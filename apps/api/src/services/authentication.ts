@@ -7,6 +7,7 @@ import { config } from '../config.js';
 import {
   AuthCheckPayload,
   AuthCheckResult,
+  ChangePasswordPayload,
   ForgotPayload,
   ForgotResult,
   LoginPayload,
@@ -16,11 +17,14 @@ import {
   ResetPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { TokenService } from './token.js';
 
 export class AuthenticationService {
   prisma: PrismaClient;
+  tokenService: TokenService;
   constructor(options: AbstractServiceOptions) {
     this.prisma = options.prisma;
+    this.tokenService = new TokenService({ prisma: options.prisma });
   }
 
   async login(payload: LoginPayload) {
@@ -103,6 +107,29 @@ export class AuthenticationService {
     }
     return user;
   }
+
+  async changePassword(payload: ChangePasswordPayload) {
+    const user = await this.prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user || !user.password) {
+      throw new Error('password_not_set');
+    }
+
+    const isValid = await this.validatePassword(payload.currentPassword, user.password);
+    if (!isValid) {
+      throw new Error('invalid_current_password');
+    }
+
+    const hashedPassword = await bcrypt.hash(payload.newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    await this.tokenService.revokeAllRefreshTokens(user.id);
+
+    return { message: 'password_changed', forceLogout: true };
+  }
+
   private async hashPassword(password: string): Promise<string> {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);

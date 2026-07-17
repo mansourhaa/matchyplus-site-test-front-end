@@ -6,8 +6,11 @@ import fp from 'fastify-plugin';
 
 import { PrismaClient } from '@saas-boilerplate/types';
 
+import { OtpClient } from '../lib/twilio.js';
+
 export type TestAppOverrides = {
   prisma?: Partial<PrismaClient>;
+  otpClient?: Partial<OtpClient>;
 };
 
 export async function buildTestApp(
@@ -35,6 +38,12 @@ export async function buildTestApp(
             instance.decorate('prisma', overrides.prisma as PrismaClient);
           },
           { name: 'prisma' },
+        ),
+        twilio: fp(
+          async (instance) => {
+            instance.decorate('otpClient', overrides.otpClient as OtpClient);
+          },
+          { name: 'twilio' },
         ),
       },
     },

@@ -1,7 +1,5 @@
-// config.ts
 import * as dotenv from 'dotenv';
 
-// Load environment variables from .env into process.env
 dotenv.config();
 
 /**
@@ -9,29 +7,33 @@ dotenv.config();
  */
 function requiredVar(name: string): string {
   const value = process.env[name];
+
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
+
   return value;
 }
 
 /**
- * Same as `requiredVar`, but parses the variable as an integer.
+ * Same as requiredVar, but parses the variable as an integer.
  */
 function requiredIntVar(name: string): number {
-  const raw = requiredVar(name); // This will throw if missing
+  const raw = requiredVar(name);
   const parsed = parseInt(raw, 10);
-  if (isNaN(parsed)) {
+
+  if (Number.isNaN(parsed)) {
     throw new Error(`Invalid integer environment variable: ${name} = "${raw}"`);
   }
+
   return parsed;
 }
 
 export const config = {
   /**
-   * Application Settings
+   * Application settings
    */
-  //nodeEnv: requiredVar('NODE_ENV'),
+  nodeEnv: process.env.NODE_ENV,
   serverPort: requiredIntVar('SERVER_PORT'),
   serverHost: requiredVar('SERVER_HOST'),
 
@@ -41,7 +43,7 @@ export const config = {
   databaseUrl: requiredVar('DATABASE_URL'),
 
   /**
-   * Auth
+   * Authentication
    */
   accessTokenSecret: requiredVar('ACCESS_TOKEN_SECRET'),
   accessTokenTtl: requiredVar('ACCESS_TOKEN_TTL'),
@@ -53,4 +55,17 @@ export const config = {
   aiStreamKey: process.env.AI_STREAM_KEY ?? 'ai:jobs',
   aiConsumerGroup: process.env.AI_CONSUMER_GROUP ?? 'ai-workers',
   aiCacheTtlSeconds: parseInt(process.env.AI_CACHE_TTL_SECONDS ?? '300', 10),
+
+  /**
+   * Phone OTP (Twilio Verify)
+   */
+  twilioAccountSid: requiredVar('TWILIO_ACCOUNT_SID'),
+  twilioAuthToken: requiredVar('TWILIO_AUTH_TOKEN'),
+  twilioVerifyServiceSid: requiredVar('TWILIO_VERIFY_SERVICE_SID'),
+
+  /**
+   * Refresh tokens
+   */
+  refreshTokenSecret: requiredVar('REFRESH_TOKEN_SECRET'),
+  refreshTokenTtlDays: requiredIntVar('REFRESH_TOKEN_TTL_DAYS'),
 };

@@ -2,7 +2,7 @@ import { Prisma, User } from '@saas-boilerplate/types';
 
 export type LoginResult = {
   accessToken: string;
-  refreshToken?: any;
+  refreshToken?: string;
   user: Partial<User>;
 };
 export type AuthCheckResult = {
@@ -42,4 +42,67 @@ export type RegisterResult = {};
 
 export type ResetBody = {
   password: string;
+};
+
+export type SendOtpPayload = {
+  phone: string;
+};
+export type SendOtpResult = {
+  message: string;
+  phone: string;
+};
+
+export type VerifyOtpPayload = {
+  phone: string;
+  code: string;
+};
+export type VerifyOtpResult = {
+  accessToken: string;
+  refreshToken: string;
+  user: Partial<User>;
+};
+
+export type LoginPhonePayload = {
+  phone: string;
+  password: string;
+};
+
+export type RegisterPhonePayload = {
+  phone: string;
+  password: string;
+  name?: string;
+};
+
+export type RefreshPayload = {
+  refresh_token: string;
+};
+export type RefreshResult = {
+  accessToken: string;
+};
+
+export type RequestPasswordResetPayload = {
+  phone: string;
+};
+export type RequestPasswordResetResult = {
+  message: string;
+  phone: string;
+};
+
+export type ConfirmPasswordResetPayload = {
+  phone: string;
+  code: string;
+  newPassword: string;
+};
+export type ConfirmPasswordResetResult = {
+  message: string;
+};
+
+export type ChangePasswordPayload = {
+  userId: string;
+  currentPassword: string;
+  newPassword: string;
+};
+export type ChangePasswordResult = {
+  message: string;
+  forceLogout: boolean;
 };

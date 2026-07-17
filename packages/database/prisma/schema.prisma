@@ -8,15 +8,31 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  name       String
-  email      String   @unique
-  password   String   @db.Text()
-  create_at  DateTime @default(now())
-  updated_at DateTime @default(now()) @updatedAt
-  aiJobs     AiJob[]
+  id            String   @id @default(cuid())
+  name          String?
+  email         String?  @unique
+  phone         String?  @unique
+  password      String?  @db.Text()
+  auth_provider String   @default("email")
+  create_at     DateTime @default(now())
+  updated_at    DateTime @default(now()) @updatedAt
+aiJobs AiJob[]
+  refresh_tokens RefreshToken[]
 
   @@index([email])
+  @@index([phone])
+}
+
+model RefreshToken {
+  id         String    @id
+  token_hash String    @unique @db.Text()
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  expires_at DateTime
+  revoked_at DateTime?
+  create_at  DateTime  @default(now())
+
+  @@index([user_id])
 }
 
 enum AiJobType {
