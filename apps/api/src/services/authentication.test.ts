@@ -63,6 +63,49 @@ describe('AuthenticationService', () => {
     expect(result.user.email).toBe('user@example.com');
   });
 
+  it('rejects a valid non-admin account on admin login', async () => {
+    const prisma = createMockPrisma();
+    const hashedPassword = await import('bcryptjs').then((bcrypt) =>
+      bcrypt.hash('password123', 10),
+    );
+
+    prisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+      name: 'user@example.com',
+      password: hashedPassword,
+      role: 'USER',
+    });
+
+    const service = new AuthenticationService({ prisma: prisma as never });
+
+    await expect(
+      service.adminLogin({ email: 'user@example.com', password: 'password123' }),
+    ).rejects.toThrow('invalid credentials');
+  });
+
+  it('returns access token and admin on successful admin login', async () => {
+    const prisma = createMockPrisma();
+    const hashedPassword = await import('bcryptjs').then((bcrypt) => bcrypt.hash('matchy2026', 10));
+
+    prisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@matchyplus.tn',
+      name: 'Super Admin',
+      password: hashedPassword,
+      role: 'SUPER_ADMIN',
+    });
+
+    const service = new AuthenticationService({ prisma: prisma as never });
+    const result = await service.adminLogin({
+      email: 'admin@matchyplus.tn',
+      password: 'matchy2026',
+    });
+
+    expect(result.accessToken).toBeTypeOf('string');
+    expect(result.user.role).toBe('SUPER_ADMIN');
+  });
+
   it('throws when registering an existing user', async () => {
     const prisma = createMockPrisma();
     prisma.user.findUnique.mockResolvedValue({

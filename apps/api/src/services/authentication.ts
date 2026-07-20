@@ -4,6 +4,7 @@ import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { PrismaClient } from '@saas-boilerplate/types';
 
 import { config } from '../config.js';
+import { isAdminRole } from '../constants.js';
 import {
   AuthCheckPayload,
   AuthCheckResult,
@@ -17,6 +18,10 @@ import {
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
 
+function parseTokenTtl(ttl: string): SignOptions['expiresIn'] {
+  return /^\d+$/.test(ttl) ? Number(ttl) : (ttl as SignOptions['expiresIn']);
+}
+
 export class AuthenticationService {
   prisma: PrismaClient;
   constructor(options: AbstractServiceOptions) {
@@ -27,8 +32,8 @@ export class AuthenticationService {
     const { accessTokenSecret, accessTokenTtl } = config;
 
     const secret = accessTokenSecret as Secret;
-    const expiresIn = Number(accessTokenTtl);
-    const signOptions: SignOptions = { expiresIn };
+    // ACCESS_TOKEN_TTL is either a raw seconds count or a jsonwebtoken timespan such as '1d'.
+    const signOptions: SignOptions = { expiresIn: parseTokenTtl(accessTokenTtl) };
 
     let user = null;
     try {
@@ -39,6 +44,7 @@ export class AuthenticationService {
           name: true,
           id: true,
           password: true,
+          role: true,
         },
       });
     } catch (err) {
@@ -53,12 +59,27 @@ export class AuthenticationService {
       id: user.id,
       email: user.email,
       name: user.email,
+      role: user.role,
     };
     const accessToken = jwt.sign(tokenPayload, secret, signOptions);
     return {
       accessToken,
       user,
     };
+  }
+
+  /**
+   * Authenticates against the admin panel. Non-admin accounts are rejected with the
+   * same error as bad credentials so the endpoint cannot be used to enumerate roles.
+   */
+  async adminLogin(payload: LoginPayload) {
+    const data = await this.login(payload);
+
+    if (!isAdminRole(data.user.role)) {
+      throw new Error('invalid credentials');
+    }
+
+    return data;
   }
 
   async register(payload: RegisterPayload) {

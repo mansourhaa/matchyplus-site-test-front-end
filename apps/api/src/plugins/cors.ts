@@ -8,7 +8,10 @@ import fp from 'fastify-plugin';
  */
 export default fp<FastifyCorsOptions>(
   async (fastify) => {
-    fastify.register(cors);
+    fastify.register(cors, {
+      // Defaults to GET,HEAD,POST only, which fails preflight for every write route.
+      methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    });
   },
   {
     name: 'cors',

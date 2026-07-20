@@ -17,6 +17,12 @@ export { Prisma };
 export * as $Enums from './enums.js';
 export * from './enums.js';
 /**
+ * Model Plan
+ * Plan configuration edited from the admin "Gestion Forfaits" section. The id mirrors
+ * `UserPlan` so a user's plan resolves to exactly one row.
+ */
+export type Plan = Prisma.PlanModel;
+/**
  * Model User
  *
  */

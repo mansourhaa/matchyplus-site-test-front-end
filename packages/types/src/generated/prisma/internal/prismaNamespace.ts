@@ -374,6 +374,7 @@ export type FieldRef<Model, FieldType> = runtime.FieldRef<Model, FieldType>;
 type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRef<Model, FieldType>;
 
 export const ModelName = {
+  Plan: 'Plan',
   User: 'User',
 } as const;
 
@@ -394,10 +395,84 @@ export type TypeMap<
     omit: GlobalOmitOptions;
   };
   meta: {
-    modelProps: 'user';
+    modelProps: 'plan' | 'user';
     txIsolationLevel: TransactionIsolationLevel;
   };
   model: {
+    Plan: {
+      payload: Prisma.$PlanPayload<ExtArgs>;
+      fields: Prisma.PlanFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.PlanFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.PlanFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        findFirst: {
+          args: Prisma.PlanFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.PlanFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        findMany: {
+          args: Prisma.PlanFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>[];
+        };
+        create: {
+          args: Prisma.PlanCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        createMany: {
+          args: Prisma.PlanCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.PlanCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>[];
+        };
+        delete: {
+          args: Prisma.PlanDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        update: {
+          args: Prisma.PlanUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        deleteMany: {
+          args: Prisma.PlanDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.PlanUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.PlanUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>[];
+        };
+        upsert: {
+          args: Prisma.PlanUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        aggregate: {
+          args: Prisma.PlanAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlan>;
+        };
+        groupBy: {
+          args: Prisma.PlanGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.PlanGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.PlanCountArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.PlanCountAggregateOutputType> | number;
+        };
+      };
+    };
     User: {
       payload: Prisma.$UserPayload<ExtArgs>;
       fields: Prisma.UserFieldRefs;
@@ -511,11 +586,55 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel =
   (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel];
 
+export const PlanScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  price: 'price',
+  color: 'color',
+  is_active: 'is_active',
+  badge: 'badge',
+  trial_days: 'trial_days',
+  description: 'description',
+  features: 'features',
+  swipes_per_day: 'swipes_per_day',
+  profiles_per_category: 'profiles_per_category',
+  messages_per_day: 'messages_per_day',
+  actions_per_day: 'actions_per_day',
+  boosts_per_month: 'boosts_per_month',
+  super_connects_per_month: 'super_connects_per_month',
+  sort_order: 'sort_order',
+  create_at: 'create_at',
+  updated_at: 'updated_at',
+} as const;
+
+export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum];
+
 export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
   password: 'password',
+  role: 'role',
+  status: 'status',
+  plan: 'plan',
+  phone: 'phone',
+  job: 'job',
+  category: 'category',
+  city: 'city',
+  bio: 'bio',
+  image: 'image',
+  interests: 'interests',
+  languages: 'languages',
+  contact_modes: 'contact_modes',
+  experience: 'experience',
+  schedule: 'schedule',
+  price: 'price',
+  rating: 'rating',
+  reviews: 'reviews',
+  matches: 'matches',
+  missions: 'missions',
+  total_earnings: 'total_earnings',
+  last_login: 'last_login',
   create_at: 'create_at',
   updated_at: 'updated_at',
 } as const;
@@ -536,9 +655,29 @@ export const QueryMode = {
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode];
 
+export const NullsOrder = {
+  first: 'first',
+  last: 'last',
+} as const;
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];
+
 /**
  * Field references
  */
+
+/**
+ * Reference to a field of type 'UserPlan'
+ */
+export type EnumUserPlanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserPlan'>;
+
+/**
+ * Reference to a field of type 'UserPlan[]'
+ */
+export type ListEnumUserPlanFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'UserPlan[]'
+>;
 
 /**
  * Reference to a field of type 'String'
@@ -551,14 +690,19 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
 export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>;
 
 /**
- * Reference to a field of type 'DateTime'
+ * Reference to a field of type 'Float'
  */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>;
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>;
 
 /**
- * Reference to a field of type 'DateTime[]'
+ * Reference to a field of type 'Float[]'
  */
-export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>;
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>;
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>;
 
 /**
  * Reference to a field of type 'Int'
@@ -569,6 +713,42 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>;
+
+/**
+ * Reference to a field of type 'DateTime'
+ */
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>;
+
+/**
+ * Reference to a field of type 'DateTime[]'
+ */
+export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>;
+
+/**
+ * Reference to a field of type 'Role'
+ */
+export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role'>;
+
+/**
+ * Reference to a field of type 'Role[]'
+ */
+export type ListEnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role[]'>;
+
+/**
+ * Reference to a field of type 'UserStatus'
+ */
+export type EnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'UserStatus'
+>;
+
+/**
+ * Reference to a field of type 'UserStatus[]'
+ */
+export type ListEnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'UserStatus[]'
+>;
 
 /**
  * Batch Payload for updateMany & deleteMany & createMany
@@ -688,6 +868,7 @@ export type PrismaClientOptions = (
   queryPlanCacheMaxSize?: number;
 };
 export type GlobalOmitConfig = {
+  plan?: Prisma.PlanOmit;
   user?: Prisma.UserOmit;
 };
 

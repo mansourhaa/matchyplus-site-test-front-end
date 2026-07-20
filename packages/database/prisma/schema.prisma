@@ -7,13 +7,84 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  SUPPORT
+  MODERATOR
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+enum UserPlan {
+  FREE
+  PREMIUM
+  PREMIUM_PLUS
+}
+
+/// Plan configuration edited from the admin "Gestion Forfaits" section. The id mirrors
+/// `UserPlan` so a user's plan resolves to exactly one row.
+model Plan {
+  id          UserPlan @id
+  name        String
+  price       Float    @default(0)
+  color       String   @default("#888888")
+  is_active   Boolean  @default(true)
+  badge       String   @default("")
+  trial_days  Int      @default(0)
+  description String   @default("")
+  features    String[] @default([])
+
+  // Limits: -1 means unlimited.
+  swipes_per_day           Int @default(-1)
+  profiles_per_category    Int @default(-1)
+  messages_per_day         Int @default(-1)
+  actions_per_day          Int @default(-1)
+  boosts_per_month         Int @default(0)
+  super_connects_per_month Int @default(0)
+
+  sort_order Int      @default(0)
+  create_at  DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+}
+
 model User {
-  id         String   @id @default(cuid())
-  name       String
-  email      String   @unique
-  password   String   @db.Text()
+  id       String @id @default(cuid())
+  name     String
+  email    String @unique
+  password String @db.Text()
+  role     Role   @default(USER)
+
+  // Profile fields surfaced by the admin panel.
+  status         UserStatus @default(ACTIVE)
+  plan           UserPlan   @default(FREE)
+  phone          String?
+  job            String?
+  category       String?
+  city           String?
+  bio            String?    @db.Text()
+  image          String?    @db.Text()
+  interests      String[]   @default([])
+  languages      String[]   @default([])
+  contact_modes  String[]   @default([])
+  experience     String?
+  schedule       String?
+  price          String?
+  rating         Float      @default(0)
+  reviews        Int        @default(0)
+  matches        Int        @default(0)
+  missions       Int        @default(0)
+  total_earnings Int        @default(0)
+  last_login     DateTime?
+
   create_at  DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
 
   @@index([email])
+  @@index([status])
+  @@index([plan])
 }

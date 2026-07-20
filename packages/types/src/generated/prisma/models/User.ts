@@ -20,8 +20,26 @@ export type UserModel = runtime.Types.Result.DefaultSelection<Prisma.$UserPayloa
 
 export type AggregateUser = {
   _count: UserCountAggregateOutputType | null;
+  _avg: UserAvgAggregateOutputType | null;
+  _sum: UserSumAggregateOutputType | null;
   _min: UserMinAggregateOutputType | null;
   _max: UserMaxAggregateOutputType | null;
+};
+
+export type UserAvgAggregateOutputType = {
+  rating: number | null;
+  reviews: number | null;
+  matches: number | null;
+  missions: number | null;
+  total_earnings: number | null;
+};
+
+export type UserSumAggregateOutputType = {
+  rating: number | null;
+  reviews: number | null;
+  matches: number | null;
+  missions: number | null;
+  total_earnings: number | null;
 };
 
 export type UserMinAggregateOutputType = {
@@ -29,6 +47,24 @@ export type UserMinAggregateOutputType = {
   name: string | null;
   email: string | null;
   password: string | null;
+  role: $Enums.Role | null;
+  status: $Enums.UserStatus | null;
+  plan: $Enums.UserPlan | null;
+  phone: string | null;
+  job: string | null;
+  category: string | null;
+  city: string | null;
+  bio: string | null;
+  image: string | null;
+  experience: string | null;
+  schedule: string | null;
+  price: string | null;
+  rating: number | null;
+  reviews: number | null;
+  matches: number | null;
+  missions: number | null;
+  total_earnings: number | null;
+  last_login: Date | null;
   create_at: Date | null;
   updated_at: Date | null;
 };
@@ -38,6 +74,24 @@ export type UserMaxAggregateOutputType = {
   name: string | null;
   email: string | null;
   password: string | null;
+  role: $Enums.Role | null;
+  status: $Enums.UserStatus | null;
+  plan: $Enums.UserPlan | null;
+  phone: string | null;
+  job: string | null;
+  category: string | null;
+  city: string | null;
+  bio: string | null;
+  image: string | null;
+  experience: string | null;
+  schedule: string | null;
+  price: string | null;
+  rating: number | null;
+  reviews: number | null;
+  matches: number | null;
+  missions: number | null;
+  total_earnings: number | null;
+  last_login: Date | null;
   create_at: Date | null;
   updated_at: Date | null;
 };
@@ -47,9 +101,46 @@ export type UserCountAggregateOutputType = {
   name: number;
   email: number;
   password: number;
+  role: number;
+  status: number;
+  plan: number;
+  phone: number;
+  job: number;
+  category: number;
+  city: number;
+  bio: number;
+  image: number;
+  interests: number;
+  languages: number;
+  contact_modes: number;
+  experience: number;
+  schedule: number;
+  price: number;
+  rating: number;
+  reviews: number;
+  matches: number;
+  missions: number;
+  total_earnings: number;
+  last_login: number;
   create_at: number;
   updated_at: number;
   _all: number;
+};
+
+export type UserAvgAggregateInputType = {
+  rating?: true;
+  reviews?: true;
+  matches?: true;
+  missions?: true;
+  total_earnings?: true;
+};
+
+export type UserSumAggregateInputType = {
+  rating?: true;
+  reviews?: true;
+  matches?: true;
+  missions?: true;
+  total_earnings?: true;
 };
 
 export type UserMinAggregateInputType = {
@@ -57,6 +148,24 @@ export type UserMinAggregateInputType = {
   name?: true;
   email?: true;
   password?: true;
+  role?: true;
+  status?: true;
+  plan?: true;
+  phone?: true;
+  job?: true;
+  category?: true;
+  city?: true;
+  bio?: true;
+  image?: true;
+  experience?: true;
+  schedule?: true;
+  price?: true;
+  rating?: true;
+  reviews?: true;
+  matches?: true;
+  missions?: true;
+  total_earnings?: true;
+  last_login?: true;
   create_at?: true;
   updated_at?: true;
 };
@@ -66,6 +175,24 @@ export type UserMaxAggregateInputType = {
   name?: true;
   email?: true;
   password?: true;
+  role?: true;
+  status?: true;
+  plan?: true;
+  phone?: true;
+  job?: true;
+  category?: true;
+  city?: true;
+  bio?: true;
+  image?: true;
+  experience?: true;
+  schedule?: true;
+  price?: true;
+  rating?: true;
+  reviews?: true;
+  matches?: true;
+  missions?: true;
+  total_earnings?: true;
+  last_login?: true;
   create_at?: true;
   updated_at?: true;
 };
@@ -75,6 +202,27 @@ export type UserCountAggregateInputType = {
   name?: true;
   email?: true;
   password?: true;
+  role?: true;
+  status?: true;
+  plan?: true;
+  phone?: true;
+  job?: true;
+  category?: true;
+  city?: true;
+  bio?: true;
+  image?: true;
+  interests?: true;
+  languages?: true;
+  contact_modes?: true;
+  experience?: true;
+  schedule?: true;
+  price?: true;
+  rating?: true;
+  reviews?: true;
+  matches?: true;
+  missions?: true;
+  total_earnings?: true;
+  last_login?: true;
   create_at?: true;
   updated_at?: true;
   _all?: true;
@@ -120,6 +268,18 @@ export type UserAggregateArgs<
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    *
+   * Select which fields to average
+   **/
+  _avg?: UserAvgAggregateInputType;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   *
+   * Select which fields to sum
+   **/
+  _sum?: UserSumAggregateInputType;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   *
    * Select which fields to find the minimum value
    **/
   _min?: UserMinAggregateInputType;
@@ -149,6 +309,8 @@ export type UserGroupByArgs<
   take?: number;
   skip?: number;
   _count?: UserCountAggregateInputType | true;
+  _avg?: UserAvgAggregateInputType;
+  _sum?: UserSumAggregateInputType;
   _min?: UserMinAggregateInputType;
   _max?: UserMaxAggregateInputType;
 };
@@ -158,9 +320,32 @@ export type UserGroupByOutputType = {
   name: string;
   email: string;
   password: string;
+  role: $Enums.Role;
+  status: $Enums.UserStatus;
+  plan: $Enums.UserPlan;
+  phone: string | null;
+  job: string | null;
+  category: string | null;
+  city: string | null;
+  bio: string | null;
+  image: string | null;
+  interests: string[];
+  languages: string[];
+  contact_modes: string[];
+  experience: string | null;
+  schedule: string | null;
+  price: string | null;
+  rating: number;
+  reviews: number;
+  matches: number;
+  missions: number;
+  total_earnings: number;
+  last_login: Date | null;
   create_at: Date;
   updated_at: Date;
   _count: UserCountAggregateOutputType | null;
+  _avg: UserAvgAggregateOutputType | null;
+  _sum: UserSumAggregateOutputType | null;
   _min: UserMinAggregateOutputType | null;
   _max: UserMaxAggregateOutputType | null;
 };
@@ -185,6 +370,27 @@ export type UserWhereInput = {
   name?: Prisma.StringFilter<'User'> | string;
   email?: Prisma.StringFilter<'User'> | string;
   password?: Prisma.StringFilter<'User'> | string;
+  role?: Prisma.EnumRoleFilter<'User'> | $Enums.Role;
+  status?: Prisma.EnumUserStatusFilter<'User'> | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFilter<'User'> | $Enums.UserPlan;
+  phone?: Prisma.StringNullableFilter<'User'> | string | null;
+  job?: Prisma.StringNullableFilter<'User'> | string | null;
+  category?: Prisma.StringNullableFilter<'User'> | string | null;
+  city?: Prisma.StringNullableFilter<'User'> | string | null;
+  bio?: Prisma.StringNullableFilter<'User'> | string | null;
+  image?: Prisma.StringNullableFilter<'User'> | string | null;
+  interests?: Prisma.StringNullableListFilter<'User'>;
+  languages?: Prisma.StringNullableListFilter<'User'>;
+  contact_modes?: Prisma.StringNullableListFilter<'User'>;
+  experience?: Prisma.StringNullableFilter<'User'> | string | null;
+  schedule?: Prisma.StringNullableFilter<'User'> | string | null;
+  price?: Prisma.StringNullableFilter<'User'> | string | null;
+  rating?: Prisma.FloatFilter<'User'> | number;
+  reviews?: Prisma.IntFilter<'User'> | number;
+  matches?: Prisma.IntFilter<'User'> | number;
+  missions?: Prisma.IntFilter<'User'> | number;
+  total_earnings?: Prisma.IntFilter<'User'> | number;
+  last_login?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
   create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
   updated_at?: Prisma.DateTimeFilter<'User'> | Date | string;
 };
@@ -194,6 +400,27 @@ export type UserOrderByWithRelationInput = {
   name?: Prisma.SortOrder;
   email?: Prisma.SortOrder;
   password?: Prisma.SortOrder;
+  role?: Prisma.SortOrder;
+  status?: Prisma.SortOrder;
+  plan?: Prisma.SortOrder;
+  phone?: Prisma.SortOrderInput | Prisma.SortOrder;
+  job?: Prisma.SortOrderInput | Prisma.SortOrder;
+  category?: Prisma.SortOrderInput | Prisma.SortOrder;
+  city?: Prisma.SortOrderInput | Prisma.SortOrder;
+  bio?: Prisma.SortOrderInput | Prisma.SortOrder;
+  image?: Prisma.SortOrderInput | Prisma.SortOrder;
+  interests?: Prisma.SortOrder;
+  languages?: Prisma.SortOrder;
+  contact_modes?: Prisma.SortOrder;
+  experience?: Prisma.SortOrderInput | Prisma.SortOrder;
+  schedule?: Prisma.SortOrderInput | Prisma.SortOrder;
+  price?: Prisma.SortOrderInput | Prisma.SortOrder;
+  rating?: Prisma.SortOrder;
+  reviews?: Prisma.SortOrder;
+  matches?: Prisma.SortOrder;
+  missions?: Prisma.SortOrder;
+  total_earnings?: Prisma.SortOrder;
+  last_login?: Prisma.SortOrderInput | Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
 };
@@ -207,6 +434,27 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[];
     name?: Prisma.StringFilter<'User'> | string;
     password?: Prisma.StringFilter<'User'> | string;
+    role?: Prisma.EnumRoleFilter<'User'> | $Enums.Role;
+    status?: Prisma.EnumUserStatusFilter<'User'> | $Enums.UserStatus;
+    plan?: Prisma.EnumUserPlanFilter<'User'> | $Enums.UserPlan;
+    phone?: Prisma.StringNullableFilter<'User'> | string | null;
+    job?: Prisma.StringNullableFilter<'User'> | string | null;
+    category?: Prisma.StringNullableFilter<'User'> | string | null;
+    city?: Prisma.StringNullableFilter<'User'> | string | null;
+    bio?: Prisma.StringNullableFilter<'User'> | string | null;
+    image?: Prisma.StringNullableFilter<'User'> | string | null;
+    interests?: Prisma.StringNullableListFilter<'User'>;
+    languages?: Prisma.StringNullableListFilter<'User'>;
+    contact_modes?: Prisma.StringNullableListFilter<'User'>;
+    experience?: Prisma.StringNullableFilter<'User'> | string | null;
+    schedule?: Prisma.StringNullableFilter<'User'> | string | null;
+    price?: Prisma.StringNullableFilter<'User'> | string | null;
+    rating?: Prisma.FloatFilter<'User'> | number;
+    reviews?: Prisma.IntFilter<'User'> | number;
+    matches?: Prisma.IntFilter<'User'> | number;
+    missions?: Prisma.IntFilter<'User'> | number;
+    total_earnings?: Prisma.IntFilter<'User'> | number;
+    last_login?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
     create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
     updated_at?: Prisma.DateTimeFilter<'User'> | Date | string;
   },
@@ -218,11 +466,34 @@ export type UserOrderByWithAggregationInput = {
   name?: Prisma.SortOrder;
   email?: Prisma.SortOrder;
   password?: Prisma.SortOrder;
+  role?: Prisma.SortOrder;
+  status?: Prisma.SortOrder;
+  plan?: Prisma.SortOrder;
+  phone?: Prisma.SortOrderInput | Prisma.SortOrder;
+  job?: Prisma.SortOrderInput | Prisma.SortOrder;
+  category?: Prisma.SortOrderInput | Prisma.SortOrder;
+  city?: Prisma.SortOrderInput | Prisma.SortOrder;
+  bio?: Prisma.SortOrderInput | Prisma.SortOrder;
+  image?: Prisma.SortOrderInput | Prisma.SortOrder;
+  interests?: Prisma.SortOrder;
+  languages?: Prisma.SortOrder;
+  contact_modes?: Prisma.SortOrder;
+  experience?: Prisma.SortOrderInput | Prisma.SortOrder;
+  schedule?: Prisma.SortOrderInput | Prisma.SortOrder;
+  price?: Prisma.SortOrderInput | Prisma.SortOrder;
+  rating?: Prisma.SortOrder;
+  reviews?: Prisma.SortOrder;
+  matches?: Prisma.SortOrder;
+  missions?: Prisma.SortOrder;
+  total_earnings?: Prisma.SortOrder;
+  last_login?: Prisma.SortOrderInput | Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
   _count?: Prisma.UserCountOrderByAggregateInput;
+  _avg?: Prisma.UserAvgOrderByAggregateInput;
   _max?: Prisma.UserMaxOrderByAggregateInput;
   _min?: Prisma.UserMinOrderByAggregateInput;
+  _sum?: Prisma.UserSumOrderByAggregateInput;
 };
 
 export type UserScalarWhereWithAggregatesInput = {
@@ -233,6 +504,27 @@ export type UserScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<'User'> | string;
   email?: Prisma.StringWithAggregatesFilter<'User'> | string;
   password?: Prisma.StringWithAggregatesFilter<'User'> | string;
+  role?: Prisma.EnumRoleWithAggregatesFilter<'User'> | $Enums.Role;
+  status?: Prisma.EnumUserStatusWithAggregatesFilter<'User'> | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanWithAggregatesFilter<'User'> | $Enums.UserPlan;
+  phone?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  job?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  category?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  city?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  bio?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  image?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  interests?: Prisma.StringNullableListFilter<'User'>;
+  languages?: Prisma.StringNullableListFilter<'User'>;
+  contact_modes?: Prisma.StringNullableListFilter<'User'>;
+  experience?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  schedule?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  price?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  rating?: Prisma.FloatWithAggregatesFilter<'User'> | number;
+  reviews?: Prisma.IntWithAggregatesFilter<'User'> | number;
+  matches?: Prisma.IntWithAggregatesFilter<'User'> | number;
+  missions?: Prisma.IntWithAggregatesFilter<'User'> | number;
+  total_earnings?: Prisma.IntWithAggregatesFilter<'User'> | number;
+  last_login?: Prisma.DateTimeNullableWithAggregatesFilter<'User'> | Date | string | null;
   create_at?: Prisma.DateTimeWithAggregatesFilter<'User'> | Date | string;
   updated_at?: Prisma.DateTimeWithAggregatesFilter<'User'> | Date | string;
 };
@@ -242,6 +534,27 @@ export type UserCreateInput = {
   name: string;
   email: string;
   password: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  phone?: string | null;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
   create_at?: Date | string;
   updated_at?: Date | string;
 };
@@ -251,6 +564,27 @@ export type UserUncheckedCreateInput = {
   name: string;
   email: string;
   password: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  phone?: string | null;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
   create_at?: Date | string;
   updated_at?: Date | string;
 };
@@ -260,6 +594,27 @@ export type UserUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string;
   email?: Prisma.StringFieldUpdateOperationsInput | string;
   password?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -269,6 +624,27 @@ export type UserUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string;
   email?: Prisma.StringFieldUpdateOperationsInput | string;
   password?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -278,6 +654,27 @@ export type UserCreateManyInput = {
   name: string;
   email: string;
   password: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  phone?: string | null;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
   create_at?: Date | string;
   updated_at?: Date | string;
 };
@@ -287,6 +684,27 @@ export type UserUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string;
   email?: Prisma.StringFieldUpdateOperationsInput | string;
   password?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -296,6 +714,27 @@ export type UserUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string;
   email?: Prisma.StringFieldUpdateOperationsInput | string;
   password?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -305,8 +744,37 @@ export type UserCountOrderByAggregateInput = {
   name?: Prisma.SortOrder;
   email?: Prisma.SortOrder;
   password?: Prisma.SortOrder;
+  role?: Prisma.SortOrder;
+  status?: Prisma.SortOrder;
+  plan?: Prisma.SortOrder;
+  phone?: Prisma.SortOrder;
+  job?: Prisma.SortOrder;
+  category?: Prisma.SortOrder;
+  city?: Prisma.SortOrder;
+  bio?: Prisma.SortOrder;
+  image?: Prisma.SortOrder;
+  interests?: Prisma.SortOrder;
+  languages?: Prisma.SortOrder;
+  contact_modes?: Prisma.SortOrder;
+  experience?: Prisma.SortOrder;
+  schedule?: Prisma.SortOrder;
+  price?: Prisma.SortOrder;
+  rating?: Prisma.SortOrder;
+  reviews?: Prisma.SortOrder;
+  matches?: Prisma.SortOrder;
+  missions?: Prisma.SortOrder;
+  total_earnings?: Prisma.SortOrder;
+  last_login?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
+};
+
+export type UserAvgOrderByAggregateInput = {
+  rating?: Prisma.SortOrder;
+  reviews?: Prisma.SortOrder;
+  matches?: Prisma.SortOrder;
+  missions?: Prisma.SortOrder;
+  total_earnings?: Prisma.SortOrder;
 };
 
 export type UserMaxOrderByAggregateInput = {
@@ -314,6 +782,24 @@ export type UserMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder;
   email?: Prisma.SortOrder;
   password?: Prisma.SortOrder;
+  role?: Prisma.SortOrder;
+  status?: Prisma.SortOrder;
+  plan?: Prisma.SortOrder;
+  phone?: Prisma.SortOrder;
+  job?: Prisma.SortOrder;
+  category?: Prisma.SortOrder;
+  city?: Prisma.SortOrder;
+  bio?: Prisma.SortOrder;
+  image?: Prisma.SortOrder;
+  experience?: Prisma.SortOrder;
+  schedule?: Prisma.SortOrder;
+  price?: Prisma.SortOrder;
+  rating?: Prisma.SortOrder;
+  reviews?: Prisma.SortOrder;
+  matches?: Prisma.SortOrder;
+  missions?: Prisma.SortOrder;
+  total_earnings?: Prisma.SortOrder;
+  last_login?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
 };
@@ -323,16 +809,77 @@ export type UserMinOrderByAggregateInput = {
   name?: Prisma.SortOrder;
   email?: Prisma.SortOrder;
   password?: Prisma.SortOrder;
+  role?: Prisma.SortOrder;
+  status?: Prisma.SortOrder;
+  plan?: Prisma.SortOrder;
+  phone?: Prisma.SortOrder;
+  job?: Prisma.SortOrder;
+  category?: Prisma.SortOrder;
+  city?: Prisma.SortOrder;
+  bio?: Prisma.SortOrder;
+  image?: Prisma.SortOrder;
+  experience?: Prisma.SortOrder;
+  schedule?: Prisma.SortOrder;
+  price?: Prisma.SortOrder;
+  rating?: Prisma.SortOrder;
+  reviews?: Prisma.SortOrder;
+  matches?: Prisma.SortOrder;
+  missions?: Prisma.SortOrder;
+  total_earnings?: Prisma.SortOrder;
+  last_login?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
 };
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string;
+export type UserSumOrderByAggregateInput = {
+  rating?: Prisma.SortOrder;
+  reviews?: Prisma.SortOrder;
+  matches?: Prisma.SortOrder;
+  missions?: Prisma.SortOrder;
+  total_earnings?: Prisma.SortOrder;
 };
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string;
+export type UserCreateinterestsInput = {
+  set: string[];
+};
+
+export type UserCreatelanguagesInput = {
+  set: string[];
+};
+
+export type UserCreatecontact_modesInput = {
+  set: string[];
+};
+
+export type EnumRoleFieldUpdateOperationsInput = {
+  set?: $Enums.Role;
+};
+
+export type EnumUserStatusFieldUpdateOperationsInput = {
+  set?: $Enums.UserStatus;
+};
+
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null;
+};
+
+export type UserUpdateinterestsInput = {
+  set?: string[];
+  push?: string | string[];
+};
+
+export type UserUpdatelanguagesInput = {
+  set?: string[];
+  push?: string | string[];
+};
+
+export type UserUpdatecontact_modesInput = {
+  set?: string[];
+  push?: string | string[];
+};
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null;
 };
 
 export type UserSelect<
@@ -343,6 +890,27 @@ export type UserSelect<
     name?: boolean;
     email?: boolean;
     password?: boolean;
+    role?: boolean;
+    status?: boolean;
+    plan?: boolean;
+    phone?: boolean;
+    job?: boolean;
+    category?: boolean;
+    city?: boolean;
+    bio?: boolean;
+    image?: boolean;
+    interests?: boolean;
+    languages?: boolean;
+    contact_modes?: boolean;
+    experience?: boolean;
+    schedule?: boolean;
+    price?: boolean;
+    rating?: boolean;
+    reviews?: boolean;
+    matches?: boolean;
+    missions?: boolean;
+    total_earnings?: boolean;
+    last_login?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
   },
@@ -357,6 +925,27 @@ export type UserSelectCreateManyAndReturn<
     name?: boolean;
     email?: boolean;
     password?: boolean;
+    role?: boolean;
+    status?: boolean;
+    plan?: boolean;
+    phone?: boolean;
+    job?: boolean;
+    category?: boolean;
+    city?: boolean;
+    bio?: boolean;
+    image?: boolean;
+    interests?: boolean;
+    languages?: boolean;
+    contact_modes?: boolean;
+    experience?: boolean;
+    schedule?: boolean;
+    price?: boolean;
+    rating?: boolean;
+    reviews?: boolean;
+    matches?: boolean;
+    missions?: boolean;
+    total_earnings?: boolean;
+    last_login?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
   },
@@ -371,6 +960,27 @@ export type UserSelectUpdateManyAndReturn<
     name?: boolean;
     email?: boolean;
     password?: boolean;
+    role?: boolean;
+    status?: boolean;
+    plan?: boolean;
+    phone?: boolean;
+    job?: boolean;
+    category?: boolean;
+    city?: boolean;
+    bio?: boolean;
+    image?: boolean;
+    interests?: boolean;
+    languages?: boolean;
+    contact_modes?: boolean;
+    experience?: boolean;
+    schedule?: boolean;
+    price?: boolean;
+    rating?: boolean;
+    reviews?: boolean;
+    matches?: boolean;
+    missions?: boolean;
+    total_earnings?: boolean;
+    last_login?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
   },
@@ -382,6 +992,27 @@ export type UserSelectScalar = {
   name?: boolean;
   email?: boolean;
   password?: boolean;
+  role?: boolean;
+  status?: boolean;
+  plan?: boolean;
+  phone?: boolean;
+  job?: boolean;
+  category?: boolean;
+  city?: boolean;
+  bio?: boolean;
+  image?: boolean;
+  interests?: boolean;
+  languages?: boolean;
+  contact_modes?: boolean;
+  experience?: boolean;
+  schedule?: boolean;
+  price?: boolean;
+  rating?: boolean;
+  reviews?: boolean;
+  matches?: boolean;
+  missions?: boolean;
+  total_earnings?: boolean;
+  last_login?: boolean;
   create_at?: boolean;
   updated_at?: boolean;
 };
@@ -389,7 +1020,33 @@ export type UserSelectScalar = {
 export type UserOmit<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetOmit<
-  'id' | 'name' | 'email' | 'password' | 'create_at' | 'updated_at',
+  | 'id'
+  | 'name'
+  | 'email'
+  | 'password'
+  | 'role'
+  | 'status'
+  | 'plan'
+  | 'phone'
+  | 'job'
+  | 'category'
+  | 'city'
+  | 'bio'
+  | 'image'
+  | 'interests'
+  | 'languages'
+  | 'contact_modes'
+  | 'experience'
+  | 'schedule'
+  | 'price'
+  | 'rating'
+  | 'reviews'
+  | 'matches'
+  | 'missions'
+  | 'total_earnings'
+  | 'last_login'
+  | 'create_at'
+  | 'updated_at',
   ExtArgs['result']['user']
 >;
 
@@ -404,6 +1061,27 @@ export type $UserPayload<
       name: string;
       email: string;
       password: string;
+      role: $Enums.Role;
+      status: $Enums.UserStatus;
+      plan: $Enums.UserPlan;
+      phone: string | null;
+      job: string | null;
+      category: string | null;
+      city: string | null;
+      bio: string | null;
+      image: string | null;
+      interests: string[];
+      languages: string[];
+      contact_modes: string[];
+      experience: string | null;
+      schedule: string | null;
+      price: string | null;
+      rating: number;
+      reviews: number;
+      matches: number;
+      missions: number;
+      total_earnings: number;
+      last_login: Date | null;
       create_at: Date;
       updated_at: Date;
     },
@@ -951,6 +1629,27 @@ export interface UserFieldRefs {
   readonly name: Prisma.FieldRef<'User', 'String'>;
   readonly email: Prisma.FieldRef<'User', 'String'>;
   readonly password: Prisma.FieldRef<'User', 'String'>;
+  readonly role: Prisma.FieldRef<'User', 'Role'>;
+  readonly status: Prisma.FieldRef<'User', 'UserStatus'>;
+  readonly plan: Prisma.FieldRef<'User', 'UserPlan'>;
+  readonly phone: Prisma.FieldRef<'User', 'String'>;
+  readonly job: Prisma.FieldRef<'User', 'String'>;
+  readonly category: Prisma.FieldRef<'User', 'String'>;
+  readonly city: Prisma.FieldRef<'User', 'String'>;
+  readonly bio: Prisma.FieldRef<'User', 'String'>;
+  readonly image: Prisma.FieldRef<'User', 'String'>;
+  readonly interests: Prisma.FieldRef<'User', 'String[]'>;
+  readonly languages: Prisma.FieldRef<'User', 'String[]'>;
+  readonly contact_modes: Prisma.FieldRef<'User', 'String[]'>;
+  readonly experience: Prisma.FieldRef<'User', 'String'>;
+  readonly schedule: Prisma.FieldRef<'User', 'String'>;
+  readonly price: Prisma.FieldRef<'User', 'String'>;
+  readonly rating: Prisma.FieldRef<'User', 'Float'>;
+  readonly reviews: Prisma.FieldRef<'User', 'Int'>;
+  readonly matches: Prisma.FieldRef<'User', 'Int'>;
+  readonly missions: Prisma.FieldRef<'User', 'Int'>;
+  readonly total_earnings: Prisma.FieldRef<'User', 'Int'>;
+  readonly last_login: Prisma.FieldRef<'User', 'DateTime'>;
   readonly create_at: Prisma.FieldRef<'User', 'DateTime'>;
   readonly updated_at: Prisma.FieldRef<'User', 'DateTime'>;
 }

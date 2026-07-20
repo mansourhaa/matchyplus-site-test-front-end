@@ -30,8 +30,8 @@ export * from './enums.js';
  * const prisma = new PrismaClient({
  *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
  * })
- * // Fetch zero or more Users
- * const users = await prisma.user.findMany()
+ * // Fetch zero or more Plans
+ * const plans = await prisma.plan.findMany()
  * ```
  *
  * Read more in our [docs](https://pris.ly/d/client).
@@ -44,6 +44,12 @@ export type PrismaClient<
 > = $Class.PrismaClient<LogOpts, OmitOpts, ExtArgs>;
 export { Prisma };
 
+/**
+ * Model Plan
+ * Plan configuration edited from the admin "Gestion Forfaits" section. The id mirrors
+ * `UserPlan` so a user's plan resolves to exactly one row.
+ */
+export type Plan = Prisma.PlanModel;
 /**
  * Model User
  *

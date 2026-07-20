@@ -1,7 +1,12 @@
 import { FastifyPluginAsync } from 'fastify';
 import _ from 'lodash';
 
-import { authCheckSchema, loginSchema, registerSchema } from '../../../schemas/v1/index.js';
+import {
+  adminLoginSchema,
+  authCheckSchema,
+  loginSchema,
+  registerSchema,
+} from '../../../schemas/v1/index.js';
 import { AuthenticationService } from '../../../services/authentication.js';
 import { LoginPayload, RegisterPayload, ResetPayload } from '../../../types/auth.js';
 
@@ -19,6 +24,24 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         const data = await authService.login(request.body);
 
         // Generating Token
+        return reply.code(200).send({
+          access_token: data.accessToken,
+          user: _.omit(data.user, ['password']),
+        });
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
+  fastify.post<{ Body: LoginPayload }>(
+    '/admin/login',
+    {
+      schema: adminLoginSchema,
+    },
+    async (request, reply) => {
+      try {
+        const data = await authService.adminLogin(request.body);
+
         return reply.code(200).send({
           access_token: data.accessToken,
           user: _.omit(data.user, ['password']),
