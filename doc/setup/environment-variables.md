@@ -29,15 +29,15 @@ flowchart TB
     EL -.->|overrides| ED
 ```
 
-| File | Purpose | Committed? |
-| --- | --- | --- |
-| `.env.example` | Development template | Yes |
-| `.env.staging.example` | Staging template | Yes |
-| `.env.production.example` | Production template | Yes |
-| `.env.development` | Local development | No (gitignored) |
-| `.env.staging` | Staging runtime | No (gitignored) |
-| `.env.production` | Production runtime | No (gitignored) |
-| `.env.local` | Local overrides | No (gitignored) |
+| File                      | Purpose              | Committed?      |
+| ------------------------- | -------------------- | --------------- |
+| `.env.example`            | Development template | Yes             |
+| `.env.staging.example`    | Staging template     | Yes             |
+| `.env.production.example` | Production template  | Yes             |
+| `.env.development`        | Local development    | No (gitignored) |
+| `.env.staging`            | Staging runtime      | No (gitignored) |
+| `.env.production`         | Production runtime   | No (gitignored) |
+| `.env.local`              | Local overrides      | No (gitignored) |
 
 ### Create env files
 
@@ -60,32 +60,50 @@ flowchart LR
 
 ### Core
 
-| Variable | Required | Description | Example |
-| --- | --- | --- | --- |
-| `NODE_ENV` | Yes | `development`, `staging`, or `production` | `development` |
-| `DATABASE_URL` | Yes | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/db` |
+| Variable       | Required | Description                               | Example                                    |
+| -------------- | -------- | ----------------------------------------- | ------------------------------------------ |
+| `NODE_ENV`     | Yes      | `development`, `staging`, or `production` | `development`                              |
+| `DATABASE_URL` | Yes      | PostgreSQL connection string              | `postgresql://user:pass@localhost:5432/db` |
 
 ### API server
 
-| Variable | Required | Description | Default |
-| --- | --- | --- | --- |
-| `SERVER_PORT` | No | Fastify listen port | `8000` |
-| `SERVER_HOST` | No | Fastify bind address | `localhost` |
-| `FASTIFY_CLOSE_GRACE_DELAY` | No | Graceful shutdown delay (ms) | `500` |
+| Variable                    | Required | Description                  | Default     |
+| --------------------------- | -------- | ---------------------------- | ----------- |
+| `SERVER_PORT`               | No       | Fastify listen port          | `8000`      |
+| `SERVER_HOST`               | No       | Fastify bind address         | `localhost` |
+| `FASTIFY_CLOSE_GRACE_DELAY` | No       | Graceful shutdown delay (ms) | `500`       |
 
 ### Authentication
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `ACCESS_TOKEN_SECRET` | Yes | JWT signing secret |
-| `ACCESS_TOKEN_TTL` | No | Token expiry (`1d`, `7d`, `12h`) |
-| `COOKIE_SECRET` | Yes (staging/prod) | Fastify cookie signing |
+| Variable              | Required           | Description                      |
+| --------------------- | ------------------ | -------------------------------- |
+| `ACCESS_TOKEN_SECRET` | Yes                | JWT signing secret               |
+| `ACCESS_TOKEN_TTL`    | No                 | Token expiry (`1d`, `7d`, `12h`) |
+| `COOKIE_SECRET`       | Yes (staging/prod) | Fastify cookie signing           |
+
+### Twilio Verify (phone OTP)
+
+These variables are required when the API sends SMS one-time passwords through Twilio Verify.
+
+| Variable                    | Required | Description                                                         |
+| --------------------------- | -------- | ------------------------------------------------------------------- |
+| `TWILIO_ACCOUNT_SID`        | Yes      | Your Twilio account SID from the Twilio Console                     |
+| `TWILIO_AUTH_TOKEN`         | Yes      | Your Twilio auth token from the Twilio Console                      |
+| `TWILIO_VERIFY_SERVICE_SID` | Yes      | The SID of the Verify service you create in Twilio for OTP delivery |
+
+Typical values:
+
+- `TWILIO_ACCOUNT_SID` = the Account SID shown in the Twilio dashboard
+- `TWILIO_AUTH_TOKEN` = the Auth Token shown in the Twilio dashboard
+- `TWILIO_VERIFY_SERVICE_SID` = the Service SID of the Verify service used for SMS OTP
+
+For local testing, use a Twilio trial account and make sure the destination phone number is verified in Twilio. The API uses these values in the phone OTP flow for sending and validating SMS codes.
 
 ### Frontend (Next.js)
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `NEXT_PUBLIC_API_URL` | Yes | Public API base URL (inlined at build) |
+| Variable              | Required | Description                            |
+| --------------------- | -------- | -------------------------------------- |
+| `NEXT_PUBLIC_API_URL` | Yes      | Public API base URL (inlined at build) |
 
 > Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Never put secrets in them.
 
