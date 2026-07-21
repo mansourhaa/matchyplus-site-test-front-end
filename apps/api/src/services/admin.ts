@@ -2,7 +2,9 @@ import bcrypt from 'bcryptjs';
 
 import { Prisma, PrismaClient, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
+import { outranks } from '../constants.js';
 import {
+  AdminActor,
   AdminAnalyticsResult,
   AdminChangePasswordPayload,
   AdminListUsersQuery,
@@ -180,7 +182,31 @@ export class AdminService {
     }
   }
 
-  async updateUser(id: string, payload: AdminUpdateUserPayload) {
+  /**
+   * Guards every write against another account: an admin may only act on someone strictly
+   * below them in the hierarchy, and never on their own row. Without this a SUPPORT could ban
+   * or re-address a SUPER_ADMIN, since `verifyAdmin` only checks that the caller is *an* admin.
+   */
+  private async assertCanManage(actor: AdminActor, targetId: string) {
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      select: { id: true, role: true },
+    });
+
+    if (!target) {
+      throw new Error('user not found');
+    }
+
+    if (target.id === actor.id || !outranks(actor.role, target.role)) {
+      const error = new Error('insufficient privileges');
+      (error as Error & { statusCode?: number }).statusCode = 403;
+      throw error;
+    }
+  }
+
+  async updateUser(actor: AdminActor, id: string, payload: AdminUpdateUserPayload) {
+    await this.assertCanManage(actor, id);
+
     const data: Prisma.UserUpdateInput = {};
 
     for (const field of editableFields) {
@@ -202,7 +228,9 @@ export class AdminService {
     }
   }
 
-  async updateUserStatus(id: string, status: UserStatus) {
+  async updateUserStatus(actor: AdminActor, id: string, status: UserStatus) {
+    await this.assertCanManage(actor, id);
+
     try {
       return await this.prisma.user.update({
         where: { id },

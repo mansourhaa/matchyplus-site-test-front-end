@@ -1,9 +1,12 @@
 export const AUTH_COOKIE = 'access_token';
 export const AUTH_USER_KEY = 'user';
 
+/** `Secure` outside development only, so the cookie still works over plain http on localhost. */
+const SECURE_COOKIE_FLAG = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+
 export function setAuthCookie(token: string, maxAgeSeconds = 60 * 60 * 24) {
   if (typeof document === 'undefined') return;
-  document.cookie = `${AUTH_COOKIE}=${token}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax`;
+  document.cookie = `${AUTH_COOKIE}=${token}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax${SECURE_COOKIE_FLAG}`;
 }
 
 export function clearAuthCookie() {

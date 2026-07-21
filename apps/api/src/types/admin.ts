@@ -1,4 +1,10 @@
-import { UserPlan, UserStatus } from '@saas-boilerplate/types';
+import { Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
+
+/** The admin performing the action, taken from the verified token — never from the request body. */
+export type AdminActor = {
+  id: string;
+  role: Role;
+};
 
 export type AdminListUsersQuery = {
   page?: number;

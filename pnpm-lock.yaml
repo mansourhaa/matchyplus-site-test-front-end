@@ -63,6 +63,8 @@ importers:
         specifier: ^2.8.12
         version: 2.10.4
 
+  apps/ai: {}
+
   apps/api:
     dependencies:
       '@fastify/autoload':
@@ -113,6 +115,9 @@ importers:
       '@fastify/websocket':
         specifier: ^11.3.0
         version: 11.3.0
+      '@saas-boilerplate/ai-contracts':
+        specifier: workspace:*
+        version: link:../../packages/ai-contracts
       '@saas-boilerplate/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -164,6 +169,9 @@ importers:
       i18next-http-middleware:
         specifier: ^3.9.7
         version: 3.9.7
+      ioredis:
+        specifier: ^5.11.1
+        version: 5.11.1
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
@@ -287,7 +295,7 @@ importers:
         version: 9.3.0(@types/react@19.2.17)(react@19.2.7)(redux@5.0.1)
       recharts:
         specifier: ^3.9.2
-        version: 3.9.2(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@17.0.2)(react@19.2.7)(redux@5.0.1)
+        version: 3.10.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@17.0.2)(react@19.2.7)(redux@5.0.1)
       redux-persist:
         specifier: ^6.0.0
         version: 6.0.0(react@19.2.7)(redux@5.0.1)
@@ -352,6 +360,18 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@26.1.1)(jiti@2.7.0)(jsdom@27.4.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0)
+
+  packages/ai-contracts:
+    devDependencies:
+      '@saas-boilerplate/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.1.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/database:
     dependencies:
@@ -5820,8 +5840,8 @@ packages:
   real-require@1.0.0:
     resolution: {integrity: sha512-P4nbQYQfePJxRSmY+v/KINxVucm4NF3p3s7pJveMTtom52FR4YGltUQLB8idDXwDDWW+eYrWDFbuzUnjoWHF7g==}
 
-  recharts@3.9.2:
-    resolution: {integrity: sha512-G4fy+Pk46RaXgwWMh+Nzhyo/lbFAVqXo9gtetlyehe6Ehge9CsgDuOTwQDD+i1+llaLktNBiNq4bhnGlDRXFtw==}
+  recharts@3.10.0:
+    resolution: {integrity: sha512-wulMvfncpIlmu2uFtRU/mE5/+NiVtASXkw2KdwJTdHs3WsASX0WxZlX+rpKgyn5BDbIhkPtCpUKkB9XNK5KE0w==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -12530,7 +12550,7 @@ snapshots:
 
   real-require@1.0.0: {}
 
-  recharts@3.9.2(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@17.0.2)(react@19.2.7)(redux@5.0.1):
+  recharts@3.10.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@17.0.2)(react@19.2.7)(redux@5.0.1):
     dependencies:
       '@reduxjs/toolkit': 2.12.0(react-redux@9.3.0(@types/react@19.2.17)(react@19.2.7)(redux@5.0.1))(react@19.2.7)
       clsx: 2.1.1

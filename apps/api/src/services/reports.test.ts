@@ -42,17 +42,18 @@ describe('ReportsService', () => {
   it('records the reporter and reported ids on create', async () => {
     const prisma = createMockPrisma();
     prisma.user.findUnique.mockResolvedValue({ id: 'u2' });
-    prisma.report.create.mockResolvedValue({ id: 'r1' });
+    prisma.report.create.mockResolvedValue({ id: 'r1', status: 'PENDING' });
     const service = new ReportsService({ prisma: prisma as never });
 
-    await service.createReport('u1', 'u2', { reason: 'Faux profil', details: 'd' });
+    const result = await service.createReport('u1', 'u2', { reason: 'Faux profil', details: 'd' });
 
     const { data, select } = prisma.report.create.mock.calls[0][0];
     expect(data).toMatchObject({ reporter_id: 'u1', reported_id: 'u2', reason: 'Faux profil' });
-    // The reporter identity must be joined in, and never the password.
-    expect(select.reporter).toBeTruthy();
-    expect(select.reported).toBeTruthy();
+    // The reporter only gets an acknowledgement: no identity of either party is joined in.
+    expect(select).not.toHaveProperty('reporter');
+    expect(select).not.toHaveProperty('reported');
     expect(select).not.toHaveProperty('password');
+    expect(result).toEqual({ reportId: 'r1', status: 'PENDING' });
   });
 
   it('never selects a password on the reporter or reported party', async () => {

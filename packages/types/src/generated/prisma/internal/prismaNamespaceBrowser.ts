@@ -50,6 +50,7 @@ export const ModelName = {
   Plan: 'Plan',
   User: 'User',
   Report: 'Report',
+  AiJob: 'AiJob',
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -137,12 +138,46 @@ export const ReportScalarFieldEnum = {
 export type ReportScalarFieldEnum =
   (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum];
 
+export const AiJobScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  status: 'status',
+  userId: 'userId',
+  idempotencyKey: 'idempotencyKey',
+  payload: 'payload',
+  result: 'result',
+  error: 'error',
+  attempts: 'attempts',
+  maxAttempts: 'maxAttempts',
+  queuedAt: 'queuedAt',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+} as const;
+
+export type AiJobScalarFieldEnum = (typeof AiJobScalarFieldEnum)[keyof typeof AiJobScalarFieldEnum];
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc',
 } as const;
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull,
+} as const;
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+} as const;
+
+export type NullableJsonNullValueInput =
+  (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
 
 export const QueryMode = {
   default: 'default',
@@ -157,3 +192,11 @@ export const NullsOrder = {
 } as const;
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull,
+} as const;
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter];

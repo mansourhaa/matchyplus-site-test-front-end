@@ -377,6 +377,7 @@ export const ModelName = {
   Plan: 'Plan',
   User: 'User',
   Report: 'Report',
+  AiJob: 'AiJob',
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -396,7 +397,7 @@ export type TypeMap<
     omit: GlobalOmitOptions;
   };
   meta: {
-    modelProps: 'plan' | 'user' | 'report';
+    modelProps: 'plan' | 'user' | 'report' | 'aiJob';
     txIsolationLevel: TransactionIsolationLevel;
   };
   model: {
@@ -622,6 +623,80 @@ export type TypeMap<
         };
       };
     };
+    AiJob: {
+      payload: Prisma.$AiJobPayload<ExtArgs>;
+      fields: Prisma.AiJobFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.AiJobFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.AiJobFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload>;
+        };
+        findFirst: {
+          args: Prisma.AiJobFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.AiJobFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload>;
+        };
+        findMany: {
+          args: Prisma.AiJobFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload>[];
+        };
+        create: {
+          args: Prisma.AiJobCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload>;
+        };
+        createMany: {
+          args: Prisma.AiJobCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.AiJobCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload>[];
+        };
+        delete: {
+          args: Prisma.AiJobDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload>;
+        };
+        update: {
+          args: Prisma.AiJobUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload>;
+        };
+        deleteMany: {
+          args: Prisma.AiJobDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.AiJobUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.AiJobUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload>[];
+        };
+        upsert: {
+          args: Prisma.AiJobUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AiJobPayload>;
+        };
+        aggregate: {
+          args: Prisma.AiJobAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAiJob>;
+        };
+        groupBy: {
+          args: Prisma.AiJobGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AiJobGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.AiJobCountArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AiJobCountAggregateOutputType> | number;
+        };
+      };
+    };
   };
 } & {
   other: {
@@ -730,12 +805,46 @@ export const ReportScalarFieldEnum = {
 export type ReportScalarFieldEnum =
   (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum];
 
+export const AiJobScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  status: 'status',
+  userId: 'userId',
+  idempotencyKey: 'idempotencyKey',
+  payload: 'payload',
+  result: 'result',
+  error: 'error',
+  attempts: 'attempts',
+  maxAttempts: 'maxAttempts',
+  queuedAt: 'queuedAt',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+} as const;
+
+export type AiJobScalarFieldEnum = (typeof AiJobScalarFieldEnum)[keyof typeof AiJobScalarFieldEnum];
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc',
 } as const;
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull,
+} as const;
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+} as const;
+
+export type NullableJsonNullValueInput =
+  (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
 
 export const QueryMode = {
   default: 'default',
@@ -750,6 +859,14 @@ export const NullsOrder = {
 } as const;
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull,
+} as const;
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter];
 
 /**
  * Field references
@@ -854,6 +971,45 @@ export type ListEnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
   $PrismaModel,
   'ReportStatus[]'
 >;
+
+/**
+ * Reference to a field of type 'AiJobType'
+ */
+export type EnumAiJobTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AiJobType'>;
+
+/**
+ * Reference to a field of type 'AiJobType[]'
+ */
+export type ListEnumAiJobTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'AiJobType[]'
+>;
+
+/**
+ * Reference to a field of type 'AiJobStatus'
+ */
+export type EnumAiJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'AiJobStatus'
+>;
+
+/**
+ * Reference to a field of type 'AiJobStatus[]'
+ */
+export type ListEnumAiJobStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'AiJobStatus[]'
+>;
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>;
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>;
 
 /**
  * Batch Payload for updateMany & deleteMany & createMany
@@ -976,6 +1132,7 @@ export type GlobalOmitConfig = {
   plan?: Prisma.PlanOmit;
   user?: Prisma.UserOmit;
   report?: Prisma.ReportOmit;
+  aiJob?: Prisma.AiJobOmit;
 };
 
 /* Types for Logging */

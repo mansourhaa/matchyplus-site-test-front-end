@@ -14,10 +14,24 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   const { prisma } = fastify;
   const authService = new AuthenticationService({ prisma });
 
+  /**
+   * The global limit (100/min) is far too generous for credential checking, so both login
+   * routes get their own budget. @fastify/rate-limit evaluates at `onRequest`, before the body
+   * is parsed, so this can only be keyed per IP (the plugin default) — a per-account key is not
+   * reachable here. Successful logins count towards the budget too.
+   */
+  const loginRateLimit = {
+    rateLimit: {
+      max: 10,
+      timeWindow: '15 minutes',
+    },
+  };
+
   fastify.post<{ Body: LoginPayload }>(
     '/login',
     {
       schema: loginSchema,
+      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
@@ -37,6 +51,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/admin/login',
     {
       schema: adminLoginSchema,
+      config: loginRateLimit,
     },
     async (request, reply) => {
       try {

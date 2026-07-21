@@ -29,6 +29,15 @@ const reportSelect = {
   reported: { select: partySelect },
 } satisfies Prisma.ReportSelect;
 
+/**
+ * What the reporter gets back: an acknowledgement, never anything about the reported party.
+ * The identities in `reportSelect` are for the admin sections only.
+ */
+const reportAckSelect = {
+  id: true,
+  status: true,
+} satisfies Prisma.ReportSelect;
+
 export class ReportsService {
   prisma: PrismaClient;
   constructor(options: AbstractServiceOptions) {
@@ -52,15 +61,17 @@ export class ReportsService {
       throw new Error('reported user not found');
     }
 
-    return this.prisma.report.create({
+    const report = await this.prisma.report.create({
       data: {
         reporter_id: reporterId,
         reported_id: reportedId,
         reason: payload.reason,
         details: payload.details,
       },
-      select: reportSelect,
+      select: reportAckSelect,
     });
+
+    return { reportId: report.id, status: report.status };
   }
 
   async listReports(query: AdminListReportsQuery) {

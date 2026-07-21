@@ -1,6 +1,5 @@
 'use client';
 
-import { ROLE_LABELS } from '@/features/admin-auth/schemas';
 import {
   adminLogin,
   clearAdminError,
@@ -31,11 +30,6 @@ const FEATURES = [
   { icon: Zap, label: 'Synchronisation live', desc: 'Données en temps réel' },
 ];
 
-const DEMO_ACCOUNTS = [
-  { email: 'admin@matchyplus.tn', password: 'matchy2026', role: 'SUPER_ADMIN' },
-  { email: 'mod@matchyplus.tn', password: 'mod2026', role: 'MODERATOR' },
-];
-
 export function AdminLoginForm() {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -46,7 +40,6 @@ export function AdminLoginForm() {
   const [showPass, setShowPass] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
 
   const emailRef = useRef<HTMLInputElement>(null);
 
@@ -81,13 +74,6 @@ export function AdminLoginForm() {
 
     triggerShake();
     setPassword('');
-  };
-
-  const fillDemo = (account: (typeof DEMO_ACCOUNTS)[number]) => {
-    setEmail(account.email);
-    setPassword(account.password);
-    setShowDemo(false);
-    resetError();
   };
 
   return (
@@ -358,77 +344,6 @@ export function AdminLoginForm() {
                 )}
               </button>
             </form>
-
-            <div className="mt-5">
-              <button
-                type="button"
-                onClick={() => setShowDemo(!showDemo)}
-                style={{
-                  fontSize: '12px',
-                  color: 'rgba(255,255,255,0.35)',
-                  width: '100%',
-                  textAlign: 'center',
-                }}
-              >
-                {showDemo ? 'Masquer les comptes démo' : '🔑 Comptes démo disponibles'}
-              </button>
-
-              <AnimatePresence>
-                {showDemo && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-3 space-y-2 overflow-hidden"
-                  >
-                    {DEMO_ACCOUNTS.map((account) => (
-                      <button
-                        key={account.email}
-                        type="button"
-                        onClick={() => fillDemo(account)}
-                        className="flex w-full items-center justify-between rounded-xl px-4 py-3"
-                        style={{
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="flex h-8 w-8 items-center justify-center rounded-xl"
-                            style={{
-                              background: account.role === 'SUPER_ADMIN' ? '#2F76BB' : '#61BCA6',
-                            }}
-                          >
-                            <span style={{ fontSize: '12px', fontWeight: 800, color: 'white' }}>
-                              {account.email.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="text-left">
-                            <p style={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>
-                              {account.email}
-                            </p>
-                            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
-                              {ROLE_LABELS[account.role]}
-                            </p>
-                          </div>
-                        </div>
-                        <div
-                          className="rounded-lg px-2.5 py-1"
-                          style={{
-                            background: 'rgba(255,255,255,0.1)',
-                            fontSize: '11px',
-                            color: 'rgba(255,255,255,0.6)',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {account.password}
-                        </div>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
           </motion.div>
 
           <p

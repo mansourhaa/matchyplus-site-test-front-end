@@ -65,9 +65,15 @@ export const createReportSchema = {
   },
   response: {
     200: {
+      // Acknowledgement only: the reporter must never receive the reported party's identity.
       description: 'Successful response',
       type: 'object',
-      properties: { report },
+      properties: {
+        reportId: { type: 'string' },
+        status: { type: 'string' },
+        message: { type: 'string' },
+      },
+      additionalProperties: false,
     },
     ...errorResponses,
   },

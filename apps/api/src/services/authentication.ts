@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 
-import { PrismaClient } from '@saas-boilerplate/types';
+import { PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
 import { config } from '../config.js';
 import { isAdminRole } from '../constants.js';
@@ -45,6 +45,7 @@ export class AuthenticationService {
           id: true,
           password: true,
           role: true,
+          status: true,
         },
       });
     } catch (err) {
@@ -53,6 +54,13 @@ export class AuthenticationService {
     const isPasswordValid = await this.validatePassword(payload.password, user.password as string);
 
     if (!isPasswordValid) {
+      throw new Error('invalid credentials');
+    }
+
+    // Only an ACTIVE account may authenticate. Checked after the password so the endpoint
+    // cannot be used to tell a banned account from a wrong password, and reported with the
+    // same error for the same reason.
+    if (user.status !== UserStatus.ACTIVE) {
       throw new Error('invalid credentials');
     }
     const tokenPayload = {
@@ -110,7 +118,6 @@ export class AuthenticationService {
   async authCheck(payload: AuthCheckPayload) {
     let user = null;
 
-    console.log(payload);
     try {
       user = await this.prisma.user.findUniqueOrThrow({
         where: { id: payload.id },

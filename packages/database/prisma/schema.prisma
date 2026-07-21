@@ -91,6 +91,7 @@ model User {
 
   create_at  DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
+  aiJobs     AiJob[]
 
   reports_made     Report[] @relation("ReportsMade")
   reports_received Report[] @relation("ReportsReceived")
@@ -119,4 +120,44 @@ model Report {
   @@index([reported_id])
   @@index([reporter_id])
   @@index([status])
+}
+
+enum AiJobType {
+  ANALYZE_VIDEO
+  VERIFY_IDENTITY
+  EMBED
+  MATCH
+}
+
+enum AiJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+/// Durable AI job record. Redis Streams is the queue transport;
+/// this table is the source of truth for status polling and audits.
+model AiJob {
+  id             String      @id @default(cuid())
+  type           AiJobType
+  status         AiJobStatus @default(QUEUED)
+  userId         String?
+  user           User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  idempotencyKey String?     @unique
+  payload        Json
+  result         Json?
+  error          String?     @db.Text
+  attempts       Int         @default(0)
+  maxAttempts    Int         @default(3)
+  queuedAt       DateTime    @default(now())
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@index([type, status])
 }

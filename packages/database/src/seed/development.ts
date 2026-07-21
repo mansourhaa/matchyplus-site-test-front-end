@@ -270,6 +270,15 @@ const MEMBERS: Prisma.UserCreateInput[] = [
 ];
 
 export default async function seedDev() {
+  // Second line of defence behind the environment switch in `index.ts`: this seed creates
+  // fixed-password admin accounts, so it must never run against a shared environment even if
+  // it is called directly.
+  if (process.env['NODE_ENV'] === 'production' || process.env['NODE_ENV'] === 'staging') {
+    throw new Error(
+      `Refusing to run the development seed with NODE_ENV=${process.env['NODE_ENV']}`,
+    );
+  }
+
   // Plans are configuration rather than sample data, so upserting keeps this re-runnable
   // and keeps any locally edited plan from blocking the seed.
   for (const plan of PLANS) {

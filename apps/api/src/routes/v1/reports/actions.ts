@@ -17,7 +17,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         request.params.reportedId,
         request.body,
       );
-      return reply.code(200).send({ report });
+      return reply.code(200).send({
+        reportId: report.reportId,
+        status: report.status,
+        message: request.t('report_submitted'),
+      });
     },
   );
 };

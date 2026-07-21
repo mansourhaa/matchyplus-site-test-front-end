@@ -54,10 +54,11 @@ describe('AdminService', () => {
 
   it('ignores fields that are not admin-editable', async () => {
     const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'USER' });
     prisma.user.update.mockResolvedValue({ id: 'u1' });
 
     const service = new AdminService({ prisma: prisma as never });
-    await service.updateUser('u1', {
+    await service.updateUser({ id: 'a1', role: 'SUPER_ADMIN' } as never, 'u1', {
       city: 'Tunis',
       role: 'SUPER_ADMIN',
       rating: 9999,
@@ -65,6 +66,63 @@ describe('AdminService', () => {
 
     const { data } = prisma.user.update.mock.calls[0][0];
     expect(data).toEqual({ city: 'Tunis' });
+  });
+
+  it('refuses to let a lower role act on a higher one', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'sa1', role: 'SUPER_ADMIN' });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.updateUserStatus({ id: 's1', role: 'SUPPORT' } as never, 'sa1', 'BANNED' as never),
+    ).rejects.toThrow('insufficient privileges');
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses to let a role act on a peer', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'm2', role: 'MODERATOR' });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.updateUserStatus({ id: 'm1', role: 'MODERATOR' } as never, 'm2', 'BANNED' as never),
+    ).rejects.toThrow('insufficient privileges');
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses to let an admin act on their own account', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'sa1', role: 'SUPER_ADMIN' });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.updateUserStatus(
+        { id: 'sa1', role: 'SUPER_ADMIN' } as never,
+        'sa1',
+        'BANNED' as never,
+      ),
+    ).rejects.toThrow('insufficient privileges');
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('lets a moderator ban a regular member', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'USER' });
+    prisma.user.update.mockResolvedValue({ id: 'u1', status: 'BANNED' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    await service.updateUserStatus(
+      { id: 'm1', role: 'MODERATOR' } as never,
+      'u1',
+      'BANNED' as never,
+    );
+
+    const { where, data } = prisma.user.update.mock.calls[0][0];
+    expect(where).toEqual({ id: 'u1' });
+    expect(data).toEqual({ status: 'BANNED' });
   });
 
   it('refuses to delete an admin account', async () => {

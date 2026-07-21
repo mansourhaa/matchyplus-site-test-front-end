@@ -41,3 +41,22 @@ export const ReportStatus = {
 } as const;
 
 export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus];
+
+export const AiJobType = {
+  ANALYZE_VIDEO: 'ANALYZE_VIDEO',
+  VERIFY_IDENTITY: 'VERIFY_IDENTITY',
+  EMBED: 'EMBED',
+  MATCH: 'MATCH',
+} as const;
+
+export type AiJobType = (typeof AiJobType)[keyof typeof AiJobType];
+
+export const AiJobStatus = {
+  QUEUED: 'QUEUED',
+  RUNNING: 'RUNNING',
+  SUCCEEDED: 'SUCCEEDED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export type AiJobStatus = (typeof AiJobStatus)[keyof typeof AiJobStatus];

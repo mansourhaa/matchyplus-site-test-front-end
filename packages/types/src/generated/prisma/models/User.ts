@@ -393,6 +393,7 @@ export type UserWhereInput = {
   last_login?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
   create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
   updated_at?: Prisma.DateTimeFilter<'User'> | Date | string;
+  aiJobs?: Prisma.AiJobListRelationFilter;
   reports_made?: Prisma.ReportListRelationFilter;
   reports_received?: Prisma.ReportListRelationFilter;
 };
@@ -425,6 +426,7 @@ export type UserOrderByWithRelationInput = {
   last_login?: Prisma.SortOrderInput | Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
+  aiJobs?: Prisma.AiJobOrderByRelationAggregateInput;
   reports_made?: Prisma.ReportOrderByRelationAggregateInput;
   reports_received?: Prisma.ReportOrderByRelationAggregateInput;
 };
@@ -461,6 +463,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     last_login?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
     create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
     updated_at?: Prisma.DateTimeFilter<'User'> | Date | string;
+    aiJobs?: Prisma.AiJobListRelationFilter;
     reports_made?: Prisma.ReportListRelationFilter;
     reports_received?: Prisma.ReportListRelationFilter;
   },
@@ -563,6 +566,7 @@ export type UserCreateInput = {
   last_login?: Date | string | null;
   create_at?: Date | string;
   updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
 };
@@ -595,6 +599,7 @@ export type UserUncheckedCreateInput = {
   last_login?: Date | string | null;
   create_at?: Date | string;
   updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
 };
@@ -627,6 +632,7 @@ export type UserUpdateInput = {
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
 };
@@ -659,6 +665,7 @@ export type UserUncheckedUpdateInput = {
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
 };
@@ -858,6 +865,11 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput;
 };
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null;
+  isNot?: Prisma.UserWhereInput | null;
+};
+
 export type UserCreateinterestsInput = {
   set: string[];
 };
@@ -953,6 +965,34 @@ export type UserUpdateOneRequiredWithoutReports_receivedNestedInput = {
   >;
 };
 
+export type UserCreateNestedOneWithoutAiJobsInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutAiJobsInput,
+    Prisma.UserUncheckedCreateWithoutAiJobsInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAiJobsInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneWithoutAiJobsNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutAiJobsInput,
+    Prisma.UserUncheckedCreateWithoutAiJobsInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAiJobsInput;
+  upsert?: Prisma.UserUpsertWithoutAiJobsInput;
+  disconnect?: Prisma.UserWhereInput | boolean;
+  delete?: Prisma.UserWhereInput | boolean;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutAiJobsInput,
+      Prisma.UserUpdateWithoutAiJobsInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutAiJobsInput
+  >;
+};
+
 export type UserCreateWithoutReports_madeInput = {
   id?: string;
   name: string;
@@ -981,6 +1021,7 @@ export type UserCreateWithoutReports_madeInput = {
   last_login?: Date | string | null;
   create_at?: Date | string;
   updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
 };
 
@@ -1012,6 +1053,7 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   last_login?: Date | string | null;
   create_at?: Date | string;
   updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
 };
 
@@ -1051,6 +1093,7 @@ export type UserCreateWithoutReports_receivedInput = {
   last_login?: Date | string | null;
   create_at?: Date | string;
   updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
 };
 
@@ -1082,6 +1125,7 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   last_login?: Date | string | null;
   create_at?: Date | string;
   updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
 };
 
@@ -1141,6 +1185,7 @@ export type UserUpdateWithoutReports_madeInput = {
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
 };
 
@@ -1172,6 +1217,7 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
 };
 
@@ -1223,6 +1269,7 @@ export type UserUpdateWithoutReports_receivedInput = {
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
 };
 
@@ -1254,7 +1301,164 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+};
+
+export type UserCreateWithoutAiJobsInput = {
+  id?: string;
+  name: string;
+  email: string;
+  password: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  phone?: string | null;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+};
+
+export type UserUncheckedCreateWithoutAiJobsInput = {
+  id?: string;
+  name: string;
+  email: string;
+  password: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  phone?: string | null;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+};
+
+export type UserCreateOrConnectWithoutAiJobsInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutAiJobsInput,
+    Prisma.UserUncheckedCreateWithoutAiJobsInput
+  >;
+};
+
+export type UserUpsertWithoutAiJobsInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutAiJobsInput,
+    Prisma.UserUncheckedUpdateWithoutAiJobsInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutAiJobsInput,
+    Prisma.UserUncheckedCreateWithoutAiJobsInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutAiJobsInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutAiJobsInput,
+    Prisma.UserUncheckedUpdateWithoutAiJobsInput
+  >;
+};
+
+export type UserUpdateWithoutAiJobsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.StringFieldUpdateOperationsInput | string;
+  password?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutAiJobsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.StringFieldUpdateOperationsInput | string;
+  password?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
 };
 
 /**
@@ -1262,6 +1466,7 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
  */
 
 export type UserCountOutputType = {
+  aiJobs: number;
   reports_made: number;
   reports_received: number;
 };
@@ -1269,6 +1474,7 @@ export type UserCountOutputType = {
 export type UserCountOutputTypeSelect<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
+  aiJobs?: boolean | UserCountOutputTypeCountAiJobsArgs;
   reports_made?: boolean | UserCountOutputTypeCountReports_madeArgs;
   reports_received?: boolean | UserCountOutputTypeCountReports_receivedArgs;
 };
@@ -1283,6 +1489,15 @@ export type UserCountOutputTypeDefaultArgs<
    * Select specific fields to fetch from the UserCountOutputType
    */
   select?: Prisma.UserCountOutputTypeSelect<ExtArgs> | null;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAiJobsArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.AiJobWhereInput;
 };
 
 /**
@@ -1334,6 +1549,7 @@ export type UserSelect<
     last_login?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
+    aiJobs?: boolean | Prisma.User$aiJobsArgs<ExtArgs>;
     reports_made?: boolean | Prisma.User$reports_madeArgs<ExtArgs>;
     reports_received?: boolean | Prisma.User$reports_receivedArgs<ExtArgs>;
     _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
@@ -1476,6 +1692,7 @@ export type UserOmit<
 export type UserInclude<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
+  aiJobs?: boolean | Prisma.User$aiJobsArgs<ExtArgs>;
   reports_made?: boolean | Prisma.User$reports_madeArgs<ExtArgs>;
   reports_received?: boolean | Prisma.User$reports_receivedArgs<ExtArgs>;
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
@@ -1492,6 +1709,7 @@ export type $UserPayload<
 > = {
   name: 'User';
   objects: {
+    aiJobs: Prisma.$AiJobPayload<ExtArgs>[];
     reports_made: Prisma.$ReportPayload<ExtArgs>[];
     reports_received: Prisma.$ReportPayload<ExtArgs>[];
   };
@@ -2034,6 +2252,17 @@ export interface Prisma__UserClient<
   GlobalOmitOptions = {},
 > extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: 'PrismaPromise';
+  aiJobs<T extends Prisma.User$aiJobsArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$aiJobsArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$AiJobPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
   reports_made<T extends Prisma.User$reports_madeArgs<ExtArgs> = {}>(
     args?: Prisma.Subset<T, Prisma.User$reports_madeArgs<ExtArgs>>,
   ): Prisma.PrismaPromise<
@@ -2531,6 +2760,32 @@ export type UserDeleteManyArgs<
    * Limit how many Users to delete.
    */
   limit?: number;
+};
+
+/**
+ * User.aiJobs
+ */
+export type User$aiJobsArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the AiJob
+   */
+  select?: Prisma.AiJobSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the AiJob
+   */
+  omit?: Prisma.AiJobOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AiJobInclude<ExtArgs> | null;
+  where?: Prisma.AiJobWhereInput;
+  orderBy?: Prisma.AiJobOrderByWithRelationInput | Prisma.AiJobOrderByWithRelationInput[];
+  cursor?: Prisma.AiJobWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.AiJobScalarFieldEnum | Prisma.AiJobScalarFieldEnum[];
 };
 
 /**

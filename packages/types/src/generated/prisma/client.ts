@@ -61,3 +61,9 @@ export type User = Prisma.UserModel;
  * admins from the "Signalements" section. Deleting either user removes their reports.
  */
 export type Report = Prisma.ReportModel;
+/**
+ * Model AiJob
+ * Durable AI job record. Redis Streams is the queue transport;
+ * this table is the source of truth for status polling and audits.
+ */
+export type AiJob = Prisma.AiJobModel;

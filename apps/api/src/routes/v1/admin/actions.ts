@@ -58,7 +58,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/users/:id',
     { schema: adminUpdateUserSchema },
     async (request, reply) => {
-      const user = await adminService.updateUser(request.params.id, request.body);
+      const user = await adminService.updateUser(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.params.id,
+        request.body,
+      );
       return reply.code(200).send({ user });
     },
   );
@@ -67,7 +71,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/users/:id/status',
     { schema: adminUpdateUserStatusSchema },
     async (request, reply) => {
-      const user = await adminService.updateUserStatus(request.params.id, request.body.status);
+      const user = await adminService.updateUserStatus(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.params.id,
+        request.body.status,
+      );
       return reply.code(200).send({ user });
     },
   );
