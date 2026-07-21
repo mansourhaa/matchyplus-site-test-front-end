@@ -32,3 +32,12 @@ export const UserPlan = {
 } as const;
 
 export type UserPlan = (typeof UserPlan)[keyof typeof UserPlan];
+
+export const ReportStatus = {
+  PENDING: 'PENDING',
+  REVIEWED: 'REVIEWED',
+  RESOLVED: 'RESOLVED',
+  DISMISSED: 'DISMISSED',
+} as const;
+
+export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus];

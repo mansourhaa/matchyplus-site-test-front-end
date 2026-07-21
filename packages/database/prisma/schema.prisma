@@ -26,6 +26,14 @@ enum UserPlan {
   PREMIUM_PLUS
 }
 
+/// Treatment state of a profile report, from filed to handled by an admin.
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
 /// Plan configuration edited from the admin "Gestion Forfaits" section. The id mirrors
 /// `UserPlan` so a user's plan resolves to exactly one row.
 model Plan {
@@ -84,7 +92,31 @@ model User {
   create_at  DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
 
+  reports_made     Report[] @relation("ReportsMade")
+  reports_received Report[] @relation("ReportsReceived")
+
   @@index([email])
   @@index([status])
   @@index([plan])
+}
+
+/// A profile report ("signalement"): one user flags another. Reviewed and acted on by
+/// admins from the "Signalements" section. Deleting either user removes their reports.
+model Report {
+  id      String       @id @default(cuid())
+  reason  String
+  details String?      @db.Text()
+  status  ReportStatus @default(PENDING)
+
+  reporter_id String
+  reporter    User   @relation("ReportsMade", fields: [reporter_id], references: [id], onDelete: Cascade)
+  reported_id String
+  reported    User   @relation("ReportsReceived", fields: [reported_id], references: [id], onDelete: Cascade)
+
+  create_at  DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@index([reported_id])
+  @@index([reporter_id])
+  @@index([status])
 }

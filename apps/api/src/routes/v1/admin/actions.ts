@@ -8,13 +8,17 @@ import {
   adminDeleteUserSchema,
   adminGetUserSchema,
   adminListPlansSchema,
+  adminListReportsSchema,
   adminListUsersSchema,
+  adminReportSummarySchema,
   adminStatsSchema,
   adminUpdatePlanSchema,
+  adminUpdateReportSchema,
   adminUpdateUserSchema,
   adminUpdateUserStatusSchema,
 } from '../../../schemas/v1/index.js';
 import { AdminService } from '../../../services/admin.js';
+import { ReportsService } from '../../../services/reports.js';
 import {
   AdminChangePasswordPayload,
   AdminListUsersQuery,
@@ -22,6 +26,7 @@ import {
   AdminUpdateUserPayload,
   AdminUpdateUserStatusPayload,
 } from '../../../types/admin.js';
+import { AdminListReportsQuery, AdminUpdateReportPayload } from '../../../types/report.js';
 
 type UserParams = { id: string };
 type PlanParams = { id: UserPlan };
@@ -29,6 +34,7 @@ type PlanParams = { id: UserPlan };
 const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   const { prisma } = fastify;
   const adminService = new AdminService({ prisma });
+  const reportsService = new ReportsService({ prisma });
 
   fastify.get<{ Querystring: AdminListUsersQuery }>(
     '/users',
@@ -105,6 +111,29 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     async (request, reply) => {
       const data = await adminService.changePassword(request.loggedUser.id, request.body);
       return reply.code(200).send(data);
+    },
+  );
+
+  fastify.get<{ Querystring: AdminListReportsQuery }>(
+    '/reports',
+    { schema: adminListReportsSchema },
+    async (request, reply) => {
+      const reports = await reportsService.listReports(request.query);
+      return reply.code(200).send({ reports });
+    },
+  );
+
+  fastify.get('/reports/summary', { schema: adminReportSummarySchema }, async (request, reply) => {
+    const summary = await reportsService.getReportSummary();
+    return reply.code(200).send({ summary });
+  });
+
+  fastify.patch<{ Params: UserParams; Body: AdminUpdateReportPayload }>(
+    '/reports/:id',
+    { schema: adminUpdateReportSchema },
+    async (request, reply) => {
+      const report = await reportsService.updateReportStatus(request.params.id, request.body);
+      return reply.code(200).send({ report });
     },
   );
 };

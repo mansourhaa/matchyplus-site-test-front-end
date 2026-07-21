@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 
-import { Prisma, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
+import { Prisma, ReportStatus, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
 import { prisma } from '../client.js';
 
@@ -302,7 +302,40 @@ export default async function seedDev() {
     },
   });
 
+  const members: Array<{ id: string; email: string }> = [];
   for (const member of MEMBERS) {
-    await prisma.user.create({ data: member });
+    members.push(await prisma.user.create({ data: member }));
   }
+
+  // Sample reports so the "Signalements" admin section is demonstrable: a couple of members
+  // flagging the same reported account (to show the per-user grouping and multiple reporters).
+  const byEmail = (email: string) => members.find((m) => m.email === email)!;
+  const riadh = byEmail('riadh.t@email.com');
+  const bilel = byEmail('bilel.m@email.com');
+
+  await prisma.report.createMany({
+    data: [
+      {
+        reporter_id: byEmail('fatma.a@email.com').id,
+        reported_id: riadh.id,
+        reason: 'Comportement inapproprié',
+        details: 'Messages insistants et déplacés après un premier contact.',
+        status: ReportStatus.PENDING,
+      },
+      {
+        reporter_id: byEmail('ines.h@email.com').id,
+        reported_id: riadh.id,
+        reason: 'Faux profil',
+        details: 'Les photos ne correspondent pas à la personne rencontrée.',
+        status: ReportStatus.PENDING,
+      },
+      {
+        reporter_id: byEmail('sonia.r@email.com').id,
+        reported_id: bilel.id,
+        reason: 'Spam',
+        details: 'Envoie des liens publicitaires en boucle.',
+        status: ReportStatus.REVIEWED,
+      },
+    ],
+  });
 }

@@ -3,6 +3,7 @@
 import { AdminAnalyticsSection } from '@/components/admin/admin-analytics-section';
 import { AdminDashboardSection } from '@/components/admin/admin-dashboard-section';
 import { AdminPlansSection } from '@/components/admin/admin-plans-section';
+import { AdminReportsSection } from '@/components/admin/admin-reports-section';
 import { AdminSettingsSection } from '@/components/admin/admin-settings-section';
 import { AdminSubscriptionsSection } from '@/components/admin/admin-subscriptions-section';
 import { AdminUserDetail } from '@/components/admin/admin-user-detail';
@@ -21,6 +22,15 @@ import {
 } from '@/features/admin-plans/store/admin-plans-slice';
 import type { AdminPlan, AdminPlanUpdate } from '@/features/admin-plans/types';
 import {
+  fetchAdminReports,
+  selectAdminReports,
+  selectPendingReportCount,
+  selectReportsByReportedUser,
+  setReportStatusFilter,
+  updateAdminReportStatus,
+} from '@/features/admin-reports/store/admin-reports-slice';
+import type { ReportStatus } from '@/features/admin-reports/types';
+import {
   deleteAdminUser,
   fetchAdminStats,
   fetchAdminUserById,
@@ -38,6 +48,7 @@ import {
   BarChart2,
   ChevronDown,
   CreditCard,
+  Flag,
   Home,
   LogOut,
   type LucideIcon,
@@ -50,13 +61,21 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 type AdminSection =
-  'dashboard' | 'users' | 'user-detail' | 'subscriptions' | 'plans' | 'analytics' | 'settings';
+  | 'dashboard'
+  | 'users'
+  | 'user-detail'
+  | 'subscriptions'
+  | 'plans'
+  | 'analytics'
+  | 'reports'
+  | 'settings';
 
 type NavKey = Exclude<AdminSection, 'user-detail'>;
 
 const NAV_ITEMS: { key: NavKey; icon: LucideIcon; label: string }[] = [
   { key: 'dashboard', icon: Home, label: 'Tableau de bord' },
   { key: 'users', icon: Users, label: 'Utilisateurs' },
+  { key: 'reports', icon: Flag, label: 'Signalements' },
   { key: 'subscriptions', icon: CreditCard, label: 'Abonnements' },
   { key: 'plans', icon: Package, label: 'Gestion Forfaits' },
   { key: 'analytics', icon: BarChart2, label: 'Analytiques' },
@@ -77,6 +96,13 @@ export function AdminPanel() {
     error: plansError,
   } = useAppSelector(selectAdminPlans);
   const { analytics, error: analyticsError } = useAppSelector(selectAdminAnalytics);
+  const {
+    statusFilter: reportFilter,
+    loading: loadingReports,
+    error: reportsError,
+  } = useAppSelector(selectAdminReports);
+  const reportGroups = useAppSelector(selectReportsByReportedUser);
+  const pendingReportCount = useAppSelector(selectPendingReportCount);
 
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [previousSection, setPreviousSection] = useState<AdminSection>('users');
@@ -88,6 +114,10 @@ export function AdminPanel() {
     void dispatch(fetchAdminPlans());
     void dispatch(fetchAdminAnalytics());
   }, [dispatch]);
+
+  useEffect(() => {
+    void dispatch(fetchAdminReports(reportFilter));
+  }, [dispatch, reportFilter]);
 
   // Debounced so typing in the search box does not fire a request per keystroke.
   useEffect(() => {
@@ -150,6 +180,18 @@ export function AdminPanel() {
     }
   };
 
+  const handleSetReportStatus = (id: string, status: ReportStatus) => {
+    void dispatch(updateAdminReportStatus({ id, status }));
+  };
+
+  // Acting on a report: ban (or reactivate) the reported user, then refresh the reports so their
+  // header status and any dependent stats reflect the change — this closes the "admin agit" loop.
+  const handleBanReported = async (reportedId: string, next: AdminManagedUser['status']) => {
+    await dispatch(updateAdminUserStatus({ id: reportedId, status: next }));
+    void dispatch(fetchAdminReports(reportFilter));
+    void dispatch(fetchAdminStats());
+  };
+
   const headerTitle =
     activeSection === 'user-detail' && selectedUser
       ? selectedUser.name
@@ -187,6 +229,7 @@ export function AdminPanel() {
           {NAV_ITEMS.map(({ key, icon: Icon, label }) => {
             const isActive =
               activeSection === key || (activeSection === 'user-detail' && key === 'users');
+            const badge = key === 'reports' ? pendingReportCount : 0;
             return (
               <button
                 key={key}
@@ -195,18 +238,38 @@ export function AdminPanel() {
                   setActiveSection(key);
                   dispatch(selectUser(null));
                 }}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-all"
+                className="relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-all"
                 style={{
                   background: isActive ? 'rgba(255,255,255,0.22)' : 'transparent',
                   color: 'white',
                   justifyContent: sidebarOpen ? 'flex-start' : 'center',
                 }}
               >
-                <Icon size={20} />
+                <span className="relative">
+                  <Icon size={20} />
+                  {badge > 0 && !sidebarOpen && (
+                    <span
+                      className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1"
+                      style={{ background: '#E74C3C', fontSize: '9px', fontWeight: 800 }}
+                    >
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </span>
                 {sidebarOpen && (
-                  <span style={{ fontSize: '14px', fontWeight: isActive ? 700 : 500 }}>
-                    {label}
-                  </span>
+                  <>
+                    <span style={{ fontSize: '14px', fontWeight: isActive ? 700 : 500 }}>
+                      {label}
+                    </span>
+                    {badge > 0 && (
+                      <span
+                        className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5"
+                        style={{ background: '#E74C3C', fontSize: '11px', fontWeight: 800 }}
+                      >
+                        {badge > 9 ? '9+' : badge}
+                      </span>
+                    )}
+                  </>
                 )}
               </button>
             );
@@ -300,7 +363,7 @@ export function AdminPanel() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {(error ?? plansError ?? analyticsError) && (
+          {(error ?? plansError ?? analyticsError ?? reportsError) && (
             <p
               className="mb-4 rounded-xl px-4 py-3"
               style={{
@@ -310,7 +373,7 @@ export function AdminPanel() {
                 fontSize: '13px',
               }}
             >
-              {error ?? plansError ?? analyticsError}
+              {error ?? plansError ?? analyticsError ?? reportsError}
             </p>
           )}
 
@@ -350,6 +413,17 @@ export function AdminPanel() {
           )}
 
           {activeSection === 'analytics' && <AdminAnalyticsSection analytics={analytics} />}
+
+          {activeSection === 'reports' && (
+            <AdminReportsSection
+              groups={reportGroups}
+              statusFilter={reportFilter}
+              loading={loadingReports}
+              onFilterChange={(status) => dispatch(setReportStatusFilter(status))}
+              onSetStatus={handleSetReportStatus}
+              onBanReported={handleBanReported}
+            />
+          )}
 
           {activeSection === 'settings' && (
             <AdminSettingsSection admin={admin} onLogout={handleLogout} />

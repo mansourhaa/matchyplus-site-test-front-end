@@ -55,3 +55,9 @@ export type Plan = Prisma.PlanModel;
  *
  */
 export type User = Prisma.UserModel;
+/**
+ * Model Report
+ * A profile report ("signalement"): one user flags another. Reviewed and acted on by
+ * admins from the "Signalements" section. Deleting either user removes their reports.
+ */
+export type Report = Prisma.ReportModel;

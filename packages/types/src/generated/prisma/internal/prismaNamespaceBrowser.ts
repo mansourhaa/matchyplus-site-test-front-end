@@ -49,6 +49,7 @@ export const AnyNull = runtime.AnyNull;
 export const ModelName = {
   Plan: 'Plan',
   User: 'User',
+  Report: 'Report',
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -121,6 +122,20 @@ export const UserScalarFieldEnum = {
 } as const;
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
+
+export const ReportScalarFieldEnum = {
+  id: 'id',
+  reason: 'reason',
+  details: 'details',
+  status: 'status',
+  reporter_id: 'reporter_id',
+  reported_id: 'reported_id',
+  create_at: 'create_at',
+  updated_at: 'updated_at',
+} as const;
+
+export type ReportScalarFieldEnum =
+  (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum];
 
 export const SortOrder = {
   asc: 'asc',

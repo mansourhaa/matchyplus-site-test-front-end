@@ -144,12 +144,57 @@ const ANALYTICS = {
   estimatedMonthlyRevenue: 9.9,
 };
 
+const reportParty = (id: string, name: string, status = 'ACTIVE') => ({
+  id,
+  name,
+  email: `${name.toLowerCase().replace(/\W/g, '')}@x.tn`,
+  image: null,
+  status,
+  city: null,
+  job: null,
+});
+
+// Two reports against the same reported user (Riadh) by different reporters, plus one other.
+const REPORTS = [
+  {
+    id: 'rep1',
+    reason: 'Comportement inapproprié',
+    details: 'Messages déplacés.',
+    status: 'PENDING',
+    create_at: '2026-07-01T00:00:00.000Z',
+    updated_at: '2026-07-01T00:00:00.000Z',
+    reporter: reportParty('u10', 'Fatma A.'),
+    reported: reportParty('u2', 'Riadh T.', 'ACTIVE'),
+  },
+  {
+    id: 'rep2',
+    reason: 'Faux profil',
+    details: null,
+    status: 'PENDING',
+    create_at: '2026-07-02T00:00:00.000Z',
+    updated_at: '2026-07-02T00:00:00.000Z',
+    reporter: reportParty('u11', 'Ines H.'),
+    reported: reportParty('u2', 'Riadh T.', 'ACTIVE'),
+  },
+  {
+    id: 'rep3',
+    reason: 'Spam',
+    details: 'Liens publicitaires.',
+    status: 'REVIEWED',
+    create_at: '2026-07-03T00:00:00.000Z',
+    updated_at: '2026-07-03T00:00:00.000Z',
+    reporter: reportParty('u12', 'Sonia R.'),
+    reported: reportParty('u3', 'Bilel M.', 'INACTIVE'),
+  },
+];
+
 function mockApi() {
   vi.spyOn(adminApi, 'get').mockImplementation((async (url: string) => {
     if (url === '/admin/stats') return { data: { stats: STATS } };
     if (url === '/admin/users') return { data: { users: USERS, total: USERS.length } };
     if (url === '/admin/plans') return { data: { plans: PLANS } };
     if (url === '/admin/analytics') return { data: { analytics: ANALYTICS } };
+    if (url === '/admin/reports') return { data: { reports: REPORTS } };
     const id = url.split('/').pop();
     return { data: { user: USERS.find((u) => u.id === id) } };
   }) as never);
@@ -530,6 +575,66 @@ describe('AdminPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: /Enregistrer/ }));
 
       expect(await screen.findByText('Mot de passe actuel incorrect.')).toBeInTheDocument();
+    });
+  });
+
+  describe('Signalements', () => {
+    async function gotoReports() {
+      fireEvent.click(await screen.findByRole('button', { name: /Signalements/ }));
+      await screen.findByText('Riadh T.');
+    }
+
+    it('groups reports per reported user and shows who filed each one', async () => {
+      renderPanel();
+      await gotoReports();
+
+      // Riadh has two reports; both reporters are shown under his group.
+      expect(screen.getByText('Fatma A.')).toBeInTheDocument();
+      expect(screen.getByText('Ines H.')).toBeInTheDocument();
+      expect(screen.getByText('Comportement inapproprié')).toBeInTheDocument();
+      expect(screen.getByText('Faux profil')).toBeInTheDocument();
+      // The other reported user is a separate group.
+      expect(screen.getByText('Bilel M.')).toBeInTheDocument();
+    });
+
+    it('shows a pending-report badge on the Signalements nav item', async () => {
+      renderPanel();
+      // Two of the three seeded reports are PENDING; the badge lives on the nav button.
+      const nav = await screen.findByRole('button', { name: /Signalements/ });
+      expect(await within(nav).findByText('2')).toBeInTheDocument();
+    });
+
+    it('updates a report treatment status through the reports endpoint', async () => {
+      const patch = vi
+        .spyOn(adminApi, 'patch')
+        .mockResolvedValue({ data: { report: { ...REPORTS[0], status: 'RESOLVED' } } } as never);
+
+      renderPanel();
+      await gotoReports();
+
+      // The first Riadh report is pending; resolve it. Exact name so the "Résolus" filter
+      // button (substring match) is not picked instead.
+      fireEvent.click(screen.getAllByRole('button', { name: 'Résolu' })[0]);
+
+      await waitFor(() =>
+        expect(patch).toHaveBeenCalledWith('/admin/reports/rep1', { status: 'RESOLVED' }),
+      );
+    });
+
+    it('bans the reported user directly from their report group', async () => {
+      const patch = vi
+        .spyOn(adminApi, 'patch')
+        .mockResolvedValue({ data: { user: { id: 'u2', status: 'BANNED' } } } as never);
+
+      renderPanel();
+      await gotoReports();
+
+      // Each reported-user header has a Bannir button; the first is Riadh's.
+      fireEvent.click(screen.getAllByRole('button', { name: /Bannir/ })[0]);
+
+      await waitFor(() =>
+        expect(patch).toHaveBeenCalledWith('/admin/users/u2/status', { status: 'BANNED' }),
+      );
     });
   });
 });
