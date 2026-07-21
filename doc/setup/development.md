@@ -191,7 +191,7 @@ pnpm db:studio
 
 ## IDE setup
 
-Recommended VS Code / Cursor extensions:
+Recommended editor extensions:
 
 - ESLint
 - Prettier
