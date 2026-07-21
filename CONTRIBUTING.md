@@ -1,8 +1,9 @@
 # Contributing
 
-This is a **free private** GitHub repo, so we cannot rely on branch protection rules. We keep the code safe with a clear social contract and local verification.
+Repo: **[matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)** (organization).
 
-**Full walkthrough (diagrams, promotions, GitHub UI tips):** [doc/setup/pr-and-merge-flow.md](./doc/setup/pr-and-merge-flow.md).
+**Full walkthrough:** [doc/setup/pr-and-merge-flow.md](./doc/setup/pr-and-merge-flow.md)  
+**Locking branches:** [doc/setup/branch-protection.md](./doc/setup/branch-protection.md)
 
 ## Branch flow
 
@@ -14,18 +15,20 @@ feature/* or fix/*  →  dev  →  staging  →  main
 
 | Branch | Purpose |
 | --- | --- |
-| `feature/*`, `fix/*` | Your work in progress |
+| `feature/*`, `fix/*`, `chore/*`, … | Your work in progress |
 | `dev` | Integration branch for the team |
 | `staging` | Pre-production / QA environment |
 | `main` | Production |
 
-## Social contract
+## Rules
 
 1. **Never push directly** to `dev`, `staging`, or `main`. Always open a PR.
-2. **Never merge your own PR.** Request a review; a teammate merges after approval.
+2. **Never merge your own PR.** Request a review; a teammate (or CODEOWNER) merges after approval.
 3. **Work branches** start from the latest `dev`.
 4. **Only promotion PRs** go up the chain: `dev` → `staging`, then `staging` → `main`.
-5. Verify locally (`pnpm lint`, `pnpm test`) before asking for a merge. (CI is temporarily disabled.)
+5. Wait for **CI** (`Lint, Format, Test & Build`) and **PR Guard** (`Enforce branch topology`) before merge.
+
+Branch protection on private org repos requires **GitHub Team**. Until that is enabled, the rules above are still mandatory — see [branch-protection.md](./doc/setup/branch-protection.md).
 
 ## Day-to-day steps
 
@@ -44,7 +47,6 @@ git checkout -b feature/short-description
 pnpm install
 pnpm lint
 pnpm test
-# optional: pnpm format
 ```
 
 Commit with the project convention (`pnpm commit` / conventional commits).
@@ -53,31 +55,21 @@ Commit with the project convention (`pnpm commit` / conventional commits).
 
 1. Push your branch and open a PR **targeting `dev`**.
 2. Fill in the PR template (summary, ticket link, checklist).
-3. Request at least one reviewer.
+3. Request at least one reviewer (CODEOWNERS may auto-request).
 4. Address review comments; push more commits as needed.
-5. **Let the reviewer merge** when CI is green and the review is approved.
+5. **Let the reviewer merge** when checks are green and the review is approved.
 
 ### 4. Promote to staging
 
-When `dev` is ready for QA:
-
-1. Open a PR: **`dev` → `staging`**.
-2. Get a review / release-owner sign-off.
-3. Reviewer merges (not the author alone, when possible).
-4. Verify the staging environment.
+When `dev` is ready for QA: open **`dev` → `staging`**, get review, merge, verify staging.
 
 ### 5. Promote to production
 
-When staging is verified:
+When staging is verified: open **`staging` → `main`**, get release-owner approval, merge, verify production.
 
-1. Open a PR: **`staging` → `main`**.
-2. Get explicit approval from a release owner.
-3. Reviewer merges.
-4. Confirm production looks healthy.
+## CI
 
-## CI (temporarily disabled)
-
-GitHub Actions is turned off for now (workflow file kept as `.github/workflows/ci.yml.disabled`). Rely on local checks and the PR template social contract until we re-enable it.
+GitHub Actions runs on PRs to `dev` / `staging` / `main` and on pushes to `staging` / `main` (image publish). Workflow: [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). Topology checks: [`.github/workflows/pr-guard.yml`](./.github/workflows/pr-guard.yml).
 
 ## Quick do / don’t
 
@@ -87,7 +79,7 @@ GitHub Actions is turned off for now (workflow file kept as `.github/workflows/c
 | PR into `dev` for features/fixes | Open feature PRs straight to `main` |
 | Get a teammate to merge | Click **Merge** on your own PR |
 | Link the ticket in the PR | Leave the template blank |
-| Run lint/tests locally before review | Skip local verification because CI is off |
+| Wait for CI + PR Guard | Merge with failing checks |
 
 ## Need setup help?
 

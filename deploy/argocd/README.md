@@ -1,6 +1,6 @@
 # ArgoCD GitOps
 
-ArgoCD watches [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate) and syncs Kubernetes manifests from `deploy/k8s/overlays/`.
+ArgoCD watches [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus) and syncs Kubernetes manifests from `deploy/k8s/overlays/`.
 
 ## GitOps flow
 
@@ -40,7 +40,7 @@ kubectl apply -f deploy/argocd/app-of-apps.yaml
 
 Repository URL in all manifests:
 
-`https://github.com/Khalil-Bchir/full-stack-saas-boilerplate.git`
+`https://github.com/matchy-plus/matchy-plus.git`
 
 ## Sync policy
 

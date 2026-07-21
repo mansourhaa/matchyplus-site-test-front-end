@@ -1,34 +1,40 @@
 # Pull request & merge flow
 
-How code moves from a developer branch into production on **Matchy+**.
+How code moves from a developer branch into production on **Matchy+** ([matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)).
 
-This is a **free private** GitHub repository, so we cannot turn on branch-protection rules. The flow below is enforced by process (social contract) plus optional CI later. See also [CONTRIBUTING.md](../CONTRIBUTING.md).
+Enforcement:
+
+1. **Process** — rules below (always).
+2. **CI + PR Guard** — checks on every PR (see workflows under `.github/workflows/`).
+3. **Branch protection** — when the org has **GitHub Team** (or higher); setup guide: [branch-protection.md](./branch-protection.md).
+
+See also [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## The four branch kinds
 
 | Branch | Who commits here? | Role |
 | --- | --- | --- |
-| `feature/*` or `fix/*` | One developer | Isolated work |
+| `feature/*`, `fix/*`, `chore/*`, … | One developer | Isolated work |
 | `dev` | Via PR only | Team integration |
 | `staging` | Via promotion PR only | QA / pre-production |
 | `main` | Via promotion PR only | Production |
 
 ```mermaid
 flowchart LR
-  F["feature/* or fix/*"] -->|PR + review| D[dev]
+  F["feature/* / fix/* / …"] -->|PR + review| D[dev]
   D -->|promotion PR| S[staging]
   S -->|promotion PR| M[main]
 ```
 
 **Never push straight to `dev`, `staging`, or `main`.** Always open a pull request.
 
-## Social contract (must follow)
+## Rules
 
 1. Open a PR for every change that lands on `dev`, `staging`, or `main`.
 2. **Do not merge your own PR.** A teammate reviews and merges.
 3. Features/fixes target **`dev` only** — never open a feature PR into `main`.
 4. Promotion is always **one hop**: `dev` → `staging`, then `staging` → `main`.
-5. Run local checks before asking for merge (`pnpm lint`, `pnpm test`). CI is temporarily disabled.
+5. Merge only when **CI** and **PR Guard** are green (and required reviews when protection is on).
 
 GitHub may show banners like “`dev` is N commits ahead of `main`” and offer **Compare & pull request**. That is normal after merges into `dev`. Do **not** use that shortcut to jump `dev` → `main`; use the promotion steps below.
 
@@ -61,20 +67,15 @@ git push -u origin HEAD
 
 On GitHub: **compare `feature/...` → `dev`** (not `main`).
 
-Fill the [PR template](../.github/pull_request_template.md):
-
-- Summary and ticket link  
-- Target-branch checkbox for `feature/*` → `dev`  
-- Checklist  
-- Remember: **do not self-merge**
+Fill the [PR template](../.github/pull_request_template.md).
 
 ### 4. Review and merge
 
 | Role | Action |
 | --- | --- |
 | Author | Respond to review, push fixes |
-| Reviewer | Approve and **merge** when ready |
-| Author | Delete the feature branch after merge (GitHub checkbox is fine) |
+| Reviewer | Approve and **merge** when checks are green |
+| Author | Delete the feature branch after merge (GitHub checkbox / auto-delete) |
 
 After merge, the feature lives on `dev`. It is **not** in staging or production yet.
 
@@ -86,6 +87,7 @@ sequenceDiagram
 
   Dev->>GH: Push feature/* and open PR → dev
   Dev->>Rev: Request review
+  Note over GH: CI + PR Guard run
   Rev->>GH: Review / approve
   Rev->>GH: Merge PR (not the author)
   Note over GH: Feature branch may be deleted
@@ -131,19 +133,9 @@ flowchart TB
 
 | PR | Base ← Head | Who opens | Who merges |
 | --- | --- | --- | --- |
-| Feature / fix | `dev` ← `feature/*` or `fix/*` | Author | **Someone else** |
+| Feature / fix | `dev` ← `feature/*` (etc.) | Author | **Someone else** |
 | Staging promotion | `staging` ← `dev` | Anyone / release owner | Prefer non-author |
 | Production promotion | `main` ← `staging` | Release owner | Prefer non-author |
-
-## Example we already ran (smoke test)
-
-This end-to-end path was exercised once on the repo:
-
-1. `feature/workflow-smoke-test` → `dev` (PR #1)  
-2. `dev` → `staging` (PR #2)  
-3. `staging` → `main` (PR #3)  
-
-That proved the branch topology and PR template. Real product work should follow the same shapes, with a different person merging when possible.
 
 ## Common GitHub UI situations
 
@@ -151,18 +143,20 @@ That proved the branch topology and PR template. Real product work should follow
 | --- | --- | --- |
 | “`dev` had recent pushes” / Compare & pull request | `dev` moved; GitHub offers a PR vs default branch | Ignore unless you intentionally want a promotion; never skip to `main` for features |
 | “This branch is N commits ahead of `main`” while viewing `dev` | Integration work has not been promoted yet | Promote via `dev` → `staging` → `main` when ready |
-| Merge button available on your own PR | Free private repo — GitHub will not block you | **Do not click it**; ask a teammate |
+| Merge button available on your own PR | Protection not active yet, or you are an admin bypass | **Do not click it**; ask a teammate |
+| PR Guard failed | Wrong base/head for the topology | Retarget the PR (e.g. feature → `dev`, not `main`) |
 
 ## Checklist before you ask for a merge
 
-- [ ] Correct base branch (`dev` for features; promotion only for the hops above)  
-- [ ] PR template filled (summary, ticket, checkboxes)  
-- [ ] Local lint/tests run  
-- [ ] Reviewer requested  
-- [ ] You will **not** merge it yourself  
+- [ ] Correct base branch (`dev` for features; promotion only for the hops above)
+- [ ] PR template filled (summary, ticket, checkboxes)
+- [ ] Local lint/tests run; CI + PR Guard green
+- [ ] Reviewer requested
+- [ ] You will **not** merge it yourself
 
 ## Related docs
 
-- [CONTRIBUTING.md](../CONTRIBUTING.md) — short social-contract rules  
-- [Development Workflow](./development.md) — daily commands  
-- [Getting Started](./getting-started.md) — clone and run the stack  
+- [CONTRIBUTING.md](../CONTRIBUTING.md) — short rules
+- [Branch protection](./branch-protection.md) — GitHub Team + protect `main` / `staging` / `dev`
+- [Development Workflow](./development.md) — daily commands
+- [Getting Started](./getting-started.md) — clone and run the stack

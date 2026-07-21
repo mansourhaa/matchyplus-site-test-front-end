@@ -4,15 +4,15 @@
 
 ## Ticket / task
 
-<!-- Link the Jira / Linear / GitHub issue (required when one exists). -->
+<!-- Link the Linear / Jira / GitHub issue (required when one exists). -->
 
 - Ticket:
 
 ## Target branch check
 
-Confirm this PR targets the correct branch:
+Confirm this PR targets the correct branch (PR Guard enforces this in CI):
 
-- [ ] `feature/*` or `fix/*` → **`dev`**
+- [ ] `feature/*` / `fix/*` / `chore/*` / … → **`dev`**
 - [ ] `dev` → **`staging`** (promotion for QA)
 - [ ] `staging` → **`main`** (production promotion)
 
@@ -20,10 +20,11 @@ Confirm this PR targets the correct branch:
 
 - [ ] I have tested this locally (`pnpm lint`, `pnpm test`, and relevant manual checks)
 - [ ] This PR only contains changes related to the ticket / summary
-- [ ] I have requested at least one reviewer
+- [ ] I have requested at least one reviewer (CODEOWNERS may auto-request)
+- [ ] CI (`Lint, Format, Test & Build`) and PR Guard are expected to pass
 
-## Social contract — do not self-merge
+## Do not self-merge
 
 **Do not merge your own pull request.**
 
-A teammate must review and merge. Authors may rebase, push fixes, and respond to review comments, but merging is reserved for a reviewer (or an agreed release owner for `dev` → `staging` / `staging` → `main` promotions).
+A teammate (or CODEOWNER) must review and merge. Authors may rebase, push fixes, and respond to review comments. For `dev` → `staging` / `staging` → `main` promotions, prefer a release owner who is not the author.

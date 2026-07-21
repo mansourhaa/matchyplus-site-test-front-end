@@ -155,9 +155,9 @@ flowchart TB
 
 | Image | Role |
 | --- | --- |
-| `ghcr.io/khalil-bchir/saas-boilerplate-api` | Fastify product API |
-| `ghcr.io/khalil-bchir/saas-boilerplate-app` | Next.js frontend |
-| `ghcr.io/khalil-bchir/saas-boilerplate-ai` | Flask AI worker |
+| `ghcr.io/matchy-plus/saas-boilerplate-api` | Fastify product API |
+| `ghcr.io/matchy-plus/saas-boilerplate-app` | Next.js frontend |
+| `ghcr.io/matchy-plus/saas-boilerplate-ai` | Flask AI worker |
 | `redis:7.4-alpine` | In-cluster Redis (not built by CI) |
 
 AI and Redis are ClusterIP-only (not on Ingress). See [Deployment](../setup/deployment.md), [AI Async Jobs](../features/ai-async-jobs.md), and [deploy/README.md](../../deploy/README.md).

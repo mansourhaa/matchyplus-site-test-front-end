@@ -2,7 +2,7 @@
 
 How this monorepo selects, loads, and applies environment configuration across **development**, **staging**, and **production**.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 > See also: [Environment Variables](./environment-variables.md) for the full variable reference.
 
@@ -251,7 +251,7 @@ All `db:*` scripts load the matching env file:
 ## Setup checklist (first clone)
 
 ```bash
-git clone https://github.com/Khalil-Bchir/full-stack-saas-boilerplate.git
+git clone https://github.com/matchy-plus/matchy-plus.git
 cd full-stack-saas-boilerplate
 
 cp .env.example .env.development

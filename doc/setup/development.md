@@ -2,7 +2,7 @@
 
 Day-to-day commands and conventions for working in the monorepo.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 > For env file selection and `NODE_ENV` behavior, see [Environments & NODE_ENV](./environments-and-node-env.md).
 

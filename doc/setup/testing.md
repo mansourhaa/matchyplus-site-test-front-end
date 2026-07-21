@@ -2,7 +2,7 @@
 
 Unit tests use [Vitest](https://vitest.dev/) in each app workspace.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 ## Test pipeline
 

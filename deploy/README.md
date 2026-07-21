@@ -2,7 +2,7 @@
 
 Kubernetes manifests and ArgoCD applications for GitOps deployment.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 This project uses **GitHub Actions** for CI and **Kubernetes + ArgoCD** for GitOps deployment.
 
@@ -31,19 +31,18 @@ flowchart TD
 
 ## CI pipeline
 
-Workflow: `.github/workflows/ci.yml`
+Workflows: `.github/workflows/ci.yml`, `.github/workflows/pr-guard.yml`
 
-On every push / PR to `main` or `staging`:
+On every PR to `dev` / `staging` / `main` (and pushes to `main` / `staging`):
 
-1. `pnpm lint`
-2. `pnpm test`
-3. `pnpm build`
+1. PR Guard — enforce feature → `dev` → `staging` → `main` topology
+2. `pnpm` format check, lint, test, build
 
 On push to `main` or `staging` (after CI passes):
 
-4. Build & push `ghcr.io/khalil-bchir/saas-boilerplate-api`
-5. Build & push `ghcr.io/khalil-bchir/saas-boilerplate-app`
-6. Build & push `ghcr.io/khalil-bchir/saas-boilerplate-ai`
+3. Build & push `ghcr.io/matchy-plus/saas-boilerplate-api`
+4. Build & push `ghcr.io/matchy-plus/saas-boilerplate-app`
+5. Build & push `ghcr.io/matchy-plus/saas-boilerplate-ai`
 
 ArgoCD then deploys the updated images to Kubernetes.
 
@@ -88,9 +87,9 @@ deploy/
 
 | Image | Tag (staging) | Tag (production) |
 | --- | --- | --- |
-| `ghcr.io/khalil-bchir/saas-boilerplate-api` | `staging` | `production` |
-| `ghcr.io/khalil-bchir/saas-boilerplate-app` | `staging` | `production` |
-| `ghcr.io/khalil-bchir/saas-boilerplate-ai` | `staging` | `production` |
+| `ghcr.io/matchy-plus/saas-boilerplate-api` | `staging` | `production` |
+| `ghcr.io/matchy-plus/saas-boilerplate-app` | `staging` | `production` |
+| `ghcr.io/matchy-plus/saas-boilerplate-ai` | `staging` | `production` |
 
 Redis runs from the public `redis:7.4-alpine` image (not built by CI).
 
@@ -102,13 +101,13 @@ Redis runs from the public `redis:7.4-alpine` image (not built by CI).
 pnpm test
 pnpm build
 
-docker login ghcr.io -u Khalil-Bchir
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-api:staging -f apps/api/Dockerfile .
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-app:staging -f apps/app/Dockerfile .
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-ai:staging -f apps/ai/Dockerfile apps/ai
-docker push ghcr.io/khalil-bchir/saas-boilerplate-api:staging
-docker push ghcr.io/khalil-bchir/saas-boilerplate-app:staging
-docker push ghcr.io/khalil-bchir/saas-boilerplate-ai:staging
+docker login ghcr.io -u USERNAME
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-api:staging -f apps/api/Dockerfile .
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-app:staging -f apps/app/Dockerfile .
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-ai:staging -f apps/ai/Dockerfile apps/ai
+docker push ghcr.io/matchy-plus/saas-boilerplate-api:staging
+docker push ghcr.io/matchy-plus/saas-boilerplate-app:staging
+docker push ghcr.io/matchy-plus/saas-boilerplate-ai:staging
 ```
 
 ### 2. Create secrets
