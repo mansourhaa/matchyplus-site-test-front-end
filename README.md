@@ -52,7 +52,7 @@ flowchart TB
 | Queue / cache | Redis 7 |
 | UI | shadcn/ui + Tailwind CSS v4 |
 | Monorepo | Turborepo 2 + pnpm 10 |
-| Deploy | GitHub Actions + Kubernetes + ArgoCD |
+| Deploy | Manual GHCR images + Kubernetes + ArgoCD |
 | Tests | Vitest |
 
 ## Documentation

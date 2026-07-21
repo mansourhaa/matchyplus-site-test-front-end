@@ -471,7 +471,7 @@ python -m app.entrypoint
 
 Local Compose is **not** used in staging/production. Deployment follows the existing stack:
 
-**GitHub Actions → GHCR images → ArgoCD → Kubernetes**
+**Manual image build/push → GHCR → ArgoCD → Kubernetes** (no GitHub Actions).
 
 ### Manifests
 
@@ -521,7 +521,7 @@ docker build -t ghcr.io/matchy-plus/saas-boilerplate-ai:staging \
   -f apps/ai/Dockerfile apps/ai
 ```
 
-CI (`.github/workflows/ci.yml`) includes the AI image publish step on pushes to `staging` / `main`.
+Build and push the AI image manually when promoting (see [Deployment](../setup/deployment.md)).
 
 ---
 

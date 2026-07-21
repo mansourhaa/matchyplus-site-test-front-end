@@ -26,7 +26,7 @@ feature/* or fix/*  →  dev  →  staging  →  main
 2. **Do not merge your own PR** unless you are a **repository / org admin**. Everyone else requests a review; a teammate (or CODEOWNER) merges after approval.
 3. **Work branches** start from the latest `dev`.
 4. **Only promotion PRs** go up the chain: `dev` → `staging`, then `staging` → `main`.
-5. Wait for **CI** (`Lint, Format, Test & Build`) and **PR Guard** (`Enforce branch topology`) before merge.
+5. Verify locally (`pnpm lint`, `pnpm test`) before asking for merge. This repo does **not** use GitHub Actions.
 
 Branch protection on private org repos requires **GitHub Team**. Until that is enabled, the rules above are still mandatory — see [branch-protection.md](./doc/setup/branch-protection.md).
 
@@ -57,7 +57,7 @@ Commit with the project convention (`pnpm commit` / conventional commits).
 2. Fill in the PR template (summary, ticket link, checklist).
 3. Request at least one reviewer (CODEOWNERS may auto-request).
 4. Address review comments; push more commits as needed.
-5. **Let the reviewer merge** when checks are green and the review is approved (admins may self-merge).
+5. **Let the reviewer merge** when the review is approved (admins may self-merge).
 
 ### 4. Promote to staging
 
@@ -67,10 +67,6 @@ When `dev` is ready for QA: open **`dev` → `staging`**, get review, merge, ver
 
 When staging is verified: open **`staging` → `main`**, get release-owner approval, merge, verify production.
 
-## CI
-
-GitHub Actions runs on PRs to `dev` / `staging` / `main` and on pushes to `staging` / `main` (image publish). Workflow: [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). Topology checks: [`.github/workflows/pr-guard.yml`](./.github/workflows/pr-guard.yml).
-
 ## Quick do / don’t
 
 | Do | Don’t |
@@ -79,7 +75,7 @@ GitHub Actions runs on PRs to `dev` / `staging` / `main` and on pushes to `stagi
 | PR into `dev` for features/fixes | Open feature PRs straight to `main` |
 | Get a teammate to merge (non-admins) | Non-admins: click **Merge** on your own PR |
 | Link the ticket in the PR | Leave the template blank |
-| Wait for CI + PR Guard | Merge with failing checks |
+| Run lint/tests locally before review | Skip local verification |
 
 ## Need setup help?
 

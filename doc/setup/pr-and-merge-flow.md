@@ -5,7 +5,7 @@ How code moves from a developer branch into production on **Matchy+** ([matchy-p
 Enforcement:
 
 1. **Process** — rules below (always).
-2. **CI + PR Guard** — checks on every PR (see workflows under `.github/workflows/`).
+2. **Local verification** — `pnpm lint` / `pnpm test` before review (no GitHub Actions).
 3. **Branch protection** — when the org has **GitHub Team** (or higher); setup guide: [branch-protection.md](./branch-protection.md).
 
 See also [CONTRIBUTING.md](../CONTRIBUTING.md).
@@ -34,7 +34,7 @@ flowchart LR
 2. **Do not merge your own PR** unless you are a **repository / org admin**. Non-admins: a teammate reviews and merges.
 3. Features/fixes target **`dev` only** — never open a feature PR into `main`.
 4. Promotion is always **one hop**: `dev` → `staging`, then `staging` → `main`.
-5. Merge only when **CI** and **PR Guard** are green (and required reviews when protection is on).
+5. Merge only after local lint/tests and required reviews (when protection is on).
 
 GitHub may show banners like “`dev` is N commits ahead of `main`” and offer **Compare & pull request**. That is normal after merges into `dev`. Do **not** use that shortcut to jump `dev` → `main`; use the promotion steps below.
 
@@ -87,7 +87,7 @@ sequenceDiagram
 
   Dev->>GH: Push feature/* and open PR → dev
   Dev->>Rev: Request review
-  Note over GH: CI + PR Guard run
+  Note over GH: Reviewer checks local verification was done
   Rev->>GH: Review / approve
   Rev->>GH: Merge PR (not the author)
   Note over GH: Feature branch may be deleted
@@ -144,13 +144,13 @@ flowchart TB
 | “`dev` had recent pushes” / Compare & pull request | `dev` moved; GitHub offers a PR vs default branch | Ignore unless you intentionally want a promotion; never skip to `main` for features |
 | “This branch is N commits ahead of `main`” while viewing `dev` | Integration work has not been promoted yet | Promote via `dev` → `staging` → `main` when ready |
 | Merge button available on your own PR | Non-admin: do not click it — ask a teammate. **Admin:** allowed to self-merge |
-| PR Guard failed | Wrong base/head for the topology | Retarget the PR (e.g. feature → `dev`, not `main`) |
+| Wrong base branch for the hop | Feature opened against `main`, etc. | Retarget the PR (e.g. feature → `dev`, not `main`) |
 
 ## Checklist before you ask for a merge
 
 - [ ] Correct base branch (`dev` for features; promotion only for the hops above)
 - [ ] PR template filled (summary, ticket, checkboxes)
-- [ ] Local lint/tests run; CI + PR Guard green
+- [ ] Local lint/tests run (`pnpm lint`, `pnpm test`)
 - [ ] Reviewer requested
 - [ ] You will **not** merge it yourself (unless you are a repo/org admin)
 

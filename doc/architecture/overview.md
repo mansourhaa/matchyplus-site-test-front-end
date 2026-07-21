@@ -125,10 +125,8 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-    Dev[Developer] -->|git push| GH[GitHub]
-    GH -->|trigger| GHA[GitHub Actions CI]
-    GHA -->|lint test build| GHA
-    GHA -->|push images| GHCR[GHCR Container Registry]
+    Dev[Developer] -->|git push / PR| GH[GitHub]
+    Dev -->|docker build & push| GHCR[GHCR Container Registry]
 
     GH -->|GitOps sync| Argo[ArgoCD]
     Argo -->|apply manifests| K8s[Kubernetes]

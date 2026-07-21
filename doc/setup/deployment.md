@@ -4,23 +4,18 @@ Guide for building and deploying the boilerplate to staging and production.
 
 **Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
-Deployment uses **GitHub Actions** (CI) + **Kubernetes + ArgoCD** (GitOps CD). Manifests live in [`deploy/`](../../deploy/README.md).
+Deployment uses **manual Docker builds to GHCR** + **Kubernetes + ArgoCD** (GitOps CD). This repo does **not** use GitHub Actions. Manifests live in [`deploy/`](../../deploy/README.md).
 
-## CI/CD pipeline
+## Deploy pipeline
 
 ```mermaid
 flowchart LR
-    subgraph CI["GitHub Actions — every push/PR"]
+    subgraph Local["Local / release owner"]
         Lint[pnpm lint]
         Test[pnpm test]
         Build[pnpm build]
-        Lint --> Test --> Build
-    end
-
-    subgraph CD["On push to main/staging"]
-        Docker[Build API App AI images]
-        Push[Push to GHCR]
-        Docker --> Push
+        Docker[docker build & push]
+        Lint --> Test --> Build --> Docker
     end
 
     subgraph GitOps["ArgoCD"]
@@ -30,9 +25,9 @@ flowchart LR
         Sync --> Migrate --> Rollout
     end
 
-    Git[GitHub push] --> CI
-    CI -->|passes| CD
-    CD --> GitOps
+    Docker --> GHCR[GHCR]
+    Git[GitHub PR merge] --> GitOps
+    GHCR --> GitOps
     Users[Users] --> Ingress[Ingress]
     Ingress --> AppPod[saas-app]
     Ingress --> ApiPod[saas-api]
@@ -42,20 +37,18 @@ flowchart LR
     AiPod --> PG
 ```
 
-Workflows: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), [`.github/workflows/pr-guard.yml`](../../.github/workflows/pr-guard.yml)
-
-| Job | Trigger | Steps |
+| Step | When | What |
 | --- | --- | --- |
-| **Lint, Format, Test & Build** | Every PR to `dev`/`staging`/`main`; push to `main`/`staging` | prettier → lint → test → build |
-| **Enforce branch topology** | Every PR to `dev`/`staging`/`main` | Reject wrong base/head pairs |
-| **Publish Docker Images** | Push to `main` or `staging` (after CI passes) | Build & push API + App + AI images to GHCR under `ghcr.io/matchy-plus/` |
+| Local verify | Before every PR | `pnpm lint` → `pnpm test` → `pnpm build` |
+| Publish images | When promoting to staging/production | Build & push API + App + AI to `ghcr.io/matchy-plus/` |
+| GitOps | After merge to `staging` / `main` | ArgoCD syncs manifests and rolls out |
 
-### Image tags pushed by CI
+### Image tags
 
-| Branch | Tag | SHA tag |
+| Environment | Tag | SHA tag (optional) |
 | --- | --- | --- |
-| `staging` | `staging` | `<commit-sha>` |
-| `main` | `production` | `<commit-sha>` |
+| Staging | `staging` | `<commit-sha>` |
+| Production | `production` | `<commit-sha>` |
 
 ArgoCD deploys the `staging` / `production` tags from GHCR. Deployments use `imagePullPolicy: Always` so new image pushes are picked up on rollout.
 

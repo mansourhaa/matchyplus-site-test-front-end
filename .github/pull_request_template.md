@@ -10,7 +10,7 @@
 
 ## Target branch check
 
-Confirm this PR targets the correct branch (PR Guard enforces this in CI):
+Confirm this PR targets the correct branch:
 
 - [ ] `feature/*` / `fix/*` / `chore/*` / … → **`dev`**
 - [ ] `dev` → **`staging`** (promotion for QA)
@@ -21,7 +21,6 @@ Confirm this PR targets the correct branch (PR Guard enforces this in CI):
 - [ ] I have tested this locally (`pnpm lint`, `pnpm test`, and relevant manual checks)
 - [ ] This PR only contains changes related to the ticket / summary
 - [ ] I have requested at least one reviewer (CODEOWNERS may auto-request)
-- [ ] CI (`Lint, Format, Test & Build`) and PR Guard are expected to pass
 
 ## Self-merge policy
 

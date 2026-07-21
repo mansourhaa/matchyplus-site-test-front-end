@@ -2,6 +2,8 @@
 
 How to lock `dev`, `staging`, and `main` on **[matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)** so the PR flow is enforced by GitHub, not only by process.
 
+This repo does **not** use GitHub Actions. Verification is local (`pnpm lint`, `pnpm test`). Branch protection covers PRs, reviews, and CODEOWNERS only.
+
 ## Why org alone is not enough
 
 Moving the repo under the **matchy-plus** organization does **not** unlock branch protection on a **private** repository while the org is on **GitHub Free**.
@@ -19,22 +21,17 @@ Once Team is enabled, protect all three integration branches:
 
 | Branch | Rule |
 | --- | --- |
-| `dev` | PR required · ≥1 approval · CODEOWNERS · required checks · no force-push |
+| `dev` | PR required · ≥1 approval · CODEOWNERS · no force-push |
 | `staging` | Same (only `dev` → `staging` promotions) |
 | `main` | Same (only `staging` → `main` promotions) · treat as production |
 
-**Admins** are not forced through the same rules (`enforce_admins: false`) so they can merge their own PRs. Non-admins cannot bypass — they still need review + green checks. Prefer a second reviewer on `main` even for admins.
-
-**Required status checks** (job names from workflows):
-
-1. `Lint, Format, Test & Build` — [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)
-2. `Enforce branch topology` — [`.github/workflows/pr-guard.yml`](../../.github/workflows/pr-guard.yml)
+**Admins** are not forced through the same rules (`enforce_admins: false`) so they can merge their own PRs. Non-admins cannot bypass — they still need review. Prefer a second reviewer on `main` even for admins.
 
 Also recommended repo settings: **squash merge only**, **delete head branch on merge**, **allow auto-merge**.
 
 ## Option A — Script (API)
 
-Needs a token that can administer the repo (classic `repo`, or fine-grained **Administration: Read and write** on `matchy-plus/matchy-plus`). The current Cursor `gh` fine-grained token may lack this permission.
+Needs a token that can administer the repo (classic `repo`, or fine-grained **Administration: Read and write** on `matchy-plus/matchy-plus`).
 
 ```bash
 chmod +x scripts/apply-branch-protection.sh
@@ -54,7 +51,7 @@ If you see `Upgrade to GitHub Pro/Team…` or rulesets 403, finish the org billi
    - Dismiss stale pull request approvals when new commits are pushed
    - Require review from Code Owners
    - Require approval of the most recent push
-   - Require status checks to pass: add the two checks above (after they have run at least once)
+   - Do **not** require status checks (no GitHub Actions in this repo)
    - Require conversation resolution before merging
    - Leave **Include administrators** unchecked (admins may self-merge / bypass when needed)
    - Block force pushes and deletions
@@ -73,4 +70,4 @@ Until protection can be turned on:
 
 - Follow [PR & merge flow](./pr-and-merge-flow.md) and [CONTRIBUTING.md](../../CONTRIBUTING.md)
 - **Do not self-merge** unless you are a repo/org admin; do not push straight to `dev` / `staging` / `main`
-- CI + PR Guard still run on PRs and show red/green; they are not merge blockers until marked required
+- Run `pnpm lint` and `pnpm test` locally before asking for review

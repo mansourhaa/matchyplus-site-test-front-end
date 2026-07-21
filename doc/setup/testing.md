@@ -15,8 +15,9 @@ flowchart TD
     App --> AppBuild[^build deps]
     API --> APITests[authentication.test.ts<br/>health route tests]
     App --> AppTests[schemas.test.ts<br/>auth.test.ts]
-    GHA[GitHub Actions CI] --> Root
 ```
+
+> Run tests locally with `pnpm test`. This repo does not use GitHub Actions.
 
 ## Commands
 

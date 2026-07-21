@@ -4,18 +4,16 @@ Kubernetes manifests and ArgoCD applications for GitOps deployment.
 
 **Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
-This project uses **GitHub Actions** for CI and **Kubernetes + ArgoCD** for GitOps deployment.
+This project uses **manual GHCR image publishes** and **Kubernetes + ArgoCD** for GitOps deployment. There is **no GitHub Actions** CI.
 
 ## End-to-end deploy flow
 
 ```mermaid
 flowchart TD
-    Push[git push] --> GHA[GitHub Actions]
-    GHA --> Lint[lint]
-    Lint --> Test[test]
-    Test --> Build[build]
-    Build --> Images[build & push API App AI images]
-    Images --> Argo[ArgoCD detects manifest/image]
+    Local[pnpm lint / test / build] --> Images[docker build & push API App AI]
+    Images --> GHCR[GHCR]
+    Push[git merge to staging/main] --> Argo[ArgoCD]
+    GHCR --> Argo
     Argo --> K8s[Kubernetes rollout]
     K8s --> Job[migration Job]
     Job --> Pods[api + app + ai + redis pods]
@@ -29,22 +27,15 @@ flowchart TD
     Ingress --> Live[Live traffic]
 ```
 
-## CI pipeline
+## Image publish (manual)
 
-Workflows: `.github/workflows/ci.yml`, `.github/workflows/pr-guard.yml`
+Before or after promoting to `staging` / `main`, build and push:
 
-On every PR to `dev` / `staging` / `main` (and pushes to `main` / `staging`):
+1. `ghcr.io/matchy-plus/saas-boilerplate-api`
+2. `ghcr.io/matchy-plus/saas-boilerplate-app`
+3. `ghcr.io/matchy-plus/saas-boilerplate-ai`
 
-1. PR Guard — enforce feature → `dev` → `staging` → `main` topology
-2. `pnpm` format check, lint, test, build
-
-On push to `main` or `staging` (after CI passes):
-
-3. Build & push `ghcr.io/matchy-plus/saas-boilerplate-api`
-4. Build & push `ghcr.io/matchy-plus/saas-boilerplate-app`
-5. Build & push `ghcr.io/matchy-plus/saas-boilerplate-ai`
-
-ArgoCD then deploys the updated images to Kubernetes.
+Tag with `staging` or `production` (and optionally the git SHA). ArgoCD then deploys from those tags.
 
 ## Layout
 

@@ -16,10 +16,10 @@ flowchart TD
     Code --> Test[pnpm test]
     Test --> Lint[pnpm lint]
     Lint --> Commit[pnpm commit]
-    Commit --> Push[git push]
-    Push --> CI[GitHub Actions CI]
-    CI -->|staging branch| StageDeploy[ArgoCD staging]
-    CI -->|main branch| ProdDeploy[ArgoCD production]
+    Commit --> Push[git push / open PR]
+    Push --> Review[Teammate review]
+    Review -->|staging promotion| StageDeploy[ArgoCD staging]
+    Review -->|main promotion| ProdDeploy[ArgoCD production]
 ```
 
 ## Command map

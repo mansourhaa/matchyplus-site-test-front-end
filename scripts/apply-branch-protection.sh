@@ -5,7 +5,6 @@
 #   1. Org on GitHub Team (or higher) — Free private repos cannot protect branches
 #   2. gh auth with Administration permission on the repo (classic: repo scope;
 #      fine-grained: Administration=Read and write, Contents, Pull requests, Metadata)
-#   3. CI + PR Guard workflows already running (so required checks exist)
 #
 # Usage:
 #   ./scripts/apply-branch-protection.sh
@@ -14,9 +13,6 @@
 set -euo pipefail
 
 REPO="${REPO:-matchy-plus/matchy-plus}"
-
-# Status check names must match the job `name:` fields in the workflows.
-REQUIRED_CHECKS='["Lint, Format, Test & Build","Enforce branch topology"]'
 
 protect_branch() {
   local branch="$1"
@@ -30,10 +26,7 @@ protect_branch() {
     "repos/${REPO}/branches/${branch}/protection" \
     --input - <<EOF
 {
-  "required_status_checks": {
-    "strict": true,
-    "contexts": ${REQUIRED_CHECKS}
-  },
+  "required_status_checks": null,
   "enforce_admins": false,
   "required_pull_request_reviews": {
     "required_approving_review_count": ${reviews},
