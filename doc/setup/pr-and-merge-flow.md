@@ -31,7 +31,7 @@ flowchart LR
 ## Rules
 
 1. Open a PR for every change that lands on `dev`, `staging`, or `main`.
-2. **Do not merge your own PR.** A teammate reviews and merges.
+2. **Do not merge your own PR** unless you are a **repository / org admin**. Non-admins: a teammate reviews and merges.
 3. Features/fixes target **`dev` only** — never open a feature PR into `main`.
 4. Promotion is always **one hop**: `dev` → `staging`, then `staging` → `main`.
 5. Merge only when **CI** and **PR Guard** are green (and required reviews when protection is on).
@@ -74,7 +74,7 @@ Fill the [PR template](../.github/pull_request_template.md).
 | Role | Action |
 | --- | --- |
 | Author | Respond to review, push fixes |
-| Reviewer | Approve and **merge** when checks are green |
+| Reviewer | Approve and **merge** when checks are green (authors who are **admins** may self-merge) |
 | Author | Delete the feature branch after merge (GitHub checkbox / auto-delete) |
 
 After merge, the feature lives on `dev`. It is **not** in staging or production yet.
@@ -133,9 +133,9 @@ flowchart TB
 
 | PR | Base ← Head | Who opens | Who merges |
 | --- | --- | --- | --- |
-| Feature / fix | `dev` ← `feature/*` (etc.) | Author | **Someone else** |
-| Staging promotion | `staging` ← `dev` | Anyone / release owner | Prefer non-author |
-| Production promotion | `main` ← `staging` | Release owner | Prefer non-author |
+| Feature / fix | `dev` ← `feature/*` (etc.) | Author | **Someone else** (or author if **admin**) |
+| Staging promotion | `staging` ← `dev` | Anyone / release owner | Prefer non-author (admins may self-merge) |
+| Production promotion | `main` ← `staging` | Release owner | Prefer non-author (admins may self-merge) |
 
 ## Common GitHub UI situations
 
@@ -143,7 +143,7 @@ flowchart TB
 | --- | --- | --- |
 | “`dev` had recent pushes” / Compare & pull request | `dev` moved; GitHub offers a PR vs default branch | Ignore unless you intentionally want a promotion; never skip to `main` for features |
 | “This branch is N commits ahead of `main`” while viewing `dev` | Integration work has not been promoted yet | Promote via `dev` → `staging` → `main` when ready |
-| Merge button available on your own PR | Protection not active yet, or you are an admin bypass | **Do not click it**; ask a teammate |
+| Merge button available on your own PR | Non-admin: do not click it — ask a teammate. **Admin:** allowed to self-merge |
 | PR Guard failed | Wrong base/head for the topology | Retarget the PR (e.g. feature → `dev`, not `main`) |
 
 ## Checklist before you ask for a merge
@@ -152,7 +152,7 @@ flowchart TB
 - [ ] PR template filled (summary, ticket, checkboxes)
 - [ ] Local lint/tests run; CI + PR Guard green
 - [ ] Reviewer requested
-- [ ] You will **not** merge it yourself
+- [ ] You will **not** merge it yourself (unless you are a repo/org admin)
 
 ## Related docs
 

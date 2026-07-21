@@ -34,7 +34,7 @@ protect_branch() {
     "strict": true,
     "contexts": ${REQUIRED_CHECKS}
   },
-  "enforce_admins": true,
+  "enforce_admins": false,
   "required_pull_request_reviews": {
     "required_approving_review_count": ${reviews},
     "dismiss_stale_reviews": true,

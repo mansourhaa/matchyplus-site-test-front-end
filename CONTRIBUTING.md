@@ -23,7 +23,7 @@ feature/* or fix/*  →  dev  →  staging  →  main
 ## Rules
 
 1. **Never push directly** to `dev`, `staging`, or `main`. Always open a PR.
-2. **Never merge your own PR.** Request a review; a teammate (or CODEOWNER) merges after approval.
+2. **Do not merge your own PR** unless you are a **repository / org admin**. Everyone else requests a review; a teammate (or CODEOWNER) merges after approval.
 3. **Work branches** start from the latest `dev`.
 4. **Only promotion PRs** go up the chain: `dev` → `staging`, then `staging` → `main`.
 5. Wait for **CI** (`Lint, Format, Test & Build`) and **PR Guard** (`Enforce branch topology`) before merge.
@@ -57,7 +57,7 @@ Commit with the project convention (`pnpm commit` / conventional commits).
 2. Fill in the PR template (summary, ticket link, checklist).
 3. Request at least one reviewer (CODEOWNERS may auto-request).
 4. Address review comments; push more commits as needed.
-5. **Let the reviewer merge** when checks are green and the review is approved.
+5. **Let the reviewer merge** when checks are green and the review is approved (admins may self-merge).
 
 ### 4. Promote to staging
 
@@ -77,7 +77,7 @@ GitHub Actions runs on PRs to `dev` / `staging` / `main` and on pushes to `stagi
 | --- | --- |
 | Branch from `dev` | Commit straight to `dev` / `staging` / `main` |
 | PR into `dev` for features/fixes | Open feature PRs straight to `main` |
-| Get a teammate to merge | Click **Merge** on your own PR |
+| Get a teammate to merge (non-admins) | Non-admins: click **Merge** on your own PR |
 | Link the ticket in the PR | Leave the template blank |
 | Wait for CI + PR Guard | Merge with failing checks |
 

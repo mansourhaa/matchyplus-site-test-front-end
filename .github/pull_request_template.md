@@ -23,8 +23,10 @@ Confirm this PR targets the correct branch (PR Guard enforces this in CI):
 - [ ] I have requested at least one reviewer (CODEOWNERS may auto-request)
 - [ ] CI (`Lint, Format, Test & Build`) and PR Guard are expected to pass
 
-## Do not self-merge
+## Self-merge policy
 
-**Do not merge your own pull request.**
+**Do not merge your own pull request** unless you are a **repository / org admin**.
 
-A teammate (or CODEOWNER) must review and merge. Authors may rebase, push fixes, and respond to review comments. For `dev` → `staging` / `staging` → `main` promotions, prefer a release owner who is not the author.
+Non-admins: a teammate (or CODEOWNER) must review and merge. Authors may rebase, push fixes, and respond to review comments.
+
+Admins may merge their own PRs when needed (prefer a second pair of eyes for `staging` → `main` promotions).

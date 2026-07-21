@@ -19,9 +19,11 @@ Once Team is enabled, protect all three integration branches:
 
 | Branch | Rule |
 | --- | --- |
-| `dev` | PR required · ≥1 approval · CODEOWNERS · required checks · no force-push · admins included |
+| `dev` | PR required · ≥1 approval · CODEOWNERS · required checks · no force-push |
 | `staging` | Same (only `dev` → `staging` promotions) |
 | `main` | Same (only `staging` → `main` promotions) · treat as production |
+
+**Admins** are not forced through the same rules (`enforce_admins: false`) so they can merge their own PRs. Non-admins cannot bypass — they still need review + green checks. Prefer a second reviewer on `main` even for admins.
 
 **Required status checks** (job names from workflows):
 
@@ -54,7 +56,7 @@ If you see `Upgrade to GitHub Pro/Team…` or rulesets 403, finish the org billi
    - Require approval of the most recent push
    - Require status checks to pass: add the two checks above (after they have run at least once)
    - Require conversation resolution before merging
-   - Do not allow bypassing the above settings (**Include administrators**)
+   - Leave **Include administrators** unchecked (admins may self-merge / bypass when needed)
    - Block force pushes and deletions
 4. Repo → **Settings** → **General** → Pull Requests:
    - Allow squash merging only (disable merge commit + rebase)
@@ -70,5 +72,5 @@ If you see `Upgrade to GitHub Pro/Team…` or rulesets 403, finish the org billi
 Until protection can be turned on:
 
 - Follow [PR & merge flow](./pr-and-merge-flow.md) and [CONTRIBUTING.md](../../CONTRIBUTING.md)
-- **Do not self-merge**; do not push straight to `dev` / `staging` / `main`
+- **Do not self-merge** unless you are a repo/org admin; do not push straight to `dev` / `staging` / `main`
 - CI + PR Guard still run on PRs and show red/green; they are not merge blockers until marked required
