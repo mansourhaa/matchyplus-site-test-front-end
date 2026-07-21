@@ -1,0 +1,11 @@
+# Default code owners for Matchy+ (org: matchy-plus).
+# Prefer an org team once created: replace the users below with @matchy-plus/maintainers
+# See doc/setup/branch-protection.md
+
+* @Khalil-Bchir
+
+# Workflows and branch policy — require maintainer review
+.github/ @Khalil-Bchir
+doc/setup/pr-and-merge-flow.md @Khalil-Bchir
+doc/setup/branch-protection.md @Khalil-Bchir
+CONTRIBUTING.md @Khalil-Bchir

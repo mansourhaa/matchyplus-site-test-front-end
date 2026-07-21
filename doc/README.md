@@ -2,7 +2,7 @@
 
 Central documentation for the **Full Stack SaaS Boilerplate** monorepo.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)  
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)  
 **License:** [MIT](../LICENSE)
 
 ## Documentation map
@@ -43,6 +43,7 @@ flowchart LR
 | [Database Setup](./setup/database.md) | PostgreSQL, Prisma, migrations, and seeding |
 | [Development Workflow](./setup/development.md) | Daily dev commands, Turbo, and debugging |
 | [PR & merge flow](./setup/pr-and-merge-flow.md) | Feature → dev → staging → main, reviews, promotions |
+| [Branch protection](./setup/branch-protection.md) | Lock main/staging/dev on the matchy-plus org |
 | [Testing](./setup/testing.md) | Unit tests with Vitest |
 | [Deployment](./setup/deployment.md) | Kubernetes, ArgoCD, and Docker |
 

@@ -2,7 +2,7 @@
 
 Environment files live at the **monorepo root** and are loaded via `dotenv-cli` in workspace scripts.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 > Read [Environments & NODE_ENV](./environments-and-node-env.md) for how to choose the right env file and what `NODE_ENV` controls.
 

@@ -64,4 +64,4 @@ Public AI job APIs live on Fastify (`/api/v1/ai/jobs`), not here.
 
 - Local: `compose.dev.yaml` service `ai`
 - Staging/prod: `deploy/k8s/base/ai/` (ClusterIP)
-- Image: `ghcr.io/khalil-bchir/saas-boilerplate-ai`
+- Image: `ghcr.io/matchy-plus/saas-boilerplate-ai`

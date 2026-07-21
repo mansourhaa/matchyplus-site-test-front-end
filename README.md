@@ -2,7 +2,7 @@
 
 A production-ready Turborepo monorepo with a Next.js frontend, Fastify API, Flask AI worker (Option C async jobs), Redis, and shared packages.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 ## High-level architecture
 
@@ -52,7 +52,7 @@ flowchart TB
 | Queue / cache | Redis 7 |
 | UI | shadcn/ui + Tailwind CSS v4 |
 | Monorepo | Turborepo 2 + pnpm 10 |
-| Deploy | GitHub Actions + Kubernetes + ArgoCD |
+| Deploy | Manual GHCR images + Kubernetes + ArgoCD |
 | Tests | Vitest |
 
 ## Documentation
@@ -63,8 +63,9 @@ flowchart TB
 
 | Start here | Description |
 | --- | --- |
-| [Contributing / social contract](./CONTRIBUTING.md) | Branching, PRs, and no-self-merge rules |
+| [Contributing](./CONTRIBUTING.md) | Branching, PRs, and self-merge rules (admins only) |
 | [PR & merge flow](./doc/setup/pr-and-merge-flow.md) | How feature → dev → staging → main works |
+| [Branch protection](./doc/setup/branch-protection.md) | Secure `main` / `staging` / `dev` on the org |
 | [Getting Started (A–Z)](./doc/setup/getting-started.md) | Clone, install, configure, and run |
 | [Environments & NODE_ENV](./doc/setup/environments-and-node-env.md) | Env files, NODE_ENV, staging/production |
 | [Environment Variables](./doc/setup/environment-variables.md) | All env vars explained |
@@ -92,7 +93,7 @@ flowchart TB
 ## Quick start
 
 ```bash
-git clone https://github.com/Khalil-Bchir/full-stack-saas-boilerplate.git
+git clone https://github.com/matchy-plus/matchy-plus.git
 cd full-stack-saas-boilerplate
 pnpm install
 cp .env.example .env.development

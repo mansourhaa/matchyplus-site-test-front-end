@@ -4,11 +4,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Khalil-Bchir/full-stack-saas-boilerplate.git"
+    "url": "https://github.com/matchy-plus/matchy-plus.git"
   },
-  "homepage": "https://github.com/Khalil-Bchir/full-stack-saas-boilerplate#readme",
+  "homepage": "https://github.com/matchy-plus/matchy-plus#readme",
   "bugs": {
-    "url": "https://github.com/Khalil-Bchir/full-stack-saas-boilerplate/issues"
+    "url": "https://github.com/matchy-plus/matchy-plus/issues"
   },
   "author": "Khalil Bchir (https://github.com/Khalil-Bchir)",
   "scripts": {
