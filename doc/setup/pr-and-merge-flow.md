@@ -35,6 +35,7 @@ flowchart LR
 3. Features/fixes target **`dev` only** — never open a feature PR into `main`.
 4. Promotion is always **one hop**: `dev` → `staging`, then `staging` → `main`.
 5. Merge only after local lint/tests and required reviews (when protection is on).
+6. **PR reviews and review comments are written in English only.**
 
 GitHub may show banners like “`dev` is N commits ahead of `main`” and offer **Compare & pull request**. That is normal after merges into `dev`. Do **not** use that shortcut to jump `dev` → `main`; use the promotion steps below.
 

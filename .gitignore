@@ -17,6 +17,10 @@ coverage
 # Turbo
 .turbo
 
+# Local editor agent config
+.cursorrules
+.cursor
+
 # Vercel
 .vercel
 

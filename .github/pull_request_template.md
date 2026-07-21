@@ -29,3 +29,7 @@ Confirm this PR targets the correct branch:
 Non-admins: a teammate (or CODEOWNER) must review and merge. Authors may rebase, push fixes, and respond to review comments.
 
 Admins may merge their own PRs when needed (prefer a second pair of eyes for `staging` → `main` promotions).
+
+## Review language
+
+**PR reviews and review comments must be in English.**

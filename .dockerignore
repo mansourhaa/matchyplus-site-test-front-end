@@ -1,0 +1,46 @@
+# Build context is the monorepo root (api/app images).
+
+# VCS and local editor config
+.git
+.cursor
+.cursorrules
+.github
+.husky
+.vscode
+.idea
+
+# Dependencies & caches
+node_modules
+.turbo
+.pnpm-store
+coverage
+.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+!.env.staging.example
+!.env.production.example
+
+# Local / docs / deploy not needed in app images
+doc
+deploy
+*.md
+!apps/**/README.md
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Misc
+.DS_Store
+.containers
+.ssh_keys
+npm-debug.log*
+yarn-debug.log*

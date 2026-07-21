@@ -8,3 +8,5 @@ tests
 requirements-dev.txt
 README.md
 .git
+.cursor
+.cursorrules
