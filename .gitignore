@@ -17,7 +17,7 @@ coverage
 # Turbo
 .turbo
 
-# Local editor agent config
+# Cursor
 .cursorrules
 .cursor
 

@@ -1,6 +1,6 @@
 # Build context is the monorepo root (api/app images).
 
-# VCS and local editor config
+# VCS / editor
 .git
 .cursor
 .cursorrules
