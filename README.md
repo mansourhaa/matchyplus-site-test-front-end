@@ -63,9 +63,10 @@ flowchart TB
 
 | Start here | Description |
 | --- | --- |
-| [Contributing](./CONTRIBUTING.md) | Branching, PRs, and self-merge rules (admins only) |
+| [Contributing](./CONTRIBUTING.md) | Branching, PRs, English reviews, self-merge (admins only) |
 | [PR & merge flow](./doc/setup/pr-and-merge-flow.md) | How feature → dev → staging → main works |
 | [Branch protection](./doc/setup/branch-protection.md) | Secure `main` / `staging` / `dev` on the org |
+| [Cursor rules](./.cursor/rules/) | Agent rules aligned with these docs |
 | [Getting Started (A–Z)](./doc/setup/getting-started.md) | Clone, install, configure, and run |
 | [Environments & NODE_ENV](./doc/setup/environments-and-node-env.md) | Env files, NODE_ENV, staging/production |
 | [Environment Variables](./doc/setup/environment-variables.md) | All env vars explained |

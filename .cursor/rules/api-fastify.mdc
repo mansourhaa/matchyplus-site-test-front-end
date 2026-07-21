@@ -1,0 +1,34 @@
+---
+description: Fastify API conventions — routes, services, schemas, auth
+globs: apps/api/**/*
+alwaysApply: false
+---
+
+# API (`apps/api`)
+
+Docs: `doc/features/api-architecture.md`, `doc/features/authentication.md`.
+
+## Layout
+
+```text
+routes/v1/<feature>/actions.ts   # HTTP handlers
+routes/v1/<feature>/autohooks.ts # verifyToken / verifyAdmin
+services/<feature>.ts            # business logic + Prisma
+schemas/v1/<feature>.ts          # AJV JSON Schema
+types/<feature>.ts               # TS types for payloads
+```
+
+## Conventions
+
+- Keep handlers thin; put logic in services injected with `fastify.prisma` (or constructor).
+- Validate with JSON Schema (`additionalProperties: false` on bodies).
+- Protected routes: `autohooks` → `verifyToken`; admin routes also `verifyAdmin`.
+- Prefer `httpErrors` (401/403/404) over bare `throw new Error(...)` for expected failures.
+- Never return password hashes; use explicit Prisma `select`.
+- Enforce role hierarchy for admin mutations (do not let SUPPORT ban/edit SUPER_ADMIN).
+- Reject non-`ACTIVE` users on login / admin auth when status exists.
+- Do not leak other users’ PII on user-facing endpoints (e.g. report create → minimal ack).
+
+## Tests
+
+- Colocate `*.test.ts` next to services; run via `pnpm test` / Vitest.

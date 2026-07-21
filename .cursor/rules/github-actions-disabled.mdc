@@ -1,0 +1,25 @@
+---
+description: Keep GitHub Actions disabled; use local verification only
+globs: .github/workflows/**
+alwaysApply: true
+---
+
+# GitHub Actions — disabled
+
+Per `CONTRIBUTING.md` and `doc/setup/pr-and-merge-flow.md`: **GitHub Actions is off**.
+
+## Rules
+
+- Do **not** rename `*.yml.disabled` → `*.yml` unless a human explicitly requests re-enabling CI.
+- Do **not** add new active workflow files under `.github/workflows/*.yml`.
+- Allowed: edit `ci.yml.disabled` / `pr-guard.yml.disabled` as drafts only (keep the `.disabled` suffix).
+- Verification is **local**: `pnpm lint`, `pnpm test` (and relevant manual checks).
+- Branch protection (when GitHub Team is enabled) must **not** require Actions status checks while Actions stay off — see `doc/setup/branch-protection.md` and `scripts/apply-branch-protection.sh`.
+
+## Re-enable (human-only)
+
+When the team decides to turn CI back on:
+
+1. Rename `.github/workflows/*.yml.disabled` → `*.yml`.
+2. Update docs (`CONTRIBUTING.md`, PR template, branch-protection) to require those checks.
+3. Only then mark required status checks in branch protection.

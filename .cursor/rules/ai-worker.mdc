@@ -1,0 +1,16 @@
+---
+description: Flask AI worker and Redis Streams job conventions
+globs: apps/ai/**/*,packages/ai-contracts/**/*
+alwaysApply: false
+---
+
+# AI worker (`apps/ai`)
+
+Docs: `doc/features/ai-async-jobs.md`, `packages/ai-contracts/README.md`.
+
+## Conventions
+
+- Job shapes live in `@saas-boilerplate/ai-contracts` — update contracts before worker/API drift.
+- API enqueues; Flask consumes Redis Streams and updates durable `AiJob` rows.
+- Keep default/stub processors offline-friendly for local/dev; don’t require paid APIs in tests.
+- Respect existing env flags for real model backends (e.g. Ollama) vs stubs.

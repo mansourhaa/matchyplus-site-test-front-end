@@ -1,0 +1,35 @@
+---
+description: Matchy+ monorepo core — stack, packages, and source-of-truth docs
+alwaysApply: true
+---
+
+# Project core
+
+Repo: **matchy-plus/matchy-plus** (org). Turborepo + pnpm workspaces.
+
+| Package | Role |
+| --- | --- |
+| `apps/app` | Next.js 16 (App Router) |
+| `apps/api` | Fastify 5 REST API |
+| `apps/ai` | Flask + Redis Streams worker |
+| `packages/database` | Prisma 7 + PostgreSQL |
+| `packages/types` | Generated Prisma types |
+| `packages/ai-contracts` | Shared AI job contracts |
+| `packages/ui` | shadcn/ui + Tailwind |
+
+## Source of truth
+
+Prefer these docs over inventing process:
+
+- `CONTRIBUTING.md`
+- `doc/setup/pr-and-merge-flow.md`
+- `doc/setup/branch-protection.md`
+- `doc/architecture/overview.md`
+- `doc/features/*` for feature-area conventions
+
+## Hard constraints
+
+- Do **not** commit secrets (`.env`, tokens, private keys).
+- Do **not** push directly to `dev`, `staging`, or `main`.
+- Do **not** enable GitHub Actions unless the team explicitly asks (see github-actions rule).
+- Feature vertical slices: Prisma → types → service → schemas/routes → app feature (see `doc/practical-workflow-lab.md`).

@@ -27,8 +27,11 @@ feature/* or fix/*  →  dev  →  staging  →  main
 3. **Work branches** start from the latest `dev`.
 4. **Only promotion PRs** go up the chain: `dev` → `staging`, then `staging` → `main`.
 5. Verify locally (`pnpm lint`, `pnpm test`) before asking for merge. This repo does **not** use GitHub Actions.
+6. **PR reviews are in English only** (review comments and approval summaries).
 
 Branch protection on private org repos requires **GitHub Team**. Until that is enabled, the rules above are still mandatory — see [branch-protection.md](./doc/setup/branch-protection.md).
+
+Cursor agent guidance lives in [`.cursor/rules/`](./.cursor/rules/).
 
 ## Day-to-day steps
 

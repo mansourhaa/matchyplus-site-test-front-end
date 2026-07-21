@@ -1,0 +1,24 @@
+---
+description: Conventional commits and local verification (no CI)
+alwaysApply: true
+---
+
+# Commits and local checks
+
+## Commits
+
+- Use conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`…).
+- Prefer `pnpm commit` / commitlint when committing interactively.
+- Commit message = why; keep body short. **No AI co-author trailers** unless the human asks.
+- Author identity = the human’s git config only.
+
+## Verification (Actions disabled)
+
+Before PR / merge readiness:
+
+```bash
+pnpm lint
+pnpm test
+```
+
+Optional: `pnpm format` / targeted builds. Do not claim “CI is green” — there is no active GitHub Actions CI.

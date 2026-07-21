@@ -1,0 +1,31 @@
+---
+description: Next.js app conventions — features, UI, auth cookies
+globs: apps/app/**/*
+alwaysApply: false
+---
+
+# App (`apps/app`)
+
+Docs: `doc/features/ui-system.md`, `doc/features/authentication.md`.
+
+## Layout
+
+```text
+src/app/                 # App Router pages / layouts
+src/features/<feature>/  # schemas, store, hooks
+src/components/          # UI composition
+src/lib/                 # api clients, auth helpers, store
+```
+
+## Conventions
+
+- Prefer feature folders under `src/features/` for domain state and schemas.
+- Use `@saas-boilerplate/ui` / shared Tailwind patterns; don’t invent a parallel design system.
+- Talk to the API via existing clients (axios / feature hooks); don’t bypass auth cookies casually.
+- Never hardcode credentials, demo passwords, or secrets in client components (they ship to the browser).
+- Admin UI must not imply stronger auth than the API enforces; treat client gates as UX only.
+- Match existing Redux / store patterns in `src/features` and `src/lib/store.ts`.
+
+## Tests
+
+- Component/unit tests with Vitest where the codebase already tests similar UI.
