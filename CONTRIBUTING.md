@@ -67,6 +67,10 @@ When `dev` is ready for QA: open **`dev` → `staging`**, get review, merge, ver
 
 When staging is verified: open **`staging` → `main`**, get release-owner approval, merge, verify production.
 
+## CI (disabled)
+
+GitHub Actions is off for now. Workflow files are kept as `.github/workflows/*.yml.disabled` — rename to `.yml` to re-enable. Rely on local `pnpm lint` / `pnpm test` until then.
+
 ## Quick do / don’t
 
 | Do | Don’t |
