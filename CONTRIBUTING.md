@@ -31,8 +31,6 @@ feature/* or fix/*  →  dev  →  staging  →  main
 
 Branch protection on private org repos requires **GitHub Team**. Until that is enabled, the rules above are still mandatory — see [branch-protection.md](./doc/setup/branch-protection.md).
 
-Cursor agent guidance lives in [`.cursor/rules/`](./.cursor/rules/).
-
 ## Day-to-day steps
 
 ### 1. Start from `dev`

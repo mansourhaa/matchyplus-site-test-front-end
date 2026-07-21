@@ -17,6 +17,10 @@ coverage
 # Turbo
 .turbo
 
+# Cursor
+.cursorrules
+.cursor
+
 # Vercel
 .vercel
 
