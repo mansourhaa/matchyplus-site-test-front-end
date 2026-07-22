@@ -198,10 +198,28 @@ const MEMBERS: Prisma.UserCreateInput[] = [
   },
 ];
 
+/**
+ * Admin passwords come from the environment. The documented demo values are only a
+ * convenience for a developer machine, so they are used solely when NODE_ENV is explicitly
+ * `development`; any other environment that reaches this seed has to supply the password
+ * rather than get a publicly known one planted on its database.
+ */
+function adminPassword(variable: string, developmentDemo: string): string {
+  const value = process.env[variable];
+  if (value) return value;
+
+  if (process.env['NODE_ENV'] === 'development') return developmentDemo;
+
+  throw new Error(
+    `Missing required environment variable: ${variable}. ` +
+      'The demo admin password is only a fallback under NODE_ENV=development.',
+  );
+}
+
 export default async function seedDev() {
   // Second line of defence behind the environment switch in `index.ts`: this seed creates
-  // fixed-password admin accounts, so it must never run against a shared environment even if
-  // it is called directly.
+  // admin accounts, so it must never run against a shared environment even if it is called
+  // directly.
   if (process.env['NODE_ENV'] === 'production' || process.env['NODE_ENV'] === 'staging') {
     throw new Error(
       `Refusing to run the development seed with NODE_ENV=${process.env['NODE_ENV']}`,
@@ -222,7 +240,7 @@ export default async function seedDev() {
 
   await prisma.user.create({
     data: {
-      password: bcrypt.hashSync('matchy2026'),
+      password: bcrypt.hashSync(adminPassword('SEED_SUPER_ADMIN_PASSWORD', 'matchy2026')),
       email: 'admin@matchyplus.tn',
       name: 'Super Admin',
       role: Role.SUPER_ADMIN,
@@ -231,7 +249,7 @@ export default async function seedDev() {
 
   await prisma.user.create({
     data: {
-      password: bcrypt.hashSync('mod2026'),
+      password: bcrypt.hashSync(adminPassword('SEED_MODERATOR_PASSWORD', 'mod2026')),
       email: 'mod@matchyplus.tn',
       name: 'Moderateur',
       role: Role.MODERATOR,
