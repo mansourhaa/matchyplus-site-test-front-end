@@ -3,78 +3,7 @@ import bcrypt from 'bcryptjs';
 import { Prisma, ReportStatus, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
 import { prisma } from '../client.js';
-
-/** Ported from Matchy-FullStack's DEFAULT_PLANS (PlansContext). */
-const PLANS: Prisma.PlanCreateInput[] = [
-  {
-    id: UserPlan.FREE,
-    name: 'Gratuit',
-    price: 0,
-    color: '#888888',
-    is_active: true,
-    badge: '',
-    trial_days: 0,
-    description: 'Accès limité aux fonctionnalités de base',
-    features: ['3 profils visibles par catégorie', 'Swipe limité (20/jour)', 'Chat basique'],
-    swipes_per_day: 20,
-    profiles_per_category: 3,
-    messages_per_day: 5,
-    actions_per_day: 10,
-    boosts_per_month: 0,
-    super_connects_per_month: 0,
-    sort_order: 0,
-  },
-  {
-    id: UserPlan.PREMIUM,
-    name: 'Premium',
-    price: 9.9,
-    color: '#2F76BB',
-    is_active: true,
-    badge: 'Populaire',
-    trial_days: 7,
-    description: 'Accès complet aux profils et connexions',
-    features: [
-      'Profils illimités',
-      'Swipe illimité',
-      'Se connecter sans restriction',
-      'Voir les modes de contact',
-      'Messagerie vidéo',
-      'Boost profil × 1/mois',
-    ],
-    swipes_per_day: -1,
-    profiles_per_category: -1,
-    messages_per_day: -1,
-    actions_per_day: -1,
-    boosts_per_month: 1,
-    super_connects_per_month: 0,
-    sort_order: 1,
-  },
-  {
-    id: UserPlan.PREMIUM_PLUS,
-    name: 'Premium+',
-    price: 19.9,
-    color: '#F5A623',
-    is_active: true,
-    badge: 'Meilleure valeur',
-    trial_days: 14,
-    description: 'Accès total + avantages exclusifs',
-    features: [
-      'Tout Premium inclus',
-      'Profil mis en avant',
-      'Accès admin lite',
-      '5 Super Connexions/mois',
-      'Statistiques avancées',
-      'Support prioritaire',
-    ],
-    swipes_per_day: -1,
-    profiles_per_category: -1,
-    messages_per_day: -1,
-    actions_per_day: -1,
-    boosts_per_month: 3,
-    super_connects_per_month: 5,
-    sort_order: 2,
-  },
-];
+import { seedPlans } from './plans.js';
 
 /** Ported from the Matchy-FullStack admin mock data so the admin panel has realistic rows. */
 const MEMBERS: Prisma.UserCreateInput[] = [
@@ -281,9 +210,7 @@ export default async function seedDev() {
 
   // Plans are configuration rather than sample data, so upserting keeps this re-runnable
   // and keeps any locally edited plan from blocking the seed.
-  for (const plan of PLANS) {
-    await prisma.plan.upsert({ where: { id: plan.id }, create: plan, update: {} });
-  }
+  await seedPlans(prisma);
 
   await prisma.user.create({
     data: {
