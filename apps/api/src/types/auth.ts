@@ -70,6 +70,7 @@ export type LoginPhonePayload = {
 export type RegisterPhonePayload = {
   phone: string;
   password: string;
+  code: string;
   name?: string;
 };
 

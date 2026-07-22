@@ -191,9 +191,10 @@ export const registerPhoneSchema = {
     properties: {
       phone: { type: 'string', minLength: 6, maxLength: 20 },
       password: { type: 'string', format: 'password', minLength: 6 },
+      code: { type: 'string', minLength: 4, maxLength: 10 },
       name: { type: 'string' },
     },
-    required: ['phone', 'password'],
+    required: ['phone', 'password', 'code'],
   },
   response: {
     201: {

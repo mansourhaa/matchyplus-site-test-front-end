@@ -81,6 +81,11 @@ export class PhoneAuthenticationService {
       throw new Error('invalid_phone');
     }
 
+    const result = await this.otpClient.checkOtp(phone, payload.code);
+    if (!result.valid) {
+      throw new Error('invalid_otp');
+    }
+
     const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) {
       throw new Error('phone_already_registered');

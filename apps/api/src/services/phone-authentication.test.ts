@@ -35,6 +35,30 @@ describe('PhoneAuthenticationService', () => {
     expect(result).toEqual({ message: 'otp_sent', phone: '+33612345678' });
   });
 
+  it('requires a valid OTP before creating a phone account', async () => {
+    const prisma = createMockPrisma();
+    const otpClient = {
+      sendOtp: vi.fn(),
+      checkOtp: vi.fn().mockResolvedValue({ valid: false, status: 'pending' }),
+    };
+
+    const service = new PhoneAuthenticationService({
+      prisma: prisma as never,
+      otpClient: otpClient as never,
+    });
+
+    await expect(
+      service.registerWithPhone({
+        phone: '+33 6 12 34 56 78',
+        password: 'password123',
+        code: '123456',
+      }),
+    ).rejects.toThrow('invalid_otp');
+
+    expect(otpClient.checkOtp).toHaveBeenCalledWith('+33612345678', '123456');
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
   it('verifies OTP and creates a user when none exists yet', async () => {
     const prisma = createMockPrisma();
     prisma.user.findUnique.mockResolvedValue(null);
