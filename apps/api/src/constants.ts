@@ -54,6 +54,11 @@ export function forbidden(message: string): Error & { statusCode?: number } {
   return httpError(403, message);
 }
 
+/** The request clashes with something that already exists. */
+export function conflict(message: string): Error & { statusCode?: number } {
+  return httpError(409, message);
+}
+
 export function insufficientPrivileges(): Error & { statusCode?: number } {
   return forbidden('insufficient privileges');
 }

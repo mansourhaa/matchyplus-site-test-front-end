@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient, ReportStatus, Role } from '@saas-boilerplate/types';
 
-import { assertMinimumRole, notFound } from '../constants.js';
+import { assertMinimumRole, conflict, notFound } from '../constants.js';
 import { AdminActor } from '../types/admin.js';
 import {
   AdminListReportsQuery,
@@ -40,6 +40,14 @@ const reportAckSelect = {
   status: true,
 } satisfies Prisma.ReportSelect;
 
+/**
+ * One report per reporter, per target, per window. Re-filing the same complaint only floods
+ * the moderation queue and inflates the per-user rollup that admins triage by, so a target
+ * could be buried under reports from a single account. A genuinely new incident can still be
+ * reported once the window has passed, which a plain unique constraint would forbid forever.
+ */
+const REPORT_COOLDOWN_HOURS = 24;
+
 export class ReportsService {
   prisma: PrismaClient;
   constructor(options: AbstractServiceOptions) {
@@ -61,6 +69,15 @@ export class ReportsService {
     });
     if (!reported) {
       throw notFound('reported user not found');
+    }
+
+    const since = new Date(Date.now() - REPORT_COOLDOWN_HOURS * 60 * 60 * 1000);
+    const recent = await this.prisma.report.findFirst({
+      where: { reporter_id: reporterId, reported_id: reportedId, create_at: { gte: since } },
+      select: { id: true },
+    });
+    if (recent) {
+      throw conflict('a report against this user was already filed recently');
     }
 
     const report = await this.prisma.report.create({

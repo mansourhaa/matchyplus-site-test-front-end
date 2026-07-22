@@ -10,6 +10,7 @@ function createMockPrisma() {
     },
     report: {
       create: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue(null),
       findMany: vi.fn(),
       update: vi.fn(),
       groupBy: vi.fn(),
@@ -54,6 +55,49 @@ describe('ReportsService', () => {
     expect(select).not.toHaveProperty('reported');
     expect(select).not.toHaveProperty('password');
     expect(result).toEqual({ reportId: 'r1', status: 'PENDING' });
+  });
+
+  it('refuses a second report against the same target inside the cooldown', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'u2' });
+    prisma.report.findFirst.mockResolvedValue({ id: 'earlier-report' });
+    const service = new ReportsService({ prisma: prisma as never });
+
+    await expect(service.createReport('u1', 'u2', { reason: 'Spam' })).rejects.toMatchObject({
+      message: 'a report against this user was already filed recently',
+      statusCode: 409,
+    });
+    expect(prisma.report.create).not.toHaveBeenCalled();
+  });
+
+  it('scopes the duplicate check to the reporter, the target and a time window', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'u2' });
+    prisma.report.create.mockResolvedValue({ id: 'r1', status: 'PENDING' });
+    const service = new ReportsService({ prisma: prisma as never });
+
+    await service.createReport('u1', 'u2', { reason: 'Spam' });
+
+    const { where } = prisma.report.findFirst.mock.calls[0][0];
+    expect(where.reporter_id).toBe('u1');
+    expect(where.reported_id).toBe('u2');
+    // Bounded window, so a genuinely new incident is still reportable later on.
+    expect(where.create_at.gte).toBeInstanceOf(Date);
+    expect(Date.now() - where.create_at.gte.getTime()).toBeCloseTo(24 * 60 * 60 * 1000, -4);
+  });
+
+  it('lets a reporter file again once the cooldown has passed', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'u2' });
+    // No row inside the window is what an expired cooldown looks like.
+    prisma.report.findFirst.mockResolvedValue(null);
+    prisma.report.create.mockResolvedValue({ id: 'r2', status: 'PENDING' });
+    const service = new ReportsService({ prisma: prisma as never });
+
+    await expect(service.createReport('u1', 'u2', { reason: 'Spam' })).resolves.toEqual({
+      reportId: 'r2',
+      status: 'PENDING',
+    });
   });
 
   it('never selects a password on the reporter or reported party', async () => {
