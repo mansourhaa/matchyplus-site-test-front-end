@@ -123,7 +123,37 @@ describe('ReportsService', () => {
     const service = new ReportsService({ prisma: prisma as never });
 
     await expect(
-      service.updateReportStatus('ghost', { status: 'RESOLVED' } as never),
+      service.updateReportStatus({ id: 'm1', role: 'MODERATOR' } as never, 'ghost', {
+        status: 'RESOLVED',
+      } as never),
     ).rejects.toThrow('report not found');
+  });
+
+  it('refuses to let a SUPPORT rule on a report', async () => {
+    const prisma = createMockPrisma();
+    const service = new ReportsService({ prisma: prisma as never });
+
+    const rejection = service.updateReportStatus({ id: 's1', role: 'SUPPORT' } as never, 'r1', {
+      status: 'DISMISSED',
+    } as never);
+
+    await expect(rejection).rejects.toThrow('insufficient privileges');
+    await expect(rejection).rejects.toMatchObject({ statusCode: 403 });
+    expect(prisma.report.update).not.toHaveBeenCalled();
+  });
+
+  it.each(['MODERATOR', 'SUPER_ADMIN'])('lets a %s rule on a report', async (role) => {
+    const prisma = createMockPrisma();
+    prisma.report.update.mockResolvedValue({ id: 'r1', status: 'RESOLVED' });
+    const service = new ReportsService({ prisma: prisma as never });
+
+    await service.updateReportStatus({ id: 'a1', role } as never, 'r1', {
+      status: 'RESOLVED',
+    } as never);
+
+    expect(prisma.report.update.mock.calls[0][0]).toMatchObject({
+      where: { id: 'r1' },
+      data: { status: 'RESOLVED' },
+    });
   });
 });

@@ -1,5 +1,7 @@
-import { Prisma, PrismaClient, ReportStatus } from '@saas-boilerplate/types';
+import { Prisma, PrismaClient, ReportStatus, Role } from '@saas-boilerplate/types';
 
+import { assertMinimumRole } from '../constants.js';
+import { AdminActor } from '../types/admin.js';
 import {
   AdminListReportsQuery,
   AdminUpdateReportPayload,
@@ -125,7 +127,13 @@ export class ReportsService {
       .filter((row): row is NonNullable<typeof row> => row !== null);
   }
 
-  async updateReportStatus(id: string, payload: AdminUpdateReportPayload) {
+  /**
+   * Ruling on a report is a moderation decision — it is what clears or confirms a flag against
+   * a member — so it starts at MODERATOR. SUPPORT can still read the queue to triage it.
+   */
+  async updateReportStatus(actor: AdminActor, id: string, payload: AdminUpdateReportPayload) {
+    assertMinimumRole(actor.role, Role.MODERATOR);
+
     try {
       return await this.prisma.report.update({
         where: { id },

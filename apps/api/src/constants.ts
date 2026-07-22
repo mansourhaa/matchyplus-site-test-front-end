@@ -27,3 +27,24 @@ export const ROLE_RANK: Record<Role, number> = {
 export function outranks(actor: Role, target: Role): boolean {
   return ROLE_RANK[actor] > ROLE_RANK[target];
 }
+
+/**
+ * 403 shaped the way the error handler expects, so a refused action answers with the status
+ * instead of falling through to a 500.
+ */
+export function insufficientPrivileges(): Error & { statusCode?: number } {
+  const error: Error & { statusCode?: number } = new Error('insufficient privileges');
+  error.statusCode = 403;
+  return error;
+}
+
+/**
+ * Guards an action that has no second account to compare against — plan configuration, report
+ * moderation — against a fixed floor in the hierarchy. Same ranking as `outranks`; `verifyAdmin`
+ * only proves the caller is *an* admin, which is not enough for the control plane.
+ */
+export function assertMinimumRole(actor: Role, minimum: Role): void {
+  if (ROLE_RANK[actor] < ROLE_RANK[minimum]) {
+    throw insufficientPrivileges();
+  }
+}

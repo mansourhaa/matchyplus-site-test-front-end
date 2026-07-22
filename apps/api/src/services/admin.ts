@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 
 import { Prisma, PrismaClient, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
-import { outranks } from '../constants.js';
+import { assertMinimumRole, insufficientPrivileges, outranks } from '../constants.js';
 import {
   AdminActor,
   AdminAnalyticsResult,
@@ -198,9 +198,7 @@ export class AdminService {
     }
 
     if (target.id === actor.id || !outranks(actor.role, target.role)) {
-      const error = new Error('insufficient privileges');
-      (error as Error & { statusCode?: number }).statusCode = 403;
-      throw error;
+      throw insufficientPrivileges();
     }
   }
 
@@ -245,8 +243,12 @@ export class AdminService {
   /**
    * Admin accounts are deleted through the same panel they log in from, so refuse to
    * remove one — an admin must not be able to delete themselves or a peer by accident.
+   * Deleting is at least as destructive as banning, so it goes through the same hierarchy
+   * guard as `updateUserStatus` rather than being open to any admin.
    */
-  async deleteUser(id: string) {
+  async deleteUser(actor: AdminActor, id: string) {
+    await this.assertCanManage(actor, id);
+
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: { id: true, role: true },
@@ -291,7 +293,14 @@ export class AdminService {
     return this.prisma.plan.findMany({ orderBy: { sort_order: 'asc' } });
   }
 
-  async updatePlan(id: UserPlan, payload: AdminUpdatePlanPayload) {
+  /**
+   * Plan configuration is the control plane — price, limits and trial length apply to every
+   * member at once, and raising a member to premium is a paid entitlement. That is above
+   * day-to-day moderation, so it is reserved to SUPER_ADMIN.
+   */
+  async updatePlan(actor: AdminActor, id: UserPlan, payload: AdminUpdatePlanPayload) {
+    assertMinimumRole(actor.role, Role.SUPER_ADMIN);
+
     try {
       return await this.prisma.plan.update({ where: { id }, data: payload });
     } catch (err) {

@@ -127,11 +127,15 @@ describe('AdminService', () => {
 
   it('refuses to delete an admin account', async () => {
     const prisma = createMockPrisma();
-    prisma.user.findUnique.mockResolvedValue({ id: 'a1', role: 'SUPER_ADMIN' });
+    // A target the actor does outrank, so the refusal comes from the admin-account rule
+    // rather than from the hierarchy guard in front of it.
+    prisma.user.findUnique.mockResolvedValue({ id: 'm1', role: 'MODERATOR' });
 
     const service = new AdminService({ prisma: prisma as never });
 
-    await expect(service.deleteUser('a1')).rejects.toThrow('cannot delete an admin account');
+    await expect(
+      service.deleteUser({ id: 'sa1', role: 'SUPER_ADMIN' } as never, 'm1'),
+    ).rejects.toThrow('cannot delete an admin account');
     expect(prisma.user.delete).not.toHaveBeenCalled();
   });
 
@@ -142,8 +146,34 @@ describe('AdminService', () => {
 
     const service = new AdminService({ prisma: prisma as never });
 
-    await expect(service.deleteUser('u1')).resolves.toEqual({ deleted: true });
+    await expect(
+      service.deleteUser({ id: 'm1', role: 'MODERATOR' } as never, 'u1'),
+    ).resolves.toEqual({ deleted: true });
     expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'u1' } });
+  });
+
+  it('refuses to let a lower role delete a peer or a superior', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'sa1', role: 'SUPER_ADMIN' });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(service.deleteUser({ id: 's1', role: 'SUPPORT' } as never, 'sa1')).rejects.toThrow(
+      'insufficient privileges',
+    );
+    expect(prisma.user.delete).not.toHaveBeenCalled();
+  });
+
+  it('refuses to let an admin delete their own account', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'sa1', role: 'SUPER_ADMIN' });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.deleteUser({ id: 'sa1', role: 'SUPER_ADMIN' } as never, 'sa1'),
+    ).rejects.toThrow('insufficient privileges');
+    expect(prisma.user.delete).not.toHaveBeenCalled();
   });
 
   it('reports zero for statuses and plans with no rows', async () => {
@@ -163,6 +193,36 @@ describe('AdminService', () => {
       freeUsers: 2,
       premiumUsers: 0,
       premiumPlusUsers: 0,
+    });
+  });
+});
+
+describe('AdminService plan management', () => {
+  it.each(['SUPPORT', 'MODERATOR'])('refuses to let a %s edit a plan', async (role) => {
+    const prisma = createMockPrisma();
+    const service = new AdminService({ prisma: prisma as never });
+
+    const rejection = service.updatePlan({ id: 'a1', role } as never, 'PREMIUM' as never, {
+      price: 0,
+    });
+
+    await expect(rejection).rejects.toThrow('insufficient privileges');
+    await expect(rejection).rejects.toMatchObject({ statusCode: 403 });
+    expect(prisma.plan.update).not.toHaveBeenCalled();
+  });
+
+  it('lets a super admin edit a plan', async () => {
+    const prisma = createMockPrisma();
+    prisma.plan.update.mockResolvedValue({ id: 'PREMIUM', price: 12.9 });
+
+    const service = new AdminService({ prisma: prisma as never });
+    await service.updatePlan({ id: 'sa1', role: 'SUPER_ADMIN' } as never, 'PREMIUM' as never, {
+      price: 12.9,
+    });
+
+    expect(prisma.plan.update.mock.calls[0][0]).toMatchObject({
+      where: { id: 'PREMIUM' },
+      data: { price: 12.9 },
     });
   });
 });

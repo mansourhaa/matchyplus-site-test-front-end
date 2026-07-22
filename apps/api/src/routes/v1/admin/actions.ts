@@ -84,7 +84,10 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/users/:id',
     { schema: adminDeleteUserSchema },
     async (request, reply) => {
-      const data = await adminService.deleteUser(request.params.id);
+      const data = await adminService.deleteUser(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.params.id,
+      );
       return reply.code(200).send(data);
     },
   );
@@ -103,7 +106,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/plans/:id',
     { schema: adminUpdatePlanSchema },
     async (request, reply) => {
-      const plan = await adminService.updatePlan(request.params.id, request.body);
+      const plan = await adminService.updatePlan(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.params.id,
+        request.body,
+      );
       return reply.code(200).send({ plan });
     },
   );
@@ -140,7 +147,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/reports/:id',
     { schema: adminUpdateReportSchema },
     async (request, reply) => {
-      const report = await reportsService.updateReportStatus(request.params.id, request.body);
+      const report = await reportsService.updateReportStatus(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.params.id,
+        request.body,
+      );
       return reply.code(200).send({ report });
     },
   );
