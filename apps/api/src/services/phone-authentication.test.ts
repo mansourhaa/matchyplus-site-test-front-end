@@ -1,0 +1,72 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import { PhoneAuthenticationService } from './phone-authentication.js';
+import { TokenService } from './token.js';
+
+function createMockPrisma() {
+  return {
+    user: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    refreshToken: {
+      create: vi.fn(),
+    },
+  };
+}
+
+describe('PhoneAuthenticationService', () => {
+  it('sends an OTP after normalizing the phone number', async () => {
+    const prisma = createMockPrisma();
+    const otpClient = {
+      sendOtp: vi.fn().mockResolvedValue({ status: 'pending', sid: 'test-sid' }),
+      checkOtp: vi.fn(),
+    };
+
+    const service = new PhoneAuthenticationService({
+      prisma: prisma as never,
+      otpClient: otpClient as never,
+    });
+
+    const result = await service.sendOtp({ phone: '+33 6 12 34 56 78' });
+
+    expect(otpClient.sendOtp).toHaveBeenCalledWith('+33612345678');
+    expect(result).toEqual({ message: 'otp_sent', phone: '+33612345678' });
+  });
+
+  it('verifies OTP and creates a user when none exists yet', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({
+      id: 'user-1',
+      phone: '+33612345678',
+      auth_provider: 'phone',
+    });
+
+    const otpClient = {
+      sendOtp: vi.fn(),
+      checkOtp: vi.fn().mockResolvedValue({ valid: true, status: 'approved' }),
+    };
+
+    const issueTokenPairSpy = vi
+      .spyOn(TokenService.prototype, 'issueTokenPair')
+      .mockResolvedValue({ accessToken: 'access-token', refreshToken: 'refresh-token' });
+
+    const service = new PhoneAuthenticationService({
+      prisma: prisma as never,
+      otpClient: otpClient as never,
+    });
+
+    const result = await service.verifyOtp({ phone: '06 12 34 56 78', code: '123456' });
+
+    expect(otpClient.checkOtp).toHaveBeenCalledWith('+0612345678', '123456');
+    expect(prisma.user.create).toHaveBeenCalledWith({
+      data: { phone: '+0612345678', auth_provider: 'phone' },
+    });
+    expect(result.accessToken).toBe('access-token');
+    expect(result.user.phone).toBe('+33612345678');
+
+    issueTokenPairSpy.mockRestore();
+  });
+});
