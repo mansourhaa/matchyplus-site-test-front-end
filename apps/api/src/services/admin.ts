@@ -2,7 +2,14 @@ import bcrypt from 'bcryptjs';
 
 import { Prisma, PrismaClient, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
-import { assertMinimumRole, insufficientPrivileges, outranks, rolesBelow } from '../constants.js';
+import {
+  assertMinimumRole,
+  forbidden,
+  insufficientPrivileges,
+  notFound,
+  outranks,
+  rolesBelow,
+} from '../constants.js';
 import {
   AdminActor,
   AdminAnalyticsResult,
@@ -184,7 +191,7 @@ export class AdminService {
         select: userSelect,
       });
     } catch (err) {
-      throw new Error('user not found');
+      throw notFound('user not found');
     }
   }
 
@@ -200,7 +207,7 @@ export class AdminService {
     });
 
     if (!target) {
-      throw new Error('user not found');
+      throw notFound('user not found');
     }
 
     if (target.id === actor.id || !outranks(actor.role, target.role)) {
@@ -228,7 +235,7 @@ export class AdminService {
         select: userSelect,
       });
     } catch (err) {
-      throw new Error('user not found');
+      throw notFound('user not found');
     }
   }
 
@@ -242,7 +249,7 @@ export class AdminService {
         select: userSelect,
       });
     } catch (err) {
-      throw new Error('user not found');
+      throw notFound('user not found');
     }
   }
 
@@ -261,11 +268,11 @@ export class AdminService {
     });
 
     if (!user) {
-      throw new Error('user not found');
+      throw notFound('user not found');
     }
 
     if (user.role !== Role.USER) {
-      throw new Error('cannot delete an admin account');
+      throw forbidden('cannot delete an admin account');
     }
 
     await this.prisma.user.delete({ where: { id } });
@@ -310,7 +317,7 @@ export class AdminService {
     try {
       return await this.prisma.plan.update({ where: { id }, data: payload });
     } catch (err) {
-      throw new Error('plan not found');
+      throw notFound('plan not found');
     }
   }
 
@@ -424,7 +431,7 @@ export class AdminService {
     });
 
     if (!admin) {
-      throw new Error('user not found');
+      throw notFound('user not found');
     }
 
     const isCurrentValid = await bcrypt.compare(payload.currentPassword, admin.password);

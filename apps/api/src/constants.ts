@@ -34,13 +34,28 @@ export function rolesBelow(actor: Role): Role[] {
 }
 
 /**
- * 403 shaped the way the error handler expects, so a refused action answers with the status
- * instead of falling through to a 500.
+ * An error carrying its HTTP status, the shape `set-error-handler` turns into a response.
+ * Without the status the handler falls back to 500, so a refusal or a missing row would be
+ * reported to the panel as a server error.
  */
-export function insufficientPrivileges(): Error & { statusCode?: number } {
-  const error: Error & { statusCode?: number } = new Error('insufficient privileges');
-  error.statusCode = 403;
+function httpError(statusCode: number, message: string): Error & { statusCode?: number } {
+  const error: Error & { statusCode?: number } = new Error(message);
+  error.statusCode = statusCode;
   return error;
+}
+
+/** The row does not exist, or the caller may not know whether it does. */
+export function notFound(message: string): Error & { statusCode?: number } {
+  return httpError(404, message);
+}
+
+/** The caller is authenticated but not allowed to do this. */
+export function forbidden(message: string): Error & { statusCode?: number } {
+  return httpError(403, message);
+}
+
+export function insufficientPrivileges(): Error & { statusCode?: number } {
+  return forbidden('insufficient privileges');
 }
 
 /**

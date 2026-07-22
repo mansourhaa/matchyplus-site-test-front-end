@@ -227,6 +227,39 @@ describe('AdminService', () => {
     expect(prisma.user.delete).not.toHaveBeenCalled();
   });
 
+  it('reports a missing user as a 404 rather than a server error', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.getUserById({ id: 'sa1', role: 'SUPER_ADMIN' } as never, 'ghost'),
+    ).rejects.toMatchObject({ message: 'user not found', statusCode: 404 });
+  });
+
+  it('reports a refusal to delete an admin as a 403', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'm1', role: 'MODERATOR' });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.deleteUser({ id: 'sa1', role: 'SUPER_ADMIN' } as never, 'm1'),
+    ).rejects.toMatchObject({ message: 'cannot delete an admin account', statusCode: 403 });
+  });
+
+  it('reports a missing plan as a 404', async () => {
+    const prisma = createMockPrisma();
+    prisma.plan.update.mockRejectedValue(new Error('no row'));
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.updatePlan({ id: 'sa1', role: 'SUPER_ADMIN' } as never, 'PREMIUM' as never, {}),
+    ).rejects.toMatchObject({ message: 'plan not found', statusCode: 404 });
+  });
+
   it('reports zero for statuses and plans with no rows', async () => {
     const prisma = createMockPrisma();
     prisma.user.count.mockResolvedValue(2);

@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient, ReportStatus, Role } from '@saas-boilerplate/types';
 
-import { assertMinimumRole } from '../constants.js';
+import { assertMinimumRole, notFound } from '../constants.js';
 import { AdminActor } from '../types/admin.js';
 import {
   AdminListReportsQuery,
@@ -60,7 +60,7 @@ export class ReportsService {
       select: { id: true },
     });
     if (!reported) {
-      throw new Error('reported user not found');
+      throw notFound('reported user not found');
     }
 
     const report = await this.prisma.report.create({
@@ -141,7 +141,7 @@ export class ReportsService {
         select: reportSelect,
       });
     } catch (err) {
-      throw new Error('report not found');
+      throw notFound('report not found');
     }
   }
 }

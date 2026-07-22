@@ -126,7 +126,18 @@ describe('ReportsService', () => {
       service.updateReportStatus({ id: 'm1', role: 'MODERATOR' } as never, 'ghost', {
         status: 'RESOLVED',
       } as never),
-    ).rejects.toThrow('report not found');
+    ).rejects.toMatchObject({ message: 'report not found', statusCode: 404 });
+  });
+
+  it('reports a missing target as a 404 rather than a server error', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    const service = new ReportsService({ prisma: prisma as never });
+
+    await expect(service.createReport('u1', 'ghost', { reason: 'x' })).rejects.toMatchObject({
+      message: 'reported user not found',
+      statusCode: 404,
+    });
   });
 
   it('refuses to let a SUPPORT rule on a report', async () => {
