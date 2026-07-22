@@ -29,7 +29,7 @@ export class TokenService {
   signAccessToken(user: Pick<User, 'id' | 'email' | 'phone'>): string {
     const { accessTokenSecret, accessTokenTtl } = config;
     const secret = accessTokenSecret as Secret;
-    const signOptions: SignOptions = { expiresIn: Number(accessTokenTtl) };
+    const signOptions: SignOptions = { expiresIn: accessTokenTtl as SignOptions['expiresIn'] };
 
     return jwt.sign({ id: user.id, email: user.email, phone: user.phone }, secret, signOptions);
   }

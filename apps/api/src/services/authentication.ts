@@ -1,20 +1,14 @@
-import bcrypt from 'bcryptjs';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 
 import { PrismaClient } from '@saas-boilerplate/types';
 
 import { config } from '../config.js';
+import { hashPassword, verifyPassword } from '../lib/password.js';
 import {
   AuthCheckPayload,
-  AuthCheckResult,
   ChangePasswordPayload,
-  ForgotPayload,
-  ForgotResult,
   LoginPayload,
-  LoginResult,
   RegisterPayload,
-  RegisterResult,
-  ResetPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import { TokenService } from './token.js';
@@ -31,8 +25,7 @@ export class AuthenticationService {
     const { accessTokenSecret, accessTokenTtl } = config;
 
     const secret = accessTokenSecret as Secret;
-    const expiresIn = Number(accessTokenTtl);
-    const signOptions: SignOptions = { expiresIn };
+    const signOptions: SignOptions = { expiresIn: accessTokenTtl as SignOptions['expiresIn'] };
 
     let user = null;
     try {
@@ -48,7 +41,7 @@ export class AuthenticationService {
     } catch (err) {
       throw new Error('invalid credentials');
     }
-    const isPasswordValid = await this.validatePassword(payload.password, user.password as string);
+    const isPasswordValid = await verifyPassword(payload.password, user.password as string);
 
     if (!isPasswordValid) {
       throw new Error('invalid credentials');
@@ -79,7 +72,7 @@ export class AuthenticationService {
       throw new Error('user already exist');
     }
 
-    const hashedPassword = await this.hashPassword(payload.password);
+    const hashedPassword = await hashPassword(payload.password);
     user = await this.prisma.user.create({
       data: {
         email: payload.email,
@@ -114,12 +107,12 @@ export class AuthenticationService {
       throw new Error('password_not_set');
     }
 
-    const isValid = await this.validatePassword(payload.currentPassword, user.password);
+    const isValid = await verifyPassword(payload.currentPassword, user.password);
     if (!isValid) {
       throw new Error('invalid_current_password');
     }
 
-    const hashedPassword = await bcrypt.hash(payload.newPassword, 12);
+    const hashedPassword = await hashPassword(payload.newPassword);
     await this.prisma.user.update({
       where: { id: user.id },
       data: { password: hashedPassword },
@@ -128,14 +121,5 @@ export class AuthenticationService {
     await this.tokenService.revokeAllRefreshTokens(user.id);
 
     return { message: 'password_changed', forceLogout: true };
-  }
-
-  private async hashPassword(password: string): Promise<string> {
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    return hashedPassword;
-  }
-  private async validatePassword(password: string, hash: string): Promise<boolean> {
-    return await bcrypt.compare(password, hash);
   }
 }

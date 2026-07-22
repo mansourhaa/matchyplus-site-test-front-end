@@ -1,7 +1,6 @@
-import bcrypt from 'bcryptjs';
-
 import { PrismaClient } from '@saas-boilerplate/types';
 
+import { hashPassword, verifyPassword } from '../lib/password.js';
 import { normalizePhoneForAuth } from '../lib/phone.js';
 import { OtpClient } from '../lib/twilio.js';
 import {
@@ -66,7 +65,7 @@ export class PhoneAuthenticationService {
       throw new Error('invalid_credentials');
     }
 
-    const isValid = await bcrypt.compare(payload.password, user.password);
+    const isValid = await verifyPassword(payload.password, user.password);
     if (!isValid) {
       throw new Error('invalid_credentials');
     }
@@ -91,7 +90,7 @@ export class PhoneAuthenticationService {
       throw new Error('phone_already_registered');
     }
 
-    const hashedPassword = await bcrypt.hash(payload.password, 12);
+    const hashedPassword = await hashPassword(payload.password);
     const user = await this.prisma.user.create({
       data: {
         phone,
@@ -139,7 +138,7 @@ export class PhoneAuthenticationService {
       throw new Error('phone_not_found');
     }
 
-    const hashedPassword = await bcrypt.hash(payload.newPassword, 12);
+    const hashedPassword = await hashPassword(payload.newPassword);
     await this.prisma.user.update({
       where: { id: user.id },
       data: { password: hashedPassword, auth_provider: 'phone' },
