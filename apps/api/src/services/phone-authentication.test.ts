@@ -59,6 +59,94 @@ describe('PhoneAuthenticationService', () => {
     expect(prisma.user.create).not.toHaveBeenCalled();
   });
 
+  it('returns a uniform success response for an unknown phone without sending OTP', async () => {
+    const prisma = createMockPrisma();
+    const otpClient = {
+      sendOtp: vi.fn(),
+      checkOtp: vi.fn(),
+    };
+
+    prisma.user.findUnique.mockResolvedValue(null);
+
+    const service = new PhoneAuthenticationService({
+      prisma: prisma as never,
+      otpClient: otpClient as never,
+    });
+
+    const result = await service.requestPasswordReset({ phone: '+33 6 12 34 56 78' });
+
+    expect(result).toEqual({ message: 'reset_code_sent' });
+    expect(otpClient.sendOtp).not.toHaveBeenCalled();
+  });
+
+  it('returns a uniform success response for a passwordless user without sending OTP', async () => {
+    const prisma = createMockPrisma();
+    const otpClient = {
+      sendOtp: vi.fn(),
+      checkOtp: vi.fn(),
+    };
+
+    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', phone: '+33612345678' });
+
+    const service = new PhoneAuthenticationService({
+      prisma: prisma as never,
+      otpClient: otpClient as never,
+    });
+
+    const result = await service.requestPasswordReset({ phone: '+33 6 12 34 56 78' });
+
+    expect(result).toEqual({ message: 'reset_code_sent' });
+    expect(otpClient.sendOtp).not.toHaveBeenCalled();
+  });
+
+  it('returns a uniform success response and sends OTP for a valid passworded user', async () => {
+    const prisma = createMockPrisma();
+    const otpClient = {
+      sendOtp: vi.fn().mockResolvedValue({ status: 'pending', sid: 'test-sid' }),
+      checkOtp: vi.fn(),
+    };
+
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      phone: '+33612345678',
+      password: 'hashed-password',
+    });
+
+    const service = new PhoneAuthenticationService({
+      prisma: prisma as never,
+      otpClient: otpClient as never,
+    });
+
+    const result = await service.requestPasswordReset({ phone: '+33 6 12 34 56 78' });
+
+    expect(result).toEqual({ message: 'reset_code_sent' });
+    expect(otpClient.sendOtp).toHaveBeenCalledWith('+33612345678');
+  });
+
+  it('returns a uniform success response when OTP delivery fails', async () => {
+    const prisma = createMockPrisma();
+    const otpClient = {
+      sendOtp: vi.fn().mockRejectedValue(new Error('twilio-down')),
+      checkOtp: vi.fn(),
+    };
+
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      phone: '+33612345678',
+      password: 'hashed-password',
+    });
+
+    const service = new PhoneAuthenticationService({
+      prisma: prisma as never,
+      otpClient: otpClient as never,
+    });
+
+    const result = await service.requestPasswordReset({ phone: '+33 6 12 34 56 78' });
+
+    expect(result).toEqual({ message: 'reset_code_sent' });
+    expect(otpClient.sendOtp).toHaveBeenCalledWith('+33612345678');
+  });
+
   it('verifies OTP and creates a user when none exists yet', async () => {
     const prisma = createMockPrisma();
     prisma.user.findUnique.mockResolvedValue(null);

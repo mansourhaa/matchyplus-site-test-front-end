@@ -106,22 +106,25 @@ export class PhoneAuthenticationService {
 
   async requestPasswordReset(payload: RequestPasswordResetPayload) {
     const phone = normalizePhoneForAuth(payload.phone);
+
     if (!phone) {
       throw new Error('invalid_phone');
     }
 
-    const user = await this.prisma.user.findUnique({ where: { phone } });
-    if (!user) {
-      throw new Error('phone_not_found');
-    }
-    if (!user.password) {
-      throw new Error('password_not_set');
+    const user = await this.prisma.user.findUnique({
+      where: { phone },
+    });
+
+    if (user?.password) {
+      try {
+        await this.otpClient.sendOtp(phone);
+      } catch {}
     }
 
-    await this.otpClient.sendOtp(phone);
-    return { message: 'reset_code_sent', phone };
+    return {
+      message: 'reset_code_sent',
+    };
   }
-
   async confirmPasswordReset(payload: ConfirmPasswordResetPayload) {
     const phone = normalizePhoneForAuth(payload.phone);
     if (!phone) {
