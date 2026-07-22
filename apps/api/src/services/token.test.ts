@@ -12,6 +12,7 @@ function createMockPrisma() {
     refreshToken: {
       create: vi.fn(),
       findUnique: vi.fn(),
+      update: vi.fn(),
       updateMany: vi.fn(),
     },
   };
@@ -80,6 +81,7 @@ describe('TokenService', () => {
     });
 
     expect(result.accessToken).toBeTypeOf('string');
+    expect(result.refreshToken).toBeTypeOf('string');
 
     const refreshedPayload = jwt.decode(result.accessToken) as JwtPayload;
 
@@ -246,5 +248,40 @@ describe('TokenService', () => {
         revoked_at: expect.any(Date),
       },
     });
+  });
+
+  it('revokes the used refresh token and issues a replacement on refresh', async () => {
+    const prisma = createMockPrisma();
+    const service = new TokenService({ prisma: prisma as never });
+
+    const refreshToken = await service.issueRefreshToken('user-1');
+    const decoded = jwt.decode(refreshToken) as JwtPayload & {
+      jti: string;
+    };
+
+    const storedTokenHash = await import('node:crypto').then((crypto) =>
+      crypto.createHash('sha256').update(refreshToken).digest('hex'),
+    );
+
+    prisma.refreshToken.findUnique.mockResolvedValue({
+      id: decoded.jti,
+      user_id: 'user-1',
+      token_hash: storedTokenHash,
+      expires_at: new Date(Date.now() + 60_000),
+      revoked_at: null,
+    });
+    prisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+      phone: '+21612345678',
+    });
+
+    const result = await service.refreshAccessToken(refreshToken);
+
+    expect(prisma.refreshToken.update).toHaveBeenCalledWith({
+      where: { id: decoded.jti },
+      data: { revoked_at: expect.any(Date) },
+    });
+    expect(result.refreshToken).toBeTypeOf('string');
   });
 });

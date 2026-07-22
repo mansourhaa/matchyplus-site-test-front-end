@@ -71,7 +71,9 @@ export class TokenService {
     });
   }
 
-  async refreshAccessToken(rawToken: string): Promise<{ accessToken: string }> {
+  async refreshAccessToken(
+    rawToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     let payload: RefreshTokenPayload;
     try {
       payload = jwt.verify(rawToken, config.refreshTokenSecret as Secret) as RefreshTokenPayload;
@@ -99,6 +101,12 @@ export class TokenService {
       throw new Error('invalid_refresh_token');
     }
 
-    return { accessToken: this.signAccessToken(user) };
+    await this.prisma.refreshToken.update({
+      where: { id: payload.jti },
+      data: { revoked_at: new Date() },
+    });
+
+    const refreshToken = await this.issueRefreshToken(user.id);
+    return { accessToken: this.signAccessToken(user), refreshToken };
   }
 }

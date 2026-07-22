@@ -26,7 +26,6 @@ import {
   RegisterPayload,
   RegisterPhonePayload,
   RequestPasswordResetPayload,
-  ResetPayload,
   SendOtpPayload,
   VerifyOtpPayload,
 } from '../../../types/auth.js';
@@ -188,7 +187,10 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     async (request, reply) => {
       try {
         const data = await tokenService.refreshAccessToken(request.body.refresh_token);
-        return reply.code(200).send({ access_token: data.accessToken });
+        return reply.code(200).send({
+          access_token: data.accessToken,
+          refresh_token: data.refreshToken,
+        });
       } catch (err) {
         throw mapError(err as Error);
       }
