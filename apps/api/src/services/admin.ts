@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 
 import { Prisma, PrismaClient, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
-import { assertMinimumRole, insufficientPrivileges, outranks } from '../constants.js';
+import { assertMinimumRole, insufficientPrivileges, outranks, rolesBelow } from '../constants.js';
 import {
   AdminActor,
   AdminAnalyticsResult,
@@ -140,11 +140,14 @@ export class AdminService {
     this.prisma = options.prisma;
   }
 
-  async listUsers(query: AdminListUsersQuery) {
+  async listUsers(actor: AdminActor, query: AdminListUsersQuery) {
     const page = Math.max(1, Number(query.page ?? 1));
     const limit = Math.min(200, Math.max(1, Number(query.limit ?? 50)));
 
-    const where: Prisma.UserWhereInput = {};
+    // Reads follow the same hierarchy as writes. Without this a SUPPORT could page through
+    // a SUPER_ADMIN's profile — email, phone, last login — even though every write against
+    // that row is refused.
+    const where: Prisma.UserWhereInput = { role: { in: rolesBelow(actor.role) } };
 
     if (query.search) {
       where.OR = [
@@ -171,7 +174,10 @@ export class AdminService {
     return { users, total };
   }
 
-  async getUserById(id: string) {
+  /** Same hierarchy as the writes: an admin only opens a profile they could act on. */
+  async getUserById(actor: AdminActor, id: string) {
+    await this.assertCanManage(actor, id);
+
     try {
       return await this.prisma.user.findUniqueOrThrow({
         where: { id },

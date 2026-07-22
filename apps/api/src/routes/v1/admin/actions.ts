@@ -40,7 +40,10 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/users',
     { schema: adminListUsersSchema },
     async (request, reply) => {
-      const data = await adminService.listUsers(request.query);
+      const data = await adminService.listUsers(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.query,
+      );
       return reply.code(200).send(data);
     },
   );
@@ -49,7 +52,10 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/users/:id',
     { schema: adminGetUserSchema },
     async (request, reply) => {
-      const user = await adminService.getUserById(request.params.id);
+      const user = await adminService.getUserById(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.params.id,
+      );
       return reply.code(200).send({ user });
     },
   );

@@ -28,6 +28,11 @@ export function outranks(actor: Role, target: Role): boolean {
   return ROLE_RANK[actor] > ROLE_RANK[target];
 }
 
+/** Every role `actor` sits strictly above: the set they may act on, and the set they may see. */
+export function rolesBelow(actor: Role): Role[] {
+  return (Object.keys(ROLE_RANK) as Role[]).filter((role) => outranks(actor, role));
+}
+
 /**
  * 403 shaped the way the error handler expects, so a refused action answers with the status
  * instead of falling through to a 500.

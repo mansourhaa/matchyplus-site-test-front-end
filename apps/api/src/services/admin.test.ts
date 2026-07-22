@@ -27,7 +27,14 @@ describe('AdminService', () => {
     prisma.user.count.mockResolvedValue(0);
 
     const service = new AdminService({ prisma: prisma as never });
-    await service.listUsers({ search: 'karim', status: 'BANNED', plan: 'FREE' } as never);
+    await service.listUsers(
+      { id: 'sa1', role: 'SUPER_ADMIN' } as never,
+      {
+        search: 'karim',
+        status: 'BANNED',
+        plan: 'FREE',
+      } as never,
+    );
 
     const { where } = prisma.user.findMany.mock.calls[0][0];
     expect(where.status).toBe('BANNED');
@@ -45,11 +52,55 @@ describe('AdminService', () => {
     prisma.user.count.mockResolvedValue(0);
 
     const service = new AdminService({ prisma: prisma as never });
-    await service.listUsers({});
+    await service.listUsers({ id: 'sa1', role: 'SUPER_ADMIN' } as never, {});
 
     const { select } = prisma.user.findMany.mock.calls[0][0];
     expect(select).not.toHaveProperty('password');
     expect(select.email).toBe(true);
+  });
+
+  it.each([
+    ['SUPPORT', ['USER']],
+    ['MODERATOR', ['USER', 'SUPPORT']],
+    ['SUPER_ADMIN', ['USER', 'SUPPORT', 'MODERATOR']],
+  ])('scopes the list a %s sees to the roles below them', async (role, visible) => {
+    const prisma = createMockPrisma();
+    prisma.user.findMany.mockResolvedValue([]);
+    prisma.user.count.mockResolvedValue(0);
+
+    const service = new AdminService({ prisma: prisma as never });
+    await service.listUsers({ id: 'a1', role } as never, {});
+
+    const { where } = prisma.user.findMany.mock.calls[0][0];
+    expect(where.role.in).toEqual(visible);
+    // The count has to be scoped the same way or pagination advertises hidden rows.
+    expect(prisma.user.count.mock.calls[0][0].where.role.in).toEqual(visible);
+  });
+
+  it('refuses to let a moderator open a super admin profile', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'sa1', role: 'SUPER_ADMIN' });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    const rejection = service.getUserById({ id: 'm1', role: 'MODERATOR' } as never, 'sa1');
+
+    await expect(rejection).rejects.toThrow('insufficient privileges');
+    await expect(rejection).rejects.toMatchObject({ statusCode: 403 });
+    // Nothing about the higher-ranked account is read, not even the projection.
+    expect(prisma.user.findUniqueOrThrow).not.toHaveBeenCalled();
+  });
+
+  it('lets an admin open a profile below them', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'USER' });
+    prisma.user.findUniqueOrThrow.mockResolvedValue({ id: 'u1', email: 'u1@x.tn' });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.getUserById({ id: 's1', role: 'SUPPORT' } as never, 'u1'),
+    ).resolves.toMatchObject({ id: 'u1' });
   });
 
   it('ignores fields that are not admin-editable', async () => {
