@@ -80,6 +80,8 @@ flowchart LR
 | `ACCESS_TOKEN_SECRET` | Yes                | JWT signing secret               |
 | `ACCESS_TOKEN_TTL`    | No                 | Token expiry (`1d`, `7d`, `12h`) |
 | `COOKIE_SECRET`       | Yes (staging/prod) | Fastify cookie signing           |
+| `REFRESH_TOKEN_SECRET` | Yes | Secret used to sign refresh tokens. Use a different long random value from `ACCESS_TOKEN_SECRET`. |
+| `REFRESH_TOKEN_TTL_DAYS` | Yes | Number of days before a refresh token expires. |
 
 ### Twilio Verify (phone OTP)
 
