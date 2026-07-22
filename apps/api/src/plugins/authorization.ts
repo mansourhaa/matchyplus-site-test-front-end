@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '@saas-boilerplate/types';
 
 import { isAdminRole } from '../constants.js';
+import { ADMIN_SESSION_COOKIE } from '../services/admin-session.js';
 import { AuthorizationService } from '../services/authorization.js';
 
 /**
@@ -20,7 +21,9 @@ async function authorization(fastify: FastifyInstance) {
     const headerValue = request.headers['authorization'] || '';
 
     const matches = headerValue.match(/bearer\s+(\S+)/i);
-    const token = matches ? matches[1] : null;
+    // The admin panel holds its token in an HttpOnly cookie, so it cannot set the header —
+    // the browser replays the cookie instead. Other clients keep using the bearer header.
+    const token = matches ? matches[1] : (request.cookies?.[ADMIN_SESSION_COOKIE] ?? null);
     if (!token) {
       throw httpErrors.unauthorized(
         // @ts-ignore

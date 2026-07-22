@@ -3,10 +3,16 @@ import _ from 'lodash';
 
 import {
   adminLoginSchema,
+  adminLogoutSchema,
   authCheckSchema,
   loginSchema,
   registerSchema,
 } from '../../../schemas/v1/index.js';
+import {
+  ADMIN_SESSION_COOKIE,
+  adminSessionCookieOptions,
+  clearAdminSessionCookieOptions,
+} from '../../../services/admin-session.js';
 import { AuthenticationService } from '../../../services/authentication.js';
 import { LoginPayload, RegisterPayload, ResetPayload } from '../../../types/auth.js';
 
@@ -57,8 +63,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await authService.adminLogin(request.body);
 
+        // The panel never receives the token in the body: it goes out as an HttpOnly cookie
+        // the browser replays on its own, so no script running in the panel can read it.
+        reply.setCookie(ADMIN_SESSION_COOKIE, data.accessToken, adminSessionCookieOptions());
+
         return reply.code(200).send({
-          access_token: data.accessToken,
           user: _.omit(data.user, ['password']),
         });
       } catch (err) {
@@ -66,6 +75,16 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       }
     },
   );
+
+  /**
+   * An HttpOnly cookie cannot be cleared by the panel, so ending a session has to come back
+   * here. Unauthenticated on purpose: it only clears a cookie, and a caller whose session
+   * already expired must still be able to tidy up.
+   */
+  fastify.post('/admin/logout', { schema: adminLogoutSchema }, async (request, reply) => {
+    reply.clearCookie(ADMIN_SESSION_COOKIE, clearAdminSessionCookieOptions());
+    return reply.code(200).send({ ok: true });
+  });
   fastify.post<{ Body: RegisterPayload }>(
     '/register',
     {

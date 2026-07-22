@@ -1,9 +1,4 @@
-import {
-  ADMIN_AUTH_TOKEN_KEY,
-  ADMIN_AUTH_USER_KEY,
-  clearAdminSession,
-  persistAdminSession,
-} from '@/lib/admin-auth';
+import { ADMIN_AUTH_USER_KEY, clearAdminSession, persistAdminSession } from '@/lib/admin-auth';
 import { api } from '@/lib/api';
 import type { RootState } from '@/lib/store';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
@@ -16,7 +11,8 @@ const isClient = typeof window !== 'undefined';
 const initialState: AdminAuthState = {
   loading: false,
   error: null,
-  accessToken: isClient ? sessionStorage.getItem(ADMIN_AUTH_TOKEN_KEY) : null,
+  // Only the profile is restored: the session token is an HttpOnly cookie this code cannot
+  // read, so "logged in" is tracked by the presence of the admin rather than of a token.
   admin:
     isClient && sessionStorage.getItem(ADMIN_AUTH_USER_KEY)
       ? JSON.parse(sessionStorage.getItem(ADMIN_AUTH_USER_KEY)!)
@@ -28,7 +24,12 @@ export const adminLogin = createAsyncThunk(
   'adminAuth/login',
   async ({ email, password }: AdminLoginInput, { rejectWithValue }) => {
     try {
-      const response = await api.post('/auth/admin/login', { email, password });
+      // `withCredentials` so the browser keeps the HttpOnly session cookie the API sets here.
+      const response = await api.post(
+        '/auth/admin/login',
+        { email, password },
+        { withCredentials: true },
+      );
       return response.data;
     } catch {
       // The endpoint answers the same way for a bad password and for a valid non-admin
@@ -43,7 +44,6 @@ const adminAuthSlice = createSlice({
   initialState,
   reducers: {
     adminLogout(state) {
-      state.accessToken = null;
       state.admin = null;
       state.error = null;
       state.loginAt = null;
@@ -61,13 +61,12 @@ const adminAuthSlice = createSlice({
       })
       .addCase(
         adminLogin.fulfilled,
-        (state, action: PayloadAction<{ access_token: string; user: AdminAuthState['admin'] }>) => {
+        (state, action: PayloadAction<{ user: AdminAuthState['admin'] }>) => {
           state.loading = false;
-          state.accessToken = action.payload.access_token;
           state.admin = action.payload.user;
           state.loginAt = new Date().toISOString();
-          if (action.payload.access_token && action.payload.user) {
-            persistAdminSession(action.payload.access_token, action.payload.user);
+          if (action.payload.user) {
+            persistAdminSession(action.payload.user);
           }
         },
       )
@@ -84,7 +83,7 @@ export const selectAdminAuthState = (state: RootState) => state.adminAuth;
 
 export const selectAdminAuth = createSelector([selectAdminAuthState], (adminAuth) => ({
   ...adminAuth,
-  isAuthenticated: !!adminAuth.accessToken,
+  isAuthenticated: !!adminAuth.admin,
 }));
 
 export default adminAuthSlice.reducer;

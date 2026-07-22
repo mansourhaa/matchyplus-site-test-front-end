@@ -41,7 +41,7 @@ describe('AdminLoginForm', () => {
     vi.restoreAllMocks();
     push.mockClear();
     sessionStorage.clear();
-    document.cookie = 'admin_access_token=; path=/; max-age=0';
+    document.cookie = 'admin_session=; path=/; max-age=0';
   });
 
   it('renders the admin branding and credential fields', () => {
@@ -66,9 +66,9 @@ describe('AdminLoginForm', () => {
   });
 
   it('stores the session and redirects to the panel on success', async () => {
+    // No access_token in the body any more: the API returns it as an HttpOnly cookie.
     const post = vi.spyOn(api, 'post').mockResolvedValue({
       data: {
-        access_token: 'admin-token',
         user: {
           id: 'admin-1',
           email: 'admin@matchyplus.tn',
@@ -83,12 +83,32 @@ describe('AdminLoginForm', () => {
 
     await waitFor(() => expect(push).toHaveBeenCalledWith('/admin'));
 
-    expect(post).toHaveBeenCalledWith('/auth/admin/login', {
-      email: 'admin@matchyplus.tn',
-      password: 'matchy2026',
-    });
+    // `withCredentials` or the browser drops the Set-Cookie on this cross-origin call.
+    expect(post).toHaveBeenCalledWith(
+      '/auth/admin/login',
+      { email: 'admin@matchyplus.tn', password: 'matchy2026' },
+      { withCredentials: true },
+    );
     expect(store.getState().adminAuth.admin?.role).toBe('SUPER_ADMIN');
-    expect(document.cookie).toContain('admin_access_token=admin-token');
+    expect(document.cookie).toContain('admin_session=1');
+  });
+
+  it('never puts the admin token in storage reachable by a script', async () => {
+    vi.spyOn(api, 'post').mockResolvedValue({
+      data: {
+        user: { id: 'admin-1', email: 'a@x.tn', name: 'Super Admin', role: 'SUPER_ADMIN' },
+      },
+    } as never);
+
+    renderForm();
+    submit('a@x.tn', 'matchy2026');
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/admin'));
+
+    // The whole point of the HttpOnly cookie: an injected script finds no credential here.
+    const readable = JSON.stringify(sessionStorage) + document.cookie + localStorage.length;
+    expect(readable).not.toContain('admin_access_token');
+    expect(sessionStorage.getItem('admin_access_token')).toBeNull();
   });
 
   it('shows an error and stays put when the api rejects the credentials', async () => {
@@ -103,6 +123,6 @@ describe('AdminLoginForm', () => {
       await screen.findByText('Identifiants incorrects. Vérifiez votre email et mot de passe.'),
     ).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
-    expect(document.cookie).not.toContain('admin_access_token');
+    expect(document.cookie).not.toContain('admin_session');
   });
 });

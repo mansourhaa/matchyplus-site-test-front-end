@@ -56,10 +56,9 @@ export const adminLoginSchema = {
   },
   response: {
     200: {
-      description: 'Successful response',
+      description: 'Successful response. The token is returned as an HttpOnly cookie, not here.',
       type: 'object',
       properties: {
-        access_token: { type: 'string' },
         user: {
           type: 'object',
           properties: {
@@ -86,6 +85,19 @@ export const adminLoginSchema = {
         status: { type: 'number', default: 500 },
         code: { type: 'string' },
         message: { type: 'string' },
+      },
+    },
+  },
+};
+
+export const adminLogoutSchema = {
+  tags: ['auth', 'admin'],
+  response: {
+    200: {
+      description: 'Session cookie cleared',
+      type: 'object',
+      properties: {
+        ok: { type: 'boolean' },
       },
     },
   },

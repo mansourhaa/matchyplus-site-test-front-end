@@ -34,6 +34,11 @@ export default fp<FastifyCorsOptions>(
       origin: allowedOrigins.length > 0 ? allowedOrigins : true,
       // Defaults to GET,HEAD,POST only, which fails preflight for every write route.
       methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      // The admin panel authenticates with an HttpOnly cookie, which a cross-origin request
+      // only carries when credentials are allowed. Safe because the origin is now an explicit
+      // allowlist everywhere it matters — the pairing of `credentials` with a reflected origin
+      // is what makes that combination dangerous.
+      credentials: true,
     });
   },
   {

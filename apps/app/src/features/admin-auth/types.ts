@@ -10,7 +10,7 @@ export interface AdminUser {
 export interface AdminAuthState {
   loading: boolean;
   error: string | null;
-  accessToken: string | null;
+  /** No token field: the admin session is an HttpOnly cookie the client cannot read. */
   admin: AdminUser | null;
   loginAt: string | null;
 }

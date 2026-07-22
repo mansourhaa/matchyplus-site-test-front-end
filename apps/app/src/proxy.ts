@@ -1,4 +1,4 @@
-import { ADMIN_AUTH_COOKIE } from '@/lib/admin-auth';
+import { ADMIN_SESSION_COOKIE } from '@/lib/admin-auth';
 import { AUTH_COOKIE } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -14,14 +14,18 @@ export function proxy(request: NextRequest) {
   // The admin panel has its own session and its own login screen, so it has to be
   // resolved before the rules below — otherwise admins fall through to /login.
   if (pathname === ADMIN_ROOT || pathname.startsWith(`${ADMIN_ROOT}/`)) {
-    const adminToken = request.cookies.get(ADMIN_AUTH_COOKIE)?.value;
+    // The credential itself is an HttpOnly cookie owned by the API, which this middleware
+    // cannot see once the API sits on another host. Redirects only need to know whether a
+    // session was opened, so they key off the non-secret marker; the API remains the thing
+    // that actually authorises every admin call.
+    const adminSession = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
     const isAdminLogin = pathname === ADMIN_LOGIN_ROUTE;
 
-    if (!adminToken && !isAdminLogin) {
+    if (!adminSession && !isAdminLogin) {
       return NextResponse.redirect(new URL(ADMIN_LOGIN_ROUTE, request.url));
     }
 
-    if (adminToken && isAdminLogin) {
+    if (adminSession && isAdminLogin) {
       return NextResponse.redirect(new URL(ADMIN_ROOT, request.url));
     }
 

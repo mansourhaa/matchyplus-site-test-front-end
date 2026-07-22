@@ -1,23 +1,16 @@
 import axios from 'axios';
 
-import { ADMIN_AUTH_TOKEN_KEY, clearAdminSession } from './admin-auth';
+import { clearAdminSession } from './admin-auth';
 
 /**
  * Separate from `api` because every admin route is behind `verifyToken` + `verifyAdmin`
- * and must carry the admin session token rather than the regular user one.
+ * and must carry the admin session rather than the regular user one. That session is an
+ * HttpOnly cookie the browser replays by itself, so there is no token to read here and put
+ * in an Authorization header — which is exactly the point.
  */
 export const adminApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-});
-
-adminApi.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = sessionStorage.getItem(ADMIN_AUTH_TOKEN_KEY);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
+  withCredentials: true,
 });
 
 adminApi.interceptors.response.use(
