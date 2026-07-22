@@ -44,6 +44,11 @@ function httpError(statusCode: number, message: string): Error & { statusCode?: 
   return error;
 }
 
+/** The request itself is malformed or breaks a rule of the domain. */
+export function badRequest(message: string): Error & { statusCode?: number } {
+  return httpError(400, message);
+}
+
 /** The row does not exist, or the caller may not know whether it does. */
 export function notFound(message: string): Error & { statusCode?: number } {
   return httpError(404, message);

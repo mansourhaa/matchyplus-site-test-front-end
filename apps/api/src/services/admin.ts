@@ -4,6 +4,7 @@ import { Prisma, PrismaClient, Role, UserPlan, UserStatus } from '@saas-boilerpl
 
 import {
   assertMinimumRole,
+  badRequest,
   forbidden,
   insufficientPrivileges,
   notFound,
@@ -422,7 +423,7 @@ export class AdminService {
 
   async changePassword(adminId: string, payload: AdminChangePasswordPayload) {
     if (payload.newPassword.length < 8) {
-      throw new Error('password too short');
+      throw badRequest('password too short');
     }
 
     const admin = await this.prisma.user.findUnique({
@@ -436,7 +437,9 @@ export class AdminService {
 
     const isCurrentValid = await bcrypt.compare(payload.currentPassword, admin.password);
     if (!isCurrentValid) {
-      throw new Error('invalid current password');
+      // 403 and not 401: the admin is authenticated, only this re-check failed. A 401 would
+      // trip the panel's session interceptor and log them out over a mistyped password.
+      throw forbidden('invalid current password');
     }
 
     const hashed = await bcrypt.hash(payload.newPassword, await bcrypt.genSalt(10));

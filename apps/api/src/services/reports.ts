@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient, ReportStatus, Role } from '@saas-boilerplate/types';
 
-import { assertMinimumRole, conflict, notFound } from '../constants.js';
+import { assertMinimumRole, badRequest, conflict, notFound } from '../constants.js';
 import { AdminActor } from '../types/admin.js';
 import {
   AdminListReportsQuery,
@@ -60,7 +60,7 @@ export class ReportsService {
    */
   async createReport(reporterId: string, reportedId: string, payload: CreateReportPayload) {
     if (reporterId === reportedId) {
-      throw new Error('cannot report yourself');
+      throw badRequest('cannot report yourself');
     }
 
     const reported = await this.prisma.user.findUnique({

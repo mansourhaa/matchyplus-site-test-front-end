@@ -23,9 +23,10 @@ describe('ReportsService', () => {
     const prisma = createMockPrisma();
     const service = new ReportsService({ prisma: prisma as never });
 
-    await expect(service.createReport('u1', 'u1', { reason: 'x' })).rejects.toThrow(
-      'cannot report yourself',
-    );
+    await expect(service.createReport('u1', 'u1', { reason: 'x' })).rejects.toMatchObject({
+      message: 'cannot report yourself',
+      statusCode: 400,
+    });
     expect(prisma.report.create).not.toHaveBeenCalled();
   });
 

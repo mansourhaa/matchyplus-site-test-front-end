@@ -478,9 +478,11 @@ describe('AdminService password change', () => {
 
     const service = new AdminService({ prisma: prisma as never });
 
+    // 403 rather than 401: a mistyped password must not trip the panel's session
+    // interceptor and log the admin out.
     await expect(
       service.changePassword('a1', { currentPassword: 'nope', newPassword: 'newpass2026' }),
-    ).rejects.toThrow('invalid current password');
+    ).rejects.toMatchObject({ message: 'invalid current password', statusCode: 403 });
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
@@ -490,7 +492,7 @@ describe('AdminService password change', () => {
 
     await expect(
       service.changePassword('a1', { currentPassword: 'matchy2026', newPassword: 'short' }),
-    ).rejects.toThrow('password too short');
+    ).rejects.toMatchObject({ message: 'password too short', statusCode: 400 });
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
 
