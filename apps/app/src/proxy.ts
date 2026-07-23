@@ -4,9 +4,11 @@ import type { NextRequest } from 'next/server';
 
 const publicRoutes = ['/login', '/register'];
 
+// The admin dashboard lives in its own app (apps/admin) with its own proxy and session.
 export function proxy(request: NextRequest) {
-  const token = request.cookies.get(AUTH_COOKIE)?.value;
   const { pathname } = request.nextUrl;
+
+  const token = request.cookies.get(AUTH_COOKIE)?.value;
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
   if (!token && !isPublicRoute) {

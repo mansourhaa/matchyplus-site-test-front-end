@@ -1,7 +1,7 @@
+import { type Redis } from 'ioredis';
 import { createHash } from 'node:crypto';
 
 import { AiJobType, buildCacheKey } from '@saas-boilerplate/ai-contracts';
-import { type Redis } from 'ioredis';
 
 export class AiCacheService {
   constructor(
@@ -14,7 +14,10 @@ export class AiCacheService {
   }
 
   hashPayload(payload: unknown): string {
-    return createHash('sha256').update(JSON.stringify(payload ?? {})).digest('hex').slice(0, 32);
+    return createHash('sha256')
+      .update(JSON.stringify(payload ?? {}))
+      .digest('hex')
+      .slice(0, 32);
   }
 
   async get<T = unknown>(type: AiJobType, payload: unknown): Promise<T | null> {

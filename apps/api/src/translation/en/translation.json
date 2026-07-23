@@ -1,4 +1,5 @@
 {
 	"hello": "Welcome",
-	"invalid_token": "Invalid Token"
+	"invalid_token": "Invalid Token",
+	"admin_access_required": "Administrator access required"
 }

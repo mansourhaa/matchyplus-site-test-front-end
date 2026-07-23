@@ -18,6 +18,10 @@ export default defineConfig({
       ACCESS_TOKEN_SECRET: 'test-access-token-secret',
       ACCESS_TOKEN_TTL: '3600',
       COOKIE_SECRET: 'test-cookie-secret',
+      // NODE_ENV is 'test' here, so the cors plugin requires an explicit allowlist just like
+      // it does in staging and production; tests run against the deployed shape, not the
+      // permissive development one.
+      CORS_ORIGINS: 'http://localhost:3000',
     },
   },
 });
