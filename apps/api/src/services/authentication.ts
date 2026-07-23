@@ -38,13 +38,13 @@ export class AuthenticationService {
           password: true,
         },
       });
-    } catch (err) {
-      throw new Error('invalid credentials');
+    } catch {
+      throw new Error('invalid_credentials');
     }
     const isPasswordValid = await verifyPassword(payload.password, user.password as string);
 
     if (!isPasswordValid) {
-      throw new Error('invalid credentials');
+      throw new Error('invalid_credentials');
     }
     const tokenPayload = {
       id: user.id,
@@ -69,7 +69,7 @@ export class AuthenticationService {
       },
     });
     if (user) {
-      throw new Error('user already exist');
+      throw new Error('user_already_exists');
     }
 
     const hashedPassword = await hashPassword(payload.password);
@@ -86,7 +86,6 @@ export class AuthenticationService {
   async authCheck(payload: AuthCheckPayload) {
     let user = null;
 
-    console.log(payload);
     try {
       user = await this.prisma.user.findUniqueOrThrow({
         where: { id: payload.id },
@@ -95,8 +94,8 @@ export class AuthenticationService {
           id: true,
         },
       });
-    } catch (err) {
-      throw new Error('Not Found');
+    } catch {
+      throw new Error('user_not_found');
     }
     return user;
   }

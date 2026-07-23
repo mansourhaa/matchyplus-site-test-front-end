@@ -21,7 +21,7 @@ describe('AuthenticationService', () => {
 
     await expect(
       service.login({ email: 'user@example.com', password: 'password123' }),
-    ).rejects.toThrow('invalid credentials');
+    ).rejects.toThrow('invalid_credentials');
   });
 
   it('throws when password is invalid on login', async () => {
@@ -37,7 +37,7 @@ describe('AuthenticationService', () => {
 
     await expect(
       service.login({ email: 'user@example.com', password: 'wrong-password' }),
-    ).rejects.toThrow('invalid credentials');
+    ).rejects.toThrow('invalid_credentials');
   });
 
   it('returns access token and user on successful login', async () => {
@@ -81,6 +81,6 @@ describe('AuthenticationService', () => {
         last_name: 'User',
         name: 'Test User',
       }),
-    ).rejects.toThrow('user already exist');
+    ).rejects.toThrow('user_already_exists');
   });
 });

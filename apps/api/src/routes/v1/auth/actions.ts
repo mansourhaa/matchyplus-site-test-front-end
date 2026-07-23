@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import _ from 'lodash';
 
 import {
@@ -36,7 +36,9 @@ const ERROR_STATUS: Record<string, 'badRequest' | 'unauthorized' | 'notFound' | 
   invalid_credentials: 'unauthorized',
   invalid_refresh_token: 'unauthorized',
   phone_already_registered: 'conflict',
+  user_already_exists: 'conflict',
   phone_not_found: 'notFound',
+  user_not_found: 'notFound',
   password_not_set: 'badRequest',
   invalid_current_password: 'badRequest',
 };
@@ -47,9 +49,32 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   const phoneAuthService = new PhoneAuthenticationService({ prisma, otpClient });
   const tokenService = new TokenService({ prisma });
 
-  function mapError(err: Error) {
+  function mapError(err: Error, request: FastifyRequest) {
     const kind = ERROR_STATUS[err.message];
-    return kind ? httpErrors[kind](err.message) : err;
+
+    if (!kind) {
+      const mapped = httpErrors.internalServerError(
+        request.t('internal_error', {
+          defaultValue: 'An unexpected error occurred',
+        }),
+      );
+
+      mapped.code = 'internal_error';
+      return mapped;
+    }
+
+    const mapped = httpErrors[kind](
+      request.t(err.message, {
+        defaultValue: err.message,
+      }),
+    );
+
+    mapped.code = err.message;
+    return mapped;
+  }
+
+  function translate(request: FastifyRequest, code: string) {
+    return request.t(code, { defaultValue: code });
   }
 
   fastify.post<{ Body: LoginPayload }>(
@@ -67,7 +92,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           user: _.omit(data.user, ['password']),
         });
       } catch (err) {
-        throw err;
+        throw mapError(err as Error, request);
       }
     },
   );
@@ -84,7 +109,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           code: 'account_created_successfully',
         });
       } catch (err) {
-        throw err;
+        throw mapError(err as Error, request);
       }
     },
   );
@@ -101,7 +126,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         });
         return reply.code(200).send({ user: data });
       } catch (err) {
-        throw err;
+        throw mapError(err as Error, request);
       }
     },
   );
@@ -115,9 +140,9 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     async (request, reply) => {
       try {
         const data = await phoneAuthService.sendOtp(request.body);
-        return reply.code(200).send(data);
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
       } catch (err) {
-        throw mapError(err as Error);
+        throw mapError(err as Error, request);
       }
     },
   );
@@ -136,7 +161,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           user: _.omit(data.user, ['password']),
         });
       } catch (err) {
-        throw mapError(err as Error);
+        throw mapError(err as Error, request);
       }
     },
   );
@@ -155,7 +180,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           user: _.omit(data.user, ['password']),
         });
       } catch (err) {
-        throw mapError(err as Error);
+        throw mapError(err as Error, request);
       }
     },
   );
@@ -174,7 +199,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           user: _.omit(data.user, ['password']),
         });
       } catch (err) {
-        throw mapError(err as Error);
+        throw mapError(err as Error, request);
       }
     },
   );
@@ -192,7 +217,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           refresh_token: data.refreshToken,
         });
       } catch (err) {
-        throw mapError(err as Error);
+        throw mapError(err as Error, request);
       }
     },
   );
@@ -205,9 +230,9 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     async (request, reply) => {
       try {
         const data = await phoneAuthService.requestPasswordReset(request.body);
-        return reply.code(200).send(data);
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
       } catch (err) {
-        throw mapError(err as Error);
+        throw mapError(err as Error, request);
       }
     },
   );
@@ -220,9 +245,9 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     async (request, reply) => {
       try {
         const data = await phoneAuthService.confirmPasswordReset(request.body);
-        return reply.code(200).send(data);
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
       } catch (err) {
-        throw mapError(err as Error);
+        throw mapError(err as Error, request);
       }
     },
   );
@@ -239,9 +264,9 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           ...request.body,
           userId: request.loggedUser.id,
         });
-        return reply.code(200).send(data);
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
       } catch (err) {
-        throw mapError(err as Error);
+        throw mapError(err as Error, request);
       }
     },
   );
