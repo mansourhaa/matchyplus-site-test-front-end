@@ -126,7 +126,12 @@ function computeTrends(timeline: CumulativePoint[]): AdminAnalyticsResult['trend
   };
 }
 
-/** Fields an admin is allowed to edit from the user detail panel. */
+/**
+ * Fields an admin is allowed to edit from the user detail panel. `plan` is deliberately
+ * excluded: assigning a paid tier is a control-plane action, and leaving it here let any
+ * admin who merely outranks the target grant premium through this generic update path,
+ * sidestepping the SUPER_ADMIN gate that guards plan management.
+ */
 const editableFields = [
   'name',
   'email',
@@ -139,7 +144,6 @@ const editableFields = [
   'schedule',
   'price',
   'status',
-  'plan',
 ] as const;
 
 export class AdminService {

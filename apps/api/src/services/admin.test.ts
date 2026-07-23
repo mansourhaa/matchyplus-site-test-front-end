@@ -113,6 +113,9 @@ describe('AdminService', () => {
       city: 'Tunis',
       role: 'SUPER_ADMIN',
       rating: 9999,
+      // `plan` is not editable here: granting a paid tier must not ride the generic update
+      // path, it is reserved to the SUPER_ADMIN-gated plan management.
+      plan: 'PREMIUM_PLUS',
     } as never);
 
     const { data } = prisma.user.update.mock.calls[0][0];
