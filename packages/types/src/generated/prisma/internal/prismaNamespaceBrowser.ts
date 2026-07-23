@@ -77,6 +77,10 @@ export const UserScalarFieldEnum = {
   auth_provider: 'auth_provider',
   create_at: 'create_at',
   updated_at: 'updated_at',
+  email_verified: 'email_verified',
+  pending_email: 'pending_email',
+  email_verification_code: 'email_verification_code',
+  email_verification_expires_at: 'email_verification_expires_at',
 } as const;
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];

@@ -16,6 +16,22 @@ function createMockPrisma() {
   };
 }
 
+function createPhoneLinkService(
+  prisma = createMockPrisma(),
+  otpOverrides: Record<string, unknown> = {},
+) {
+  const otpClient = {
+    sendOtp: vi.fn().mockResolvedValue({ status: 'pending', sid: 'test-sid' }),
+    checkOtp: vi.fn().mockResolvedValue({ valid: true, status: 'approved' }),
+    ...otpOverrides,
+  };
+  const service = new PhoneAuthenticationService({
+    prisma: prisma as never,
+    otpClient: otpClient as never,
+  });
+  return { service, prisma, otpClient };
+}
+
 describe('PhoneAuthenticationService', () => {
   it('sends an OTP after normalizing the phone number', async () => {
     const prisma = createMockPrisma();
@@ -180,5 +196,141 @@ describe('PhoneAuthenticationService', () => {
     expect(result.user.phone).toBe('+33612345678');
 
     issueTokenPairSpy.mockRestore();
+  });
+
+  describe('requestPhoneLink', () => {
+    it('rejects when the account was not created via a social provider', async () => {
+      const { service, prisma, otpClient } = createPhoneLinkService();
+      prisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-1',
+        auth_provider: 'email',
+        phone: null,
+      });
+
+      await expect(
+        service.requestPhoneLink({ userId: 'user-1', phone: '+33612345678' }),
+      ).rejects.toThrow('phone_link_not_allowed');
+      expect(otpClient.sendOtp).not.toHaveBeenCalled();
+    });
+
+    it('rejects when the account already has a linked phone', async () => {
+      const { service, prisma, otpClient } = createPhoneLinkService();
+      prisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-1',
+        auth_provider: 'google',
+        phone: '+33600000000',
+      });
+
+      await expect(
+        service.requestPhoneLink({ userId: 'user-1', phone: '+33612345678' }),
+      ).rejects.toThrow('phone_already_linked');
+      expect(otpClient.sendOtp).not.toHaveBeenCalled();
+    });
+
+    it('rejects when the phone number is already registered to someone else', async () => {
+      const { service, prisma, otpClient } = createPhoneLinkService();
+      prisma.user.findUnique
+        .mockResolvedValueOnce({ id: 'user-1', auth_provider: 'google', phone: null })
+        .mockResolvedValueOnce({ id: 'other-user', phone: '+33612345678' });
+
+      await expect(
+        service.requestPhoneLink({ userId: 'user-1', phone: '+33612345678' }),
+      ).rejects.toThrow('phone_already_registered');
+      expect(otpClient.sendOtp).not.toHaveBeenCalled();
+    });
+
+    it('sends an OTP for an eligible social account', async () => {
+      const { service, prisma, otpClient } = createPhoneLinkService();
+      prisma.user.findUnique
+        .mockResolvedValueOnce({ id: 'user-1', auth_provider: 'linkedin', phone: null })
+        .mockResolvedValueOnce(null);
+
+      const result = await service.requestPhoneLink({ userId: 'user-1', phone: '+33612345678' });
+
+      expect(otpClient.sendOtp).toHaveBeenCalledWith('+33612345678');
+      expect(result).toEqual({ message: 'phone_link_code_sent', phone: '+33612345678' });
+    });
+  });
+
+  describe('confirmPhoneLink', () => {
+    it('re-checks eligibility instead of trusting the request-time check', async () => {
+      const { service, prisma, otpClient } = createPhoneLinkService();
+      // The account is no longer eligible by confirm time (e.g. it already linked a
+      // phone through a concurrent request) — confirm must catch this itself.
+      prisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-1',
+        auth_provider: 'google',
+        phone: '+33699999999',
+      });
+
+      await expect(
+        service.confirmPhoneLink({ userId: 'user-1', phone: '+33612345678', code: '123456' }),
+      ).rejects.toThrow('phone_already_linked');
+      expect(otpClient.checkOtp).not.toHaveBeenCalled();
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects a non-social account even if it somehow reaches confirm', async () => {
+      const { service, prisma, otpClient } = createPhoneLinkService();
+      prisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-1',
+        auth_provider: 'email',
+        phone: null,
+      });
+
+      await expect(
+        service.confirmPhoneLink({ userId: 'user-1', phone: '+33612345678', code: '123456' }),
+      ).rejects.toThrow('phone_link_not_allowed');
+      expect(otpClient.checkOtp).not.toHaveBeenCalled();
+    });
+
+    it('rejects an invalid OTP without linking the phone', async () => {
+      const { service, prisma } = createPhoneLinkService(createMockPrisma(), {
+        checkOtp: vi.fn().mockResolvedValue({ valid: false, status: 'pending' }),
+      });
+      prisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-1',
+        auth_provider: 'google',
+        phone: null,
+      });
+
+      await expect(
+        service.confirmPhoneLink({ userId: 'user-1', phone: '+33612345678', code: '000000' }),
+      ).rejects.toThrow('invalid_otp');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects when the phone was claimed by someone else between request and confirm', async () => {
+      const { service, prisma } = createPhoneLinkService();
+      prisma.user.findUnique
+        .mockResolvedValueOnce({ id: 'user-1', auth_provider: 'google', phone: null })
+        .mockResolvedValueOnce({ id: 'other-user', phone: '+33612345678' });
+
+      await expect(
+        service.confirmPhoneLink({ userId: 'user-1', phone: '+33612345678', code: '123456' }),
+      ).rejects.toThrow('phone_already_registered');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('links the phone once every check passes', async () => {
+      const { service, prisma, otpClient } = createPhoneLinkService();
+      prisma.user.findUnique
+        .mockResolvedValueOnce({ id: 'user-1', auth_provider: 'google', phone: null })
+        .mockResolvedValueOnce(null);
+      prisma.user.update.mockResolvedValue({ id: 'user-1', phone: '+33612345678' });
+
+      const result = await service.confirmPhoneLink({
+        userId: 'user-1',
+        phone: '+33612345678',
+        code: '123456',
+      });
+
+      expect(otpClient.checkOtp).toHaveBeenCalledWith('+33612345678', '123456');
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { phone: '+33612345678' },
+      });
+      expect(result).toEqual({ message: 'phone_linked', phone: '+33612345678' });
+    });
   });
 });

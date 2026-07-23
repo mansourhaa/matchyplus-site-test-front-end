@@ -47,7 +47,7 @@ export const config = {
    */
   accessTokenSecret: requiredVar('ACCESS_TOKEN_SECRET'),
   accessTokenTtl: requiredVar('ACCESS_TOKEN_TTL'),
-
+  verificationCodeSecret: requiredVar('VERIFICATION_CODE_SECRET'),
   /**
    * Option C — async AI queue / cache
    */
@@ -68,4 +68,17 @@ export const config = {
    */
   refreshTokenSecret: requiredVar('REFRESH_TOKEN_SECRET'),
   refreshTokenTtlDays: requiredIntVar('REFRESH_TOKEN_TTL_DAYS'),
+
+  /**
+   * Email (SMTP) — optional. Email verification fails at request time (not at server
+   * boot) if these aren't set.
+   */
+  smtpHost: process.env.SMTP_HOST,
+  smtpPort: process.env.SMTP_PORT,
+  smtpUser: process.env.SMTP_USER,
+  smtpPass: process.env.SMTP_PASS,
+  smtpFrom: process.env.SMTP_FROM,
+  smtpFromName: process.env.SMTP_FROM_NAME,
+  smtpSecure: process.env.SMTP_SECURE,
+  appName: process.env.APP_NAME,
 };

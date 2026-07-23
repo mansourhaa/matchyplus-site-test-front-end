@@ -671,6 +671,10 @@ export const UserScalarFieldEnum = {
   auth_provider: 'auth_provider',
   create_at: 'create_at',
   updated_at: 'updated_at',
+  email_verified: 'email_verified',
+  pending_email: 'pending_email',
+  email_verification_code: 'email_verification_code',
+  email_verification_expires_at: 'email_verification_expires_at',
 } as const;
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
@@ -773,6 +777,11 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>;
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>;
 
 /**
  * Reference to a field of type 'AiJobType'

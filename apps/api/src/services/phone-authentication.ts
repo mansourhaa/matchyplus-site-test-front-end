@@ -1,13 +1,16 @@
 import { PrismaClient } from '@saas-boilerplate/types';
 
+import { SOCIAL_AUTH_PROVIDERS } from '../constants.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import { normalizePhoneForAuth } from '../lib/phone.js';
 import { OtpClient } from '../lib/twilio.js';
 import {
   ConfirmPasswordResetPayload,
+  ConfirmPhoneLinkPayload,
   LoginPhonePayload,
   RegisterPhonePayload,
   RequestPasswordResetPayload,
+  RequestPhoneLinkPayload,
   SendOtpPayload,
   VerifyOtpPayload,
 } from '../types/auth.js';
@@ -148,5 +151,69 @@ export class PhoneAuthenticationService {
     });
 
     return { message: 'password_reset' };
+  }
+
+  async requestPhoneLink(payload: RequestPhoneLinkPayload) {
+    const phone = normalizePhoneForAuth(payload.phone);
+    if (!phone) {
+      throw new Error('invalid_phone');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user) {
+      throw new Error('user_not_found');
+    }
+    if (!SOCIAL_AUTH_PROVIDERS.has(user.auth_provider)) {
+      throw new Error('phone_link_not_allowed');
+    }
+    if (user.phone) {
+      throw new Error('phone_already_linked');
+    }
+
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
+    if (existing) {
+      throw new Error('phone_already_registered');
+    }
+
+    await this.otpClient.sendOtp(phone);
+    return { message: 'phone_link_code_sent', phone };
+  }
+
+  async confirmPhoneLink(payload: ConfirmPhoneLinkPayload) {
+    const phone = normalizePhoneForAuth(payload.phone);
+    if (!phone) {
+      throw new Error('invalid_phone');
+    }
+
+    // Re-check eligibility at confirm time, not just at request time — the account's
+    // provider/phone state can change in between (e.g. a concurrent link completing),
+    // so trusting the request-time check alone would let a stale request overwrite it.
+    const user = await this.prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user) {
+      throw new Error('user_not_found');
+    }
+    if (!SOCIAL_AUTH_PROVIDERS.has(user.auth_provider)) {
+      throw new Error('phone_link_not_allowed');
+    }
+    if (user.phone) {
+      throw new Error('phone_already_linked');
+    }
+
+    const result = await this.otpClient.checkOtp(phone, payload.code);
+    if (!result.valid) {
+      throw new Error('invalid_otp');
+    }
+
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
+    if (existing) {
+      throw new Error('phone_already_registered');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { phone },
+    });
+
+    return { message: 'phone_linked', phone: updated.phone as string };
   }
 }

@@ -4,13 +4,17 @@ import _ from 'lodash';
 import {
   authCheckSchema,
   changePasswordSchema,
+  confirmEmailVerificationSchema,
   confirmPasswordResetSchema,
+  confirmPhoneLinkSchema,
   loginPhoneSchema,
   loginSchema,
   refreshSchema,
   registerPhoneSchema,
   registerSchema,
+  requestEmailVerificationSchema,
   requestPasswordResetSchema,
+  requestPhoneLinkSchema,
   sendOtpSchema,
   verifyOtpSchema,
 } from '../../../schemas/v1/index.js';
@@ -19,18 +23,25 @@ import { PhoneAuthenticationService } from '../../../services/phone-authenticati
 import { TokenService } from '../../../services/token.js';
 import {
   ChangePasswordPayload,
+  ConfirmEmailVerificationPayload,
   ConfirmPasswordResetPayload,
+  ConfirmPhoneLinkPayload,
   LoginPayload,
   LoginPhonePayload,
   RefreshPayload,
   RegisterPayload,
   RegisterPhonePayload,
+  RequestEmailVerificationPayload,
   RequestPasswordResetPayload,
+  RequestPhoneLinkPayload,
   SendOtpPayload,
   VerifyOtpPayload,
 } from '../../../types/auth.js';
 
-const ERROR_STATUS: Record<string, 'badRequest' | 'unauthorized' | 'notFound' | 'conflict'> = {
+const ERROR_STATUS: Record<
+  string,
+  'badRequest' | 'unauthorized' | 'forbidden' | 'notFound' | 'conflict' | 'serviceUnavailable'
+> = {
   invalid_phone: 'badRequest',
   invalid_otp: 'badRequest',
   invalid_credentials: 'unauthorized',
@@ -41,11 +52,16 @@ const ERROR_STATUS: Record<string, 'badRequest' | 'unauthorized' | 'notFound' | 
   user_not_found: 'notFound',
   password_not_set: 'badRequest',
   invalid_current_password: 'badRequest',
+  phone_link_not_allowed: 'forbidden',
+  phone_already_linked: 'badRequest',
+  email_already_used: 'conflict',
+  invalid_verification_code: 'badRequest',
+  smtp_not_configured: 'serviceUnavailable',
 };
 
 const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-  const { prisma, otpClient, httpErrors } = fastify;
-  const authService = new AuthenticationService({ prisma });
+  const { prisma, otpClient, emailClient, httpErrors } = fastify;
+  const authService = new AuthenticationService({ prisma, emailClient });
   const phoneAuthService = new PhoneAuthenticationService({ prisma, otpClient });
   const tokenService = new TokenService({ prisma });
 
@@ -261,6 +277,84 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     async (request, reply) => {
       try {
         const data = await authService.changePassword({
+          ...request.body,
+          userId: request.loggedUser.id,
+        });
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
+  fastify.post<{ Body: Omit<RequestEmailVerificationPayload, 'userId'> }>(
+    '/email-verification/request',
+    {
+      schema: requestEmailVerificationSchema,
+      preHandler: [fastify.verifyToken],
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+    },
+    async (request, reply) => {
+      try {
+        const data = await authService.requestEmailVerification({
+          ...request.body,
+          userId: request.loggedUser.id,
+        });
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
+  fastify.post<{ Body: Omit<ConfirmEmailVerificationPayload, 'userId'> }>(
+    '/email-verification/confirm',
+    {
+      schema: confirmEmailVerificationSchema,
+      preHandler: [fastify.verifyToken],
+    },
+    async (request, reply) => {
+      try {
+        const data = await authService.confirmEmailVerification({
+          ...request.body,
+          userId: request.loggedUser.id,
+        });
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
+  fastify.post<{ Body: Omit<RequestPhoneLinkPayload, 'userId'> }>(
+    '/phone-link/request',
+    {
+      schema: requestPhoneLinkSchema,
+      preHandler: [fastify.verifyToken],
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+    },
+    async (request, reply) => {
+      try {
+        const data = await phoneAuthService.requestPhoneLink({
+          ...request.body,
+          userId: request.loggedUser.id,
+        });
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
+  fastify.post<{ Body: Omit<ConfirmPhoneLinkPayload, 'userId'> }>(
+    '/phone-link/confirm',
+    {
+      schema: confirmPhoneLinkSchema,
+      preHandler: [fastify.verifyToken],
+    },
+    async (request, reply) => {
+      try {
+        const data = await phoneAuthService.confirmPhoneLink({
           ...request.body,
           userId: request.loggedUser.id,
         });

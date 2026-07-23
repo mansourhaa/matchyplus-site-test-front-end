@@ -101,6 +101,20 @@ Typical values:
 
 For local testing, use a Twilio trial account and make sure the destination phone number is verified in Twilio. The API uses these values in the phone OTP flow for sending and validating SMS codes.
 
+### Email (SMTP) — optional
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `SMTP_HOST` | No | SMTP server host |
+| `SMTP_PORT` | No | SMTP server port (e.g. `587`, `465`) |
+| `SMTP_USER` | No | SMTP auth username |
+| `SMTP_PASS` | No | SMTP auth password |
+| `SMTP_FROM` | No | `From` address for outgoing mail |
+| `SMTP_FROM_NAME` | No | `From` display name (defaults to `APP_NAME`) |
+| `SMTP_SECURE` | No | Force TLS (`true`/`false`); defaults to `true` only on port `465` |
+
+> Email verification is optional infrastructure: if any of `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / a resolvable "from" address are missing, the server still boots normally — `POST /auth/email-verification/request` just fails at request time with `smtp_not_configured` (503) instead of the process refusing to start.
+
 ### Frontend (Next.js)
 
 | Variable              | Required | Description                            |
