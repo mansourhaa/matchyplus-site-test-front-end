@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from '@/components/shared/providers/theme-provider';
 import { Spinner } from '@/components/shared/spinner';
+import { AuthBootstrap } from '@/features/auth/components/auth-bootstrap';
 import { persistor, store } from '@/lib/store';
 import type React from 'react';
 import { Provider } from 'react-redux';
@@ -24,7 +25,7 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AuthBootstrap>{children}</AuthBootstrap>
         </ThemeProvider>
       </PersistGate>
     </Provider>
