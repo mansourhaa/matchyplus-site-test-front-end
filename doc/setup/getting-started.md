@@ -2,7 +2,7 @@
 
 This guide walks you through setting up the **Full Stack SaaS Boilerplate** from a fresh clone to a running local environment.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 ## Setup flow
 
@@ -59,7 +59,7 @@ corepack prepare pnpm@10.12.4 --activate
 ## 2. Clone the repository
 
 ```bash
-git clone https://github.com/Khalil-Bchir/full-stack-saas-boilerplate.git
+git clone https://github.com/matchy-plus/matchy-plus.git
 cd full-stack-saas-boilerplate
 ```
 

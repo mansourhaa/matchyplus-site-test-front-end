@@ -39,11 +39,11 @@ patches:
 
 images:
   - name: saas-boilerplate-api
-    newName: ghcr.io/khalil-bchir/saas-boilerplate-api
+    newName: ghcr.io/matchy-plus/saas-boilerplate-api
     newTag: production
   - name: saas-boilerplate-app
-    newName: ghcr.io/khalil-bchir/saas-boilerplate-app
+    newName: ghcr.io/matchy-plus/saas-boilerplate-app
     newTag: production
   - name: saas-boilerplate-ai
-    newName: ghcr.io/khalil-bchir/saas-boilerplate-ai
+    newName: ghcr.io/matchy-plus/saas-boilerplate-ai
     newTag: production
