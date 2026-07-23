@@ -33,6 +33,10 @@ export type UserMinAggregateOutputType = {
   auth_provider: string | null;
   create_at: Date | null;
   updated_at: Date | null;
+  email_verified: boolean | null;
+  pending_email: string | null;
+  email_verification_code: string | null;
+  email_verification_expires_at: Date | null;
 };
 
 export type UserMaxAggregateOutputType = {
@@ -44,6 +48,10 @@ export type UserMaxAggregateOutputType = {
   auth_provider: string | null;
   create_at: Date | null;
   updated_at: Date | null;
+  email_verified: boolean | null;
+  pending_email: string | null;
+  email_verification_code: string | null;
+  email_verification_expires_at: Date | null;
 };
 
 export type UserCountAggregateOutputType = {
@@ -55,6 +63,10 @@ export type UserCountAggregateOutputType = {
   auth_provider: number;
   create_at: number;
   updated_at: number;
+  email_verified: number;
+  pending_email: number;
+  email_verification_code: number;
+  email_verification_expires_at: number;
   _all: number;
 };
 
@@ -67,6 +79,10 @@ export type UserMinAggregateInputType = {
   auth_provider?: true;
   create_at?: true;
   updated_at?: true;
+  email_verified?: true;
+  pending_email?: true;
+  email_verification_code?: true;
+  email_verification_expires_at?: true;
 };
 
 export type UserMaxAggregateInputType = {
@@ -78,6 +94,10 @@ export type UserMaxAggregateInputType = {
   auth_provider?: true;
   create_at?: true;
   updated_at?: true;
+  email_verified?: true;
+  pending_email?: true;
+  email_verification_code?: true;
+  email_verification_expires_at?: true;
 };
 
 export type UserCountAggregateInputType = {
@@ -89,6 +109,10 @@ export type UserCountAggregateInputType = {
   auth_provider?: true;
   create_at?: true;
   updated_at?: true;
+  email_verified?: true;
+  pending_email?: true;
+  email_verification_code?: true;
+  email_verification_expires_at?: true;
   _all?: true;
 };
 
@@ -174,6 +198,10 @@ export type UserGroupByOutputType = {
   auth_provider: string;
   create_at: Date;
   updated_at: Date;
+  email_verified: boolean;
+  pending_email: string | null;
+  email_verification_code: string | null;
+  email_verification_expires_at: Date | null;
   _count: UserCountAggregateOutputType | null;
   _min: UserMinAggregateOutputType | null;
   _max: UserMaxAggregateOutputType | null;
@@ -203,6 +231,10 @@ export type UserWhereInput = {
   auth_provider?: Prisma.StringFilter<'User'> | string;
   create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
   updated_at?: Prisma.DateTimeFilter<'User'> | Date | string;
+  email_verified?: Prisma.BoolFilter<'User'> | boolean;
+  pending_email?: Prisma.StringNullableFilter<'User'> | string | null;
+  email_verification_code?: Prisma.StringNullableFilter<'User'> | string | null;
+  email_verification_expires_at?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
   aiJobs?: Prisma.AiJobListRelationFilter;
   refresh_tokens?: Prisma.RefreshTokenListRelationFilter;
 };
@@ -216,6 +248,10 @@ export type UserOrderByWithRelationInput = {
   auth_provider?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
+  email_verified?: Prisma.SortOrder;
+  pending_email?: Prisma.SortOrderInput | Prisma.SortOrder;
+  email_verification_code?: Prisma.SortOrderInput | Prisma.SortOrder;
+  email_verification_expires_at?: Prisma.SortOrderInput | Prisma.SortOrder;
   aiJobs?: Prisma.AiJobOrderByRelationAggregateInput;
   refresh_tokens?: Prisma.RefreshTokenOrderByRelationAggregateInput;
 };
@@ -233,6 +269,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     auth_provider?: Prisma.StringFilter<'User'> | string;
     create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
     updated_at?: Prisma.DateTimeFilter<'User'> | Date | string;
+    email_verified?: Prisma.BoolFilter<'User'> | boolean;
+    pending_email?: Prisma.StringNullableFilter<'User'> | string | null;
+    email_verification_code?: Prisma.StringNullableFilter<'User'> | string | null;
+    email_verification_expires_at?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
     aiJobs?: Prisma.AiJobListRelationFilter;
     refresh_tokens?: Prisma.RefreshTokenListRelationFilter;
   },
@@ -248,6 +288,10 @@ export type UserOrderByWithAggregationInput = {
   auth_provider?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
+  email_verified?: Prisma.SortOrder;
+  pending_email?: Prisma.SortOrderInput | Prisma.SortOrder;
+  email_verification_code?: Prisma.SortOrderInput | Prisma.SortOrder;
+  email_verification_expires_at?: Prisma.SortOrderInput | Prisma.SortOrder;
   _count?: Prisma.UserCountOrderByAggregateInput;
   _max?: Prisma.UserMaxOrderByAggregateInput;
   _min?: Prisma.UserMinOrderByAggregateInput;
@@ -265,6 +309,11 @@ export type UserScalarWhereWithAggregatesInput = {
   auth_provider?: Prisma.StringWithAggregatesFilter<'User'> | string;
   create_at?: Prisma.DateTimeWithAggregatesFilter<'User'> | Date | string;
   updated_at?: Prisma.DateTimeWithAggregatesFilter<'User'> | Date | string;
+  email_verified?: Prisma.BoolWithAggregatesFilter<'User'> | boolean;
+  pending_email?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  email_verification_code?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  email_verification_expires_at?:
+    Prisma.DateTimeNullableWithAggregatesFilter<'User'> | Date | string | null;
 };
 
 export type UserCreateInput = {
@@ -276,6 +325,10 @@ export type UserCreateInput = {
   auth_provider?: string;
   create_at?: Date | string;
   updated_at?: Date | string;
+  email_verified?: boolean;
+  pending_email?: string | null;
+  email_verification_code?: string | null;
+  email_verification_expires_at?: Date | string | null;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
 };
@@ -289,6 +342,10 @@ export type UserUncheckedCreateInput = {
   auth_provider?: string;
   create_at?: Date | string;
   updated_at?: Date | string;
+  email_verified?: boolean;
+  pending_email?: string | null;
+  email_verification_code?: string | null;
+  email_verification_expires_at?: Date | string | null;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
 };
@@ -302,6 +359,11 @@ export type UserUpdateInput = {
   auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_expires_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
 };
@@ -315,6 +377,11 @@ export type UserUncheckedUpdateInput = {
   auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_expires_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
@@ -328,6 +395,10 @@ export type UserCreateManyInput = {
   auth_provider?: string;
   create_at?: Date | string;
   updated_at?: Date | string;
+  email_verified?: boolean;
+  pending_email?: string | null;
+  email_verification_code?: string | null;
+  email_verification_expires_at?: Date | string | null;
 };
 
 export type UserUpdateManyMutationInput = {
@@ -339,6 +410,11 @@ export type UserUpdateManyMutationInput = {
   auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_expires_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
 
 export type UserUncheckedUpdateManyInput = {
@@ -350,6 +426,11 @@ export type UserUncheckedUpdateManyInput = {
   auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_expires_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
 
 export type UserCountOrderByAggregateInput = {
@@ -361,6 +442,10 @@ export type UserCountOrderByAggregateInput = {
   auth_provider?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
+  email_verified?: Prisma.SortOrder;
+  pending_email?: Prisma.SortOrder;
+  email_verification_code?: Prisma.SortOrder;
+  email_verification_expires_at?: Prisma.SortOrder;
 };
 
 export type UserMaxOrderByAggregateInput = {
@@ -372,6 +457,10 @@ export type UserMaxOrderByAggregateInput = {
   auth_provider?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
+  email_verified?: Prisma.SortOrder;
+  pending_email?: Prisma.SortOrder;
+  email_verification_code?: Prisma.SortOrder;
+  email_verification_expires_at?: Prisma.SortOrder;
 };
 
 export type UserMinOrderByAggregateInput = {
@@ -383,6 +472,10 @@ export type UserMinOrderByAggregateInput = {
   auth_provider?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
+  email_verified?: Prisma.SortOrder;
+  pending_email?: Prisma.SortOrder;
+  email_verification_code?: Prisma.SortOrder;
+  email_verification_expires_at?: Prisma.SortOrder;
 };
 
 export type UserScalarRelationFilter = {
@@ -405,6 +498,14 @@ export type NullableStringFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string;
+};
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean;
+};
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null;
 };
 
 export type UserCreateNestedOneWithoutRefresh_tokensInput = {
@@ -470,6 +571,10 @@ export type UserCreateWithoutRefresh_tokensInput = {
   auth_provider?: string;
   create_at?: Date | string;
   updated_at?: Date | string;
+  email_verified?: boolean;
+  pending_email?: string | null;
+  email_verification_code?: string | null;
+  email_verification_expires_at?: Date | string | null;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
 };
 
@@ -482,6 +587,10 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   auth_provider?: string;
   create_at?: Date | string;
   updated_at?: Date | string;
+  email_verified?: boolean;
+  pending_email?: string | null;
+  email_verification_code?: string | null;
+  email_verification_expires_at?: Date | string | null;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
 };
 
@@ -522,6 +631,11 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_expires_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
 };
 
@@ -534,6 +648,11 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_expires_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
 };
 
@@ -546,6 +665,10 @@ export type UserCreateWithoutAiJobsInput = {
   auth_provider?: string;
   create_at?: Date | string;
   updated_at?: Date | string;
+  email_verified?: boolean;
+  pending_email?: string | null;
+  email_verification_code?: string | null;
+  email_verification_expires_at?: Date | string | null;
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
 };
 
@@ -558,6 +681,10 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   auth_provider?: string;
   create_at?: Date | string;
   updated_at?: Date | string;
+  email_verified?: boolean;
+  pending_email?: string | null;
+  email_verification_code?: string | null;
+  email_verification_expires_at?: Date | string | null;
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
@@ -598,6 +725,11 @@ export type UserUpdateWithoutAiJobsInput = {
   auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_expires_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
 };
 
@@ -610,6 +742,11 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  email_verification_expires_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
@@ -671,6 +808,10 @@ export type UserSelect<
     auth_provider?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
+    email_verified?: boolean;
+    pending_email?: boolean;
+    email_verification_code?: boolean;
+    email_verification_expires_at?: boolean;
     aiJobs?: boolean | Prisma.User$aiJobsArgs<ExtArgs>;
     refresh_tokens?: boolean | Prisma.User$refresh_tokensArgs<ExtArgs>;
     _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
@@ -690,6 +831,10 @@ export type UserSelectCreateManyAndReturn<
     auth_provider?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
+    email_verified?: boolean;
+    pending_email?: boolean;
+    email_verification_code?: boolean;
+    email_verification_expires_at?: boolean;
   },
   ExtArgs['result']['user']
 >;
@@ -706,6 +851,10 @@ export type UserSelectUpdateManyAndReturn<
     auth_provider?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
+    email_verified?: boolean;
+    pending_email?: boolean;
+    email_verification_code?: boolean;
+    email_verification_expires_at?: boolean;
   },
   ExtArgs['result']['user']
 >;
@@ -719,12 +868,27 @@ export type UserSelectScalar = {
   auth_provider?: boolean;
   create_at?: boolean;
   updated_at?: boolean;
+  email_verified?: boolean;
+  pending_email?: boolean;
+  email_verification_code?: boolean;
+  email_verification_expires_at?: boolean;
 };
 
 export type UserOmit<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetOmit<
-  'id' | 'name' | 'email' | 'phone' | 'password' | 'auth_provider' | 'create_at' | 'updated_at',
+  | 'id'
+  | 'name'
+  | 'email'
+  | 'phone'
+  | 'password'
+  | 'auth_provider'
+  | 'create_at'
+  | 'updated_at'
+  | 'email_verified'
+  | 'pending_email'
+  | 'email_verification_code'
+  | 'email_verification_expires_at',
   ExtArgs['result']['user']
 >;
 export type UserInclude<
@@ -759,6 +923,10 @@ export type $UserPayload<
       auth_provider: string;
       create_at: Date;
       updated_at: Date;
+      email_verified: boolean;
+      pending_email: string | null;
+      email_verification_code: string | null;
+      email_verification_expires_at: Date | null;
     },
     ExtArgs['result']['user']
   >;
@@ -1330,6 +1498,10 @@ export interface UserFieldRefs {
   readonly auth_provider: Prisma.FieldRef<'User', 'String'>;
   readonly create_at: Prisma.FieldRef<'User', 'DateTime'>;
   readonly updated_at: Prisma.FieldRef<'User', 'DateTime'>;
+  readonly email_verified: Prisma.FieldRef<'User', 'Boolean'>;
+  readonly pending_email: Prisma.FieldRef<'User', 'String'>;
+  readonly email_verification_code: Prisma.FieldRef<'User', 'String'>;
+  readonly email_verification_expires_at: Prisma.FieldRef<'User', 'DateTime'>;
 }
 
 // Custom InputTypes

@@ -107,3 +107,41 @@ export type ChangePasswordResult = {
   message: string;
   forceLogout: boolean;
 };
+
+export type RequestEmailVerificationPayload = {
+  userId: string;
+  email: string;
+};
+export type RequestEmailVerificationResult = {
+  message: string;
+  email: string;
+};
+
+export type ConfirmEmailVerificationPayload = {
+  userId: string;
+  code: string;
+};
+export type ConfirmEmailVerificationResult = {
+  message: string;
+  email: string;
+  emailVerified: boolean;
+};
+
+export type RequestPhoneLinkPayload = {
+  userId: string;
+  phone: string;
+};
+export type RequestPhoneLinkResult = {
+  message: string;
+  phone: string;
+};
+
+export type ConfirmPhoneLinkPayload = {
+  userId: string;
+  phone: string;
+  code: string;
+};
+export type ConfirmPhoneLinkResult = {
+  message: string;
+  phone: string;
+};

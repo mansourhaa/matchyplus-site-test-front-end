@@ -300,6 +300,107 @@ export const changePasswordSchema = {
   },
 };
 
+const authenticatedHeadersSchema = {
+  type: 'object',
+  properties: {
+    Authorization: { type: 'string' },
+  },
+};
+
+export const requestEmailVerificationSchema = {
+  tags: ['auth'],
+  headers: authenticatedHeadersSchema,
+  body: {
+    type: 'object',
+    properties: {
+      email: { type: 'string', format: 'email' },
+    },
+    required: ['email'],
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        email: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const confirmEmailVerificationSchema = {
+  tags: ['auth'],
+  headers: authenticatedHeadersSchema,
+  body: {
+    type: 'object',
+    properties: {
+      code: { type: 'string', minLength: 4, maxLength: 10 },
+    },
+    required: ['code'],
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        email: { type: 'string' },
+        emailVerified: { type: 'boolean' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const requestPhoneLinkSchema = {
+  tags: ['auth'],
+  headers: authenticatedHeadersSchema,
+  body: {
+    type: 'object',
+    properties: {
+      phone: { type: 'string', minLength: 6, maxLength: 20 },
+    },
+    required: ['phone'],
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        phone: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const confirmPhoneLinkSchema = {
+  tags: ['auth'],
+  headers: authenticatedHeadersSchema,
+  body: {
+    type: 'object',
+    properties: {
+      phone: { type: 'string', minLength: 6, maxLength: 20 },
+      code: { type: 'string', minLength: 4, maxLength: 10 },
+    },
+    required: ['phone', 'code'],
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        phone: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
 export const registerSchema = {
   tags: ['auth'],
   body: {

@@ -16,8 +16,13 @@ model User {
   auth_provider String   @default("email")
   create_at     DateTime @default(now())
   updated_at    DateTime @default(now()) @updatedAt
-aiJobs AiJob[]
-  refresh_tokens RefreshToken[]
+
+  email_verified                Boolean        @default(false)
+  pending_email                 String?
+  email_verification_code       String?
+  email_verification_expires_at DateTime?
+  aiJobs                        AiJob[]
+  refresh_tokens                RefreshToken[]
 
   @@index([email])
   @@index([phone])

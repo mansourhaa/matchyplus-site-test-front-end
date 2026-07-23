@@ -109,6 +109,27 @@ GET /api/v1/auth/authcheck
 Authorization: Bearer eyJhbG...
 ```
 
+## Email verification
+
+**API**: `POST /api/v1/auth/email-verification/request` (auth required) → `POST /api/v1/auth/email-verification/confirm` (auth required)
+
+1. `request` takes `{ email }`, rejects it if another account already uses that email (`email_already_used`), and — if SMTP is configured — emails a 6-digit code and stores its **sha256 hash** (not the plaintext code) on the user record alongside the pending email and a 30-minute expiry.
+2. `confirm` takes `{ code }`, hashes it and compares against the stored hash; on match the pending email becomes the user's real `email` and `email_verified` is set to `true`.
+3. If SMTP isn't configured (see [Environment variables](../setup/environment-variables.md#email-smtp--optional)), `request` fails with `smtp_not_configured` (503) rather than the server refusing to boot.
+
+Both endpoints are rate-limited the same way as OTP send (`request`: 5 per 15 minutes).
+
+## Phone linking
+
+**API**: `POST /api/v1/auth/phone-link/request` (auth required) → `POST /api/v1/auth/phone-link/confirm` (auth required)
+
+Lets a user who signed up via a social provider (Google/LinkedIn — see `SOCIAL_AUTH_PROVIDERS` in `apps/api/src/constants.ts`) attach a phone number to their account, reusing the Twilio Verify OTP flow:
+
+1. `request` takes `{ phone }`; rejects if the account isn't a social-auth account, already has a phone linked, or the phone is already registered to someone else — then sends an OTP.
+2. `confirm` takes `{ phone, code }` and **re-checks the same eligibility (provider + not-already-linked) at confirm time**, not just at request time, before verifying the OTP and writing the phone.
+
+Both endpoints are rate-limited the same way as OTP send (`request`: 5 per 15 minutes).
+
 ## Logout
 
 **Frontend**: dispatches `logout()` action which:
@@ -124,6 +145,7 @@ Authorization: Bearer eyJhbG...
 | `ACCESS_TOKEN_SECRET` | API — JWT signing |
 | `ACCESS_TOKEN_TTL` | API — token expiry |
 | `COOKIE_SECRET` | API — cookie plugin |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` / `SMTP_FROM_NAME` / `SMTP_SECURE` | API — email verification (optional, see [environment variables](../setup/environment-variables.md#email-smtp--optional)) |
 
 ## Security notes
 
@@ -138,7 +160,6 @@ Authorization: Bearer eyJhbG...
 Common next steps:
 
 - Refresh tokens
-- Email verification
 - OAuth providers (Clerk, Auth0, etc.)
 - Role-based access control (extend User model + admin autohooks)
 
