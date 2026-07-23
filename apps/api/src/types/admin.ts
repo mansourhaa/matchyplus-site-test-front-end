@@ -27,7 +27,7 @@ export type AdminUpdateUserPayload = {
   schedule?: string;
   price?: string;
   status?: UserStatus;
-  plan?: UserPlan;
+  // `plan` is deliberately absent: it is not part of the generic update contract.
 };
 
 export type AdminUpdateUserStatusPayload = {

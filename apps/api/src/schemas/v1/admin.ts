@@ -116,7 +116,9 @@ export const adminUpdateUserSchema = {
       schedule: { type: 'string' },
       price: { type: 'string' },
       status: { type: 'string', enum: userStatusEnum },
-      plan: { type: 'string', enum: userPlanEnum },
+      // No `plan` here on purpose: granting a paid tier must not ride the generic update
+      // path, so the field is dropped at the validation boundary instead of silently
+      // ignored by the service. Plan changes go through the SUPER_ADMIN-gated updatePlan.
     },
     additionalProperties: false,
   },

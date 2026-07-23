@@ -72,6 +72,5 @@ export type AdminUserUpdate = Partial<
     | 'schedule'
     | 'price'
     | 'status'
-    | 'plan'
   >
 >;
