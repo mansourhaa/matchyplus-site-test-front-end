@@ -46,8 +46,8 @@ export { Prisma };
 
 /**
  * Model Plan
- * Plan configuration edited from the admin "Gestion Forfaits" section. The id mirrors
- * `UserPlan` so a user's plan resolves to exactly one row.
+ * Plan configuration edited from the admin "Gestion Forfaits" section.
+ * The id mirrors UserPlan so a user's plan resolves to exactly one row.
  */
 export type Plan = Prisma.PlanModel;
 /**
@@ -56,9 +56,20 @@ export type Plan = Prisma.PlanModel;
  */
 export type User = Prisma.UserModel;
 /**
+ * Model RefreshToken
+ *
+ */
+export type RefreshToken = Prisma.RefreshTokenModel;
+/**
+ * Model OAuthExchangeCode
+ * One-time code that bridges an OAuth provider redirect to the SPA.
+ * Only a hash of the code is stored, never raw access or refresh tokens.
+ */
+export type OAuthExchangeCode = Prisma.OAuthExchangeCodeModel;
+/**
  * Model Report
- * A profile report ("signalement"): one user flags another. Reviewed and acted on by
- * admins from the "Signalements" section. Deleting either user removes their reports.
+ * A profile report where one user flags another.
+ * Deleting either user removes the related reports.
  */
 export type Report = Prisma.ReportModel;
 /**

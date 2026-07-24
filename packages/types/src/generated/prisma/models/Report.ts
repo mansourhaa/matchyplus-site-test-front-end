@@ -14,8 +14,8 @@ import type * as Prisma from '../internal/prismaNamespace.js';
 
 /**
  * Model Report
- * A profile report ("signalement"): one user flags another. Reviewed and acted on by
- * admins from the "Signalements" section. Deleting either user removes their reports.
+ * A profile report where one user flags another.
+ * Deleting either user removes the related reports.
  */
 export type ReportModel = runtime.Types.Result.DefaultSelection<Prisma.$ReportPayload>;
 

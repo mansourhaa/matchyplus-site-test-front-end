@@ -34,8 +34,8 @@ enum ReportStatus {
   DISMISSED
 }
 
-/// Plan configuration edited from the admin "Gestion Forfaits" section. The id mirrors
-/// `UserPlan` so a user's plan resolves to exactly one row.
+/// Plan configuration edited from the admin "Gestion Forfaits" section.
+/// The id mirrors UserPlan so a user's plan resolves to exactly one row.
 model Plan {
   id          UserPlan @id
   name        String
@@ -61,48 +61,88 @@ model Plan {
 }
 
 model User {
-  id       String @id @default(cuid())
-  name     String
-  email    String @unique
-  password String @db.Text()
-  role     Role   @default(USER)
+  id            String  @id @default(cuid())
+  name          String
+  email         String? @unique
+  phone         String? @unique
+  password      String? @db.Text()
+  auth_provider String  @default("email")
+
+  role   Role       @default(USER)
+  status UserStatus @default(ACTIVE)
+  plan   UserPlan   @default(FREE)
 
   // Profile fields surfaced by the admin panel.
-  status         UserStatus @default(ACTIVE)
-  plan           UserPlan   @default(FREE)
-  phone          String?
   job            String?
   category       String?
   city           String?
-  bio            String?    @db.Text()
-  image          String?    @db.Text()
-  interests      String[]   @default([])
-  languages      String[]   @default([])
-  contact_modes  String[]   @default([])
+  bio            String?   @db.Text()
+  image          String?   @db.Text()
+  interests      String[]  @default([])
+  languages      String[]  @default([])
+  contact_modes  String[]  @default([])
   experience     String?
   schedule       String?
   price          String?
-  rating         Float      @default(0)
-  reviews        Int        @default(0)
-  matches        Int        @default(0)
-  missions       Int        @default(0)
-  total_earnings Int        @default(0)
+  rating         Float     @default(0)
+  reviews        Int       @default(0)
+  matches        Int       @default(0)
+  missions       Int       @default(0)
+  total_earnings Int       @default(0)
   last_login     DateTime?
+
+  // Authentication fields.
+  email_verified                Boolean   @default(false)
+  pending_email                 String?
+  email_verification_code       String?
+  email_verification_expires_at DateTime?
+  google_id                     String?   @unique
+  linkedin_id                   String?   @unique
 
   create_at  DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
-  aiJobs     AiJob[]
+
+  aiJobs               AiJob[]
+  refresh_tokens       RefreshToken[]
+  oauth_exchange_codes OAuthExchangeCode[]
 
   reports_made     Report[] @relation("ReportsMade")
   reports_received Report[] @relation("ReportsReceived")
 
   @@index([email])
+  @@index([phone])
   @@index([status])
   @@index([plan])
 }
 
-/// A profile report ("signalement"): one user flags another. Reviewed and acted on by
-/// admins from the "Signalements" section. Deleting either user removes their reports.
+model RefreshToken {
+  id         String    @id
+  token_hash String    @unique @db.Text()
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  expires_at DateTime
+  revoked_at DateTime?
+  create_at  DateTime  @default(now())
+
+  @@index([user_id])
+}
+
+/// One-time code that bridges an OAuth provider redirect to the SPA.
+/// Only a hash of the code is stored, never raw access or refresh tokens.
+model OAuthExchangeCode {
+  id          String    @id @default(cuid())
+  code_hash   String    @unique @db.Text()
+  user_id     String
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  expires_at  DateTime
+  consumed_at DateTime?
+  create_at   DateTime  @default(now())
+
+  @@index([user_id])
+}
+
+/// A profile report where one user flags another.
+/// Deleting either user removes the related reports.
 model Report {
   id      String       @id @default(cuid())
   reason  String

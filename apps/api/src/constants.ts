@@ -9,6 +9,16 @@ export enum Status {
 
 export const azureAdminUsername = 'azureuser';
 
+// Only Google and LinkedIn OAuth are implemented; Facebook is intentionally excluded
+// since no Facebook auth flow exists to ever set a user's auth_provider to it.
+export const SOCIAL_AUTH_PROVIDERS = new Set(['google', 'linkedin']);
+
+// For destructive, hard-to-undo actions such as account deletion.
+export const RATE_LIMIT_STRICT = {
+  max: 3,
+  timeWindow: '1 hour',
+};
+
 export const ADMIN_ROLES: Role[] = [Role.SUPER_ADMIN, Role.MODERATOR, Role.SUPPORT];
 
 export function isAdminRole(role: Role): boolean {
@@ -28,15 +38,14 @@ export function outranks(actor: Role, target: Role): boolean {
   return ROLE_RANK[actor] > ROLE_RANK[target];
 }
 
-/** Every role `actor` sits strictly above: the set they may act on, and the set they may see. */
+/** Every role `actor` sits strictly above. */
 export function rolesBelow(actor: Role): Role[] {
   return (Object.keys(ROLE_RANK) as Role[]).filter((role) => outranks(actor, role));
 }
 
 /**
- * An error carrying its HTTP status, the shape `set-error-handler` turns into a response.
- * Without the status the handler falls back to 500, so a refusal or a missing row would be
- * reported to the panel as a server error.
+ * An error carrying its HTTP status, the shape `set-error-handler`
+ * turns into a response.
  */
 function httpError(statusCode: number, message: string): Error & { statusCode?: number } {
   const error: Error & { statusCode?: number } = new Error(message);
@@ -64,14 +73,14 @@ export function conflict(message: string): Error & { statusCode?: number } {
   return httpError(409, message);
 }
 
-export function insufficientPrivileges(): Error & { statusCode?: number } {
+export function insufficientPrivileges(): Error & {
+  statusCode?: number;
+} {
   return forbidden('insufficient privileges');
 }
 
 /**
- * Guards an action that has no second account to compare against — plan configuration, report
- * moderation — against a fixed floor in the hierarchy. Same ranking as `outranks`; `verifyAdmin`
- * only proves the caller is *an* admin, which is not enough for the control plane.
+ * Guards an action that has no second account to compare against.
  */
 export function assertMinimumRole(actor: Role, minimum: Role): void {
   if (ROLE_RANK[actor] < ROLE_RANK[minimum]) {

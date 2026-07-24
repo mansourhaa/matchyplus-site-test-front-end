@@ -29,15 +29,15 @@ flowchart TB
     EL -.->|overrides| ED
 ```
 
-| File | Purpose | Committed? |
-| --- | --- | --- |
-| `.env.example` | Development template | Yes |
-| `.env.staging.example` | Staging template | Yes |
-| `.env.production.example` | Production template | Yes |
-| `.env.development` | Local development | No (gitignored) |
-| `.env.staging` | Staging runtime | No (gitignored) |
-| `.env.production` | Production runtime | No (gitignored) |
-| `.env.local` | Local overrides | No (gitignored) |
+| File                      | Purpose              | Committed?      |
+| ------------------------- | -------------------- | --------------- |
+| `.env.example`            | Development template | Yes             |
+| `.env.staging.example`    | Staging template     | Yes             |
+| `.env.production.example` | Production template  | Yes             |
+| `.env.development`        | Local development    | No (gitignored) |
+| `.env.staging`            | Staging runtime      | No (gitignored) |
+| `.env.production`         | Production runtime   | No (gitignored) |
+| `.env.local`              | Local overrides      | No (gitignored) |
 
 ### Create env files
 
@@ -60,32 +60,80 @@ flowchart LR
 
 ### Core
 
-| Variable | Required | Description | Example |
-| --- | --- | --- | --- |
-| `NODE_ENV` | Yes | `development`, `staging`, or `production` | `development` |
-| `DATABASE_URL` | Yes | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/db` |
+| Variable       | Required | Description                               | Example                                    |
+| -------------- | -------- | ----------------------------------------- | ------------------------------------------ |
+| `NODE_ENV`     | Yes      | `development`, `staging`, or `production` | `development`                              |
+| `DATABASE_URL` | Yes      | PostgreSQL connection string              | `postgresql://user:pass@localhost:5432/db` |
 
 ### API server
 
-| Variable | Required | Description | Default |
-| --- | --- | --- | --- |
-| `SERVER_PORT` | No | Fastify listen port | `8000` |
-| `SERVER_HOST` | No | Fastify bind address | `localhost` |
-| `FASTIFY_CLOSE_GRACE_DELAY` | No | Graceful shutdown delay (ms) | `500` |
+| Variable                    | Required | Description                  | Default     |
+| --------------------------- | -------- | ---------------------------- | ----------- |
+| `SERVER_PORT`               | No       | Fastify listen port          | `8000`      |
+| `SERVER_HOST`               | No       | Fastify bind address         | `localhost` |
+| `FASTIFY_CLOSE_GRACE_DELAY` | No       | Graceful shutdown delay (ms) | `500`       |
 
 ### Authentication
 
+| Variable              | Required           | Description                      |
+| --------------------- | ------------------ | -------------------------------- |
+| `ACCESS_TOKEN_SECRET` | Yes                | JWT signing secret               |
+| `ACCESS_TOKEN_TTL`    | No                 | Token expiry (`1d`, `7d`, `12h`) |
+| `COOKIE_SECRET`       | Yes (staging/prod) | Fastify cookie signing           |
+| `REFRESH_TOKEN_SECRET` | Yes | Secret used to sign refresh tokens. Use a different long random value from `ACCESS_TOKEN_SECRET`. |
+| `REFRESH_TOKEN_TTL_DAYS` | Yes | Number of days before a refresh token expires. |
+
+### Twilio Verify (phone OTP)
+
+These variables are required when the API sends SMS one-time passwords through Twilio Verify.
+
+| Variable                    | Required | Description                                                         |
+| --------------------------- | -------- | ------------------------------------------------------------------- |
+| `TWILIO_ACCOUNT_SID`        | Yes      | Your Twilio account SID from the Twilio Console                     |
+| `TWILIO_AUTH_TOKEN`         | Yes      | Your Twilio auth token from the Twilio Console                      |
+| `TWILIO_VERIFY_SERVICE_SID` | Yes      | The SID of the Verify service you create in Twilio for OTP delivery |
+
+Typical values:
+
+- `TWILIO_ACCOUNT_SID` = the Account SID shown in the Twilio dashboard
+- `TWILIO_AUTH_TOKEN` = the Auth Token shown in the Twilio dashboard
+- `TWILIO_VERIFY_SERVICE_SID` = the Service SID of the Verify service used for SMS OTP
+
+For local testing, use a Twilio trial account and make sure the destination phone number is verified in Twilio. The API uses these values in the phone OTP flow for sending and validating SMS codes.
+
+### Email (SMTP) — optional
+
 | Variable | Required | Description |
 | --- | --- | --- |
-| `ACCESS_TOKEN_SECRET` | Yes | JWT signing secret |
-| `ACCESS_TOKEN_TTL` | No | Token expiry (`1d`, `7d`, `12h`) |
-| `COOKIE_SECRET` | Yes (staging/prod) | Fastify cookie signing |
+| `SMTP_HOST` | No | SMTP server host |
+| `SMTP_PORT` | No | SMTP server port (e.g. `587`, `465`) |
+| `SMTP_USER` | No | SMTP auth username |
+| `SMTP_PASS` | No | SMTP auth password |
+| `SMTP_FROM` | No | `From` address for outgoing mail |
+| `SMTP_FROM_NAME` | No | `From` display name (defaults to `APP_NAME`) |
+| `SMTP_SECURE` | No | Force TLS (`true`/`false`); defaults to `true` only on port `465` |
+
+> Email verification is optional infrastructure: if any of `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / a resolvable "from" address are missing, the server still boots normally — `POST /auth/email-verification/request` just fails at request time with `smtp_not_configured` (503) instead of the process refusing to start.
+
+### Google & LinkedIn OAuth — optional, per provider
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `API_BASE_URL` | No | This API's own absolute base URL, used to build the OAuth callback URL registered with each provider |
+| `FRONTEND_URL` | No | SPA base URL; the OAuth callback redirects here with `?code=...` or `?error=...` |
+| `GOOGLE_CLIENT_ID` | No | Google OAuth client id |
+| `GOOGLE_CLIENT_SECRET` | No | Google OAuth client secret |
+| `LINKEDIN_CLIENT_ID` | No | LinkedIn OAuth client id |
+| `LINKEDIN_CLIENT_SECRET` | No | LinkedIn OAuth client secret |
+| `OAUTH_EXCHANGE_CODE_TTL_SECONDS` | No | How long a one-time exchange code stays valid (default `60`) |
+
+> Google and LinkedIn are independent and both optional: each is only registered when its own client id **and** secret are both set. A missing pair disables just that provider's `/api/v1/auth/oauth/<provider>` route — it does not stop the API from starting, and the other provider is unaffected.
 
 ### Frontend (Next.js)
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `NEXT_PUBLIC_API_URL` | Yes | Public API base URL (inlined at build) |
+| Variable              | Required | Description                            |
+| --------------------- | -------- | -------------------------------------- |
+| `NEXT_PUBLIC_API_URL` | Yes      | Public API base URL (inlined at build) |
 
 > Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Never put secrets in them.
 

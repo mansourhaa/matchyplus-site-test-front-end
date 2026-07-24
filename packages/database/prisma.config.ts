@@ -10,6 +10,6 @@ export default defineConfig({
   datasource: {
     url:
       process.env.DATABASE_URL ??
-      'postgresql://postgres:postgres@localhost:5432/Matchy_db?schema=public',
+      'postgresql://postgres:postgres@localhost:5432/saas_db?schema=public',
   },
 });

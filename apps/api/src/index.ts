@@ -2,12 +2,16 @@ import closeWithGrace from 'close-with-grace';
 
 import { PrismaClient, User } from '@saas-boilerplate/types';
 
+import { EmailClient } from './lib/email.js';
+import { OtpClient } from './lib/twilio.js';
 import { createServerApp } from './server.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
     prisma: PrismaClient;
     verifyToken: () => Promise<void>;
+    otpClient: OtpClient;
+    emailClient: EmailClient;
     verifyAdmin: () => Promise<void>;
   }
   interface FastifyRequest {

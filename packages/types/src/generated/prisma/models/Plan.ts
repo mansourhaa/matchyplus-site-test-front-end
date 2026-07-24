@@ -14,8 +14,8 @@ import type * as Prisma from '../internal/prismaNamespace.js';
 
 /**
  * Model Plan
- * Plan configuration edited from the admin "Gestion Forfaits" section. The id mirrors
- * `UserPlan` so a user's plan resolves to exactly one row.
+ * Plan configuration edited from the admin "Gestion Forfaits" section.
+ * The id mirrors UserPlan so a user's plan resolves to exactly one row.
  */
 export type PlanModel = runtime.Types.Result.DefaultSelection<Prisma.$PlanPayload>;
 

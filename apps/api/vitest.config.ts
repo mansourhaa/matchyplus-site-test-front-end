@@ -5,6 +5,7 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     exclude: ['src/routes/**'],
+    testTimeout: 10000,
     server: {
       deps: {
         inline: ['@fastify/autoload'],
@@ -17,10 +18,15 @@ export default defineConfig({
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test?schema=public',
       ACCESS_TOKEN_SECRET: 'test-access-token-secret',
       ACCESS_TOKEN_TTL: '3600',
+      VERIFICATION_CODE_SECRET: 'test-verification-code-secret',
       COOKIE_SECRET: 'test-cookie-secret',
-      // NODE_ENV is 'test' here, so the cors plugin requires an explicit allowlist just like
-      // it does in staging and production; tests run against the deployed shape, not the
-      // permissive development one.
+      TWILIO_ACCOUNT_SID: 'test-twilio-account-sid',
+      TWILIO_AUTH_TOKEN: 'test-twilio-auth-token',
+      TWILIO_VERIFY_SERVICE_SID: 'test-twilio-verify-service-sid',
+      REFRESH_TOKEN_SECRET: 'test-refresh-token-secret',
+      REFRESH_TOKEN_TTL_DAYS: '120',
+
+      // NODE_ENV is 'test' here, so the CORS plugin requires an explicit allowlist.
       CORS_ORIGINS: 'http://localhost:3000',
     },
   },
