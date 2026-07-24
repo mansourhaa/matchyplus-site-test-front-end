@@ -57,11 +57,13 @@ export const config = {
   aiCacheTtlSeconds: parseInt(process.env.AI_CACHE_TTL_SECONDS ?? '300', 10),
 
   /**
-   * Phone OTP (Twilio Verify)
+   * Phone OTP (Twilio Verify) — optional at startup. The API boots without these; an
+   * OTP-dependent endpoint fails at request time with `otp_service_not_configured`
+   * instead (see lib/twilio.ts).
    */
-  twilioAccountSid: requiredVar('TWILIO_ACCOUNT_SID'),
-  twilioAuthToken: requiredVar('TWILIO_AUTH_TOKEN'),
-  twilioVerifyServiceSid: requiredVar('TWILIO_VERIFY_SERVICE_SID'),
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
+  twilioVerifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID,
 
   /**
    * Refresh tokens

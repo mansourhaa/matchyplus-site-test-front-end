@@ -4,6 +4,10 @@ End-to-end authentication flow between the Next.js frontend and Fastify API.
 
 ## Overview
 
+**Phone + SMS one-time password (OTP) is the primary way end users register and log
+in** — see [Phone OTP](#phone-otp-primary-login) below. Email/password (this section)
+and Google/LinkedIn OAuth are supported alternatives, not the main flow.
+
 ```mermaid
 sequenceDiagram
     actor User
@@ -15,7 +19,7 @@ sequenceDiagram
     User->>App: POST /login
     App->>API: POST /api/v1/auth/login
     API->>DB: Find user + verify bcrypt
-    API-->>App: access_token + user
+    API-->>App: access_token + refresh_token + user
     App->>App: Redux + sessionStorage + cookie
     User->>App: Visit /projects
     App->>Proxy: Check cookie
@@ -25,7 +29,24 @@ sequenceDiagram
     API-->>App: user data
 ```
 
-## Registration
+## Phone OTP (primary login)
+
+**API**: `POST /api/v1/auth/otp/send` → `POST /api/v1/auth/otp/verify`
+
+- `otp/send` takes `{ phone }` and asks Twilio Verify to text a code to that number.
+- `otp/verify` takes `{ phone, code }`; on a valid code it finds the existing account for
+  that phone or **creates one** if it's new, then issues an access/refresh token pair —
+  the same OTP-verify call handles both login and first-time signup.
+
+**API**: `POST /api/v1/auth/login-phone` (existing account, `{ phone, password }`) / `POST /api/v1/auth/register-phone` (new account, `{ phone, password, code }` — a fresh OTP `code` alongside the chosen password)
+
+Phone auth depends on Twilio Verify being configured — see
+[Environment variables](#environment-variables). **The API itself starts normally
+without it**; only these OTP-dependent endpoints fail, with `otp_service_not_configured`
+(503), until `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_VERIFY_SERVICE_SID` are
+all set.
+
+## Registration (email/password)
 
 **Frontend**: `apps/app/src/components/auth/register-form.tsx`
 
@@ -41,7 +62,7 @@ sequenceDiagram
 
 Passwords are hashed with **bcrypt** before storage.
 
-## Login
+## Login (email/password)
 
 **Frontend**: `apps/app/src/components/auth/login-form.tsx`
 
@@ -102,12 +123,40 @@ Protected routes use `preHandler: [fastify.verifyToken]`:
 2. Verify JWT with `ACCESS_TOKEN_SECRET`
 3. Attach decoded user to `request.loggedUser`
 
-Example protected route:
+**API**: `GET /api/v1/auth/authcheck` (auth required)
 
 ```
 GET /api/v1/auth/authcheck
 Authorization: Bearer eyJhbG...
 ```
+
+Response:
+
+```json
+{
+  "user": {
+    "id": "clx...",
+    "email": "jane@example.com",
+    "phone": "+21612345678",
+    "name": "Jane Doe",
+    "auth_provider": "phone",
+    "email_verified": false,
+    "role": "USER"
+  }
+}
+```
+
+These are exactly the safe profile fields `apps/app` needs to render the logged-in state — password, refresh tokens, verification codes, token hashes, and any other internal field are never selected, let alone returned. `role` is included because it's already part of the established response contract (`login`/`admin/login` both expose it); `status` is not — it's used internally to gate active accounts but has never been part of a response schema.
+
+## Refresh tokens
+
+**API**: `POST /api/v1/auth/refresh`
+
+Every successful login/registration/OTP-verify issues an **access token** (short-lived JWT, `ACCESS_TOKEN_TTL`) and a **refresh token** (long-lived, `REFRESH_TOKEN_TTL_DAYS`). Refresh tokens are stored server-side as a `RefreshToken` row keyed by a **sha256 hash** of the token — the raw token itself is never persisted.
+
+`POST /api/v1/auth/refresh` takes `{ refresh_token }` and **rotates** it: the presented token is looked up by its hash, checked for revocation/expiry, then revoked and replaced in the same call — the response returns a new `access_token` **and** a new `refresh_token`. The old refresh token cannot be used again after this, so a client must always persist the latest pair.
+
+`POST /api/v1/auth/logout` revokes a single refresh token (`revokeRefreshToken`). Changing your password revokes **every** refresh token on the account (`revokeAllRefreshTokens`), forcing re-login on all devices.
 
 ## Email verification
 
@@ -173,7 +222,7 @@ On a successful callback:
 - If the account **has no password** (OTP-only or OAuth-only accounts), no password check applies — `confirm: true` alone is sufficient.
 - `reason` is optional and never required; when present it's logged server-side (`request.log.info`) for support/analytics purposes only — it isn't stored on the user record or used in the deletion decision.
 - Rate-limited with the strict tier (`RATE_LIMIT_STRICT`: 3 requests per hour) — deliberately tighter than the 5/15min tier used by OTP/email/phone-link "send" endpoints, since this is destructive and hard to undo.
-- **This is currently a hard delete**: `prisma.user.delete()` removes the row outright. `RefreshToken` and `OAuthExchangeCode` rows for that user are removed automatically via Prisma's `onDelete: Cascade`. There is no soft-delete flag, `status` enum, or "banned" state on `User` — deleting is permanent and immediate.
+- **This is currently a hard delete**: `prisma.user.delete()` removes the row outright. `RefreshToken` and `OAuthExchangeCode` rows for that user are removed automatically via Prisma's `onDelete: Cascade`. This endpoint does not use the `status` enum (`ACTIVE`/`INACTIVE`/`BANNED`) at all — that field exists for admin moderation, not self-service deletion — so there is no soft-delete path here: deleting is permanent and immediate.
 - The response body is `{ message }` only; no user object (and therefore no password field) is ever returned.
 
 ## Environment variables
@@ -183,6 +232,10 @@ On a successful callback:
 | `ACCESS_TOKEN_SECRET` | API — JWT signing |
 | `ACCESS_TOKEN_TTL` | API — token expiry |
 | `COOKIE_SECRET` | API — cookie plugin |
+| `REFRESH_TOKEN_SECRET` | API — refresh token signing (see [Refresh tokens](#refresh-tokens)) |
+| `REFRESH_TOKEN_TTL_DAYS` | API — refresh token lifetime |
+| `VERIFICATION_CODE_SECRET` | API — HMAC key used to hash email-verification codes before storage (never the plaintext code) |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_VERIFY_SERVICE_SID` | API — phone OTP (optional at startup; required only for OTP-dependent endpoints, see [Phone OTP](#phone-otp-primary-login)) |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` / `SMTP_FROM_NAME` / `SMTP_SECURE` | API — email verification (optional, see [environment variables](../setup/environment-variables.md#email-smtp--optional)) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` | API — Google/LinkedIn OAuth (optional per provider, see [environment variables](../setup/environment-variables.md#google--linkedin-oauth--optional-per-provider)) |
 | `API_BASE_URL` / `FRONTEND_URL` | API — OAuth callback URL and SPA redirect target |

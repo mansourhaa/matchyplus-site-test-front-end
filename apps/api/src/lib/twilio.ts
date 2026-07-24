@@ -50,6 +50,31 @@ function createRealOtpClient(): OtpClient {
   };
 }
 
+// Called once at plugin registration time (see plugins/twilio.ts) — the check must be
+// eager so a missing config always yields the stub client, never a half-configured
+// real one. checkOtp on the stub always fails closed (never returns valid: true), so
+// this never weakens OTP verification, it just fails clearly when Twilio isn't set up.
+function isTwilioConfigured(): boolean {
+  return Boolean(
+    config.twilioAccountSid && config.twilioAuthToken && config.twilioVerifyServiceSid,
+  );
+}
+
+function createUnconfiguredOtpClient(): OtpClient {
+  return {
+    async sendOtp() {
+      throw new Error('otp_service_not_configured');
+    },
+    async checkOtp() {
+      throw new Error('otp_service_not_configured');
+    },
+  };
+}
+
 export function createOtpClient(): OtpClient {
+  if (!isTwilioConfigured()) {
+    return createUnconfiguredOtpClient();
+  }
+
   return createRealOtpClient();
 }

@@ -178,3 +178,64 @@ describe('DELETE /api/v1/auth/account', () => {
     expect(deleteMock).not.toHaveBeenCalled();
   });
 });
+
+describe('GET /api/v1/auth/authcheck', () => {
+  const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
+
+  afterEach(async () => {
+    await Promise.all(apps.map((app) => app.close()));
+    apps.length = 0;
+  });
+
+  it('requires authentication', async () => {
+    const app = await buildTestApp({});
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/auth/authcheck',
+    });
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('returns the safe profile fields, never password or internal fields', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'user@example.com',
+            phone: '+21612345678',
+            name: 'Jane Doe',
+            auth_provider: 'email',
+            email_verified: true,
+            role: 'USER',
+            status: 'ACTIVE',
+          }),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/auth/authcheck',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      user: {
+        id: 'user-1',
+        email: 'user@example.com',
+        phone: '+21612345678',
+        name: 'Jane Doe',
+        auth_provider: 'email',
+        email_verified: true,
+        role: 'USER',
+      },
+    });
+    expect(response.body).not.toContain('password');
+  });
+});
