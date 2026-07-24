@@ -47,8 +47,11 @@ export const JsonNull = runtime.JsonNull;
 export const AnyNull = runtime.AnyNull;
 
 export const ModelName = {
+  Plan: 'Plan',
   User: 'User',
   RefreshToken: 'RefreshToken',
+  OAuthExchangeCode: 'OAuthExchangeCode',
+  Report: 'Report',
   AiJob: 'AiJob',
 } as const;
 
@@ -68,6 +71,29 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel =
   (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel];
 
+export const PlanScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  price: 'price',
+  color: 'color',
+  is_active: 'is_active',
+  badge: 'badge',
+  trial_days: 'trial_days',
+  description: 'description',
+  features: 'features',
+  swipes_per_day: 'swipes_per_day',
+  profiles_per_category: 'profiles_per_category',
+  messages_per_day: 'messages_per_day',
+  actions_per_day: 'actions_per_day',
+  boosts_per_month: 'boosts_per_month',
+  super_connects_per_month: 'super_connects_per_month',
+  sort_order: 'sort_order',
+  create_at: 'create_at',
+  updated_at: 'updated_at',
+} as const;
+
+export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum];
+
 export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -75,12 +101,34 @@ export const UserScalarFieldEnum = {
   phone: 'phone',
   password: 'password',
   auth_provider: 'auth_provider',
-  create_at: 'create_at',
-  updated_at: 'updated_at',
+  role: 'role',
+  status: 'status',
+  plan: 'plan',
+  job: 'job',
+  category: 'category',
+  city: 'city',
+  bio: 'bio',
+  image: 'image',
+  interests: 'interests',
+  languages: 'languages',
+  contact_modes: 'contact_modes',
+  experience: 'experience',
+  schedule: 'schedule',
+  price: 'price',
+  rating: 'rating',
+  reviews: 'reviews',
+  matches: 'matches',
+  missions: 'missions',
+  total_earnings: 'total_earnings',
+  last_login: 'last_login',
   email_verified: 'email_verified',
   pending_email: 'pending_email',
   email_verification_code: 'email_verification_code',
   email_verification_expires_at: 'email_verification_expires_at',
+  google_id: 'google_id',
+  linkedin_id: 'linkedin_id',
+  create_at: 'create_at',
+  updated_at: 'updated_at',
 } as const;
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
@@ -96,6 +144,32 @@ export const RefreshTokenScalarFieldEnum = {
 
 export type RefreshTokenScalarFieldEnum =
   (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum];
+
+export const OAuthExchangeCodeScalarFieldEnum = {
+  id: 'id',
+  code_hash: 'code_hash',
+  user_id: 'user_id',
+  expires_at: 'expires_at',
+  consumed_at: 'consumed_at',
+  create_at: 'create_at',
+} as const;
+
+export type OAuthExchangeCodeScalarFieldEnum =
+  (typeof OAuthExchangeCodeScalarFieldEnum)[keyof typeof OAuthExchangeCodeScalarFieldEnum];
+
+export const ReportScalarFieldEnum = {
+  id: 'id',
+  reason: 'reason',
+  details: 'details',
+  status: 'status',
+  reporter_id: 'reporter_id',
+  reported_id: 'reported_id',
+  create_at: 'create_at',
+  updated_at: 'updated_at',
+} as const;
+
+export type ReportScalarFieldEnum =
+  (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum];
 
 export const AiJobScalarFieldEnum = {
   id: 'id',

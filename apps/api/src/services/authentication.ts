@@ -1,5 +1,6 @@
-import { PrismaClient } from '@saas-boilerplate/types';
+import { PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
+import { isAdminRole } from '../constants.js';
 import { EmailClient } from '../lib/email.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import { generateNumericCode, hashVerificationCode } from '../lib/verification-code.js';
@@ -17,12 +18,15 @@ import { TokenService } from './token.js';
 
 const EMAIL_VERIFICATION_TTL_MINUTES = 30;
 
-export type AuthenticationServiceOptions = AbstractServiceOptions & { emailClient: EmailClient };
+export type AuthenticationServiceOptions = AbstractServiceOptions & {
+  emailClient: EmailClient;
+};
 
 export class AuthenticationService {
   prisma: PrismaClient;
   tokenService: TokenService;
   emailClient: EmailClient;
+
   constructor(options: AuthenticationServiceOptions) {
     this.prisma = options.prisma;
     this.tokenService = new TokenService({ prisma: options.prisma });
@@ -43,6 +47,8 @@ export class AuthenticationService {
           phone: true,
           name: true,
           password: true,
+          role: true,
+          status: true,
         },
       });
     } catch {
@@ -56,6 +62,11 @@ export class AuthenticationService {
     const isPasswordValid = await verifyPassword(payload.password, user.password);
 
     if (!isPasswordValid) {
+      throw new Error('invalid_credentials');
+    }
+
+    // Do not reveal whether the account is banned, inactive, or nonexistent.
+    if (user.status !== UserStatus.ACTIVE) {
       throw new Error('invalid_credentials');
     }
 
@@ -74,37 +85,55 @@ export class AuthenticationService {
     };
   }
 
+  /**
+   * Authenticates against the admin panel. Non-admin accounts are rejected with
+   * the same error as invalid credentials so roles cannot be enumerated.
+   */
+  async adminLogin(payload: LoginPayload) {
+    const data = await this.login(payload);
+
+    if (!isAdminRole(data.user.role)) {
+      throw new Error('invalid_credentials');
+    }
+
+    return data;
+  }
+
   async register(payload: RegisterPayload) {
-    let user = null;
-    user = await this.prisma.user.findUnique({
-      where: { email: payload.email.toLowerCase() },
+    let user = await this.prisma.user.findUnique({
+      where: {
+        email: payload.email.toLowerCase(),
+      },
       select: {
         email: true,
         id: true,
         password: true,
       },
     });
+
     if (user) {
       throw new Error('user_already_exists');
     }
 
     const hashedPassword = await hashPassword(payload.password);
+
     user = await this.prisma.user.create({
       data: {
-        email: payload.email,
+        email: payload.email.toLowerCase(),
         password: hashedPassword,
         name: payload.email,
       },
     });
+
     return user;
   }
 
   async authCheck(payload: AuthCheckPayload) {
-    let user = null;
-
     try {
-      user = await this.prisma.user.findUniqueOrThrow({
-        where: { id: payload.id },
+      return await this.prisma.user.findUniqueOrThrow({
+        where: {
+          id: payload.id,
+        },
         select: {
           email: true,
           id: true,
@@ -113,35 +142,53 @@ export class AuthenticationService {
     } catch {
       throw new Error('user_not_found');
     }
-    return user;
   }
 
   async changePassword(payload: ChangePasswordPayload) {
-    const user = await this.prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: payload.userId,
+      },
+    });
+
     if (!user || !user.password) {
       throw new Error('password_not_set');
     }
 
     const isValid = await verifyPassword(payload.currentPassword, user.password);
+
     if (!isValid) {
       throw new Error('invalid_current_password');
     }
 
     const hashedPassword = await hashPassword(payload.newPassword);
+
     await this.prisma.user.update({
-      where: { id: user.id },
-      data: { password: hashedPassword },
+      where: {
+        id: user.id,
+      },
+      data: {
+        password: hashedPassword,
+      },
     });
 
     await this.tokenService.revokeAllRefreshTokens(user.id);
 
-    return { message: 'password_changed', forceLogout: true };
+    return {
+      message: 'password_changed',
+      forceLogout: true,
+    };
   }
 
   async requestEmailVerification(payload: RequestEmailVerificationPayload) {
     const email = payload.email.trim().toLowerCase();
 
-    const existing = await this.prisma.user.findUnique({ where: { email } });
+    const existing = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
     if (existing && existing.id !== payload.userId) {
       throw new Error('email_already_used');
     }
@@ -151,8 +198,11 @@ export class AuthenticationService {
     }
 
     const code = generateNumericCode(6);
+
     await this.prisma.user.update({
-      where: { id: payload.userId },
+      where: {
+        id: payload.userId,
+      },
       data: {
         pending_email: email,
         email_verification_code: hashVerificationCode(code),
@@ -168,7 +218,10 @@ export class AuthenticationService {
       expiresMinutes: EMAIL_VERIFICATION_TTL_MINUTES,
     });
 
-    return { message: 'verification_code_sent', email };
+    return {
+      message: 'verification_code_sent',
+      email,
+    };
   }
 
   async confirmEmailVerification(payload: ConfirmEmailVerificationPayload) {
@@ -176,17 +229,25 @@ export class AuthenticationService {
       where: {
         id: payload.userId,
         email_verification_code: hashVerificationCode(payload.code),
-        pending_email: { not: null },
-        email_verification_expires_at: { gt: new Date() },
+        pending_email: {
+          not: null,
+        },
+        email_verification_expires_at: {
+          gt: new Date(),
+        },
       },
     });
+
     if (!user) {
       throw new Error('invalid_verification_code');
     }
 
     const nextEmail = user.pending_email as string;
+
     const updated = await this.prisma.user.update({
-      where: { id: user.id },
+      where: {
+        id: user.id,
+      },
       data: {
         email: nextEmail,
         email_verified: true,
@@ -196,13 +257,20 @@ export class AuthenticationService {
       },
     });
 
-    return { message: 'email_verified', email: updated.email as string, emailVerified: true };
+    return {
+      message: 'email_verified',
+      email: updated.email as string,
+      emailVerified: true,
+    };
   }
 
-  // Hard delete: Prisma's onDelete: Cascade on RefreshToken/OAuthExchangeCode removes
-  // those rows for us. There is no soft-delete/status flag on User in this branch.
   async deleteAccount(payload: DeleteAccountPayload) {
-    const user = await this.prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: payload.userId,
+      },
+    });
+
     if (!user) {
       throw new Error('user_not_found');
     }
@@ -217,13 +285,20 @@ export class AuthenticationService {
       }
 
       const isValid = await verifyPassword(payload.currentPassword, user.password);
+
       if (!isValid) {
         throw new Error('invalid_current_password');
       }
     }
 
-    await this.prisma.user.delete({ where: { id: user.id } });
+    await this.prisma.user.delete({
+      where: {
+        id: user.id,
+      },
+    });
 
-    return { message: 'account_deleted' };
+    return {
+      message: 'account_deleted',
+    };
   }
 }

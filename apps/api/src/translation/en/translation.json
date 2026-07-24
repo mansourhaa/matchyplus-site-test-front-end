@@ -15,5 +15,6 @@
   "invalid_current_password": "Current password is incorrect.",
   "internal_error": "An unexpected error occurred",
   "user_already_exists": "An account with this email already exists.",
-  "user_not_found": "User not found."
+  "user_not_found": "User not found.",
+  "admin_access_required": "Administrator access required"
 }

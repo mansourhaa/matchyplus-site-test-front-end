@@ -30,8 +30,8 @@ export * from './enums.js';
  * const prisma = new PrismaClient({
  *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
  * })
- * // Fetch zero or more Users
- * const users = await prisma.user.findMany()
+ * // Fetch zero or more Plans
+ * const plans = await prisma.plan.findMany()
  * ```
  *
  * Read more in our [docs](https://pris.ly/d/client).
@@ -45,6 +45,12 @@ export type PrismaClient<
 export { Prisma };
 
 /**
+ * Model Plan
+ * Plan configuration edited from the admin "Gestion Forfaits" section.
+ * The id mirrors UserPlan so a user's plan resolves to exactly one row.
+ */
+export type Plan = Prisma.PlanModel;
+/**
  * Model User
  *
  */
@@ -54,6 +60,18 @@ export type User = Prisma.UserModel;
  *
  */
 export type RefreshToken = Prisma.RefreshTokenModel;
+/**
+ * Model OAuthExchangeCode
+ * One-time code that bridges an OAuth provider redirect to the SPA.
+ * Only a hash of the code is stored, never raw access or refresh tokens.
+ */
+export type OAuthExchangeCode = Prisma.OAuthExchangeCodeModel;
+/**
+ * Model Report
+ * A profile report where one user flags another.
+ * Deleting either user removes the related reports.
+ */
+export type Report = Prisma.ReportModel;
 /**
  * Model AiJob
  * Durable AI job record. Redis Streams is the queue transport;

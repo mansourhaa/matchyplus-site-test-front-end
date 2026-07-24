@@ -190,7 +190,11 @@ describe('PhoneAuthenticationService', () => {
 
     expect(otpClient.checkOtp).toHaveBeenCalledWith('+0612345678', '123456');
     expect(prisma.user.create).toHaveBeenCalledWith({
-      data: { phone: '+0612345678', auth_provider: 'phone' },
+      data: {
+        phone: '+0612345678',
+        name: '+0612345678',
+        auth_provider: 'phone',
+      },
     });
     expect(result.accessToken).toBe('access-token');
     expect(result.user.phone).toBe('+33612345678');

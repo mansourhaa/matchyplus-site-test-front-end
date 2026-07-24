@@ -47,7 +47,7 @@ export class OAuthAuthenticationService {
       data: {
         email,
         email_verified: profile.emailVerified,
-        name: profile.name,
+        name: profile.name ?? profile.email ?? `${provider}-${profile.id}`,
         auth_provider: provider,
         ...(provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id }),
       },

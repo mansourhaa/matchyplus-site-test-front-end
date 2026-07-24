@@ -77,6 +77,7 @@ describe('AuthenticationService', () => {
       phone: '+21612345678',
       name: 'user@example.com',
       password: hashedPassword,
+      status: 'ACTIVE',
     });
 
     const service = new AuthenticationService({
@@ -97,6 +98,7 @@ describe('AuthenticationService', () => {
       email: 'user@example.com',
       phone: '+21612345678',
       name: 'user@example.com',
+      status: 'ACTIVE',
     });
 
     expect(result.user).not.toHaveProperty('password');
@@ -111,6 +113,85 @@ describe('AuthenticationService', () => {
       },
     });
   });
+
+  it('rejects a valid non-admin account on admin login', async () => {
+    const prisma = createMockPrisma();
+    const hashedPassword = await import('bcryptjs').then((bcrypt) =>
+      bcrypt.hash('password123', 10),
+    );
+
+    prisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+      name: 'user@example.com',
+      password: hashedPassword,
+      role: 'USER',
+      status: 'ACTIVE',
+    });
+
+    const service = new AuthenticationService({
+      prisma: prisma as never,
+      emailClient: {} as never,
+    });
+
+    await expect(
+      service.adminLogin({ email: 'user@example.com', password: 'password123' }),
+    ).rejects.toThrow('invalid_credentials');
+  });
+
+  it('returns access token and admin on successful admin login', async () => {
+    const prisma = createMockPrisma();
+    const hashedPassword = await import('bcryptjs').then((bcrypt) => bcrypt.hash('matchy2026', 10));
+
+    prisma.user.findUniqueOrThrow.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@matchyplus.tn',
+      name: 'Super Admin',
+      password: hashedPassword,
+      role: 'SUPER_ADMIN',
+      status: 'ACTIVE',
+    });
+
+    const service = new AuthenticationService({
+      prisma: prisma as never,
+      emailClient: {} as never,
+    });
+    const result = await service.adminLogin({
+      email: 'admin@matchyplus.tn',
+      password: 'matchy2026',
+    });
+
+    expect(result.accessToken).toBeTypeOf('string');
+    expect(result.user.role).toBe('SUPER_ADMIN');
+  });
+
+  it.each(['BANNED', 'INACTIVE'])(
+    'refuses a %s admin with the right password on admin login',
+    async (status) => {
+      const prisma = createMockPrisma();
+      const hashedPassword = await import('bcryptjs').then((bcrypt) =>
+        bcrypt.hash('matchy2026', 10),
+      );
+
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@matchyplus.tn',
+        name: 'Super Admin',
+        password: hashedPassword,
+        role: 'SUPER_ADMIN',
+        status,
+      });
+
+      const service = new AuthenticationService({
+        prisma: prisma as never,
+        emailClient: {} as never,
+      });
+
+      await expect(
+        service.adminLogin({ email: 'admin@matchyplus.tn', password: 'matchy2026' }),
+      ).rejects.toThrow('invalid_credentials');
+    },
+  );
 
   it('throws when registering an existing user', async () => {
     const prisma = createMockPrisma();

@@ -53,7 +53,13 @@ export class PhoneAuthenticationService {
 
     let user = await this.prisma.user.findUnique({ where: { phone } });
     if (!user) {
-      user = await this.prisma.user.create({ data: { phone, auth_provider: 'phone' } });
+      user = await this.prisma.user.create({
+        data: {
+          phone,
+          name: phone,
+          auth_provider: 'phone',
+        },
+      });
     }
 
     const tokens = await this.tokenService.issueTokenPair(user);
@@ -98,7 +104,7 @@ export class PhoneAuthenticationService {
       data: {
         phone,
         password: hashedPassword,
-        name: payload.name ?? null,
+        name: payload.name ?? phone,
         auth_provider: 'phone',
       },
     });

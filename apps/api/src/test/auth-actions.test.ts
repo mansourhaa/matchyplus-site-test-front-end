@@ -113,8 +113,18 @@ describe('DELETE /api/v1/auth/account', () => {
     const app = await buildTestApp({
       prisma: {
         user: {
-          findUniqueOrThrow: vi.fn().mockResolvedValue({ id: 'user-1', password: null }),
-          findUnique: vi.fn().mockResolvedValue({ id: 'user-1', password: null }),
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'user@example.com',
+            password: null,
+            status: 'ACTIVE',
+          }),
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'user@example.com',
+            password: null,
+            status: 'ACTIVE',
+          }),
           delete: deleteMock,
         } as never,
       },
@@ -139,8 +149,18 @@ describe('DELETE /api/v1/auth/account', () => {
     const app = await buildTestApp({
       prisma: {
         user: {
-          findUniqueOrThrow: vi.fn().mockResolvedValue({ id: 'user-1', password: null }),
-          findUnique: vi.fn().mockResolvedValue({ id: 'user-1', password: null }),
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'user@example.com',
+            password: null,
+            status: 'ACTIVE',
+          }),
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'user@example.com',
+            password: null,
+            status: 'ACTIVE',
+          }),
           delete: deleteMock,
         } as never,
       },

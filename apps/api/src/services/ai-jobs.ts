@@ -1,3 +1,5 @@
+import { type Redis } from 'ioredis';
+
 import {
   AI_CONSUMER_GROUP_DEFAULT,
   AI_STREAM_KEY_DEFAULT,
@@ -5,7 +7,6 @@ import {
   CreateAiJobRequest,
 } from '@saas-boilerplate/ai-contracts';
 import { AiJob, AiJobStatus, Prisma, PrismaClient } from '@saas-boilerplate/types';
-import { type Redis } from 'ioredis';
 
 import { AiCacheService } from './ai-cache.js';
 

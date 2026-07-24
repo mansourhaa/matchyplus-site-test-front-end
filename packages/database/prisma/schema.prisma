@@ -7,28 +7,112 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id            String   @id @default(cuid())
-  name          String?
-  email         String?  @unique
-  phone         String?  @unique
-  password      String?  @db.Text()
-  auth_provider String   @default("email")
-  create_at     DateTime @default(now())
-  updated_at    DateTime @default(now()) @updatedAt
+enum Role {
+  USER
+  SUPPORT
+  MODERATOR
+  SUPER_ADMIN
+}
 
-  email_verified                Boolean             @default(false)
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+enum UserPlan {
+  FREE
+  PREMIUM
+  PREMIUM_PLUS
+}
+
+/// Treatment state of a profile report, from filed to handled by an admin.
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+/// Plan configuration edited from the admin "Gestion Forfaits" section.
+/// The id mirrors UserPlan so a user's plan resolves to exactly one row.
+model Plan {
+  id          UserPlan @id
+  name        String
+  price       Float    @default(0)
+  color       String   @default("#888888")
+  is_active   Boolean  @default(true)
+  badge       String   @default("")
+  trial_days  Int      @default(0)
+  description String   @default("")
+  features    String[] @default([])
+
+  // Limits: -1 means unlimited.
+  swipes_per_day           Int @default(-1)
+  profiles_per_category    Int @default(-1)
+  messages_per_day         Int @default(-1)
+  actions_per_day          Int @default(-1)
+  boosts_per_month         Int @default(0)
+  super_connects_per_month Int @default(0)
+
+  sort_order Int      @default(0)
+  create_at  DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+}
+
+model User {
+  id            String  @id @default(cuid())
+  name          String
+  email         String? @unique
+  phone         String? @unique
+  password      String? @db.Text()
+  auth_provider String  @default("email")
+
+  role   Role       @default(USER)
+  status UserStatus @default(ACTIVE)
+  plan   UserPlan   @default(FREE)
+
+  // Profile fields surfaced by the admin panel.
+  job            String?
+  category       String?
+  city           String?
+  bio            String?   @db.Text()
+  image          String?   @db.Text()
+  interests      String[]  @default([])
+  languages      String[]  @default([])
+  contact_modes  String[]  @default([])
+  experience     String?
+  schedule       String?
+  price          String?
+  rating         Float     @default(0)
+  reviews        Int       @default(0)
+  matches        Int       @default(0)
+  missions       Int       @default(0)
+  total_earnings Int       @default(0)
+  last_login     DateTime?
+
+  // Authentication fields.
+  email_verified                Boolean   @default(false)
   pending_email                 String?
   email_verification_code       String?
   email_verification_expires_at DateTime?
-  google_id                     String?             @unique
-  linkedin_id                   String?             @unique
-  aiJobs                        AiJob[]
-  refresh_tokens                RefreshToken[]
-  oauth_exchange_codes          OAuthExchangeCode[]
+  google_id                     String?   @unique
+  linkedin_id                   String?   @unique
+
+  create_at  DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  aiJobs               AiJob[]
+  refresh_tokens       RefreshToken[]
+  oauth_exchange_codes OAuthExchangeCode[]
+
+  reports_made     Report[] @relation("ReportsMade")
+  reports_received Report[] @relation("ReportsReceived")
 
   @@index([email])
   @@index([phone])
+  @@index([status])
+  @@index([plan])
 }
 
 model RefreshToken {
@@ -43,9 +127,8 @@ model RefreshToken {
   @@index([user_id])
 }
 
-/// One-time code that bridges an OAuth provider redirect (browser navigation, can't
-/// carry JSON) to the SPA, which exchanges it for a real token pair. Only a hash of
-/// the code is stored — never raw access/refresh tokens.
+/// One-time code that bridges an OAuth provider redirect to the SPA.
+/// Only a hash of the code is stored, never raw access or refresh tokens.
 model OAuthExchangeCode {
   id          String    @id @default(cuid())
   code_hash   String    @unique @db.Text()
@@ -56,6 +139,27 @@ model OAuthExchangeCode {
   create_at   DateTime  @default(now())
 
   @@index([user_id])
+}
+
+/// A profile report where one user flags another.
+/// Deleting either user removes the related reports.
+model Report {
+  id      String       @id @default(cuid())
+  reason  String
+  details String?      @db.Text()
+  status  ReportStatus @default(PENDING)
+
+  reporter_id String
+  reporter    User   @relation("ReportsMade", fields: [reporter_id], references: [id], onDelete: Cascade)
+  reported_id String
+  reported    User   @relation("ReportsReceived", fields: [reported_id], references: [id], onDelete: Cascade)
+
+  create_at  DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@index([reported_id])
+  @@index([reporter_id])
+  @@index([status])
 }
 
 enum AiJobType {

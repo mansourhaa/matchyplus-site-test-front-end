@@ -12,6 +12,7 @@ declare module 'fastify' {
     verifyToken: () => Promise<void>;
     otpClient: OtpClient;
     emailClient: EmailClient;
+    verifyAdmin: () => Promise<void>;
   }
   interface FastifyRequest {
     loggedUser: User;

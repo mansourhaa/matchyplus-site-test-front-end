@@ -374,8 +374,11 @@ export type FieldRef<Model, FieldType> = runtime.FieldRef<Model, FieldType>;
 type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRef<Model, FieldType>;
 
 export const ModelName = {
+  Plan: 'Plan',
   User: 'User',
   RefreshToken: 'RefreshToken',
+  OAuthExchangeCode: 'OAuthExchangeCode',
+  Report: 'Report',
   AiJob: 'AiJob',
 } as const;
 
@@ -396,10 +399,84 @@ export type TypeMap<
     omit: GlobalOmitOptions;
   };
   meta: {
-    modelProps: 'user' | 'refreshToken' | 'aiJob';
+    modelProps: 'plan' | 'user' | 'refreshToken' | 'oAuthExchangeCode' | 'report' | 'aiJob';
     txIsolationLevel: TransactionIsolationLevel;
   };
   model: {
+    Plan: {
+      payload: Prisma.$PlanPayload<ExtArgs>;
+      fields: Prisma.PlanFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.PlanFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.PlanFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        findFirst: {
+          args: Prisma.PlanFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.PlanFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        findMany: {
+          args: Prisma.PlanFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>[];
+        };
+        create: {
+          args: Prisma.PlanCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        createMany: {
+          args: Prisma.PlanCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.PlanCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>[];
+        };
+        delete: {
+          args: Prisma.PlanDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        update: {
+          args: Prisma.PlanUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        deleteMany: {
+          args: Prisma.PlanDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.PlanUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.PlanUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>[];
+        };
+        upsert: {
+          args: Prisma.PlanUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanPayload>;
+        };
+        aggregate: {
+          args: Prisma.PlanAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlan>;
+        };
+        groupBy: {
+          args: Prisma.PlanGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.PlanGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.PlanCountArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.PlanCountAggregateOutputType> | number;
+        };
+      };
+    };
     User: {
       payload: Prisma.$UserPayload<ExtArgs>;
       fields: Prisma.UserFieldRefs;
@@ -549,6 +626,155 @@ export type TypeMap<
         };
       };
     };
+    OAuthExchangeCode: {
+      payload: Prisma.$OAuthExchangeCodePayload<ExtArgs>;
+      fields: Prisma.OAuthExchangeCodeFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.OAuthExchangeCodeFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.OAuthExchangeCodeFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        findFirst: {
+          args: Prisma.OAuthExchangeCodeFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.OAuthExchangeCodeFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        findMany: {
+          args: Prisma.OAuthExchangeCodeFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>[];
+        };
+        create: {
+          args: Prisma.OAuthExchangeCodeCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        createMany: {
+          args: Prisma.OAuthExchangeCodeCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.OAuthExchangeCodeCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>[];
+        };
+        delete: {
+          args: Prisma.OAuthExchangeCodeDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        update: {
+          args: Prisma.OAuthExchangeCodeUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        deleteMany: {
+          args: Prisma.OAuthExchangeCodeDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.OAuthExchangeCodeUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.OAuthExchangeCodeUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>[];
+        };
+        upsert: {
+          args: Prisma.OAuthExchangeCodeUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        aggregate: {
+          args: Prisma.OAuthExchangeCodeAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOAuthExchangeCode>;
+        };
+        groupBy: {
+          args: Prisma.OAuthExchangeCodeGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.OAuthExchangeCodeGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.OAuthExchangeCodeCountArgs<ExtArgs>;
+          result:
+            runtime.Types.Utils.Optional<Prisma.OAuthExchangeCodeCountAggregateOutputType> | number;
+        };
+      };
+    };
+    Report: {
+      payload: Prisma.$ReportPayload<ExtArgs>;
+      fields: Prisma.ReportFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.ReportFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.ReportFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>;
+        };
+        findFirst: {
+          args: Prisma.ReportFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.ReportFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>;
+        };
+        findMany: {
+          args: Prisma.ReportFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>[];
+        };
+        create: {
+          args: Prisma.ReportCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>;
+        };
+        createMany: {
+          args: Prisma.ReportCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.ReportCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>[];
+        };
+        delete: {
+          args: Prisma.ReportDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>;
+        };
+        update: {
+          args: Prisma.ReportUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>;
+        };
+        deleteMany: {
+          args: Prisma.ReportDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.ReportUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.ReportUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>[];
+        };
+        upsert: {
+          args: Prisma.ReportUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>;
+        };
+        aggregate: {
+          args: Prisma.ReportAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateReport>;
+        };
+        groupBy: {
+          args: Prisma.ReportGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.ReportGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.ReportCountArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.ReportCountAggregateOutputType> | number;
+        };
+      };
+    };
     AiJob: {
       payload: Prisma.$AiJobPayload<ExtArgs>;
       fields: Prisma.AiJobFieldRefs;
@@ -662,6 +888,29 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel =
   (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel];
 
+export const PlanScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  price: 'price',
+  color: 'color',
+  is_active: 'is_active',
+  badge: 'badge',
+  trial_days: 'trial_days',
+  description: 'description',
+  features: 'features',
+  swipes_per_day: 'swipes_per_day',
+  profiles_per_category: 'profiles_per_category',
+  messages_per_day: 'messages_per_day',
+  actions_per_day: 'actions_per_day',
+  boosts_per_month: 'boosts_per_month',
+  super_connects_per_month: 'super_connects_per_month',
+  sort_order: 'sort_order',
+  create_at: 'create_at',
+  updated_at: 'updated_at',
+} as const;
+
+export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum];
+
 export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -669,12 +918,34 @@ export const UserScalarFieldEnum = {
   phone: 'phone',
   password: 'password',
   auth_provider: 'auth_provider',
-  create_at: 'create_at',
-  updated_at: 'updated_at',
+  role: 'role',
+  status: 'status',
+  plan: 'plan',
+  job: 'job',
+  category: 'category',
+  city: 'city',
+  bio: 'bio',
+  image: 'image',
+  interests: 'interests',
+  languages: 'languages',
+  contact_modes: 'contact_modes',
+  experience: 'experience',
+  schedule: 'schedule',
+  price: 'price',
+  rating: 'rating',
+  reviews: 'reviews',
+  matches: 'matches',
+  missions: 'missions',
+  total_earnings: 'total_earnings',
+  last_login: 'last_login',
   email_verified: 'email_verified',
   pending_email: 'pending_email',
   email_verification_code: 'email_verification_code',
   email_verification_expires_at: 'email_verification_expires_at',
+  google_id: 'google_id',
+  linkedin_id: 'linkedin_id',
+  create_at: 'create_at',
+  updated_at: 'updated_at',
 } as const;
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
@@ -690,6 +961,32 @@ export const RefreshTokenScalarFieldEnum = {
 
 export type RefreshTokenScalarFieldEnum =
   (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum];
+
+export const OAuthExchangeCodeScalarFieldEnum = {
+  id: 'id',
+  code_hash: 'code_hash',
+  user_id: 'user_id',
+  expires_at: 'expires_at',
+  consumed_at: 'consumed_at',
+  create_at: 'create_at',
+} as const;
+
+export type OAuthExchangeCodeScalarFieldEnum =
+  (typeof OAuthExchangeCodeScalarFieldEnum)[keyof typeof OAuthExchangeCodeScalarFieldEnum];
+
+export const ReportScalarFieldEnum = {
+  id: 'id',
+  reason: 'reason',
+  details: 'details',
+  status: 'status',
+  reporter_id: 'reporter_id',
+  reported_id: 'reported_id',
+  create_at: 'create_at',
+  updated_at: 'updated_at',
+} as const;
+
+export type ReportScalarFieldEnum =
+  (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum];
 
 export const AiJobScalarFieldEnum = {
   id: 'id',
@@ -759,6 +1056,19 @@ export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof Json
  */
 
 /**
+ * Reference to a field of type 'UserPlan'
+ */
+export type EnumUserPlanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserPlan'>;
+
+/**
+ * Reference to a field of type 'UserPlan[]'
+ */
+export type ListEnumUserPlanFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'UserPlan[]'
+>;
+
+/**
  * Reference to a field of type 'String'
  */
 export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String'>;
@@ -767,6 +1077,31 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
  * Reference to a field of type 'String[]'
  */
 export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>;
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>;
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>;
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>;
+
+/**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>;
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>;
 
 /**
  * Reference to a field of type 'DateTime'
@@ -779,9 +1114,46 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>;
 
 /**
- * Reference to a field of type 'Boolean'
+ * Reference to a field of type 'Role'
  */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>;
+export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role'>;
+
+/**
+ * Reference to a field of type 'Role[]'
+ */
+export type ListEnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role[]'>;
+
+/**
+ * Reference to a field of type 'UserStatus'
+ */
+export type EnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'UserStatus'
+>;
+
+/**
+ * Reference to a field of type 'UserStatus[]'
+ */
+export type ListEnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'UserStatus[]'
+>;
+
+/**
+ * Reference to a field of type 'ReportStatus'
+ */
+export type EnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'ReportStatus'
+>;
+
+/**
+ * Reference to a field of type 'ReportStatus[]'
+ */
+export type ListEnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'ReportStatus[]'
+>;
 
 /**
  * Reference to a field of type 'AiJobType'
@@ -821,26 +1193,6 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>;
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>;
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>;
-
-/**
- * Reference to a field of type 'Float'
- */
-export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>;
-
-/**
- * Reference to a field of type 'Float[]'
- */
-export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>;
 
 /**
  * Batch Payload for updateMany & deleteMany & createMany
@@ -960,8 +1312,11 @@ export type PrismaClientOptions = (
   queryPlanCacheMaxSize?: number;
 };
 export type GlobalOmitConfig = {
+  plan?: Prisma.PlanOmit;
   user?: Prisma.UserOmit;
   refreshToken?: Prisma.RefreshTokenOmit;
+  oAuthExchangeCode?: Prisma.OAuthExchangeCodeOmit;
+  report?: Prisma.ReportOmit;
   aiJob?: Prisma.AiJobOmit;
 };
 
