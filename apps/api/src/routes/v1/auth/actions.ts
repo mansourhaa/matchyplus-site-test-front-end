@@ -105,7 +105,8 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         // Generating Token
         return reply.code(200).send({
           access_token: data.accessToken,
-          user: _.omit(data.user, ['password']),
+          refresh_token: data.refreshToken,
+          user: data.user,
         });
       } catch (err) {
         throw mapError(err as Error, request);
