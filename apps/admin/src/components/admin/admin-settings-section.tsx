@@ -1,8 +1,9 @@
 'use client';
 
 import { ROLE_LABELS } from '@/features/admin-auth/schemas';
+import { changeAdminPassword, selectAdminAuth } from '@/features/admin-auth/store/admin-auth-slice';
 import type { AdminUser } from '@/features/admin-auth/types';
-import { adminApi } from '@/lib/admin-api';
+import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { Check, LogOut, Save } from 'lucide-react';
 import { useState } from 'react';
 
@@ -13,39 +14,38 @@ export function AdminSettingsSection({
   admin: AdminUser | null;
   onLogout: () => void;
 }) {
+  const dispatch = useAppDispatch();
+  // The HTTP call lives in the thunk; the component only dispatches and reads status from the store.
+  const { passwordChangeLoading, passwordChangeError } = useAppSelector(selectAdminAuth);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  // Client-side form validation only — server refusals come back through the store.
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSave = async () => {
-    if (saving) return;
-    setError(null);
+    if (passwordChangeLoading) return;
+    setFormError(null);
 
     if (!currentPassword || !newPassword) {
-      setError('Veuillez remplir les deux champs mot de passe.');
+      setFormError('Veuillez remplir les deux champs mot de passe.');
       return;
     }
     if (newPassword.length < 8) {
-      setError('Le nouveau mot de passe doit contenir au moins 8 caractères.');
+      setFormError('Le nouveau mot de passe doit contenir au moins 8 caractères.');
       return;
     }
 
-    setSaving(true);
-    try {
-      await adminApi.post('/admin/change-password', { currentPassword, newPassword });
+    const result = await dispatch(changeAdminPassword({ currentPassword, newPassword }));
+    if (changeAdminPassword.fulfilled.match(result)) {
       setSaved(true);
       setCurrentPassword('');
       setNewPassword('');
       setTimeout(() => setSaved(false), 2500);
-    } catch {
-      // The endpoint answers the same way for a wrong password as for any other refusal.
-      setError('Mot de passe actuel incorrect.');
-    } finally {
-      setSaving(false);
     }
   };
+
+  const error = formError ?? passwordChangeError;
 
   return (
     <div className="max-w-2xl space-y-5">
@@ -97,7 +97,7 @@ export function AdminSettingsSection({
               value={currentPassword}
               onChange={(event) => {
                 setCurrentPassword(event.target.value);
-                setError(null);
+                setFormError(null);
               }}
               className="mt-1 w-full rounded-xl px-4 py-3 outline-none"
               style={inputStyle}
@@ -115,7 +115,7 @@ export function AdminSettingsSection({
               value={newPassword}
               onChange={(event) => {
                 setNewPassword(event.target.value);
-                setError(null);
+                setFormError(null);
               }}
               className="mt-1 w-full rounded-xl px-4 py-3 outline-none"
               style={inputStyle}
@@ -129,14 +129,14 @@ export function AdminSettingsSection({
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving}
+            disabled={passwordChangeLoading}
             className="flex w-full items-center justify-center gap-2 rounded-xl py-3"
             style={{
               background: saved ? '#61BCA6' : '#2F76BB',
               color: 'white',
               fontSize: '14px',
               fontWeight: 700,
-              cursor: saving ? 'not-allowed' : 'pointer',
+              cursor: passwordChangeLoading ? 'not-allowed' : 'pointer',
             }}
           >
             {saved ? (
@@ -147,7 +147,7 @@ export function AdminSettingsSection({
             ) : (
               <>
                 <Save size={16} />
-                {saving ? 'Enregistrement...' : 'Enregistrer'}
+                {passwordChangeLoading ? 'Enregistrement...' : 'Enregistrer'}
               </>
             )}
           </button>

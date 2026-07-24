@@ -1,4 +1,41 @@
-import { Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
+import { Prisma, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
+
+/**
+ * Projection for every user row the admin panel reads. Declared here, in the types layer, so the
+ * shape and the type derived from it live together and are shared rather than re-inlined per query.
+ * `password` is deliberately absent: it must never reach the panel — admin reads always go through
+ * this select, never a bare `findUnique` on the full User row.
+ */
+export const adminUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  status: true,
+  plan: true,
+  phone: true,
+  job: true,
+  category: true,
+  city: true,
+  bio: true,
+  image: true,
+  interests: true,
+  languages: true,
+  contact_modes: true,
+  experience: true,
+  schedule: true,
+  price: true,
+  rating: true,
+  reviews: true,
+  matches: true,
+  missions: true,
+  total_earnings: true,
+  last_login: true,
+  create_at: true,
+} satisfies Prisma.UserSelect;
+
+/** A user as exposed to the admin panel: exactly the {@link adminUserSelect} projection, never a password. */
+export type AdminUser = Prisma.UserGetPayload<{ select: typeof adminUserSelect }>;
 
 /** The admin performing the action, taken from the verified token — never from the request body. */
 export type AdminActor = {
