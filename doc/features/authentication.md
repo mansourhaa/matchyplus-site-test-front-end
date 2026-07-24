@@ -130,6 +130,24 @@ Lets a user who signed up via a social provider (Google/LinkedIn — see `SOCIAL
 
 Both endpoints are rate-limited the same way as OTP send (`request`: 5 per 15 minutes).
 
+## Google & LinkedIn OAuth
+
+First-party OAuth via [`@fastify/oauth2`](https://github.com/fastify/fastify-oauth2) — no third-party auth provider (Clerk, Auth0, etc.) is used or planned.
+
+**Plugin**: `apps/api/src/plugins/oauth.ts` registers a separate `@fastify/oauth2` instance per provider (`oauth2Google`, `oauth2LinkedIn`), each providing its own `/api/v1/auth/oauth/<provider>` start-redirect route with built-in state/CSRF cookie handling. **Each provider is independent and optional**: it's only registered when both its client id and secret are set (`GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `LINKEDIN_CLIENT_ID`/`LINKEDIN_CLIENT_SECRET`) — a missing pair disables just that provider's route, the API still starts normally, and the other provider is unaffected.
+
+**Callbacks**: `GET /api/v1/auth/oauth/google/callback` and `GET /api/v1/auth/oauth/linkedin/callback`, implemented in `routes/v1/auth/actions.ts` (kept alongside the other auth routes; only the two `@fastify/oauth2` plugin instances live in `plugins/oauth.ts`). Profile-fetching is delegated to dedicated helpers — `lib/google-oauth.ts` / `lib/linkedin-oauth.ts` — each calling the provider's OIDC `userinfo` endpoint with the access token `@fastify/oauth2` already validated.
+
+On a successful callback:
+
+1. `services/oauth-authentication.ts`'s `findOrCreateOAuthUser` looks up the user by provider id (`google_id`/`linkedin_id`); if none exists, it links the provider to an existing account with a matching **verified** email, or otherwise creates a new user. An existing account with a matching but **unverified** email is not linked (`oauth_email_not_verified`) — the provider can't yet prove ownership of that email.
+2. A short-lived, single-use **exchange code** is minted (`createExchangeCode`) and the browser is redirected to `${FRONTEND_URL}/oauth-callback?code=...`.
+3. On failure (profile fetch failure, unverified-email conflict, or a disabled provider), the browser is redirected to `${FRONTEND_URL}/oauth-callback?error=...` instead — a top-level browser redirect can't carry a JSON error body, so there's no HTTP error response to read here.
+
+**Exchange codes** (`OAuthExchangeCode` table): only a **sha256 hash** of the code is stored, never a token — alongside `user_id`, `expires_at`, and `consumed_at` (null until used). The SPA calls `POST /api/v1/auth/oauth/exchange` with `{ code }`; `consumeExchangeCode` rejects a code that's missing, expired, or already consumed (`invalid_exchange_code`), otherwise marks it consumed and — **only at this point** — calls the existing `TokenService.issueTokenPair()` to mint a real access/refresh token pair. No tokens exist anywhere until a valid code is actually exchanged.
+
+> **Frontend note**: the `/oauth-callback` SPA route that reads `?code=`/`?error=` and calls the exchange endpoint is implemented separately, not part of this backend change.
+
 ## Logout
 
 **Frontend**: dispatches `logout()` action which:
@@ -146,6 +164,9 @@ Both endpoints are rate-limited the same way as OTP send (`request`: 5 per 15 mi
 | `ACCESS_TOKEN_TTL` | API — token expiry |
 | `COOKIE_SECRET` | API — cookie plugin |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` / `SMTP_FROM_NAME` / `SMTP_SECURE` | API — email verification (optional, see [environment variables](../setup/environment-variables.md#email-smtp--optional)) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` | API — Google/LinkedIn OAuth (optional per provider, see [environment variables](../setup/environment-variables.md#google--linkedin-oauth--optional-per-provider)) |
+| `API_BASE_URL` / `FRONTEND_URL` | API — OAuth callback URL and SPA redirect target |
+| `OAUTH_EXCHANGE_CODE_TTL_SECONDS` | API — OAuth exchange code lifetime (default 60s) |
 
 ## Security notes
 
@@ -159,8 +180,6 @@ Both endpoints are rate-limited the same way as OTP send (`request`: 5 per 15 mi
 
 Common next steps:
 
-- Refresh tokens
-- OAuth providers (Clerk, Auth0, etc.)
 - Role-based access control (extend User model + admin autohooks)
 
 Admin routes already have a hook scaffold at `apps/api/src/routes/v1/admin/autohooks.ts`.

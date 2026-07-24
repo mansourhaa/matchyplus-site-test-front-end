@@ -17,12 +17,15 @@ model User {
   create_at     DateTime @default(now())
   updated_at    DateTime @default(now()) @updatedAt
 
-  email_verified                Boolean        @default(false)
+  email_verified                Boolean             @default(false)
   pending_email                 String?
   email_verification_code       String?
   email_verification_expires_at DateTime?
+  google_id                     String?             @unique
+  linkedin_id                   String?             @unique
   aiJobs                        AiJob[]
   refresh_tokens                RefreshToken[]
+  oauth_exchange_codes          OAuthExchangeCode[]
 
   @@index([email])
   @@index([phone])
@@ -36,6 +39,21 @@ model RefreshToken {
   expires_at DateTime
   revoked_at DateTime?
   create_at  DateTime  @default(now())
+
+  @@index([user_id])
+}
+
+/// One-time code that bridges an OAuth provider redirect (browser navigation, can't
+/// carry JSON) to the SPA, which exchanges it for a real token pair. Only a hash of
+/// the code is stored — never raw access/refresh tokens.
+model OAuthExchangeCode {
+  id          String    @id @default(cuid())
+  code_hash   String    @unique @db.Text()
+  user_id     String
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  expires_at  DateTime
+  consumed_at DateTime?
+  create_at   DateTime  @default(now())
 
   @@index([user_id])
 }

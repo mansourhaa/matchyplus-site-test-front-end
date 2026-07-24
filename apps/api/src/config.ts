@@ -81,4 +81,17 @@ export const config = {
   smtpFromName: process.env.SMTP_FROM_NAME,
   smtpSecure: process.env.SMTP_SECURE,
   appName: process.env.APP_NAME,
+
+  /**
+   * OAuth (Google / LinkedIn) — optional. Each provider is only enabled when both its
+   * client id and secret are set; a missing pair disables just that provider instead
+   * of preventing the server from starting.
+   */
+  googleClientId: process.env.GOOGLE_CLIENT_ID,
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  linkedinClientId: process.env.LINKEDIN_CLIENT_ID,
+  linkedinClientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+  apiBaseUrl: process.env.API_BASE_URL ?? 'http://localhost:8000',
+  frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+  oauthExchangeCodeTtlSeconds: parseInt(process.env.OAUTH_EXCHANGE_CODE_TTL_SECONDS ?? '60', 10),
 };

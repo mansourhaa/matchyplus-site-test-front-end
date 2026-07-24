@@ -401,6 +401,24 @@ export const confirmPhoneLinkSchema = {
   },
 };
 
+export const oauthExchangeSchema = {
+  tags: ['auth'],
+  body: {
+    type: 'object',
+    properties: {
+      code: { type: 'string', minLength: 16 },
+    },
+    required: ['code'],
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      ...tokenPairResponseSchema,
+    },
+    ...errorResponses,
+  },
+};
+
 export const registerSchema = {
   tags: ['auth'],
   body: {

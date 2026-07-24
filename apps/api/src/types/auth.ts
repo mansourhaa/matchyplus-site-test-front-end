@@ -145,3 +145,21 @@ export type ConfirmPhoneLinkResult = {
   message: string;
   phone: string;
 };
+
+export type OAuthProviderName = 'google' | 'linkedin';
+
+export type OAuthProfilePayload = {
+  id: string;
+  email: string | null;
+  emailVerified: boolean;
+  name: string | null;
+};
+
+export type OAuthExchangePayload = {
+  code: string;
+};
+export type OAuthExchangeResult = {
+  accessToken: string;
+  refreshToken: string;
+  user: Partial<User>;
+};
