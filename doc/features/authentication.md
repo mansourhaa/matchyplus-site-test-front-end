@@ -31,6 +31,13 @@ sequenceDiagram
 
 ## Phone OTP (primary login)
 
+**Frontend**: `apps/app/src/components/auth/login-form.tsx` (OTP-first: send code → enter
+code → verify → session) and `apps/app/src/components/auth/register-form.tsx`
+(OTP-gated: a code must be sent and verified before `register-phone` is called).
+`apps/app` is the only product UI — phone OTP is its primary sign-in flow;
+password-based `login-phone` is kept as an opt-in fallback behind an explicit toggle, not
+the default path.
+
 **API**: `POST /api/v1/auth/otp/send` → `POST /api/v1/auth/otp/verify`
 
 - `otp/send` takes `{ phone }` and asks Twilio Verify to text a code to that number.
@@ -105,11 +112,11 @@ See `apps/app/src/lib/auth.ts`.
 
 **File**: `apps/app/src/proxy.ts`
 
-| Condition | Action |
-| --- | --- |
-| No cookie + protected route | Redirect to `/login` |
-| Has cookie + auth route (`/login`, `/register`) | Redirect to `/` |
-| Otherwise | Continue |
+| Condition                                       | Action               |
+| ----------------------------------------------- | -------------------- |
+| No cookie + protected route                     | Redirect to `/login` |
+| Has cookie + auth route (`/login`, `/register`) | Redirect to `/`      |
+| Otherwise                                       | Continue             |
 
 > This is an **optimistic cookie check** only — it does not verify JWT signatures. Real authorization happens on the API.
 
@@ -195,7 +202,10 @@ On a successful callback:
 
 **Exchange codes** (`OAuthExchangeCode` table): only a **sha256 hash** of the code is stored, never a token — alongside `user_id`, `expires_at`, and `consumed_at` (null until used). The SPA calls `POST /api/v1/auth/oauth/exchange` with `{ code }`; `consumeExchangeCode` rejects a code that's missing, expired, or already consumed (`invalid_exchange_code`), otherwise marks it consumed and — **only at this point** — calls the existing `TokenService.issueTokenPair()` to mint a real access/refresh token pair. No tokens exist anywhere until a valid code is actually exchanged.
 
-> **Frontend note**: the `/oauth-callback` SPA route that reads `?code=`/`?error=` and calls the exchange endpoint is implemented separately, not part of this backend change.
+**Frontend**: `apps/app/src/components/auth/oauth-callback.tsx` reads `?code=`/`?error=`,
+calls the exchange endpoint, and routes into the app on success — the same
+`resolvePostAuthDestination` next-param handling used by the OTP and phone-password
+flows (see [Client-side session storage](#client-side-session-storage)).
 
 ## Logout
 
@@ -227,19 +237,19 @@ On a successful callback:
 
 ## Environment variables
 
-| Variable | Used by |
-| --- | --- |
-| `ACCESS_TOKEN_SECRET` | API — JWT signing |
-| `ACCESS_TOKEN_TTL` | API — token expiry |
-| `COOKIE_SECRET` | API — cookie plugin |
-| `REFRESH_TOKEN_SECRET` | API — refresh token signing (see [Refresh tokens](#refresh-tokens)) |
-| `REFRESH_TOKEN_TTL_DAYS` | API — refresh token lifetime |
-| `VERIFICATION_CODE_SECRET` | API — HMAC key used to hash email-verification codes before storage (never the plaintext code) |
-| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_VERIFY_SERVICE_SID` | API — phone OTP (optional at startup; required only for OTP-dependent endpoints, see [Phone OTP](#phone-otp-primary-login)) |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` / `SMTP_FROM_NAME` / `SMTP_SECURE` | API — email verification (optional, see [environment variables](../setup/environment-variables.md#email-smtp--optional)) |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` | API — Google/LinkedIn OAuth (optional per provider, see [environment variables](../setup/environment-variables.md#google--linkedin-oauth--optional-per-provider)) |
-| `API_BASE_URL` / `FRONTEND_URL` | API — OAuth callback URL and SPA redirect target |
-| `OAUTH_EXCHANGE_CODE_TTL_SECONDS` | API — OAuth exchange code lifetime (default 60s) |
+| Variable                                                                                               | Used by                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ACCESS_TOKEN_SECRET`                                                                                  | API — JWT signing                                                                                                                                                 |
+| `ACCESS_TOKEN_TTL`                                                                                     | API — token expiry                                                                                                                                                |
+| `COOKIE_SECRET`                                                                                        | API — cookie plugin                                                                                                                                               |
+| `REFRESH_TOKEN_SECRET`                                                                                 | API — refresh token signing (see [Refresh tokens](#refresh-tokens))                                                                                               |
+| `REFRESH_TOKEN_TTL_DAYS`                                                                               | API — refresh token lifetime                                                                                                                                      |
+| `VERIFICATION_CODE_SECRET`                                                                             | API — HMAC key used to hash email-verification codes before storage (never the plaintext code)                                                                    |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_VERIFY_SERVICE_SID`                               | API — phone OTP (optional at startup; required only for OTP-dependent endpoints, see [Phone OTP](#phone-otp-primary-login))                                       |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` / `SMTP_FROM_NAME` / `SMTP_SECURE` | API — email verification (optional, see [environment variables](../setup/environment-variables.md#email-smtp--optional))                                          |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET`          | API — Google/LinkedIn OAuth (optional per provider, see [environment variables](../setup/environment-variables.md#google--linkedin-oauth--optional-per-provider)) |
+| `API_BASE_URL` / `FRONTEND_URL`                                                                        | API — OAuth callback URL and SPA redirect target                                                                                                                  |
+| `OAUTH_EXCHANGE_CODE_TTL_SECONDS`                                                                      | API — OAuth exchange code lifetime (default 60s)                                                                                                                  |
 
 ## Security notes
 

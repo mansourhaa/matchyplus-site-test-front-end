@@ -30,6 +30,7 @@ export const loginPhoneSchema = z.object({
 export const registerPhoneSchema = z.object({
   phone: phoneNumberSchema,
   password: phonePasswordSchema,
+  code: z.string().min(4).max(10),
   name: z.string().optional(),
 });
 

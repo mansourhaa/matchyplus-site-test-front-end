@@ -47,13 +47,13 @@ export function PhoneInput({
         id={id}
         type="tel"
         inputMode="numeric"
-        placeholder="Phone number"
+        placeholder={country.placeholder}
         value={nationalNumber}
         disabled={disabled}
         onChange={(event) =>
           onNationalNumberChange(sanitizeNationalPhone(event.target.value, country.iso))
         }
-        className="flex-1 bg-transparent outline-none"
+        className="flex-1 bg-transparent text-[#353535] outline-none"
         style={{ fontSize: 15, direction: 'ltr', textAlign: 'left', unicodeBidi: 'plaintext' }}
         required
       />

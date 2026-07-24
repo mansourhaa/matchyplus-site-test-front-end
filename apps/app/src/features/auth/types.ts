@@ -42,6 +42,7 @@ export interface LoginPhoneInput {
 export interface RegisterPhoneInput {
   phone: string;
   password: string;
+  code: string;
   name?: string;
 }
 
@@ -78,7 +79,8 @@ export interface ConfirmPhoneLinkInput {
 }
 
 export interface DeleteAccountInput {
-  password?: string;
+  confirm: boolean;
+  currentPassword?: string;
   reason?: string;
 }
 

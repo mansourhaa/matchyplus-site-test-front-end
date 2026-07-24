@@ -2,6 +2,7 @@
 
 import { useAppDispatch } from '@/features/auth/hooks';
 import { exchangeOAuthCode } from '@/features/auth/store/auth-slice';
+import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -42,7 +43,7 @@ export function OAuthCallback() {
       try {
         const result = await dispatch(exchangeOAuthCode({ code }));
         if (exchangeOAuthCode.fulfilled.match(result)) {
-          router.push('/');
+          router.push(resolvePostAuthDestination(searchParams.get('next')));
           router.refresh();
         } else {
           setError('La connexion a échoué. Réessayez.');

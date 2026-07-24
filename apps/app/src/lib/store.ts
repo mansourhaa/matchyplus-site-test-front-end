@@ -1,7 +1,10 @@
+import { resetAuthState } from '@/features/auth/store/auth-slice';
 import rootReducer from '@/features/auth/store/root-reducer';
 import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+
+import { setAuthFailureHandler } from './auth-events';
 
 const persistConfig = {
   key: 'root',
@@ -20,6 +23,12 @@ export const store = configureStore({
 });
 
 export const persistor = persistStore(store);
+
+// See lib/auth-events.ts — this is the one place that closes the loop between the
+// axios interceptor and Redux, kept out of lib/api.ts to avoid a circular import.
+setAuthFailureHandler(() => {
+  store.dispatch(resetAuthState());
+});
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

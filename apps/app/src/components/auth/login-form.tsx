@@ -1,13 +1,17 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
+import { sendOtpSchema, verifyOtpSchema } from '@/features/auth/schemas';
 import {
   confirmPasswordReset,
   loginPhone,
   requestPasswordReset,
   selectAuth,
+  sendOtp,
+  verifyOtp,
 } from '@/features/auth/store/auth-slice';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
+import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { ArrowLeft, ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -54,7 +58,7 @@ function GoogleIcon() {
 }
 
 function getOAuthRedirectUrl(provider: 'google' | 'linkedin') {
-  return `${process.env.NEXT_PUBLIC_API_URL}/auth/${provider}`;
+  return `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth/${provider}`;
 }
 
 export function LoginForm() {
@@ -70,6 +74,13 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // OTP is the primary phone-login flow: enter phone -> send code -> enter code ->
+  // verify. Password login (loginPhone) is kept only as an opt-in fallback behind
+  // usePasswordFallback, not the default path.
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [usePasswordFallback, setUsePasswordFallback] = useState(false);
 
   const [resetMode, setResetMode] = useState(false);
   const [resetCode, setResetCode] = useState('');
@@ -88,6 +99,52 @@ export function LoginForm() {
     setLocalError(null);
     setResetMode(false);
     setResetInfo(null);
+    setUsePasswordFallback(false);
+    setOtpSent(false);
+    setOtpCode('');
+  };
+
+  const goToPostAuthDestination = () => {
+    router.push(resolvePostAuthDestination(searchParams.get('next')));
+    router.refresh();
+  };
+
+  const handleSendOtp = async () => {
+    const parsed = sendOtpSchema.safeParse({ phone });
+    if (!parsed.success) {
+      setLocalError(`Entrez un numéro de téléphone valide (${country.nationalLength} chiffres)`);
+      return;
+    }
+
+    setLocalError(null);
+    const resultAction = await dispatch(sendOtp({ phone }));
+    if (sendOtp.fulfilled.match(resultAction)) {
+      setOtpSent(true);
+    } else {
+      setLocalError("Impossible d'envoyer le code. Vérifiez votre numéro.");
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const parsed = verifyOtpSchema.safeParse({ phone, code: otpCode });
+    if (!parsed.success) {
+      setLocalError('Entrez le code reçu par SMS.');
+      return;
+    }
+
+    setLocalError(null);
+    const resultAction = await dispatch(verifyOtp({ phone, code: otpCode }));
+    if (verifyOtp.fulfilled.match(resultAction)) {
+      goToPostAuthDestination();
+    } else {
+      setLocalError('Code invalide ou expiré.');
+    }
+  };
+
+  const handleEditPhone = () => {
+    setOtpSent(false);
+    setOtpCode('');
+    setLocalError(null);
   };
 
   const handlePhoneLogin = async () => {
@@ -96,8 +153,7 @@ export function LoginForm() {
     setLocalError(null);
     const resultAction = await dispatch(loginPhone({ phone, password }));
     if (loginPhone.fulfilled.match(resultAction)) {
-      router.push('/');
-      router.refresh();
+      goToPostAuthDestination();
     } else {
       setLocalError('Connexion échouée. Vérifiez votre numéro et votre mot de passe');
     }
@@ -119,7 +175,12 @@ export function LoginForm() {
     setResetRequestLoading(true);
     try {
       await dispatch(requestPasswordReset({ phone })).unwrap();
-      setResetInfo('Code de réinitialisation envoyé par SMS.');
+      // The API always returns success here regardless of whether this phone has a
+      // password-based account (anti-enumeration) — the copy must stay conditional
+      // ("if an account exists") rather than promising an SMS that may not be sent.
+      setResetInfo(
+        "Si un compte avec mot de passe existe pour ce numéro, un code de réinitialisation vient d'être envoyé par SMS.",
+      );
       setResetMode(true);
     } catch {
       setLocalError("Impossible d'envoyer le code de réinitialisation");
@@ -167,7 +228,11 @@ export function LoginForm() {
         <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.6, marginTop: '6px' }}>
           {step === 'login'
             ? 'Identifiez-vous pour rester au courant de ce qui se passe dans votre sphère professionnelle.'
-            : 'Entrez votre numéro de téléphone et votre mot de passe pour continuer.'}
+            : usePasswordFallback
+              ? 'Entrez votre numéro de téléphone et votre mot de passe pour continuer.'
+              : otpSent
+                ? 'Entrez le code reçu par SMS.'
+                : 'Entrez votre numéro de téléphone, nous vous envoyons un code.'}
         </p>
       </div>
 
@@ -274,7 +339,7 @@ export function LoginForm() {
             </button>
           </div>
         </div>
-      ) : (
+      ) : usePasswordFallback ? (
         <div>
           <div className="mb-4">
             <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
@@ -321,7 +386,7 @@ export function LoginForm() {
               disabled={resetRequestLoading}
               style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
             >
-              {resetRequestLoading ? 'Envoi du code...' : 'Mot de passe oublié ?'}
+              {resetRequestLoading ? 'Envoyer le code...' : 'Mot de passe oublié ?'}
             </button>
           </div>
 
@@ -340,7 +405,7 @@ export function LoginForm() {
                   onChange={(event) =>
                     setResetCode(event.target.value.replace(/\D/g, '').slice(0, 6))
                   }
-                  className="mt-1 w-full rounded-xl px-4 py-2.5 outline-none"
+                  className="mt-1 w-full rounded-xl px-4 py-2.5 text-[#353535] outline-none"
                   style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
                   placeholder="123456"
                 />
@@ -353,7 +418,7 @@ export function LoginForm() {
                   type="password"
                   value={newResetPassword}
                   onChange={(event) => setNewResetPassword(event.target.value)}
-                  className="mt-1 w-full rounded-xl px-4 py-2.5 outline-none"
+                  className="mt-1 w-full rounded-xl px-4 py-2.5 text-[#353535] outline-none"
                   style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
                   placeholder="6 caractères minimum"
                 />
@@ -365,7 +430,9 @@ export function LoginForm() {
                 className="w-full rounded-xl py-2.5 text-white"
                 style={{ background: '#2F76BB', fontSize: '13px', fontWeight: 700 }}
               >
-                {resetSubmitLoading ? 'Réinitialisation...' : 'Réinitialiser le mot de passe'}
+                {resetSubmitLoading
+                  ? 'Réinitialiser le mot de passe...'
+                  : 'Réinitialiser le mot de passe'}
               </button>
             </div>
           )}
@@ -401,6 +468,133 @@ export function LoginForm() {
             {loading && <Loader2 size={16} className="animate-spin" />}
             Continuer
           </button>
+
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setUsePasswordFallback(false);
+                setLocalError(null);
+              }}
+              style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
+            >
+              Se connecter avec un code SMS
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className="mb-4">
+            <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+              Indicatif pays
+            </label>
+            <PhoneInput
+              countryIso={countryIso}
+              nationalNumber={nationalNumber}
+              onCountryChange={setCountryIso}
+              onNationalNumberChange={setNationalNumber}
+              disabled={loading || otpSent}
+            />
+          </div>
+
+          {otpSent ? (
+            <>
+              <div className="mb-2">
+                <button
+                  type="button"
+                  onClick={handleEditPhone}
+                  style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
+                >
+                  Modifier le numéro
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+                  Code reçu par SMS
+                </label>
+                <div
+                  className="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3.5"
+                  style={{ border: '2px solid #2F76BB', background: '#F5F9FF' }}
+                >
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={otpCode}
+                    onChange={(event) =>
+                      setOtpCode(event.target.value.replace(/\D/g, '').slice(0, 10))
+                    }
+                    placeholder="123456"
+                    className="flex-1 bg-transparent text-[#353535] outline-none"
+                    style={{ fontSize: '15px' }}
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <p className="mb-3 text-center" style={{ fontSize: '12px', color: '#E24E59' }}>
+                  {error}
+                </p>
+              )}
+
+              <button
+                onClick={handleVerifyOtp}
+                disabled={loading || otpCode.trim().length < 4}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
+                style={{
+                  background:
+                    otpCode.trim().length >= 4 && !loading
+                      ? 'linear-gradient(90deg, #61BCA6, #2F76BB)'
+                      : '#D5D5D5',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  transition: 'background 0.2s',
+                }}
+              >
+                {loading && <Loader2 size={16} className="animate-spin" />}
+                Vérifier le code
+              </button>
+            </>
+          ) : (
+            <>
+              {error && (
+                <p className="mb-3 text-center" style={{ fontSize: '12px', color: '#E24E59' }}>
+                  {error}
+                </p>
+              )}
+
+              <button
+                onClick={handleSendOtp}
+                disabled={loading || nationalNumber.length < country.nationalLength}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
+                style={{
+                  background:
+                    nationalNumber.length >= country.nationalLength && !loading
+                      ? 'linear-gradient(90deg, #61BCA6, #2F76BB)'
+                      : '#D5D5D5',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  transition: 'background 0.2s',
+                }}
+              >
+                {loading && <Loader2 size={16} className="animate-spin" />}
+                Envoyer le code
+              </button>
+            </>
+          )}
+
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setUsePasswordFallback(true);
+                setLocalError(null);
+              }}
+              style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
+            >
+              Se connecter avec un mot de passe
+            </button>
+          </div>
         </div>
       )}
 

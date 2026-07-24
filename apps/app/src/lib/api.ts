@@ -1,6 +1,13 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-import { clearAuthSession, getAccessToken, getRefreshToken, setAccessToken } from './auth';
+import {
+  clearAuthSession,
+  getAccessToken,
+  getRefreshToken,
+  setAccessToken,
+  setRefreshToken,
+} from './auth';
+import { notifyAuthFailure } from './auth-events';
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -24,13 +31,20 @@ async function refreshAccessToken(): Promise<string> {
     throw new Error('No refresh token available');
   }
 
-  const response = await axios.post<{ access_token: string }>(
+  // The API rotates refresh tokens on every use — the presented one is revoked
+  // server-side and a new one issued in the same response — so both the new access
+  // and refresh tokens must be persisted, or the next refresh would be attempted with
+  // an already-revoked token.
+  const response = await axios.post<{ access_token: string; refresh_token: string }>(
     `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
     { refresh_token: refreshToken },
   );
 
-  const accessToken = response.data.access_token;
+  const { access_token: accessToken, refresh_token: newRefreshToken } = response.data;
   setAccessToken(accessToken);
+  if (newRefreshToken) {
+    setRefreshToken(newRefreshToken);
+  }
   return accessToken;
 }
 
@@ -57,6 +71,10 @@ api.interceptors.response.use(
       return api(config);
     } catch {
       clearAuthSession();
+      // clearAuthSession() only clears sessionStorage/cookie — the Redux auth state
+      // (and its own redux-persist copy) is untouched by that alone, so without this
+      // the UI would keep rendering as authenticated until the next reload.
+      notifyAuthFailure();
       return Promise.reject(error);
     }
   },

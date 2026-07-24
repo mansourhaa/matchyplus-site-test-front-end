@@ -87,11 +87,12 @@ export const loginPhone = createAsyncThunk(
 
 export const registerPhone = createAsyncThunk(
   'auth/registerPhone',
-  async ({ phone, password, name }: RegisterPhoneInput) => {
+  async ({ phone, password, name, code }: RegisterPhoneInput) => {
     const response = await api.post<TokenPairResponse>('/auth/register-phone', {
       phone,
       password,
       name,
+      code,
     });
     return response.data;
   },
@@ -186,9 +187,9 @@ export const confirmPhoneLink = createAsyncThunk(
 
 export const deleteAccount = createAsyncThunk(
   'auth/deleteAccount',
-  async ({ password, reason }: DeleteAccountInput) => {
+  async ({ confirm, currentPassword, reason }: DeleteAccountInput) => {
     const response = await api.delete<{ message: string }>('/auth/account', {
-      data: { password, reason },
+      data: { confirm, currentPassword, reason },
     });
     return response.data;
   },
@@ -235,7 +236,19 @@ function applyTokenPair(state: AuthState, payload: TokenPairResponse) {
 const authSlice = createSlice({
   name: 'auth',
   initialState,
-  reducers: {},
+  reducers: {
+    // Dispatched by lib/api.ts (via lib/auth-events.ts, to avoid a circular import)
+    // when a token refresh fails — clearAuthSession() alone only clears
+    // sessionStorage/cookie, it doesn't touch this in-memory Redux state (or its own
+    // redux-persist copy), so the UI would otherwise keep rendering as authenticated.
+    resetAuthState: (state) => {
+      state.accessToken = null;
+      state.refreshToken = null;
+      state.user = null;
+      state.error = null;
+      clearAuthSession();
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(login.pending, (state) => {
@@ -317,6 +330,13 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action: PayloadAction<{ user: AuthUser }>) => {
         state.user = action.payload.user;
+        if (state.accessToken) {
+          persistAuthSession(
+            state.accessToken,
+            action.payload.user,
+            state.refreshToken ?? undefined,
+          );
+        }
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
         state.accessToken = null;
@@ -377,6 +397,8 @@ const authSlice = createSlice({
       });
   },
 });
+
+export const { resetAuthState } = authSlice.actions;
 
 export const selectAuthState = (state: RootState) => state.auth;
 

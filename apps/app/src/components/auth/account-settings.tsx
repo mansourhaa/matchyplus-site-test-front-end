@@ -456,7 +456,9 @@ function DeleteAccountSection() {
     setError(null);
     setSubmitting(true);
     try {
-      await dispatch(deleteAccount({ password: password || undefined })).unwrap();
+      await dispatch(
+        deleteAccount({ confirm: true, currentPassword: password || undefined }),
+      ).unwrap();
       router.push('/login');
     } catch {
       setError(

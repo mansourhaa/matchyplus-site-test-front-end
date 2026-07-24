@@ -31,6 +31,11 @@ export function setAccessToken(token: string) {
   setAuthCookie(token);
 }
 
+export function setRefreshToken(token: string) {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem(AUTH_REFRESH_TOKEN_KEY, token);
+}
+
 export function persistAuthSession(token: string, user: unknown, refreshToken?: string) {
   if (typeof window === 'undefined') return;
   sessionStorage.setItem('access_token', token);

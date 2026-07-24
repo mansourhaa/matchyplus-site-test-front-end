@@ -9,9 +9,10 @@ const publicRoutes = ['/login', '/register'];
 // Always allowed regardless of auth state:
 // - /oauth-callback is reached via external redirect (OAuth provider callback), so
 //   bouncing based on a stale cookie would break the flow.
-// - /otp-test is a dev testing tool, not a real login screen — no reason to force
-//   logout before re-testing it.
-const neutralRoutes = ['/oauth-callback', '/otp-test'];
+// /otp-test is intentionally NOT here — it's a dev-only harness (see
+// app/otp-test/page.tsx, which 404s outside development), not part of the shipped
+// product flow, so it gets the same auth rules as any other route.
+const neutralRoutes = ['/oauth-callback'];
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE)?.value;

@@ -88,7 +88,7 @@ export function OtpTestForm() {
               value={code}
               onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 10))}
               placeholder="123456"
-              className="mt-2 w-full rounded-2xl px-4 py-3.5 outline-none"
+              className="mt-2 w-full rounded-2xl px-4 py-3.5 text-[#353535] outline-none"
               style={{ border: '2px solid #2F76BB', background: '#F5F9FF', fontSize: '15px' }}
             />
           </div>
