@@ -218,6 +218,68 @@ describe('AuthenticationService', () => {
     ).rejects.toThrow('user_already_exists');
   });
 
+  describe('authCheck', () => {
+    it('returns the safe profile fields the frontend needs, nothing sensitive', async () => {
+      const prisma = createMockPrisma();
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@example.com',
+        phone: '+21612345678',
+        name: 'Jane Doe',
+        auth_provider: 'email',
+        email_verified: true,
+        role: 'USER',
+      });
+
+      const service = new AuthenticationService({
+        prisma: prisma as never,
+        emailClient: {} as never,
+      });
+
+      const result = await service.authCheck({ id: 'user-1' });
+
+      expect(prisma.user.findUniqueOrThrow).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        select: {
+          id: true,
+          email: true,
+          phone: true,
+          name: true,
+          auth_provider: true,
+          email_verified: true,
+          role: true,
+        },
+      });
+
+      expect(result).toEqual({
+        id: 'user-1',
+        email: 'user@example.com',
+        phone: '+21612345678',
+        name: 'Jane Doe',
+        auth_provider: 'email',
+        email_verified: true,
+        role: 'USER',
+      });
+
+      expect(result).not.toHaveProperty('password');
+      expect(result).not.toHaveProperty('status');
+      expect(result).not.toHaveProperty('refresh_tokens');
+      expect(result).not.toHaveProperty('email_verification_code');
+    });
+
+    it('throws when the user no longer exists', async () => {
+      const prisma = createMockPrisma();
+      prisma.user.findUniqueOrThrow.mockRejectedValue(new Error('Not found'));
+
+      const service = new AuthenticationService({
+        prisma: prisma as never,
+        emailClient: {} as never,
+      });
+
+      await expect(service.authCheck({ id: 'missing-user' })).rejects.toThrow('user_not_found');
+    });
+  });
+
   describe('requestEmailVerification', () => {
     it('rejects an email already used by another account', async () => {
       const prisma = createMockPrisma();

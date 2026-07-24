@@ -84,6 +84,7 @@ const ERROR_STATUS: Record<
   oauth_email_not_verified: 'forbidden',
   oauth_provider_not_configured: 'serviceUnavailable',
   account_deletion_not_confirmed: 'badRequest',
+  otp_service_not_configured: 'serviceUnavailable',
 };
 
 const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {

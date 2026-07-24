@@ -135,8 +135,13 @@ export class AuthenticationService {
           id: payload.id,
         },
         select: {
-          email: true,
           id: true,
+          email: true,
+          phone: true,
+          name: true,
+          auth_provider: true,
+          email_verified: true,
+          role: true,
         },
       });
     } catch {

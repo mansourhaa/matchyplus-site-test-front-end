@@ -82,16 +82,25 @@ flowchart LR
 | `COOKIE_SECRET`       | Yes (staging/prod) | Fastify cookie signing           |
 | `REFRESH_TOKEN_SECRET` | Yes | Secret used to sign refresh tokens. Use a different long random value from `ACCESS_TOKEN_SECRET`. |
 | `REFRESH_TOKEN_TTL_DAYS` | Yes | Number of days before a refresh token expires. |
+| `VERIFICATION_CODE_SECRET` | Yes | HMAC key used to hash email-verification codes before they're stored — the plaintext code is never persisted. |
 
-### Twilio Verify (phone OTP)
+### Twilio Verify (phone OTP) — optional at startup
 
-These variables are required when the API sends SMS one-time passwords through Twilio Verify.
+These variables are **optional**: the API starts normally without them. They're only
+required for phone-OTP endpoints to actually work — without them, `POST /otp/send`,
+`POST /otp/verify`, `POST /register-phone`, and the OTP-dependent parts of password
+reset / phone linking all fail closed with `otp_service_not_configured` (503) instead
+of attempting a call with missing credentials.
 
 | Variable                    | Required | Description                                                         |
 | --------------------------- | -------- | ------------------------------------------------------------------- |
-| `TWILIO_ACCOUNT_SID`        | Yes      | Your Twilio account SID from the Twilio Console                     |
-| `TWILIO_AUTH_TOKEN`         | Yes      | Your Twilio auth token from the Twilio Console                      |
-| `TWILIO_VERIFY_SERVICE_SID` | Yes      | The SID of the Verify service you create in Twilio for OTP delivery |
+| `TWILIO_ACCOUNT_SID`        | No (see above) | Your Twilio account SID from the Twilio Console                     |
+| `TWILIO_AUTH_TOKEN`         | No (see above) | Your Twilio auth token from the Twilio Console                      |
+| `TWILIO_VERIFY_SERVICE_SID` | No (see above) | The SID of the Verify service you create in Twilio for OTP delivery |
+
+All three must be set together for phone OTP to work — Twilio Verify (not the plain
+Messaging API) handles SMS delivery, so no separate sender phone number is configured
+here.
 
 Typical values:
 

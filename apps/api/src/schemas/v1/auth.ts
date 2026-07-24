@@ -119,8 +119,13 @@ export const authCheckSchema = {
         user: {
           type: 'object',
           properties: {
-            email: { type: 'string' },
             id: { type: 'string' },
+            email: { type: 'string' },
+            phone: { type: 'string' },
+            name: { type: 'string' },
+            auth_provider: { type: 'string' },
+            email_verified: { type: 'boolean' },
+            role: { type: 'string' },
           },
         },
       },
