@@ -401,6 +401,30 @@ export const confirmPhoneLinkSchema = {
   },
 };
 
+export const deleteAccountSchema = {
+  tags: ['auth'],
+  headers: authenticatedHeadersSchema,
+  body: {
+    type: 'object',
+    properties: {
+      confirm: { type: 'boolean' },
+      currentPassword: { type: 'string' },
+      reason: { type: 'string', maxLength: 500 },
+    },
+    required: ['confirm'],
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
 export const oauthExchangeSchema = {
   tags: ['auth'],
   body: {

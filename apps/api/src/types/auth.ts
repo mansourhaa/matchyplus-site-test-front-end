@@ -163,3 +163,13 @@ export type OAuthExchangeResult = {
   refreshToken: string;
   user: Partial<User>;
 };
+
+export type DeleteAccountPayload = {
+  userId: string;
+  confirm: boolean;
+  currentPassword?: string;
+  reason?: string;
+};
+export type DeleteAccountResult = {
+  message: string;
+};

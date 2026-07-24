@@ -2,6 +2,7 @@ import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import _ from 'lodash';
 
 import { config } from '../../../config.js';
+import { RATE_LIMIT_STRICT } from '../../../constants.js';
 import { fetchGoogleProfile } from '../../../lib/google-oauth.js';
 import { fetchLinkedInProfile } from '../../../lib/linkedin-oauth.js';
 import {
@@ -10,6 +11,7 @@ import {
   confirmEmailVerificationSchema,
   confirmPasswordResetSchema,
   confirmPhoneLinkSchema,
+  deleteAccountSchema,
   loginPhoneSchema,
   loginSchema,
   oauthExchangeSchema,
@@ -31,6 +33,7 @@ import {
   ConfirmEmailVerificationPayload,
   ConfirmPasswordResetPayload,
   ConfirmPhoneLinkPayload,
+  DeleteAccountPayload,
   LoginPayload,
   LoginPhonePayload,
   OAuthExchangePayload,
@@ -73,6 +76,7 @@ const ERROR_STATUS: Record<
   oauth_profile_fetch_failed: 'badGateway',
   oauth_email_not_verified: 'forbidden',
   oauth_provider_not_configured: 'serviceUnavailable',
+  account_deletion_not_confirmed: 'badRequest',
 };
 
 const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
@@ -392,6 +396,33 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     async (request, reply) => {
       try {
         const data = await phoneAuthService.confirmPhoneLink({
+          ...request.body,
+          userId: request.loggedUser.id,
+        });
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
+  fastify.delete<{ Body: Omit<DeleteAccountPayload, 'userId'> }>(
+    '/account',
+    {
+      schema: deleteAccountSchema,
+      preHandler: [fastify.verifyToken],
+      config: { rateLimit: RATE_LIMIT_STRICT },
+    },
+    async (request, reply) => {
+      try {
+        if (request.body?.reason) {
+          request.log.info(
+            { userId: request.loggedUser.id, reason: request.body.reason },
+            'account_deletion_requested',
+          );
+        }
+
+        const data = await authService.deleteAccount({
           ...request.body,
           userId: request.loggedUser.id,
         });

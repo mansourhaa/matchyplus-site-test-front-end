@@ -1,6 +1,11 @@
+import jwt from 'jsonwebtoken';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTestApp } from './build-test-app.js';
+
+function signAccessToken(userId: string) {
+  return jwt.sign({ id: userId, email: 'user@example.com' }, 'test-access-token-secret');
+}
 
 describe('POST /api/v1/auth — error/message translation', () => {
   const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
@@ -79,5 +84,77 @@ describe('POST /api/v1/auth — error/message translation', () => {
     });
 
     expect(response.body).not.toContain('database_connection_details');
+  });
+});
+
+describe('DELETE /api/v1/auth/account', () => {
+  const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
+
+  afterEach(async () => {
+    await Promise.all(apps.map((app) => app.close()));
+    apps.length = 0;
+  });
+
+  it('requires authentication', async () => {
+    const app = await buildTestApp({});
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: '/api/v1/auth/account',
+      payload: { confirm: true },
+    });
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('deletes a passwordless account once confirmed, without ever returning password data', async () => {
+    const deleteMock = vi.fn().mockResolvedValue({ id: 'user-1' });
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: vi.fn().mockResolvedValue({ id: 'user-1', password: null }),
+          findUnique: vi.fn().mockResolvedValue({ id: 'user-1', password: null }),
+          delete: deleteMock,
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: '/api/v1/auth/account',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      payload: { confirm: true },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ message: expect.any(String) });
+    expect(response.body).not.toContain('password');
+    expect(deleteMock).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+  });
+
+  it('rejects deletion when confirmation is missing', async () => {
+    const deleteMock = vi.fn();
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: vi.fn().mockResolvedValue({ id: 'user-1', password: null }),
+          findUnique: vi.fn().mockResolvedValue({ id: 'user-1', password: null }),
+          delete: deleteMock,
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: '/api/v1/auth/account',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      payload: {},
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(deleteMock).not.toHaveBeenCalled();
   });
 });
