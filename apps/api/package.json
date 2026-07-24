@@ -24,6 +24,7 @@
     "@fastify/formbody": "^8.0.2",
     "@fastify/helmet": "^13.1.0",
     "@fastify/multipart": "^10.1.0",
+    "@fastify/oauth2": "^8.2.0",
     "@fastify/rate-limit": "^11.1.0",
     "@fastify/redis": "^8.0.0",
     "@fastify/sensible": "^6.0.4",

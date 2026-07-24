@@ -115,6 +115,20 @@ For local testing, use a Twilio trial account and make sure the destination phon
 
 > Email verification is optional infrastructure: if any of `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / a resolvable "from" address are missing, the server still boots normally — `POST /auth/email-verification/request` just fails at request time with `smtp_not_configured` (503) instead of the process refusing to start.
 
+### Google & LinkedIn OAuth — optional, per provider
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `API_BASE_URL` | No | This API's own absolute base URL, used to build the OAuth callback URL registered with each provider |
+| `FRONTEND_URL` | No | SPA base URL; the OAuth callback redirects here with `?code=...` or `?error=...` |
+| `GOOGLE_CLIENT_ID` | No | Google OAuth client id |
+| `GOOGLE_CLIENT_SECRET` | No | Google OAuth client secret |
+| `LINKEDIN_CLIENT_ID` | No | LinkedIn OAuth client id |
+| `LINKEDIN_CLIENT_SECRET` | No | LinkedIn OAuth client secret |
+| `OAUTH_EXCHANGE_CODE_TTL_SECONDS` | No | How long a one-time exchange code stays valid (default `60`) |
+
+> Google and LinkedIn are independent and both optional: each is only registered when its own client id **and** secret are both set. A missing pair disables just that provider's `/api/v1/auth/oauth/<provider>` route — it does not stop the API from starting, and the other provider is unaffected.
+
 ### Frontend (Next.js)
 
 | Variable              | Required | Description                            |
