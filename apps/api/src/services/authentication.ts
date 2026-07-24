@@ -7,6 +7,7 @@ import {
   AuthCheckPayload,
   ChangePasswordPayload,
   ConfirmEmailVerificationPayload,
+  DeleteAccountPayload,
   LoginPayload,
   RegisterPayload,
   RequestEmailVerificationPayload,
@@ -196,5 +197,33 @@ export class AuthenticationService {
     });
 
     return { message: 'email_verified', email: updated.email as string, emailVerified: true };
+  }
+
+  // Hard delete: Prisma's onDelete: Cascade on RefreshToken/OAuthExchangeCode removes
+  // those rows for us. There is no soft-delete/status flag on User in this branch.
+  async deleteAccount(payload: DeleteAccountPayload) {
+    const user = await this.prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user) {
+      throw new Error('user_not_found');
+    }
+
+    if (!payload.confirm) {
+      throw new Error('account_deletion_not_confirmed');
+    }
+
+    if (user.password) {
+      if (!payload.currentPassword) {
+        throw new Error('invalid_current_password');
+      }
+
+      const isValid = await verifyPassword(payload.currentPassword, user.password);
+      if (!isValid) {
+        throw new Error('invalid_current_password');
+      }
+    }
+
+    await this.prisma.user.delete({ where: { id: user.id } });
+
+    return { message: 'account_deleted' };
   }
 }

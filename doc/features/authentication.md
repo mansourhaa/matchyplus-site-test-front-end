@@ -156,6 +156,26 @@ On a successful callback:
 - Removes sessionStorage entries
 - Clears the `access_token` cookie
 
+## Account deletion
+
+**API**: `DELETE /api/v1/auth/account` (auth required)
+
+```json
+{
+  "confirm": true,
+  "currentPassword": "only required if the account has a password",
+  "reason": "optional, logged server-side only"
+}
+```
+
+- `confirm: true` is **always required**, regardless of how the account authenticates — a missing or `false` value is rejected (`account_deletion_not_confirmed`, 400) before anything else is checked.
+- If the account **has a password** (email/phone password accounts), `currentPassword` is also required and verified against the stored hash — both a missing and an incorrect password are rejected as `invalid_current_password` (400).
+- If the account **has no password** (OTP-only or OAuth-only accounts), no password check applies — `confirm: true` alone is sufficient.
+- `reason` is optional and never required; when present it's logged server-side (`request.log.info`) for support/analytics purposes only — it isn't stored on the user record or used in the deletion decision.
+- Rate-limited with the strict tier (`RATE_LIMIT_STRICT`: 3 requests per hour) — deliberately tighter than the 5/15min tier used by OTP/email/phone-link "send" endpoints, since this is destructive and hard to undo.
+- **This is currently a hard delete**: `prisma.user.delete()` removes the row outright. `RefreshToken` and `OAuthExchangeCode` rows for that user are removed automatically via Prisma's `onDelete: Cascade`. There is no soft-delete flag, `status` enum, or "banned" state on `User` — deleting is permanent and immediate.
+- The response body is `{ message }` only; no user object (and therefore no password field) is ever returned.
+
 ## Environment variables
 
 | Variable | Used by |

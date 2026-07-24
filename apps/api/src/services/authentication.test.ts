@@ -11,6 +11,7 @@ function createMockPrisma() {
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     refreshToken: {
       create: vi.fn(),
@@ -268,6 +269,130 @@ describe('AuthenticationService', () => {
         email: 'new@example.com',
         emailVerified: true,
       });
+    });
+  });
+
+  describe('deleteAccount', () => {
+    it('deletes a password account when the correct current password is given', async () => {
+      const prisma = createMockPrisma();
+      const hashedPassword = await import('bcryptjs').then((bcrypt) =>
+        bcrypt.hash('password123', 10),
+      );
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        password: hashedPassword,
+      });
+      prisma.user.delete.mockResolvedValue({ id: 'user-1' });
+
+      const service = new AuthenticationService({
+        prisma: prisma as never,
+        emailClient: {} as never,
+      });
+
+      const result = await service.deleteAccount({
+        userId: 'user-1',
+        confirm: true,
+        currentPassword: 'password123',
+      });
+
+      expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+      expect(result).toEqual({ message: 'account_deleted' });
+    });
+
+    it('rejects a password account when the wrong current password is given', async () => {
+      const prisma = createMockPrisma();
+      const hashedPassword = await import('bcryptjs').then((bcrypt) =>
+        bcrypt.hash('password123', 10),
+      );
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        password: hashedPassword,
+      });
+
+      const service = new AuthenticationService({
+        prisma: prisma as never,
+        emailClient: {} as never,
+      });
+
+      await expect(
+        service.deleteAccount({
+          userId: 'user-1',
+          confirm: true,
+          currentPassword: 'wrong-password',
+        }),
+      ).rejects.toThrow('invalid_current_password');
+
+      expect(prisma.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('rejects a password account when the current password is missing', async () => {
+      const prisma = createMockPrisma();
+      const hashedPassword = await import('bcryptjs').then((bcrypt) =>
+        bcrypt.hash('password123', 10),
+      );
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        password: hashedPassword,
+      });
+
+      const service = new AuthenticationService({
+        prisma: prisma as never,
+        emailClient: {} as never,
+      });
+
+      await expect(
+        service.deleteAccount({
+          userId: 'user-1',
+          confirm: true,
+        }),
+      ).rejects.toThrow('invalid_current_password');
+
+      expect(prisma.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('deletes a passwordless OAuth/OTP account once confirm is true', async () => {
+      const prisma = createMockPrisma();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        password: null,
+      });
+      prisma.user.delete.mockResolvedValue({ id: 'user-1' });
+
+      const service = new AuthenticationService({
+        prisma: prisma as never,
+        emailClient: {} as never,
+      });
+
+      const result = await service.deleteAccount({
+        userId: 'user-1',
+        confirm: true,
+      });
+
+      expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+      expect(result).toEqual({ message: 'account_deleted' });
+    });
+
+    it('rejects deletion when confirmation is false or missing, regardless of password', async () => {
+      const prisma = createMockPrisma();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        password: null,
+      });
+
+      const service = new AuthenticationService({
+        prisma: prisma as never,
+        emailClient: {} as never,
+      });
+
+      await expect(service.deleteAccount({ userId: 'user-1', confirm: false })).rejects.toThrow(
+        'account_deletion_not_confirmed',
+      );
+
+      await expect(service.deleteAccount({ userId: 'user-1' } as never)).rejects.toThrow(
+        'account_deletion_not_confirmed',
+      );
+
+      expect(prisma.user.delete).not.toHaveBeenCalled();
     });
   });
 });
