@@ -238,6 +238,25 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   );
 
+  fastify.post<{ Body: RefreshPayload }>(
+    '/logout',
+    {
+      schema: refreshSchema,
+    },
+    async (request, reply) => {
+      try {
+        await tokenService.revokeRefreshToken(request.body.refresh_token);
+
+        return reply.code(200).send({
+          message: translate(request, 'logout_successful'),
+          code: 'logout_successful',
+        });
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
   fastify.post<{ Body: RequestPasswordResetPayload }>(
     '/password-reset/request',
     {

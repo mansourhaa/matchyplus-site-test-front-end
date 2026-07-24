@@ -64,6 +64,38 @@ export class TokenService {
     return { accessToken, refreshToken };
   }
 
+  async revokeRefreshToken(rawToken: string): Promise<void> {
+    let payload: RefreshTokenPayload;
+
+    try {
+      payload = jwt.verify(rawToken, config.refreshTokenSecret as Secret) as RefreshTokenPayload;
+    } catch {
+      throw new Error('invalid_refresh_token');
+    }
+
+    if (payload.type !== 'refresh' || !payload.jti) {
+      throw new Error('invalid_refresh_token');
+    }
+
+    const stored = await this.prisma.refreshToken.findUnique({
+      where: { id: payload.jti },
+    });
+
+    if (
+      !stored ||
+      stored.revoked_at !== null ||
+      stored.expires_at < new Date() ||
+      stored.token_hash !== sha256(rawToken)
+    ) {
+      throw new Error('invalid_refresh_token');
+    }
+
+    await this.prisma.refreshToken.update({
+      where: { id: payload.jti },
+      data: { revoked_at: new Date() },
+    });
+  }
+
   async revokeAllRefreshTokens(userId: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
       where: { user_id: userId, revoked_at: null },

@@ -250,6 +250,36 @@ describe('TokenService', () => {
     });
   });
 
+  it('revokes one refresh token', async () => {
+    const prisma = createMockPrisma();
+    const service = new TokenService({ prisma: prisma as never });
+
+    const refreshToken = await service.issueRefreshToken('user-1');
+
+    const decoded = jwt.decode(refreshToken) as JwtPayload & {
+      jti: string;
+    };
+
+    const createArgs = prisma.refreshToken.create.mock.calls[0]?.[0];
+
+    prisma.refreshToken.findUnique.mockResolvedValue({
+      id: decoded.jti,
+      user_id: 'user-1',
+      token_hash: createArgs.data.token_hash,
+      expires_at: new Date(Date.now() + 60_000),
+      revoked_at: null,
+    });
+
+    await service.revokeRefreshToken(refreshToken);
+
+    expect(prisma.refreshToken.update).toHaveBeenCalledWith({
+      where: { id: decoded.jti },
+      data: { revoked_at: expect.any(Date) },
+    });
+
+    expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+  });
+
   it('revokes the used refresh token and issues a replacement on refresh', async () => {
     const prisma = createMockPrisma();
     const service = new TokenService({ prisma: prisma as never });
