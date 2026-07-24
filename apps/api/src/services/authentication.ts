@@ -1,8 +1,5 @@
-import jwt, { Secret, SignOptions } from 'jsonwebtoken';
-
 import { PrismaClient } from '@saas-boilerplate/types';
 
-import { config } from '../config.js';
 import { EmailClient } from '../lib/email.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import { generateNumericCode, hashVerificationCode } from '../lib/verification-code.js';
@@ -32,39 +29,47 @@ export class AuthenticationService {
   }
 
   async login(payload: LoginPayload) {
-    const { accessTokenSecret, accessTokenTtl } = config;
+    let user;
 
-    const secret = accessTokenSecret as Secret;
-    const signOptions: SignOptions = { expiresIn: accessTokenTtl as SignOptions['expiresIn'] };
-
-    let user = null;
     try {
       user = await this.prisma.user.findUniqueOrThrow({
-        where: { email: payload.email.toLowerCase() },
+        where: {
+          email: payload.email.toLowerCase(),
+        },
         select: {
-          email: true,
-          name: true,
           id: true,
+          email: true,
+          phone: true,
+          name: true,
           password: true,
         },
       });
     } catch {
       throw new Error('invalid_credentials');
     }
-    const isPasswordValid = await verifyPassword(payload.password, user.password as string);
+
+    if (!user.password) {
+      throw new Error('invalid_credentials');
+    }
+
+    const isPasswordValid = await verifyPassword(payload.password, user.password);
 
     if (!isPasswordValid) {
       throw new Error('invalid_credentials');
     }
-    const tokenPayload = {
+
+    const tokens = await this.tokenService.issueTokenPair({
       id: user.id,
       email: user.email,
-      name: user.email,
-    };
-    const accessToken = jwt.sign(tokenPayload, secret, signOptions);
+      phone: user.phone,
+    });
+
+    const { password: _password, ...safeUser } = user;
+
     return {
-      accessToken,
-      user,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: safeUser,
     };
   }
 
