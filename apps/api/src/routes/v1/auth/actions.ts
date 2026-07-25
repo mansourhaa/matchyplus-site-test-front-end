@@ -8,13 +8,13 @@ import {
   loginSchema,
   registerSchema,
 } from '../../../schemas/v1/index.js';
+import { AuthenticationService } from '../../../services/authentication.js';
+import { LoginPayload, RegisterPayload, ResetPayload } from '../../../types/auth.js';
 import {
   ADMIN_SESSION_COOKIE,
   adminSessionCookieOptions,
   clearAdminSessionCookieOptions,
-} from '../../../services/admin-session.js';
-import { AuthenticationService } from '../../../services/authentication.js';
-import { LoginPayload, RegisterPayload, ResetPayload } from '../../../types/auth.js';
+} from '../../../utils/admin-session.js';
 
 const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   const { prisma } = fastify;

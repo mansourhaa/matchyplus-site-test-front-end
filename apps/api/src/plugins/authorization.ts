@@ -5,8 +5,8 @@ import jwt from 'jsonwebtoken';
 import { User } from '@saas-boilerplate/types';
 
 import { isAdminRole } from '../constants.js';
-import { ADMIN_SESSION_COOKIE } from '../services/admin-session.js';
 import { AuthorizationService } from '../services/authorization.js';
+import { ADMIN_SESSION_COOKIE } from '../utils/admin-session.js';
 
 /**
  * Authorization plugin that handle every step in authorization process.
