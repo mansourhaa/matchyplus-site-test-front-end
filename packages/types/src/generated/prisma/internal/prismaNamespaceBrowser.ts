@@ -121,6 +121,17 @@ export const UserScalarFieldEnum = {
   missions: 'missions',
   total_earnings: 'total_earnings',
   last_login: 'last_login',
+  profile_type: 'profile_type',
+  offer_service: 'offer_service',
+  service_type: 'service_type',
+  sector: 'sector',
+  selected_goals: 'selected_goals',
+  experiences: 'experiences',
+  education_level: 'education_level',
+  educations: 'educations',
+  availability_days: 'availability_days',
+  availability_hours: 'availability_hours',
+  onboarding_completed_at: 'onboarding_completed_at',
   email_verified: 'email_verified',
   pending_email: 'pending_email',
   email_verification_code: 'email_verification_code',
@@ -198,12 +209,6 @@ export const SortOrder = {
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
 
-export const JsonNullValueInput = {
-  JsonNull: JsonNull,
-} as const;
-
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
-
 export const NullableJsonNullValueInput = {
   DbNull: DbNull,
   JsonNull: JsonNull,
@@ -212,19 +217,18 @@ export const NullableJsonNullValueInput = {
 export type NullableJsonNullValueInput =
   (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull,
+} as const;
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive',
 } as const;
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode];
-
-export const NullsOrder = {
-  first: 'first',
-  last: 'last',
-} as const;
-
-export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];
 
 export const JsonNullValueFilter = {
   DbNull: DbNull,
@@ -233,3 +237,10 @@ export const JsonNullValueFilter = {
 } as const;
 
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter];
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last',
+} as const;
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];

@@ -104,8 +104,8 @@ export function LoginForm() {
     setOtpCode('');
   };
 
-  const goToPostAuthDestination = () => {
-    router.push(resolvePostAuthDestination(searchParams.get('next')));
+  const goToPostAuthDestination = (onboardingCompleted: boolean) => {
+    router.push(resolvePostAuthDestination(searchParams.get('next'), onboardingCompleted));
     router.refresh();
   };
 
@@ -135,7 +135,7 @@ export function LoginForm() {
     setLocalError(null);
     const resultAction = await dispatch(verifyOtp({ phone, code: otpCode }));
     if (verifyOtp.fulfilled.match(resultAction)) {
-      goToPostAuthDestination();
+      goToPostAuthDestination(resultAction.payload.user.onboarding_completed);
     } else {
       setLocalError('Code invalide ou expiré.');
     }
@@ -153,7 +153,7 @@ export function LoginForm() {
     setLocalError(null);
     const resultAction = await dispatch(loginPhone({ phone, password }));
     if (loginPhone.fulfilled.match(resultAction)) {
-      goToPostAuthDestination();
+      goToPostAuthDestination(resultAction.payload.user.onboarding_completed);
     } else {
       setLocalError('Connexion échouée. Vérifiez votre numéro et votre mot de passe');
     }
@@ -327,7 +327,7 @@ export function LoginForm() {
 
           <div className="mt-2">
             <button
-              onClick={() => router.push('/register')}
+              onClick={() => router.push('/onboarding')}
               className="w-full rounded-2xl py-3.5 text-white"
               style={{
                 background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',

@@ -130,7 +130,7 @@ export class AuthenticationService {
 
   async authCheck(payload: AuthCheckPayload) {
     try {
-      return await this.prisma.user.findUniqueOrThrow({
+      const user = await this.prisma.user.findUniqueOrThrow({
         where: {
           id: payload.id,
         },
@@ -142,8 +142,12 @@ export class AuthenticationService {
           auth_provider: true,
           email_verified: true,
           role: true,
+          onboarding_completed_at: true,
         },
       });
+
+      const { onboarding_completed_at, ...rest } = user;
+      return { ...rest, onboarding_completed: Boolean(onboarding_completed_at) };
     } catch {
       throw new Error('user_not_found');
     }

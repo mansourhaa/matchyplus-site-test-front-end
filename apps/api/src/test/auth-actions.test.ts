@@ -234,6 +234,7 @@ describe('GET /api/v1/auth/authcheck', () => {
         auth_provider: 'email',
         email_verified: true,
         role: 'USER',
+        onboarding_completed: false,
       },
     });
     expect(response.body).not.toContain('password');

@@ -1,6 +1,10 @@
 'use client';
 
+import { useAppSelector } from '@/features/auth/hooks';
+import { selectAuth } from '@/features/auth/store/auth-slice';
+import { useRouter } from 'next/navigation';
 import type React from 'react';
+import { useEffect } from 'react';
 
 import { Separator } from '@saas-boilerplate/ui/components/separator';
 import {
@@ -13,6 +17,22 @@ import { AppSidebar } from './app-sidebar';
 import { ThemeToggle } from './theme-toggle';
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { user } = useAppSelector(selectAuth);
+  // `user` is null until fetchCurrentUser resolves (see useBootstrapSession) — only
+  // redirect once we actually know the profile is incomplete, not during that window.
+  const needsOnboarding = Boolean(user && !user.onboarding_completed);
+
+  useEffect(() => {
+    if (needsOnboarding) {
+      router.replace('/onboarding');
+    }
+  }, [needsOnboarding, router]);
+
+  if (needsOnboarding) {
+    return null;
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar />

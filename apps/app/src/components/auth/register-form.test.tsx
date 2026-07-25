@@ -31,6 +31,7 @@ const registeredUser = {
   name: 'Jane Doe',
   auth_provider: 'phone',
   email_verified: false,
+  onboarding_completed: true,
 };
 
 // AuthLayout renders both a desktop and a mobile copy of the form content, so every

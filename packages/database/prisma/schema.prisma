@@ -34,6 +34,14 @@ enum ReportStatus {
   DISMISSED
 }
 
+/// Set on the identity step of onboarding. INDIVIDUAL (old app: "Employé") looks for
+/// work/services; PROVIDER (old app: "Employeur") offers them — this determines whether
+/// the experience/education onboarding steps are shown at all.
+enum ProfileType {
+  INDIVIDUAL
+  PROVIDER
+}
+
 /// Plan configuration edited from the admin "Gestion Forfaits" section.
 /// The id mirrors UserPlan so a user's plan resolves to exactly one row.
 model Plan {
@@ -90,6 +98,21 @@ model User {
   missions       Int       @default(0)
   total_earnings Int       @default(0)
   last_login     DateTime?
+
+  // Onboarding wizard fields (identity/interests/experience/education/location steps).
+  // `job`, `bio`, `image`, `interests`, `languages`, `contact_modes`, `price`,
+  // `experience`, and `city` above are shared with the admin panel and reused here.
+  profile_type            ProfileType?
+  offer_service           Boolean      @default(false)
+  service_type            String?
+  sector                  String?
+  selected_goals          String[]     @default([])
+  experiences             Json?
+  education_level         String?
+  educations              Json?
+  availability_days       String[]     @default([])
+  availability_hours      String[]     @default([])
+  onboarding_completed_at DateTime?
 
   // Authentication fields.
   email_verified                Boolean   @default(false)

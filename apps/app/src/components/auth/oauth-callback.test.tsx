@@ -31,6 +31,7 @@ const oauthUser = {
   name: 'Jane Doe',
   auth_provider: 'google',
   email_verified: true,
+  onboarding_completed: true,
 };
 
 describe('OAuthCallback', () => {

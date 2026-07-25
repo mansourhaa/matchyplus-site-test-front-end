@@ -9,10 +9,14 @@ const publicRoutes = ['/login', '/register'];
 // Always allowed regardless of auth state:
 // - /oauth-callback is reached via external redirect (OAuth provider callback), so
 //   bouncing based on a stale cookie would break the flow.
+// - /onboarding doubles as the account-creation entry point ("Créer un compte" goes
+//   straight here, unauthenticated) AND the redirect target for an authenticated user
+//   with an incomplete profile — neither publicRoutes (bounces away when logged in) nor
+//   the protected default (bounces away when logged out) fits both cases.
 // /otp-test is intentionally NOT here — it's a dev-only harness (see
 // app/otp-test/page.tsx, which 404s outside development), not part of the shipped
 // product flow, so it gets the same auth rules as any other route.
-const neutralRoutes = ['/oauth-callback'];
+const neutralRoutes = ['/oauth-callback', '/onboarding'];
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE)?.value;

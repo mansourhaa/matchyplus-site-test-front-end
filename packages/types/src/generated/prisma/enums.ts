@@ -42,6 +42,13 @@ export const ReportStatus = {
 
 export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus];
 
+export const ProfileType = {
+  INDIVIDUAL: 'INDIVIDUAL',
+  PROVIDER: 'PROVIDER',
+} as const;
+
+export type ProfileType = (typeof ProfileType)[keyof typeof ProfileType];
+
 export const AiJobType = {
   ANALYZE_VIDEO: 'ANALYZE_VIDEO',
   VERIFY_IDENTITY: 'VERIFY_IDENTITY',

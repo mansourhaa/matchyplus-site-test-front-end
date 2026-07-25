@@ -126,6 +126,7 @@ export const authCheckSchema = {
             auth_provider: { type: 'string' },
             email_verified: { type: 'boolean' },
             role: { type: 'string' },
+            onboarding_completed: { type: 'boolean' },
           },
         },
       },

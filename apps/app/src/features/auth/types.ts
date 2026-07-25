@@ -5,6 +5,7 @@ export interface AuthUser {
   name: string | null;
   auth_provider: string;
   email_verified: boolean;
+  onboarding_completed: boolean;
 }
 
 export interface AuthState {

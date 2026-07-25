@@ -43,7 +43,12 @@ export function OAuthCallback() {
       try {
         const result = await dispatch(exchangeOAuthCode({ code }));
         if (exchangeOAuthCode.fulfilled.match(result)) {
-          router.push(resolvePostAuthDestination(searchParams.get('next')));
+          router.push(
+            resolvePostAuthDestination(
+              searchParams.get('next'),
+              result.payload.user.onboarding_completed,
+            ),
+          );
           router.refresh();
         } else {
           setError('La connexion a échoué. Réessayez.');

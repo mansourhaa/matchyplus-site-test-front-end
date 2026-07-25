@@ -6,7 +6,6 @@
 */
 -- AlterTable
 ALTER TABLE "User" ADD COLUMN     "auth_provider" TEXT NOT NULL DEFAULT 'email',
-ADD COLUMN     "phone" TEXT,
 ALTER COLUMN "name" DROP NOT NULL,
 ALTER COLUMN "email" DROP NOT NULL,
 ALTER COLUMN "password" DROP NOT NULL;

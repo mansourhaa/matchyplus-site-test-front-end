@@ -69,7 +69,12 @@ export function RegisterForm() {
     setLocalError(null);
     const resultAction = await dispatch(registerPhone({ phone, password, code, name }));
     if (registerPhone.fulfilled.match(resultAction)) {
-      router.push(resolvePostAuthDestination(searchParams.get('next')));
+      router.push(
+        resolvePostAuthDestination(
+          searchParams.get('next'),
+          resultAction.payload.user.onboarding_completed,
+        ),
+      );
       router.refresh();
     } else {
       setLocalError('Code invalide ou expiré.');
