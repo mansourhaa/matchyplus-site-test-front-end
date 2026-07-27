@@ -1,10 +1,11 @@
+import { adminApi } from '@/lib/admin-api';
 import { ADMIN_AUTH_USER_KEY, clearAdminSession, persistAdminSession } from '@/lib/admin-auth';
 import { api } from '@/lib/api';
 import type { RootState } from '@/lib/store';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
 
-import type { AdminAuthState, AdminLoginInput } from '../types';
+import type { AdminAuthState, AdminLoginInput, AdminPasswordChangeInput } from '../types';
 
 const isClient = typeof window !== 'undefined';
 
@@ -18,6 +19,8 @@ const initialState: AdminAuthState = {
       ? JSON.parse(sessionStorage.getItem(ADMIN_AUTH_USER_KEY)!)
       : null,
   loginAt: null,
+  passwordChangeLoading: false,
+  passwordChangeError: null,
 };
 
 export const adminLogin = createAsyncThunk(
@@ -35,6 +38,19 @@ export const adminLogin = createAsyncThunk(
       // The endpoint answers the same way for a bad password and for a valid non-admin
       // account, so there is nothing role-specific to surface here.
       return rejectWithValue('Identifiants incorrects. Vérifiez votre email et mot de passe.');
+    }
+  },
+);
+
+export const changeAdminPassword = createAsyncThunk(
+  'adminAuth/changePassword',
+  async ({ currentPassword, newPassword }: AdminPasswordChangeInput, { rejectWithValue }) => {
+    try {
+      // Authenticated admin route: goes through `adminApi` (credentialed, 401 → clear session).
+      await adminApi.post('/admin/change-password', { currentPassword, newPassword });
+    } catch {
+      // The endpoint answers the same way for a wrong password as for any other refusal.
+      return rejectWithValue('Mot de passe actuel incorrect.');
     }
   },
 );
@@ -73,6 +89,18 @@ const adminAuthSlice = createSlice({
       .addCase(adminLogin.rejected, (state, action) => {
         state.loading = false;
         state.error = (action.payload as string) || 'Identifiants incorrects.';
+      })
+      .addCase(changeAdminPassword.pending, (state) => {
+        state.passwordChangeLoading = true;
+        state.passwordChangeError = null;
+      })
+      .addCase(changeAdminPassword.fulfilled, (state) => {
+        state.passwordChangeLoading = false;
+        state.passwordChangeError = null;
+      })
+      .addCase(changeAdminPassword.rejected, (state, action) => {
+        state.passwordChangeLoading = false;
+        state.passwordChangeError = (action.payload as string) || 'Mot de passe actuel incorrect.';
       });
   },
 });

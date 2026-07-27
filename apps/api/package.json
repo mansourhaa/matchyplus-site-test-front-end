@@ -28,7 +28,7 @@
     "@fastify/rate-limit": "^11.1.0",
     "@fastify/redis": "^8.0.0",
     "@fastify/sensible": "^6.0.4",
-    "@fastify/static": "^9.3.0",
+    "@fastify/static": "^10.1.2",
     "@fastify/swagger": "^9.8.0",
     "@fastify/swagger-ui": "^6.1.0",
     "@fastify/under-pressure": "^9.1.0",

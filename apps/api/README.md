@@ -71,8 +71,12 @@ src/
     ai-cache.ts         Redis result cache
   schemas/v1/           Request/response JSON schemas
   types/                TypeScript interfaces
+  utils/                Pure helpers (no DI), e.g. admin session cookie name + Set-Cookie options
   translation/          i18next locale files (en, ar)
 ```
+
+`services/` holds injected/OOP business logic (constructor DI via `prisma`); stateless helpers with
+no injection — such as cookie name + `Set-Cookie` option builders — live in `utils/`.
 
 ## Scripts
 
