@@ -50,6 +50,7 @@ export const ModelName = {
   Plan: 'Plan',
   User: 'User',
   RefreshToken: 'RefreshToken',
+  OtpChallenge: 'OtpChallenge',
   OAuthExchangeCode: 'OAuthExchangeCode',
   Report: 'Report',
   AiJob: 'AiJob',
@@ -122,11 +123,9 @@ export const UserScalarFieldEnum = {
   total_earnings: 'total_earnings',
   last_login: 'last_login',
   email_verified: 'email_verified',
-  pending_email: 'pending_email',
-  email_verification_code: 'email_verification_code',
-  email_verification_expires_at: 'email_verification_expires_at',
   google_id: 'google_id',
   linkedin_id: 'linkedin_id',
+  phone_verified: 'phone_verified',
   create_at: 'create_at',
   updated_at: 'updated_at',
 } as const;
@@ -144,6 +143,24 @@ export const RefreshTokenScalarFieldEnum = {
 
 export type RefreshTokenScalarFieldEnum =
   (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum];
+
+export const OtpChallengeScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  purpose: 'purpose',
+  code_hash: 'code_hash',
+  attempts: 'attempts',
+  expires_at: 'expires_at',
+  consumed_at: 'consumed_at',
+  user_id: 'user_id',
+  grant_hash: 'grant_hash',
+  grant_expires_at: 'grant_expires_at',
+  grant_consumed_at: 'grant_consumed_at',
+  create_at: 'create_at',
+} as const;
+
+export type OtpChallengeScalarFieldEnum =
+  (typeof OtpChallengeScalarFieldEnum)[keyof typeof OtpChallengeScalarFieldEnum];
 
 export const OAuthExchangeCodeScalarFieldEnum = {
   id: 'id',

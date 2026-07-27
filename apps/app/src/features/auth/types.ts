@@ -7,22 +7,17 @@ export interface AuthUser {
   email_verified: boolean;
 }
 
+// Both session tokens live in HttpOnly cookies the browser attaches automatically —
+// neither is ever readable from this app's own code, so "authenticated" can only be
+// known by asking the API (see fetchCurrentUser / useBootstrapSession), not by checking
+// a token value. 'unknown' is the state before that first check resolves.
+export type AuthStatus = 'unknown' | 'authenticated' | 'unauthenticated';
+
 export interface AuthState {
+  status: AuthStatus;
   loading: boolean;
   error: string | null;
-  accessToken: string | null;
-  refreshToken: string | null;
   user: AuthUser | null;
-}
-
-export interface LoginInput {
-  email: string;
-  password: string;
-}
-
-export interface RegisterInput {
-  email: string;
-  password: string;
 }
 
 export interface SendOtpInput {
@@ -42,7 +37,7 @@ export interface LoginPhoneInput {
 export interface RegisterPhoneInput {
   phone: string;
   password: string;
-  code: string;
+  signupToken: string;
   name?: string;
 }
 
@@ -59,14 +54,6 @@ export interface ConfirmPasswordResetInput {
 export interface ChangePasswordInput {
   currentPassword: string;
   newPassword: string;
-}
-
-export interface RequestEmailVerificationInput {
-  email: string;
-}
-
-export interface ConfirmEmailVerificationInput {
-  code: string;
 }
 
 export interface RequestPhoneLinkInput {

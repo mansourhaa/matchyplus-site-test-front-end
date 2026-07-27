@@ -82,47 +82,30 @@ flowchart LR
 | `COOKIE_SECRET`       | Yes (staging/prod) | Fastify cookie signing           |
 | `REFRESH_TOKEN_SECRET` | Yes | Secret used to sign refresh tokens. Use a different long random value from `ACCESS_TOKEN_SECRET`. |
 | `REFRESH_TOKEN_TTL_DAYS` | Yes | Number of days before a refresh token expires. |
-| `VERIFICATION_CODE_SECRET` | Yes | HMAC key used to hash email-verification codes before they're stored — the plaintext code is never persisted. |
+| `VERIFICATION_CODE_SECRET` | Yes | HMAC key used to hash phone OTP codes before they're stored — the plaintext code is never persisted. |
 
-### Twilio Verify (phone OTP) — optional at startup
+### TunisieSMS (phone OTP delivery) — optional at startup
 
-These variables are **optional**: the API starts normally without them. They're only
-required for phone-OTP endpoints to actually work — without them, `POST /otp/send`,
-`POST /otp/verify`, `POST /register-phone`, and the OTP-dependent parts of password
-reset / phone linking all fail closed with `otp_service_not_configured` (503) instead
-of attempting a call with missing credentials.
+This app owns the entire OTP lifecycle itself (generation, hashing, expiry, attempts —
+see `apps/api/src/services/otp-challenge.ts`); TunisieSMS only delivers the text
+message. `TUNISIESMS_KEY` is **optional**: the API starts normally without it. It's
+only required for phone-OTP endpoints to actually send anything — without it,
+`POST /otp/send` and the OTP-sending parts of password reset / phone linking fail
+closed with `sms_service_not_configured` (503) instead of attempting a call with no key.
 
-| Variable                    | Required | Description                                                         |
-| --------------------------- | -------- | ------------------------------------------------------------------- |
-| `TWILIO_ACCOUNT_SID`        | No (see above) | Your Twilio account SID from the Twilio Console                     |
-| `TWILIO_AUTH_TOKEN`         | No (see above) | Your Twilio auth token from the Twilio Console                      |
-| `TWILIO_VERIFY_SERVICE_SID` | No (see above) | The SID of the Verify service you create in Twilio for OTP delivery |
+| Variable            | Required       | Description                                                    |
+| -------------------- | -------------- | ---------------------------------------------------------------- |
+| `TUNISIESMS_KEY`     | No (see above) | API key from your TunisieSMS account                              |
+| `TUNISIESMS_SENDER`  | No             | Sender name shown on the SMS, truncated to 11 chars (default `Matchy plus`) |
 
-All three must be set together for phone OTP to work — Twilio Verify (not the plain
-Messaging API) handles SMS delivery, so no separate sender phone number is configured
-here.
+Optional OTP lifecycle tuning — all have sensible defaults if left unset:
 
-Typical values:
-
-- `TWILIO_ACCOUNT_SID` = the Account SID shown in the Twilio dashboard
-- `TWILIO_AUTH_TOKEN` = the Auth Token shown in the Twilio dashboard
-- `TWILIO_VERIFY_SERVICE_SID` = the Service SID of the Verify service used for SMS OTP
-
-For local testing, use a Twilio trial account and make sure the destination phone number is verified in Twilio. The API uses these values in the phone OTP flow for sending and validating SMS codes.
-
-### Email (SMTP) — optional
-
-| Variable | Required | Description |
-| --- | --- | --- |
-| `SMTP_HOST` | No | SMTP server host |
-| `SMTP_PORT` | No | SMTP server port (e.g. `587`, `465`) |
-| `SMTP_USER` | No | SMTP auth username |
-| `SMTP_PASS` | No | SMTP auth password |
-| `SMTP_FROM` | No | `From` address for outgoing mail |
-| `SMTP_FROM_NAME` | No | `From` display name (defaults to `APP_NAME`) |
-| `SMTP_SECURE` | No | Force TLS (`true`/`false`); defaults to `true` only on port `465` |
-
-> Email verification is optional infrastructure: if any of `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / a resolvable "from" address are missing, the server still boots normally — `POST /auth/email-verification/request` just fails at request time with `smtp_not_configured` (503) instead of the process refusing to start.
+| Variable                        | Default | Description                                              |
+| -------------------------------- | ------- | ---------------------------------------------------------- |
+| `OTP_TTL_MINUTES`                | `10`    | How long a sent code stays valid                          |
+| `OTP_MAX_ATTEMPTS`               | `5`     | Wrong-code attempts allowed before a challenge is dead     |
+| `OTP_RESEND_COOLDOWN_SECONDS`    | `60`    | Minimum time between two codes for the same phone+purpose  |
+| `OTP_SIGNUP_GRANT_TTL_MINUTES`   | `15`    | How long a signup-verification grant stays valid before `register-phone` must consume it |
 
 ### Google & LinkedIn OAuth — optional, per provider
 

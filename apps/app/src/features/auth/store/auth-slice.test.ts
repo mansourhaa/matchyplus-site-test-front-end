@@ -45,17 +45,15 @@ describe('auth-slice', () => {
   });
 
   describe('registerPhone', () => {
-    it('sends { phone, password, code, name } to /auth/register-phone', async () => {
-      vi.mocked(api.post).mockResolvedValue({
-        data: { access_token: 'access-1', refresh_token: 'refresh-1', user },
-      });
+    it('sends { phone, password, signupToken, name } to /auth/register-phone, no tokens are ever in the response', async () => {
+      vi.mocked(api.post).mockResolvedValue({ data: { user } });
 
       const store = buildStore();
       await store.dispatch(
         registerPhone({
           phone: '+21612345678',
           password: 'secret123',
-          code: '123456',
+          signupToken: 'valid-grant-token',
           name: 'Jane Doe',
         }),
       );
@@ -63,47 +61,37 @@ describe('auth-slice', () => {
       expect(api.post).toHaveBeenCalledWith('/auth/register-phone', {
         phone: '+21612345678',
         password: 'secret123',
-        code: '123456',
+        signupToken: 'valid-grant-token',
         name: 'Jane Doe',
       });
       expect(store.getState().auth.user).toEqual(user);
-      expect(store.getState().auth.accessToken).toBe('access-1');
+      expect(store.getState().auth.status).toBe('authenticated');
     });
   });
 
-  describe('fetchCurrentUser.fulfilled', () => {
-    it('re-persists the returned user to sessionStorage', async () => {
-      const store = buildStore({
-        loading: false,
-        error: null,
-        accessToken: 'existing-access-token',
-        refreshToken: 'existing-refresh-token',
-        user: null,
-      });
-
-      const updatedUser: AuthUser = { ...user, name: 'Updated Name' };
-      vi.mocked(api.get).mockResolvedValue({ data: { user: updatedUser } });
-
-      await store.dispatch(fetchCurrentUser());
-
-      expect(store.getState().auth.user).toEqual(updatedUser);
-      expect(sessionStorage.getItem(AUTH_USER_KEY)).toBe(JSON.stringify(updatedUser));
-      expect(sessionStorage.getItem('access_token')).toBe('existing-access-token');
-    });
-
-    it('does not persist when there is no access token yet', async () => {
-      const store = buildStore({
-        loading: false,
-        error: null,
-        accessToken: null,
-        refreshToken: null,
-        user: null,
-      });
+  describe('fetchCurrentUser', () => {
+    it('marks the session authenticated and persists the user on success', async () => {
+      const store = buildStore({ status: 'unknown', loading: false, error: null, user: null });
 
       vi.mocked(api.get).mockResolvedValue({ data: { user } });
 
       await store.dispatch(fetchCurrentUser());
 
+      expect(store.getState().auth.status).toBe('authenticated');
+      expect(store.getState().auth.user).toEqual(user);
+      expect(sessionStorage.getItem(AUTH_USER_KEY)).toBe(JSON.stringify(user));
+    });
+
+    it('marks the session unauthenticated and clears the cache when there is no valid cookie', async () => {
+      sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+      const store = buildStore({ status: 'unknown', loading: false, error: null, user });
+
+      vi.mocked(api.get).mockRejectedValue(new Error('401'));
+
+      await store.dispatch(fetchCurrentUser());
+
+      expect(store.getState().auth.status).toBe('unauthenticated');
+      expect(store.getState().auth.user).toBeNull();
       expect(sessionStorage.getItem(AUTH_USER_KEY)).toBeNull();
     });
   });
@@ -135,26 +123,22 @@ describe('auth-slice', () => {
   });
 
   describe('resetAuthState', () => {
-    it('clears tokens, user, and error, and wipes the persisted session', () => {
-      sessionStorage.setItem('access_token', 'stale-access-token');
+    it('marks the session unauthenticated, clears the user and error, and wipes the cache', () => {
       sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
 
       const store = buildStore({
+        status: 'authenticated',
         loading: false,
         error: 'some previous error',
-        accessToken: 'stale-access-token',
-        refreshToken: 'stale-refresh-token',
         user,
       });
 
       store.dispatch(resetAuthState());
 
       const state = store.getState().auth;
-      expect(state.accessToken).toBeNull();
-      expect(state.refreshToken).toBeNull();
+      expect(state.status).toBe('unauthenticated');
       expect(state.user).toBeNull();
       expect(state.error).toBeNull();
-      expect(sessionStorage.getItem('access_token')).toBeNull();
       expect(sessionStorage.getItem(AUTH_USER_KEY)).toBeNull();
     });
   });

@@ -65,10 +65,15 @@ describe('RegisterForm — OTP-gated registration', () => {
     expect(screen.queryByRole('button', { name: 'Créer un compte' })).not.toBeInTheDocument();
   });
 
-  it('sends an OTP, then registers with { phone, password, code, name } via /auth/register-phone', async () => {
+  it('sends an OTP, verifies it for a signup grant, then registers via /auth/register-phone', async () => {
     vi.mocked(api.post).mockImplementation(async (url: string) => {
       if (url === '/auth/otp/send') {
         return { data: { message: 'sent', phone: '+21612345678' } };
+      }
+      if (url === '/auth/otp/verify') {
+        return {
+          data: { verified: true, phone: '+21612345678', signupToken: 'valid-grant-token' },
+        };
       }
       if (url === '/auth/register-phone') {
         return {
@@ -92,17 +97,18 @@ describe('RegisterForm — OTP-gated registration', () => {
     fireEvent.click(firstButton('Créer un compte'));
 
     await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/auth/otp/verify', {
+        phone: '+21612345678',
+        code: '123456',
+      }),
+    );
+    await waitFor(() =>
       expect(api.post).toHaveBeenCalledWith('/auth/register-phone', {
         phone: '+21612345678',
         password: 'secret123',
-        code: '123456',
+        signupToken: 'valid-grant-token',
         name: 'Jane Doe',
       }),
-    );
-    // Must not fall back to the old pre-OTP payload shape.
-    expect(api.post).not.toHaveBeenCalledWith(
-      '/auth/register-phone',
-      expect.not.objectContaining({ code: expect.anything() }),
     );
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/'));
     expect(refreshMock).toHaveBeenCalled();

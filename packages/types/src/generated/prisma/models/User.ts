@@ -67,11 +67,9 @@ export type UserMinAggregateOutputType = {
   total_earnings: number | null;
   last_login: Date | null;
   email_verified: boolean | null;
-  pending_email: string | null;
-  email_verification_code: string | null;
-  email_verification_expires_at: Date | null;
   google_id: string | null;
   linkedin_id: string | null;
+  phone_verified: boolean | null;
   create_at: Date | null;
   updated_at: Date | null;
 };
@@ -101,11 +99,9 @@ export type UserMaxAggregateOutputType = {
   total_earnings: number | null;
   last_login: Date | null;
   email_verified: boolean | null;
-  pending_email: string | null;
-  email_verification_code: string | null;
-  email_verification_expires_at: Date | null;
   google_id: string | null;
   linkedin_id: string | null;
+  phone_verified: boolean | null;
   create_at: Date | null;
   updated_at: Date | null;
 };
@@ -138,11 +134,9 @@ export type UserCountAggregateOutputType = {
   total_earnings: number;
   last_login: number;
   email_verified: number;
-  pending_email: number;
-  email_verification_code: number;
-  email_verification_expires_at: number;
   google_id: number;
   linkedin_id: number;
+  phone_verified: number;
   create_at: number;
   updated_at: number;
   _all: number;
@@ -189,11 +183,9 @@ export type UserMinAggregateInputType = {
   total_earnings?: true;
   last_login?: true;
   email_verified?: true;
-  pending_email?: true;
-  email_verification_code?: true;
-  email_verification_expires_at?: true;
   google_id?: true;
   linkedin_id?: true;
+  phone_verified?: true;
   create_at?: true;
   updated_at?: true;
 };
@@ -223,11 +215,9 @@ export type UserMaxAggregateInputType = {
   total_earnings?: true;
   last_login?: true;
   email_verified?: true;
-  pending_email?: true;
-  email_verification_code?: true;
-  email_verification_expires_at?: true;
   google_id?: true;
   linkedin_id?: true;
+  phone_verified?: true;
   create_at?: true;
   updated_at?: true;
 };
@@ -260,11 +250,9 @@ export type UserCountAggregateInputType = {
   total_earnings?: true;
   last_login?: true;
   email_verified?: true;
-  pending_email?: true;
-  email_verification_code?: true;
-  email_verification_expires_at?: true;
   google_id?: true;
   linkedin_id?: true;
+  phone_verified?: true;
   create_at?: true;
   updated_at?: true;
   _all?: true;
@@ -385,11 +373,9 @@ export type UserGroupByOutputType = {
   total_earnings: number;
   last_login: Date | null;
   email_verified: boolean;
-  pending_email: string | null;
-  email_verification_code: string | null;
-  email_verification_expires_at: Date | null;
   google_id: string | null;
   linkedin_id: string | null;
+  phone_verified: boolean;
   create_at: Date;
   updated_at: Date;
   _count: UserCountAggregateOutputType | null;
@@ -442,16 +428,15 @@ export type UserWhereInput = {
   total_earnings?: Prisma.IntFilter<'User'> | number;
   last_login?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
   email_verified?: Prisma.BoolFilter<'User'> | boolean;
-  pending_email?: Prisma.StringNullableFilter<'User'> | string | null;
-  email_verification_code?: Prisma.StringNullableFilter<'User'> | string | null;
-  email_verification_expires_at?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
   google_id?: Prisma.StringNullableFilter<'User'> | string | null;
   linkedin_id?: Prisma.StringNullableFilter<'User'> | string | null;
+  phone_verified?: Prisma.BoolFilter<'User'> | boolean;
   create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
   updated_at?: Prisma.DateTimeFilter<'User'> | Date | string;
   aiJobs?: Prisma.AiJobListRelationFilter;
   refresh_tokens?: Prisma.RefreshTokenListRelationFilter;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeListRelationFilter;
+  otp_challenges?: Prisma.OtpChallengeListRelationFilter;
   reports_made?: Prisma.ReportListRelationFilter;
   reports_received?: Prisma.ReportListRelationFilter;
 };
@@ -484,16 +469,15 @@ export type UserOrderByWithRelationInput = {
   total_earnings?: Prisma.SortOrder;
   last_login?: Prisma.SortOrderInput | Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
-  pending_email?: Prisma.SortOrderInput | Prisma.SortOrder;
-  email_verification_code?: Prisma.SortOrderInput | Prisma.SortOrder;
-  email_verification_expires_at?: Prisma.SortOrderInput | Prisma.SortOrder;
   google_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrderInput | Prisma.SortOrder;
+  phone_verified?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
   aiJobs?: Prisma.AiJobOrderByRelationAggregateInput;
   refresh_tokens?: Prisma.RefreshTokenOrderByRelationAggregateInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeOrderByRelationAggregateInput;
+  otp_challenges?: Prisma.OtpChallengeOrderByRelationAggregateInput;
   reports_made?: Prisma.ReportOrderByRelationAggregateInput;
   reports_received?: Prisma.ReportOrderByRelationAggregateInput;
 };
@@ -532,14 +516,13 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     total_earnings?: Prisma.IntFilter<'User'> | number;
     last_login?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
     email_verified?: Prisma.BoolFilter<'User'> | boolean;
-    pending_email?: Prisma.StringNullableFilter<'User'> | string | null;
-    email_verification_code?: Prisma.StringNullableFilter<'User'> | string | null;
-    email_verification_expires_at?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
+    phone_verified?: Prisma.BoolFilter<'User'> | boolean;
     create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
     updated_at?: Prisma.DateTimeFilter<'User'> | Date | string;
     aiJobs?: Prisma.AiJobListRelationFilter;
     refresh_tokens?: Prisma.RefreshTokenListRelationFilter;
     oauth_exchange_codes?: Prisma.OAuthExchangeCodeListRelationFilter;
+    otp_challenges?: Prisma.OtpChallengeListRelationFilter;
     reports_made?: Prisma.ReportListRelationFilter;
     reports_received?: Prisma.ReportListRelationFilter;
   },
@@ -574,11 +557,9 @@ export type UserOrderByWithAggregationInput = {
   total_earnings?: Prisma.SortOrder;
   last_login?: Prisma.SortOrderInput | Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
-  pending_email?: Prisma.SortOrderInput | Prisma.SortOrder;
-  email_verification_code?: Prisma.SortOrderInput | Prisma.SortOrder;
-  email_verification_expires_at?: Prisma.SortOrderInput | Prisma.SortOrder;
   google_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrderInput | Prisma.SortOrder;
+  phone_verified?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
   _count?: Prisma.UserCountOrderByAggregateInput;
@@ -619,12 +600,9 @@ export type UserScalarWhereWithAggregatesInput = {
   total_earnings?: Prisma.IntWithAggregatesFilter<'User'> | number;
   last_login?: Prisma.DateTimeNullableWithAggregatesFilter<'User'> | Date | string | null;
   email_verified?: Prisma.BoolWithAggregatesFilter<'User'> | boolean;
-  pending_email?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
-  email_verification_code?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
-  email_verification_expires_at?:
-    Prisma.DateTimeNullableWithAggregatesFilter<'User'> | Date | string | null;
   google_id?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   linkedin_id?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  phone_verified?: Prisma.BoolWithAggregatesFilter<'User'> | boolean;
   create_at?: Prisma.DateTimeWithAggregatesFilter<'User'> | Date | string;
   updated_at?: Prisma.DateTimeWithAggregatesFilter<'User'> | Date | string;
 };
@@ -657,16 +635,15 @@ export type UserCreateInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
 };
@@ -699,16 +676,15 @@ export type UserUncheckedCreateInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
 };
@@ -741,17 +717,15 @@ export type UserUpdateInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
 };
@@ -784,17 +758,15 @@ export type UserUncheckedUpdateInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
 };
@@ -827,11 +799,9 @@ export type UserCreateManyInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
 };
@@ -864,12 +834,9 @@ export type UserUpdateManyMutationInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -902,12 +869,9 @@ export type UserUncheckedUpdateManyInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -940,11 +904,9 @@ export type UserCountOrderByAggregateInput = {
   total_earnings?: Prisma.SortOrder;
   last_login?: Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
-  pending_email?: Prisma.SortOrder;
-  email_verification_code?: Prisma.SortOrder;
-  email_verification_expires_at?: Prisma.SortOrder;
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
+  phone_verified?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
 };
@@ -982,11 +944,9 @@ export type UserMaxOrderByAggregateInput = {
   total_earnings?: Prisma.SortOrder;
   last_login?: Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
-  pending_email?: Prisma.SortOrder;
-  email_verification_code?: Prisma.SortOrder;
-  email_verification_expires_at?: Prisma.SortOrder;
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
+  phone_verified?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
 };
@@ -1016,11 +976,9 @@ export type UserMinOrderByAggregateInput = {
   total_earnings?: Prisma.SortOrder;
   last_login?: Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
-  pending_email?: Prisma.SortOrder;
-  email_verification_code?: Prisma.SortOrder;
-  email_verification_expires_at?: Prisma.SortOrder;
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
+  phone_verified?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
 };
@@ -1109,6 +1067,34 @@ export type UserUpdateOneRequiredWithoutRefresh_tokensNestedInput = {
       Prisma.UserUpdateWithoutRefresh_tokensInput
     >,
     Prisma.UserUncheckedUpdateWithoutRefresh_tokensInput
+  >;
+};
+
+export type UserCreateNestedOneWithoutOtp_challengesInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutOtp_challengesInput,
+    Prisma.UserUncheckedCreateWithoutOtp_challengesInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOtp_challengesInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneWithoutOtp_challengesNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutOtp_challengesInput,
+    Prisma.UserUncheckedCreateWithoutOtp_challengesInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOtp_challengesInput;
+  upsert?: Prisma.UserUpsertWithoutOtp_challengesInput;
+  disconnect?: Prisma.UserWhereInput | boolean;
+  delete?: Prisma.UserWhereInput | boolean;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutOtp_challengesInput,
+      Prisma.UserUpdateWithoutOtp_challengesInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutOtp_challengesInput
   >;
 };
 
@@ -1246,15 +1232,14 @@ export type UserCreateWithoutRefresh_tokensInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
 };
@@ -1287,15 +1272,14 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
 };
@@ -1356,16 +1340,14 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
 };
@@ -1398,15 +1380,201 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+};
+
+export type UserCreateWithoutOtp_challengesInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+};
+
+export type UserUncheckedCreateWithoutOtp_challengesInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+};
+
+export type UserCreateOrConnectWithoutOtp_challengesInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutOtp_challengesInput,
+    Prisma.UserUncheckedCreateWithoutOtp_challengesInput
+  >;
+};
+
+export type UserUpsertWithoutOtp_challengesInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutOtp_challengesInput,
+    Prisma.UserUncheckedUpdateWithoutOtp_challengesInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutOtp_challengesInput,
+    Prisma.UserUncheckedCreateWithoutOtp_challengesInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutOtp_challengesInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutOtp_challengesInput,
+    Prisma.UserUncheckedUpdateWithoutOtp_challengesInput
+  >;
+};
+
+export type UserUpdateWithoutOtp_challengesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutOtp_challengesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
@@ -1440,15 +1608,14 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
 };
@@ -1481,15 +1648,14 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
 };
@@ -1550,16 +1716,14 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
 };
@@ -1592,16 +1756,14 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
 };
@@ -1634,16 +1796,15 @@ export type UserCreateWithoutReports_madeInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
 };
 
@@ -1675,16 +1836,15 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
 };
 
@@ -1724,16 +1884,15 @@ export type UserCreateWithoutReports_receivedInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
 };
 
@@ -1765,16 +1924,15 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
 };
 
@@ -1834,17 +1992,15 @@ export type UserUpdateWithoutReports_madeInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
 };
 
@@ -1876,17 +2032,15 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
 };
 
@@ -1938,17 +2092,15 @@ export type UserUpdateWithoutReports_receivedInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
 };
 
@@ -1980,17 +2132,15 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
 };
 
@@ -2022,15 +2172,14 @@ export type UserCreateWithoutAiJobsInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
 };
@@ -2063,15 +2212,14 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   total_earnings?: number;
   last_login?: Date | string | null;
   email_verified?: boolean;
-  pending_email?: string | null;
-  email_verification_code?: string | null;
-  email_verification_expires_at?: Date | string | null;
   google_id?: string | null;
   linkedin_id?: string | null;
+  phone_verified?: boolean;
   create_at?: Date | string;
   updated_at?: Date | string;
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
 };
@@ -2132,16 +2280,14 @@ export type UserUpdateWithoutAiJobsInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
 };
@@ -2174,16 +2320,14 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  pending_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  email_verification_expires_at?:
-    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
 };
@@ -2196,6 +2340,7 @@ export type UserCountOutputType = {
   aiJobs: number;
   refresh_tokens: number;
   oauth_exchange_codes: number;
+  otp_challenges: number;
   reports_made: number;
   reports_received: number;
 };
@@ -2206,6 +2351,7 @@ export type UserCountOutputTypeSelect<
   aiJobs?: boolean | UserCountOutputTypeCountAiJobsArgs;
   refresh_tokens?: boolean | UserCountOutputTypeCountRefresh_tokensArgs;
   oauth_exchange_codes?: boolean | UserCountOutputTypeCountOauth_exchange_codesArgs;
+  otp_challenges?: boolean | UserCountOutputTypeCountOtp_challengesArgs;
   reports_made?: boolean | UserCountOutputTypeCountReports_madeArgs;
   reports_received?: boolean | UserCountOutputTypeCountReports_receivedArgs;
 };
@@ -2247,6 +2393,15 @@ export type UserCountOutputTypeCountOauth_exchange_codesArgs<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
   where?: Prisma.OAuthExchangeCodeWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountOtp_challengesArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.OtpChallengeWhereInput;
 };
 
 /**
@@ -2298,16 +2453,15 @@ export type UserSelect<
     total_earnings?: boolean;
     last_login?: boolean;
     email_verified?: boolean;
-    pending_email?: boolean;
-    email_verification_code?: boolean;
-    email_verification_expires_at?: boolean;
     google_id?: boolean;
     linkedin_id?: boolean;
+    phone_verified?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
     aiJobs?: boolean | Prisma.User$aiJobsArgs<ExtArgs>;
     refresh_tokens?: boolean | Prisma.User$refresh_tokensArgs<ExtArgs>;
     oauth_exchange_codes?: boolean | Prisma.User$oauth_exchange_codesArgs<ExtArgs>;
+    otp_challenges?: boolean | Prisma.User$otp_challengesArgs<ExtArgs>;
     reports_made?: boolean | Prisma.User$reports_madeArgs<ExtArgs>;
     reports_received?: boolean | Prisma.User$reports_receivedArgs<ExtArgs>;
     _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
@@ -2346,11 +2500,9 @@ export type UserSelectCreateManyAndReturn<
     total_earnings?: boolean;
     last_login?: boolean;
     email_verified?: boolean;
-    pending_email?: boolean;
-    email_verification_code?: boolean;
-    email_verification_expires_at?: boolean;
     google_id?: boolean;
     linkedin_id?: boolean;
+    phone_verified?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
   },
@@ -2388,11 +2540,9 @@ export type UserSelectUpdateManyAndReturn<
     total_earnings?: boolean;
     last_login?: boolean;
     email_verified?: boolean;
-    pending_email?: boolean;
-    email_verification_code?: boolean;
-    email_verification_expires_at?: boolean;
     google_id?: boolean;
     linkedin_id?: boolean;
+    phone_verified?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
   },
@@ -2427,11 +2577,9 @@ export type UserSelectScalar = {
   total_earnings?: boolean;
   last_login?: boolean;
   email_verified?: boolean;
-  pending_email?: boolean;
-  email_verification_code?: boolean;
-  email_verification_expires_at?: boolean;
   google_id?: boolean;
   linkedin_id?: boolean;
+  phone_verified?: boolean;
   create_at?: boolean;
   updated_at?: boolean;
 };
@@ -2466,11 +2614,9 @@ export type UserOmit<
   | 'total_earnings'
   | 'last_login'
   | 'email_verified'
-  | 'pending_email'
-  | 'email_verification_code'
-  | 'email_verification_expires_at'
   | 'google_id'
   | 'linkedin_id'
+  | 'phone_verified'
   | 'create_at'
   | 'updated_at',
   ExtArgs['result']['user']
@@ -2481,6 +2627,7 @@ export type UserInclude<
   aiJobs?: boolean | Prisma.User$aiJobsArgs<ExtArgs>;
   refresh_tokens?: boolean | Prisma.User$refresh_tokensArgs<ExtArgs>;
   oauth_exchange_codes?: boolean | Prisma.User$oauth_exchange_codesArgs<ExtArgs>;
+  otp_challenges?: boolean | Prisma.User$otp_challengesArgs<ExtArgs>;
   reports_made?: boolean | Prisma.User$reports_madeArgs<ExtArgs>;
   reports_received?: boolean | Prisma.User$reports_receivedArgs<ExtArgs>;
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
@@ -2500,6 +2647,7 @@ export type $UserPayload<
     aiJobs: Prisma.$AiJobPayload<ExtArgs>[];
     refresh_tokens: Prisma.$RefreshTokenPayload<ExtArgs>[];
     oauth_exchange_codes: Prisma.$OAuthExchangeCodePayload<ExtArgs>[];
+    otp_challenges: Prisma.$OtpChallengePayload<ExtArgs>[];
     reports_made: Prisma.$ReportPayload<ExtArgs>[];
     reports_received: Prisma.$ReportPayload<ExtArgs>[];
   };
@@ -2532,11 +2680,9 @@ export type $UserPayload<
       total_earnings: number;
       last_login: Date | null;
       email_verified: boolean;
-      pending_email: string | null;
-      email_verification_code: string | null;
-      email_verification_expires_at: Date | null;
       google_id: string | null;
       linkedin_id: string | null;
+      phone_verified: boolean;
       create_at: Date;
       updated_at: Date;
     },
@@ -3082,6 +3228,17 @@ export interface Prisma__UserClient<
       >
     | Null
   >;
+  otp_challenges<T extends Prisma.User$otp_challengesArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$otp_challengesArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$OtpChallengePayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
   reports_made<T extends Prisma.User$reports_madeArgs<ExtArgs> = {}>(
     args?: Prisma.Subset<T, Prisma.User$reports_madeArgs<ExtArgs>>,
   ): Prisma.PrismaPromise<
@@ -3162,11 +3319,9 @@ export interface UserFieldRefs {
   readonly total_earnings: Prisma.FieldRef<'User', 'Int'>;
   readonly last_login: Prisma.FieldRef<'User', 'DateTime'>;
   readonly email_verified: Prisma.FieldRef<'User', 'Boolean'>;
-  readonly pending_email: Prisma.FieldRef<'User', 'String'>;
-  readonly email_verification_code: Prisma.FieldRef<'User', 'String'>;
-  readonly email_verification_expires_at: Prisma.FieldRef<'User', 'DateTime'>;
   readonly google_id: Prisma.FieldRef<'User', 'String'>;
   readonly linkedin_id: Prisma.FieldRef<'User', 'String'>;
+  readonly phone_verified: Prisma.FieldRef<'User', 'Boolean'>;
   readonly create_at: Prisma.FieldRef<'User', 'DateTime'>;
   readonly updated_at: Prisma.FieldRef<'User', 'DateTime'>;
 }
@@ -3667,6 +3822,33 @@ export type User$oauth_exchange_codesArgs<
   take?: number;
   skip?: number;
   distinct?: Prisma.OAuthExchangeCodeScalarFieldEnum | Prisma.OAuthExchangeCodeScalarFieldEnum[];
+};
+
+/**
+ * User.otp_challenges
+ */
+export type User$otp_challengesArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the OtpChallenge
+   */
+  select?: Prisma.OtpChallengeSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the OtpChallenge
+   */
+  omit?: Prisma.OtpChallengeOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OtpChallengeInclude<ExtArgs> | null;
+  where?: Prisma.OtpChallengeWhereInput;
+  orderBy?:
+    Prisma.OtpChallengeOrderByWithRelationInput | Prisma.OtpChallengeOrderByWithRelationInput[];
+  cursor?: Prisma.OtpChallengeWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.OtpChallengeScalarFieldEnum | Prisma.OtpChallengeScalarFieldEnum[];
 };
 
 /**

@@ -40,8 +40,14 @@ describe('POST /api/v1/auth — error/message translation', () => {
 
   it('translates a success message instead of returning the raw internal code', async () => {
     const app = await buildTestApp({
-      otpClient: {
-        sendOtp: vi.fn().mockResolvedValue({ status: 'pending', sid: 'test-sid' }),
+      prisma: {
+        otpChallenge: {
+          findFirst: vi.fn().mockResolvedValue(null),
+          create: vi.fn().mockResolvedValue({}),
+        } as never,
+      },
+      smsClient: {
+        sendSms: vi.fn().mockResolvedValue(undefined),
       },
     });
     apps.push(app);

@@ -5,11 +5,9 @@ import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export function OtpTestForm() {
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const { loading, error } = useAppSelector(selectAuth);
 
@@ -37,8 +35,10 @@ export function OtpTestForm() {
     if (!code.trim()) return;
     const result = await dispatch(verifyOtp({ phone, code: code.trim() }));
     if (verifyOtp.fulfilled.match(result)) {
-      router.push('/');
-      router.refresh();
+      // Verifying an OTP only proves phone ownership — it never creates a session by
+      // itself (see doc/reviews/authentication-contract.md), so this harness just
+      // surfaces the grant register-phone would need, instead of redirecting.
+      setSendInfo(`Code vérifié. signupToken: ${result.payload.signupToken}`);
     }
   };
 

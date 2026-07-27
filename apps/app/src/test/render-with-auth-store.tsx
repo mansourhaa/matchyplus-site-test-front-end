@@ -6,10 +6,9 @@ import type { ReactElement } from 'react';
 import { Provider } from 'react-redux';
 
 const DEFAULT_AUTH_STATE: AuthState = {
+  status: 'unknown',
   loading: false,
   error: null,
-  accessToken: null,
-  refreshToken: null,
   user: null,
 };
 

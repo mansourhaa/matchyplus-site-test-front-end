@@ -2,7 +2,7 @@ import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
 import { createHash } from 'node:crypto';
 
-import { PrismaClient, User } from '@saas-boilerplate/types';
+import { PrismaClient, User, UserStatus } from '@saas-boilerplate/types';
 
 import { config } from '../config.js';
 import { AbstractServiceOptions } from '../types/services.js';
@@ -56,7 +56,17 @@ export class TokenService {
     return token;
   }
 
-  async issueTokenPair(user: Pick<User, 'id' | 'email' | 'phone'>) {
+  /**
+   * Centralized ACTIVE-status gate — every path that mints tokens (login, phone login,
+   * register, OAuth exchange, refresh) goes through here, so a banned/inactive account
+   * loses access uniformly instead of relying on each caller to remember its own check.
+   * Same generic error as bad credentials, to avoid revealing account status.
+   */
+  async issueTokenPair(user: Pick<User, 'id' | 'email' | 'phone' | 'status'>) {
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new Error('invalid_credentials');
+    }
+
     const [accessToken, refreshToken] = [
       this.signAccessToken(user),
       await this.issueRefreshToken(user.id),
@@ -130,6 +140,10 @@ export class TokenService {
     try {
       user = await this.prisma.user.findUniqueOrThrow({ where: { id: payload.sub } });
     } catch {
+      throw new Error('invalid_refresh_token');
+    }
+
+    if (user.status !== UserStatus.ACTIVE) {
       throw new Error('invalid_refresh_token');
     }
 

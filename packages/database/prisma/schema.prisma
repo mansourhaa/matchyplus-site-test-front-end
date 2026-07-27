@@ -34,6 +34,14 @@ enum ReportStatus {
   DISMISSED
 }
 
+/// What an OTP challenge is verifying ownership for. Never used as a login method itself —
+/// see doc/reviews/authentication-contract.md.
+enum OtpPurpose {
+  SIGNUP_VERIFICATION
+  PHONE_LINK
+  PASSWORD_RESET
+}
+
 /// Plan configuration edited from the admin "Gestion Forfaits" section.
 /// The id mirrors UserPlan so a user's plan resolves to exactly one row.
 model Plan {
@@ -66,7 +74,7 @@ model User {
   email         String? @unique
   phone         String? @unique
   password      String? @db.Text()
-  auth_provider String  @default("email")
+  auth_provider String  @default("phone")
 
   role   Role       @default(USER)
   status UserStatus @default(ACTIVE)
@@ -92,12 +100,10 @@ model User {
   last_login     DateTime?
 
   // Authentication fields.
-  email_verified                Boolean   @default(false)
-  pending_email                 String?
-  email_verification_code       String?
-  email_verification_expires_at DateTime?
-  google_id                     String?   @unique
-  linkedin_id                   String?   @unique
+  email_verified Boolean @default(false)
+  google_id      String? @unique
+  linkedin_id    String? @unique
+  phone_verified Boolean @default(false)
 
   create_at  DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
@@ -105,6 +111,7 @@ model User {
   aiJobs               AiJob[]
   refresh_tokens       RefreshToken[]
   oauth_exchange_codes OAuthExchangeCode[]
+  otp_challenges       OtpChallenge[]
 
   reports_made     Report[] @relation("ReportsMade")
   reports_received Report[] @relation("ReportsReceived")
@@ -124,6 +131,37 @@ model RefreshToken {
   revoked_at DateTime?
   create_at  DateTime  @default(now())
 
+  @@index([user_id])
+}
+
+/// Purpose-scoped phone OTP challenge — never a login mechanism itself, only proof of
+/// phone ownership for signup verification, phone linking, or password reset (see
+/// doc/reviews/authentication-contract.md). `user_id` is null for SIGNUP_VERIFICATION,
+/// since the phone may not have an account yet at that point.
+///
+/// A signup-verification challenge, once successfully verified, also carries a one-time
+/// "grant" (`grant_hash`/`grant_expires_at`/`grant_consumed_at`) that register-phone must
+/// present to actually create the account — this is what lets OTP verification prove
+/// ownership without itself creating a user or a session.
+model OtpChallenge {
+  id          String     @id @default(cuid())
+  phone       String
+  purpose     OtpPurpose
+  code_hash   String     @db.Text()
+  attempts    Int        @default(0)
+  expires_at  DateTime
+  consumed_at DateTime?
+
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  grant_hash        String?   @db.Text()
+  grant_expires_at  DateTime?
+  grant_consumed_at DateTime?
+
+  create_at DateTime @default(now())
+
+  @@index([phone, purpose])
   @@index([user_id])
 }
 

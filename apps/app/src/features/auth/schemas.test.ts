@@ -1,53 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  loginPhoneSchema,
-  loginSchema,
-  registerPhoneSchema,
-  registerSchema,
-  sendOtpSchema,
-  verifyOtpSchema,
-} from './schemas';
-
-describe('loginSchema', () => {
-  it('accepts valid credentials', () => {
-    const result = loginSchema.safeParse({
-      email: 'user@example.com',
-      password: 'password123',
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it('rejects invalid email', () => {
-    const result = loginSchema.safeParse({
-      email: 'not-an-email',
-      password: 'password123',
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects short passwords', () => {
-    const result = loginSchema.safeParse({
-      email: 'user@example.com',
-      password: 'short',
-    });
-
-    expect(result.success).toBe(false);
-  });
-});
-
-describe('registerSchema', () => {
-  it('accepts valid registration data', () => {
-    const result = registerSchema.safeParse({
-      email: 'user@example.com',
-      password: 'password123',
-    });
-
-    expect(result.success).toBe(true);
-  });
-});
+import { loginPhoneSchema, registerPhoneSchema, sendOtpSchema, verifyOtpSchema } from './schemas';
 
 describe('sendOtpSchema', () => {
   it('accepts a valid phone number', () => {
@@ -102,12 +55,14 @@ describe('loginPhoneSchema', () => {
 });
 
 describe('registerPhoneSchema', () => {
-  it('accepts a valid phone, password, and code', () => {
+  const signupToken = 'a'.repeat(20);
+
+  it('accepts a valid phone, password, and signup token', () => {
     expect(
       registerPhoneSchema.safeParse({
         phone: '+21612345678',
         password: 'secret123',
-        code: '123456',
+        signupToken,
       }).success,
     ).toBe(true);
   });
@@ -117,26 +72,26 @@ describe('registerPhoneSchema', () => {
       registerPhoneSchema.safeParse({
         phone: '+21612345678',
         password: 'secret123',
-        code: '123456',
+        signupToken,
         name: 'Jane Doe',
       }).success,
     ).toBe(true);
   });
 
-  // The API contract for POST /auth/register-phone requires a verified OTP `code` —
+  // register-phone requires the signup grant proving a verified OTP (see /otp/verify) —
   // registration must not be submittable without one.
-  it('rejects a missing code', () => {
+  it('rejects a missing signup token', () => {
     expect(
       registerPhoneSchema.safeParse({ phone: '+21612345678', password: 'secret123' }).success,
     ).toBe(false);
   });
 
-  it('rejects a code shorter than 4 characters', () => {
+  it('rejects a signup token shorter than 16 characters', () => {
     expect(
       registerPhoneSchema.safeParse({
         phone: '+21612345678',
         password: 'secret123',
-        code: '12',
+        signupToken: 'short',
       }).success,
     ).toBe(false);
   });

@@ -1,8 +1,8 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { registerPhoneSchema } from '@/features/auth/schemas';
-import { registerPhone, selectAuth, sendOtp } from '@/features/auth/store/auth-slice';
+import { verifyOtpSchema } from '@/features/auth/schemas';
+import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { ArrowLeft, Eye, EyeOff, Loader2, Lock, User } from 'lucide-react';
@@ -26,9 +26,10 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Registration is OTP-gated: send a code to the phone first, then submit
-  // register-phone with { phone, password, code, name } — a code is required by the
-  // API contract and the account isn't created without verifying one.
+  // Registration is OTP-gated in two steps: verify the code to get a one-time signup
+  // grant proving phone ownership, then register-phone consumes that grant to actually
+  // create the account — verifying a code never creates a user or session by itself
+  // (see doc/reviews/authentication-contract.md).
   const [otpSent, setOtpSent] = useState(false);
   const [code, setCode] = useState('');
 
@@ -60,19 +61,27 @@ export function RegisterForm() {
     event.preventDefault();
     if (!otpSent) return;
 
-    const parsed = registerPhoneSchema.safeParse({ phone, password, code, name });
+    const parsed = verifyOtpSchema.safeParse({ phone, code });
     if (!parsed.success) {
       setLocalError('Entrez le code reçu par SMS.');
       return;
     }
 
     setLocalError(null);
-    const resultAction = await dispatch(registerPhone({ phone, password, code, name }));
-    if (registerPhone.fulfilled.match(resultAction)) {
+    const verifyAction = await dispatch(verifyOtp({ phone, code }));
+    if (!verifyOtp.fulfilled.match(verifyAction)) {
+      setLocalError('Code invalide ou expiré.');
+      return;
+    }
+
+    const registerAction = await dispatch(
+      registerPhone({ phone, password, name, signupToken: verifyAction.payload.signupToken }),
+    );
+    if (registerPhone.fulfilled.match(registerAction)) {
       router.push(resolvePostAuthDestination(searchParams.get('next')));
       router.refresh();
     } else {
-      setLocalError('Code invalide ou expiré.');
+      setLocalError('Impossible de créer le compte.');
     }
   };
 

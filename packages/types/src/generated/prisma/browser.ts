@@ -33,6 +33,19 @@ export type User = Prisma.UserModel;
  */
 export type RefreshToken = Prisma.RefreshTokenModel;
 /**
+ * Model OtpChallenge
+ * Purpose-scoped phone OTP challenge — never a login mechanism itself, only proof of
+ * phone ownership for signup verification, phone linking, or password reset (see
+ * doc/reviews/authentication-contract.md). `user_id` is null for SIGNUP_VERIFICATION,
+ * since the phone may not have an account yet at that point.
+ *
+ * A signup-verification challenge, once successfully verified, also carries a one-time
+ * "grant" (`grant_hash`/`grant_expires_at`/`grant_consumed_at`) that register-phone must
+ * present to actually create the account — this is what lets OTP verification prove
+ * ownership without itself creating a user or a session.
+ */
+export type OtpChallenge = Prisma.OtpChallengeModel;
+/**
  * Model OAuthExchangeCode
  * One-time code that bridges an OAuth provider redirect to the SPA.
  * Only a hash of the code is stored, never raw access or refresh tokens.

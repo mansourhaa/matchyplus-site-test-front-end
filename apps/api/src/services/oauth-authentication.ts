@@ -32,13 +32,16 @@ export class OAuthAuthenticationService {
     if (email) {
       const existingByEmail = await this.prisma.user.findUnique({ where: { email } });
       if (existingByEmail) {
-        if (!existingByEmail.email_verified) {
-          throw new Error('oauth_email_not_verified');
-        }
-
+        // Email is OAuth-only in this app (see doc/reviews/authentication-contract.md) — every
+        // provider that returns this address has already verified it on its own side, so an
+        // unverified flag on our side (e.g. a stale value from before this account linked a
+        // provider) is never a reason to refuse the merge.
         return this.prisma.user.update({
           where: { id: existingByEmail.id },
-          data: provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id },
+          data: {
+            email_verified: true,
+            ...(provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id }),
+          },
         });
       }
     }

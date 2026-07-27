@@ -10,49 +10,49 @@ import {
   adminLogoutSchema,
   authCheckSchema,
   changePasswordSchema,
-  confirmEmailVerificationSchema,
   confirmPasswordResetSchema,
   confirmPhoneLinkSchema,
   deleteAccountSchema,
   loginPhoneSchema,
-  loginSchema,
   oauthExchangeSchema,
   refreshSchema,
   registerPhoneSchema,
-  registerSchema,
-  requestEmailVerificationSchema,
   requestPasswordResetSchema,
   requestPhoneLinkSchema,
   sendOtpSchema,
   verifyOtpSchema,
 } from '../../../schemas/v1/index.js';
-import {
-  ADMIN_SESSION_COOKIE,
-  adminSessionCookieOptions,
-  clearAdminSessionCookieOptions,
-} from '../../../services/admin-session.js';
 import { AuthenticationService } from '../../../services/authentication.js';
 import { OAuthAuthenticationService } from '../../../services/oauth-authentication.js';
 import { PhoneAuthenticationService } from '../../../services/phone-authentication.js';
 import { TokenService } from '../../../services/token.js';
 import {
   ChangePasswordPayload,
-  ConfirmEmailVerificationPayload,
   ConfirmPasswordResetPayload,
   ConfirmPhoneLinkPayload,
   DeleteAccountPayload,
   LoginPayload,
   LoginPhonePayload,
   OAuthExchangePayload,
-  RefreshPayload,
-  RegisterPayload,
   RegisterPhonePayload,
-  RequestEmailVerificationPayload,
   RequestPasswordResetPayload,
   RequestPhoneLinkPayload,
   SendOtpPayload,
   VerifyOtpPayload,
 } from '../../../types/auth.js';
+import {
+  ADMIN_SESSION_COOKIE,
+  adminSessionCookieOptions,
+  clearAdminSessionCookieOptions,
+} from '../../../utils/admin-session.js';
+import {
+  MEMBER_ACCESS_COOKIE,
+  MEMBER_REFRESH_COOKIE,
+  clearMemberAccessCookieOptions,
+  clearMemberRefreshCookieOptions,
+  memberAccessCookieOptions,
+  memberRefreshCookieOptions,
+} from '../../../utils/member-session.js';
 
 const ERROR_STATUS: Record<
   string,
@@ -66,31 +66,31 @@ const ERROR_STATUS: Record<
 > = {
   invalid_phone: 'badRequest',
   invalid_otp: 'badRequest',
+  otp_resend_too_soon: 'badRequest',
+  invalid_signup_grant: 'badRequest',
   invalid_credentials: 'unauthorized',
   invalid_refresh_token: 'unauthorized',
+  oauth_only_account: 'forbidden',
+  phone_not_verified: 'forbidden',
   phone_already_registered: 'conflict',
-  user_already_exists: 'conflict',
   phone_not_found: 'notFound',
   user_not_found: 'notFound',
   password_not_set: 'badRequest',
   invalid_current_password: 'badRequest',
   phone_link_not_allowed: 'forbidden',
   phone_already_linked: 'badRequest',
-  email_already_used: 'conflict',
-  invalid_verification_code: 'badRequest',
-  smtp_not_configured: 'serviceUnavailable',
   invalid_exchange_code: 'unauthorized',
   oauth_profile_fetch_failed: 'badGateway',
-  oauth_email_not_verified: 'forbidden',
   oauth_provider_not_configured: 'serviceUnavailable',
   account_deletion_not_confirmed: 'badRequest',
-  otp_service_not_configured: 'serviceUnavailable',
+  sms_service_not_configured: 'serviceUnavailable',
+  sms_delivery_failed: 'badGateway',
 };
 
 const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-  const { prisma, otpClient, emailClient, httpErrors } = fastify;
-  const authService = new AuthenticationService({ prisma, emailClient });
-  const phoneAuthService = new PhoneAuthenticationService({ prisma, otpClient });
+  const { prisma, smsClient, httpErrors } = fastify;
+  const authService = new AuthenticationService({ prisma });
+  const phoneAuthService = new PhoneAuthenticationService({ prisma, smsClient });
   const oauthAuthService = new OAuthAuthenticationService({ prisma });
   const tokenService = new TokenService({ prisma });
 
@@ -122,6 +122,22 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     return request.t(code, { defaultValue: code });
   }
 
+  // Every member-session-issuing route goes through here: neither token is ever put in a
+  // JSON response body, only in HttpOnly cookies the browser attaches automatically —
+  // matching the admin panel's existing cookie-only pattern.
+  function setMemberSessionCookies(
+    reply: import('fastify').FastifyReply,
+    tokens: { accessToken: string; refreshToken: string },
+  ) {
+    reply.setCookie(MEMBER_ACCESS_COOKIE, tokens.accessToken, memberAccessCookieOptions());
+    reply.setCookie(MEMBER_REFRESH_COOKIE, tokens.refreshToken, memberRefreshCookieOptions());
+  }
+
+  function clearMemberSessionCookies(reply: import('fastify').FastifyReply) {
+    reply.clearCookie(MEMBER_ACCESS_COOKIE, clearMemberAccessCookieOptions());
+    reply.clearCookie(MEMBER_REFRESH_COOKIE, clearMemberRefreshCookieOptions());
+  }
+
   /**
    * The global limit (100/min) is far too generous for credential checking, so both login
    * routes get their own budget. @fastify/rate-limit evaluates at `onRequest`, before the body
@@ -135,27 +151,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   };
 
-  fastify.post<{ Body: LoginPayload }>(
-    '/login',
-    {
-      schema: loginSchema,
-      config: loginRateLimit,
-    },
-    async (request, reply) => {
-      try {
-        const data = await authService.login(request.body);
-
-        // Generating Token
-        return reply.code(200).send({
-          access_token: data.accessToken,
-          refresh_token: data.refreshToken,
-          user: data.user,
-        });
-      } catch (err) {
-        throw mapError(err as Error, request);
-      }
-    },
-  );
   fastify.post<{ Body: LoginPayload }>(
     '/admin/login',
     {
@@ -188,23 +183,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     reply.clearCookie(ADMIN_SESSION_COOKIE, clearAdminSessionCookieOptions());
     return reply.code(200).send({ ok: true });
   });
-  fastify.post<{ Body: RegisterPayload }>(
-    '/register',
-    {
-      schema: registerSchema,
-    },
-    async (request, reply) => {
-      try {
-        const data = await authService.register(request.body);
-        return reply.code(200).send({
-          message: request.t('account_created_successfully'),
-          code: 'account_created_successfully',
-        });
-      } catch (err) {
-        throw mapError(err as Error, request);
-      }
-    },
-  );
   fastify.get(
     '/authcheck',
     {
@@ -243,14 +221,15 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/otp/verify',
     {
       schema: verifyOtpSchema,
+      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
         const data = await phoneAuthService.verifyOtp(request.body);
         return reply.code(200).send({
-          access_token: data.accessToken,
-          refresh_token: data.refreshToken,
-          user: _.omit(data.user, ['password']),
+          verified: data.verified,
+          phone: data.phone,
+          signupToken: data.signupToken,
         });
       } catch (err) {
         throw mapError(err as Error, request);
@@ -262,13 +241,13 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/login-phone',
     {
       schema: loginPhoneSchema,
+      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
         const data = await phoneAuthService.loginWithPhone(request.body);
+        setMemberSessionCookies(reply, data);
         return reply.code(200).send({
-          access_token: data.accessToken,
-          refresh_token: data.refreshToken,
           user: _.omit(data.user, ['password']),
         });
       } catch (err) {
@@ -281,13 +260,13 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/register-phone',
     {
       schema: registerPhoneSchema,
+      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
         const data = await phoneAuthService.registerWithPhone(request.body);
+        setMemberSessionCookies(reply, data);
         return reply.code(201).send({
-          access_token: data.accessToken,
-          refresh_token: data.refreshToken,
           user: _.omit(data.user, ['password']),
         });
       } catch (err) {
@@ -296,47 +275,53 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   );
 
-  fastify.post<{ Body: RefreshPayload }>(
+  fastify.post(
     '/refresh',
     {
       schema: refreshSchema,
+      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
-        const data = await tokenService.refreshAccessToken(request.body.refresh_token);
-        return reply.code(200).send({
-          access_token: data.accessToken,
-          refresh_token: data.refreshToken,
-        });
+        const refreshToken = request.cookies?.[MEMBER_REFRESH_COOKIE];
+        if (!refreshToken) {
+          throw new Error('invalid_refresh_token');
+        }
+
+        const data = await tokenService.refreshAccessToken(refreshToken);
+        setMemberSessionCookies(reply, data);
+        return reply.code(200).send({ ok: true });
       } catch (err) {
         throw mapError(err as Error, request);
       }
     },
   );
 
-  fastify.post<{ Body: RefreshPayload }>(
-    '/logout',
-    {
-      schema: refreshSchema,
-    },
-    async (request, reply) => {
-      try {
-        await tokenService.revokeRefreshToken(request.body.refresh_token);
-
-        return reply.code(200).send({
-          message: translate(request, 'logout_successful'),
-          code: 'logout_successful',
-        });
-      } catch (err) {
-        throw mapError(err as Error, request);
+  fastify.post('/logout', {}, async (request, reply) => {
+    try {
+      const refreshToken = request.cookies?.[MEMBER_REFRESH_COOKIE];
+      if (refreshToken) {
+        // Best-effort: an already-expired or already-revoked token must not block the
+        // client from clearing its own (now-stale) cookies.
+        await tokenService.revokeRefreshToken(refreshToken).catch(() => undefined);
       }
-    },
-  );
+
+      clearMemberSessionCookies(reply);
+
+      return reply.code(200).send({
+        message: translate(request, 'logout_successful'),
+        code: 'logout_successful',
+      });
+    } catch (err) {
+      throw mapError(err as Error, request);
+    }
+  });
 
   fastify.post<{ Body: RequestPasswordResetPayload }>(
     '/password-reset/request',
     {
       schema: requestPasswordResetSchema,
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
     },
     async (request, reply) => {
       try {
@@ -352,6 +337,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/password-reset/confirm',
     {
       schema: confirmPasswordResetSchema,
+      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
@@ -368,6 +354,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     {
       schema: changePasswordSchema,
       preHandler: [fastify.verifyToken],
+      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
@@ -375,45 +362,13 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           ...request.body,
           userId: request.loggedUser.id,
         });
-        return reply.code(200).send({ ...data, message: translate(request, data.message) });
-      } catch (err) {
-        throw mapError(err as Error, request);
-      }
-    },
-  );
 
-  fastify.post<{ Body: Omit<RequestEmailVerificationPayload, 'userId'> }>(
-    '/email-verification/request',
-    {
-      schema: requestEmailVerificationSchema,
-      preHandler: [fastify.verifyToken],
-      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
-    },
-    async (request, reply) => {
-      try {
-        const data = await authService.requestEmailVerification({
-          ...request.body,
-          userId: request.loggedUser.id,
-        });
-        return reply.code(200).send({ ...data, message: translate(request, data.message) });
-      } catch (err) {
-        throw mapError(err as Error, request);
-      }
-    },
-  );
+        // changePassword revokes every refresh token, but the caller's own access
+        // token is still a cryptographically valid, unexpired JWT — without clearing
+        // its cookie too, this browser would keep looking authenticated (to
+        // proxy.ts's middleware and to /authcheck) until that token's TTL runs out.
+        clearMemberSessionCookies(reply);
 
-  fastify.post<{ Body: Omit<ConfirmEmailVerificationPayload, 'userId'> }>(
-    '/email-verification/confirm',
-    {
-      schema: confirmEmailVerificationSchema,
-      preHandler: [fastify.verifyToken],
-    },
-    async (request, reply) => {
-      try {
-        const data = await authService.confirmEmailVerification({
-          ...request.body,
-          userId: request.loggedUser.id,
-        });
         return reply.code(200).send({ ...data, message: translate(request, data.message) });
       } catch (err) {
         throw mapError(err as Error, request);
@@ -480,6 +435,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           ...request.body,
           userId: request.loggedUser.id,
         });
+
+        // The user row is gone, so the next request would 401 anyway — but clearing
+        // the cookies here avoids a stale "still logged in" flash before that happens.
+        clearMemberSessionCookies(reply);
+
         return reply.code(200).send({ ...data, message: translate(request, data.message) });
       } catch (err) {
         throw mapError(err as Error, request);
@@ -533,13 +493,13 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/oauth/exchange',
     {
       schema: oauthExchangeSchema,
+      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
         const data = await oauthAuthService.consumeExchangeCode(request.body);
+        setMemberSessionCookies(reply, data);
         return reply.code(200).send({
-          access_token: data.accessToken,
-          refresh_token: data.refreshToken,
           user: _.omit(data.user, ['password']),
         });
       } catch (err) {

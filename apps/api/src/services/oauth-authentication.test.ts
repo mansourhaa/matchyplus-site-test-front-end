@@ -101,13 +101,16 @@ describe('OAuthAuthenticationService', () => {
 
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-1' },
-        data: { linkedin_id: 'linkedin-sub-1' },
+        data: { email_verified: true, linkedin_id: 'linkedin-sub-1' },
       });
       expect(prisma.user.create).not.toHaveBeenCalled();
       expect(result.linkedin_id).toBe('linkedin-sub-1');
     });
 
-    it('does not link the provider when the matching account has an unverified email', async () => {
+    it('links the provider to an existing account even when its email was unverified', async () => {
+      // Every OAuth provider has already verified the email on its own side, so a stale
+      // unverified flag here is never a reason to refuse the merge (see
+      // doc/reviews/authentication-contract.md).
       const { service, prisma } = createService();
       prisma.user.findUnique.mockResolvedValueOnce(null); // by google_id
       prisma.user.findUnique.mockResolvedValueOnce({
@@ -115,18 +118,26 @@ describe('OAuthAuthenticationService', () => {
         email: 'unverified@example.com',
         email_verified: false,
       });
+      prisma.user.update.mockResolvedValue({
+        id: 'user-1',
+        email: 'unverified@example.com',
+        email_verified: true,
+        google_id: 'google-sub-1',
+      });
 
-      await expect(
-        service.findOrCreateOAuthUser('google', {
-          id: 'google-sub-1',
-          email: 'unverified@example.com',
-          emailVerified: true,
-          name: 'Jane Doe',
-        }),
-      ).rejects.toThrow('oauth_email_not_verified');
+      const result = await service.findOrCreateOAuthUser('google', {
+        id: 'google-sub-1',
+        email: 'unverified@example.com',
+        emailVerified: true,
+        name: 'Jane Doe',
+      });
 
-      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { email_verified: true, google_id: 'google-sub-1' },
+      });
       expect(prisma.user.create).not.toHaveBeenCalled();
+      expect(result.email_verified).toBe(true);
     });
 
     it('never mints tokens while finding or creating a user', async () => {

@@ -393,6 +393,7 @@ export const ModelName = {
   Plan: 'Plan',
   User: 'User',
   RefreshToken: 'RefreshToken',
+  OtpChallenge: 'OtpChallenge',
   OAuthExchangeCode: 'OAuthExchangeCode',
   Report: 'Report',
   AiJob: 'AiJob',
@@ -415,7 +416,8 @@ export type TypeMap<
     omit: GlobalOmitOptions;
   };
   meta: {
-    modelProps: 'plan' | 'user' | 'refreshToken' | 'oAuthExchangeCode' | 'report' | 'aiJob';
+    modelProps:
+      'plan' | 'user' | 'refreshToken' | 'otpChallenge' | 'oAuthExchangeCode' | 'report' | 'aiJob';
     txIsolationLevel: TransactionIsolationLevel;
   };
   model: {
@@ -639,6 +641,81 @@ export type TypeMap<
           args: Prisma.RefreshTokenCountArgs<ExtArgs>;
           result:
             runtime.Types.Utils.Optional<Prisma.RefreshTokenCountAggregateOutputType> | number;
+        };
+      };
+    };
+    OtpChallenge: {
+      payload: Prisma.$OtpChallengePayload<ExtArgs>;
+      fields: Prisma.OtpChallengeFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.OtpChallengeFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.OtpChallengeFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        findFirst: {
+          args: Prisma.OtpChallengeFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.OtpChallengeFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        findMany: {
+          args: Prisma.OtpChallengeFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>[];
+        };
+        create: {
+          args: Prisma.OtpChallengeCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        createMany: {
+          args: Prisma.OtpChallengeCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.OtpChallengeCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>[];
+        };
+        delete: {
+          args: Prisma.OtpChallengeDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        update: {
+          args: Prisma.OtpChallengeUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        deleteMany: {
+          args: Prisma.OtpChallengeDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.OtpChallengeUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.OtpChallengeUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>[];
+        };
+        upsert: {
+          args: Prisma.OtpChallengeUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        aggregate: {
+          args: Prisma.OtpChallengeAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOtpChallenge>;
+        };
+        groupBy: {
+          args: Prisma.OtpChallengeGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.OtpChallengeGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.OtpChallengeCountArgs<ExtArgs>;
+          result:
+            runtime.Types.Utils.Optional<Prisma.OtpChallengeCountAggregateOutputType> | number;
         };
       };
     };
@@ -955,11 +1032,9 @@ export const UserScalarFieldEnum = {
   total_earnings: 'total_earnings',
   last_login: 'last_login',
   email_verified: 'email_verified',
-  pending_email: 'pending_email',
-  email_verification_code: 'email_verification_code',
-  email_verification_expires_at: 'email_verification_expires_at',
   google_id: 'google_id',
   linkedin_id: 'linkedin_id',
+  phone_verified: 'phone_verified',
   create_at: 'create_at',
   updated_at: 'updated_at',
 } as const;
@@ -977,6 +1052,24 @@ export const RefreshTokenScalarFieldEnum = {
 
 export type RefreshTokenScalarFieldEnum =
   (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum];
+
+export const OtpChallengeScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  purpose: 'purpose',
+  code_hash: 'code_hash',
+  attempts: 'attempts',
+  expires_at: 'expires_at',
+  consumed_at: 'consumed_at',
+  user_id: 'user_id',
+  grant_hash: 'grant_hash',
+  grant_expires_at: 'grant_expires_at',
+  grant_consumed_at: 'grant_consumed_at',
+  create_at: 'create_at',
+} as const;
+
+export type OtpChallengeScalarFieldEnum =
+  (typeof OtpChallengeScalarFieldEnum)[keyof typeof OtpChallengeScalarFieldEnum];
 
 export const OAuthExchangeCodeScalarFieldEnum = {
   id: 'id',
@@ -1153,6 +1246,22 @@ export type EnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 export type ListEnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
   $PrismaModel,
   'UserStatus[]'
+>;
+
+/**
+ * Reference to a field of type 'OtpPurpose'
+ */
+export type EnumOtpPurposeFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'OtpPurpose'
+>;
+
+/**
+ * Reference to a field of type 'OtpPurpose[]'
+ */
+export type ListEnumOtpPurposeFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'OtpPurpose[]'
 >;
 
 /**
@@ -1370,6 +1479,7 @@ export type GlobalOmitConfig = {
   plan?: Prisma.PlanOmit;
   user?: Prisma.UserOmit;
   refreshToken?: Prisma.RefreshTokenOmit;
+  otpChallenge?: Prisma.OtpChallengeOmit;
   oAuthExchangeCode?: Prisma.OAuthExchangeCodeOmit;
   report?: Prisma.ReportOmit;
   aiJob?: Prisma.AiJobOmit;
