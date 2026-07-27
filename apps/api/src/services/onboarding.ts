@@ -95,16 +95,19 @@ export class OnboardingService {
   /**
    * The old app had two inconsistent completeness checks (a loose "any of sector/bio/
    * interest" OR, and a separate strict "all 5 steps" check that nothing actually called).
-   * This is the one authoritative rule: identity (job) + at least one interest are always
-   * required; service_type/price are only required when the user opted into offering a
-   * service. Experience and education are always optional/skippable, matching the old
-   * app's "Passer" behavior on those two steps.
+   * This is the one authoritative rule: at least one interest is always required; `job`
+   * is only required for an INDIVIDUAL ("Employé") profile — a PROVIDER ("Employeur")
+   * profile leaves it optional, matching the old app's Inscription1 ("facultatif" label
+   * on profession for Employeur). service_type/price are only required when the user
+   * opted into offering a service. Experience and education are always optional/
+   * skippable, matching the old app's "Passer" behavior on those two steps.
    */
   async completeOnboarding(payload: CompleteOnboardingPayload) {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: payload.userId },
       select: {
         job: true,
+        profile_type: true,
         interests: true,
         offer_service: true,
         service_type: true,
@@ -112,7 +115,7 @@ export class OnboardingService {
       },
     });
 
-    const hasIdentity = Boolean(user.job?.trim());
+    const hasIdentity = user.profile_type !== 'INDIVIDUAL' || Boolean(user.job?.trim());
     const hasInterest = user.interests.length > 0;
     const hasServiceDetails = !user.offer_service || Boolean(user.service_type && user.price);
 

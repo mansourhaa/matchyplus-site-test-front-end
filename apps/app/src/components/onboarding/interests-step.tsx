@@ -8,10 +8,10 @@ import {
 } from '@/features/onboarding/constants';
 import { interestsStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile } from '@/features/onboarding/types';
-import { Loader2 } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 
-import { OnboardingStepLayout } from './onboarding-step-layout';
+import { OnboardingStepLayout, StepCard, StepCtaRow, StepProgress } from './onboarding-step-layout';
 
 type InterestsStepProps = {
   profile: OnboardingProfile | null;
@@ -28,33 +28,6 @@ type InterestsStepProps = {
   onBack: () => void;
 };
 
-function Chip({
-  label,
-  selected,
-  onClick,
-}: {
-  label: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-full px-3 py-1.5"
-      style={{
-        border: `1.5px solid ${selected ? '#2F76BB' : '#E8E8E8'}`,
-        background: selected ? '#F3F8FF' : 'white',
-        color: selected ? '#2F76BB' : '#667085',
-        fontSize: '13px',
-        fontWeight: 600,
-      }}
-    >
-      {label}
-    </button>
-  );
-}
-
 export function InterestsStep({
   profile,
   stepNumber,
@@ -70,6 +43,10 @@ export function InterestsStep({
   const [serviceType, setServiceType] = useState(profile?.service_type ?? '');
   const [price, setPrice] = useState(profile?.price ?? '');
   const [error, setError] = useState<string | null>(null);
+
+  // "Offrir un service" only applies to INDIVIDUAL (Employé) profiles — matching the
+  // old app's Inscription2, which hides this card entirely for Employeur.
+  const isIndividual = (profile?.profile_type ?? 'INDIVIDUAL') === 'INDIVIDUAL';
 
   const addInterest = (value: string) => {
     const trimmed = value.trim();
@@ -88,11 +65,12 @@ export function InterestsStep({
     );
   };
 
-  const handleSubmit = async () => {
+  const handleNext = async () => {
+    const effectiveOfferService = isIndividual && offerService;
     const parsed = interestsStepSchema.safeParse({
       interests,
       selectedGoals,
-      offerService,
+      offerService: effectiveOfferService,
       serviceType: serviceType || undefined,
       price: price || undefined,
     });
@@ -105,9 +83,9 @@ export function InterestsStep({
     const saved = await onNext({
       interests,
       selectedGoals,
-      offerService,
-      serviceType: offerService ? serviceType : undefined,
-      price: offerService ? price : undefined,
+      offerService: effectiveOfferService,
+      serviceType: effectiveOfferService ? serviceType : undefined,
+      price: effectiveOfferService ? price : undefined,
     });
     if (!saved) {
       setError('Échec de la sauvegarde. Réessayez.');
@@ -117,165 +95,228 @@ export function InterestsStep({
   const suggestions = INTERESTS_SUGGESTIONS.filter((s) => !interests.includes(s)).slice(0, 4);
 
   return (
-    <OnboardingStepLayout
-      step={stepNumber}
-      totalSteps={totalSteps}
-      stepLabel="Vos objectifs"
-      onBack={onBack}
-    >
-      <div className="mx-auto w-full max-w-sm">
-        <div className="mb-8">
-          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1A1A2E' }}>Vos objectifs</h1>
-          <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.6, marginTop: '6px' }}>
-            Dites-nous ce que vous cherchez sur Matchy+.
-          </p>
-        </div>
+    <OnboardingStepLayout step={stepNumber} totalSteps={totalSteps} stepLabel="Vos objectifs">
+      <div className="mx-auto w-full max-w-2xl">
+        <StepProgress step={stepNumber} total={totalSteps} />
 
-        <div className="mb-4">
-          <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-            Centres d&apos;intérêts ou services (max {MAX_INTERESTS})
-          </label>
-          <div className="mt-2 flex gap-2">
-            <input
-              type="text"
-              value={interestInput}
-              onChange={(event) => setInterestInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  addInterest(interestInput);
-                }
-              }}
-              placeholder="Ajouter un intérêt..."
-              disabled={interests.length >= MAX_INTERESTS}
-              className="flex-1 rounded-2xl px-4 py-2.5 text-[#353535] outline-none"
-              style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
-            />
-            <button
-              type="button"
-              onClick={() => addInterest(interestInput)}
-              disabled={interests.length >= MAX_INTERESTS}
-              className="rounded-2xl px-4 py-2.5"
-              style={{ background: '#2F76BB', color: 'white', fontSize: '13px', fontWeight: 700 }}
+        <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E', marginBottom: '6px' }}>
+          Vos objectifs
+        </h1>
+        <p style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}>
+          Dites-nous ce que vous cherchez sur Matchy+.
+        </p>
+
+        <div className="space-y-8 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
+          {/* Left: interests + offer service */}
+          <div className="space-y-6">
+            <StepCard
+              title="Centres d'intérêts ou services"
+              description={`Max ${MAX_INTERESTS} — vos compétences et domaines d'activité.`}
             >
-              Ajouter
-            </button>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {interests.map((interest) => (
-              <Chip
-                key={interest}
-                label={`${interest} ×`}
-                selected
-                onClick={() => removeInterest(interest)}
-              />
-            ))}
-            {suggestions.map((suggestion) => (
-              <Chip
-                key={suggestion}
-                label={suggestion}
-                selected={false}
-                onClick={() => addInterest(suggestion)}
-              />
-            ))}
-          </div>
-        </div>
+              <div className="mb-3 flex gap-2">
+                <input
+                  type="text"
+                  value={interestInput}
+                  onChange={(event) => setInterestInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      addInterest(interestInput);
+                    }
+                  }}
+                  placeholder="Ajouter un intérêt..."
+                  disabled={interests.length >= MAX_INTERESTS}
+                  className="flex-1 rounded-xl px-3 py-2 text-[#353535] outline-none"
+                  style={{ border: '1.5px solid #E0E0E0', background: 'white', fontSize: '13px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => interestInput.trim() && addInterest(interestInput)}
+                  disabled={interests.length >= MAX_INTERESTS}
+                  className="rounded-xl px-4 py-2"
+                  style={{
+                    background: '#E8F7F3',
+                    color: '#61BCA6',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                  }}
+                >
+                  Ajouter
+                </button>
+              </div>
 
-        <div className="mb-4">
-          <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-            Que cherchez-vous ?
-          </label>
-          {GOAL_CATEGORIES.map((category) => (
-            <div key={category.label} className="mt-3">
-              <p style={{ fontSize: '12px', fontWeight: 700, color: '#353535' }}>
-                {category.emoji} {category.label}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {category.options.map((option) => (
-                  <Chip
-                    key={option}
-                    label={option}
-                    selected={selectedGoals.includes(option)}
-                    onClick={() => toggleGoal(option)}
-                  />
+              <div className="flex flex-wrap gap-2">
+                {interests.map((interest) => (
+                  <span
+                    key={interest}
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5"
+                    style={{
+                      background: '#EEF5FF',
+                      border: '1px solid #C5D8F0',
+                      fontSize: '13px',
+                      color: '#2F76BB',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {interest}
+                    <button type="button" onClick={() => removeInterest(interest)}>
+                      <X size={12} color="#2F76BB" />
+                    </button>
+                  </span>
+                ))}
+                {suggestions.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => addInterest(suggestion)}
+                    className="rounded-full px-3 py-1.5"
+                    style={{ border: '1.5px dashed #D0D0D0', fontSize: '12px', color: '#AAA' }}
+                  >
+                    + {suggestion}
+                  </button>
                 ))}
               </div>
-            </div>
-          ))}
-        </div>
+              <p style={{ fontSize: '11px', color: '#61BCA6', marginTop: '8px' }}>
+                {MAX_INTERESTS - interests.length} emplacement(s) disponible(s)
+              </p>
+            </StepCard>
 
-        <div className="mb-4">
-          <label className="flex items-center justify-between">
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#353535' }}>
-              Offrir un service ?
-            </span>
-            <input
-              type="checkbox"
-              checked={offerService}
-              onChange={(event) => setOfferService(event.target.checked)}
-            />
-          </label>
-        </div>
+            {isIndividual && (
+              <StepCard>
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A2E' }}>
+                      Offrir un service ?
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#888' }}>
+                      Élargissez votre activité autour de vous.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOfferService(!offerService)}
+                    className="relative shrink-0"
+                    style={{ width: '48px', height: '28px' }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-full transition-colors"
+                      style={{ background: offerService ? '#2F76BB' : '#E0E0E0' }}
+                    />
+                    <div
+                      className="absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-transform"
+                      style={{ transform: offerService ? 'translateX(22px)' : 'translateX(2px)' }}
+                    />
+                  </button>
+                </div>
 
-        {offerService && (
-          <div
-            className="mb-4 space-y-3 rounded-2xl p-3"
-            style={{ background: '#F7FBFF', border: '1px solid #DCEAF8' }}
-          >
-            <div>
-              <label style={{ fontSize: '12px', color: '#888', fontWeight: 600 }}>
-                Type de service
-              </label>
-              <select
-                value={serviceType}
-                onChange={(event) => setServiceType(event.target.value)}
-                className="mt-1 w-full rounded-xl px-3 py-2.5 text-[#353535] outline-none"
-                style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
-              >
-                <option value="">Choisir un type de service</option>
-                {SERVICE_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#888', fontWeight: 600 }}>
-                Prix approximatif (DT)
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={price}
-                onChange={(event) => setPrice(event.target.value.replace(/[^0-9.,]/g, ''))}
-                placeholder="Montant"
-                className="mt-1 w-full rounded-xl px-3 py-2.5 text-[#353535] outline-none"
-                style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
-              />
-            </div>
+                {offerService && (
+                  <div className="mt-3 space-y-3">
+                    <div>
+                      <label style={{ fontSize: '12px', color: '#888' }}>Type de service</label>
+                      <select
+                        value={serviceType}
+                        onChange={(event) => setServiceType(event.target.value)}
+                        className="mt-1 w-full rounded-xl px-3 py-2.5 text-[#353535] outline-none"
+                        style={{
+                          border: '1.5px solid #E0E0E0',
+                          background: 'white',
+                          fontSize: '13px',
+                        }}
+                      >
+                        <option value="">Choisir un type de service</option>
+                        {SERVICE_TYPES.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: '#888' }}>
+                        Prix approximatif (DT)
+                      </label>
+                      <div
+                        className="mt-1 flex items-center gap-2 rounded-xl px-3 py-2.5"
+                        style={{ border: '1.5px solid #E0E0E0', background: 'white' }}
+                      >
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={price}
+                          onChange={(event) =>
+                            setPrice(event.target.value.replace(/[^0-9.,]/g, ''))
+                          }
+                          placeholder="Montant"
+                          className="flex-1 bg-transparent text-[#353535] outline-none"
+                          style={{ fontSize: '13px' }}
+                        />
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#2F76BB' }}>
+                          DT
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </StepCard>
+            )}
           </div>
-        )}
+
+          {/* Right: goals */}
+          <StepCard
+            title="Que cherchez-vous ?"
+            description="Dites-nous ce dont vous avez besoin près de chez vous"
+          >
+            <div className="space-y-5">
+              {GOAL_CATEGORIES.map((category) => (
+                <div key={category.label}>
+                  <div className="mb-2 flex items-center gap-2">
+                    <span style={{ fontSize: '18px' }}>{category.emoji}</span>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#555' }}>
+                      {category.label}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {category.options.map((option) => {
+                      const isSelected = selectedGoals.includes(option);
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => toggleGoal(option)}
+                          className="rounded-full px-3 py-1.5 transition-all"
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: isSelected ? 700 : 400,
+                            background: isSelected ? '#2F76BB' : 'white',
+                            color: isSelected ? 'white' : '#666',
+                            border: isSelected ? 'none' : '1.5px solid #E0E0E0',
+                          }}
+                        >
+                          {isSelected && <Check size={11} className="mr-1 inline" />}
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </StepCard>
+        </div>
 
         {error && (
-          <p className="mb-3 text-center" style={{ fontSize: '12px', color: '#E24E59' }}>
+          <p className="mt-4" style={{ fontSize: '12px', color: '#E74C3C', fontWeight: 600 }}>
             {error}
           </p>
         )}
 
-        <button
-          onClick={handleSubmit}
+        <StepCtaRow
+          onBack={onBack}
+          onContinue={handleNext}
+          continueLabel="Enregistrer et continuer"
           disabled={loading}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
-          style={{
-            background: !loading ? 'linear-gradient(90deg, #61BCA6, #2F76BB)' : '#D5D5D5',
-            fontSize: '14px',
-            fontWeight: 700,
-          }}
-        >
-          {loading && <Loader2 size={16} className="animate-spin" />}
-          Enregistrer et continuer
-        </button>
+          loading={loading}
+        />
       </div>
     </OnboardingStepLayout>
   );

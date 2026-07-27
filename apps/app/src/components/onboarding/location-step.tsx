@@ -8,10 +8,10 @@ import {
 } from '@/features/onboarding/constants';
 import { locationStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile } from '@/features/onboarding/types';
-import { Loader2, Rocket } from 'lucide-react';
+import { Check, MapPin, Phone, Rocket } from 'lucide-react';
 import { useState } from 'react';
 
-import { OnboardingStepLayout } from './onboarding-step-layout';
+import { OnboardingStepLayout, StepCard, StepCtaRow, StepProgress } from './onboarding-step-layout';
 
 type LocationStepProps = {
   profile: OnboardingProfile | null;
@@ -27,33 +27,6 @@ type LocationStepProps = {
   }) => Promise<boolean>;
   onBack: () => void;
 };
-
-function Chip({
-  label,
-  selected,
-  onClick,
-}: {
-  label: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-full px-3 py-1.5"
-      style={{
-        border: `1.5px solid ${selected ? '#2F76BB' : '#E8E8E8'}`,
-        background: selected ? '#F3F8FF' : 'white',
-        color: selected ? '#2F76BB' : '#667085',
-        fontSize: '13px',
-        fontWeight: 600,
-      }}
-    >
-      {label}
-    </button>
-  );
-}
 
 export function LocationStep({
   profile,
@@ -80,7 +53,7 @@ export function LocationStep({
     setList(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   };
 
-  const handleSubmit = async () => {
+  const submit = async () => {
     const parsed = locationStepSchema.safeParse({
       city,
       offerService,
@@ -114,115 +87,214 @@ export function LocationStep({
       stepLabel="Localisation & Préférences"
       onBack={onBack}
     >
-      <div className="mx-auto w-full max-w-sm">
-        <div className="mb-8">
-          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1A1A2E' }}>
-            Localisation &amp; Préférences
-          </h1>
-          <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.6, marginTop: '6px' }}>
-            Dernière étape ! Configurez votre zone et vos disponibilités.
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-2xl">
+        <StepProgress step={stepNumber} total={totalSteps} />
 
-        <div className="mb-4">
-          <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>Ville</label>
-          <input
-            type="text"
-            value={city}
-            onChange={(event) => setCity(event.target.value)}
-            placeholder="Tunis, Sfax, Sousse..."
-            className="mt-2 w-full rounded-2xl px-4 py-3.5 text-[#353535] outline-none"
-            style={{ border: '2px solid #2F76BB', background: '#F5F9FF', fontSize: '15px' }}
-          />
-        </div>
+        <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E', marginBottom: '6px' }}>
+          Localisation &amp; Préférences
+        </h1>
+        <p style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}>
+          Dernière étape ! Configurez votre zone de matching et vos disponibilités.
+        </p>
 
-        {offerService && (
-          <div className="mb-4">
-            <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-              Mes disponibilités
-            </label>
-            <p style={{ fontSize: '12px', color: '#AAA', marginTop: '2px' }}>
-              Quand êtes-vous disponible pour des missions ?
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {DAYS.map((day) => (
-                <Chip
-                  key={day.short}
-                  label={day.long}
-                  selected={availabilityDays.includes(day.short)}
-                  onClick={() => toggle(availabilityDays, setAvailabilityDays, day.short)}
+        <div className="space-y-5 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
+          {/* Left: location + availability */}
+          <div className="space-y-5">
+            <StepCard
+              title="Ma localisation"
+              description="Indispensable pour le matching géolocalisé"
+            >
+              <div
+                className="flex items-center gap-2 rounded-xl px-3 py-2.5"
+                style={{ border: '2px solid #E0E0E0', background: '#FAFAFA' }}
+              >
+                <MapPin size={15} color={city ? '#2F76BB' : '#CCC'} />
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  placeholder="Votre ville (ex : Tunis, Sousse...)"
+                  className="flex-1 bg-transparent text-[#353535] outline-none"
+                  style={{ fontSize: '14px' }}
                 />
-              ))}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {TIME_SLOTS.map((slot) => (
-                <Chip
-                  key={slot.value}
-                  label={slot.label}
-                  selected={availabilityHours.includes(slot.value)}
-                  onClick={() => toggle(availabilityHours, setAvailabilityHours, slot.value)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+            </StepCard>
 
-        <div className="mb-4">
-          <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-            Préférences de contact
-          </label>
-          <p style={{ fontSize: '12px', color: '#AAA', marginTop: '2px' }}>
-            Comment préférez-vous être contacté ?
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {CONTACT_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                label={option.label}
-                selected={contactModes.includes(option.value)}
-                onClick={() => toggle(contactModes, setContactModes, option.value)}
-              />
-            ))}
+            {offerService && (
+              <StepCard
+                title="Mes disponibilités"
+                description="Quand êtes-vous disponible pour des missions ?"
+              >
+                <div className="mb-4 grid grid-cols-7 gap-1">
+                  {DAYS.map((day) => {
+                    const selected = availabilityDays.includes(day.short);
+                    return (
+                      <button
+                        key={day.short}
+                        type="button"
+                        onClick={() => toggle(availabilityDays, setAvailabilityDays, day.short)}
+                        className="flex aspect-square flex-col items-center justify-center rounded-xl transition-all"
+                        style={{
+                          background: selected
+                            ? 'linear-gradient(135deg, #61BCA6, #2F76BB)'
+                            : 'white',
+                          border: `2px solid ${selected ? '#2F76BB' : '#E0E0E0'}`,
+                          fontSize: '10px',
+                          fontWeight: selected ? 700 : 400,
+                          color: selected ? 'white' : '#888',
+                        }}
+                      >
+                        {day.short}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {TIME_SLOTS.map((slot) => {
+                    const selected = availabilityHours.includes(slot.value);
+                    return (
+                      <button
+                        key={slot.value}
+                        type="button"
+                        onClick={() => toggle(availabilityHours, setAvailabilityHours, slot.value)}
+                        className="flex items-center gap-2 rounded-xl px-3 py-2.5 transition-all"
+                        style={{
+                          background: selected ? '#E8F7F3' : 'white',
+                          border: `2px solid ${selected ? '#61BCA6' : '#E0E0E0'}`,
+                        }}
+                      >
+                        <div className="text-left">
+                          <p
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: selected ? 700 : 400,
+                              color: selected ? '#2A9177' : '#555',
+                            }}
+                          >
+                            {slot.label}
+                          </p>
+                          <p style={{ fontSize: '10px', color: '#AAA' }}>{slot.hint}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </StepCard>
+            )}
           </div>
-        </div>
 
-        <div className="mb-4">
-          <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-            Langues parlées
-          </label>
-          <p style={{ fontSize: '12px', color: '#AAA', marginTop: '2px' }}>
-            Sélectionnez toutes les langues que vous pratiquez
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {LANGUAGE_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                label={`${option.flag} ${option.label}`}
-                selected={languages.includes(option.value)}
-                onClick={() => toggle(languages, setLanguages, option.value)}
-              />
-            ))}
+          {/* Right: contact preferences + languages */}
+          <div className={`space-y-5 ${!offerService ? 'md:col-span-2' : ''}`}>
+            <StepCard
+              title="Préférences de contact"
+              description="Comment préférez-vous être contacté ?"
+            >
+              <div className="space-y-2">
+                {CONTACT_OPTIONS.map((option) => {
+                  const selected = contactModes.includes(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => toggle(contactModes, setContactModes, option.value)}
+                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all"
+                      style={{
+                        background: selected ? 'linear-gradient(90deg, #E8F7F3, #EEF5FF)' : 'white',
+                        border: `2px solid ${selected ? '#61BCA6' : '#E0E0E0'}`,
+                      }}
+                    >
+                      <div
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                        style={{
+                          background: selected
+                            ? 'linear-gradient(135deg, #61BCA6, #2F76BB)'
+                            : '#F5F5F5',
+                        }}
+                      >
+                        <Phone size={15} color={selected ? 'white' : '#AAA'} />
+                      </div>
+                      <span
+                        className="flex-1 text-left"
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: selected ? 700 : 400,
+                          color: selected ? '#2A9177' : '#555',
+                        }}
+                      >
+                        {option.label}
+                      </span>
+                      <div
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded"
+                        style={{
+                          background: selected ? '#61BCA6' : 'white',
+                          border: `2px solid ${selected ? '#61BCA6' : '#D0D0D0'}`,
+                        }}
+                      >
+                        {selected && <Check size={11} color="white" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </StepCard>
+
+            <StepCard
+              title="Langues parlées"
+              description="Sélectionnez toutes les langues que vous pratiquez"
+            >
+              <div className="flex flex-wrap gap-2">
+                {LANGUAGE_OPTIONS.map((option) => {
+                  const selected = languages.includes(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => toggle(languages, setLanguages, option.value)}
+                      className="flex items-center gap-1.5 rounded-xl px-3 py-2 transition-all"
+                      style={{
+                        background: selected
+                          ? 'linear-gradient(135deg, #61BCA6, #2F76BB)'
+                          : 'white',
+                        border: `2px solid ${selected ? '#2F76BB' : '#E0E0E0'}`,
+                        color: selected ? 'white' : '#555',
+                        fontSize: '12px',
+                        fontWeight: selected ? 700 : 400,
+                      }}
+                    >
+                      <span aria-hidden>{option.flag}</span>
+                      <span>{option.label}</span>
+                      {selected && <Check size={11} color="white" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </StepCard>
           </div>
         </div>
 
         {error && (
-          <p className="mb-3 text-center" style={{ fontSize: '12px', color: '#E24E59' }}>
+          <p className="mt-6 text-center" style={{ fontSize: '12px', color: '#E24E59' }}>
             {error}
           </p>
         )}
 
-        <button
-          onClick={handleSubmit}
+        <StepCtaRow
+          onBack={onBack}
+          onContinue={submit}
+          continueLabel={loading ? 'Synchronisation...' : 'Lancer Matchy+'}
+          continueIcon={<Rocket size={18} />}
           disabled={loading}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
-          style={{
-            background: !loading ? 'linear-gradient(90deg, #61BCA6, #2F76BB)' : '#D5D5D5',
-            fontSize: '14px',
-            fontWeight: 700,
-          }}
+          loading={loading}
+        />
+
+        <button
+          type="button"
+          onClick={submit}
+          disabled={loading}
+          className="mt-3 block w-full text-center"
+          style={{ fontSize: '14px', color: '#BBB' }}
         >
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <Rocket size={16} />}
-          Lancer Matchy+
+          Passer et lancer
         </button>
       </div>
     </OnboardingStepLayout>

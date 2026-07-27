@@ -87,7 +87,7 @@ describe('LocationStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton('Lundi'));
+    fireEvent.click(firstButton('Lun'));
     fireEvent.click(firstButton('Lancer Matchy+'));
 
     expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ availabilityDays: ['Lun'] }));

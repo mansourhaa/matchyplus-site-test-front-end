@@ -26,11 +26,11 @@ async function findFirstPlaceholder(text: string) {
   return matches[0];
 }
 
-const registeredUser = {
+const verifiedUser = {
   id: 'user-1',
   email: null,
   phone: '+21612345678',
-  name: 'Jane Doe',
+  name: '+21612345678',
   auth_provider: 'phone',
   email_verified: false,
   onboarding_completed: false,
@@ -41,7 +41,7 @@ describe('IdentityStep — resuming (already authenticated)', () => {
     vi.clearAllMocks();
   });
 
-  it('blocks submission and shows an error when job is missing', async () => {
+  it('blocks submission and shows an error when profession is missing for an Employé profile', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
       <IdentityStep
@@ -54,16 +54,15 @@ describe('IdentityStep — resuming (already authenticated)', () => {
       />,
     );
 
-    fireEvent.change(firstPlaceholder('Votre nom complet'), { target: { value: 'Jane Doe' } });
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).not.toHaveBeenCalled();
-    expect(
-      await screen.findAllByText('Le nom et la profession sont obligatoires.'),
-    ).not.toHaveLength(0);
+    expect(await screen.findAllByText('La profession est obligatoire.')).not.toHaveLength(0);
   });
 
-  it('submits name, job, and the selected profile type', async () => {
+  it('does not require profession for an Employeur (PROVIDER) profile', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
       <IdentityStep
@@ -76,11 +75,38 @@ describe('IdentityStep — resuming (already authenticated)', () => {
       />,
     );
 
-    fireEvent.change(firstPlaceholder('Votre nom complet'), { target: { value: 'Jane Doe' } });
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
+    fireEvent.click(firstButton('Employeur'));
+    fireEvent.click(firstButton('Enregistrer et continuer'));
+
+    expect(onNext).toHaveBeenCalledWith({
+      name: 'Jane Doe',
+      job: undefined,
+      bio: undefined,
+      image: undefined,
+      profileType: 'PROVIDER',
+    });
+  });
+
+  it('submits prénom, nom, job, and the selected profile type', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={5}
+        loading={false}
+        isAuthenticated
+        onNext={onNext}
+      />,
+    );
+
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
     fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
       target: { value: 'Électricien' },
     });
-    fireEvent.click(firstButton('Employeur'));
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).toHaveBeenCalledWith({
@@ -88,11 +114,11 @@ describe('IdentityStep — resuming (already authenticated)', () => {
       job: 'Électricien',
       bio: undefined,
       image: undefined,
-      profileType: 'PROVIDER',
+      profileType: 'INDIVIDUAL',
     });
   });
 
-  it('prefills from an existing profile and never shows phone/password fields', () => {
+  it('prefills prénom/nom by splitting the existing name, and never shows the phone field', () => {
     renderWithAuthStore(
       <IdentityStep
         profile={{
@@ -127,7 +153,8 @@ describe('IdentityStep — resuming (already authenticated)', () => {
       />,
     );
 
-    expect(firstPlaceholder('Votre nom complet')).toHaveValue('Existing Name');
+    expect(firstPlaceholder('Votre prénom')).toHaveValue('Existing');
+    expect(firstPlaceholder('Votre nom de famille')).toHaveValue('Name');
     expect(firstPlaceholder('Ingénieur, designer, chauffeur...')).toHaveValue('Plombier');
     expect(screen.queryByText('Numéro de téléphone')).not.toBeInTheDocument();
   });
@@ -138,7 +165,7 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
     vi.clearAllMocks();
   });
 
-  it('shows phone/password fields and "Créer un compte" as the heading', () => {
+  it('shows the phone field (no password) and "Créer un compte" as the heading', () => {
     renderWithAuthStore(
       <IdentityStep
         profile={null}
@@ -152,18 +179,18 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
 
     expect(screen.getAllByText('Créer un compte')[0]).toBeInTheDocument();
     expect(firstPlaceholder('XX XXX XXX')).toBeInTheDocument();
-    expect(firstPlaceholder('Au moins 6 caractères')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Au moins 6 caractères')).not.toBeInTheDocument();
   });
 
-  it('sends OTP, then registers the account before calling onNext (without name, already sent)', async () => {
+  it('sends OTP, then verifies it (no password/registerPhone) before calling onNext', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     vi.mocked(api.post).mockImplementation(async (url: string) => {
       if (url === '/auth/otp/send') {
         return { data: { message: 'sent', phone: '+21612345678' } };
       }
-      if (url === '/auth/register-phone') {
+      if (url === '/auth/otp/verify') {
         return {
-          data: { access_token: 'access-1', refresh_token: 'refresh-1', user: registeredUser },
+          data: { access_token: 'access-1', refresh_token: 'refresh-1', user: verifiedUser },
         };
       }
       throw new Error(`Unexpected URL ${url}`);
@@ -180,13 +207,13 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
       />,
     );
 
-    fireEvent.change(firstPlaceholder('Votre nom complet'), { target: { value: 'Jane Doe' } });
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
     fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
       target: { value: 'Électricien' },
     });
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), { target: { value: 'secret123' } });
-    fireEvent.click(firstButton('Envoyer le code'));
+    fireEvent.click(firstButton('Vérifier le numéro par SMS'));
 
     const codeInput = await findFirstPlaceholder('123456');
     fireEvent.change(codeInput, { target: { value: '123456' } });
@@ -194,15 +221,15 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
 
     expect(api.post).toHaveBeenCalledWith('/auth/otp/send', { phone: '+21612345678' });
     await vi.waitFor(() =>
-      expect(api.post).toHaveBeenCalledWith('/auth/register-phone', {
+      expect(api.post).toHaveBeenCalledWith('/auth/otp/verify', {
         phone: '+21612345678',
-        password: 'secret123',
         code: '123456',
-        name: 'Jane Doe',
       }),
     );
+    expect(api.post).not.toHaveBeenCalledWith('/auth/register-phone', expect.anything());
     await vi.waitFor(() =>
       expect(onNext).toHaveBeenCalledWith({
+        name: 'Jane Doe',
         job: 'Électricien',
         bio: undefined,
         image: undefined,
@@ -231,19 +258,19 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
       />,
     );
 
-    fireEvent.change(firstPlaceholder('Votre nom complet'), { target: { value: 'Jane Doe' } });
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
     fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
       target: { value: 'Électricien' },
     });
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), { target: { value: 'secret123' } });
-    fireEvent.click(firstButton('Envoyer le code'));
+    fireEvent.click(firstButton('Vérifier le numéro par SMS'));
 
     const codeInput = await findFirstPlaceholder('123456');
     fireEvent.change(codeInput, { target: { value: '000000' } });
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
-    await screen.findAllByText('Code invalide ou expiré.');
+    await screen.findAllByText('Code incorrect.');
     expect(onNext).not.toHaveBeenCalled();
   });
 });

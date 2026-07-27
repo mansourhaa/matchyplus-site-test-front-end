@@ -1,12 +1,19 @@
 import { z } from 'zod';
 
-export const identityStepSchema = z.object({
-  name: z.string().trim().min(1),
-  job: z.string().trim().min(1),
-  bio: z.string().max(250).optional(),
-  image: z.string().optional(),
-  profileType: z.enum(['INDIVIDUAL', 'PROVIDER']),
-});
+// Profession is only required for "Employé" (INDIVIDUAL) profiles — optional
+// ("facultatif") for "Employeur" (PROVIDER), matching the old app's Inscription1.
+export const identityStepSchema = z
+  .object({
+    name: z.string().trim().min(1),
+    job: z.string().trim().optional(),
+    bio: z.string().max(250).optional(),
+    image: z.string().optional(),
+    profileType: z.enum(['INDIVIDUAL', 'PROVIDER']),
+  })
+  .refine((data) => data.profileType !== 'INDIVIDUAL' || Boolean(data.job?.trim()), {
+    message: 'La profession est obligatoire.',
+    path: ['job'],
+  });
 
 export const interestsStepSchema = z
   .object({

@@ -1,16 +1,16 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { sendOtpSchema } from '@/features/auth/schemas';
-import { registerPhone, selectAuth, sendOtp } from '@/features/auth/store/auth-slice';
+import { selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
 import { identityStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
-import { Eye, EyeOff, Loader2, Lock, Upload, User } from 'lucide-react';
+import { Check, User } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { PhoneInput } from '../auth/phone-input';
-import { OnboardingStepLayout } from './onboarding-step-layout';
+import { OnboardingStepLayout, StepCtaRow, StepProgress } from './onboarding-step-layout';
 
 type IdentityStepProps = {
   profile: OnboardingProfile | null;
@@ -19,8 +19,8 @@ type IdentityStepProps = {
   loading: boolean;
   isAuthenticated: boolean;
   onNext: (patch: {
-    name?: string;
-    job: string;
+    name: string;
+    job?: string;
     bio?: string;
     image?: string;
     profileType: ProfileType;
@@ -36,6 +36,13 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
+function splitName(fullName: string) {
+  const trimmed = fullName.trim();
+  const spaceIndex = trimmed.indexOf(' ');
+  if (spaceIndex === -1) return { firstName: trimmed, lastName: '' };
+  return { firstName: trimmed.slice(0, spaceIndex), lastName: trimmed.slice(spaceIndex + 1) };
+}
+
 export function IdentityStep({
   profile,
   stepNumber,
@@ -47,7 +54,9 @@ export function IdentityStep({
   const dispatch = useAppDispatch();
   const auth = useAppSelector(selectAuth);
 
-  const [name, setName] = useState(profile?.name ?? '');
+  const existingName = splitName(profile?.name ?? '');
+  const [firstName, setFirstName] = useState(existingName.firstName);
+  const [lastName, setLastName] = useState(existingName.lastName);
   const [job, setJob] = useState(profile?.job ?? '');
   const [bio, setBio] = useState(profile?.bio ?? '');
   const [image, setImage] = useState(profile?.image ?? '');
@@ -56,20 +65,17 @@ export function IdentityStep({
   );
   const [error, setError] = useState<string | null>(null);
 
-  // Account bootstrap fields — only relevant when !isAuthenticated (a fresh "Créer un
-  // compte" visit). Mirrors register-form.tsx's send-code-then-register-with-code flow.
   const [countryIso, setCountryIso] = useState(DEFAULT_PHONE_COUNTRY.iso);
   const [nationalNumber, setNationalNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [code, setCode] = useState('');
 
   const country = getPhoneCountry(countryIso);
   const phone = composeE164Phone(countryIso, nationalNumber);
-  const isPhoneAndPasswordValid =
-    nationalNumber.length >= country.nationalLength && password.length >= 6;
+  const isPhoneValid = nationalNumber.length >= country.nationalLength;
   const isBusy = loading || auth.loading;
+  const name = `${firstName} ${lastName}`.trim();
+  const isJobRequired = profileType === 'INDIVIDUAL';
 
   const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -78,11 +84,8 @@ export function IdentityStep({
   };
 
   const handleSendCode = async () => {
-    const parsed = sendOtpSchema.safeParse({ phone });
-    if (!parsed.success || !isPhoneAndPasswordValid) {
-      setError(
-        `Entrez un numéro de téléphone valide (${country.nationalLength} chiffres) et un mot de passe (6 caractères minimum).`,
-      );
+    if (!isPhoneValid) {
+      setError(`Le numéro de téléphone est obligatoire (${country.nationalLength} chiffres).`);
       return;
     }
 
@@ -101,30 +104,36 @@ export function IdentityStep({
     setError(null);
   };
 
-  const handleSubmit = async () => {
+  const handleNext = async () => {
     const parsed = identityStepSchema.safeParse({ name, job, bio, image, profileType });
     if (!parsed.success) {
-      setError('Le nom et la profession sont obligatoires.');
+      setError(parsed.error.issues[0]?.message ?? 'Le prénom et le nom sont obligatoires.');
       return;
     }
 
     if (!isAuthenticated) {
-      if (!otpSent || code.trim().length < 4) {
-        setError('Entrez le code reçu par SMS.');
+      if (!otpSent) {
+        setError('Vérifiez votre numéro de téléphone avec le code SMS.');
+        return;
+      }
+      if (code.trim().length < 4) {
+        setError('Entrez le code à 6 chiffres.');
         return;
       }
 
       setError(null);
-      const registerResult = await dispatch(registerPhone({ phone, password, code, name }));
-      if (!registerPhone.fulfilled.match(registerResult)) {
-        setError('Code invalide ou expiré.');
+      const verifyResult = await dispatch(verifyOtp({ phone, code }));
+      if (!verifyOtp.fulfilled.match(verifyResult)) {
+        setError('Code incorrect.');
         return;
       }
 
-      // The account now exists and is authenticated — onNext's PATCH call will
-      // succeed from here on. `name` was already sent via registerPhone.
+      // The account now exists (verifyOtp both verifies and logs in, same as our OTP-
+      // first login flow) — onNext's PATCH call will succeed from here on. The account
+      // was created with a placeholder name, so it's sent here for real.
       const saved = await onNext({
-        job,
+        name,
+        job: job || undefined,
         bio: bio || undefined,
         image: image || undefined,
         profileType,
@@ -138,7 +147,7 @@ export function IdentityStep({
     setError(null);
     const saved = await onNext({
       name,
-      job,
+      job: job || undefined,
       bio: bio || undefined,
       image: image || undefined,
       profileType,
@@ -148,167 +157,167 @@ export function IdentityStep({
     }
   };
 
-  const showSendCodeButton = !isAuthenticated && !otpSent;
-
   return (
     <OnboardingStepLayout step={stepNumber} totalSteps={totalSteps} stepLabel="Votre identité">
-      <div className="mx-auto w-full max-w-sm">
-        <div className="mb-8">
-          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1A1A2E' }}>
-            {isAuthenticated ? 'Votre identité' : 'Créer un compte'}
-          </h1>
-          <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.6, marginTop: '6px' }}>
-            {isAuthenticated
-              ? 'Commençons par les informations de base.'
-              : 'Rejoignez Matchy+ avec votre numéro de téléphone.'}
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-2xl">
+        <StepProgress step={stepNumber} total={totalSteps} />
 
-        <div className="mb-4">
-          <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-            Photo de profil
-          </label>
-          <label
-            className="mt-2 flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3.5"
-            style={{ border: '2px dashed #2F76BB', background: '#F5F9FF' }}
-          >
-            {image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={image} alt="" className="h-12 w-12 rounded-full object-cover" />
-            ) : (
+        <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E', marginBottom: '6px' }}>
+          {isAuthenticated ? 'Votre identité' : 'Créer un compte'}
+        </h1>
+        <p style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}>
+          {isAuthenticated
+            ? 'Commençons par les informations de base.'
+            : 'Rejoignez Matchy+ avec votre numéro de téléphone.'}
+        </p>
+
+        <div className="space-y-6 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
+          {/* Left: photo + profile type */}
+          <div className="flex flex-col items-center">
+            <div className="relative mb-3">
               <div
-                className="flex h-12 w-12 items-center justify-center rounded-full"
-                style={{ background: '#E8F0FA' }}
+                className="flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-4 transition-transform hover:scale-105"
+                style={{ borderColor: '#2F76BB', background: '#D5E6F5' }}
               >
-                <User size={20} color="#2F76BB" />
+                {image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={image} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <User size={40} color="#2F76BB" />
+                )}
               </div>
-            )}
-            <span
-              className="flex flex-1 items-center gap-2"
-              style={{ fontSize: '13px', fontWeight: 600, color: '#353535' }}
-            >
-              <Upload size={14} />
-              {image ? 'Changer la photo' : 'Choisir une photo'}
-            </span>
-            <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-          </label>
-        </div>
-
-        <div className="mb-4">
-          <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>Je suis</label>
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setProfileType('INDIVIDUAL')}
-              className="flex-1 rounded-2xl py-2.5"
-              style={{
-                border: `1.5px solid ${profileType === 'INDIVIDUAL' ? '#2F76BB' : '#E8E8E8'}`,
-                background: profileType === 'INDIVIDUAL' ? '#F3F8FF' : 'white',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: profileType === 'INDIVIDUAL' ? '#2F76BB' : '#667085',
-              }}
-            >
-              Employé
-            </button>
-            <button
-              type="button"
-              onClick={() => setProfileType('PROVIDER')}
-              className="flex-1 rounded-2xl py-2.5"
-              style={{
-                border: `1.5px solid ${profileType === 'PROVIDER' ? '#2F76BB' : '#E8E8E8'}`,
-                background: profileType === 'PROVIDER' ? '#F3F8FF' : 'white',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: profileType === 'PROVIDER' ? '#2F76BB' : '#667085',
-              }}
-            >
-              Employeur
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>Nom complet</label>
-          <div
-            className="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3.5"
-            style={{ border: '2px solid #2F76BB', background: '#F5F9FF' }}
-          >
-            <input
-              type="text"
-              value={name}
-              disabled={!isAuthenticated && otpSent}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Votre nom complet"
-              className="flex-1 bg-transparent text-[#353535] outline-none"
-              style={{ fontSize: '15px' }}
-            />
-          </div>
-        </div>
-
-        {!isAuthenticated && (
-          <>
-            <div className="mb-4">
-              <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                Numéro de téléphone
+              <label
+                className="absolute -right-2 -bottom-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 bg-white shadow-md"
+                style={{ borderColor: '#61BCA6' }}
+              >
+                <Check size={16} color="#61BCA6" style={{ display: image ? 'block' : 'none' }} />
+                {!image && <User size={14} color="#61BCA6" />}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
               </label>
-              <PhoneInput
-                countryIso={countryIso}
-                nationalNumber={nationalNumber}
-                onCountryChange={setCountryIso}
-                onNationalNumberChange={setNationalNumber}
-                disabled={isBusy || otpSent}
+            </div>
+            <p style={{ fontSize: '12px', color: '#AAA' }}>Photo de profil</p>
+
+            <div className="mt-6 w-full">
+              <p
+                style={{ fontSize: '14px', fontWeight: 700, color: '#353535', marginBottom: '8px' }}
+              >
+                Je suis
+              </p>
+              <div className="flex gap-2">
+                {(['PROVIDER', 'INDIVIDUAL'] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setProfileType(type)}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 transition-all"
+                    style={{
+                      background: profileType === type ? '#2F76BB' : 'white',
+                      border: `2px solid ${profileType === type ? '#2F76BB' : '#E0E0E0'}`,
+                    }}
+                  >
+                    {profileType === type && <Check size={14} color="white" />}
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: profileType === type ? 'white' : '#666',
+                      }}
+                    >
+                      {type === 'PROVIDER' ? 'Employeur' : 'Employé'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: identity fields */}
+          <div className="space-y-4">
+            <div>
+              <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+                Prénom <span style={{ color: '#61BCA6' }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                placeholder="Votre prénom"
+                className="mt-1 w-full rounded-xl px-4 py-3 text-[#353535] transition-all outline-none"
+                style={{
+                  fontSize: '14px',
+                  border: `2px solid ${firstName ? '#2F76BB' : '#E0E0E0'}`,
+                  background: firstName ? '#F5F9FF' : '#FAFAFA',
+                }}
               />
             </div>
 
-            <div className="mb-4">
+            <div>
               <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                Mot de passe
+                Nom <span style={{ color: '#61BCA6' }}>*</span>
               </label>
-              <div
-                className="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3.5"
-                style={{ border: '2px solid #2F76BB', background: '#F5F9FF' }}
-              >
-                <Lock size={16} color="#61BCA6" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  disabled={otpSent}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Au moins 6 caractères"
-                  className="flex-1 bg-transparent text-[#353535] outline-none"
-                  style={{ fontSize: '15px' }}
-                />
-                <button type="button" onClick={() => setShowPassword((value) => !value)}>
-                  {showPassword ? (
-                    <EyeOff size={18} color="#7A7A7A" />
-                  ) : (
-                    <Eye size={18} color="#7A7A7A" />
-                  )}
-                </button>
-              </div>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+                placeholder="Votre nom de famille"
+                className="mt-1 w-full rounded-xl px-4 py-3 text-[#353535] transition-all outline-none"
+                style={{
+                  fontSize: '14px',
+                  border: `2px solid ${lastName ? '#2F76BB' : '#E0E0E0'}`,
+                  background: lastName ? '#F5F9FF' : '#FAFAFA',
+                }}
+              />
             </div>
 
-            {otpSent && (
-              <>
-                <div className="mb-2">
-                  <button
-                    type="button"
-                    onClick={handleEditPhone}
-                    style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
-                  >
-                    Modifier le numéro
-                  </button>
+            {!isAuthenticated && (
+              <div>
+                <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+                  Numéro de téléphone <span style={{ color: '#61BCA6' }}>*</span>
+                </label>
+                <div className="mt-1">
+                  <PhoneInput
+                    countryIso={countryIso}
+                    nationalNumber={nationalNumber}
+                    onCountryChange={setCountryIso}
+                    onNationalNumberChange={setNationalNumber}
+                    disabled={isBusy || otpSent}
+                  />
                 </div>
 
-                <div className="mb-4">
-                  <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                    Code reçu par SMS
-                  </label>
-                  <div
-                    className="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3.5"
-                    style={{ border: '2px solid #2F76BB', background: '#F5F9FF' }}
+                {!otpSent ? (
+                  <button
+                    type="button"
+                    onClick={handleSendCode}
+                    disabled={isBusy || !isPhoneValid}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all"
+                    style={{
+                      background: '#EAF3FB',
+                      color: '#2F76BB',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                    }}
                   >
+                    Vérifier le numéro par SMS
+                  </button>
+                ) : (
+                  <div className="mt-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+                        Code reçu par SMS
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleEditPhone}
+                        style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
+                      >
+                        Modifier le numéro
+                      </button>
+                    </div>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -317,71 +326,90 @@ export function IdentityStep({
                         setCode(event.target.value.replace(/\D/g, '').slice(0, 10))
                       }
                       placeholder="123456"
-                      className="flex-1 bg-transparent text-[#353535] outline-none"
-                      style={{ fontSize: '15px' }}
+                      className="w-full rounded-xl px-4 py-3 text-center text-[#1A1A2E] outline-none"
+                      style={{
+                        border: `2px solid ${code.length >= 4 ? '#2F76BB' : '#E0E0E0'}`,
+                        background: '#F8FBFF',
+                        fontSize: '20px',
+                        fontWeight: 700,
+                        letterSpacing: '6px',
+                      }}
                     />
                   </div>
-                </div>
-              </>
+                )}
+              </div>
             )}
-          </>
-        )}
 
-        <div className="mb-4">
-          <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-            Métier / Profession
-          </label>
-          <div
-            className="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3.5"
-            style={{ border: '2px solid #2F76BB', background: '#F5F9FF' }}
-          >
-            <input
-              type="text"
-              value={job}
-              onChange={(event) => setJob(event.target.value)}
-              placeholder="Ingénieur, designer, chauffeur..."
-              className="flex-1 bg-transparent text-[#353535] outline-none"
-              style={{ fontSize: '15px' }}
-            />
+            <div>
+              <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+                Métier / Profession
+                {isJobRequired ? (
+                  <span style={{ color: '#61BCA6' }}> *</span>
+                ) : (
+                  <span style={{ color: '#888' }}> (facultatif)</span>
+                )}
+              </label>
+              <input
+                type="text"
+                value={job}
+                onChange={(event) => setJob(event.target.value)}
+                placeholder="Ingénieur, designer, chauffeur..."
+                className="mt-1 w-full rounded-xl px-4 py-3 text-[#353535] transition-all outline-none"
+                style={{
+                  fontSize: '14px',
+                  border: `2px solid ${job ? '#2F76BB' : '#E0E0E0'}`,
+                  background: job ? '#F5F9FF' : '#FAFAFA',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+                À propos de vous
+              </label>
+              <textarea
+                value={bio}
+                onChange={(event) => setBio(event.target.value.slice(0, 250))}
+                placeholder="Parlez de vous en quelques mots..."
+                rows={3}
+                className="mt-1 w-full resize-none rounded-xl px-4 py-3 text-[#353535] transition-all outline-none"
+                style={{
+                  fontSize: '14px',
+                  border: `2px solid ${bio ? '#2F76BB' : '#E0E0E0'}`,
+                  background: bio ? '#F5F9FF' : '#FAFAFA',
+                }}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="mb-4">
-          <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-            À propos de vous
-          </label>
-          <textarea
-            value={bio}
-            onChange={(event) => setBio(event.target.value.slice(0, 250))}
-            placeholder="Parlez de vous en quelques mots..."
-            rows={3}
-            className="mt-2 w-full resize-none rounded-2xl px-4 py-3.5 text-[#353535] outline-none"
-            style={{ border: '2px solid #2F76BB', background: '#F5F9FF', fontSize: '14px' }}
-          />
-          <p className="mt-1 text-right" style={{ fontSize: '11px', color: '#AAA' }}>
-            {bio.length}/250
-          </p>
-        </div>
-
         {error && (
-          <p className="mb-3 text-center" style={{ fontSize: '12px', color: '#E24E59' }}>
+          <p className="mt-4" style={{ fontSize: '12px', color: '#E74C3C', fontWeight: 600 }}>
             {error}
           </p>
         )}
 
-        <button
-          onClick={showSendCodeButton ? handleSendCode : handleSubmit}
-          disabled={isBusy || (showSendCodeButton && !isPhoneAndPasswordValid)}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
-          style={{
-            background: !isBusy ? 'linear-gradient(90deg, #61BCA6, #2F76BB)' : '#D5D5D5',
-            fontSize: '14px',
-            fontWeight: 700,
-          }}
-        >
-          {isBusy && <Loader2 size={16} className="animate-spin" />}
-          {showSendCodeButton ? 'Envoyer le code' : 'Enregistrer et continuer'}
-        </button>
+        <StepCtaRow
+          onContinue={handleNext}
+          continueLabel="Enregistrer et continuer"
+          disabled={isBusy}
+          loading={isBusy}
+        />
+
+        {!isAuthenticated && (
+          <Link
+            href="/login"
+            className="mt-3 block w-full rounded-2xl py-3 text-center"
+            style={{
+              border: '1.5px solid #E0E0E0',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#555',
+            }}
+          >
+            Connexion
+          </Link>
+        )}
       </div>
     </OnboardingStepLayout>
   );

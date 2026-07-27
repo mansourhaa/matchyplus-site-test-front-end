@@ -105,10 +105,11 @@ describe('OnboardingService', () => {
   });
 
   describe('completeOnboarding', () => {
-    it('rejects when job is missing', async () => {
+    it('rejects when job is missing for an INDIVIDUAL (Employé) profile', async () => {
       const { service, prisma } = createService();
       prisma.user.findUniqueOrThrow.mockResolvedValue({
         job: null,
+        profile_type: 'INDIVIDUAL',
         interests: ['Bricolage'],
         offer_service: false,
         service_type: null,
@@ -119,6 +120,26 @@ describe('OnboardingService', () => {
         'onboarding_incomplete',
       );
       expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('does not require job for a PROVIDER (Employeur) profile — profession is optional there', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        job: null,
+        profile_type: 'PROVIDER',
+        interests: ['Bricolage'],
+        offer_service: false,
+        service_type: null,
+        price: null,
+      });
+      prisma.user.update.mockResolvedValue({
+        ...baseProfile,
+        onboarding_completed_at: new Date('2026-01-01'),
+      });
+
+      await expect(service.completeOnboarding({ userId: 'user-1' })).resolves.toMatchObject({
+        onboardingCompleted: true,
+      });
     });
 
     it('rejects when there are no interests', async () => {

@@ -98,6 +98,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     const kind = ERROR_STATUS[err.message];
 
     if (!kind) {
+      // The client only ever gets the generic message below — without logging the
+      // original error here first, an unmapped exception (e.g. a raw Twilio SDK error)
+      // is otherwise discarded with no trace of what it actually was.
+      request.log.error({ err }, 'unmapped auth error');
+
       const mapped = httpErrors.internalServerError(
         request.t('internal_error', {
           defaultValue: 'An unexpected error occurred',
