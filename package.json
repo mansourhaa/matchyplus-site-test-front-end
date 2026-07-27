@@ -59,11 +59,18 @@
   "packageManager": "pnpm@10.12.4",
   "pnpm": {
     "overrides": {
-      "postcss": "^8.5.10",
-      "@prisma/dev": "^0.24.14"
+      "postcss": "^8.5.18",
+      "@prisma/dev": "^0.24.17",
+      "@fastify/static": "10.1.2",
+      "brace-expansion": "5.0.8",
+      "fast-uri": "^3.1.4",
+      "find-my-way": "^9.7.0",
+      "sharp": "^0.35.0",
+      "valibot": "^1.4.2"
     },
     "patchedDependencies": {
-      "next-themes@0.4.6": "patches/next-themes@0.4.6.patch"
+      "next-themes@0.4.6": "patches/next-themes@0.4.6.patch",
+      "brace-expansion@5.0.8": "patches/brace-expansion@5.0.8.patch"
     }
   }
 }
