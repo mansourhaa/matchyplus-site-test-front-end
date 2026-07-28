@@ -408,6 +408,9 @@ importers:
       reselect:
         specifier: ^5.2.0
         version: 5.2.0
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       three:
         specifier: ^0.185.1
         version: 0.185.1
@@ -7715,7 +7718,7 @@ snapshots:
 
   '@fastify/oauth2@8.2.0':
     dependencies:
-      '@fastify/cookie': 11.1.0
+      '@fastify/cookie': 11.1.2
       fastify-plugin: 5.1.0
       simple-oauth2: 5.1.0
     transitivePeerDependencies:

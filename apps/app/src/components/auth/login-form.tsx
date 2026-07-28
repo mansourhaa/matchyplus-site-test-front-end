@@ -1,5 +1,6 @@
 'use client';
 
+import { MatchyLogo } from '@/components/matchy/matchy-logo';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import {
   confirmPasswordReset,
@@ -14,7 +15,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { AuthLayout } from './auth-layout';
-import { MatchyLogo } from './matchy-logo';
 import { PhoneInput } from './phone-input';
 
 function LinkedInIcon() {

@@ -1,5 +1,6 @@
 'use client';
 
+import { MatchyLogo } from '@/components/matchy/matchy-logo';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { verifyOtpSchema } from '@/features/auth/schemas';
 import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
@@ -10,7 +11,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { AuthLayout } from './auth-layout';
-import { MatchyLogo } from './matchy-logo';
 import { PhoneInput } from './phone-input';
 
 export function RegisterForm() {
