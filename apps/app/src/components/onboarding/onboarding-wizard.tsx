@@ -38,8 +38,7 @@ export function OnboardingWizard() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const { profile, loading } = useAppSelector(selectOnboarding);
-  const { accessToken } = useAppSelector(selectAuth);
-  const isAuthenticated = Boolean(accessToken);
+  const { isAuthenticated } = useAppSelector(selectAuth);
 
   const requestedStep = searchParams.get('step');
   const step: OnboardingStep = VALID_STEPS.includes(requestedStep as OnboardingStep)

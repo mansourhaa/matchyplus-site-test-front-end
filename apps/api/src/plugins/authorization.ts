@@ -5,8 +5,9 @@ import jwt from 'jsonwebtoken';
 import { User } from '@saas-boilerplate/types';
 
 import { isAdminRole } from '../constants.js';
-import { ADMIN_SESSION_COOKIE } from '../services/admin-session.js';
 import { AuthorizationService } from '../services/authorization.js';
+import { ADMIN_SESSION_COOKIE } from '../utils/admin-session.js';
+import { MEMBER_ACCESS_COOKIE } from '../utils/member-session.js';
 
 /**
  * Authorization plugin that handle every step in authorization process.
@@ -21,9 +22,14 @@ async function authorization(fastify: FastifyInstance) {
     const headerValue = request.headers['authorization'] || '';
 
     const matches = headerValue.match(/bearer\s+(\S+)/i);
-    // The admin panel holds its token in an HttpOnly cookie, so it cannot set the header —
-    // the browser replays the cookie instead. Other clients keep using the bearer header.
-    const token = matches ? matches[1] : (request.cookies?.[ADMIN_SESSION_COOKIE] ?? null);
+    // Both the admin panel and the member app hold their token in an HttpOnly cookie, so
+    // neither can set the header — the browser replays the cookie instead. Other clients
+    // (e.g. mobile) keep using the bearer header.
+    const token = matches
+      ? matches[1]
+      : (request.cookies?.[ADMIN_SESSION_COOKIE] ??
+        request.cookies?.[MEMBER_ACCESS_COOKIE] ??
+        null);
     if (!token) {
       throw httpErrors.unauthorized(
         // @ts-ignore

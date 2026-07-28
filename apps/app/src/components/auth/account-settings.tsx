@@ -3,15 +3,13 @@
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import {
   changePassword,
-  confirmEmailVerification,
   confirmPhoneLink,
   deleteAccount,
-  requestEmailVerification,
   requestPhoneLink,
   selectAuth,
 } from '@/features/auth/store/auth-slice';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
-import { AlertTriangle, CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, Trash2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Eye, EyeOff, Lock, Phone, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useState } from 'react';
@@ -236,106 +234,6 @@ function PasswordField({
   );
 }
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function EmailVerificationSection() {
-  const dispatch = useAppDispatch();
-  const { user } = useAppSelector(selectAuth);
-  const [email, setEmail] = useState(user?.email ?? '');
-  const [code, setCode] = useState('');
-  const [codeVisible, setCodeVisible] = useState(false);
-  const [requestLoading, setRequestLoading] = useState(false);
-  const [confirmLoading, setConfirmLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
-
-  const handleRequestCode = async () => {
-    setError(null);
-    setInfo(null);
-    const normalized = email.trim().toLowerCase();
-    if (!EMAIL_REGEX.test(normalized)) {
-      setError('Entrez une adresse email valide');
-      return;
-    }
-
-    setRequestLoading(true);
-    try {
-      await dispatch(requestEmailVerification({ email: normalized })).unwrap();
-      setCodeVisible(true);
-      setInfo('Code de vérification envoyé par email.');
-    } catch {
-      setError("Échec de l'envoi du code de vérification");
-    } finally {
-      setRequestLoading(false);
-    }
-  };
-
-  const handleConfirmCode = async () => {
-    setError(null);
-    setInfo(null);
-    if (!code.trim()) {
-      setError('Entrez le code de vérification');
-      return;
-    }
-
-    setConfirmLoading(true);
-    try {
-      await dispatch(confirmEmailVerification({ code: code.trim() })).unwrap();
-      setCode('');
-      setCodeVisible(false);
-      setInfo('Adresse email confirmée avec succès.');
-    } catch {
-      setError('Échec de la confirmation de l’email');
-    } finally {
-      setConfirmLoading(false);
-    }
-  };
-
-  return (
-    <SettingsCard
-      icon={<Mail size={18} color="#F5A623" />}
-      iconBackground="#FFF8EB"
-      title="Adresse email"
-      description={`Actuel : ${user?.email ?? '-'} · Statut : ${user?.email_verified ? 'Vérifié' : 'Non vérifié'}`}
-    >
-      <TextField
-        label="Nouvel email"
-        type="email"
-        value={email}
-        onChange={(event) => {
-          setEmail(event.target.value);
-          setCodeVisible(false);
-        }}
-        placeholder="nom@exemple.com"
-      />
-      <SubmitButton onClick={handleRequestCode} disabled={requestLoading} loading={requestLoading}>
-        Vérifier
-      </SubmitButton>
-
-      {codeVisible && (
-        <>
-          <TextField
-            label="Code de vérification"
-            value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-            placeholder="123456"
-          />
-          <SubmitButton
-            onClick={handleConfirmCode}
-            disabled={confirmLoading}
-            loading={confirmLoading}
-          >
-            Confirmer l&apos;email
-          </SubmitButton>
-        </>
-      )}
-
-      {error && <InlineBanner kind="error" message={error} />}
-      {info && <InlineBanner kind="success" message={info} />}
-    </SettingsCard>
-  );
-}
-
 function PhoneLinkSection() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectAuth);
@@ -547,7 +445,6 @@ export function AccountSettings() {
 
       <div className="mx-auto max-w-2xl space-y-3 px-4 py-6">
         <ChangePasswordSection />
-        <EmailVerificationSection />
         <PhoneLinkSection />
         <DeleteAccountSection />
       </div>

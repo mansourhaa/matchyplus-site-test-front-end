@@ -17,33 +17,6 @@ export type AuthCheckPayload = {
   id: string;
 };
 
-export type ForgotResult = {
-  token: string;
-  user: Partial<User>;
-};
-export type ForgotPayload = {
-  email: string;
-};
-
-export type ResetPayload = {
-  token: string;
-  password: string;
-};
-
-export type RegisterPayload = {
-  first_name: string;
-  last_name: string;
-  email: string;
-  name: string;
-  password: string;
-};
-
-export type RegisterResult = {};
-
-export type ResetBody = {
-  password: string;
-};
-
 export type SendOtpPayload = {
   phone: string;
 };
@@ -56,10 +29,12 @@ export type VerifyOtpPayload = {
   phone: string;
   code: string;
 };
+// Proves phone ownership only — never a login or account-creation result itself (see
+// doc/reviews/authentication-contract.md). `signupToken` is what register-phone consumes.
 export type VerifyOtpResult = {
-  accessToken: string;
-  refreshToken: string;
-  user: Partial<User>;
+  verified: true;
+  phone: string;
+  signupToken: string;
 };
 
 export type LoginPhonePayload = {
@@ -70,15 +45,8 @@ export type LoginPhonePayload = {
 export type RegisterPhonePayload = {
   phone: string;
   password: string;
-  code: string;
+  signupToken: string;
   name?: string;
-};
-
-export type RefreshPayload = {
-  refresh_token: string;
-};
-export type RefreshResult = {
-  accessToken: string;
 };
 
 export type RequestPasswordResetPayload = {
@@ -106,25 +74,6 @@ export type ChangePasswordPayload = {
 export type ChangePasswordResult = {
   message: string;
   forceLogout: boolean;
-};
-
-export type RequestEmailVerificationPayload = {
-  userId: string;
-  email: string;
-};
-export type RequestEmailVerificationResult = {
-  message: string;
-  email: string;
-};
-
-export type ConfirmEmailVerificationPayload = {
-  userId: string;
-  code: string;
-};
-export type ConfirmEmailVerificationResult = {
-  message: string;
-  email: string;
-  emailVerified: boolean;
 };
 
 export type RequestPhoneLinkPayload = {

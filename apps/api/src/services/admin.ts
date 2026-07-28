@@ -19,37 +19,9 @@ import {
   AdminUpdatePlanPayload,
   AdminUpdateUserPayload,
   AdminUserStatsResult,
+  adminUserSelect,
 } from '../types/admin.js';
 import { AbstractServiceOptions } from '../types/services.js';
-
-/** Password must never reach the admin panel; every read goes through this projection. */
-const userSelect = {
-  id: true,
-  name: true,
-  email: true,
-  role: true,
-  status: true,
-  plan: true,
-  phone: true,
-  job: true,
-  category: true,
-  city: true,
-  bio: true,
-  image: true,
-  interests: true,
-  languages: true,
-  contact_modes: true,
-  experience: true,
-  schedule: true,
-  price: true,
-  rating: true,
-  reviews: true,
-  matches: true,
-  missions: true,
-  total_earnings: true,
-  last_login: true,
-  create_at: true,
-} satisfies Prisma.UserSelect;
 
 /** "2026-01" plus n months, still as "YYYY-MM". */
 function addMonth(month: string, n: number): string {
@@ -175,7 +147,7 @@ export class AdminService {
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
-        select: userSelect,
+        select: adminUserSelect,
         orderBy: { create_at: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -193,7 +165,7 @@ export class AdminService {
     try {
       return await this.prisma.user.findUniqueOrThrow({
         where: { id },
-        select: userSelect,
+        select: adminUserSelect,
       });
     } catch (err) {
       throw notFound('user not found');
@@ -237,7 +209,7 @@ export class AdminService {
       return await this.prisma.user.update({
         where: { id },
         data,
-        select: userSelect,
+        select: adminUserSelect,
       });
     } catch (err) {
       throw notFound('user not found');
@@ -251,7 +223,7 @@ export class AdminService {
       return await this.prisma.user.update({
         where: { id },
         data: { status },
-        select: userSelect,
+        select: adminUserSelect,
       });
     } catch (err) {
       throw notFound('user not found');

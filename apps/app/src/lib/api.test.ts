@@ -2,24 +2,12 @@ import axios, { AxiosError } from 'axios';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from './api';
-import { clearAuthSession, setAccessToken, setRefreshToken } from './auth';
+import { clearAuthSession } from './auth';
 import { notifyAuthFailure } from './auth-events';
 
-vi.mock('./auth', () => {
-  let accessToken = 'expired-access-token';
-  let refreshToken = 'old-refresh-token';
-  return {
-    getAccessToken: vi.fn(() => accessToken),
-    getRefreshToken: vi.fn(() => refreshToken),
-    setAccessToken: vi.fn((token: string) => {
-      accessToken = token;
-    }),
-    setRefreshToken: vi.fn((token: string) => {
-      refreshToken = token;
-    }),
-    clearAuthSession: vi.fn(),
-  };
-});
+vi.mock('./auth', () => ({
+  clearAuthSession: vi.fn(),
+}));
 
 vi.mock('./auth-events', () => ({
   notifyAuthFailure: vi.fn(),
@@ -49,18 +37,16 @@ describe('api response interceptor', () => {
     vi.clearAllMocks();
   });
 
-  it('rotates and persists both new tokens, then retries the original request', async () => {
+  it('rotates both cookies via a bodyless refresh call, then retries the original request', async () => {
     // The raw axios.post(...) refresh call bypasses `api`'s interceptors by design (see
-    // api.ts) — it goes through the global default axios instance instead.
+    // api.ts) — it goes through the global default axios instance instead. Neither token
+    // is in the request or the response: both cookies are rotated by the API's own
+    // Set-Cookie header, invisible to this code.
     axios.defaults.adapter = async (config) => {
       expect(config.url).toContain('/auth/refresh');
-      return {
-        data: { access_token: 'new-access-token', refresh_token: 'new-refresh-token' },
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config,
-      };
+      expect(config.data).toBeUndefined();
+      expect(config.withCredentials).toBe(true);
+      return { data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config };
     };
 
     let attempt = 0;
@@ -69,18 +55,12 @@ describe('api response interceptor', () => {
       if (attempt === 1) {
         throw fakeAxiosError(config as never);
       }
-      // Retried request — should carry the rotated access token.
-      expect((config.headers as Record<string, string>).Authorization).toBe(
-        'Bearer new-access-token',
-      );
       return { data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config };
     };
 
     const response = await api.get('/protected');
 
     expect(response.data).toEqual({ ok: true });
-    expect(setAccessToken).toHaveBeenCalledWith('new-access-token');
-    expect(setRefreshToken).toHaveBeenCalledWith('new-refresh-token');
     expect(attempt).toBe(2);
   });
 
@@ -89,13 +69,7 @@ describe('api response interceptor', () => {
     axios.defaults.adapter = async (config) => {
       refreshCalls += 1;
       await new Promise((resolve) => setTimeout(resolve, 10));
-      return {
-        data: { access_token: 'new-access-token', refresh_token: 'new-refresh-token' },
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config,
-      };
+      return { data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config };
     };
 
     api.defaults.adapter = async (config) => {
@@ -121,9 +95,9 @@ describe('api response interceptor', () => {
 
     await expect(api.get('/protected')).rejects.toBeTruthy();
 
-    // clearAuthSession() alone only clears sessionStorage/cookie — Redux state must be
-    // reset separately, via the notifyAuthFailure indirection (see lib/auth-events.ts),
-    // or the UI would keep rendering as authenticated.
+    // clearAuthSession() alone only clears the cached user in sessionStorage — Redux
+    // state must be reset separately, via the notifyAuthFailure indirection (see
+    // lib/auth-events.ts), or the UI would keep rendering as authenticated.
     expect(clearAuthSession).toHaveBeenCalled();
     expect(notifyAuthFailure).toHaveBeenCalled();
   });

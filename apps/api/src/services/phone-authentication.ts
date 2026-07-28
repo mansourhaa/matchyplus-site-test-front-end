@@ -1,9 +1,9 @@
-import { PrismaClient } from '@saas-boilerplate/types';
+import { OtpPurpose, PrismaClient } from '@saas-boilerplate/types';
 
 import { SOCIAL_AUTH_PROVIDERS } from '../constants.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import { normalizePhoneForAuth } from '../lib/phone.js';
-import { OtpClient } from '../lib/twilio.js';
+import { SmsClient } from '../lib/sms.js';
 import {
   ConfirmPasswordResetPayload,
   ConfirmPhoneLinkPayload,
@@ -15,19 +15,26 @@ import {
   VerifyOtpPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { OtpChallengeService } from './otp-challenge.js';
 import { TokenService } from './token.js';
 
-export type PhoneAuthServiceOptions = AbstractServiceOptions & { otpClient: OtpClient };
+export type PhoneAuthServiceOptions = AbstractServiceOptions & { smsClient: SmsClient };
+
+function otpMessage(code: string): string {
+  return `Matchy+: your verification code is ${code}.`;
+}
 
 export class PhoneAuthenticationService {
   prisma: PrismaClient;
-  otpClient: OtpClient;
+  smsClient: SmsClient;
   tokenService: TokenService;
+  otpChallengeService: OtpChallengeService;
 
   constructor(options: PhoneAuthServiceOptions) {
     this.prisma = options.prisma;
-    this.otpClient = options.otpClient;
+    this.smsClient = options.smsClient;
     this.tokenService = new TokenService({ prisma: options.prisma });
+    this.otpChallengeService = new OtpChallengeService({ prisma: options.prisma });
   }
 
   async sendOtp(payload: SendOtpPayload) {
@@ -36,47 +43,59 @@ export class PhoneAuthenticationService {
       throw new Error('invalid_phone');
     }
 
-    await this.otpClient.sendOtp(phone);
+    const code = await this.otpChallengeService.createChallenge(
+      phone,
+      OtpPurpose.SIGNUP_VERIFICATION,
+    );
+    await this.smsClient.sendSms(phone, otpMessage(code));
+
     return { message: 'otp_sent', phone };
   }
 
+  /**
+   * Proves ownership of the phone for signup only — never creates a user or session
+   * itself (see doc/reviews/authentication-contract.md). register-phone consumes the
+   * returned grant to actually create the account.
+   */
   async verifyOtp(payload: VerifyOtpPayload) {
     const phone = normalizePhoneForAuth(payload.phone);
     if (!phone) {
       throw new Error('invalid_phone');
     }
 
-    const result = await this.otpClient.checkOtp(phone, payload.code);
-    if (!result.valid) {
-      throw new Error('invalid_otp');
-    }
+    const challenge = await this.otpChallengeService.verifyChallenge(
+      phone,
+      OtpPurpose.SIGNUP_VERIFICATION,
+      payload.code,
+    );
+    const signupToken = await this.otpChallengeService.issueSignupGrant(challenge.id);
 
-    let user = await this.prisma.user.findUnique({ where: { phone } });
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          phone,
-          name: phone,
-          auth_provider: 'phone',
-        },
-      });
-    }
-
-    const tokens = await this.tokenService.issueTokenPair(user);
-    return { ...tokens, user };
+    return { verified: true as const, phone, signupToken };
   }
 
   async loginWithPhone(payload: LoginPhonePayload) {
     const phone = normalizePhoneForAuth(payload.phone);
     const user = phone ? await this.prisma.user.findUnique({ where: { phone } }) : null;
 
-    if (!user || !user.password) {
+    if (!user) {
       throw new Error('invalid_credentials');
+    }
+
+    // A social-only account never had a password to check — this is not a wrong
+    // password, so it gets its own actionable code rather than the generic one.
+    if (!user.password) {
+      throw new Error('oauth_only_account');
     }
 
     const isValid = await verifyPassword(payload.password, user.password);
     if (!isValid) {
       throw new Error('invalid_credentials');
+    }
+
+    // Only reached once the password is already confirmed correct, so this can't be
+    // used to probe whether a phone number has an account at all.
+    if (!user.phone_verified) {
+      throw new Error('phone_not_verified');
     }
 
     const tokens = await this.tokenService.issueTokenPair(user);
@@ -89,10 +108,7 @@ export class PhoneAuthenticationService {
       throw new Error('invalid_phone');
     }
 
-    const result = await this.otpClient.checkOtp(phone, payload.code);
-    if (!result.valid) {
-      throw new Error('invalid_otp');
-    }
+    await this.otpChallengeService.consumeSignupGrant(phone, payload.signupToken);
 
     const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) {
@@ -106,6 +122,7 @@ export class PhoneAuthenticationService {
         password: hashedPassword,
         name: payload.name ?? phone,
         auth_provider: 'phone',
+        phone_verified: true,
       },
     });
 
@@ -126,7 +143,12 @@ export class PhoneAuthenticationService {
 
     if (user?.password) {
       try {
-        await this.otpClient.sendOtp(phone);
+        const code = await this.otpChallengeService.createChallenge(
+          phone,
+          OtpPurpose.PASSWORD_RESET,
+          user.id,
+        );
+        await this.smsClient.sendSms(phone, otpMessage(code));
       } catch {}
     }
 
@@ -134,16 +156,14 @@ export class PhoneAuthenticationService {
       message: 'reset_code_sent',
     };
   }
+
   async confirmPasswordReset(payload: ConfirmPasswordResetPayload) {
     const phone = normalizePhoneForAuth(payload.phone);
     if (!phone) {
       throw new Error('invalid_phone');
     }
 
-    const result = await this.otpClient.checkOtp(phone, payload.code);
-    if (!result.valid) {
-      throw new Error('invalid_otp');
-    }
+    await this.otpChallengeService.verifyChallenge(phone, OtpPurpose.PASSWORD_RESET, payload.code);
 
     const user = await this.prisma.user.findUnique({ where: { phone } });
     if (!user) {
@@ -151,10 +171,16 @@ export class PhoneAuthenticationService {
     }
 
     const hashedPassword = await hashPassword(payload.newPassword);
+    // Deliberately does not touch auth_provider — a reset never changes how the account
+    // is otherwise authenticated, only its password.
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { password: hashedPassword, auth_provider: 'phone' },
+      data: { password: hashedPassword },
     });
+
+    // A reset is a credential change just like changePassword — every existing session
+    // must die so a token stolen before the reset can't outlive it.
+    await this.tokenService.revokeAllRefreshTokens(user.id);
 
     return { message: 'password_reset' };
   }
@@ -181,7 +207,13 @@ export class PhoneAuthenticationService {
       throw new Error('phone_already_registered');
     }
 
-    await this.otpClient.sendOtp(phone);
+    const code = await this.otpChallengeService.createChallenge(
+      phone,
+      OtpPurpose.PHONE_LINK,
+      user.id,
+    );
+    await this.smsClient.sendSms(phone, otpMessage(code));
+
     return { message: 'phone_link_code_sent', phone };
   }
 
@@ -205,19 +237,18 @@ export class PhoneAuthenticationService {
       throw new Error('phone_already_linked');
     }
 
-    const result = await this.otpClient.checkOtp(phone, payload.code);
-    if (!result.valid) {
-      throw new Error('invalid_otp');
-    }
+    await this.otpChallengeService.verifyChallenge(phone, OtpPurpose.PHONE_LINK, payload.code);
 
     const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) {
       throw new Error('phone_already_registered');
     }
 
+    // A completed OTP check is real proof of ownership, same as signup — mark it verified
+    // so this account becomes eligible for phone+password login going forward.
     const updated = await this.prisma.user.update({
       where: { id: user.id },
-      data: { phone },
+      data: { phone, phone_verified: true },
     });
 
     return { message: 'phone_linked', phone: updated.phone as string };

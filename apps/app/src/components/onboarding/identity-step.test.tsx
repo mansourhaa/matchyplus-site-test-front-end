@@ -26,11 +26,11 @@ async function findFirstPlaceholder(text: string) {
   return matches[0];
 }
 
-const verifiedUser = {
+const registeredUser = {
   id: 'user-1',
   email: null,
   phone: '+21612345678',
-  name: '+21612345678',
+  name: 'Jane Doe',
   auth_provider: 'phone',
   email_verified: false,
   onboarding_completed: false,
@@ -165,7 +165,7 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
     vi.clearAllMocks();
   });
 
-  it('shows the phone field (no password) and "Créer un compte" as the heading', () => {
+  it('shows the phone and password fields and "Créer un compte" as the heading', () => {
     renderWithAuthStore(
       <IdentityStep
         profile={null}
@@ -179,10 +179,10 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
 
     expect(screen.getAllByText('Créer un compte')[0]).toBeInTheDocument();
     expect(firstPlaceholder('XX XXX XXX')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Au moins 6 caractères')).not.toBeInTheDocument();
+    expect(firstPlaceholder('Au moins 6 caractères')).toBeInTheDocument();
   });
 
-  it('sends OTP, then verifies it (no password/registerPhone) before calling onNext', async () => {
+  it('sends OTP, verifies it for a signup grant, registers via /auth/register-phone, then calls onNext', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     vi.mocked(api.post).mockImplementation(async (url: string) => {
       if (url === '/auth/otp/send') {
@@ -190,7 +190,12 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
       }
       if (url === '/auth/otp/verify') {
         return {
-          data: { access_token: 'access-1', refresh_token: 'refresh-1', user: verifiedUser },
+          data: { verified: true, phone: '+21612345678', signupToken: 'valid-grant-token' },
+        };
+      }
+      if (url === '/auth/register-phone') {
+        return {
+          data: { access_token: 'access-1', refresh_token: 'refresh-1', user: registeredUser },
         };
       }
       throw new Error(`Unexpected URL ${url}`);
@@ -213,6 +218,9 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
       target: { value: 'Électricien' },
     });
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
+    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), {
+      target: { value: 'secret123' },
+    });
     fireEvent.click(firstButton('Vérifier le numéro par SMS'));
 
     const codeInput = await findFirstPlaceholder('123456');
@@ -226,7 +234,14 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
         code: '123456',
       }),
     );
-    expect(api.post).not.toHaveBeenCalledWith('/auth/register-phone', expect.anything());
+    await vi.waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/auth/register-phone', {
+        phone: '+21612345678',
+        password: 'secret123',
+        name: 'Jane Doe',
+        signupToken: 'valid-grant-token',
+      }),
+    );
     await vi.waitFor(() =>
       expect(onNext).toHaveBeenCalledWith({
         name: 'Jane Doe',
@@ -238,7 +253,7 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
     );
   });
 
-  it('does not call onNext when the OTP code is rejected', async () => {
+  it('does not call registerPhone or onNext when the OTP code is rejected', async () => {
     const onNext = vi.fn();
     vi.mocked(api.post).mockImplementation(async (url: string) => {
       if (url === '/auth/otp/send') {
@@ -264,6 +279,9 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
       target: { value: 'Électricien' },
     });
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
+    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), {
+      target: { value: 'secret123' },
+    });
     fireEvent.click(firstButton('Vérifier le numéro par SMS'));
 
     const codeInput = await findFirstPlaceholder('123456');
@@ -271,6 +289,7 @@ describe('IdentityStep — account bootstrap (not yet authenticated)', () => {
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     await screen.findAllByText('Code incorrect.');
+    expect(api.post).not.toHaveBeenCalledWith('/auth/register-phone', expect.anything());
     expect(onNext).not.toHaveBeenCalled();
   });
 });

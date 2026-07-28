@@ -57,32 +57,29 @@ export const config = {
   aiCacheTtlSeconds: parseInt(process.env.AI_CACHE_TTL_SECONDS ?? '300', 10),
 
   /**
-   * Phone OTP (Twilio Verify) — optional at startup. The API boots without these; an
-   * OTP-dependent endpoint fails at request time with `otp_service_not_configured`
-   * instead (see lib/twilio.ts).
+   * SMS delivery (TunisieSMS) — optional at startup. The API boots without this; an
+   * OTP-dependent endpoint fails at request time with `sms_service_not_configured`
+   * instead (see lib/sms.ts). TunisieSMS only sends text messages — it never manages
+   * OTP codes itself, unlike Twilio Verify — so this app owns the whole OTP lifecycle
+   * (see services/otp-challenge.ts).
    */
-  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
-  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
-  twilioVerifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID,
+  tunisieSmsKey: process.env.TUNISIESMS_KEY,
+  tunisieSmsSender: process.env.TUNISIESMS_SENDER,
+
+  /**
+   * OTP challenge lifecycle (see services/otp-challenge.ts) — purpose-scoped codes
+   * this app owns and verifies itself, independent of whichever SMS provider sends them.
+   */
+  otpTtlMinutes: parseInt(process.env.OTP_TTL_MINUTES ?? '10', 10),
+  otpMaxAttempts: parseInt(process.env.OTP_MAX_ATTEMPTS ?? '5', 10),
+  otpResendCooldownSeconds: parseInt(process.env.OTP_RESEND_COOLDOWN_SECONDS ?? '60', 10),
+  otpSignupGrantTtlMinutes: parseInt(process.env.OTP_SIGNUP_GRANT_TTL_MINUTES ?? '15', 10),
 
   /**
    * Refresh tokens
    */
   refreshTokenSecret: requiredVar('REFRESH_TOKEN_SECRET'),
   refreshTokenTtlDays: requiredIntVar('REFRESH_TOKEN_TTL_DAYS'),
-
-  /**
-   * Email (SMTP) — optional. Email verification fails at request time (not at server
-   * boot) if these aren't set.
-   */
-  smtpHost: process.env.SMTP_HOST,
-  smtpPort: process.env.SMTP_PORT,
-  smtpUser: process.env.SMTP_USER,
-  smtpPass: process.env.SMTP_PASS,
-  smtpFrom: process.env.SMTP_FROM,
-  smtpFromName: process.env.SMTP_FROM_NAME,
-  smtpSecure: process.env.SMTP_SECURE,
-  appName: process.env.APP_NAME,
 
   /**
    * OAuth (Google / LinkedIn) — optional. Each provider is only enabled when both its

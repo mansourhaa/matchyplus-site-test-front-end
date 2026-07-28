@@ -37,7 +37,7 @@ const oauthUser = {
 describe('OAuthCallback', () => {
   beforeEach(() => {
     vi.mocked(api.post).mockResolvedValue({
-      data: { access_token: 'access-1', refresh_token: 'refresh-1' },
+      data: { access_token: 'access-1', refresh_token: 'refresh-1', user: oauthUser },
     });
     vi.mocked(api.get).mockResolvedValue({ data: { user: oauthUser } });
   });

@@ -1,11 +1,11 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
+import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
 import { identityStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
-import { Check, User } from 'lucide-react';
+import { Check, Eye, EyeOff, Lock, User } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -69,6 +69,8 @@ export function IdentityStep({
   const [nationalNumber, setNationalNumber] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const country = getPhoneCountry(countryIso);
   const phone = composeE164Phone(countryIso, nationalNumber);
@@ -120,17 +122,30 @@ export function IdentityStep({
         setError('Entrez le code à 6 chiffres.');
         return;
       }
+      if (password.length < 6) {
+        setError('Le mot de passe doit contenir au moins 6 caractères.');
+        return;
+      }
 
       setError(null);
+      // verifyOtp only proves phone ownership and returns a one-time signup grant — it
+      // never creates the account or a session by itself (OTP is not a login mechanism).
+      // registerPhone consumes that grant, together with the password collected here, to
+      // actually create the account and open the session.
       const verifyResult = await dispatch(verifyOtp({ phone, code }));
       if (!verifyOtp.fulfilled.match(verifyResult)) {
         setError('Code incorrect.');
         return;
       }
 
-      // The account now exists (verifyOtp both verifies and logs in, same as our OTP-
-      // first login flow) — onNext's PATCH call will succeed from here on. The account
-      // was created with a placeholder name, so it's sent here for real.
+      const registerResult = await dispatch(
+        registerPhone({ phone, password, name, signupToken: verifyResult.payload.signupToken }),
+      );
+      if (!registerPhone.fulfilled.match(registerResult)) {
+        setError('Impossible de créer le compte.');
+        return;
+      }
+
       const saved = await onNext({
         name,
         job: job || undefined,
@@ -337,6 +352,38 @@ export function IdentityStep({
                     />
                   </div>
                 )}
+              </div>
+            )}
+
+            {!isAuthenticated && (
+              <div>
+                <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+                  Mot de passe <span style={{ color: '#61BCA6' }}>*</span>
+                </label>
+                <div
+                  className="mt-1 flex items-center gap-3 rounded-xl px-4 py-3"
+                  style={{
+                    border: `2px solid ${password ? '#2F76BB' : '#E0E0E0'}`,
+                    background: password ? '#F5F9FF' : '#FAFAFA',
+                  }}
+                >
+                  <Lock size={16} color="#61BCA6" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Au moins 6 caractères"
+                    className="flex-1 bg-transparent text-[#353535] outline-none"
+                    style={{ fontSize: '14px' }}
+                  />
+                  <button type="button" onClick={() => setShowPassword((value) => !value)}>
+                    {showPassword ? (
+                      <EyeOff size={18} color="#7A7A7A" />
+                    ) : (
+                      <Eye size={18} color="#7A7A7A" />
+                    )}
+                  </button>
+                </div>
               </div>
             )}
 

@@ -49,6 +49,14 @@ export const ProfileType = {
 
 export type ProfileType = (typeof ProfileType)[keyof typeof ProfileType];
 
+export const OtpPurpose = {
+  SIGNUP_VERIFICATION: 'SIGNUP_VERIFICATION',
+  PHONE_LINK: 'PHONE_LINK',
+  PASSWORD_RESET: 'PASSWORD_RESET',
+} as const;
+
+export type OtpPurpose = (typeof OtpPurpose)[keyof typeof OtpPurpose];
+
 export const AiJobType = {
   ANALYZE_VIDEO: 'ANALYZE_VIDEO',
   VERIFY_IDENTITY: 'VERIFY_IDENTITY',

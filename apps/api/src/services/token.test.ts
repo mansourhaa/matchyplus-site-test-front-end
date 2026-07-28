@@ -18,6 +18,13 @@ function createMockPrisma() {
   };
 }
 
+const activeUser = {
+  id: 'user-1',
+  email: 'user@example.com',
+  phone: '+21612345678',
+  status: 'ACTIVE' as const,
+};
+
 describe('TokenService', () => {
   it('signs an access token with the user claims', () => {
     const prisma = createMockPrisma();
@@ -70,6 +77,7 @@ describe('TokenService', () => {
       id: 'user-1',
       email: 'user@example.com',
       phone: '+21612345678',
+      status: 'ACTIVE',
     });
 
     const result = await service.refreshAccessToken(refreshToken);
@@ -280,6 +288,56 @@ describe('TokenService', () => {
     expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
   });
 
+  it('issues a token pair for an active user', async () => {
+    const prisma = createMockPrisma();
+    const service = new TokenService({ prisma: prisma as never });
+
+    const result = await service.issueTokenPair(activeUser);
+
+    expect(result.accessToken).toBeTypeOf('string');
+    expect(result.refreshToken).toBeTypeOf('string');
+  });
+
+  it.each(['INACTIVE', 'BANNED'] as const)(
+    'refuses to issue a token pair for a %s user',
+    async (status) => {
+      const prisma = createMockPrisma();
+      const service = new TokenService({ prisma: prisma as never });
+
+      await expect(service.issueTokenPair({ ...activeUser, status })).rejects.toThrow(
+        'invalid_credentials',
+      );
+      expect(prisma.refreshToken.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['INACTIVE', 'BANNED'] as const)(
+    'refuses to refresh a token for a %s user',
+    async (status) => {
+      const prisma = createMockPrisma();
+      const service = new TokenService({ prisma: prisma as never });
+
+      const refreshToken = await service.issueRefreshToken('user-1');
+      const createArgs = prisma.refreshToken.create.mock.calls[0]?.[0];
+      const decoded = jwt.decode(refreshToken) as JwtPayload & { jti: string };
+
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: decoded.jti,
+        user_id: 'user-1',
+        token_hash: createArgs.data.token_hash,
+        expires_at: new Date(Date.now() + 60_000),
+        revoked_at: null,
+      });
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ ...activeUser, status });
+
+      await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow(
+        'invalid_refresh_token',
+      );
+      // Only ever revoke the stored token once its owner is confirmed still active.
+      expect(prisma.refreshToken.update).not.toHaveBeenCalled();
+    },
+  );
+
   it('revokes the used refresh token and issues a replacement on refresh', async () => {
     const prisma = createMockPrisma();
     const service = new TokenService({ prisma: prisma as never });
@@ -304,6 +362,7 @@ describe('TokenService', () => {
       id: 'user-1',
       email: 'user@example.com',
       phone: '+21612345678',
+      status: 'ACTIVE',
     });
 
     const result = await service.refreshAccessToken(refreshToken);

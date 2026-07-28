@@ -1,38 +1,24 @@
-import { PrismaClient, UserStatus } from '@saas-boilerplate/types';
+import { PrismaClient } from '@saas-boilerplate/types';
 
 import { isAdminRole } from '../constants.js';
-import { EmailClient } from '../lib/email.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
-import { generateNumericCode, hashVerificationCode } from '../lib/verification-code.js';
 import {
   AuthCheckPayload,
   ChangePasswordPayload,
-  ConfirmEmailVerificationPayload,
   DeleteAccountPayload,
   LoginPayload,
-  RegisterPayload,
-  RequestEmailVerificationPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import { TokenService } from './token.js';
 
-const EMAIL_VERIFICATION_TTL_MINUTES = 30;
-
-export type AuthenticationServiceOptions = AbstractServiceOptions & {
-  emailClient: EmailClient;
-};
-
 export class AuthenticationService {
   prisma: PrismaClient;
   tokenService: TokenService;
-  emailClient: EmailClient;
 
-  constructor(options: AuthenticationServiceOptions) {
+  constructor(options: AbstractServiceOptions) {
     this.prisma = options.prisma;
     this.tokenService = new TokenService({ prisma: options.prisma });
-    this.emailClient = options.emailClient;
   }
-
   async login(payload: LoginPayload) {
     let user;
 
@@ -65,16 +51,9 @@ export class AuthenticationService {
       throw new Error('invalid_credentials');
     }
 
-    // Do not reveal whether the account is banned, inactive, or nonexistent.
-    if (user.status !== UserStatus.ACTIVE) {
-      throw new Error('invalid_credentials');
-    }
-
-    const tokens = await this.tokenService.issueTokenPair({
-      id: user.id,
-      email: user.email,
-      phone: user.phone,
-    });
+    // Do not reveal whether the account is banned, inactive, or nonexistent — issueTokenPair's
+    // ACTIVE-status gate throws the same invalid_credentials error as a bad password.
+    const tokens = await this.tokenService.issueTokenPair(user);
 
     const { password: _password, ...safeUser } = user;
 
@@ -97,35 +76,6 @@ export class AuthenticationService {
     }
 
     return data;
-  }
-
-  async register(payload: RegisterPayload) {
-    let user = await this.prisma.user.findUnique({
-      where: {
-        email: payload.email.toLowerCase(),
-      },
-      select: {
-        email: true,
-        id: true,
-        password: true,
-      },
-    });
-
-    if (user) {
-      throw new Error('user_already_exists');
-    }
-
-    const hashedPassword = await hashPassword(payload.password);
-
-    user = await this.prisma.user.create({
-      data: {
-        email: payload.email.toLowerCase(),
-        password: hashedPassword,
-        name: payload.email,
-      },
-    });
-
-    return user;
   }
 
   async authCheck(payload: AuthCheckPayload) {
@@ -186,90 +136,6 @@ export class AuthenticationService {
     return {
       message: 'password_changed',
       forceLogout: true,
-    };
-  }
-
-  async requestEmailVerification(payload: RequestEmailVerificationPayload) {
-    const email = payload.email.trim().toLowerCase();
-
-    const existing = await this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-
-    if (existing && existing.id !== payload.userId) {
-      throw new Error('email_already_used');
-    }
-
-    if (!this.emailClient.isConfigured()) {
-      throw new Error('smtp_not_configured');
-    }
-
-    const code = generateNumericCode(6);
-
-    await this.prisma.user.update({
-      where: {
-        id: payload.userId,
-      },
-      data: {
-        pending_email: email,
-        email_verification_code: hashVerificationCode(code),
-        email_verification_expires_at: new Date(
-          Date.now() + EMAIL_VERIFICATION_TTL_MINUTES * 60 * 1000,
-        ),
-      },
-    });
-
-    await this.emailClient.sendVerificationCode({
-      to: email,
-      code,
-      expiresMinutes: EMAIL_VERIFICATION_TTL_MINUTES,
-    });
-
-    return {
-      message: 'verification_code_sent',
-      email,
-    };
-  }
-
-  async confirmEmailVerification(payload: ConfirmEmailVerificationPayload) {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: payload.userId,
-        email_verification_code: hashVerificationCode(payload.code),
-        pending_email: {
-          not: null,
-        },
-        email_verification_expires_at: {
-          gt: new Date(),
-        },
-      },
-    });
-
-    if (!user) {
-      throw new Error('invalid_verification_code');
-    }
-
-    const nextEmail = user.pending_email as string;
-
-    const updated = await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        email: nextEmail,
-        email_verified: true,
-        pending_email: null,
-        email_verification_code: null,
-        email_verification_expires_at: null,
-      },
-    });
-
-    return {
-      message: 'email_verified',
-      email: updated.email as string,
-      emailVerified: true,
     };
   }
 
