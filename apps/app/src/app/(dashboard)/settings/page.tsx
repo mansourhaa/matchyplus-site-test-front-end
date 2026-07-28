@@ -1,8 +1,5 @@
+import { SettingsView } from '@/components/matchy/settings/settings-view';
+
 export default function SettingsPage() {
-  return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-bold">Settings</h1>
-      <p className="text-muted-foreground">Configure your account and workspace preferences.</p>
-    </div>
-  );
+  return <SettingsView />;
 }

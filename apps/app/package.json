@@ -33,6 +33,7 @@
     "recharts": "^3.9.2",
     "redux-persist": "^6.0.0",
     "reselect": "^5.2.0",
+    "sonner": "^2.0.7",
     "three": "^0.185.1",
     "three-globe": "^2.45.2",
     "zod": "^4.4.3"

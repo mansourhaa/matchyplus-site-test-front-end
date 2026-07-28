@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { Prisma, ReportStatus, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
 import { prisma } from '../client.js';
+import { seedMatching } from './matching.js';
 import { seedPlans } from './plans.js';
 
 /** Ported from the Matchy-FullStack admin mock data so the admin panel has realistic rows. */
@@ -31,6 +32,13 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     schedule: 'Lun – Sam, 7h – 19h',
     contact_modes: ['call', 'café'],
     price: '40 DT/h',
+    goals: ['proposer mes services', 'trouver un partenaire'],
+    looking_for: 'proposer mes services électricité',
+    activity_sector: 'Électricité',
+    service_type: 'Électricité',
+    profile_type: 'freelancer',
+    gps_latitude: 34.7406,
+    gps_longitude: 10.7603,
     last_login: new Date('2026-04-01'),
     create_at: new Date('2025-10-15'),
   },
@@ -58,6 +66,13 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     schedule: 'Lun – Ven, 7h – 18h',
     contact_modes: ['call', 'café'],
     price: '15 DT/h',
+    goals: ['proposer mes services', 'demander un service'],
+    looking_for: 'proposer mes services ménage',
+    activity_sector: 'Ménage',
+    service_type: 'Aide ménagère',
+    profile_type: 'freelancer',
+    gps_latitude: 36.8065,
+    gps_longitude: 10.1815,
     last_login: new Date('2026-03-28'),
     create_at: new Date('2026-01-08'),
   },
@@ -68,7 +83,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     phone: '+216 25 789 012',
     job: 'Chef Cuisinier',
     category: 'Cuisine',
-    city: 'Sousse',
+    city: 'Tunis',
     plan: UserPlan.PREMIUM,
     status: UserStatus.ACTIVE,
     rating: 4.8,
@@ -85,6 +100,13 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     schedule: 'Ven – Dim, sur réservation',
     contact_modes: ['call', 'café'],
     price: '60 DT/event',
+    goals: ['proposer mes services'],
+    looking_for: 'proposer mes services cuisine traiteur',
+    activity_sector: 'Cuisine',
+    service_type: 'Traiteur',
+    profile_type: 'freelancer',
+    gps_latitude: 36.812,
+    gps_longitude: 10.19,
     last_login: new Date('2026-03-30'),
     create_at: new Date('2025-12-20'),
   },
@@ -139,6 +161,13 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     schedule: 'Flexible',
     contact_modes: ['video', 'café', 'call'],
     price: '10 DT/h',
+    goals: ['proposer mes services', 'trouver un job'],
+    looking_for: 'proposer mes services garde enfants',
+    activity_sector: 'Garde enfants',
+    service_type: 'Nounou',
+    profile_type: 'freelancer',
+    gps_latitude: 36.81,
+    gps_longitude: 10.18,
     last_login: new Date('2026-04-01'),
     create_at: new Date('2026-02-14'),
   },
@@ -193,6 +222,13 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     schedule: 'Mar – Sam, 6h – 22h',
     contact_modes: ['call', 'café'],
     price: '35 DT/trajet',
+    goals: ['proposer mes services', 'rencontrer des personnes près de moi'],
+    looking_for: 'proposer mes services transport VTC',
+    activity_sector: 'Transport',
+    service_type: 'VTC',
+    profile_type: 'freelancer',
+    gps_latitude: 36.8065,
+    gps_longitude: 10.1815,
     last_login: new Date('2026-04-01'),
     create_at: new Date('2026-01-22'),
   },
@@ -230,66 +266,142 @@ export default async function seedDev() {
   // and keeps any locally edited plan from blocking the seed.
   await seedPlans(prisma);
 
-  await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { email: 'itskhvlil@outlook.com' },
+    create: {
       password: bcrypt.hashSync('passer'),
       email: 'itskhvlil@outlook.com',
       name: 'Khalil Bchir',
+      status: UserStatus.ACTIVE,
+      role: Role.USER,
+      job: 'Founder',
+      category: 'Tech',
+      city: 'Tunis',
+      goals: ["recruter quelqu'un", 'trouver un prestataire'],
+      looking_for: 'recruter hire prestataires tech',
+      activity_sector: 'Tech',
+      service_type: 'Product',
+      profile_type: 'recruiter',
+      gps_latitude: 36.8065,
+      gps_longitude: 10.1815,
+      interests: ['Startup', 'Product', 'Networking'],
+    },
+    update: {
+      status: UserStatus.ACTIVE,
+      job: 'Founder',
+      category: 'Tech',
+      city: 'Tunis',
+      goals: ["recruter quelqu'un", 'trouver un prestataire'],
+      looking_for: 'recruter hire prestataires tech',
+      activity_sector: 'Tech',
+      service_type: 'Product',
+      profile_type: 'recruiter',
+      gps_latitude: 36.8065,
+      gps_longitude: 10.1815,
     },
   });
 
-  await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { email: 'admin@matchyplus.tn' },
+    create: {
       password: bcrypt.hashSync(adminPassword('SEED_SUPER_ADMIN_PASSWORD', 'matchy2026')),
       email: 'admin@matchyplus.tn',
       name: 'Super Admin',
       role: Role.SUPER_ADMIN,
     },
+    update: {
+      role: Role.SUPER_ADMIN,
+    },
   });
 
-  await prisma.user.create({
-    data: {
+  await prisma.user.upsert({
+    where: { email: 'mod@matchyplus.tn' },
+    create: {
       password: bcrypt.hashSync(adminPassword('SEED_MODERATOR_PASSWORD', 'mod2026')),
       email: 'mod@matchyplus.tn',
       name: 'Moderateur',
+      role: Role.MODERATOR,
+    },
+    update: {
       role: Role.MODERATOR,
     },
   });
 
   const members: Array<{ id: string; email: string }> = [];
   for (const member of MEMBERS) {
-    members.push(await prisma.user.create({ data: member }));
+    const { password: _password, email, ...rest } = member;
+    const row = await prisma.user.upsert({
+      where: { email },
+      create: member,
+      update: { ...rest },
+    });
+    members.push({ id: row.id, email: row.email });
+
+    if (
+      rest.gps_latitude != null &&
+      rest.gps_longitude != null &&
+      rest.status === UserStatus.ACTIVE
+    ) {
+      await prisma.userLocation.upsert({
+        where: { user_id: row.id },
+        create: {
+          user_id: row.id,
+          latitude: rest.gps_latitude,
+          longitude: rest.gps_longitude,
+          location_enabled: true,
+          city: typeof rest.city === 'string' ? rest.city : undefined,
+          country: 'Tunisia',
+        },
+        update: {
+          latitude: rest.gps_latitude,
+          longitude: rest.gps_longitude,
+          location_enabled: true,
+          city: typeof rest.city === 'string' ? rest.city : undefined,
+        },
+      });
+    }
   }
 
-  // Sample reports so the "Signalements" admin section is demonstrable: a couple of members
-  // flagging the same reported account (to show the per-user grouping and multiple reporters).
+  // Sample reports so the "Signalements" admin section is demonstrable.
   const byEmail = (email: string) => members.find((m) => m.email === email)!;
   const riadh = byEmail('riadh.t@email.com');
   const bilel = byEmail('bilel.m@email.com');
 
-  await prisma.report.createMany({
-    data: [
-      {
-        reporter_id: byEmail('fatma.a@email.com').id,
-        reported_id: riadh.id,
-        reason: 'Comportement inapproprié',
-        details: 'Messages insistants et déplacés après un premier contact.',
-        status: ReportStatus.PENDING,
-      },
-      {
-        reporter_id: byEmail('ines.h@email.com').id,
-        reported_id: riadh.id,
-        reason: 'Faux profil',
-        details: 'Les photos ne correspondent pas à la personne rencontrée.',
-        status: ReportStatus.PENDING,
-      },
-      {
-        reporter_id: byEmail('sonia.r@email.com').id,
-        reported_id: bilel.id,
-        reason: 'Spam',
-        details: 'Envoie des liens publicitaires en boucle.',
-        status: ReportStatus.REVIEWED,
-      },
-    ],
+  const existingReports = await prisma.report.count({
+    where: {
+      OR: [{ reported_id: riadh.id }, { reported_id: bilel.id }],
+    },
   });
+  if (existingReports === 0) {
+    await prisma.report.createMany({
+      data: [
+        {
+          reporter_id: byEmail('fatma.a@email.com').id,
+          reported_id: riadh.id,
+          reason: 'Comportement inapproprié',
+          details: 'Messages insistants et déplacés après un premier contact.',
+          status: ReportStatus.PENDING,
+        },
+        {
+          reporter_id: byEmail('ines.h@email.com').id,
+          reported_id: riadh.id,
+          reason: 'Faux profil',
+          details: 'Les photos ne correspondent pas à la personne rencontrée.',
+          status: ReportStatus.PENDING,
+        },
+        {
+          reporter_id: byEmail('sonia.r@email.com').id,
+          reported_id: bilel.id,
+          reason: 'Spam',
+          details: 'Envoie des liens publicitaires en boucle.',
+          status: ReportStatus.REVIEWED,
+        },
+      ],
+    });
+  }
+
+  const matching = await seedMatching(prisma);
+  console.log(
+    `[seed] matching demo ready — login ${matching.testerEmail} / ${matching.testerPassword} (${matching.profileCount} nearby profiles + 1 match)`,
+  );
 }
