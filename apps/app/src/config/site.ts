@@ -1,4 +1,4 @@
-import { Activity, FolderKanban, type LucideIcon, Settings2 } from 'lucide-react';
+import { Activity, FolderKanban, Heart, type LucideIcon, Settings2, Sparkles } from 'lucide-react';
 
 export const siteConfig = {
   name: 'SaaS Boilerplate',
@@ -28,6 +28,18 @@ export const dashboardNav: NavItem[] = [
       { title: 'Overview', url: '/' },
       { title: 'Analytics', url: '#', disabled: true },
     ],
+  },
+  {
+    title: 'Discover',
+    url: '/discover',
+    icon: Sparkles,
+    items: [{ title: 'Swipe feed', url: '/discover' }],
+  },
+  {
+    title: 'Matches',
+    url: '/matches',
+    icon: Heart,
+    items: [{ title: 'My matches', url: '/matches' }],
   },
   {
     title: 'Projects',

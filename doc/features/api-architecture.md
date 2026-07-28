@@ -147,8 +147,13 @@ Business logic lives in `src/services/`:
 | `authentication.ts` | Register, login, auth check |
 | `authorization.ts` | JWT verify, token decode |
 | `users.ts` | User CRUD |
+| `discovery.ts` | Swipe feed ranking (scripted v5) |
+| `swipe.ts` | Swipe, match, pending, withdraw, unmatch |
+| `swipe-quota.ts` | Plan limits + UTC-day RIGHT counts |
+| `ai-jobs.ts` | Enqueue + poll AI jobs |
+| `ai-cache.ts` | Redis result cache |
 
-Services receive `prisma` via constructor injection.
+Services receive `prisma` via constructor injection. Matching details: [Matching & Discovery](./matching.md).
 
 ## Authentication on routes
 

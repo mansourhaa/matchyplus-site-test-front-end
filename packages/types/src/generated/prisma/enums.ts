@@ -42,6 +42,14 @@ export const ReportStatus = {
 
 export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus];
 
+export const SwipeDirection = {
+  LEFT: 'LEFT',
+  RIGHT: 'RIGHT',
+  WITHDRAWN: 'WITHDRAWN',
+} as const;
+
+export type SwipeDirection = (typeof SwipeDirection)[keyof typeof SwipeDirection];
+
 export const AiJobType = {
   ANALYZE_VIDEO: 'ANALYZE_VIDEO',
   VERIFY_IDENTITY: 'VERIFY_IDENTITY',

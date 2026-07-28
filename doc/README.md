@@ -26,6 +26,7 @@ flowchart LR
     GS --> Features[Feature guides]
     Features --> Auth[Authentication]
     Features --> API[API Architecture]
+    Features --> Match[Matching]
     Features --> AI[AI Async Jobs]
     Features --> UI[UI System]
     Features --> Mono[Monorepo Workflow]
@@ -62,6 +63,7 @@ flowchart LR
 | [Monorepo Workflow](./features/monorepo-workflow.md) | Turborepo, pnpm workspaces, and package boundaries |
 | [UI System](./features/ui-system.md) | shadcn/ui, Tailwind v4, theming, and styling |
 | [API Architecture](./features/api-architecture.md) | Fastify plugins, routes, and validation |
+| [Matching & Discovery](./features/matching.md) | Swipe feed, mutual match, quota (scripted v5) |
 | [Database Layer](./features/database-layer.md) | Prisma schema, shared types, and client usage |
 | [AI Async Jobs (Option C)](./features/ai-async-jobs.md) | Redis Streams queue, Flask worker, AiJob model |
 
