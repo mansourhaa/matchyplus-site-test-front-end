@@ -29,15 +29,15 @@ flowchart TB
     EL -.->|overrides| ED
 ```
 
-| File | Purpose | Committed? |
-| --- | --- | --- |
-| `.env.example` | Development template | Yes |
-| `.env.staging.example` | Staging template | Yes |
-| `.env.production.example` | Production template | Yes |
-| `.env.development` | Local development | No (gitignored) |
-| `.env.staging` | Staging runtime | No (gitignored) |
-| `.env.production` | Production runtime | No (gitignored) |
-| `.env.local` | Local overrides | No (gitignored) |
+| File                      | Purpose              | Committed?      |
+| ------------------------- | -------------------- | --------------- |
+| `.env.example`            | Development template | Yes             |
+| `.env.staging.example`    | Staging template     | Yes             |
+| `.env.production.example` | Production template  | Yes             |
+| `.env.development`        | Local development    | No (gitignored) |
+| `.env.staging`            | Staging runtime      | No (gitignored) |
+| `.env.production`         | Production runtime   | No (gitignored) |
+| `.env.local`              | Local overrides      | No (gitignored) |
 
 ### Create env files
 
@@ -60,32 +60,72 @@ flowchart LR
 
 ### Core
 
-| Variable | Required | Description | Example |
-| --- | --- | --- | --- |
-| `NODE_ENV` | Yes | `development`, `staging`, or `production` | `development` |
-| `DATABASE_URL` | Yes | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/db` |
+| Variable       | Required | Description                               | Example                                    |
+| -------------- | -------- | ----------------------------------------- | ------------------------------------------ |
+| `NODE_ENV`     | Yes      | `development`, `staging`, or `production` | `development`                              |
+| `DATABASE_URL` | Yes      | PostgreSQL connection string              | `postgresql://user:pass@localhost:5432/db` |
 
 ### API server
 
-| Variable | Required | Description | Default |
-| --- | --- | --- | --- |
-| `SERVER_PORT` | No | Fastify listen port | `8000` |
-| `SERVER_HOST` | No | Fastify bind address | `localhost` |
-| `FASTIFY_CLOSE_GRACE_DELAY` | No | Graceful shutdown delay (ms) | `500` |
+| Variable                    | Required | Description                  | Default     |
+| --------------------------- | -------- | ---------------------------- | ----------- |
+| `SERVER_PORT`               | No       | Fastify listen port          | `8000`      |
+| `SERVER_HOST`               | No       | Fastify bind address         | `localhost` |
+| `FASTIFY_CLOSE_GRACE_DELAY` | No       | Graceful shutdown delay (ms) | `500`       |
 
 ### Authentication
 
+| Variable              | Required           | Description                      |
+| --------------------- | ------------------ | -------------------------------- |
+| `ACCESS_TOKEN_SECRET` | Yes                | JWT signing secret               |
+| `ACCESS_TOKEN_TTL`    | No                 | Token expiry (`1d`, `7d`, `12h`) |
+| `COOKIE_SECRET`       | Yes (staging/prod) | Fastify cookie signing           |
+| `REFRESH_TOKEN_SECRET` | Yes | Secret used to sign refresh tokens. Use a different long random value from `ACCESS_TOKEN_SECRET`. |
+| `REFRESH_TOKEN_TTL_DAYS` | Yes | Number of days before a refresh token expires. |
+| `VERIFICATION_CODE_SECRET` | Yes | HMAC key used to hash phone OTP codes before they're stored — the plaintext code is never persisted. |
+
+### TunisieSMS (phone OTP delivery) — optional at startup
+
+This app owns the entire OTP lifecycle itself (generation, hashing, expiry, attempts —
+see `apps/api/src/services/otp-challenge.ts`); TunisieSMS only delivers the text
+message. `TUNISIESMS_KEY` is **optional**: the API starts normally without it. It's
+only required for phone-OTP endpoints to actually send anything — without it,
+`POST /otp/send` and the OTP-sending parts of password reset / phone linking fail
+closed with `sms_service_not_configured` (503) instead of attempting a call with no key.
+
+| Variable            | Required       | Description                                                    |
+| -------------------- | -------------- | ---------------------------------------------------------------- |
+| `TUNISIESMS_KEY`     | No (see above) | API key from your TunisieSMS account                              |
+| `TUNISIESMS_SENDER`  | No             | Sender name shown on the SMS, truncated to 11 chars (default `Matchy plus`) |
+
+Optional OTP lifecycle tuning — all have sensible defaults if left unset:
+
+| Variable                        | Default | Description                                              |
+| -------------------------------- | ------- | ---------------------------------------------------------- |
+| `OTP_TTL_MINUTES`                | `10`    | How long a sent code stays valid                          |
+| `OTP_MAX_ATTEMPTS`               | `5`     | Wrong-code attempts allowed before a challenge is dead     |
+| `OTP_RESEND_COOLDOWN_SECONDS`    | `60`    | Minimum time between two codes for the same phone+purpose  |
+| `OTP_SIGNUP_GRANT_TTL_MINUTES`   | `15`    | How long a signup-verification grant stays valid before `register-phone` must consume it |
+
+### Google & LinkedIn OAuth — optional, per provider
+
 | Variable | Required | Description |
 | --- | --- | --- |
-| `ACCESS_TOKEN_SECRET` | Yes | JWT signing secret |
-| `ACCESS_TOKEN_TTL` | No | Token expiry (`1d`, `7d`, `12h`) |
-| `COOKIE_SECRET` | Yes (staging/prod) | Fastify cookie signing |
+| `API_BASE_URL` | No | This API's own absolute base URL, used to build the OAuth callback URL registered with each provider |
+| `FRONTEND_URL` | No | SPA base URL; the OAuth callback redirects here with `?code=...` or `?error=...` |
+| `GOOGLE_CLIENT_ID` | No | Google OAuth client id |
+| `GOOGLE_CLIENT_SECRET` | No | Google OAuth client secret |
+| `LINKEDIN_CLIENT_ID` | No | LinkedIn OAuth client id |
+| `LINKEDIN_CLIENT_SECRET` | No | LinkedIn OAuth client secret |
+| `OAUTH_EXCHANGE_CODE_TTL_SECONDS` | No | How long a one-time exchange code stays valid (default `60`) |
+
+> Google and LinkedIn are independent and both optional: each is only registered when its own client id **and** secret are both set. A missing pair disables just that provider's `/api/v1/auth/oauth/<provider>` route — it does not stop the API from starting, and the other provider is unaffected.
 
 ### Frontend (Next.js)
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `NEXT_PUBLIC_API_URL` | Yes | Public API base URL (inlined at build) |
+| Variable              | Required | Description                            |
+| --------------------- | -------- | -------------------------------------- |
+| `NEXT_PUBLIC_API_URL` | Yes      | Public API base URL (inlined at build) |
 
 > Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Never put secrets in them.
 

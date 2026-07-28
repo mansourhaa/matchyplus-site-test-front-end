@@ -9,6 +9,16 @@ export enum Status {
 
 export const azureAdminUsername = 'azureuser';
 
+// Only Google and LinkedIn OAuth are implemented; Facebook is intentionally excluded
+// since no Facebook auth flow exists to ever set a user's auth_provider to it.
+export const SOCIAL_AUTH_PROVIDERS = new Set(['google', 'linkedin']);
+
+// For destructive, hard-to-undo actions such as account deletion.
+export const RATE_LIMIT_STRICT = {
+  max: 3,
+  timeWindow: '1 hour',
+};
+
 export const ADMIN_ROLES: Role[] = [Role.SUPER_ADMIN, Role.MODERATOR, Role.SUPPORT];
 
 /** Role hierarchy, lowest to highest. Used to keep a role from acting on its peers or superiors. */

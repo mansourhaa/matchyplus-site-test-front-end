@@ -404,12 +404,11 @@ export class AdminService {
       throw notFound('user not found');
     }
 
-    const isCurrentValid = await bcrypt.compare(payload.currentPassword, admin.password);
-    if (!isCurrentValid) {
-      // 403 and not 401: the admin is authenticated, only this re-check failed. A 401 would
-      // trip the panel's session interceptor and log them out over a mistyped password.
+    if (!admin.password) {
       throw forbidden('invalid current password');
     }
+
+    const isCurrentValid = await bcrypt.compare(payload.currentPassword, admin.password);
 
     const hashed = await bcrypt.hash(payload.newPassword, await bcrypt.genSalt(10));
     await this.prisma.user.update({ where: { id: adminId }, data: { password: hashed } });

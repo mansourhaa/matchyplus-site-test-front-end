@@ -49,6 +49,9 @@ export const AnyNull = runtime.AnyNull;
 export const ModelName = {
   Plan: 'Plan',
   User: 'User',
+  RefreshToken: 'RefreshToken',
+  OtpChallenge: 'OtpChallenge',
+  OAuthExchangeCode: 'OAuthExchangeCode',
   Report: 'Report',
   Swipe: 'Swipe',
   SwipeLog: 'SwipeLog',
@@ -101,11 +104,12 @@ export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
+  phone: 'phone',
   password: 'password',
+  auth_provider: 'auth_provider',
   role: 'role',
   status: 'status',
   plan: 'plan',
-  phone: 'phone',
   job: 'job',
   category: 'category',
   city: 'city',
@@ -123,6 +127,10 @@ export const UserScalarFieldEnum = {
   missions: 'missions',
   total_earnings: 'total_earnings',
   last_login: 'last_login',
+  email_verified: 'email_verified',
+  google_id: 'google_id',
+  linkedin_id: 'linkedin_id',
+  phone_verified: 'phone_verified',
   goals: 'goals',
   looking_for: 'looking_for',
   activity_sector: 'activity_sector',
@@ -135,6 +143,48 @@ export const UserScalarFieldEnum = {
 } as const;
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
+
+export const RefreshTokenScalarFieldEnum = {
+  id: 'id',
+  token_hash: 'token_hash',
+  user_id: 'user_id',
+  expires_at: 'expires_at',
+  revoked_at: 'revoked_at',
+  create_at: 'create_at',
+} as const;
+
+export type RefreshTokenScalarFieldEnum =
+  (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum];
+
+export const OtpChallengeScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  purpose: 'purpose',
+  code_hash: 'code_hash',
+  attempts: 'attempts',
+  expires_at: 'expires_at',
+  consumed_at: 'consumed_at',
+  user_id: 'user_id',
+  grant_hash: 'grant_hash',
+  grant_expires_at: 'grant_expires_at',
+  grant_consumed_at: 'grant_consumed_at',
+  create_at: 'create_at',
+} as const;
+
+export type OtpChallengeScalarFieldEnum =
+  (typeof OtpChallengeScalarFieldEnum)[keyof typeof OtpChallengeScalarFieldEnum];
+
+export const OAuthExchangeCodeScalarFieldEnum = {
+  id: 'id',
+  code_hash: 'code_hash',
+  user_id: 'user_id',
+  expires_at: 'expires_at',
+  consumed_at: 'consumed_at',
+  create_at: 'create_at',
+} as const;
+
+export type OAuthExchangeCodeScalarFieldEnum =
+  (typeof OAuthExchangeCodeScalarFieldEnum)[keyof typeof OAuthExchangeCodeScalarFieldEnum];
 
 export const ReportScalarFieldEnum = {
   id: 'id',

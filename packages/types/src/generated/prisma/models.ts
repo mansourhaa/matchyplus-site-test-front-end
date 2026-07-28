@@ -9,6 +9,9 @@
  */
 export type * from './models/Plan.js';
 export type * from './models/User.js';
+export type * from './models/RefreshToken.js';
+export type * from './models/OtpChallenge.js';
+export type * from './models/OAuthExchangeCode.js';
 export type * from './models/Report.js';
 export type * from './models/Swipe.js';
 export type * from './models/SwipeLog.js';

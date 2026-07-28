@@ -12,7 +12,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     password: bcrypt.hashSync('passer'),
     email: 'karim.b@email.com',
     name: 'Karim B.',
-    phone: '+216 55 678 901',
+    phone: '+21655678901',
     job: 'Électricien',
     category: 'Électricité',
     city: 'Sfax',
@@ -46,7 +46,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     password: bcrypt.hashSync('passer'),
     email: 'fatma.a@email.com',
     name: 'Fatma A.',
-    phone: '+216 98 123 456',
+    phone: '+21698123456',
     job: 'Aide Ménagère',
     category: 'Ménage',
     city: 'Tunis',
@@ -80,7 +80,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     password: bcrypt.hashSync('passer'),
     email: 'ahmed.c@email.com',
     name: 'Ahmed C.',
-    phone: '+216 25 789 012',
+    phone: '+21625789012',
     job: 'Chef Cuisinier',
     category: 'Cuisine',
     city: 'Tunis',
@@ -114,7 +114,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     password: bcrypt.hashSync('passer'),
     email: 'bilel.m@email.com',
     name: 'Bilel M.',
-    phone: '+216 44 234 567',
+    phone: '+21644234567',
     job: 'Mécanicien Auto',
     category: 'Mécanique',
     city: 'Nabeul',
@@ -141,7 +141,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     password: bcrypt.hashSync('passer'),
     email: 'sonia.r@email.com',
     name: 'Sonia R.',
-    phone: '+216 33 456 789',
+    phone: '+21633456789',
     job: "Nounou / Garde d'Enfants",
     category: 'Garde enfants',
     city: 'Tunis',
@@ -175,7 +175,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     password: bcrypt.hashSync('passer'),
     email: 'riadh.t@email.com',
     name: 'Riadh T.',
-    phone: '+216 77 890 123',
+    phone: '+21677890123',
     job: 'Plombier',
     category: 'Plomberie',
     city: 'Ariana',
@@ -202,7 +202,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     password: bcrypt.hashSync('passer'),
     email: 'ines.h@email.com',
     name: 'Ines H.',
-    phone: '+216 66 012 345',
+    phone: '+21666012345',
     job: 'Chauffeur VTC',
     category: 'Transport',
     city: 'Tunis',
@@ -327,7 +327,8 @@ export default async function seedDev() {
     },
   });
 
-  const members: Array<{ id: string; email: string }> = [];
+  const members: Array<{ id: string; email: string | null }> = [];
+
   for (const member of MEMBERS) {
     const { password: _password, email, ...rest } = member;
     const row = await prisma.user.upsert({

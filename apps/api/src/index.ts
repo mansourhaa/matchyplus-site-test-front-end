@@ -2,12 +2,14 @@ import closeWithGrace from 'close-with-grace';
 
 import { PrismaClient, User } from '@saas-boilerplate/types';
 
+import { SmsClient } from './lib/sms.js';
 import { createServerApp } from './server.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
     prisma: PrismaClient;
     verifyToken: () => Promise<void>;
+    smsClient: SmsClient;
     verifyAdmin: () => Promise<void>;
   }
   interface FastifyRequest {

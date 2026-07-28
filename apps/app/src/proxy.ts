@@ -2,13 +2,26 @@ import { AUTH_COOKIE } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Redirect away from these when already authenticated (pre-existing behavior for
+// login/register).
 const publicRoutes = ['/login', '/register'];
 
-// The admin dashboard lives in its own app (apps/admin) with its own proxy and session.
+// Always allowed regardless of auth state:
+// - /oauth-callback is reached via external redirect (OAuth provider callback), so
+//   bouncing based on a stale cookie would break the flow.
+// /otp-test is intentionally NOT here — it's a dev-only harness (see
+// app/otp-test/page.tsx, which 404s outside development), not part of the shipped
+// product flow, so it gets the same auth rules as any other route.
+const neutralRoutes = ['/oauth-callback'];
+
 export function proxy(request: NextRequest) {
+  const token = request.cookies.get(AUTH_COOKIE)?.value;
   const { pathname } = request.nextUrl;
 
-  const token = request.cookies.get(AUTH_COOKIE)?.value;
+  if (neutralRoutes.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
+
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
   if (!token && !isPublicRoute) {

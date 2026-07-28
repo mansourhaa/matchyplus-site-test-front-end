@@ -1,6 +1,6 @@
 # Matching & Discovery (product API)
 
-Scripted Discovery v5 + mutual-like matching in Fastify.  
+Scripted Discovery v5 + mutual-like matching in Fastify.
 Source migration notes: [MATCHING_FEATURE.md](../../../.doc/MATCHING_FEATURE.md) (legacy Matchy-FullStack).
 
 ## Responsibility split

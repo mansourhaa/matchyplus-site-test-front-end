@@ -77,11 +77,11 @@ export type PrismaVersion = {
 };
 
 /**
- * Prisma Client JS version: 7.9.0
+ * Prisma Client JS version: 7.9.1
  * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
  */
 export const prismaVersion: PrismaVersion = {
-  client: '7.9.0',
+  client: '7.9.1',
   engine: 'e922089b7d7502aff4249d5da3420f6fa55fc6ad',
 };
 
@@ -392,6 +392,9 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   Plan: 'Plan',
   User: 'User',
+  RefreshToken: 'RefreshToken',
+  OtpChallenge: 'OtpChallenge',
+  OAuthExchangeCode: 'OAuthExchangeCode',
   Report: 'Report',
   Swipe: 'Swipe',
   SwipeLog: 'SwipeLog',
@@ -421,6 +424,9 @@ export type TypeMap<
     modelProps:
       | 'plan'
       | 'user'
+      | 'refreshToken'
+      | 'otpChallenge'
+      | 'oAuthExchangeCode'
       | 'report'
       | 'swipe'
       | 'swipeLog'
@@ -576,6 +582,231 @@ export type TypeMap<
         count: {
           args: Prisma.UserCountArgs<ExtArgs>;
           result: runtime.Types.Utils.Optional<Prisma.UserCountAggregateOutputType> | number;
+        };
+      };
+    };
+    RefreshToken: {
+      payload: Prisma.$RefreshTokenPayload<ExtArgs>;
+      fields: Prisma.RefreshTokenFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.RefreshTokenFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.RefreshTokenFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload>;
+        };
+        findFirst: {
+          args: Prisma.RefreshTokenFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.RefreshTokenFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload>;
+        };
+        findMany: {
+          args: Prisma.RefreshTokenFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload>[];
+        };
+        create: {
+          args: Prisma.RefreshTokenCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload>;
+        };
+        createMany: {
+          args: Prisma.RefreshTokenCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.RefreshTokenCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload>[];
+        };
+        delete: {
+          args: Prisma.RefreshTokenDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload>;
+        };
+        update: {
+          args: Prisma.RefreshTokenUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload>;
+        };
+        deleteMany: {
+          args: Prisma.RefreshTokenDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.RefreshTokenUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.RefreshTokenUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload>[];
+        };
+        upsert: {
+          args: Prisma.RefreshTokenUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefreshTokenPayload>;
+        };
+        aggregate: {
+          args: Prisma.RefreshTokenAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRefreshToken>;
+        };
+        groupBy: {
+          args: Prisma.RefreshTokenGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.RefreshTokenGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.RefreshTokenCountArgs<ExtArgs>;
+          result:
+            runtime.Types.Utils.Optional<Prisma.RefreshTokenCountAggregateOutputType> | number;
+        };
+      };
+    };
+    OtpChallenge: {
+      payload: Prisma.$OtpChallengePayload<ExtArgs>;
+      fields: Prisma.OtpChallengeFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.OtpChallengeFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.OtpChallengeFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        findFirst: {
+          args: Prisma.OtpChallengeFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.OtpChallengeFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        findMany: {
+          args: Prisma.OtpChallengeFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>[];
+        };
+        create: {
+          args: Prisma.OtpChallengeCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        createMany: {
+          args: Prisma.OtpChallengeCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.OtpChallengeCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>[];
+        };
+        delete: {
+          args: Prisma.OtpChallengeDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        update: {
+          args: Prisma.OtpChallengeUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        deleteMany: {
+          args: Prisma.OtpChallengeDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.OtpChallengeUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.OtpChallengeUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>[];
+        };
+        upsert: {
+          args: Prisma.OtpChallengeUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OtpChallengePayload>;
+        };
+        aggregate: {
+          args: Prisma.OtpChallengeAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOtpChallenge>;
+        };
+        groupBy: {
+          args: Prisma.OtpChallengeGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.OtpChallengeGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.OtpChallengeCountArgs<ExtArgs>;
+          result:
+            runtime.Types.Utils.Optional<Prisma.OtpChallengeCountAggregateOutputType> | number;
+        };
+      };
+    };
+    OAuthExchangeCode: {
+      payload: Prisma.$OAuthExchangeCodePayload<ExtArgs>;
+      fields: Prisma.OAuthExchangeCodeFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.OAuthExchangeCodeFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.OAuthExchangeCodeFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        findFirst: {
+          args: Prisma.OAuthExchangeCodeFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.OAuthExchangeCodeFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        findMany: {
+          args: Prisma.OAuthExchangeCodeFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>[];
+        };
+        create: {
+          args: Prisma.OAuthExchangeCodeCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        createMany: {
+          args: Prisma.OAuthExchangeCodeCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.OAuthExchangeCodeCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>[];
+        };
+        delete: {
+          args: Prisma.OAuthExchangeCodeDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        update: {
+          args: Prisma.OAuthExchangeCodeUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        deleteMany: {
+          args: Prisma.OAuthExchangeCodeDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.OAuthExchangeCodeUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.OAuthExchangeCodeUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>[];
+        };
+        upsert: {
+          args: Prisma.OAuthExchangeCodeUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthExchangeCodePayload>;
+        };
+        aggregate: {
+          args: Prisma.OAuthExchangeCodeAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOAuthExchangeCode>;
+        };
+        groupBy: {
+          args: Prisma.OAuthExchangeCodeGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.OAuthExchangeCodeGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.OAuthExchangeCodeCountArgs<ExtArgs>;
+          result:
+            runtime.Types.Utils.Optional<Prisma.OAuthExchangeCodeCountAggregateOutputType> | number;
         };
       };
     };
@@ -1164,11 +1395,12 @@ export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
+  phone: 'phone',
   password: 'password',
+  auth_provider: 'auth_provider',
   role: 'role',
   status: 'status',
   plan: 'plan',
-  phone: 'phone',
   job: 'job',
   category: 'category',
   city: 'city',
@@ -1186,6 +1418,10 @@ export const UserScalarFieldEnum = {
   missions: 'missions',
   total_earnings: 'total_earnings',
   last_login: 'last_login',
+  email_verified: 'email_verified',
+  google_id: 'google_id',
+  linkedin_id: 'linkedin_id',
+  phone_verified: 'phone_verified',
   goals: 'goals',
   looking_for: 'looking_for',
   activity_sector: 'activity_sector',
@@ -1198,6 +1434,48 @@ export const UserScalarFieldEnum = {
 } as const;
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
+
+export const RefreshTokenScalarFieldEnum = {
+  id: 'id',
+  token_hash: 'token_hash',
+  user_id: 'user_id',
+  expires_at: 'expires_at',
+  revoked_at: 'revoked_at',
+  create_at: 'create_at',
+} as const;
+
+export type RefreshTokenScalarFieldEnum =
+  (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum];
+
+export const OtpChallengeScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  purpose: 'purpose',
+  code_hash: 'code_hash',
+  attempts: 'attempts',
+  expires_at: 'expires_at',
+  consumed_at: 'consumed_at',
+  user_id: 'user_id',
+  grant_hash: 'grant_hash',
+  grant_expires_at: 'grant_expires_at',
+  grant_consumed_at: 'grant_consumed_at',
+  create_at: 'create_at',
+} as const;
+
+export type OtpChallengeScalarFieldEnum =
+  (typeof OtpChallengeScalarFieldEnum)[keyof typeof OtpChallengeScalarFieldEnum];
+
+export const OAuthExchangeCodeScalarFieldEnum = {
+  id: 'id',
+  code_hash: 'code_hash',
+  user_id: 'user_id',
+  expires_at: 'expires_at',
+  consumed_at: 'consumed_at',
+  create_at: 'create_at',
+} as const;
+
+export type OAuthExchangeCodeScalarFieldEnum =
+  (typeof OAuthExchangeCodeScalarFieldEnum)[keyof typeof OAuthExchangeCodeScalarFieldEnum];
 
 export const ReportScalarFieldEnum = {
   id: 'id',
@@ -1418,6 +1696,22 @@ export type EnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 export type ListEnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
   $PrismaModel,
   'UserStatus[]'
+>;
+
+/**
+ * Reference to a field of type 'OtpPurpose'
+ */
+export type EnumOtpPurposeFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'OtpPurpose'
+>;
+
+/**
+ * Reference to a field of type 'OtpPurpose[]'
+ */
+export type ListEnumOtpPurposeFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'OtpPurpose[]'
 >;
 
 /**
@@ -1650,6 +1944,9 @@ export type PrismaClientOptions =
 export type GlobalOmitConfig = {
   plan?: Prisma.PlanOmit;
   user?: Prisma.UserOmit;
+  refreshToken?: Prisma.RefreshTokenOmit;
+  otpChallenge?: Prisma.OtpChallengeOmit;
+  oAuthExchangeCode?: Prisma.OAuthExchangeCodeOmit;
   report?: Prisma.ReportOmit;
   swipe?: Prisma.SwipeOmit;
   swipeLog?: Prisma.SwipeLogOmit;

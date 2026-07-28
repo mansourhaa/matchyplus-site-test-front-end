@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from '@/components/shared/providers/theme-provider';
 import { Spinner } from '@/components/shared/spinner';
+import { AuthBootstrap } from '@/features/auth/components/auth-bootstrap';
 import { I18nProvider } from '@/features/i18n/i18n-provider';
 import { LocationProvider } from '@/features/location/location-context';
 import { MatchingRealtimeBridge } from '@/features/matching/components/matching-realtime-bridge';
@@ -30,8 +31,10 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
               enableSystem={false}
               disableTransitionOnChange
             >
-              <MatchingRealtimeBridge />
-              {children}
+              <AuthBootstrap>
+                <MatchingRealtimeBridge />
+                {children}
+              </AuthBootstrap>
             </ThemeProvider>
           </LocationProvider>
         </I18nProvider>

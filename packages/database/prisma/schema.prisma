@@ -34,8 +34,16 @@ enum ReportStatus {
   DISMISSED
 }
 
-/// Plan configuration edited from the admin "Gestion Forfaits" section. The id mirrors
-/// `UserPlan` so a user's plan resolves to exactly one row.
+/// What an OTP challenge is verifying ownership for. Never used as a login method itself —
+/// see doc/reviews/authentication-contract.md.
+enum OtpPurpose {
+  SIGNUP_VERIFICATION
+  PHONE_LINK
+  PASSWORD_RESET
+}
+
+/// Plan configuration edited from the admin "Gestion Forfaits" section.
+/// The id mirrors UserPlan so a user's plan resolves to exactly one row.
 model Plan {
   id          UserPlan @id
   name        String
@@ -61,33 +69,41 @@ model Plan {
 }
 
 model User {
-  id       String @id @default(cuid())
-  name     String
-  email    String @unique
-  password String @db.Text()
-  role     Role   @default(USER)
+  id            String  @id @default(cuid())
+  name          String
+  email         String? @unique
+  phone         String? @unique
+  password      String? @db.Text()
+  auth_provider String  @default("phone")
+
+  role   Role       @default(USER)
+  status UserStatus @default(ACTIVE)
+  plan   UserPlan   @default(FREE)
 
   // Profile fields surfaced by the admin panel.
-  status         UserStatus @default(ACTIVE)
-  plan           UserPlan   @default(FREE)
-  phone          String?
   job            String?
   category       String?
   city           String?
-  bio            String?    @db.Text()
-  image          String?    @db.Text()
-  interests      String[]   @default([])
-  languages      String[]   @default([])
-  contact_modes  String[]   @default([])
+  bio            String?   @db.Text()
+  image          String?   @db.Text()
+  interests      String[]  @default([])
+  languages      String[]  @default([])
+  contact_modes  String[]  @default([])
   experience     String?
   schedule       String?
   price          String?
-  rating         Float      @default(0)
-  reviews        Int        @default(0)
-  matches        Int        @default(0)
-  missions       Int        @default(0)
-  total_earnings Int        @default(0)
+  rating         Float     @default(0)
+  reviews        Int       @default(0)
+  matches        Int       @default(0)
+  missions       Int       @default(0)
+  total_earnings Int       @default(0)
   last_login     DateTime?
+
+  // Authentication fields.
+  email_verified Boolean @default(false)
+  google_id      String? @unique
+  linkedin_id    String? @unique
+  phone_verified Boolean @default(false)
 
   /// Matching / discovery fields (scripted Discovery v5 in apps/api).
   goals           String[] @default([])
@@ -100,7 +116,11 @@ model User {
 
   create_at  DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
-  aiJobs     AiJob[]
+
+  aiJobs               AiJob[]
+  refresh_tokens       RefreshToken[]
+  oauth_exchange_codes OAuthExchangeCode[]
+  otp_challenges       OtpChallenge[]
 
   reports_made     Report[] @relation("ReportsMade")
   reports_received Report[] @relation("ReportsReceived")
@@ -116,12 +136,70 @@ model User {
   blocks_received   UserBlock[]   @relation("BlocksReceived")
 
   @@index([email])
+  @@index([phone])
   @@index([status])
   @@index([plan])
 }
 
-/// A profile report ("signalement"): one user flags another. Reviewed and acted on by
-/// admins from the "Signalements" section. Deleting either user removes their reports.
+model RefreshToken {
+  id         String    @id
+  token_hash String    @unique @db.Text()
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  expires_at DateTime
+  revoked_at DateTime?
+  create_at  DateTime  @default(now())
+
+  @@index([user_id])
+}
+
+/// Purpose-scoped phone OTP challenge — never a login mechanism itself, only proof of
+/// phone ownership for signup verification, phone linking, or password reset (see
+/// doc/reviews/authentication-contract.md). `user_id` is null for SIGNUP_VERIFICATION,
+/// since the phone may not have an account yet at that point.
+///
+/// A signup-verification challenge, once successfully verified, also carries a one-time
+/// "grant" (`grant_hash`/`grant_expires_at`/`grant_consumed_at`) that register-phone must
+/// present to actually create the account — this is what lets OTP verification prove
+/// ownership without itself creating a user or a session.
+model OtpChallenge {
+  id          String     @id @default(cuid())
+  phone       String
+  purpose     OtpPurpose
+  code_hash   String     @db.Text()
+  attempts    Int        @default(0)
+  expires_at  DateTime
+  consumed_at DateTime?
+
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  grant_hash        String?   @db.Text()
+  grant_expires_at  DateTime?
+  grant_consumed_at DateTime?
+
+  create_at DateTime @default(now())
+
+  @@index([phone, purpose])
+  @@index([user_id])
+}
+
+/// One-time code that bridges an OAuth provider redirect to the SPA.
+/// Only a hash of the code is stored, never raw access or refresh tokens.
+model OAuthExchangeCode {
+  id          String    @id @default(cuid())
+  code_hash   String    @unique @db.Text()
+  user_id     String
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  expires_at  DateTime
+  consumed_at DateTime?
+  create_at   DateTime  @default(now())
+
+  @@index([user_id])
+}
+
+/// A profile report where one user flags another.
+/// Deleting either user removes the related reports.
 model Report {
   id      String       @id @default(cuid())
   reason  String
