@@ -1,5 +1,7 @@
 'use client';
 
+import { useAppSelector } from '@/features/auth/hooks';
+import { selectAuth } from '@/features/auth/store/auth-slice';
 import { identityStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
 import { Check, User } from 'lucide-react';
@@ -59,12 +61,14 @@ export function IdentityStep({
   const [error, setError] = useState<string | null>(null);
   const [requiredTouched, setRequiredTouched] = useState(false);
 
+  const { user } = useAppSelector(selectAuth);
   const name = `${firstName} ${lastName}`.trim();
   const isJobRequired = profileType === 'INDIVIDUAL';
   // Only a phone-signup account ever needs a real profile photo — matching the old
   // app's Inscription1 (`requiresPhoto = isPhoneSignupFlow() || Boolean(data.phone)`).
   // An OAuth account already has a provider avatar concept and never collected a phone.
-  const isPhotoRequired = profile?.auth_provider === 'phone';
+  const authProvider = user?.auth_provider ?? profile?.auth_provider ?? 'phone';
+  const isPhotoRequired = authProvider === 'phone';
   const missingPhoto = requiredTouched && isPhotoRequired && !image;
 
   const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
