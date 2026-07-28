@@ -12,6 +12,10 @@ import { AbstractServiceOptions } from '../types/services.js';
 const PROFILE_SELECT = {
   id: true,
   name: true,
+  // Read-only: lets the identity step know whether the account went through phone
+  // signup (photo required, matching the old app's Inscription1) or OAuth (no phone
+  // ever collected, so no photo requirement) — never accepted back via updateProfile.
+  auth_provider: true,
   job: true,
   bio: true,
   image: true,

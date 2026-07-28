@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { fetchCurrentUser, selectAuth } from '@/features/auth/store/auth-slice';
+import { fetchCurrentUser } from '@/features/auth/store/auth-slice';
 import {
   getNextStep,
   getPreviousStep,
@@ -19,42 +19,29 @@ import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
-import { EducationStep } from './education-step';
-import { ExperienceStep } from './experience-step';
 import { IdentityStep } from './identity-step';
 import { InterestsStep } from './interests-step';
 import { LocationStep } from './location-step';
 
-const VALID_STEPS: OnboardingStep[] = [
-  'identity',
-  'interests',
-  'experience',
-  'education',
-  'location',
-];
+const VALID_STEPS: OnboardingStep[] = ['identity', 'interests', 'location'];
 
+// Credentials (phone + password + OTP) happen on /register, before this wizard is ever
+// reached — by the time /onboarding renders, a session always already exists.
 export function OnboardingWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const { profile, loading } = useAppSelector(selectOnboarding);
-  const { isAuthenticated } = useAppSelector(selectAuth);
 
   const requestedStep = searchParams.get('step');
   const step: OnboardingStep = VALID_STEPS.includes(requestedStep as OnboardingStep)
     ? (requestedStep as OnboardingStep)
     : 'identity';
   const nextParam = searchParams.get('next');
-  const profileType = profile?.profile_type;
 
   useEffect(() => {
-    // A brand-new "Créer un compte" visitor has no token yet — GET /users/me/profile
-    // would just 401. The identity step renders in account-bootstrap mode instead.
-    if (isAuthenticated) {
-      dispatch(fetchOnboardingProfile());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+    dispatch(fetchOnboardingProfile());
+  }, [dispatch]);
 
   useEffect(() => {
     if (profile?.onboardingCompleted) {
@@ -63,16 +50,6 @@ export function OnboardingWizard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.onboardingCompleted]);
 
-  // A PROVIDER profile can't be on experience/education — mirrors the old app's
-  // Inscription3/Inscription4 self-redirect-to-the-next-valid-step guard.
-  useEffect(() => {
-    const order = getStepOrder(profileType);
-    if (!order.includes(step)) {
-      router.replace(`/onboarding?step=${order[order.length - 1]}`);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, profileType]);
-
   const buildStepUrl = (target: OnboardingStep) => {
     const query = new URLSearchParams({ step: target });
     if (nextParam) query.set('next', nextParam);
@@ -80,7 +57,7 @@ export function OnboardingWizard() {
   };
 
   const goBack = () => {
-    const previous = getPreviousStep(step, profileType);
+    const previous = getPreviousStep(step);
     if (previous) router.push(buildStepUrl(previous));
   };
 
@@ -93,8 +70,7 @@ export function OnboardingWizard() {
     const saved = await saveStep(patch);
     if (!saved) return false;
 
-    const nextProfileType = patch.profileType ?? profileType;
-    const next = getNextStep(step, nextProfileType);
+    const next = getNextStep(step);
     if (next) router.push(buildStepUrl(next));
     return true;
   };
@@ -112,13 +88,8 @@ export function OnboardingWizard() {
     return true;
   };
 
-  const skipStep = () => {
-    const next = getNextStep(step, profileType);
-    if (next) router.push(buildStepUrl(next));
-  };
-
-  const stepNumber = getStepNumber(step, profileType);
-  const totalSteps = getStepOrder(profileType).length;
+  const stepNumber = getStepNumber(step);
+  const totalSteps = getStepOrder().length;
 
   switch (step) {
     case 'identity':
@@ -128,7 +99,6 @@ export function OnboardingWizard() {
           stepNumber={stepNumber}
           totalSteps={totalSteps}
           loading={loading}
-          isAuthenticated={isAuthenticated}
           onNext={goToNextStep}
         />
       );
@@ -141,30 +111,6 @@ export function OnboardingWizard() {
           loading={loading}
           onNext={goToNextStep}
           onBack={goBack}
-        />
-      );
-    case 'experience':
-      return (
-        <ExperienceStep
-          profile={profile}
-          stepNumber={stepNumber}
-          totalSteps={totalSteps}
-          loading={loading}
-          onNext={goToNextStep}
-          onBack={goBack}
-          onSkip={skipStep}
-        />
-      );
-    case 'education':
-      return (
-        <EducationStep
-          profile={profile}
-          stepNumber={stepNumber}
-          totalSteps={totalSteps}
-          loading={loading}
-          onNext={goToNextStep}
-          onBack={goBack}
-          onSkip={skipStep}
         />
       );
     case 'location':

@@ -8,10 +8,150 @@ import {
 } from '@/features/onboarding/constants';
 import { locationStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile } from '@/features/onboarding/types';
-import { Check, MapPin, Phone, Rocket } from 'lucide-react';
+import {
+  Check,
+  Clock,
+  Coffee,
+  Globe,
+  MapPin,
+  MessageCircle,
+  Moon,
+  Phone,
+  Rocket,
+  Smile,
+  Sun,
+  Sunset,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 import { OnboardingStepLayout, StepCard, StepCtaRow, StepProgress } from './onboarding-step-layout';
+
+const CONTACT_ICONS: Record<string, ReactNode> = {
+  phone: <Phone size={15} />,
+  whatsapp: <MessageCircle size={15} />,
+  person: <Coffee size={15} />,
+};
+
+const TIME_ICONS: Record<string, ReactNode> = {
+  morning: <Sun size={14} />,
+  afternoon: <Sunset size={14} />,
+  evening: <Moon size={14} />,
+  flexible: <Smile size={14} />,
+};
+
+// Real flag icons, not emoji — country-flag emoji frequently fail to render as actual
+// flags on Windows (shows blank boxes or letter codes instead), unlike macOS/iOS.
+function LangFlag({ langKey, size = 18 }: { langKey: string; size?: number }) {
+  const width = Math.round(size * 1.45);
+  const wrapStyle = {
+    width,
+    height: size,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    flexShrink: 0,
+  } as const;
+  const svgStyle = { display: 'block', width: '100%', height: '100%' } as const;
+
+  if (langKey === 'fr') {
+    return (
+      <div style={wrapStyle}>
+        <svg viewBox="0 0 3 2" style={svgStyle} aria-hidden>
+          <rect width="1" height="2" fill="#002395" />
+          <rect x="1" width="1" height="2" fill="#fff" />
+          <rect x="2" width="1" height="2" fill="#ED2939" />
+        </svg>
+      </div>
+    );
+  }
+  if (langKey === 'en') {
+    return (
+      <div style={wrapStyle}>
+        <svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice" style={svgStyle} aria-hidden>
+          <rect width="60" height="30" fill="#012169" />
+          <g fill="#fff">
+            <polygon points="0,0 60,30 60,25 5,0" />
+            <polygon points="60,0 0,30 0,25 55,0" />
+          </g>
+          <g fill="#C8102E">
+            <polygon points="0,0 60,30 60,27 3,0" />
+            <polygon points="60,0 0,30 0,27 57,0" />
+            <rect x="25" width="10" height="30" />
+            <rect y="10" width="60" height="10" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+  if (langKey === 'de') {
+    return (
+      <div style={wrapStyle}>
+        <svg viewBox="0 0 5 3" style={svgStyle} aria-hidden>
+          <rect width="5" height="1" fill="#000" />
+          <rect y="1" width="5" height="1" fill="#D00" />
+          <rect y="2" width="5" height="1" fill="#FFCE00" />
+        </svg>
+      </div>
+    );
+  }
+  if (langKey === 'es') {
+    return (
+      <div style={wrapStyle}>
+        <svg viewBox="0 0 3 2" style={svgStyle} aria-hidden>
+          <rect width="3" height="2" fill="#c60b1e" />
+          <rect y="0.5" width="3" height="1" fill="#ffc400" />
+        </svg>
+      </div>
+    );
+  }
+  if (langKey === 'it') {
+    return (
+      <div style={wrapStyle}>
+        <svg viewBox="0 0 3 2" style={svgStyle} aria-hidden>
+          <rect width="1" height="2" fill="#009246" />
+          <rect x="1" width="1" height="2" fill="#fff" />
+          <rect x="2" width="1" height="2" fill="#CE2B37" />
+        </svg>
+      </div>
+    );
+  }
+  if (langKey === 'ar') {
+    return (
+      <div style={wrapStyle}>
+        <svg viewBox="0 0 3 2" style={svgStyle} aria-hidden>
+          <rect width="3" height="2" fill="#E70013" />
+          <circle cx="1.5" cy="1" r="0.6" fill="#fff" />
+          <circle cx="1.65" cy="1" r="0.48" fill="#E70013" />
+          <path
+            d="M1.62 0.62 L1.78 1 L1.62 1.38 L1.95 1.15 L2.05 1.4 L2.1 1.1 L2.35 1.05 L2.1 0.9 L2.05 0.6 L1.95 0.85 Z"
+            fill="#fff"
+          />
+        </svg>
+      </div>
+    );
+  }
+  if (langKey === 'ar-dialect') {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          flexShrink: 0,
+          background: 'linear-gradient(135deg, #61BCA6, #2F76BB)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <MessageCircle size={size * 0.65} color="white" />
+      </div>
+    );
+  }
+  return <Globe size={size * 0.85} />;
+}
 
 type LocationStepProps = {
   profile: OnboardingProfile | null;
@@ -124,6 +264,7 @@ export function LocationStep({
               <StepCard
                 title="Mes disponibilités"
                 description="Quand êtes-vous disponible pour des missions ?"
+                icon={<Clock size={16} color="white" />}
               >
                 <div className="mb-4 grid grid-cols-7 gap-1">
                   {DAYS.map((day) => {
@@ -163,6 +304,9 @@ export function LocationStep({
                           border: `2px solid ${selected ? '#61BCA6' : '#E0E0E0'}`,
                         }}
                       >
+                        <span style={{ color: selected ? '#2A9177' : '#AAA' }}>
+                          {TIME_ICONS[slot.value]}
+                        </span>
                         <div className="text-left">
                           <p
                             style={{
@@ -188,6 +332,7 @@ export function LocationStep({
             <StepCard
               title="Préférences de contact"
               description="Comment préférez-vous être contacté ?"
+              icon={<Phone size={16} color="white" />}
             >
               <div className="space-y-2">
                 {CONTACT_OPTIONS.map((option) => {
@@ -211,7 +356,9 @@ export function LocationStep({
                             : '#F5F5F5',
                         }}
                       >
-                        <Phone size={15} color={selected ? 'white' : '#AAA'} />
+                        <span style={{ color: selected ? 'white' : '#AAA' }}>
+                          {CONTACT_ICONS[option.value]}
+                        </span>
                       </div>
                       <span
                         className="flex-1 text-left"
@@ -241,6 +388,7 @@ export function LocationStep({
             <StepCard
               title="Langues parlées"
               description="Sélectionnez toutes les langues que vous pratiquez"
+              icon={<Globe size={16} color="white" />}
             >
               <div className="flex flex-wrap gap-2">
                 {LANGUAGE_OPTIONS.map((option) => {
@@ -261,7 +409,7 @@ export function LocationStep({
                         fontWeight: selected ? 700 : 400,
                       }}
                     >
-                      <span aria-hidden>{option.flag}</span>
+                      <LangFlag langKey={option.value} size={18} />
                       <span>{option.label}</span>
                       {selected && <Check size={11} color="white" />}
                     </button>

@@ -40,28 +40,35 @@ export function StepProgress({ step, total }: { step: number; total: number }) {
 export function StepCard({
   title,
   description,
+  icon,
   children,
 }: {
   title?: string;
   description?: string;
+  icon?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <div className="rounded-2xl p-5" style={{ background: '#F9FAFC', border: '1px solid #F0F0F0' }}>
-      {title && (
-        <p
-          style={{
-            fontSize: '16px',
-            fontWeight: 700,
-            color: '#1A1A2E',
-            marginBottom: description ? '4px' : '16px',
-          }}
-        >
-          {title}
-        </p>
-      )}
-      {description && (
-        <p style={{ fontSize: '12px', color: '#888', marginBottom: '14px' }}>{description}</p>
+      {(title || icon) && (
+        <div className="mb-4 flex items-start gap-3">
+          {icon && (
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: 'linear-gradient(135deg, #61BCA6, #2F76BB)' }}
+            >
+              {icon}
+            </div>
+          )}
+          <div>
+            {title && (
+              <p style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A2E' }}>{title}</p>
+            )}
+            {description && (
+              <p style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{description}</p>
+            )}
+          </div>
+        </div>
       )}
       {children}
     </div>

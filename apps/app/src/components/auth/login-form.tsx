@@ -289,7 +289,7 @@ export function LoginForm() {
 
           <div className="mt-2">
             <button
-              onClick={() => router.push('/onboarding')}
+              onClick={() => router.push('/register')}
               className="w-full rounded-2xl py-3.5 text-white"
               style={{
                 background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',

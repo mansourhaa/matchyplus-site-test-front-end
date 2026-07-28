@@ -32,35 +32,6 @@ export const interestsStepSchema = z
     path: ['price'],
   });
 
-const workExperienceSchema = z.object({
-  title: z.string().trim().min(1),
-  company: z.string().trim().min(1),
-  type: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  current: z.boolean().optional(),
-});
-
-export const experienceStepSchema = z.object({
-  experience: z.string().optional(),
-  sector: z.string().optional(),
-  experiences: z.array(workExperienceSchema).optional(),
-});
-
-const educationSchema = z.object({
-  school: z.string().trim().min(1),
-  degree: z.string().optional(),
-  field: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  result: z.string().optional(),
-});
-
-export const educationStepSchema = z.object({
-  educationLevel: z.string().optional(),
-  educations: z.array(educationSchema).optional(),
-});
-
 export const locationStepSchema = z
   .object({
     city: z.string().trim().optional(),
@@ -77,6 +48,4 @@ export const locationStepSchema = z
 
 export type IdentityStepSchema = z.infer<typeof identityStepSchema>;
 export type InterestsStepSchema = z.infer<typeof interestsStepSchema>;
-export type ExperienceStepSchema = z.infer<typeof experienceStepSchema>;
-export type EducationStepSchema = z.infer<typeof educationStepSchema>;
 export type LocationStepSchema = z.infer<typeof locationStepSchema>;

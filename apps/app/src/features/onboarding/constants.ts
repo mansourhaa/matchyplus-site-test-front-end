@@ -56,45 +56,6 @@ export const GOAL_CATEGORIES = [
   },
 ];
 
-export const YEARS_OPTIONS = ["Moins d'1 an", '1-2 ans', '3-5 ans', '5-10 ans', 'Plus de 10 ans'];
-
-export const SECTORS = [
-  'Informatique / Tech',
-  'Marketing / Communication',
-  'Finance / Comptabilité',
-  'BTP / Artisanat',
-  'Santé / Médical',
-  'Education / Formation',
-  'Transport / Logistique',
-  'Restauration / Hôtellerie',
-  'Commerce / Vente',
-  'Garde enfants',
-  'Ménage',
-  'Plomberie / Sanitaire',
-  'Bâtiment et travaux',
-  'Autre',
-];
-
-export const EXPERIENCE_TYPES = [
-  'Temps plein',
-  'Temps partiel',
-  'Services & missions',
-  'Stage',
-  'Alternance',
-  'Bénévolat',
-];
-
-export const EDUCATION_LEVELS = [
-  'Bac',
-  'Bac+2 / BTS / DUT',
-  'Licence (Bac+3)',
-  'Master (Bac+5)',
-  'Mastère de recherche',
-  'Doctorat',
-  'Formation professionnelle',
-  'Autre',
-];
-
 export const DAYS = [
   { short: 'Lun', long: 'Lundi' },
   { short: 'Mar', long: 'Mardi' },

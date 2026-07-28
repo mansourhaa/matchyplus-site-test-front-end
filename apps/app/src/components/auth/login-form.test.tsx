@@ -226,11 +226,11 @@ describe('LoginForm — Créer un compte', () => {
     vi.clearAllMocks();
   });
 
-  it('goes to the onboarding wizard, not the old standalone /register page', () => {
+  it('goes to the credentials step (/register), where phone + password + OTP are collected', () => {
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.click(firstButton('Créer un compte'));
 
-    expect(pushMock).toHaveBeenCalledWith('/onboarding');
+    expect(pushMock).toHaveBeenCalledWith('/register');
   });
 });

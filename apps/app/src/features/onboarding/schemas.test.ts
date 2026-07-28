@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  educationStepSchema,
-  experienceStepSchema,
-  identityStepSchema,
-  interestsStepSchema,
-  locationStepSchema,
-} from './schemas';
+import { identityStepSchema, interestsStepSchema, locationStepSchema } from './schemas';
 
 describe('identityStepSchema', () => {
   it('requires a name, job, and profile type', () => {
@@ -83,28 +77,6 @@ describe('interestsStepSchema', () => {
         price: '0',
       }).success,
     ).toBe(false);
-  });
-});
-
-describe('experienceStepSchema', () => {
-  it('is fully optional (the step is skippable)', () => {
-    expect(experienceStepSchema.safeParse({}).success).toBe(true);
-  });
-
-  it('requires title and company on a listed experience', () => {
-    expect(
-      experienceStepSchema.safeParse({ experiences: [{ title: '', company: '' }] }).success,
-    ).toBe(false);
-  });
-});
-
-describe('educationStepSchema', () => {
-  it('is fully optional (the step is skippable)', () => {
-    expect(educationStepSchema.safeParse({}).success).toBe(true);
-  });
-
-  it('requires a school on a listed education entry', () => {
-    expect(educationStepSchema.safeParse({ educations: [{ school: '' }] }).success).toBe(false);
   });
 });
 
