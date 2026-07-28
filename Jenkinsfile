@@ -96,10 +96,16 @@ pipeline {
       // HUSKY=0 skips husky's git-dependent prepare hook outright, and the
       // rest of these env vars are the same dummy CI values that file used,
       // since apps/api/src/config.ts validates them at import time.
+      // NODE_ENV='test', not 'production': apps/admin's tests render real
+      // components via @testing-library/react, and React/react-dom resolve
+      // to their production build under NODE_ENV=production, where act() is
+      // a non-functional stub (it's a dev/test-only utility). apps/api's own
+      // vitest config already independently forces NODE_ENV='test' for the
+      // same reason - this just makes the CI-level default match it.
       agent { docker { image 'node:22-alpine'; args '-u root'; reuseNode true } }
       environment {
         HUSKY = '0'
-        NODE_ENV = 'production'
+        NODE_ENV = 'test'
         DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/ci?schema=public'
         NEXT_PUBLIC_API_URL = 'http://localhost:8000/api/v1'
         ACCESS_TOKEN_SECRET = 'ci-access-token-secret'
