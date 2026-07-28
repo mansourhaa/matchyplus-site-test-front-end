@@ -3,6 +3,7 @@
 import { ThemeProvider } from '@/components/shared/providers/theme-provider';
 import { Spinner } from '@/components/shared/spinner';
 import { I18nProvider } from '@/features/i18n/i18n-provider';
+import { LocationProvider } from '@/features/location/location-context';
 import { MatchingRealtimeBridge } from '@/features/matching/components/matching-realtime-bridge';
 import { persistor, store } from '@/lib/store';
 import type React from 'react';
@@ -21,15 +22,18 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
         persistor={persistor}
       >
         <I18nProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <MatchingRealtimeBridge />
-            {children}
-          </ThemeProvider>
+          <LocationProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              forcedTheme="light"
+              enableSystem={false}
+              disableTransitionOnChange
+            >
+              <MatchingRealtimeBridge />
+              {children}
+            </ThemeProvider>
+          </LocationProvider>
         </I18nProvider>
       </PersistGate>
     </Provider>

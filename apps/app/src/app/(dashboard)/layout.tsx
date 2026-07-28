@@ -1,5 +1,5 @@
-import { DashboardShell } from '@/components/dashboard/dashboard-shell';
+import { MatchyDashboardShell } from '@/components/matchy/matchy-dashboard-shell';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <DashboardShell>{children}</DashboardShell>;
+  return <MatchyDashboardShell>{children}</MatchyDashboardShell>;
 }
