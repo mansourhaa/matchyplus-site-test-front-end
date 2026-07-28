@@ -18,23 +18,32 @@ import { AbstractServiceOptions } from '../types/services.js';
 import { OtpChallengeService } from './otp-challenge.js';
 import { TokenService } from './token.js';
 
-export type PhoneAuthServiceOptions = AbstractServiceOptions & { smsClient: SmsClient };
+export type Logger = { warn: (obj: unknown, msg?: string) => void };
+
+export type PhoneAuthServiceOptions = AbstractServiceOptions & {
+  smsClient: SmsClient;
+  logger?: Logger;
+};
 
 function otpMessage(code: string): string {
   return `Matchy+: your verification code is ${code}.`;
 }
+
+const noopLogger: Logger = { warn: () => {} };
 
 export class PhoneAuthenticationService {
   prisma: PrismaClient;
   smsClient: SmsClient;
   tokenService: TokenService;
   otpChallengeService: OtpChallengeService;
+  logger: Logger;
 
   constructor(options: PhoneAuthServiceOptions) {
     this.prisma = options.prisma;
     this.smsClient = options.smsClient;
     this.tokenService = new TokenService({ prisma: options.prisma });
     this.otpChallengeService = new OtpChallengeService({ prisma: options.prisma });
+    this.logger = options.logger ?? noopLogger;
   }
 
   async sendOtp(payload: SendOtpPayload) {
@@ -149,7 +158,13 @@ export class PhoneAuthenticationService {
           user.id,
         );
         await this.smsClient.sendSms(phone, otpMessage(code));
-      } catch {}
+      } catch (err) {
+        // The caller always gets the same uniform response either way (anti-
+        // enumeration), but a delivery/config/cooldown failure here means no code
+        // actually went out — that must stay visible in the logs, or a real
+        // production incident (e.g. TunisieSMS misconfigured) looks like silence.
+        this.logger.warn({ err, phone }, 'password_reset_challenge_or_delivery_failed');
+      }
     }
 
     return {

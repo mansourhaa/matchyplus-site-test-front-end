@@ -90,7 +90,11 @@ const ERROR_STATUS: Record<
 const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   const { prisma, smsClient, httpErrors } = fastify;
   const authService = new AuthenticationService({ prisma });
-  const phoneAuthService = new PhoneAuthenticationService({ prisma, smsClient });
+  const phoneAuthService = new PhoneAuthenticationService({
+    prisma,
+    smsClient,
+    logger: fastify.log,
+  });
   const oauthAuthService = new OAuthAuthenticationService({ prisma });
   const tokenService = new TokenService({ prisma });
 
