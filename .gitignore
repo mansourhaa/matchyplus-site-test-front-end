@@ -2,6 +2,7 @@
 
 # Dependencies
 node_modules
+.pnpm-store
 .pnp
 .pnp.js
 
@@ -13,6 +14,8 @@ node_modules
 
 # Testing
 coverage
+coverage.xml
+.coverage
 
 # Turbo
 .turbo

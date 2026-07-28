@@ -30,5 +30,10 @@ export default defineConfig({
       // NODE_ENV is 'test' here, so the CORS plugin requires an explicit allowlist.
       CORS_ORIGINS: 'http://localhost:3000',
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['lcovonly', 'text'],
+      reportsDirectory: 'coverage',
+    },
   },
 });
