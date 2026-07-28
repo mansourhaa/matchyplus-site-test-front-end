@@ -163,4 +163,67 @@ describe('SwipeService', () => {
       },
     });
   });
+
+  it('rejects a right swipe when the daily quota is exhausted', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockImplementation(async ({ where, select }) => {
+      if (select?.plan) return { plan: UserPlan.FREE };
+      if (where.id === 'u2') return { id: 'u2', name: 'Bob', image: null };
+      return null;
+    });
+    prisma.plan.findUnique.mockResolvedValue({ swipes_per_day: 2 });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.swipeLog.count.mockResolvedValue(2);
+
+    const service = new SwipeService({ prisma: prisma as never });
+
+    await expect(
+      service.postSwipe('u1', { target_user_id: 'u2', direction: 'right' }),
+    ).rejects.toMatchObject({
+      statusCode: 429,
+    });
+
+    expect(prisma.swipe.upsert).not.toHaveBeenCalled();
+    expect(prisma.match.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a swipe when either user has blocked the other', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'u2', name: 'Bob', image: null });
+    prisma.userBlock.findFirst.mockResolvedValue({ id: 'block-1' });
+
+    const service = new SwipeService({ prisma: prisma as never });
+
+    await expect(
+      service.postSwipe('u1', { target_user_id: 'u2', direction: 'right' }),
+    ).rejects.toMatchObject({
+      statusCode: 403,
+    });
+
+    expect(prisma.swipe.upsert).not.toHaveBeenCalled();
+  });
+
+  it('unmatches a pair, clears swipe history, and notifies both users', async () => {
+    const prisma = createMockPrisma();
+    const notify = vi.fn();
+    prisma.$transaction.mockImplementation(async (callback) => callback(prisma));
+    prisma.swipe.deleteMany.mockResolvedValue({ count: 2 });
+    prisma.swipeLog.deleteMany.mockResolvedValue({ count: 2 });
+    prisma.match.deleteMany.mockResolvedValue({ count: 1 });
+
+    const service = new SwipeService({ prisma: prisma as never, notify });
+    const result = await service.unmatch('u1', 'u2');
+
+    expect(result).toEqual({ removed_user_id: 'u2' });
+    expect(prisma.swipe.deleteMany).toHaveBeenCalled();
+    expect(prisma.swipeLog.deleteMany).toHaveBeenCalled();
+    expect(prisma.match.deleteMany).toHaveBeenCalledWith({
+      where: {
+        user_low_id: 'u1',
+        user_high_id: 'u2',
+      },
+    });
+    expect(notify).toHaveBeenCalledWith('u1', 'match_removed', { matched_user_id: 'u2' });
+    expect(notify).toHaveBeenCalledWith('u2', 'match_removed', { matched_user_id: 'u1' });
+  });
 });

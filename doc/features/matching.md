@@ -10,7 +10,7 @@ Source migration notes: [MATCHING_FEATURE.md](../../../.doc/MATCHING_FEATURE.md)
 | `apps/api` DiscoveryService / SwipeService | Feed eligibility, scripted score, swipe, quota, match creation, withdraw, unmatch |
 | `apps/api` `utils/matching-score.ts` | Pure scoring (no I/O, no Ollama) |
 | `apps/ai` `MATCH` / `EMBED` processors | Future semantic retrieval / rerank via `AiJob` — **not** swipe state |
-| `apps/app` | UI consuming these REST + realtime endpoints (wire-up follow-up) |
+| `apps/app` | UI consuming these REST + realtime endpoints |
 
 Do **not** port legacy `aiMatchingService`, unmounted `/api/matching/*`, Ollama feed calls, or browser `AIMatchingEngine`.
 
@@ -21,8 +21,14 @@ Prisma models in `packages/database/prisma/schema.prisma`:
 - `Swipe` — live state per pair (`LEFT` \| `RIGHT` \| `WITHDRAWN`)
 - `SwipeLog` — append-only; **RIGHT** rows in the UTC day drive quota
 - `Match` — mutual RIGHT; presence = active (no status column); ordered `user_low_id` / `user_high_id`
-- `UserLocation` — dynamic GPS preferred over `User.gps_*`
-- `UserBlock` — bidirectional exclusion
+- `UserLocation` — dynamic GPS preferred over `User.gps_*` for discovery radius
+- `UserBlock` — bidirectional exclusion from feed and swipes
+
+### Ownership notes for overlapping schema
+
+- `UserLocation` and `UserBlock` are **matching dependencies** in this migration so discovery radius and block checks work.
+- The location-sharing feature may extend `UserLocation` with update/delete/settings UX; merge order into `dev` must treat this matching migration as the schema source of truth for the table creation.
+- `UserBlock` is matching-owned for feed/swipe exclusion. Other features should reuse it rather than create a second block table.
 
 ### Backlog fixes baked in
 
@@ -34,6 +40,18 @@ Prisma models in `packages/database/prisma/schema.prisma`:
 6. **Reciprocity** boost when the candidate already liked you.
 7. Cross-sector under sector-strict intents → low-priority **suggestion** group, not hard drop.
 8. Quota reset labeled `midnight_utc` deliberately.
+
+## Match → conversation (deferred)
+
+Legacy Matchy created a conversation row on reciprocal match.
+
+In this codebase, **conversation / messaging is a separate feature**. Matching only:
+
+- creates the `Match` row
+- notifies both users (`notification_match`)
+- exposes matches in `/swipe/matches`
+
+Conversation thread creation must land with the conversations feature so matching does not own messaging schema or inbox lifecycle.
 
 ## Endpoints (JWT required)
 
@@ -61,6 +79,12 @@ Prefix: `/api/v1`
 
 Identities are **User ids** (cuid), not legacy integer profile ids.
 
+### Realtime client
+
+- Browser connects to `/api/v1/realtime?access_token=<token>` because WebSocket cannot set `Authorization`
+- Server promotes the query token to Bearer before `verifyToken`
+- App bridge: `features/matching/hooks/use-matching-realtime.ts` refreshes match/pending state on `notification_match` (`event_type: match`) and `match_removed`
+
 ## Directory map
 
 ```text
@@ -77,6 +101,12 @@ apps/api/src/
   routes/v1/realtime/
   schemas/v1/matching.ts
   types/matching.ts
+
+apps/app/src/
+  features/matching/store/matching-slice.ts
+  features/matching/hooks/use-matching-realtime.ts
+  features/matching/components/matching-realtime-bridge.tsx
+  components/matching/
 ```
 
 ## AI MATCH later
@@ -88,8 +118,9 @@ When pgvector + EMBED are live, Discovery may enqueue a `MATCH` `AiJob` for rera
 | Piece | Path |
 | --- | --- |
 | Redux slice | `features/matching/store/matching-slice.ts` |
+| Realtime bridge | `features/matching/components/matching-realtime-bridge.tsx` |
 | i18n (en/fr/ar) | `features/i18n/` |
 | Discover UI | `components/matching/discover-view.tsx` → `/discover` |
 | Matches UI | `components/matching/matches-view.tsx` → `/matches` |
 
-Auth: `lib/api.ts` attaches `Authorization: Bearer` from `sessionStorage`. Errors are stored as message keys and rendered via `t(...)`.
+Auth for matching REST currently follows the app client (`lib/api.ts`). Session-model migration is owned by the auth team and is out of scope for matching feature fixes.

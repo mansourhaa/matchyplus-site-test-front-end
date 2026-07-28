@@ -176,7 +176,9 @@ export class SwipeService {
           event_type: 'match',
           match_id: detected.match_id,
           matched_at: detected.matched_at,
-          body: 'New match! Open your matches to start the conversation.',
+          // Conversation thread creation is owned by the conversations feature.
+          // Matching only establishes the mutual-like graph + notifies both users.
+          body: 'New match! Open your matches to continue.',
         };
         // Bilateral notify — both users get the same match event.
         this.notify(userId, 'notification_match', {
