@@ -1,6 +1,5 @@
 import { PrismaClient } from '@saas-boilerplate/types';
 
-import { isAdminRole } from '../constants.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import {
   AuthCheckPayload,
@@ -9,6 +8,7 @@ import {
   LoginPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { isAdminRole } from '../utils/roles.js';
 import { TokenService } from './token.js';
 
 export class AuthenticationService {

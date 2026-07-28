@@ -53,6 +53,11 @@ export const ModelName = {
   OtpChallenge: 'OtpChallenge',
   OAuthExchangeCode: 'OAuthExchangeCode',
   Report: 'Report',
+  Swipe: 'Swipe',
+  SwipeLog: 'SwipeLog',
+  Match: 'Match',
+  UserLocation: 'UserLocation',
+  UserBlock: 'UserBlock',
   AiJob: 'AiJob',
 } as const;
 
@@ -137,6 +142,11 @@ export const UserScalarFieldEnum = {
   google_id: 'google_id',
   linkedin_id: 'linkedin_id',
   phone_verified: 'phone_verified',
+  goals: 'goals',
+  looking_for: 'looking_for',
+  activity_sector: 'activity_sector',
+  gps_latitude: 'gps_latitude',
+  gps_longitude: 'gps_longitude',
   create_at: 'create_at',
   updated_at: 'updated_at',
 } as const;
@@ -198,6 +208,62 @@ export const ReportScalarFieldEnum = {
 
 export type ReportScalarFieldEnum =
   (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum];
+
+export const SwipeScalarFieldEnum = {
+  id: 'id',
+  swiper_id: 'swiper_id',
+  target_id: 'target_id',
+  direction: 'direction',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+} as const;
+
+export type SwipeScalarFieldEnum = (typeof SwipeScalarFieldEnum)[keyof typeof SwipeScalarFieldEnum];
+
+export const SwipeLogScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  target_id: 'target_id',
+  direction: 'direction',
+  swiped_at: 'swiped_at',
+} as const;
+
+export type SwipeLogScalarFieldEnum =
+  (typeof SwipeLogScalarFieldEnum)[keyof typeof SwipeLogScalarFieldEnum];
+
+export const MatchScalarFieldEnum = {
+  id: 'id',
+  user_low_id: 'user_low_id',
+  user_high_id: 'user_high_id',
+  matched_at: 'matched_at',
+} as const;
+
+export type MatchScalarFieldEnum = (typeof MatchScalarFieldEnum)[keyof typeof MatchScalarFieldEnum];
+
+export const UserLocationScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  location_enabled: 'location_enabled',
+  city: 'city',
+  country: 'country',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+} as const;
+
+export type UserLocationScalarFieldEnum =
+  (typeof UserLocationScalarFieldEnum)[keyof typeof UserLocationScalarFieldEnum];
+
+export const UserBlockScalarFieldEnum = {
+  id: 'id',
+  blocker_id: 'blocker_id',
+  blocked_id: 'blocked_id',
+  created_at: 'created_at',
+} as const;
+
+export type UserBlockScalarFieldEnum =
+  (typeof UserBlockScalarFieldEnum)[keyof typeof UserBlockScalarFieldEnum];
 
 export const AiJobScalarFieldEnum = {
   id: 'id',

@@ -6,6 +6,7 @@ import {
   selectAdminAuth,
 } from '@/features/admin-auth/store/admin-auth-slice';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
+import { hasAdminSessionMarker } from '@/lib/admin-auth';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
@@ -21,7 +22,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const FEATURES = [
   { icon: Users, label: 'Gestion utilisateurs', desc: 'Consulter, éditer, bannir' },
@@ -33,7 +34,7 @@ const FEATURES = [
 export function AdminLoginForm() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector(selectAdminAuth);
+  const { admin, loading, error } = useAppSelector(selectAdminAuth);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,6 +55,13 @@ export function AdminLoginForm() {
     setLocalError(null);
     if (error) dispatch(clearAdminError());
   };
+
+  useEffect(() => {
+    if (!admin || !hasAdminSessionMarker()) return;
+
+    router.replace('/admin');
+    router.refresh();
+  }, [admin, router]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

@@ -1,6 +1,5 @@
 import { Prisma, PrismaClient, ReportStatus, Role } from '@saas-boilerplate/types';
 
-import { assertMinimumRole, badRequest, conflict, notFound } from '../constants.js';
 import { AdminActor } from '../types/admin.js';
 import {
   AdminListReportsQuery,
@@ -8,6 +7,8 @@ import {
   CreateReportPayload,
 } from '../types/report.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { badRequest, conflict, notFound } from '../utils/http-errors.js';
+import { assertMinimumRole } from '../utils/roles.js';
 
 /** Never expose a password; both sides of a report are shown to the admin as public identity. */
 const partySelect = {

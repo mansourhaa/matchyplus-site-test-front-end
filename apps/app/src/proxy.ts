@@ -31,7 +31,12 @@ export function proxy(request: NextRequest) {
   }
 
   if (token && isPublicRoute) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/home', request.url));
+  }
+
+  // Prefer /home as the canonical discover entry; avoid RSC redirect() timing bugs.
+  if (pathname === '/discover' || pathname === '/projects') {
+    return NextResponse.redirect(new URL('/home', request.url));
   }
 
   return NextResponse.next();

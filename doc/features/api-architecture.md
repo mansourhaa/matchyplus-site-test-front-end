@@ -140,15 +140,52 @@ Schemas defined in `src/schemas/v1/` using `fluent-json-schema` or plain JSON Sc
 
 ## Services layer
 
-Business logic lives in `src/services/`:
+Business logic lives in `src/services/` as **classes with constructor DI** (typically `prisma`).
 
 | Service | Responsibility |
 | --- | --- |
 | `authentication.ts` | Register, login, auth check |
 | `authorization.ts` | JWT verify, token decode |
 | `users.ts` | User CRUD |
+| `discovery.ts` | Swipe feed ranking (scripted v5) |
+| `swipe.ts` | Swipe, match, pending, withdraw, unmatch |
+| `swipe-quota.ts` | Plan limits + UTC-day RIGHT counts |
+| `ai-jobs.ts` | Enqueue + poll AI jobs |
+| `ai-cache.ts` | Redis result cache |
 
-Services receive `prisma` via constructor injection.
+### Strict layout rules
+
+- **`services/`** — only service **classes** and their methods. Inject dependencies via the constructor (`AbstractServiceOptions` / `prisma`, etc.).
+- **`utils/`** — pure helpers and free functions (no service classes).
+- **`constants.ts`** — shared constants / env-backed defaults.
+- Do **not** export standalone business functions from `services/` files.
+
+### Schema validation (required)
+
+- Every route must have a Fastify `schema` with `tags`, success `response`, and error responses (`4xx` / `500`).
+- Authenticated routes declare `security: [{ http: [] }]`.
+- Request bodies use `additionalProperties: false`.
+- Swagger uses `hideUntagged: true` — untagged routes will not appear in `/docs`.
+
+### Route request typing (required)
+
+- Every route with a body, querystring, or path params must use Fastify generics backed by a **named type** from `types/<feature>.ts`.
+- Do **not** inline `{ latitude?: number; … }` or `{ userId: string }` in the route signature.
+- HTTP method does not matter — apply the same rule to GET query, POST body, DELETE params, etc.
+
+```ts
+fastify.get<{ Querystring: DiscoveryFeedQuery }>('/swipe-feed', { schema }, handler);
+fastify.post<{ Body: PostSwipeBody }>('/swipe', { schema }, handler);
+fastify.delete<{ Params: TargetUserParams }>('/pending/:userId', { schema }, handler);
+```
+
+### Error handling (required)
+
+- Every route handler and every service method must wrap its body in `try/catch`.
+- Catch blocks must rethrow (or map to a domain/http error). Do not swallow failures.
+- Prefer `utils/http-errors.ts` helpers that set `statusCode` so the global error handler can respond correctly.
+
+Services receive `prisma` via constructor injection. Matching details: [Matching & Discovery](./matching.md).
 
 ## Authentication on routes
 

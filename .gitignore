@@ -19,7 +19,9 @@ coverage
 
 # Cursor
 .cursorrules
-.cursor
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 
 # Vercel
 .vercel
@@ -56,6 +58,7 @@ __pycache__/
 .ruff_cache/
 .venv/
 apps/ai/.venv/
+doc/reviews/
 
 # .ssh_keys
 # local-meta
