@@ -26,10 +26,6 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(ADMIN_LOGIN_ROUTE, request.url));
   }
 
-  if (adminSession && isAdminLogin) {
-    return NextResponse.redirect(new URL(ADMIN_ROOT, request.url));
-  }
-
   return NextResponse.next();
 }
 

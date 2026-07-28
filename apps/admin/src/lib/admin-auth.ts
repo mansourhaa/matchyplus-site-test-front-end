@@ -31,6 +31,11 @@ function clearSessionMarker() {
   document.cookie = `${ADMIN_SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax${SECURE_COOKIE_FLAG}`;
 }
 
+export function hasAdminSessionMarker(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.cookie.split('; ').some((entry) => entry.startsWith(`${ADMIN_SESSION_COOKIE}=`));
+}
+
 export function persistAdminSession(admin: unknown, maxAgeSeconds = ADMIN_SESSION_MAX_AGE_SECONDS) {
   if (typeof window === 'undefined') return;
   sessionStorage.setItem(ADMIN_AUTH_USER_KEY, JSON.stringify(admin));
