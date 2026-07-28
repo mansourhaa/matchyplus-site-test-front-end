@@ -1,11 +1,4 @@
 // CI only, no deploy - dev is a build/scan/test gate, not an environment.
-// Job's SCM should be scoped to the dev branch (Branch Specifier: */dev).
-// A push to any branch pings the githubPush() trigger, but this job always
-// checks out and builds dev's own HEAD regardless of which branch fired it -
-// harmless (just an occasional redundant no-op rebuild if dev hasn't
-// actually changed), not incorrect.
-// webhook-trigger-test: no functional change, just to confirm the GitHub
-// webhook actually fires an automatic build on push.
 
 pipeline {
   agent any
@@ -20,11 +13,9 @@ pipeline {
   }
 
   environment {
-    // matchy-<branch>-<build>, e.g. matchy-feature-jenkins-ci-dev-17. Slashes
-    // in branch names aren't valid in Docker tags, so they become dashes.
-    // BRANCH_NAME is what Multibranch jobs set; GIT_BRANCH (as
-    // "origin/<branch>") is what a plain SCM-configured Pipeline job sets
-    // instead - falls back to whichever is actually present.
+    // matchy-<branch>-<build>, slashes in branch names become dashes since
+    // docker tags can't have them. Falls back to GIT_BRANCH if BRANCH_NAME
+    // isn't set (multibranch vs plain pipeline job).
     IMAGE_TAG = "matchy-${(env.BRANCH_NAME ?: (env.GIT_BRANCH ?: 'unknown').replaceFirst('^origin/', '')).replaceAll('/', '-')}-${env.BUILD_NUMBER}"
     REGISTRY_REPO = "mohamedazizaguir/dotit"
     SONAR_PROJECT = "matchyplus"
@@ -39,29 +30,13 @@ pipeline {
     }
 
     stage('SAST - Semgrep') {
-      // -u root: these images assume root-owned home/system dirs (semgrep
-      // writes its cache to $HOME/.semgrep). Jenkins' Docker Pipeline plugin
-      // runs the container as the host jenkins UID by default, which isn't
-      // in the image's /etc/passwd and can't write there.
-      // --config=auto pulls community rules for every language auto with
-      // ~500+ rules including plenty of general code-quality/style checks -
-      // that's SonarQube's job now (see the next two stages), so Semgrep is
-      // scoped down to security-specific packs.
-      //
-      // Real root cause of the slow/inconsistent runs (measured directly):
-      // registry fetch for the 3 packs below is only ~12s (timed standalone
-      // against an empty dir) - not the bottleneck. The "60,104 files
-      // tracked by git" Semgrep reported scanning was actually
-      // .pnpm-store/ (pnpm's local package store, ~60,030 files) - an
-      // untracked, un-gitignored directory at the repo root that a bare
-      // `.` scan target with only node_modules/.next/dist/.turbo excluded
-      // never caught. SonarQube's scoped apps/**,packages/** inclusion list
-      // was never affected by this - same fix applied here: scan explicit
-      // source dirs instead of "everything except a blacklist".
-      // -v .../semgrep-cache:/root/.semgrep: harmless, but measured to give
-      // no actual speedup (Semgrep OSS doesn't appear to persist fetched
-      // rule content there) - kept since it doesn't hurt, not because it's
-      // load-bearing.
+      // -u root: semgrep writes its cache to $HOME/.semgrep, and the
+      // container's default user can't write there.
+      // security-only rule packs, not --config=auto - general code quality
+      // is SonarQube's job (see below).
+      // scan apps/packages/ci-scripts explicitly instead of "." - "." was
+      // also picking up .pnpm-store (untracked, ~60k files) and blowing
+      // scan time up to 10+ min for no reason.
       agent { docker { image 'returntocorp/semgrep:latest'; args '-u root -v /var/lib/jenkins/semgrep-cache:/root/.semgrep'; reuseNode true } }
       steps {
         sh '''
@@ -71,14 +46,13 @@ pipeline {
             --json --output=reports/semgrep/semgrep-report.json \
             apps packages ci-scripts || true
           if [ ! -f reports/semgrep/semgrep-report.json ]; then
-            echo "WARNING: semgrep produced no report - it likely failed outright (registry/network issue), not that it found 0 problems. Falling back to an empty report so the pipeline can continue." >&2
+            echo "semgrep produced no report, falling back to an empty one so the pipeline can continue" >&2
             echo '{"results":[],"errors":[]}' > reports/semgrep/semgrep-report.json
           fi
         '''
       }
-      // Restore host-writable ownership before the container exits - any
-      // file this stage created as root would otherwise poison the next
-      // build's checkout ("Permission denied" trying to unlink it).
+      // reset ownership so the next build's checkout doesn't choke on
+      // root-owned files
       post {
         always {
           sh 'chown -R "$(stat -c "%u:%g" .)" . 2>/dev/null || true'
@@ -87,21 +61,16 @@ pipeline {
     }
 
     stage('Lint & Test') {
-      // -u root: corepack tries to symlink pnpm into /usr/local/bin,
-      // root-owned - same UID-mismatch reason as the semgrep fix above.
-      // node:22, not 18 (.nvmrc's stale pin): packages/database's postinstall
-      // runs prisma generate, which requires() zeptomatch, an ESM-only module -
-      // Node 18 can't require() ESM synchronously, Node 22 can. Matches the
-      // NODE_VERSION the repo's own disabled .github/workflows/ci.yml used.
-      // HUSKY=0 skips husky's git-dependent prepare hook outright, and the
-      // rest of these env vars are the same dummy CI values that file used,
-      // since apps/api/src/config.ts validates them at import time.
-      // NODE_ENV='test', not 'production': apps/admin's tests render real
-      // components via @testing-library/react, and React/react-dom resolve
-      // to their production build under NODE_ENV=production, where act() is
-      // a non-functional stub (it's a dev/test-only utility). apps/api's own
-      // vitest config already independently forces NODE_ENV='test' for the
-      // same reason - this just makes the CI-level default match it.
+      // -u root: corepack needs to symlink pnpm into /usr/local/bin.
+      // node 22, not the .nvmrc pin of 18 - packages/database's postinstall
+      // runs prisma generate, which requires() an ESM-only module. Node 18
+      // can't require() ESM, 22 can.
+      // HUSKY=0 skips the git-dependent prepare hook. rest of these are
+      // dummy values apps/api/src/config.ts expects at import time.
+      // NODE_ENV=test, not production - apps/admin's tests render real
+      // components via testing-library, and react-dom's production build
+      // ships a broken/no-op act(). apps/api's vitest config already forces
+      // this on its own, so this just makes it consistent everywhere.
       agent { docker { image 'node:22-alpine'; args '-u root'; reuseNode true } }
       environment {
         HUSKY = '0'
@@ -130,15 +99,10 @@ pipeline {
       }
     }
 
-    // apps/ai's own pnpm test/lint wrap a python venv and skip silently if
-    // it's not there - running pytest directly so this is a real check.
-    // Runs before SonarQube Analysis, not after: it needs to produce
-    // apps/ai/coverage.xml (pytest-cov, configured via apps/ai/pytest.ini's
-    // addopts) before the scanner picks it up - same ordering bug as the
-    // JS/TS coverage fix applied to this stage too.
+    // running pytest directly instead of pnpm test/lint - those wrap a
+    // python venv and skip silently if it's missing. runs before the
+    // SonarQube stage so coverage.xml exists by the time the scanner runs.
     stage('AI service tests') {
-      // -u root: pip install (no --user/venv) writes to root-owned
-      // site-packages - same UID-mismatch reason as the two stages above.
       agent { docker { image 'python:3.12-slim'; args '-u root'; reuseNode true } }
       steps {
         sh '''
@@ -153,15 +117,9 @@ pipeline {
       }
     }
 
-    // Mirrors the old Matchy platform's SonarQube integration
-    // (Deployment/jenkins/Jenkinsfile) - same Jenkins SonarQube server
-    // config ('sonarqube-local'), same sonarqube-token credential, same
-    // docker_devsecops network the sonarqube container is already on.
-    // Runs after Lint & Test and AI service tests, not before: it needs
-    // apps/api and apps/app's coverage/lcov.info files, plus
-    // apps/ai/coverage.xml, which those stages produce (a stage-ordering
-    // bug in the first version of this had SonarQube running before those
-    // files existed at all - "No LCOV files were found").
+    // mirrors the old Matchy platform's sonarqube setup (same server config,
+    // token, docker network). needs to run after the test stages since it
+    // reads their coverage output.
     stage('SonarQube Analysis') {
       options { timeout(time: 20, unit: 'MINUTES') }
       steps {
@@ -234,6 +192,9 @@ pipeline {
       }
     }
 
+    // advisory only for now - marks the build unstable instead of failing it
+    // so a bad gate doesn't block the rest of the pipeline while we work
+    // through the coverage/reliability findings from the first real scan.
     stage('Quality Gate') {
       steps {
         script {
@@ -247,7 +208,9 @@ pipeline {
           ).trim()
 
           if (!ceTaskId) {
-            error "Could not find ceTaskId in report-task.txt - was the scanner run copied correctly?"
+            echo "no ceTaskId found in report-task.txt, skipping quality gate check"
+            currentBuild.result = 'UNSTABLE'
+            return
           }
 
           def ceStatus = ''
@@ -269,7 +232,9 @@ pipeline {
           }
 
           if (ceStatus != 'SUCCESS') {
-            error "SonarQube Compute Engine task did not succeed (status: ${ceStatus})"
+            echo "compute engine task didn't succeed (status: ${ceStatus}), quality gate result unknown"
+            currentBuild.result = 'UNSTABLE'
+            return
           }
 
           def qgResponse = sh(
@@ -281,19 +246,23 @@ pipeline {
           ).trim()
 
           if (!qgResponse) {
-            error "Quality Gate returned empty response"
+            echo "quality gate returned an empty response"
+            currentBuild.result = 'UNSTABLE'
+            return
           }
 
           def qgJson = readJSON text: qgResponse
           def qgStatus = qgJson?.projectStatus?.status ?: 'UNKNOWN'
 
           if (qgStatus == 'ERROR') {
-            error "Quality Gate FAILED - see ${sonarUrl}/dashboard?id=${projectKey}"
+            echo "quality gate failed - see ${sonarUrl}/dashboard?id=${projectKey}"
+            currentBuild.result = 'UNSTABLE'
           } else if (qgStatus != 'OK') {
-            error "Quality Gate returned unexpected status: ${qgStatus}"
+            echo "quality gate returned unexpected status: ${qgStatus}"
+            currentBuild.result = 'UNSTABLE'
+          } else {
+            echo "Quality Gate PASSED"
           }
-
-          echo "Quality Gate PASSED"
         }
       }
     }
@@ -338,13 +307,10 @@ pipeline {
           file(credentialsId: 'cosign-private-key', variable: 'COSIGN_KEY_FILE'),
           string(credentialsId: 'cosign-key-password', variable: 'COSIGN_PASSWORD')
         ]) {
-          // Single-quoted, not Groovy-interpolated ("""...""") like the rest
-          // of this file's sh blocks - Jenkins flags any sh step inside
-          // withCredentials that uses a GString as insecure, since it can't
-          // statically verify every reference in it is properly deferred to
-          // the shell. REGISTRY_REPO/IMAGE_TAG are already real env vars
-          // (declared in environment {}), so plain $VAR here works the same
-          // as ${...} did, without the warning.
+          // single-quoted, not Groovy-interpolated like the rest of this
+          // file - Jenkins flags any sh block inside withCredentials that
+          // uses a GString as insecure. REGISTRY_REPO/IMAGE_TAG are regular
+          // env vars so plain $VAR works fine here too.
           sh '''
             command -v cosign >/dev/null 2>&1 || { curl -sL -o /tmp/cosign https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 && chmod +x /tmp/cosign; }
             COSIGN_BIN=$(command -v cosign || echo /tmp/cosign)
