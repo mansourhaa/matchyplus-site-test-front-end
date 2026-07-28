@@ -166,6 +166,7 @@ AI and Redis are ClusterIP-only (not on Ingress). See [Deployment](../setup/depl
 | --- | --- |
 | New pages | `apps/app/src/app/` |
 | New API endpoints | `apps/api/src/routes/v1/` |
+| Matching / discovery | `apps/api` services + [Matching](../features/matching.md); AI rerank later via `MATCH` jobs |
 | New DB models | `packages/database/prisma/schema.prisma` |
 | New UI components | `pnpm dlx shadcn add` from `apps/app` |
 | New shared types | Auto-generated from Prisma schema |

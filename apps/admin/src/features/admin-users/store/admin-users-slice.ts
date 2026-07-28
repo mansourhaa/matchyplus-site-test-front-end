@@ -156,7 +156,7 @@ export const { setFilters, selectUser } = adminUsersSlice.actions;
 
 export const selectAdminUsersState = (state: RootState) => state.adminUsers;
 
-export const selectAdminUsers = createSelector([selectAdminUsersState], (adminUsers) => adminUsers);
+export const selectAdminUsers = selectAdminUsersState;
 
 /** Category filter options are derived from whatever the loaded users actually declare. */
 export const selectCategoryOptions = createSelector([selectAdminUsersState], (adminUsers) => {

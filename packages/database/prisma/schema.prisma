@@ -89,12 +89,31 @@ model User {
   total_earnings Int        @default(0)
   last_login     DateTime?
 
+  /// Matching / discovery fields (scripted Discovery v5 in apps/api).
+  goals           String[] @default([])
+  looking_for     String?  @db.Text()
+  activity_sector String?
+  service_type    String?
+  profile_type    String?
+  gps_latitude    Float?
+  gps_longitude   Float?
+
   create_at  DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
   aiJobs     AiJob[]
 
   reports_made     Report[] @relation("ReportsMade")
   reports_received Report[] @relation("ReportsReceived")
+
+  swipes_made       Swipe[]       @relation("SwipesMade")
+  swipes_received   Swipe[]       @relation("SwipesReceived")
+  swipe_logs        SwipeLog[]    @relation("SwipeLogsByUser")
+  swipe_log_targets SwipeLog[]    @relation("SwipeLogsOnTarget")
+  matches_as_low    Match[]       @relation("MatchesAsLow")
+  matches_as_high   Match[]       @relation("MatchesAsHigh")
+  location          UserLocation?
+  blocks_made       UserBlock[]   @relation("BlocksMade")
+  blocks_received   UserBlock[]   @relation("BlocksReceived")
 
   @@index([email])
   @@index([status])
@@ -120,6 +139,86 @@ model Report {
   @@index([reported_id])
   @@index([reporter_id])
   @@index([status])
+}
+
+/// Live swipe state + append-only logs. WITHDRAWN is not a pass — feed exclusion
+/// only applies to LEFT and RIGHT (see DiscoveryService).
+enum SwipeDirection {
+  LEFT
+  RIGHT
+  WITHDRAWN
+}
+
+/// Current swipe between two users (one row per pair). Upserted on each action.
+model Swipe {
+  id         String         @id @default(cuid())
+  swiper_id  String
+  swiper     User           @relation("SwipesMade", fields: [swiper_id], references: [id], onDelete: Cascade)
+  target_id  String
+  target     User           @relation("SwipesReceived", fields: [target_id], references: [id], onDelete: Cascade)
+  direction  SwipeDirection
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+
+  @@unique([swiper_id, target_id])
+  @@index([swiper_id, direction])
+  @@index([target_id, direction])
+}
+
+/// Append-only audit trail. Daily RIGHT count drives quota (UTC day).
+model SwipeLog {
+  id        String         @id @default(cuid())
+  user_id   String
+  user      User           @relation("SwipeLogsByUser", fields: [user_id], references: [id], onDelete: Cascade)
+  target_id String
+  target    User           @relation("SwipeLogsOnTarget", fields: [target_id], references: [id], onDelete: Cascade)
+  direction SwipeDirection
+  swiped_at DateTime       @default(now())
+
+  @@index([user_id, swiped_at, direction])
+  @@index([user_id, target_id])
+}
+
+/// Mutual RIGHT swipe. Presence of the row = active match (no status column).
+/// user_low_id / user_high_id are lexicographically ordered for a stable unique pair.
+model Match {
+  id           String   @id @default(cuid())
+  user_low_id  String
+  user_low     User     @relation("MatchesAsLow", fields: [user_low_id], references: [id], onDelete: Cascade)
+  user_high_id String
+  user_high    User     @relation("MatchesAsHigh", fields: [user_high_id], references: [id], onDelete: Cascade)
+  matched_at   DateTime @default(now())
+
+  @@unique([user_low_id, user_high_id])
+  @@index([user_low_id])
+  @@index([user_high_id])
+}
+
+/// Dynamic GPS for discovery radius (preferred over static User.gps_*).
+model UserLocation {
+  id               String   @id @default(cuid())
+  user_id          String   @unique
+  user             User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  latitude         Float
+  longitude        Float
+  location_enabled Boolean  @default(true)
+  city             String?
+  country          String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+}
+
+/// Bidirectional block check excludes both users from each other's feed and swipes.
+model UserBlock {
+  id         String   @id @default(cuid())
+  blocker_id String
+  blocker    User     @relation("BlocksMade", fields: [blocker_id], references: [id], onDelete: Cascade)
+  blocked_id String
+  blocked    User     @relation("BlocksReceived", fields: [blocked_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+
+  @@unique([blocker_id, blocked_id])
+  @@index([blocked_id])
 }
 
 enum AiJobType {

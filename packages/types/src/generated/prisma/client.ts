@@ -62,6 +62,32 @@ export type User = Prisma.UserModel;
  */
 export type Report = Prisma.ReportModel;
 /**
+ * Model Swipe
+ * Current swipe between two users (one row per pair). Upserted on each action.
+ */
+export type Swipe = Prisma.SwipeModel;
+/**
+ * Model SwipeLog
+ * Append-only audit trail. Daily RIGHT count drives quota (UTC day).
+ */
+export type SwipeLog = Prisma.SwipeLogModel;
+/**
+ * Model Match
+ * Mutual RIGHT swipe. Presence of the row = active match (no status column).
+ * user_low_id / user_high_id are lexicographically ordered for a stable unique pair.
+ */
+export type Match = Prisma.MatchModel;
+/**
+ * Model UserLocation
+ * Dynamic GPS for discovery radius (preferred over static User.gps_*).
+ */
+export type UserLocation = Prisma.UserLocationModel;
+/**
+ * Model UserBlock
+ * Bidirectional block check excludes both users from each other's feed and swipes.
+ */
+export type UserBlock = Prisma.UserBlockModel;
+/**
  * Model AiJob
  * Durable AI job record. Redis Streams is the queue transport;
  * this table is the source of truth for status polling and audits.

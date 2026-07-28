@@ -4,7 +4,6 @@ import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
 import { config } from '../config.js';
-import { isAdminRole } from '../constants.js';
 import {
   AuthCheckPayload,
   AuthCheckResult,
@@ -17,6 +16,7 @@ import {
   ResetPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { isAdminRole } from '../utils/roles.js';
 
 function parseTokenTtl(ttl: string): SignOptions['expiresIn'] {
   return /^\d+$/.test(ttl) ? Number(ttl) : (ttl as SignOptions['expiresIn']);

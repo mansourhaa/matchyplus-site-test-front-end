@@ -39,9 +39,6 @@ const adminAnalyticsSlice = createSlice({
 
 export const selectAdminAnalyticsState = (state: RootState) => state.adminAnalytics;
 
-export const selectAdminAnalytics = createSelector(
-  [selectAdminAnalyticsState],
-  (analytics) => analytics,
-);
+export const selectAdminAnalytics = selectAdminAnalyticsState;
 
 export default adminAnalyticsSlice.reducer;
