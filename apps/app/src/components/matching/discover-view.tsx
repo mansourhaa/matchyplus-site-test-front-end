@@ -46,16 +46,24 @@ export function DiscoverView() {
 
   const onPass = async () => {
     if (!top || matching.swipeLoading) return;
-    await dispatch(swipeProfile({ targetUserId: top.id, direction: 'left', profile: top }));
+    try {
+      await dispatch(swipeProfile({ targetUserId: top.id, direction: 'left', profile: top }));
+    } catch {
+      // Errors are stored on the matching slice via rejectWithValue.
+    }
   };
 
   const onConnect = async () => {
     if (!top || matching.swipeLoading) return;
-    const result = await dispatch(
-      swipeProfile({ targetUserId: top.id, direction: 'right', profile: top }),
-    );
-    if (swipeProfile.fulfilled.match(result) && result.payload.match) {
-      void dispatch(fetchMatchState());
+    try {
+      const result = await dispatch(
+        swipeProfile({ targetUserId: top.id, direction: 'right', profile: top }),
+      );
+      if (swipeProfile.fulfilled.match(result) && result.payload.match) {
+        void dispatch(fetchMatchState());
+      }
+    } catch {
+      // Errors are stored on the matching slice via rejectWithValue.
     }
   };
 

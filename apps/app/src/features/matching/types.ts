@@ -14,7 +14,7 @@ export type ScoreBreakdown = {
   contribution: number;
 };
 
-export type FeedProfile = {
+export type MatchingProfile = {
   id: string;
   name: string;
   image: string | null;
@@ -23,10 +23,13 @@ export type FeedProfile = {
   category: string | null;
   city: string | null;
   interests: string[];
-  goals: string[];
   activity_sector: string | null;
   service_type: string | null;
   rating: number;
+};
+
+export type FeedProfile = MatchingProfile & {
+  goals: string[];
   distance_km: number | null;
   match_score: number;
   match_group: number;
@@ -40,25 +43,13 @@ export type MatchRow = {
   match_id: string;
   matched_at: string;
   matched_user_id: string;
-  profile: {
-    id: string;
-    name: string;
-    image: string | null;
-    bio: string | null;
-    job: string | null;
-    category: string | null;
-    city: string | null;
-    interests: string[];
-    activity_sector: string | null;
-    service_type: string | null;
-    rating: number;
-  } | null;
+  profile: MatchingProfile | null;
 };
 
 export type PendingRow = {
   swipe_id: string;
   liked_at: string;
-  profile: NonNullable<MatchRow['profile']>;
+  profile: MatchingProfile;
 };
 
 export type MatchSummary = {
@@ -72,6 +63,42 @@ export type SwipeResult = {
   direction: 'LEFT' | 'RIGHT';
   match: MatchSummary | null;
   quota: SwipeQuota;
+};
+
+export type DiscoveryFeedQuery = {
+  latitude?: number;
+  longitude?: number;
+  limit?: number;
+};
+
+export type SwipeFeedResponse = {
+  profiles: FeedProfile[];
+  quota: SwipeQuota;
+};
+
+export type MatchStateResponse = {
+  matches: MatchRow[];
+  pending: PendingRow[];
+};
+
+export type SwipeProfileInput = {
+  targetUserId: string;
+  direction: 'left' | 'right';
+  profile?: FeedProfile;
+};
+
+export type SwipeProfileResult = Omit<SwipeResult, 'direction'> & {
+  targetUserId: string;
+  direction: 'left' | 'right';
+  profile: FeedProfile | null;
+};
+
+export type RealtimeMessage = {
+  event?: string;
+  payload?: {
+    event_type?: string;
+    matched_user_id?: string;
+  };
 };
 
 export type MatchingState = {
@@ -89,6 +116,6 @@ export type MatchingState = {
   swipeLoading: boolean;
   swipeError: string | null;
   withdrawLoadingId: string | null;
-  celebrationProfile: FeedProfile | MatchRow['profile'] | null;
+  celebrationProfile: FeedProfile | MatchingProfile | null;
   showQuotaModal: boolean;
 };

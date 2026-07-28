@@ -1,8 +1,7 @@
 import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 
-type RealtimeQuery = {
-  access_token?: string;
-};
+import { realtimeSchema } from '../../../schemas/v1/matching.js';
+import { RealtimeQuery } from '../../../types/matching.js';
 
 /**
  * Authenticated websocket for match / swipe realtime events.
@@ -14,19 +13,30 @@ type RealtimeQuery = {
  */
 const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   async function bindQueryToken(request: FastifyRequest<{ Querystring: RealtimeQuery }>) {
-    const queryToken = request.query?.access_token;
-    if (queryToken && !request.headers.authorization) {
-      request.headers.authorization = `Bearer ${queryToken}`;
+    try {
+      const queryToken = request.query?.access_token;
+      if (queryToken && !request.headers.authorization) {
+        request.headers.authorization = `Bearer ${queryToken}`;
+      }
+    } catch (err) {
+      throw err;
     }
-    await fastify.verifyToken(request);
   }
 
   fastify.get<{ Querystring: RealtimeQuery }>(
     '/',
-    { websocket: true, preHandler: [bindQueryToken] },
+    {
+      websocket: true,
+      schema: realtimeSchema,
+      preHandler: [bindQueryToken, fastify.verifyToken],
+    },
     (socket, request) => {
       const userId = request.loggedUser.id;
-      fastify.userRealtime.subscribe(userId, socket);
+      try {
+        fastify.userRealtime.subscribe(userId, socket);
+      } catch (err) {
+        throw err;
+      }
 
       socket.on('close', () => {
         fastify.userRealtime.unsubscribe(userId, socket);

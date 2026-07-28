@@ -154,7 +154,15 @@ export function MatchesView() {
                     <button
                       type="button"
                       disabled={matching.withdrawLoadingId === row.profile.id}
-                      onClick={() => void dispatch(withdrawPending(row.profile.id))}
+                      onClick={() => {
+                        void (async () => {
+                          try {
+                            await dispatch(withdrawPending(row.profile.id));
+                          } catch {
+                            // Errors are stored on the matching slice via rejectWithValue.
+                          }
+                        })();
+                      }}
                       className="rounded-xl border border-[#F5C6C6] px-3 py-2 text-xs font-bold text-[#E74C3C] disabled:opacity-50"
                     >
                       {matching.withdrawLoadingId === row.profile.id

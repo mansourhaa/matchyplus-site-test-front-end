@@ -4,10 +4,12 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
 
 import type {
-  FeedProfile,
-  MatchRow,
+  DiscoveryFeedQuery,
+  MatchStateResponse,
   MatchingState,
-  PendingRow,
+  SwipeFeedResponse,
+  SwipeProfileInput,
+  SwipeProfileResult,
   SwipeQuota,
   SwipeResult,
 } from '../types';
@@ -33,12 +35,11 @@ const initialState: MatchingState = {
 
 export const fetchSwipeFeed = createAsyncThunk(
   'matching/fetchSwipeFeed',
-  async (coords: { latitude?: number; longitude?: number } | undefined, { rejectWithValue }) => {
+  async (coords: DiscoveryFeedQuery | undefined, { rejectWithValue }) => {
     try {
-      const response = await api.get<{
-        profiles: FeedProfile[];
-        quota: SwipeQuota;
-      }>('/discovery/swipe-feed', { params: coords });
+      const response = await api.get<SwipeFeedResponse>('/discovery/swipe-feed', {
+        params: coords,
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(apiErrorKey(error, 'matching.errors.feed'));
@@ -63,13 +64,13 @@ export const fetchMatchState = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const [matchesRes, pendingRes] = await Promise.all([
-        api.get<{ matches: MatchRow[] }>('/swipe/matches'),
-        api.get<{ pending: PendingRow[] }>('/swipe/pending'),
+        api.get<{ matches: MatchStateResponse['matches'] }>('/swipe/matches'),
+        api.get<{ pending: MatchStateResponse['pending'] }>('/swipe/pending'),
       ]);
       return {
         matches: matchesRes.data.matches ?? [],
         pending: pendingRes.data.pending ?? [],
-      };
+      } satisfies MatchStateResponse;
     } catch (error) {
       return rejectWithValue(apiErrorKey(error, 'matching.errors.matches'));
     }
@@ -78,10 +79,7 @@ export const fetchMatchState = createAsyncThunk(
 
 export const swipeProfile = createAsyncThunk(
   'matching/swipeProfile',
-  async (
-    input: { targetUserId: string; direction: 'left' | 'right'; profile?: FeedProfile },
-    { rejectWithValue },
-  ) => {
+  async (input: SwipeProfileInput, { rejectWithValue }) => {
     try {
       const response = await api.post<SwipeResult>('/discovery/swipe', {
         target_user_id: input.targetUserId,
@@ -92,7 +90,7 @@ export const swipeProfile = createAsyncThunk(
         targetUserId: input.targetUserId,
         direction: input.direction,
         profile: input.profile ?? null,
-      };
+      } satisfies SwipeProfileResult;
     } catch (error) {
       return rejectWithValue(apiErrorKey(error, 'matching.errors.swipe'));
     }
@@ -189,9 +187,6 @@ const matchingSlice = createSlice({
         if (action.payload.match && action.payload.profile) {
           state.celebrationProfile = action.payload.profile;
         }
-        if (action.payload.direction === 'right' && !action.payload.match) {
-          // Pending list refreshed separately; optimistic skip is fine.
-        }
       })
       .addCase(swipeProfile.rejected, (state, action) => {
         state.swipeLoading = false;
@@ -230,7 +225,7 @@ export const { clearCelebration, closeQuotaModal, clearSwipeError } = matchingSl
 
 export const selectMatchingState = (state: RootState) => state.matching;
 
-export const selectMatching = createSelector([selectMatchingState], (matching) => matching);
+export const selectMatching = selectMatchingState;
 
 export const selectTopFeedProfile = createSelector(
   [selectMatchingState],

@@ -57,3 +57,11 @@ export type DiscoveryFeedQuery = {
   longitude?: number;
   limit?: number;
 };
+
+export type TargetUserParams = {
+  userId: string;
+};
+
+export type RealtimeQuery = {
+  access_token?: string;
+};

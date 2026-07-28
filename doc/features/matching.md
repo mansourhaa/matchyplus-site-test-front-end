@@ -89,12 +89,14 @@ Identities are **User ids** (cuid), not legacy integer profile ids.
 
 ```text
 apps/api/src/
-  utils/matching-score.ts     # pure scorer
+  constants.ts                  # DISCOVERY_RADIUS_M, DISCOVERY_PAGE_SIZE, …
+  utils/matching-score.ts       # pure scorer
+  utils/discovery-feed.ts       # feed select + coord/score profile helpers
   utils/match-pair.ts
   utils/utc-day.ts
-  services/discovery.ts
-  services/swipe.ts
-  services/swipe-quota.ts
+  services/discovery.ts         # DiscoveryService class
+  services/swipe.ts             # SwipeService class
+  services/swipe-quota.ts       # SwipeQuotaService class
   plugins/user-realtime.ts
   routes/v1/discovery/
   routes/v1/swipe/

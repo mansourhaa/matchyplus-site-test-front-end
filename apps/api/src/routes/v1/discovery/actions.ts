@@ -1,9 +1,13 @@
 import { FastifyPluginAsync } from 'fastify';
 
-import { postSwipeSchema, swipeFeedQuerySchema } from '../../../schemas/v1/index.js';
+import {
+  discoveryQuotaSchema,
+  postSwipeSchema,
+  swipeFeedQuerySchema,
+} from '../../../schemas/v1/matching.js';
 import { DiscoveryService } from '../../../services/discovery.js';
 import { SwipeService } from '../../../services/swipe.js';
-import { PostSwipeBody } from '../../../types/matching.js';
+import { DiscoveryFeedQuery, PostSwipeBody } from '../../../types/matching.js';
 
 const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const discovery = new DiscoveryService({ prisma: fastify.prisma });
@@ -12,22 +16,38 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
     notify: (userId, event, payload) => fastify.notifyUser(userId, event, payload),
   });
 
-  fastify.get<{
-    Querystring: { latitude?: number; longitude?: number; limit?: number };
-  }>('/swipe-feed', { schema: swipeFeedQuerySchema }, async (request) => {
-    return discovery.getSwipeFeed(request.loggedUser.id, request.query);
-  });
+  fastify.get<{ Querystring: DiscoveryFeedQuery }>(
+    '/swipe-feed',
+    { schema: swipeFeedQuerySchema },
+    async (request, reply) => {
+      try {
+        const data = await discovery.getSwipeFeed(request.loggedUser.id, request.query);
+        return reply.code(200).send(data);
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
 
-  fastify.get('/quota', async (request) => {
-    return swipe.getQuota(request.loggedUser.id);
+  fastify.get('/quota', { schema: discoveryQuotaSchema }, async (request, reply) => {
+    try {
+      const data = await swipe.getQuota(request.loggedUser.id);
+      return reply.code(200).send(data);
+    } catch (err) {
+      throw err;
+    }
   });
 
   fastify.post<{ Body: PostSwipeBody }>(
     '/swipe',
     { schema: postSwipeSchema },
     async (request, reply) => {
-      const result = await swipe.postSwipe(request.loggedUser.id, request.body);
-      return reply.code(200).send(result);
+      try {
+        const result = await swipe.postSwipe(request.loggedUser.id, request.body);
+        return reply.code(200).send(result);
+      } catch (err) {
+        throw err;
+      }
     },
   );
 };
