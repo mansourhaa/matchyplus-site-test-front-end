@@ -1,0 +1,57 @@
+---
+description: Next.js app conventions — features, typing, error handling
+globs: apps/app/**/*
+alwaysApply: false
+---
+
+# App (`apps/app`)
+
+Docs: `doc/features/ui-system.md`, `doc/features/authentication.md`.
+
+## Layout
+
+```text
+src/app/                 # App Router pages / layouts
+src/features/<feature>/  # types, store, hooks, feature components
+src/components/          # UI composition
+src/lib/                 # api clients, auth helpers, store
+```
+
+## Conventions
+
+- Prefer feature folders under `src/features/` for domain state, types, and hooks.
+- Use `@saas-boilerplate/ui` / shared Tailwind patterns; don’t invent a parallel design system.
+- Talk to the API via existing clients (axios / feature thunks); don’t bypass auth casually.
+- Never hardcode credentials, demo passwords, or secrets in client components.
+- Match existing Redux / store patterns in `src/features` and `src/lib/store.ts`.
+
+## Request / response typing (required)
+
+- Every API call payload and response must use a **named type** from `features/<feature>/types.ts`.
+- Do **not** inline anonymous objects in thunks or hooks for body/query/params/response shapes.
+- Align client types with the API contract (`Body` / `Querystring` / `Params` equivalents).
+
+```ts
+// correct
+async (coords: DiscoveryFeedQuery | undefined) => {
+  const response = await api.get<SwipeFeedResponse>('/discovery/swipe-feed', { params: coords });
+}
+
+// forbidden
+async (coords: { latitude?: number; longitude?: number } | undefined) => { … }
+```
+
+## Error handling / try-catch (required)
+
+- Every async thunk that talks to the API must use `try/catch`.
+- On failure, return `rejectWithValue(...)` (or rethrow) — never swallow silently without updating feature state.
+- Async UI handlers that dispatch network thunks must also use `try/catch`.
+- Prefer mapping transport errors to stable i18n keys (`apiErrorKey`) for user-facing messages.
+
+## Selectors
+
+- Do not use `createSelector` for identity/pass-through selectors; export the plain state selector instead.
+
+## Tests
+
+- Component/unit tests with Vitest where the codebase already tests similar UI.

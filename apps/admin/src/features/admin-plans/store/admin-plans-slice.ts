@@ -64,6 +64,6 @@ const adminPlansSlice = createSlice({
 
 export const selectAdminPlansState = (state: RootState) => state.adminPlans;
 
-export const selectAdminPlans = createSelector([selectAdminPlansState], (plans) => plans);
+export const selectAdminPlans = selectAdminPlansState;
 
 export default adminPlansSlice.reducer;

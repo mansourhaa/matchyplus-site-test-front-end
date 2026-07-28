@@ -6,9 +6,9 @@
       "ESNext"
     ],
 
+    "rootDir": "src",
     "outDir": "dist",
     "sourceMap": false,
-    "baseUrl": ".",
     "noImplicitThis": false,
     "declaration": true,
     "declarationMap": true,

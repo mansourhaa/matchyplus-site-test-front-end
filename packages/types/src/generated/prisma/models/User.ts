@@ -32,6 +32,8 @@ export type UserAvgAggregateOutputType = {
   matches: number | null;
   missions: number | null;
   total_earnings: number | null;
+  gps_latitude: number | null;
+  gps_longitude: number | null;
 };
 
 export type UserSumAggregateOutputType = {
@@ -40,6 +42,8 @@ export type UserSumAggregateOutputType = {
   matches: number | null;
   missions: number | null;
   total_earnings: number | null;
+  gps_latitude: number | null;
+  gps_longitude: number | null;
 };
 
 export type UserMinAggregateOutputType = {
@@ -70,6 +74,12 @@ export type UserMinAggregateOutputType = {
   google_id: string | null;
   linkedin_id: string | null;
   phone_verified: boolean | null;
+  looking_for: string | null;
+  activity_sector: string | null;
+  service_type: string | null;
+  profile_type: string | null;
+  gps_latitude: number | null;
+  gps_longitude: number | null;
   create_at: Date | null;
   updated_at: Date | null;
 };
@@ -102,6 +112,12 @@ export type UserMaxAggregateOutputType = {
   google_id: string | null;
   linkedin_id: string | null;
   phone_verified: boolean | null;
+  looking_for: string | null;
+  activity_sector: string | null;
+  service_type: string | null;
+  profile_type: string | null;
+  gps_latitude: number | null;
+  gps_longitude: number | null;
   create_at: Date | null;
   updated_at: Date | null;
 };
@@ -137,6 +153,13 @@ export type UserCountAggregateOutputType = {
   google_id: number;
   linkedin_id: number;
   phone_verified: number;
+  goals: number;
+  looking_for: number;
+  activity_sector: number;
+  service_type: number;
+  profile_type: number;
+  gps_latitude: number;
+  gps_longitude: number;
   create_at: number;
   updated_at: number;
   _all: number;
@@ -148,6 +171,8 @@ export type UserAvgAggregateInputType = {
   matches?: true;
   missions?: true;
   total_earnings?: true;
+  gps_latitude?: true;
+  gps_longitude?: true;
 };
 
 export type UserSumAggregateInputType = {
@@ -156,6 +181,8 @@ export type UserSumAggregateInputType = {
   matches?: true;
   missions?: true;
   total_earnings?: true;
+  gps_latitude?: true;
+  gps_longitude?: true;
 };
 
 export type UserMinAggregateInputType = {
@@ -186,6 +213,12 @@ export type UserMinAggregateInputType = {
   google_id?: true;
   linkedin_id?: true;
   phone_verified?: true;
+  looking_for?: true;
+  activity_sector?: true;
+  service_type?: true;
+  profile_type?: true;
+  gps_latitude?: true;
+  gps_longitude?: true;
   create_at?: true;
   updated_at?: true;
 };
@@ -218,6 +251,12 @@ export type UserMaxAggregateInputType = {
   google_id?: true;
   linkedin_id?: true;
   phone_verified?: true;
+  looking_for?: true;
+  activity_sector?: true;
+  service_type?: true;
+  profile_type?: true;
+  gps_latitude?: true;
+  gps_longitude?: true;
   create_at?: true;
   updated_at?: true;
 };
@@ -253,6 +292,13 @@ export type UserCountAggregateInputType = {
   google_id?: true;
   linkedin_id?: true;
   phone_verified?: true;
+  goals?: true;
+  looking_for?: true;
+  activity_sector?: true;
+  service_type?: true;
+  profile_type?: true;
+  gps_latitude?: true;
+  gps_longitude?: true;
   create_at?: true;
   updated_at?: true;
   _all?: true;
@@ -376,6 +422,13 @@ export type UserGroupByOutputType = {
   google_id: string | null;
   linkedin_id: string | null;
   phone_verified: boolean;
+  goals: string[];
+  looking_for: string | null;
+  activity_sector: string | null;
+  service_type: string | null;
+  profile_type: string | null;
+  gps_latitude: number | null;
+  gps_longitude: number | null;
   create_at: Date;
   updated_at: Date;
   _count: UserCountAggregateOutputType | null;
@@ -431,6 +484,13 @@ export type UserWhereInput = {
   google_id?: Prisma.StringNullableFilter<'User'> | string | null;
   linkedin_id?: Prisma.StringNullableFilter<'User'> | string | null;
   phone_verified?: Prisma.BoolFilter<'User'> | boolean;
+  goals?: Prisma.StringNullableListFilter<'User'>;
+  looking_for?: Prisma.StringNullableFilter<'User'> | string | null;
+  activity_sector?: Prisma.StringNullableFilter<'User'> | string | null;
+  service_type?: Prisma.StringNullableFilter<'User'> | string | null;
+  profile_type?: Prisma.StringNullableFilter<'User'> | string | null;
+  gps_latitude?: Prisma.FloatNullableFilter<'User'> | number | null;
+  gps_longitude?: Prisma.FloatNullableFilter<'User'> | number | null;
   create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
   updated_at?: Prisma.DateTimeFilter<'User'> | Date | string;
   aiJobs?: Prisma.AiJobListRelationFilter;
@@ -439,6 +499,18 @@ export type UserWhereInput = {
   otp_challenges?: Prisma.OtpChallengeListRelationFilter;
   reports_made?: Prisma.ReportListRelationFilter;
   reports_received?: Prisma.ReportListRelationFilter;
+  swipes_made?: Prisma.SwipeListRelationFilter;
+  swipes_received?: Prisma.SwipeListRelationFilter;
+  swipe_logs?: Prisma.SwipeLogListRelationFilter;
+  swipe_log_targets?: Prisma.SwipeLogListRelationFilter;
+  matches_as_low?: Prisma.MatchListRelationFilter;
+  matches_as_high?: Prisma.MatchListRelationFilter;
+  location?: Prisma.XOR<
+    Prisma.UserLocationNullableScalarRelationFilter,
+    Prisma.UserLocationWhereInput
+  > | null;
+  blocks_made?: Prisma.UserBlockListRelationFilter;
+  blocks_received?: Prisma.UserBlockListRelationFilter;
 };
 
 export type UserOrderByWithRelationInput = {
@@ -472,6 +544,13 @@ export type UserOrderByWithRelationInput = {
   google_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
+  goals?: Prisma.SortOrder;
+  looking_for?: Prisma.SortOrderInput | Prisma.SortOrder;
+  activity_sector?: Prisma.SortOrderInput | Prisma.SortOrder;
+  service_type?: Prisma.SortOrderInput | Prisma.SortOrder;
+  profile_type?: Prisma.SortOrderInput | Prisma.SortOrder;
+  gps_latitude?: Prisma.SortOrderInput | Prisma.SortOrder;
+  gps_longitude?: Prisma.SortOrderInput | Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
   aiJobs?: Prisma.AiJobOrderByRelationAggregateInput;
@@ -480,6 +559,15 @@ export type UserOrderByWithRelationInput = {
   otp_challenges?: Prisma.OtpChallengeOrderByRelationAggregateInput;
   reports_made?: Prisma.ReportOrderByRelationAggregateInput;
   reports_received?: Prisma.ReportOrderByRelationAggregateInput;
+  swipes_made?: Prisma.SwipeOrderByRelationAggregateInput;
+  swipes_received?: Prisma.SwipeOrderByRelationAggregateInput;
+  swipe_logs?: Prisma.SwipeLogOrderByRelationAggregateInput;
+  swipe_log_targets?: Prisma.SwipeLogOrderByRelationAggregateInput;
+  matches_as_low?: Prisma.MatchOrderByRelationAggregateInput;
+  matches_as_high?: Prisma.MatchOrderByRelationAggregateInput;
+  location?: Prisma.UserLocationOrderByWithRelationInput;
+  blocks_made?: Prisma.UserBlockOrderByRelationAggregateInput;
+  blocks_received?: Prisma.UserBlockOrderByRelationAggregateInput;
 };
 
 export type UserWhereUniqueInput = Prisma.AtLeast<
@@ -517,6 +605,13 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     last_login?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
     email_verified?: Prisma.BoolFilter<'User'> | boolean;
     phone_verified?: Prisma.BoolFilter<'User'> | boolean;
+    goals?: Prisma.StringNullableListFilter<'User'>;
+    looking_for?: Prisma.StringNullableFilter<'User'> | string | null;
+    activity_sector?: Prisma.StringNullableFilter<'User'> | string | null;
+    service_type?: Prisma.StringNullableFilter<'User'> | string | null;
+    profile_type?: Prisma.StringNullableFilter<'User'> | string | null;
+    gps_latitude?: Prisma.FloatNullableFilter<'User'> | number | null;
+    gps_longitude?: Prisma.FloatNullableFilter<'User'> | number | null;
     create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
     updated_at?: Prisma.DateTimeFilter<'User'> | Date | string;
     aiJobs?: Prisma.AiJobListRelationFilter;
@@ -525,6 +620,18 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     otp_challenges?: Prisma.OtpChallengeListRelationFilter;
     reports_made?: Prisma.ReportListRelationFilter;
     reports_received?: Prisma.ReportListRelationFilter;
+    swipes_made?: Prisma.SwipeListRelationFilter;
+    swipes_received?: Prisma.SwipeListRelationFilter;
+    swipe_logs?: Prisma.SwipeLogListRelationFilter;
+    swipe_log_targets?: Prisma.SwipeLogListRelationFilter;
+    matches_as_low?: Prisma.MatchListRelationFilter;
+    matches_as_high?: Prisma.MatchListRelationFilter;
+    location?: Prisma.XOR<
+      Prisma.UserLocationNullableScalarRelationFilter,
+      Prisma.UserLocationWhereInput
+    > | null;
+    blocks_made?: Prisma.UserBlockListRelationFilter;
+    blocks_received?: Prisma.UserBlockListRelationFilter;
   },
   'id' | 'email' | 'phone' | 'google_id' | 'linkedin_id'
 >;
@@ -560,6 +667,13 @@ export type UserOrderByWithAggregationInput = {
   google_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
+  goals?: Prisma.SortOrder;
+  looking_for?: Prisma.SortOrderInput | Prisma.SortOrder;
+  activity_sector?: Prisma.SortOrderInput | Prisma.SortOrder;
+  service_type?: Prisma.SortOrderInput | Prisma.SortOrder;
+  profile_type?: Prisma.SortOrderInput | Prisma.SortOrder;
+  gps_latitude?: Prisma.SortOrderInput | Prisma.SortOrder;
+  gps_longitude?: Prisma.SortOrderInput | Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
   _count?: Prisma.UserCountOrderByAggregateInput;
@@ -603,6 +717,13 @@ export type UserScalarWhereWithAggregatesInput = {
   google_id?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   linkedin_id?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   phone_verified?: Prisma.BoolWithAggregatesFilter<'User'> | boolean;
+  goals?: Prisma.StringNullableListFilter<'User'>;
+  looking_for?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  activity_sector?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  service_type?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  profile_type?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  gps_latitude?: Prisma.FloatNullableWithAggregatesFilter<'User'> | number | null;
+  gps_longitude?: Prisma.FloatNullableWithAggregatesFilter<'User'> | number | null;
   create_at?: Prisma.DateTimeWithAggregatesFilter<'User'> | Date | string;
   updated_at?: Prisma.DateTimeWithAggregatesFilter<'User'> | Date | string;
 };
@@ -638,6 +759,13 @@ export type UserCreateInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
@@ -646,6 +774,15 @@ export type UserCreateInput = {
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserUncheckedCreateInput = {
@@ -679,6 +816,13 @@ export type UserUncheckedCreateInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
@@ -687,6 +831,15 @@ export type UserUncheckedCreateInput = {
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserUpdateInput = {
@@ -720,6 +873,13 @@ export type UserUpdateInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
@@ -728,6 +888,15 @@ export type UserUpdateInput = {
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserUncheckedUpdateInput = {
@@ -761,6 +930,13 @@ export type UserUncheckedUpdateInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
@@ -769,6 +945,15 @@ export type UserUncheckedUpdateInput = {
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserCreateManyInput = {
@@ -802,6 +987,13 @@ export type UserCreateManyInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
 };
@@ -837,6 +1029,13 @@ export type UserUpdateManyMutationInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -872,6 +1071,13 @@ export type UserUncheckedUpdateManyInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -907,6 +1113,13 @@ export type UserCountOrderByAggregateInput = {
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
+  goals?: Prisma.SortOrder;
+  looking_for?: Prisma.SortOrder;
+  activity_sector?: Prisma.SortOrder;
+  service_type?: Prisma.SortOrder;
+  profile_type?: Prisma.SortOrder;
+  gps_latitude?: Prisma.SortOrder;
+  gps_longitude?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
 };
@@ -917,6 +1130,8 @@ export type UserAvgOrderByAggregateInput = {
   matches?: Prisma.SortOrder;
   missions?: Prisma.SortOrder;
   total_earnings?: Prisma.SortOrder;
+  gps_latitude?: Prisma.SortOrder;
+  gps_longitude?: Prisma.SortOrder;
 };
 
 export type UserMaxOrderByAggregateInput = {
@@ -947,6 +1162,12 @@ export type UserMaxOrderByAggregateInput = {
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
+  looking_for?: Prisma.SortOrder;
+  activity_sector?: Prisma.SortOrder;
+  service_type?: Prisma.SortOrder;
+  profile_type?: Prisma.SortOrder;
+  gps_latitude?: Prisma.SortOrder;
+  gps_longitude?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
 };
@@ -979,6 +1200,12 @@ export type UserMinOrderByAggregateInput = {
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
+  looking_for?: Prisma.SortOrder;
+  activity_sector?: Prisma.SortOrder;
+  service_type?: Prisma.SortOrder;
+  profile_type?: Prisma.SortOrder;
+  gps_latitude?: Prisma.SortOrder;
+  gps_longitude?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
   updated_at?: Prisma.SortOrder;
 };
@@ -989,6 +1216,8 @@ export type UserSumOrderByAggregateInput = {
   matches?: Prisma.SortOrder;
   missions?: Prisma.SortOrder;
   total_earnings?: Prisma.SortOrder;
+  gps_latitude?: Prisma.SortOrder;
+  gps_longitude?: Prisma.SortOrder;
 };
 
 export type UserScalarRelationFilter = {
@@ -1010,6 +1239,10 @@ export type UserCreatelanguagesInput = {
 };
 
 export type UserCreatecontact_modesInput = {
+  set: string[];
+};
+
+export type UserCreategoalsInput = {
   set: string[];
 };
 
@@ -1042,6 +1275,19 @@ export type UserUpdatecontact_modesInput = {
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null;
+};
+
+export type UserUpdategoalsInput = {
+  set?: string[];
+  push?: string | string[];
+};
+
+export type NullableFloatFieldUpdateOperationsInput = {
+  set?: number | null;
+  increment?: number;
+  decrement?: number;
+  multiply?: number;
+  divide?: number;
 };
 
 export type UserCreateNestedOneWithoutRefresh_tokensInput = {
@@ -1176,6 +1422,240 @@ export type UserUpdateOneRequiredWithoutReports_receivedNestedInput = {
   >;
 };
 
+export type UserCreateNestedOneWithoutSwipes_madeInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipes_madeInput,
+    Prisma.UserUncheckedCreateWithoutSwipes_madeInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSwipes_madeInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserCreateNestedOneWithoutSwipes_receivedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipes_receivedInput,
+    Prisma.UserUncheckedCreateWithoutSwipes_receivedInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSwipes_receivedInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutSwipes_madeNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipes_madeInput,
+    Prisma.UserUncheckedCreateWithoutSwipes_madeInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSwipes_madeInput;
+  upsert?: Prisma.UserUpsertWithoutSwipes_madeInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutSwipes_madeInput,
+      Prisma.UserUpdateWithoutSwipes_madeInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutSwipes_madeInput
+  >;
+};
+
+export type UserUpdateOneRequiredWithoutSwipes_receivedNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipes_receivedInput,
+    Prisma.UserUncheckedCreateWithoutSwipes_receivedInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSwipes_receivedInput;
+  upsert?: Prisma.UserUpsertWithoutSwipes_receivedInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutSwipes_receivedInput,
+      Prisma.UserUpdateWithoutSwipes_receivedInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutSwipes_receivedInput
+  >;
+};
+
+export type UserCreateNestedOneWithoutSwipe_logsInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipe_logsInput,
+    Prisma.UserUncheckedCreateWithoutSwipe_logsInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSwipe_logsInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserCreateNestedOneWithoutSwipe_log_targetsInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipe_log_targetsInput,
+    Prisma.UserUncheckedCreateWithoutSwipe_log_targetsInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSwipe_log_targetsInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutSwipe_logsNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipe_logsInput,
+    Prisma.UserUncheckedCreateWithoutSwipe_logsInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSwipe_logsInput;
+  upsert?: Prisma.UserUpsertWithoutSwipe_logsInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutSwipe_logsInput,
+      Prisma.UserUpdateWithoutSwipe_logsInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutSwipe_logsInput
+  >;
+};
+
+export type UserUpdateOneRequiredWithoutSwipe_log_targetsNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipe_log_targetsInput,
+    Prisma.UserUncheckedCreateWithoutSwipe_log_targetsInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSwipe_log_targetsInput;
+  upsert?: Prisma.UserUpsertWithoutSwipe_log_targetsInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutSwipe_log_targetsInput,
+      Prisma.UserUpdateWithoutSwipe_log_targetsInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutSwipe_log_targetsInput
+  >;
+};
+
+export type UserCreateNestedOneWithoutMatches_as_lowInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutMatches_as_lowInput,
+    Prisma.UserUncheckedCreateWithoutMatches_as_lowInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMatches_as_lowInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserCreateNestedOneWithoutMatches_as_highInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutMatches_as_highInput,
+    Prisma.UserUncheckedCreateWithoutMatches_as_highInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMatches_as_highInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutMatches_as_lowNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutMatches_as_lowInput,
+    Prisma.UserUncheckedCreateWithoutMatches_as_lowInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMatches_as_lowInput;
+  upsert?: Prisma.UserUpsertWithoutMatches_as_lowInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutMatches_as_lowInput,
+      Prisma.UserUpdateWithoutMatches_as_lowInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutMatches_as_lowInput
+  >;
+};
+
+export type UserUpdateOneRequiredWithoutMatches_as_highNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutMatches_as_highInput,
+    Prisma.UserUncheckedCreateWithoutMatches_as_highInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMatches_as_highInput;
+  upsert?: Prisma.UserUpsertWithoutMatches_as_highInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutMatches_as_highInput,
+      Prisma.UserUpdateWithoutMatches_as_highInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutMatches_as_highInput
+  >;
+};
+
+export type UserCreateNestedOneWithoutLocationInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutLocationInput,
+    Prisma.UserUncheckedCreateWithoutLocationInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutLocationInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutLocationNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutLocationInput,
+    Prisma.UserUncheckedCreateWithoutLocationInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutLocationInput;
+  upsert?: Prisma.UserUpsertWithoutLocationInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutLocationInput,
+      Prisma.UserUpdateWithoutLocationInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutLocationInput
+  >;
+};
+
+export type UserCreateNestedOneWithoutBlocks_madeInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutBlocks_madeInput,
+    Prisma.UserUncheckedCreateWithoutBlocks_madeInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBlocks_madeInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserCreateNestedOneWithoutBlocks_receivedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutBlocks_receivedInput,
+    Prisma.UserUncheckedCreateWithoutBlocks_receivedInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBlocks_receivedInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutBlocks_madeNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutBlocks_madeInput,
+    Prisma.UserUncheckedCreateWithoutBlocks_madeInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBlocks_madeInput;
+  upsert?: Prisma.UserUpsertWithoutBlocks_madeInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutBlocks_madeInput,
+      Prisma.UserUpdateWithoutBlocks_madeInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutBlocks_madeInput
+  >;
+};
+
+export type UserUpdateOneRequiredWithoutBlocks_receivedNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutBlocks_receivedInput,
+    Prisma.UserUncheckedCreateWithoutBlocks_receivedInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBlocks_receivedInput;
+  upsert?: Prisma.UserUpsertWithoutBlocks_receivedInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutBlocks_receivedInput,
+      Prisma.UserUpdateWithoutBlocks_receivedInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutBlocks_receivedInput
+  >;
+};
+
 export type UserCreateNestedOneWithoutAiJobsInput = {
   create?: Prisma.XOR<
     Prisma.UserCreateWithoutAiJobsInput,
@@ -1235,6 +1715,13 @@ export type UserCreateWithoutRefresh_tokensInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
@@ -1242,6 +1729,15 @@ export type UserCreateWithoutRefresh_tokensInput = {
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserUncheckedCreateWithoutRefresh_tokensInput = {
@@ -1275,6 +1771,13 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
@@ -1282,6 +1785,15 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserCreateOrConnectWithoutRefresh_tokensInput = {
@@ -1343,6 +1855,13 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
@@ -1350,6 +1869,15 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
@@ -1383,6 +1911,13 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
@@ -1390,6 +1925,15 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserCreateWithoutOtp_challengesInput = {
@@ -1423,6 +1967,13 @@ export type UserCreateWithoutOtp_challengesInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
@@ -1430,6 +1981,15 @@ export type UserCreateWithoutOtp_challengesInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserUncheckedCreateWithoutOtp_challengesInput = {
@@ -1463,6 +2023,13 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
@@ -1470,6 +2037,15 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserCreateOrConnectWithoutOtp_challengesInput = {
@@ -1531,6 +2107,13 @@ export type UserUpdateWithoutOtp_challengesInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
@@ -1538,6 +2121,15 @@ export type UserUpdateWithoutOtp_challengesInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutOtp_challengesInput = {
@@ -1571,6 +2163,13 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
@@ -1578,6 +2177,15 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserCreateWithoutOauth_exchange_codesInput = {
@@ -1611,6 +2219,13 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
@@ -1618,6 +2233,15 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
@@ -1651,6 +2275,13 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
@@ -1658,6 +2289,15 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserCreateOrConnectWithoutOauth_exchange_codesInput = {
@@ -1719,6 +2359,13 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
@@ -1726,6 +2373,15 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
@@ -1759,6 +2415,13 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
@@ -1766,6 +2429,15 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserCreateWithoutReports_madeInput = {
@@ -1799,6 +2471,13 @@ export type UserCreateWithoutReports_madeInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
@@ -1806,6 +2485,15 @@ export type UserCreateWithoutReports_madeInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserUncheckedCreateWithoutReports_madeInput = {
@@ -1839,6 +2527,13 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
@@ -1846,6 +2541,15 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserCreateOrConnectWithoutReports_madeInput = {
@@ -1887,6 +2591,13 @@ export type UserCreateWithoutReports_receivedInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
@@ -1894,6 +2605,15 @@ export type UserCreateWithoutReports_receivedInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserUncheckedCreateWithoutReports_receivedInput = {
@@ -1927,6 +2647,13 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
@@ -1934,6 +2661,15 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserCreateOrConnectWithoutReports_receivedInput = {
@@ -1995,6 +2731,13 @@ export type UserUpdateWithoutReports_madeInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
@@ -2002,6 +2745,15 @@ export type UserUpdateWithoutReports_madeInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutReports_madeInput = {
@@ -2035,6 +2787,13 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
@@ -2042,6 +2801,15 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserUpsertWithoutReports_receivedInput = {
@@ -2095,6 +2863,13 @@ export type UserUpdateWithoutReports_receivedInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
@@ -2102,6 +2877,15 @@ export type UserUpdateWithoutReports_receivedInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutReports_receivedInput = {
@@ -2135,6 +2919,13 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
@@ -2142,6 +2933,2283 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserCreateWithoutSwipes_madeInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserUncheckedCreateWithoutSwipes_madeInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserCreateOrConnectWithoutSwipes_madeInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipes_madeInput,
+    Prisma.UserUncheckedCreateWithoutSwipes_madeInput
+  >;
+};
+
+export type UserCreateWithoutSwipes_receivedInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserUncheckedCreateWithoutSwipes_receivedInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserCreateOrConnectWithoutSwipes_receivedInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipes_receivedInput,
+    Prisma.UserUncheckedCreateWithoutSwipes_receivedInput
+  >;
+};
+
+export type UserUpsertWithoutSwipes_madeInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutSwipes_madeInput,
+    Prisma.UserUncheckedUpdateWithoutSwipes_madeInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipes_madeInput,
+    Prisma.UserUncheckedCreateWithoutSwipes_madeInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutSwipes_madeInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutSwipes_madeInput,
+    Prisma.UserUncheckedUpdateWithoutSwipes_madeInput
+  >;
+};
+
+export type UserUpdateWithoutSwipes_madeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutSwipes_madeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUpsertWithoutSwipes_receivedInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutSwipes_receivedInput,
+    Prisma.UserUncheckedUpdateWithoutSwipes_receivedInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipes_receivedInput,
+    Prisma.UserUncheckedCreateWithoutSwipes_receivedInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutSwipes_receivedInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutSwipes_receivedInput,
+    Prisma.UserUncheckedUpdateWithoutSwipes_receivedInput
+  >;
+};
+
+export type UserUpdateWithoutSwipes_receivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserCreateWithoutSwipe_logsInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserUncheckedCreateWithoutSwipe_logsInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserCreateOrConnectWithoutSwipe_logsInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipe_logsInput,
+    Prisma.UserUncheckedCreateWithoutSwipe_logsInput
+  >;
+};
+
+export type UserCreateWithoutSwipe_log_targetsInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserCreateOrConnectWithoutSwipe_log_targetsInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipe_log_targetsInput,
+    Prisma.UserUncheckedCreateWithoutSwipe_log_targetsInput
+  >;
+};
+
+export type UserUpsertWithoutSwipe_logsInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutSwipe_logsInput,
+    Prisma.UserUncheckedUpdateWithoutSwipe_logsInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipe_logsInput,
+    Prisma.UserUncheckedCreateWithoutSwipe_logsInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutSwipe_logsInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutSwipe_logsInput,
+    Prisma.UserUncheckedUpdateWithoutSwipe_logsInput
+  >;
+};
+
+export type UserUpdateWithoutSwipe_logsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutSwipe_logsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUpsertWithoutSwipe_log_targetsInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutSwipe_log_targetsInput,
+    Prisma.UserUncheckedUpdateWithoutSwipe_log_targetsInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutSwipe_log_targetsInput,
+    Prisma.UserUncheckedCreateWithoutSwipe_log_targetsInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutSwipe_log_targetsInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutSwipe_log_targetsInput,
+    Prisma.UserUncheckedUpdateWithoutSwipe_log_targetsInput
+  >;
+};
+
+export type UserUpdateWithoutSwipe_log_targetsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserCreateWithoutMatches_as_lowInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserUncheckedCreateWithoutMatches_as_lowInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserCreateOrConnectWithoutMatches_as_lowInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutMatches_as_lowInput,
+    Prisma.UserUncheckedCreateWithoutMatches_as_lowInput
+  >;
+};
+
+export type UserCreateWithoutMatches_as_highInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserUncheckedCreateWithoutMatches_as_highInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserCreateOrConnectWithoutMatches_as_highInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutMatches_as_highInput,
+    Prisma.UserUncheckedCreateWithoutMatches_as_highInput
+  >;
+};
+
+export type UserUpsertWithoutMatches_as_lowInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutMatches_as_lowInput,
+    Prisma.UserUncheckedUpdateWithoutMatches_as_lowInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutMatches_as_lowInput,
+    Prisma.UserUncheckedCreateWithoutMatches_as_lowInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutMatches_as_lowInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutMatches_as_lowInput,
+    Prisma.UserUncheckedUpdateWithoutMatches_as_lowInput
+  >;
+};
+
+export type UserUpdateWithoutMatches_as_lowInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUpsertWithoutMatches_as_highInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutMatches_as_highInput,
+    Prisma.UserUncheckedUpdateWithoutMatches_as_highInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutMatches_as_highInput,
+    Prisma.UserUncheckedCreateWithoutMatches_as_highInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutMatches_as_highInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutMatches_as_highInput,
+    Prisma.UserUncheckedUpdateWithoutMatches_as_highInput
+  >;
+};
+
+export type UserUpdateWithoutMatches_as_highInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutMatches_as_highInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserCreateWithoutLocationInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserUncheckedCreateWithoutLocationInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserCreateOrConnectWithoutLocationInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutLocationInput,
+    Prisma.UserUncheckedCreateWithoutLocationInput
+  >;
+};
+
+export type UserUpsertWithoutLocationInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutLocationInput,
+    Prisma.UserUncheckedUpdateWithoutLocationInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutLocationInput,
+    Prisma.UserUncheckedCreateWithoutLocationInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutLocationInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutLocationInput,
+    Prisma.UserUncheckedUpdateWithoutLocationInput
+  >;
+};
+
+export type UserUpdateWithoutLocationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutLocationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserCreateWithoutBlocks_madeInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserUncheckedCreateWithoutBlocks_madeInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+};
+
+export type UserCreateOrConnectWithoutBlocks_madeInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutBlocks_madeInput,
+    Prisma.UserUncheckedCreateWithoutBlocks_madeInput
+  >;
+};
+
+export type UserCreateWithoutBlocks_receivedInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+};
+
+export type UserUncheckedCreateWithoutBlocks_receivedInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+};
+
+export type UserCreateOrConnectWithoutBlocks_receivedInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutBlocks_receivedInput,
+    Prisma.UserUncheckedCreateWithoutBlocks_receivedInput
+  >;
+};
+
+export type UserUpsertWithoutBlocks_madeInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutBlocks_madeInput,
+    Prisma.UserUncheckedUpdateWithoutBlocks_madeInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutBlocks_madeInput,
+    Prisma.UserUncheckedCreateWithoutBlocks_madeInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutBlocks_madeInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutBlocks_madeInput,
+    Prisma.UserUncheckedUpdateWithoutBlocks_madeInput
+  >;
+};
+
+export type UserUpdateWithoutBlocks_madeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutBlocks_madeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+};
+
+export type UserUpsertWithoutBlocks_receivedInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutBlocks_receivedInput,
+    Prisma.UserUncheckedUpdateWithoutBlocks_receivedInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutBlocks_receivedInput,
+    Prisma.UserUncheckedCreateWithoutBlocks_receivedInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutBlocks_receivedInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutBlocks_receivedInput,
+    Prisma.UserUncheckedUpdateWithoutBlocks_receivedInput
+  >;
+};
+
+export type UserUpdateWithoutBlocks_receivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
 };
 
 export type UserCreateWithoutAiJobsInput = {
@@ -2175,6 +5243,13 @@ export type UserCreateWithoutAiJobsInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
@@ -2182,6 +5257,15 @@ export type UserCreateWithoutAiJobsInput = {
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserUncheckedCreateWithoutAiJobsInput = {
@@ -2215,6 +5299,13 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  service_type?: string | null;
+  profile_type?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
   create_at?: Date | string;
   updated_at?: Date | string;
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
@@ -2222,6 +5313,15 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
 };
 
 export type UserCreateOrConnectWithoutAiJobsInput = {
@@ -2283,6 +5383,13 @@ export type UserUpdateWithoutAiJobsInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
@@ -2290,6 +5397,15 @@ export type UserUpdateWithoutAiJobsInput = {
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutAiJobsInput = {
@@ -2323,6 +5439,13 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
@@ -2330,6 +5453,15 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
 };
 
 /**
@@ -2343,6 +5475,14 @@ export type UserCountOutputType = {
   otp_challenges: number;
   reports_made: number;
   reports_received: number;
+  swipes_made: number;
+  swipes_received: number;
+  swipe_logs: number;
+  swipe_log_targets: number;
+  matches_as_low: number;
+  matches_as_high: number;
+  blocks_made: number;
+  blocks_received: number;
 };
 
 export type UserCountOutputTypeSelect<
@@ -2354,6 +5494,14 @@ export type UserCountOutputTypeSelect<
   otp_challenges?: boolean | UserCountOutputTypeCountOtp_challengesArgs;
   reports_made?: boolean | UserCountOutputTypeCountReports_madeArgs;
   reports_received?: boolean | UserCountOutputTypeCountReports_receivedArgs;
+  swipes_made?: boolean | UserCountOutputTypeCountSwipes_madeArgs;
+  swipes_received?: boolean | UserCountOutputTypeCountSwipes_receivedArgs;
+  swipe_logs?: boolean | UserCountOutputTypeCountSwipe_logsArgs;
+  swipe_log_targets?: boolean | UserCountOutputTypeCountSwipe_log_targetsArgs;
+  matches_as_low?: boolean | UserCountOutputTypeCountMatches_as_lowArgs;
+  matches_as_high?: boolean | UserCountOutputTypeCountMatches_as_highArgs;
+  blocks_made?: boolean | UserCountOutputTypeCountBlocks_madeArgs;
+  blocks_received?: boolean | UserCountOutputTypeCountBlocks_receivedArgs;
 };
 
 /**
@@ -2422,6 +5570,78 @@ export type UserCountOutputTypeCountReports_receivedArgs<
   where?: Prisma.ReportWhereInput;
 };
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountSwipes_madeArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.SwipeWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountSwipes_receivedArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.SwipeWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountSwipe_logsArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.SwipeLogWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountSwipe_log_targetsArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.SwipeLogWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountMatches_as_lowArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.MatchWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountMatches_as_highArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.MatchWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountBlocks_madeArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.UserBlockWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountBlocks_receivedArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.UserBlockWhereInput;
+};
+
 export type UserSelect<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
@@ -2456,6 +5676,13 @@ export type UserSelect<
     google_id?: boolean;
     linkedin_id?: boolean;
     phone_verified?: boolean;
+    goals?: boolean;
+    looking_for?: boolean;
+    activity_sector?: boolean;
+    service_type?: boolean;
+    profile_type?: boolean;
+    gps_latitude?: boolean;
+    gps_longitude?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
     aiJobs?: boolean | Prisma.User$aiJobsArgs<ExtArgs>;
@@ -2464,6 +5691,15 @@ export type UserSelect<
     otp_challenges?: boolean | Prisma.User$otp_challengesArgs<ExtArgs>;
     reports_made?: boolean | Prisma.User$reports_madeArgs<ExtArgs>;
     reports_received?: boolean | Prisma.User$reports_receivedArgs<ExtArgs>;
+    swipes_made?: boolean | Prisma.User$swipes_madeArgs<ExtArgs>;
+    swipes_received?: boolean | Prisma.User$swipes_receivedArgs<ExtArgs>;
+    swipe_logs?: boolean | Prisma.User$swipe_logsArgs<ExtArgs>;
+    swipe_log_targets?: boolean | Prisma.User$swipe_log_targetsArgs<ExtArgs>;
+    matches_as_low?: boolean | Prisma.User$matches_as_lowArgs<ExtArgs>;
+    matches_as_high?: boolean | Prisma.User$matches_as_highArgs<ExtArgs>;
+    location?: boolean | Prisma.User$locationArgs<ExtArgs>;
+    blocks_made?: boolean | Prisma.User$blocks_madeArgs<ExtArgs>;
+    blocks_received?: boolean | Prisma.User$blocks_receivedArgs<ExtArgs>;
     _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
   },
   ExtArgs['result']['user']
@@ -2503,6 +5739,13 @@ export type UserSelectCreateManyAndReturn<
     google_id?: boolean;
     linkedin_id?: boolean;
     phone_verified?: boolean;
+    goals?: boolean;
+    looking_for?: boolean;
+    activity_sector?: boolean;
+    service_type?: boolean;
+    profile_type?: boolean;
+    gps_latitude?: boolean;
+    gps_longitude?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
   },
@@ -2543,6 +5786,13 @@ export type UserSelectUpdateManyAndReturn<
     google_id?: boolean;
     linkedin_id?: boolean;
     phone_verified?: boolean;
+    goals?: boolean;
+    looking_for?: boolean;
+    activity_sector?: boolean;
+    service_type?: boolean;
+    profile_type?: boolean;
+    gps_latitude?: boolean;
+    gps_longitude?: boolean;
     create_at?: boolean;
     updated_at?: boolean;
   },
@@ -2580,6 +5830,13 @@ export type UserSelectScalar = {
   google_id?: boolean;
   linkedin_id?: boolean;
   phone_verified?: boolean;
+  goals?: boolean;
+  looking_for?: boolean;
+  activity_sector?: boolean;
+  service_type?: boolean;
+  profile_type?: boolean;
+  gps_latitude?: boolean;
+  gps_longitude?: boolean;
   create_at?: boolean;
   updated_at?: boolean;
 };
@@ -2617,6 +5874,13 @@ export type UserOmit<
   | 'google_id'
   | 'linkedin_id'
   | 'phone_verified'
+  | 'goals'
+  | 'looking_for'
+  | 'activity_sector'
+  | 'service_type'
+  | 'profile_type'
+  | 'gps_latitude'
+  | 'gps_longitude'
   | 'create_at'
   | 'updated_at',
   ExtArgs['result']['user']
@@ -2630,6 +5894,15 @@ export type UserInclude<
   otp_challenges?: boolean | Prisma.User$otp_challengesArgs<ExtArgs>;
   reports_made?: boolean | Prisma.User$reports_madeArgs<ExtArgs>;
   reports_received?: boolean | Prisma.User$reports_receivedArgs<ExtArgs>;
+  swipes_made?: boolean | Prisma.User$swipes_madeArgs<ExtArgs>;
+  swipes_received?: boolean | Prisma.User$swipes_receivedArgs<ExtArgs>;
+  swipe_logs?: boolean | Prisma.User$swipe_logsArgs<ExtArgs>;
+  swipe_log_targets?: boolean | Prisma.User$swipe_log_targetsArgs<ExtArgs>;
+  matches_as_low?: boolean | Prisma.User$matches_as_lowArgs<ExtArgs>;
+  matches_as_high?: boolean | Prisma.User$matches_as_highArgs<ExtArgs>;
+  location?: boolean | Prisma.User$locationArgs<ExtArgs>;
+  blocks_made?: boolean | Prisma.User$blocks_madeArgs<ExtArgs>;
+  blocks_received?: boolean | Prisma.User$blocks_receivedArgs<ExtArgs>;
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type UserIncludeCreateManyAndReturn<
@@ -2650,6 +5923,15 @@ export type $UserPayload<
     otp_challenges: Prisma.$OtpChallengePayload<ExtArgs>[];
     reports_made: Prisma.$ReportPayload<ExtArgs>[];
     reports_received: Prisma.$ReportPayload<ExtArgs>[];
+    swipes_made: Prisma.$SwipePayload<ExtArgs>[];
+    swipes_received: Prisma.$SwipePayload<ExtArgs>[];
+    swipe_logs: Prisma.$SwipeLogPayload<ExtArgs>[];
+    swipe_log_targets: Prisma.$SwipeLogPayload<ExtArgs>[];
+    matches_as_low: Prisma.$MatchPayload<ExtArgs>[];
+    matches_as_high: Prisma.$MatchPayload<ExtArgs>[];
+    location: Prisma.$UserLocationPayload<ExtArgs> | null;
+    blocks_made: Prisma.$UserBlockPayload<ExtArgs>[];
+    blocks_received: Prisma.$UserBlockPayload<ExtArgs>[];
   };
   scalars: runtime.Types.Extensions.GetPayloadResult<
     {
@@ -2683,6 +5965,16 @@ export type $UserPayload<
       google_id: string | null;
       linkedin_id: string | null;
       phone_verified: boolean;
+      /**
+       * Matching / discovery fields (scripted Discovery v5 in apps/api).
+       */
+      goals: string[];
+      looking_for: string | null;
+      activity_sector: string | null;
+      service_type: string | null;
+      profile_type: string | null;
+      gps_latitude: number | null;
+      gps_longitude: number | null;
       create_at: Date;
       updated_at: Date;
     },
@@ -3261,6 +6553,107 @@ export interface Prisma__UserClient<
       >
     | Null
   >;
+  swipes_made<T extends Prisma.User$swipes_madeArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$swipes_madeArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$SwipePayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  swipes_received<T extends Prisma.User$swipes_receivedArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$swipes_receivedArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$SwipePayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  swipe_logs<T extends Prisma.User$swipe_logsArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$swipe_logsArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$SwipeLogPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  swipe_log_targets<T extends Prisma.User$swipe_log_targetsArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$swipe_log_targetsArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$SwipeLogPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  matches_as_low<T extends Prisma.User$matches_as_lowArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$matches_as_lowArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$MatchPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  matches_as_high<T extends Prisma.User$matches_as_highArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$matches_as_highArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$MatchPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  location<T extends Prisma.User$locationArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$locationArgs<ExtArgs>>,
+  ): Prisma.Prisma__UserLocationClient<
+    runtime.Types.Result.GetResult<
+      Prisma.$UserLocationPayload<ExtArgs>,
+      T,
+      'findUniqueOrThrow',
+      GlobalOmitOptions
+    > | null,
+    null,
+    ExtArgs,
+    GlobalOmitOptions
+  >;
+  blocks_made<T extends Prisma.User$blocks_madeArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$blocks_madeArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$UserBlockPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  blocks_received<T extends Prisma.User$blocks_receivedArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$blocks_receivedArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$UserBlockPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3322,6 +6715,13 @@ export interface UserFieldRefs {
   readonly google_id: Prisma.FieldRef<'User', 'String'>;
   readonly linkedin_id: Prisma.FieldRef<'User', 'String'>;
   readonly phone_verified: Prisma.FieldRef<'User', 'Boolean'>;
+  readonly goals: Prisma.FieldRef<'User', 'String[]'>;
+  readonly looking_for: Prisma.FieldRef<'User', 'String'>;
+  readonly activity_sector: Prisma.FieldRef<'User', 'String'>;
+  readonly service_type: Prisma.FieldRef<'User', 'String'>;
+  readonly profile_type: Prisma.FieldRef<'User', 'String'>;
+  readonly gps_latitude: Prisma.FieldRef<'User', 'Float'>;
+  readonly gps_longitude: Prisma.FieldRef<'User', 'Float'>;
   readonly create_at: Prisma.FieldRef<'User', 'DateTime'>;
   readonly updated_at: Prisma.FieldRef<'User', 'DateTime'>;
 }
@@ -3901,6 +7301,235 @@ export type User$reports_receivedArgs<
   take?: number;
   skip?: number;
   distinct?: Prisma.ReportScalarFieldEnum | Prisma.ReportScalarFieldEnum[];
+};
+
+/**
+ * User.swipes_made
+ */
+export type User$swipes_madeArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Swipe
+   */
+  select?: Prisma.SwipeSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Swipe
+   */
+  omit?: Prisma.SwipeOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SwipeInclude<ExtArgs> | null;
+  where?: Prisma.SwipeWhereInput;
+  orderBy?: Prisma.SwipeOrderByWithRelationInput | Prisma.SwipeOrderByWithRelationInput[];
+  cursor?: Prisma.SwipeWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.SwipeScalarFieldEnum | Prisma.SwipeScalarFieldEnum[];
+};
+
+/**
+ * User.swipes_received
+ */
+export type User$swipes_receivedArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Swipe
+   */
+  select?: Prisma.SwipeSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Swipe
+   */
+  omit?: Prisma.SwipeOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SwipeInclude<ExtArgs> | null;
+  where?: Prisma.SwipeWhereInput;
+  orderBy?: Prisma.SwipeOrderByWithRelationInput | Prisma.SwipeOrderByWithRelationInput[];
+  cursor?: Prisma.SwipeWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.SwipeScalarFieldEnum | Prisma.SwipeScalarFieldEnum[];
+};
+
+/**
+ * User.swipe_logs
+ */
+export type User$swipe_logsArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the SwipeLog
+   */
+  select?: Prisma.SwipeLogSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the SwipeLog
+   */
+  omit?: Prisma.SwipeLogOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SwipeLogInclude<ExtArgs> | null;
+  where?: Prisma.SwipeLogWhereInput;
+  orderBy?: Prisma.SwipeLogOrderByWithRelationInput | Prisma.SwipeLogOrderByWithRelationInput[];
+  cursor?: Prisma.SwipeLogWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.SwipeLogScalarFieldEnum | Prisma.SwipeLogScalarFieldEnum[];
+};
+
+/**
+ * User.swipe_log_targets
+ */
+export type User$swipe_log_targetsArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the SwipeLog
+   */
+  select?: Prisma.SwipeLogSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the SwipeLog
+   */
+  omit?: Prisma.SwipeLogOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SwipeLogInclude<ExtArgs> | null;
+  where?: Prisma.SwipeLogWhereInput;
+  orderBy?: Prisma.SwipeLogOrderByWithRelationInput | Prisma.SwipeLogOrderByWithRelationInput[];
+  cursor?: Prisma.SwipeLogWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.SwipeLogScalarFieldEnum | Prisma.SwipeLogScalarFieldEnum[];
+};
+
+/**
+ * User.matches_as_low
+ */
+export type User$matches_as_lowArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Match
+   */
+  select?: Prisma.MatchSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Match
+   */
+  omit?: Prisma.MatchOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MatchInclude<ExtArgs> | null;
+  where?: Prisma.MatchWhereInput;
+  orderBy?: Prisma.MatchOrderByWithRelationInput | Prisma.MatchOrderByWithRelationInput[];
+  cursor?: Prisma.MatchWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.MatchScalarFieldEnum | Prisma.MatchScalarFieldEnum[];
+};
+
+/**
+ * User.matches_as_high
+ */
+export type User$matches_as_highArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Match
+   */
+  select?: Prisma.MatchSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Match
+   */
+  omit?: Prisma.MatchOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MatchInclude<ExtArgs> | null;
+  where?: Prisma.MatchWhereInput;
+  orderBy?: Prisma.MatchOrderByWithRelationInput | Prisma.MatchOrderByWithRelationInput[];
+  cursor?: Prisma.MatchWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.MatchScalarFieldEnum | Prisma.MatchScalarFieldEnum[];
+};
+
+/**
+ * User.location
+ */
+export type User$locationArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the UserLocation
+   */
+  select?: Prisma.UserLocationSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the UserLocation
+   */
+  omit?: Prisma.UserLocationOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserLocationInclude<ExtArgs> | null;
+  where?: Prisma.UserLocationWhereInput;
+};
+
+/**
+ * User.blocks_made
+ */
+export type User$blocks_madeArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the UserBlock
+   */
+  select?: Prisma.UserBlockSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the UserBlock
+   */
+  omit?: Prisma.UserBlockOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserBlockInclude<ExtArgs> | null;
+  where?: Prisma.UserBlockWhereInput;
+  orderBy?: Prisma.UserBlockOrderByWithRelationInput | Prisma.UserBlockOrderByWithRelationInput[];
+  cursor?: Prisma.UserBlockWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.UserBlockScalarFieldEnum | Prisma.UserBlockScalarFieldEnum[];
+};
+
+/**
+ * User.blocks_received
+ */
+export type User$blocks_receivedArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the UserBlock
+   */
+  select?: Prisma.UserBlockSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the UserBlock
+   */
+  omit?: Prisma.UserBlockOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserBlockInclude<ExtArgs> | null;
+  where?: Prisma.UserBlockWhereInput;
+  orderBy?: Prisma.UserBlockOrderByWithRelationInput | Prisma.UserBlockOrderByWithRelationInput[];
+  cursor?: Prisma.UserBlockWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.UserBlockScalarFieldEnum | Prisma.UserBlockScalarFieldEnum[];
 };
 
 /**

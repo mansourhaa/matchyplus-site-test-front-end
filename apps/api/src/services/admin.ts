@@ -3,15 +3,6 @@ import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
 import {
-  assertMinimumRole,
-  badRequest,
-  forbidden,
-  insufficientPrivileges,
-  notFound,
-  outranks,
-  rolesBelow,
-} from '../constants.js';
-import {
   AdminActor,
   AdminAnalyticsResult,
   AdminChangePasswordPayload,
@@ -22,6 +13,8 @@ import {
   adminUserSelect,
 } from '../types/admin.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { badRequest, forbidden, insufficientPrivileges, notFound } from '../utils/http-errors.js';
+import { assertMinimumRole, outranks, rolesBelow } from '../utils/roles.js';
 
 /** "2026-01" plus n months, still as "YYYY-MM". */
 function addMonth(month: string, n: number): string {

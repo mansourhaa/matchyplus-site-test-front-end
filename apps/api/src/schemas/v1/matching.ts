@@ -1,0 +1,372 @@
+const errorResponses = {
+  '4xx': {
+    type: 'object',
+    properties: {
+      status: { type: 'number' },
+      code: { type: 'string' },
+      message: { type: 'string' },
+    },
+  },
+  500: {
+    description: 'Error response',
+    type: 'object',
+    properties: {
+      status: { type: 'number', default: 500 },
+      code: { type: 'string' },
+      message: { type: 'string' },
+    },
+  },
+};
+
+const swipeActionEnum = ['left', 'right'];
+const matchConfidenceEnum = ['high', 'medium', 'low'];
+
+const scoreBreakdown = {
+  type: 'object',
+  properties: {
+    dimension: { type: 'string' },
+    score: { type: 'number' },
+    weight: { type: 'number' },
+    contribution: { type: 'number' },
+  },
+};
+
+const swipeQuota = {
+  type: 'object',
+  properties: {
+    plan: { type: 'string' },
+    unlimited: { type: 'boolean' },
+    used: { type: 'number', nullable: true },
+    limit: { type: 'number', nullable: true },
+    remaining: { type: 'number', nullable: true },
+    resets_at: { type: 'string', enum: ['midnight_utc'] },
+  },
+};
+
+const matchingProfile = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    image: { type: 'string', nullable: true },
+    bio: { type: 'string', nullable: true },
+    job: { type: 'string', nullable: true },
+    category: { type: 'string', nullable: true },
+    city: { type: 'string', nullable: true },
+    interests: { type: 'array', items: { type: 'string' } },
+    activity_sector: { type: 'string', nullable: true },
+    service_type: { type: 'string', nullable: true },
+    rating: { type: 'number' },
+  },
+};
+
+const feedProfile = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    image: { type: 'string', nullable: true },
+    bio: { type: 'string', nullable: true },
+    job: { type: 'string', nullable: true },
+    category: { type: 'string', nullable: true },
+    city: { type: 'string', nullable: true },
+    interests: { type: 'array', items: { type: 'string' } },
+    goals: { type: 'array', items: { type: 'string' } },
+    activity_sector: { type: 'string', nullable: true },
+    service_type: { type: 'string', nullable: true },
+    rating: { type: 'number' },
+    distance_km: { type: 'number', nullable: true },
+    match_score: { type: 'number' },
+    match_group: { type: 'integer', minimum: 1, maximum: 4 },
+    match_type_label: { type: 'string' },
+    confidence: { type: 'string', enum: matchConfidenceEnum },
+    compatibility: { type: 'array', items: scoreBreakdown },
+    liked_me: { type: 'boolean' },
+  },
+};
+
+const matchSummary = {
+  type: 'object',
+  nullable: true,
+  properties: {
+    match_id: { type: 'string' },
+    matched_at: { type: 'string' },
+    matched_user_id: { type: 'string' },
+  },
+};
+
+const matchRow = {
+  type: 'object',
+  properties: {
+    match_id: { type: 'string' },
+    matched_at: { type: 'string' },
+    matched_user_id: { type: 'string' },
+    profile: { ...matchingProfile, nullable: true },
+  },
+};
+
+const pendingRow = {
+  type: 'object',
+  properties: {
+    swipe_id: { type: 'string' },
+    liked_at: { type: 'string' },
+    profile: matchingProfile,
+  },
+};
+
+const targetUserParams = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['userId'],
+  properties: {
+    userId: { type: 'string', minLength: 1 },
+  },
+};
+
+const postSwipeBody = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['target_user_id', 'direction'],
+  properties: {
+    target_user_id: { type: 'string', minLength: 1 },
+    direction: { type: 'string', enum: swipeActionEnum },
+  },
+};
+
+const swipeResult = {
+  type: 'object',
+  properties: {
+    swipe_id: { type: 'string' },
+    direction: { type: 'string', enum: ['LEFT', 'RIGHT'] },
+    match: matchSummary,
+    quota: swipeQuota,
+  },
+};
+
+/** GET /discovery/swipe-feed */
+export const swipeFeedQuerySchema = {
+  tags: ['discovery'],
+  summary: 'Ranked swipe feed',
+  description: 'Returns eligible profiles ranked by scripted Discovery v5 scoring. Requires JWT.',
+  security: [{ http: [] }],
+  querystring: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      latitude: { type: 'number' },
+      longitude: { type: 'number' },
+      limit: { type: 'integer', minimum: 1, maximum: 50 },
+    },
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        profiles: { type: 'array', items: feedProfile },
+        count: { type: 'integer' },
+        feed_breakdown: {
+          type: 'object',
+          properties: {
+            g1_complementary: { type: 'integer' },
+            g2_domain: { type: 'integer' },
+            g3_network: { type: 'integer' },
+            g4_suggestions: { type: 'integer' },
+            feed_total: { type: 'integer' },
+          },
+        },
+        quota: swipeQuota,
+        scoring_version: { type: 'string', enum: ['v5-scripted'] },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+/** GET /discovery/quota */
+export const discoveryQuotaSchema = {
+  tags: ['discovery'],
+  summary: 'Daily right-swipe quota snapshot',
+  description: 'UTC-day RIGHT swipe usage from SwipeLog. Requires JWT.',
+  security: [{ http: [] }],
+  response: {
+    200: {
+      description: 'Successful response',
+      ...swipeQuota,
+    },
+    ...errorResponses,
+  },
+};
+
+/** POST /discovery/swipe and POST /swipe */
+export const postSwipeSchema = {
+  tags: ['discovery', 'swipe'],
+  summary: 'Like or pass a profile',
+  description:
+    'Upserts live swipe state, appends SwipeLog, enforces daily RIGHT quota, and creates a match on reciprocal RIGHT. Requires JWT.',
+  security: [{ http: [] }],
+  body: postSwipeBody,
+  response: {
+    200: {
+      description: 'Successful response',
+      ...swipeResult,
+    },
+    ...errorResponses,
+  },
+};
+
+/** GET /swipe/matches */
+export const listMatchesSchema = {
+  tags: ['swipe'],
+  summary: 'List mutual matches',
+  description: 'Active matches for the authenticated user. Requires JWT.',
+  security: [{ http: [] }],
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        matches: { type: 'array', items: matchRow },
+        count: { type: 'integer' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+/** GET /swipe/pending */
+export const listPendingSchema = {
+  tags: ['swipe'],
+  summary: 'List outgoing pending likes',
+  description: 'One-way RIGHT swipes that are not yet mutual matches. Requires JWT.',
+  security: [{ http: [] }],
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        pending: { type: 'array', items: pendingRow },
+        count: { type: 'integer' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+/** DELETE /swipe/pending/:userId */
+export const withdrawPendingSchema = {
+  tags: ['swipe'],
+  summary: 'Withdraw a pending like',
+  description:
+    'Removes the outgoing RIGHT swipe and logs WITHDRAWN (not LEFT) so the profile can reappear in the feed. Requires JWT.',
+  security: [{ http: [] }],
+  params: targetUserParams,
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        withdrawn_user_id: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+/** GET /swipe/stats */
+export const swipeStatsSchema = {
+  tags: ['swipe'],
+  summary: 'Swipe / match aggregates',
+  description:
+    'Likes, passes, pending, matches, and quota for the authenticated user. Requires JWT.',
+  security: [{ http: [] }],
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        likes: { type: 'integer' },
+        passes: { type: 'integer' },
+        pending: { type: 'integer' },
+        matches: { type: 'integer' },
+        quota: swipeQuota,
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+/** GET /swipe/who-liked-me */
+export const whoLikedMeSchema = {
+  tags: ['swipe'],
+  summary: 'Incoming likes (premium+)',
+  description:
+    'Lists users who RIGHT-swiped the authenticated user and are not yet matched. Requires JWT and PREMIUM / PREMIUM_PLUS (or unlimited plan).',
+  security: [{ http: [] }],
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        who_liked_me: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              liked_at: { type: 'string' },
+              profile: matchingProfile,
+            },
+          },
+        },
+        count: { type: 'integer' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+/** POST /swipe/unmatch/:userId */
+export const unmatchSchema = {
+  tags: ['swipe'],
+  summary: 'Unmatch a user',
+  description:
+    'Deletes the Match row and clears both sides’ swipe + swipe-log history for the pair. Requires JWT.',
+  security: [{ http: [] }],
+  params: targetUserParams,
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        removed_user_id: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+/** GET /realtime (WebSocket upgrade) */
+export const realtimeSchema = {
+  tags: ['realtime'],
+  summary: 'Match realtime WebSocket',
+  description:
+    'Authenticated WebSocket for `notification_match` and `match_removed` events. Pass Bearer JWT, or `?access_token=` for browser clients. Server pushes JSON `{ event, payload }`.',
+  security: [{ http: [] }],
+  querystring: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      access_token: {
+        type: 'string',
+        description: 'Optional JWT for browsers that cannot set Authorization on WebSocket',
+      },
+    },
+  },
+  response: {
+    101: {
+      description: 'Switching Protocols — WebSocket connected',
+      type: 'null',
+    },
+    ...errorResponses,
+  },
+};
