@@ -12,6 +12,7 @@ export default defineConfig({
     },
     env: {
       NODE_ENV: 'test',
+      DOTENV_CONFIG_QUIET: 'true',
       SERVER_PORT: '8000',
       SERVER_HOST: 'localhost',
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test?schema=public',

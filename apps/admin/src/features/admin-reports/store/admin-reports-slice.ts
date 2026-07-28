@@ -68,10 +68,7 @@ export const { setReportStatusFilter } = adminReportsSlice.actions;
 
 export const selectAdminReportsState = (state: RootState) => state.adminReports;
 
-export const selectAdminReports = createSelector(
-  [selectAdminReportsState],
-  (adminReports) => adminReports,
-);
+export const selectAdminReports = selectAdminReportsState;
 
 /** Count of still-pending reports, for the sidebar badge ("admin reçoit"). */
 export const selectPendingReportCount = createSelector([selectAdminReportsState], (adminReports) =>
