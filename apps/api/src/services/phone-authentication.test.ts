@@ -30,11 +30,13 @@ function createService(prisma = createMockPrisma(), smsOverrides: Record<string,
     sendSms: vi.fn().mockResolvedValue(undefined),
     ...smsOverrides,
   };
+  const logger = { warn: vi.fn() };
   const service = new PhoneAuthenticationService({
     prisma: prisma as never,
     smsClient: smsClient as never,
+    logger,
   });
-  return { service, prisma, smsClient };
+  return { service, prisma, smsClient, logger };
 }
 
 describe('PhoneAuthenticationService', () => {
@@ -279,8 +281,8 @@ describe('PhoneAuthenticationService', () => {
       expect(smsClient.sendSms).toHaveBeenCalledWith('+33612345678', expect.any(String));
     });
 
-    it('returns a uniform success response even when SMS delivery fails', async () => {
-      const { service, prisma } = createService(createMockPrisma(), {
+    it('returns a uniform success response even when SMS delivery fails, but logs the failure', async () => {
+      const { service, prisma, logger } = createService(createMockPrisma(), {
         sendSms: vi.fn().mockRejectedValue(new Error('sms-down')),
       });
       prisma.user.findUnique.mockResolvedValue({
@@ -293,6 +295,35 @@ describe('PhoneAuthenticationService', () => {
       const result = await service.requestPasswordReset({ phone: '+33 6 12 34 56 78' });
 
       expect(result).toEqual({ message: 'reset_code_sent' });
+      // Anti-enumeration means the caller can never learn delivery failed — but that
+      // failure must not vanish outright, or a real SMS outage looks like silence.
+      expect(logger.warn).toHaveBeenCalledWith(
+        { err: expect.objectContaining({ message: 'sms-down' }), phone: '+33612345678' },
+        'password_reset_challenge_or_delivery_failed',
+      );
+    });
+
+    it('returns a uniform success response even when challenge creation fails, but logs the failure', async () => {
+      const { service, prisma, logger } = createService();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        phone: '+33612345678',
+        password: 'hashed-password',
+      });
+      // An already-active, very recent challenge trips the resend cooldown inside
+      // createChallenge — a real operational failure distinct from SMS delivery.
+      prisma.otpChallenge.findFirst.mockResolvedValue({
+        id: 'challenge-1',
+        create_at: new Date(),
+      });
+
+      const result = await service.requestPasswordReset({ phone: '+33 6 12 34 56 78' });
+
+      expect(result).toEqual({ message: 'reset_code_sent' });
+      expect(logger.warn).toHaveBeenCalledWith(
+        { err: expect.objectContaining({ message: 'otp_resend_too_soon' }), phone: '+33612345678' },
+        'password_reset_challenge_or_delivery_failed',
+      );
     });
   });
 
