@@ -33,6 +33,7 @@ const phoneUser = {
   name: null,
   auth_provider: 'phone',
   email_verified: false,
+  onboarding_completed: true,
 };
 
 // AuthLayout renders both a desktop and a mobile copy of the form content (CSS-hidden
@@ -213,5 +214,23 @@ describe('LoginForm — OAuth start URLs', () => {
     fireEvent.click(firstButton(/Continuer avec LinkedIn/));
 
     expect(window.location.href).toBe('http://localhost:4000/auth/oauth/linkedin');
+  });
+});
+
+describe('LoginForm — Créer un compte', () => {
+  beforeEach(() => {
+    searchParamsRef.current = new URLSearchParams();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('goes to the credentials step (/register), where phone + password + OTP are collected', () => {
+    renderWithAuthStore(<LoginForm />);
+
+    fireEvent.click(firstButton('Créer un compte'));
+
+    expect(pushMock).toHaveBeenCalledWith('/register');
   });
 });

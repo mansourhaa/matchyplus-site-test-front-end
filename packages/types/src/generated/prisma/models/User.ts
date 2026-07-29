@@ -70,14 +70,18 @@ export type UserMinAggregateOutputType = {
   missions: number | null;
   total_earnings: number | null;
   last_login: Date | null;
+  profile_type: $Enums.ProfileType | null;
+  offer_service: boolean | null;
+  service_type: string | null;
+  sector: string | null;
+  education_level: string | null;
+  onboarding_completed_at: Date | null;
   email_verified: boolean | null;
   google_id: string | null;
   linkedin_id: string | null;
   phone_verified: boolean | null;
   looking_for: string | null;
   activity_sector: string | null;
-  service_type: string | null;
-  profile_type: string | null;
   gps_latitude: number | null;
   gps_longitude: number | null;
   create_at: Date | null;
@@ -108,14 +112,18 @@ export type UserMaxAggregateOutputType = {
   missions: number | null;
   total_earnings: number | null;
   last_login: Date | null;
+  profile_type: $Enums.ProfileType | null;
+  offer_service: boolean | null;
+  service_type: string | null;
+  sector: string | null;
+  education_level: string | null;
+  onboarding_completed_at: Date | null;
   email_verified: boolean | null;
   google_id: string | null;
   linkedin_id: string | null;
   phone_verified: boolean | null;
   looking_for: string | null;
   activity_sector: string | null;
-  service_type: string | null;
-  profile_type: string | null;
   gps_latitude: number | null;
   gps_longitude: number | null;
   create_at: Date | null;
@@ -149,6 +157,17 @@ export type UserCountAggregateOutputType = {
   missions: number;
   total_earnings: number;
   last_login: number;
+  profile_type: number;
+  offer_service: number;
+  service_type: number;
+  sector: number;
+  selected_goals: number;
+  experiences: number;
+  education_level: number;
+  educations: number;
+  availability_days: number;
+  availability_hours: number;
+  onboarding_completed_at: number;
   email_verified: number;
   google_id: number;
   linkedin_id: number;
@@ -156,8 +175,6 @@ export type UserCountAggregateOutputType = {
   goals: number;
   looking_for: number;
   activity_sector: number;
-  service_type: number;
-  profile_type: number;
   gps_latitude: number;
   gps_longitude: number;
   create_at: number;
@@ -209,14 +226,18 @@ export type UserMinAggregateInputType = {
   missions?: true;
   total_earnings?: true;
   last_login?: true;
+  profile_type?: true;
+  offer_service?: true;
+  service_type?: true;
+  sector?: true;
+  education_level?: true;
+  onboarding_completed_at?: true;
   email_verified?: true;
   google_id?: true;
   linkedin_id?: true;
   phone_verified?: true;
   looking_for?: true;
   activity_sector?: true;
-  service_type?: true;
-  profile_type?: true;
   gps_latitude?: true;
   gps_longitude?: true;
   create_at?: true;
@@ -247,14 +268,18 @@ export type UserMaxAggregateInputType = {
   missions?: true;
   total_earnings?: true;
   last_login?: true;
+  profile_type?: true;
+  offer_service?: true;
+  service_type?: true;
+  sector?: true;
+  education_level?: true;
+  onboarding_completed_at?: true;
   email_verified?: true;
   google_id?: true;
   linkedin_id?: true;
   phone_verified?: true;
   looking_for?: true;
   activity_sector?: true;
-  service_type?: true;
-  profile_type?: true;
   gps_latitude?: true;
   gps_longitude?: true;
   create_at?: true;
@@ -288,6 +313,17 @@ export type UserCountAggregateInputType = {
   missions?: true;
   total_earnings?: true;
   last_login?: true;
+  profile_type?: true;
+  offer_service?: true;
+  service_type?: true;
+  sector?: true;
+  selected_goals?: true;
+  experiences?: true;
+  education_level?: true;
+  educations?: true;
+  availability_days?: true;
+  availability_hours?: true;
+  onboarding_completed_at?: true;
   email_verified?: true;
   google_id?: true;
   linkedin_id?: true;
@@ -295,8 +331,6 @@ export type UserCountAggregateInputType = {
   goals?: true;
   looking_for?: true;
   activity_sector?: true;
-  service_type?: true;
-  profile_type?: true;
   gps_latitude?: true;
   gps_longitude?: true;
   create_at?: true;
@@ -418,6 +452,17 @@ export type UserGroupByOutputType = {
   missions: number;
   total_earnings: number;
   last_login: Date | null;
+  profile_type: $Enums.ProfileType | null;
+  offer_service: boolean;
+  service_type: string | null;
+  sector: string | null;
+  selected_goals: string[];
+  experiences: runtime.JsonValue | null;
+  education_level: string | null;
+  educations: runtime.JsonValue | null;
+  availability_days: string[];
+  availability_hours: string[];
+  onboarding_completed_at: Date | null;
   email_verified: boolean;
   google_id: string | null;
   linkedin_id: string | null;
@@ -425,8 +470,6 @@ export type UserGroupByOutputType = {
   goals: string[];
   looking_for: string | null;
   activity_sector: string | null;
-  service_type: string | null;
-  profile_type: string | null;
   gps_latitude: number | null;
   gps_longitude: number | null;
   create_at: Date;
@@ -480,6 +523,17 @@ export type UserWhereInput = {
   missions?: Prisma.IntFilter<'User'> | number;
   total_earnings?: Prisma.IntFilter<'User'> | number;
   last_login?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
+  profile_type?: Prisma.EnumProfileTypeNullableFilter<'User'> | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFilter<'User'> | boolean;
+  service_type?: Prisma.StringNullableFilter<'User'> | string | null;
+  sector?: Prisma.StringNullableFilter<'User'> | string | null;
+  selected_goals?: Prisma.StringNullableListFilter<'User'>;
+  experiences?: Prisma.JsonNullableFilter<'User'>;
+  education_level?: Prisma.StringNullableFilter<'User'> | string | null;
+  educations?: Prisma.JsonNullableFilter<'User'>;
+  availability_days?: Prisma.StringNullableListFilter<'User'>;
+  availability_hours?: Prisma.StringNullableListFilter<'User'>;
+  onboarding_completed_at?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
   email_verified?: Prisma.BoolFilter<'User'> | boolean;
   google_id?: Prisma.StringNullableFilter<'User'> | string | null;
   linkedin_id?: Prisma.StringNullableFilter<'User'> | string | null;
@@ -487,8 +541,6 @@ export type UserWhereInput = {
   goals?: Prisma.StringNullableListFilter<'User'>;
   looking_for?: Prisma.StringNullableFilter<'User'> | string | null;
   activity_sector?: Prisma.StringNullableFilter<'User'> | string | null;
-  service_type?: Prisma.StringNullableFilter<'User'> | string | null;
-  profile_type?: Prisma.StringNullableFilter<'User'> | string | null;
   gps_latitude?: Prisma.FloatNullableFilter<'User'> | number | null;
   gps_longitude?: Prisma.FloatNullableFilter<'User'> | number | null;
   create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
@@ -540,6 +592,17 @@ export type UserOrderByWithRelationInput = {
   missions?: Prisma.SortOrder;
   total_earnings?: Prisma.SortOrder;
   last_login?: Prisma.SortOrderInput | Prisma.SortOrder;
+  profile_type?: Prisma.SortOrderInput | Prisma.SortOrder;
+  offer_service?: Prisma.SortOrder;
+  service_type?: Prisma.SortOrderInput | Prisma.SortOrder;
+  sector?: Prisma.SortOrderInput | Prisma.SortOrder;
+  selected_goals?: Prisma.SortOrder;
+  experiences?: Prisma.SortOrderInput | Prisma.SortOrder;
+  education_level?: Prisma.SortOrderInput | Prisma.SortOrder;
+  educations?: Prisma.SortOrderInput | Prisma.SortOrder;
+  availability_days?: Prisma.SortOrder;
+  availability_hours?: Prisma.SortOrder;
+  onboarding_completed_at?: Prisma.SortOrderInput | Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
   google_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -547,8 +610,6 @@ export type UserOrderByWithRelationInput = {
   goals?: Prisma.SortOrder;
   looking_for?: Prisma.SortOrderInput | Prisma.SortOrder;
   activity_sector?: Prisma.SortOrderInput | Prisma.SortOrder;
-  service_type?: Prisma.SortOrderInput | Prisma.SortOrder;
-  profile_type?: Prisma.SortOrderInput | Prisma.SortOrder;
   gps_latitude?: Prisma.SortOrderInput | Prisma.SortOrder;
   gps_longitude?: Prisma.SortOrderInput | Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
@@ -603,13 +664,22 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     missions?: Prisma.IntFilter<'User'> | number;
     total_earnings?: Prisma.IntFilter<'User'> | number;
     last_login?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
+    profile_type?: Prisma.EnumProfileTypeNullableFilter<'User'> | $Enums.ProfileType | null;
+    offer_service?: Prisma.BoolFilter<'User'> | boolean;
+    service_type?: Prisma.StringNullableFilter<'User'> | string | null;
+    sector?: Prisma.StringNullableFilter<'User'> | string | null;
+    selected_goals?: Prisma.StringNullableListFilter<'User'>;
+    experiences?: Prisma.JsonNullableFilter<'User'>;
+    education_level?: Prisma.StringNullableFilter<'User'> | string | null;
+    educations?: Prisma.JsonNullableFilter<'User'>;
+    availability_days?: Prisma.StringNullableListFilter<'User'>;
+    availability_hours?: Prisma.StringNullableListFilter<'User'>;
+    onboarding_completed_at?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
     email_verified?: Prisma.BoolFilter<'User'> | boolean;
     phone_verified?: Prisma.BoolFilter<'User'> | boolean;
     goals?: Prisma.StringNullableListFilter<'User'>;
     looking_for?: Prisma.StringNullableFilter<'User'> | string | null;
     activity_sector?: Prisma.StringNullableFilter<'User'> | string | null;
-    service_type?: Prisma.StringNullableFilter<'User'> | string | null;
-    profile_type?: Prisma.StringNullableFilter<'User'> | string | null;
     gps_latitude?: Prisma.FloatNullableFilter<'User'> | number | null;
     gps_longitude?: Prisma.FloatNullableFilter<'User'> | number | null;
     create_at?: Prisma.DateTimeFilter<'User'> | Date | string;
@@ -663,6 +733,17 @@ export type UserOrderByWithAggregationInput = {
   missions?: Prisma.SortOrder;
   total_earnings?: Prisma.SortOrder;
   last_login?: Prisma.SortOrderInput | Prisma.SortOrder;
+  profile_type?: Prisma.SortOrderInput | Prisma.SortOrder;
+  offer_service?: Prisma.SortOrder;
+  service_type?: Prisma.SortOrderInput | Prisma.SortOrder;
+  sector?: Prisma.SortOrderInput | Prisma.SortOrder;
+  selected_goals?: Prisma.SortOrder;
+  experiences?: Prisma.SortOrderInput | Prisma.SortOrder;
+  education_level?: Prisma.SortOrderInput | Prisma.SortOrder;
+  educations?: Prisma.SortOrderInput | Prisma.SortOrder;
+  availability_days?: Prisma.SortOrder;
+  availability_hours?: Prisma.SortOrder;
+  onboarding_completed_at?: Prisma.SortOrderInput | Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
   google_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -670,8 +751,6 @@ export type UserOrderByWithAggregationInput = {
   goals?: Prisma.SortOrder;
   looking_for?: Prisma.SortOrderInput | Prisma.SortOrder;
   activity_sector?: Prisma.SortOrderInput | Prisma.SortOrder;
-  service_type?: Prisma.SortOrderInput | Prisma.SortOrder;
-  profile_type?: Prisma.SortOrderInput | Prisma.SortOrder;
   gps_latitude?: Prisma.SortOrderInput | Prisma.SortOrder;
   gps_longitude?: Prisma.SortOrderInput | Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
@@ -713,6 +792,19 @@ export type UserScalarWhereWithAggregatesInput = {
   missions?: Prisma.IntWithAggregatesFilter<'User'> | number;
   total_earnings?: Prisma.IntWithAggregatesFilter<'User'> | number;
   last_login?: Prisma.DateTimeNullableWithAggregatesFilter<'User'> | Date | string | null;
+  profile_type?:
+    Prisma.EnumProfileTypeNullableWithAggregatesFilter<'User'> | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolWithAggregatesFilter<'User'> | boolean;
+  service_type?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  sector?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  selected_goals?: Prisma.StringNullableListFilter<'User'>;
+  experiences?: Prisma.JsonNullableWithAggregatesFilter<'User'>;
+  education_level?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  educations?: Prisma.JsonNullableWithAggregatesFilter<'User'>;
+  availability_days?: Prisma.StringNullableListFilter<'User'>;
+  availability_hours?: Prisma.StringNullableListFilter<'User'>;
+  onboarding_completed_at?:
+    Prisma.DateTimeNullableWithAggregatesFilter<'User'> | Date | string | null;
   email_verified?: Prisma.BoolWithAggregatesFilter<'User'> | boolean;
   google_id?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   linkedin_id?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
@@ -720,8 +812,6 @@ export type UserScalarWhereWithAggregatesInput = {
   goals?: Prisma.StringNullableListFilter<'User'>;
   looking_for?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   activity_sector?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
-  service_type?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
-  profile_type?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   gps_latitude?: Prisma.FloatNullableWithAggregatesFilter<'User'> | number | null;
   gps_longitude?: Prisma.FloatNullableWithAggregatesFilter<'User'> | number | null;
   create_at?: Prisma.DateTimeWithAggregatesFilter<'User'> | Date | string;
@@ -755,6 +845,17 @@ export type UserCreateInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -762,8 +863,6 @@ export type UserCreateInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -812,6 +911,17 @@ export type UserUncheckedCreateInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -819,8 +929,6 @@ export type UserUncheckedCreateInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -869,6 +977,19 @@ export type UserUpdateInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -876,8 +997,6 @@ export type UserUpdateInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -926,6 +1045,19 @@ export type UserUncheckedUpdateInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -933,8 +1065,6 @@ export type UserUncheckedUpdateInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -983,6 +1113,17 @@ export type UserCreateManyInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -990,8 +1131,6 @@ export type UserCreateManyInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -1025,6 +1164,19 @@ export type UserUpdateManyMutationInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1032,8 +1184,6 @@ export type UserUpdateManyMutationInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -1067,6 +1217,19 @@ export type UserUncheckedUpdateManyInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1074,8 +1237,6 @@ export type UserUncheckedUpdateManyInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -1109,6 +1270,17 @@ export type UserCountOrderByAggregateInput = {
   missions?: Prisma.SortOrder;
   total_earnings?: Prisma.SortOrder;
   last_login?: Prisma.SortOrder;
+  profile_type?: Prisma.SortOrder;
+  offer_service?: Prisma.SortOrder;
+  service_type?: Prisma.SortOrder;
+  sector?: Prisma.SortOrder;
+  selected_goals?: Prisma.SortOrder;
+  experiences?: Prisma.SortOrder;
+  education_level?: Prisma.SortOrder;
+  educations?: Prisma.SortOrder;
+  availability_days?: Prisma.SortOrder;
+  availability_hours?: Prisma.SortOrder;
+  onboarding_completed_at?: Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
@@ -1116,8 +1288,6 @@ export type UserCountOrderByAggregateInput = {
   goals?: Prisma.SortOrder;
   looking_for?: Prisma.SortOrder;
   activity_sector?: Prisma.SortOrder;
-  service_type?: Prisma.SortOrder;
-  profile_type?: Prisma.SortOrder;
   gps_latitude?: Prisma.SortOrder;
   gps_longitude?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
@@ -1158,14 +1328,18 @@ export type UserMaxOrderByAggregateInput = {
   missions?: Prisma.SortOrder;
   total_earnings?: Prisma.SortOrder;
   last_login?: Prisma.SortOrder;
+  profile_type?: Prisma.SortOrder;
+  offer_service?: Prisma.SortOrder;
+  service_type?: Prisma.SortOrder;
+  sector?: Prisma.SortOrder;
+  education_level?: Prisma.SortOrder;
+  onboarding_completed_at?: Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
   looking_for?: Prisma.SortOrder;
   activity_sector?: Prisma.SortOrder;
-  service_type?: Prisma.SortOrder;
-  profile_type?: Prisma.SortOrder;
   gps_latitude?: Prisma.SortOrder;
   gps_longitude?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
@@ -1196,14 +1370,18 @@ export type UserMinOrderByAggregateInput = {
   missions?: Prisma.SortOrder;
   total_earnings?: Prisma.SortOrder;
   last_login?: Prisma.SortOrder;
+  profile_type?: Prisma.SortOrder;
+  offer_service?: Prisma.SortOrder;
+  service_type?: Prisma.SortOrder;
+  sector?: Prisma.SortOrder;
+  education_level?: Prisma.SortOrder;
+  onboarding_completed_at?: Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
   looking_for?: Prisma.SortOrder;
   activity_sector?: Prisma.SortOrder;
-  service_type?: Prisma.SortOrder;
-  profile_type?: Prisma.SortOrder;
   gps_latitude?: Prisma.SortOrder;
   gps_longitude?: Prisma.SortOrder;
   create_at?: Prisma.SortOrder;
@@ -1242,6 +1420,18 @@ export type UserCreatecontact_modesInput = {
   set: string[];
 };
 
+export type UserCreateselected_goalsInput = {
+  set: string[];
+};
+
+export type UserCreateavailability_daysInput = {
+  set: string[];
+};
+
+export type UserCreateavailability_hoursInput = {
+  set: string[];
+};
+
 export type UserCreategoalsInput = {
   set: string[];
 };
@@ -1275,6 +1465,25 @@ export type UserUpdatecontact_modesInput = {
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null;
+};
+
+export type NullableEnumProfileTypeFieldUpdateOperationsInput = {
+  set?: $Enums.ProfileType | null;
+};
+
+export type UserUpdateselected_goalsInput = {
+  set?: string[];
+  push?: string | string[];
+};
+
+export type UserUpdateavailability_daysInput = {
+  set?: string[];
+  push?: string | string[];
+};
+
+export type UserUpdateavailability_hoursInput = {
+  set?: string[];
+  push?: string | string[];
 };
 
 export type UserUpdategoalsInput = {
@@ -1711,6 +1920,17 @@ export type UserCreateWithoutRefresh_tokensInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -1718,8 +1938,6 @@ export type UserCreateWithoutRefresh_tokensInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -1767,6 +1985,17 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -1774,8 +2003,6 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -1851,6 +2078,19 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1858,8 +2098,6 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -1907,6 +2145,19 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1914,8 +2165,6 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -1963,6 +2212,17 @@ export type UserCreateWithoutOtp_challengesInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -1970,8 +2230,6 @@ export type UserCreateWithoutOtp_challengesInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -2019,6 +2277,17 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -2026,8 +2295,6 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -2103,6 +2370,19 @@ export type UserUpdateWithoutOtp_challengesInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2110,8 +2390,6 @@ export type UserUpdateWithoutOtp_challengesInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -2159,6 +2437,19 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2166,8 +2457,6 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -2215,6 +2504,17 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -2222,8 +2522,6 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -2271,6 +2569,17 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -2278,8 +2587,6 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -2355,6 +2662,19 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2362,8 +2682,6 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -2411,6 +2729,19 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2418,8 +2749,6 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -2467,6 +2796,17 @@ export type UserCreateWithoutReports_madeInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -2474,8 +2814,6 @@ export type UserCreateWithoutReports_madeInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -2523,6 +2861,17 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -2530,8 +2879,6 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -2587,6 +2934,17 @@ export type UserCreateWithoutReports_receivedInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -2594,8 +2952,6 @@ export type UserCreateWithoutReports_receivedInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -2643,6 +2999,17 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -2650,8 +3017,6 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -2727,6 +3092,19 @@ export type UserUpdateWithoutReports_madeInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2734,8 +3112,6 @@ export type UserUpdateWithoutReports_madeInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -2783,6 +3159,19 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2790,8 +3179,6 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -2859,6 +3246,19 @@ export type UserUpdateWithoutReports_receivedInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2866,8 +3266,6 @@ export type UserUpdateWithoutReports_receivedInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -2915,6 +3313,19 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2922,8 +3333,6 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -2971,6 +3380,17 @@ export type UserCreateWithoutSwipes_madeInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -2978,8 +3398,6 @@ export type UserCreateWithoutSwipes_madeInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -3027,6 +3445,17 @@ export type UserUncheckedCreateWithoutSwipes_madeInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -3034,8 +3463,6 @@ export type UserUncheckedCreateWithoutSwipes_madeInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -3091,6 +3518,17 @@ export type UserCreateWithoutSwipes_receivedInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -3098,8 +3536,6 @@ export type UserCreateWithoutSwipes_receivedInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -3147,6 +3583,17 @@ export type UserUncheckedCreateWithoutSwipes_receivedInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -3154,8 +3601,6 @@ export type UserUncheckedCreateWithoutSwipes_receivedInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -3231,6 +3676,19 @@ export type UserUpdateWithoutSwipes_madeInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3238,8 +3696,6 @@ export type UserUpdateWithoutSwipes_madeInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -3287,6 +3743,19 @@ export type UserUncheckedUpdateWithoutSwipes_madeInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3294,8 +3763,6 @@ export type UserUncheckedUpdateWithoutSwipes_madeInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -3363,6 +3830,19 @@ export type UserUpdateWithoutSwipes_receivedInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3370,8 +3850,6 @@ export type UserUpdateWithoutSwipes_receivedInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -3419,6 +3897,19 @@ export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3426,8 +3917,6 @@ export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -3475,6 +3964,17 @@ export type UserCreateWithoutSwipe_logsInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -3482,8 +3982,6 @@ export type UserCreateWithoutSwipe_logsInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -3531,6 +4029,17 @@ export type UserUncheckedCreateWithoutSwipe_logsInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -3538,8 +4047,6 @@ export type UserUncheckedCreateWithoutSwipe_logsInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -3595,6 +4102,17 @@ export type UserCreateWithoutSwipe_log_targetsInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -3602,8 +4120,6 @@ export type UserCreateWithoutSwipe_log_targetsInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -3651,6 +4167,17 @@ export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -3658,8 +4185,6 @@ export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -3735,6 +4260,19 @@ export type UserUpdateWithoutSwipe_logsInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3742,8 +4280,6 @@ export type UserUpdateWithoutSwipe_logsInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -3791,6 +4327,19 @@ export type UserUncheckedUpdateWithoutSwipe_logsInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3798,8 +4347,6 @@ export type UserUncheckedUpdateWithoutSwipe_logsInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -3867,6 +4414,19 @@ export type UserUpdateWithoutSwipe_log_targetsInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3874,8 +4434,6 @@ export type UserUpdateWithoutSwipe_log_targetsInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -3923,6 +4481,19 @@ export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3930,8 +4501,6 @@ export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -3979,6 +4548,17 @@ export type UserCreateWithoutMatches_as_lowInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -3986,8 +4566,6 @@ export type UserCreateWithoutMatches_as_lowInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -4035,6 +4613,17 @@ export type UserUncheckedCreateWithoutMatches_as_lowInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -4042,8 +4631,6 @@ export type UserUncheckedCreateWithoutMatches_as_lowInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -4099,6 +4686,17 @@ export type UserCreateWithoutMatches_as_highInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -4106,8 +4704,6 @@ export type UserCreateWithoutMatches_as_highInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -4155,6 +4751,17 @@ export type UserUncheckedCreateWithoutMatches_as_highInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -4162,8 +4769,6 @@ export type UserUncheckedCreateWithoutMatches_as_highInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -4239,6 +4844,19 @@ export type UserUpdateWithoutMatches_as_lowInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4246,8 +4864,6 @@ export type UserUpdateWithoutMatches_as_lowInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -4295,6 +4911,19 @@ export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4302,8 +4931,6 @@ export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -4371,6 +4998,19 @@ export type UserUpdateWithoutMatches_as_highInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4378,8 +5018,6 @@ export type UserUpdateWithoutMatches_as_highInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -4427,6 +5065,19 @@ export type UserUncheckedUpdateWithoutMatches_as_highInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4434,8 +5085,6 @@ export type UserUncheckedUpdateWithoutMatches_as_highInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -4483,6 +5132,17 @@ export type UserCreateWithoutLocationInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -4490,8 +5150,6 @@ export type UserCreateWithoutLocationInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -4539,6 +5197,17 @@ export type UserUncheckedCreateWithoutLocationInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -4546,8 +5215,6 @@ export type UserUncheckedCreateWithoutLocationInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -4623,6 +5290,19 @@ export type UserUpdateWithoutLocationInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4630,8 +5310,6 @@ export type UserUpdateWithoutLocationInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -4679,6 +5357,19 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4686,8 +5377,6 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -4735,6 +5424,17 @@ export type UserCreateWithoutBlocks_madeInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -4742,8 +5442,6 @@ export type UserCreateWithoutBlocks_madeInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -4791,6 +5489,17 @@ export type UserUncheckedCreateWithoutBlocks_madeInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -4798,8 +5507,6 @@ export type UserUncheckedCreateWithoutBlocks_madeInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -4855,6 +5562,17 @@ export type UserCreateWithoutBlocks_receivedInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -4862,8 +5580,6 @@ export type UserCreateWithoutBlocks_receivedInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -4911,6 +5627,17 @@ export type UserUncheckedCreateWithoutBlocks_receivedInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -4918,8 +5645,6 @@ export type UserUncheckedCreateWithoutBlocks_receivedInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -4995,6 +5720,19 @@ export type UserUpdateWithoutBlocks_madeInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5002,8 +5740,6 @@ export type UserUpdateWithoutBlocks_madeInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -5051,6 +5787,19 @@ export type UserUncheckedUpdateWithoutBlocks_madeInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5058,8 +5807,6 @@ export type UserUncheckedUpdateWithoutBlocks_madeInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -5127,6 +5874,19 @@ export type UserUpdateWithoutBlocks_receivedInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5134,8 +5894,6 @@ export type UserUpdateWithoutBlocks_receivedInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -5183,6 +5941,19 @@ export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5190,8 +5961,6 @@ export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -5239,6 +6008,17 @@ export type UserCreateWithoutAiJobsInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -5246,8 +6026,6 @@ export type UserCreateWithoutAiJobsInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -5295,6 +6073,17 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   missions?: number;
   total_earnings?: number;
   last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
   email_verified?: boolean;
   google_id?: string | null;
   linkedin_id?: string | null;
@@ -5302,8 +6091,6 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
   activity_sector?: string | null;
-  service_type?: string | null;
-  profile_type?: string | null;
   gps_latitude?: number | null;
   gps_longitude?: number | null;
   create_at?: Date | string;
@@ -5379,6 +6166,19 @@ export type UserUpdateWithoutAiJobsInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5386,8 +6186,6 @@ export type UserUpdateWithoutAiJobsInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -5435,6 +6233,19 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   missions?: Prisma.IntFieldUpdateOperationsInput | number;
   total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
   last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
   email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5442,8 +6253,6 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-  profile_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
   create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -5672,6 +6481,17 @@ export type UserSelect<
     missions?: boolean;
     total_earnings?: boolean;
     last_login?: boolean;
+    profile_type?: boolean;
+    offer_service?: boolean;
+    service_type?: boolean;
+    sector?: boolean;
+    selected_goals?: boolean;
+    experiences?: boolean;
+    education_level?: boolean;
+    educations?: boolean;
+    availability_days?: boolean;
+    availability_hours?: boolean;
+    onboarding_completed_at?: boolean;
     email_verified?: boolean;
     google_id?: boolean;
     linkedin_id?: boolean;
@@ -5679,8 +6499,6 @@ export type UserSelect<
     goals?: boolean;
     looking_for?: boolean;
     activity_sector?: boolean;
-    service_type?: boolean;
-    profile_type?: boolean;
     gps_latitude?: boolean;
     gps_longitude?: boolean;
     create_at?: boolean;
@@ -5735,6 +6553,17 @@ export type UserSelectCreateManyAndReturn<
     missions?: boolean;
     total_earnings?: boolean;
     last_login?: boolean;
+    profile_type?: boolean;
+    offer_service?: boolean;
+    service_type?: boolean;
+    sector?: boolean;
+    selected_goals?: boolean;
+    experiences?: boolean;
+    education_level?: boolean;
+    educations?: boolean;
+    availability_days?: boolean;
+    availability_hours?: boolean;
+    onboarding_completed_at?: boolean;
     email_verified?: boolean;
     google_id?: boolean;
     linkedin_id?: boolean;
@@ -5742,8 +6571,6 @@ export type UserSelectCreateManyAndReturn<
     goals?: boolean;
     looking_for?: boolean;
     activity_sector?: boolean;
-    service_type?: boolean;
-    profile_type?: boolean;
     gps_latitude?: boolean;
     gps_longitude?: boolean;
     create_at?: boolean;
@@ -5782,6 +6609,17 @@ export type UserSelectUpdateManyAndReturn<
     missions?: boolean;
     total_earnings?: boolean;
     last_login?: boolean;
+    profile_type?: boolean;
+    offer_service?: boolean;
+    service_type?: boolean;
+    sector?: boolean;
+    selected_goals?: boolean;
+    experiences?: boolean;
+    education_level?: boolean;
+    educations?: boolean;
+    availability_days?: boolean;
+    availability_hours?: boolean;
+    onboarding_completed_at?: boolean;
     email_verified?: boolean;
     google_id?: boolean;
     linkedin_id?: boolean;
@@ -5789,8 +6627,6 @@ export type UserSelectUpdateManyAndReturn<
     goals?: boolean;
     looking_for?: boolean;
     activity_sector?: boolean;
-    service_type?: boolean;
-    profile_type?: boolean;
     gps_latitude?: boolean;
     gps_longitude?: boolean;
     create_at?: boolean;
@@ -5826,6 +6662,17 @@ export type UserSelectScalar = {
   missions?: boolean;
   total_earnings?: boolean;
   last_login?: boolean;
+  profile_type?: boolean;
+  offer_service?: boolean;
+  service_type?: boolean;
+  sector?: boolean;
+  selected_goals?: boolean;
+  experiences?: boolean;
+  education_level?: boolean;
+  educations?: boolean;
+  availability_days?: boolean;
+  availability_hours?: boolean;
+  onboarding_completed_at?: boolean;
   email_verified?: boolean;
   google_id?: boolean;
   linkedin_id?: boolean;
@@ -5833,8 +6680,6 @@ export type UserSelectScalar = {
   goals?: boolean;
   looking_for?: boolean;
   activity_sector?: boolean;
-  service_type?: boolean;
-  profile_type?: boolean;
   gps_latitude?: boolean;
   gps_longitude?: boolean;
   create_at?: boolean;
@@ -5870,6 +6715,17 @@ export type UserOmit<
   | 'missions'
   | 'total_earnings'
   | 'last_login'
+  | 'profile_type'
+  | 'offer_service'
+  | 'service_type'
+  | 'sector'
+  | 'selected_goals'
+  | 'experiences'
+  | 'education_level'
+  | 'educations'
+  | 'availability_days'
+  | 'availability_hours'
+  | 'onboarding_completed_at'
   | 'email_verified'
   | 'google_id'
   | 'linkedin_id'
@@ -5877,8 +6733,6 @@ export type UserOmit<
   | 'goals'
   | 'looking_for'
   | 'activity_sector'
-  | 'service_type'
-  | 'profile_type'
   | 'gps_latitude'
   | 'gps_longitude'
   | 'create_at'
@@ -5961,18 +6815,30 @@ export type $UserPayload<
       missions: number;
       total_earnings: number;
       last_login: Date | null;
+      profile_type: $Enums.ProfileType | null;
+      offer_service: boolean;
+      service_type: string | null;
+      sector: string | null;
+      selected_goals: string[];
+      experiences: runtime.JsonValue | null;
+      education_level: string | null;
+      educations: runtime.JsonValue | null;
+      availability_days: string[];
+      availability_hours: string[];
+      onboarding_completed_at: Date | null;
       email_verified: boolean;
       google_id: string | null;
       linkedin_id: string | null;
       phone_verified: boolean;
       /**
-       * Matching / discovery fields (scripted Discovery v5 in apps/api).
+       * Matching / discovery fields (scripted Discovery v5 in apps/api). service_type and
+       * profile_type are shared with the onboarding wizard above, not redeclared here —
+       * profile_type's ProfileType enum values are plain strings at the TS level, so the
+       * matching code's `string | null` typing already reads them compatibly.
        */
       goals: string[];
       looking_for: string | null;
       activity_sector: string | null;
-      service_type: string | null;
-      profile_type: string | null;
       gps_latitude: number | null;
       gps_longitude: number | null;
       create_at: Date;
@@ -6711,6 +7577,17 @@ export interface UserFieldRefs {
   readonly missions: Prisma.FieldRef<'User', 'Int'>;
   readonly total_earnings: Prisma.FieldRef<'User', 'Int'>;
   readonly last_login: Prisma.FieldRef<'User', 'DateTime'>;
+  readonly profile_type: Prisma.FieldRef<'User', 'ProfileType'>;
+  readonly offer_service: Prisma.FieldRef<'User', 'Boolean'>;
+  readonly service_type: Prisma.FieldRef<'User', 'String'>;
+  readonly sector: Prisma.FieldRef<'User', 'String'>;
+  readonly selected_goals: Prisma.FieldRef<'User', 'String[]'>;
+  readonly experiences: Prisma.FieldRef<'User', 'Json'>;
+  readonly education_level: Prisma.FieldRef<'User', 'String'>;
+  readonly educations: Prisma.FieldRef<'User', 'Json'>;
+  readonly availability_days: Prisma.FieldRef<'User', 'String[]'>;
+  readonly availability_hours: Prisma.FieldRef<'User', 'String[]'>;
+  readonly onboarding_completed_at: Prisma.FieldRef<'User', 'DateTime'>;
   readonly email_verified: Prisma.FieldRef<'User', 'Boolean'>;
   readonly google_id: Prisma.FieldRef<'User', 'String'>;
   readonly linkedin_id: Prisma.FieldRef<'User', 'String'>;
@@ -6718,8 +7595,6 @@ export interface UserFieldRefs {
   readonly goals: Prisma.FieldRef<'User', 'String[]'>;
   readonly looking_for: Prisma.FieldRef<'User', 'String'>;
   readonly activity_sector: Prisma.FieldRef<'User', 'String'>;
-  readonly service_type: Prisma.FieldRef<'User', 'String'>;
-  readonly profile_type: Prisma.FieldRef<'User', 'String'>;
   readonly gps_latitude: Prisma.FieldRef<'User', 'Float'>;
   readonly gps_longitude: Prisma.FieldRef<'User', 'Float'>;
   readonly create_at: Prisma.FieldRef<'User', 'DateTime'>;

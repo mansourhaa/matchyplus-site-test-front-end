@@ -74,12 +74,13 @@ export const authCheckSchema = {
           type: 'object',
           properties: {
             id: { type: 'string' },
-            email: { type: 'string' },
-            phone: { type: 'string' },
+            email: { type: 'string', nullable: true },
+            phone: { type: 'string', nullable: true },
             name: { type: 'string' },
             auth_provider: { type: 'string' },
             email_verified: { type: 'boolean' },
             role: { type: 'string' },
+            onboarding_completed: { type: 'boolean' },
           },
         },
       },
@@ -108,9 +109,14 @@ const userSummarySchema = {
   type: 'object',
   properties: {
     id: { type: 'string' },
-    phone: { type: 'string' },
-    email: { type: 'string' },
+    // A phone-only account has no email, and vice versa for OAuth-only — without
+    // `nullable: true` the serializer silently coerces a real `null` to `""` on the wire.
+    phone: { type: 'string', nullable: true },
+    email: { type: 'string', nullable: true },
     name: { type: 'string' },
+    auth_provider: { type: 'string' },
+    email_verified: { type: 'boolean' },
+    onboarding_completed: { type: 'boolean' },
   },
 };
 

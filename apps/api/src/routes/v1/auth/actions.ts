@@ -102,6 +102,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     const kind = ERROR_STATUS[err.message];
 
     if (!kind) {
+      // The client only ever gets the generic message below — without logging the
+      // original error here first, an unmapped exception (e.g. a raw Twilio SDK error)
+      // is otherwise discarded with no trace of what it actually was.
+      request.log.error({ err }, 'unmapped auth error');
+
       const mapped = httpErrors.internalServerError(
         request.t('internal_error', {
           defaultValue: 'An unexpected error occurred',
@@ -251,9 +256,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await phoneAuthService.loginWithPhone(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send({
-          user: _.omit(data.user, ['password']),
-        });
+        return reply.code(200).send({ user: data.user });
       } catch (err) {
         throw mapError(err as Error, request);
       }
@@ -270,9 +273,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await phoneAuthService.registerWithPhone(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(201).send({
-          user: _.omit(data.user, ['password']),
-        });
+        return reply.code(201).send({ user: data.user });
       } catch (err) {
         throw mapError(err as Error, request);
       }
@@ -503,9 +504,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await oauthAuthService.consumeExchangeCode(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send({
-          user: _.omit(data.user, ['password']),
-        });
+        return reply.code(200).send({ user: data.user });
       } catch (err) {
         throw mapError(err as Error, request);
       }

@@ -110,7 +110,7 @@ describe('OAuthAuthenticationService', () => {
     it('links the provider to an existing account even when its email was unverified', async () => {
       // Every OAuth provider has already verified the email on its own side, so a stale
       // unverified flag here is never a reason to refuse the merge (see
-      // doc/reviews/authentication-contract.md).
+      // doc/features/authentication.md).
       const { service, prisma } = createService();
       prisma.user.findUnique.mockResolvedValueOnce(null); // by google_id
       prisma.user.findUnique.mockResolvedValueOnce({
@@ -194,6 +194,10 @@ describe('OAuthAuthenticationService', () => {
         id: 'user-1',
         email: 'user@example.com',
         phone: null,
+        name: 'Jane Doe',
+        auth_provider: 'google',
+        email_verified: true,
+        onboarding_completed_at: null,
       });
 
       const issueTokenPairSpy = vi
@@ -224,7 +228,17 @@ describe('OAuthAuthenticationService', () => {
 
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
-      expect(result.user.id).toBe('user-1');
+      // The wire response must expose the derived `onboarding_completed` boolean, not
+      // the raw onboarding_completed_at timestamp — matching authCheck's shape.
+      expect(result.user).toEqual({
+        id: 'user-1',
+        email: 'user@example.com',
+        phone: null,
+        name: 'Jane Doe',
+        auth_provider: 'google',
+        email_verified: true,
+        onboarding_completed: false,
+      });
 
       issueTokenPairSpy.mockRestore();
     });

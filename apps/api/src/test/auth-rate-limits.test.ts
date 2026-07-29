@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildTestApp } from './build-test-app.js';
 
 // Focused regression coverage for the previously-missing rate limits (see
-// doc/reviews/authentication-contract.md, H4) — one representative credential-guessing
+// doc/features/authentication.md) — one representative credential-guessing
 // route and one code-verification route, not an exhaustive sweep of every auth endpoint.
 describe('auth route rate limits', () => {
   const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];

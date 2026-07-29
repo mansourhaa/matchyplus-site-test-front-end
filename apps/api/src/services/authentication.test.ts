@@ -185,6 +185,7 @@ describe('AuthenticationService', () => {
         auth_provider: 'email',
         email_verified: true,
         role: 'USER',
+        onboarding_completed_at: new Date('2026-01-01'),
       });
 
       const service = new AuthenticationService({ prisma: prisma as never });
@@ -201,6 +202,7 @@ describe('AuthenticationService', () => {
           auth_provider: true,
           email_verified: true,
           role: true,
+          onboarding_completed_at: true,
         },
       });
 
@@ -212,11 +214,33 @@ describe('AuthenticationService', () => {
         auth_provider: 'email',
         email_verified: true,
         role: 'USER',
+        onboarding_completed: true,
       });
 
       expect(result).not.toHaveProperty('password');
       expect(result).not.toHaveProperty('status');
       expect(result).not.toHaveProperty('refresh_tokens');
+      expect(result).not.toHaveProperty('onboarding_completed_at');
+    });
+
+    it('reports onboarding_completed: false when onboarding has not been finished', async () => {
+      const prisma = createMockPrisma();
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@example.com',
+        phone: null,
+        name: 'Jane Doe',
+        auth_provider: 'email',
+        email_verified: false,
+        role: 'USER',
+        onboarding_completed_at: null,
+      });
+
+      const service = new AuthenticationService({ prisma: prisma as never });
+
+      const result = await service.authCheck({ id: 'user-1' });
+
+      expect(result.onboarding_completed).toBe(false);
     });
 
     it('throws when the user no longer exists', async () => {

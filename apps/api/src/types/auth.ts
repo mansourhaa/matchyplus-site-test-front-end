@@ -30,7 +30,7 @@ export type VerifyOtpPayload = {
   code: string;
 };
 // Proves phone ownership only — never a login or account-creation result itself (see
-// doc/reviews/authentication-contract.md). `signupToken` is what register-phone consumes.
+// doc/features/authentication.md). `signupToken` is what register-phone consumes.
 export type VerifyOtpResult = {
   verified: true;
   phone: string;

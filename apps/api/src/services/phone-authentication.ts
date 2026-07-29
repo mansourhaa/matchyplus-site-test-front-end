@@ -15,6 +15,7 @@ import {
   VerifyOtpPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { toMemberSessionUser } from '../utils/session-user.js';
 import { OtpChallengeService } from './otp-challenge.js';
 import { TokenService } from './token.js';
 
@@ -63,7 +64,7 @@ export class PhoneAuthenticationService {
 
   /**
    * Proves ownership of the phone for signup only — never creates a user or session
-   * itself (see doc/reviews/authentication-contract.md). register-phone consumes the
+   * itself (see doc/features/authentication.md). register-phone consumes the
    * returned grant to actually create the account.
    */
   async verifyOtp(payload: VerifyOtpPayload) {
@@ -108,7 +109,7 @@ export class PhoneAuthenticationService {
     }
 
     const tokens = await this.tokenService.issueTokenPair(user);
-    return { ...tokens, user };
+    return { ...tokens, user: toMemberSessionUser(user) };
   }
 
   async registerWithPhone(payload: RegisterPhonePayload) {
@@ -117,12 +118,15 @@ export class PhoneAuthenticationService {
       throw new Error('invalid_phone');
     }
 
-    await this.otpChallengeService.consumeSignupGrant(phone, payload.signupToken);
-
+    // Check for an existing account before burning the signup grant — it's a one-time
+    // token, so failing here must leave it usable for a genuine retry instead of forcing
+    // the user back through the whole OTP flow for a request that was always going to fail.
     const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) {
       throw new Error('phone_already_registered');
     }
+
+    await this.otpChallengeService.consumeSignupGrant(phone, payload.signupToken);
 
     const hashedPassword = await hashPassword(payload.password);
     const user = await this.prisma.user.create({
@@ -136,7 +140,7 @@ export class PhoneAuthenticationService {
     });
 
     const tokens = await this.tokenService.issueTokenPair(user);
-    return { ...tokens, user };
+    return { ...tokens, user: toMemberSessionUser(user) };
   }
 
   async requestPasswordReset(payload: RequestPasswordResetPayload) {
@@ -252,7 +256,15 @@ export class PhoneAuthenticationService {
       throw new Error('phone_already_linked');
     }
 
-    await this.otpChallengeService.verifyChallenge(phone, OtpPurpose.PHONE_LINK, payload.code);
+    // Binding to payload.userId here (not just phone+purpose+code) matters: without it, any
+    // authenticated caller who obtains a valid code for this challenge could link the phone
+    // to their own account instead of the account that actually requested it.
+    await this.otpChallengeService.verifyChallenge(
+      phone,
+      OtpPurpose.PHONE_LINK,
+      payload.code,
+      payload.userId,
+    );
 
     const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) {

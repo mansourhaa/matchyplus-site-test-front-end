@@ -28,9 +28,10 @@ const registeredUser = {
   id: 'user-1',
   email: null,
   phone: '+21612345678',
-  name: 'Jane Doe',
+  name: '+21612345678',
   auth_provider: 'phone',
   email_verified: false,
+  onboarding_completed: false,
 };
 
 // AuthLayout renders both a desktop and a mobile copy of the form content, so every
@@ -48,7 +49,7 @@ async function findFirstPlaceholder(text: string) {
   return matches[0];
 }
 
-describe('RegisterForm — OTP-gated registration', () => {
+describe('RegisterForm — credentials step (phone + password + OTP)', () => {
   beforeEach(() => {
     searchParamsRef.current = new URLSearchParams();
   });
@@ -57,12 +58,32 @@ describe('RegisterForm — OTP-gated registration', () => {
     vi.clearAllMocks();
   });
 
-  it('does not allow account creation before a code has been sent and entered', () => {
+  it('does not send an OTP when the password is too short', () => {
     renderWithAuthStore(<RegisterForm />);
 
-    expect(screen.queryByPlaceholderText('123456')).not.toBeInTheDocument();
-    expect(firstButton('Envoyer le code')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Créer un compte' })).not.toBeInTheDocument();
+    fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
+    const [passwordInput, confirmInput] = screen.getAllByPlaceholderText('••••••••');
+    fireEvent.change(passwordInput, { target: { value: 'short' } });
+    fireEvent.change(confirmInput, { target: { value: 'short' } });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    expect(api.post).not.toHaveBeenCalled();
+    expect(
+      screen.getAllByText('Le mot de passe doit contenir au moins 6 caractères.')[0],
+    ).toBeInTheDocument();
+  });
+
+  it('does not send an OTP when the passwords do not match', () => {
+    renderWithAuthStore(<RegisterForm />);
+
+    fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
+    const [passwordInput, confirmInput] = screen.getAllByPlaceholderText('••••••••');
+    fireEvent.change(passwordInput, { target: { value: 'secret123' } });
+    fireEvent.change(confirmInput, { target: { value: 'different1' } });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    expect(api.post).not.toHaveBeenCalled();
+    expect(screen.getAllByText('Les mots de passe ne correspondent pas.')[0]).toBeInTheDocument();
   });
 
   it('sends an OTP, verifies it for a signup grant, then registers via /auth/register-phone', async () => {
@@ -86,15 +107,19 @@ describe('RegisterForm — OTP-gated registration', () => {
     renderWithAuthStore(<RegisterForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Jane Doe' } });
-    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), {
-      target: { value: 'secret123' },
-    });
-    fireEvent.click(firstButton('Envoyer le code'));
+    const [passwordInput, confirmInput] = screen.getAllByPlaceholderText('••••••••');
+    fireEvent.change(passwordInput, { target: { value: 'secret123' } });
+    fireEvent.change(confirmInput, { target: { value: 'secret123' } });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
-    const codeInput = await findFirstPlaceholder('123456');
+    expect(await findFirstPlaceholder('------')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/auth/otp/send', { phone: '+21612345678' }),
+    );
+
+    const codeInput = await findFirstPlaceholder('------');
     fireEvent.change(codeInput, { target: { value: '123456' } });
-    fireEvent.click(firstButton('Créer un compte'));
+    fireEvent.click(firstButton('Confirmer'));
 
     await waitFor(() =>
       expect(api.post).toHaveBeenCalledWith('/auth/otp/verify', {
@@ -107,30 +132,34 @@ describe('RegisterForm — OTP-gated registration', () => {
         phone: '+21612345678',
         password: 'secret123',
         signupToken: 'valid-grant-token',
-        name: 'Jane Doe',
       }),
     );
-    await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/'));
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/onboarding'));
     expect(refreshMock).toHaveBeenCalled();
   });
 
-  it('does not submit registration when the entered code fails schema validation', async () => {
-    vi.mocked(api.post).mockResolvedValue({ data: { message: 'sent', phone: '+21612345678' } });
+  it('shows an error and does not register when the OTP code is rejected', async () => {
+    vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/otp/send') {
+        return { data: { message: 'sent', phone: '+21612345678' } };
+      }
+      throw new Error('invalid_otp');
+    });
 
     renderWithAuthStore(<RegisterForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), {
-      target: { value: 'secret123' },
-    });
-    fireEvent.click(firstButton('Envoyer le code'));
+    const [passwordInput, confirmInput] = screen.getAllByPlaceholderText('••••••••');
+    fireEvent.change(passwordInput, { target: { value: 'secret123' } });
+    fireEvent.change(confirmInput, { target: { value: 'secret123' } });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
-    // "Créer un compte" stays disabled below the 4-character minimum, so submission is
-    // blocked at the UI layer before the schema check ever runs.
-    const codeInput = await findFirstPlaceholder('123456');
-    fireEvent.change(codeInput, { target: { value: '12' } });
+    const codeInput = await findFirstPlaceholder('------');
+    fireEvent.change(codeInput, { target: { value: '000000' } });
+    fireEvent.click(firstButton('Confirmer'));
 
-    expect(firstButton('Créer un compte')).toBeDisabled();
+    await screen.findAllByText('Code incorrect.');
     expect(api.post).not.toHaveBeenCalledWith('/auth/register-phone', expect.anything());
+    expect(pushMock).not.toHaveBeenCalled();
   });
 });

@@ -26,6 +26,7 @@ const user: AuthUser = {
   name: 'Jane Doe',
   auth_provider: 'phone',
   email_verified: false,
+  onboarding_completed: false,
 };
 
 function buildStore(preloadedState?: Partial<ReturnType<typeof authReducer>>) {

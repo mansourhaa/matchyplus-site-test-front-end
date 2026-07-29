@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { hashPassword } from '../lib/password.js';
 import { buildTestApp } from './build-test-app.js';
 
 function signAccessToken(userId: string) {
@@ -185,6 +186,168 @@ describe('DELETE /api/v1/auth/account', () => {
   });
 });
 
+describe('member-session routes — onboarding_completed on the wire', () => {
+  const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
+
+  afterEach(async () => {
+    await Promise.all(apps.map((app) => app.close()));
+    apps.length = 0;
+  });
+
+  // These exercise the real Fastify response schema serialization (fast-json-stringify),
+  // not just the service-layer JS object — a field missing from the schema is silently
+  // dropped from the wire even if the service returns it, which is exactly how this bug
+  // shipped originally: onboarding_completed existed in code but wasn't in the schema.
+
+  it('POST /login-phone returns onboarding_completed as a boolean, never the password', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: null,
+            phone: '+33612345678',
+            name: 'Jane Doe',
+            password: await hashPassword('password123'),
+            auth_provider: 'phone',
+            email_verified: false,
+            phone_verified: true,
+            status: 'ACTIVE',
+            onboarding_completed_at: null,
+          }),
+        } as never,
+        refreshToken: {
+          create: vi.fn().mockResolvedValue({}),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login-phone',
+      payload: { phone: '+33612345678', password: 'password123' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      user: {
+        id: 'user-1',
+        email: null,
+        phone: '+33612345678',
+        name: 'Jane Doe',
+        auth_provider: 'phone',
+        email_verified: false,
+        onboarding_completed: false,
+      },
+    });
+    expect(response.body).not.toContain('password');
+  });
+
+  it('POST /register-phone returns onboarding_completed: false for a brand-new account', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUnique: vi.fn().mockResolvedValue(null),
+          create: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: null,
+            phone: '+33612345678',
+            name: '+33612345678',
+            auth_provider: 'phone',
+            email_verified: false,
+            phone_verified: true,
+            status: 'ACTIVE',
+            onboarding_completed_at: null,
+          }),
+        } as never,
+        otpChallenge: {
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        } as never,
+        refreshToken: {
+          create: vi.fn().mockResolvedValue({}),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/register-phone',
+      payload: {
+        phone: '+33612345678',
+        password: 'password123',
+        signupToken: 'a-valid-signup-grant-token',
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toEqual({
+      user: {
+        id: 'user-1',
+        email: null,
+        phone: '+33612345678',
+        name: '+33612345678',
+        auth_provider: 'phone',
+        email_verified: false,
+        onboarding_completed: false,
+      },
+    });
+    expect(response.body).not.toContain('password');
+  });
+
+  it('POST /oauth/exchange returns onboarding_completed: true once onboarding is done', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        oAuthExchangeCode: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'exchange-1',
+            user_id: 'user-1',
+            consumed_at: null,
+            expires_at: new Date(Date.now() + 60_000),
+          }),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        } as never,
+        user: {
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'jane@example.com',
+            phone: null,
+            name: 'Jane Doe',
+            auth_provider: 'google',
+            email_verified: true,
+            status: 'ACTIVE',
+            onboarding_completed_at: new Date('2026-01-01'),
+          }),
+        } as never,
+        refreshToken: {
+          create: vi.fn().mockResolvedValue({}),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/oauth/exchange',
+      payload: { code: 'a-valid-exchange-code-value' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      user: {
+        id: 'user-1',
+        email: 'jane@example.com',
+        phone: null,
+        name: 'Jane Doe',
+        auth_provider: 'google',
+        email_verified: true,
+        onboarding_completed: true,
+      },
+    });
+  });
+});
+
 describe('GET /api/v1/auth/authcheck', () => {
   const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
 
@@ -240,6 +403,7 @@ describe('GET /api/v1/auth/authcheck', () => {
         auth_provider: 'email',
         email_verified: true,
         role: 'USER',
+        onboarding_completed: false,
       },
     });
     expect(response.body).not.toContain('password');

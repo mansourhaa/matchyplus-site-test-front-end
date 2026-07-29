@@ -9,7 +9,7 @@ import { AbstractServiceOptions } from '../types/services.js';
  * Owns the full lifecycle of purpose-scoped phone OTP challenges: hashed codes,
  * expiration, bounded attempts, resend cooldown, and — for SIGNUP_VERIFICATION only —
  * the one-time grant that proves phone ownership without itself creating a user or
- * session. Never a login mechanism itself (see doc/reviews/authentication-contract.md).
+ * session. Never a login mechanism itself (see doc/features/authentication.md).
  *
  * This is deliberately independent of whichever client actually delivers the SMS text
  * (see lib/twilio.ts) — callers generate the code here, then send it themselves.
@@ -65,14 +65,23 @@ export class OtpChallengeService {
    * atomically marks it consumed so it can never be replayed. Every failure mode
    * (no active challenge, expired, too many attempts, wrong code) throws the same
    * `invalid_otp` externally so a caller can't distinguish them.
+   *
+   * `expectedUserId`, when passed (PHONE_LINK confirmation), must match the challenge's
+   * stored `user_id` — otherwise any authenticated caller who obtains a valid code could
+   * confirm a challenge that was requested by a different account.
    */
-  async verifyChallenge(phone: string, purpose: OtpPurpose, code: string) {
+  async verifyChallenge(phone: string, purpose: OtpPurpose, code: string, expectedUserId?: string) {
     const now = new Date();
     const active = await this.prisma.otpChallenge.findFirst({
       where: { phone, purpose, consumed_at: null },
     });
 
-    if (!active || active.expires_at < now || active.attempts >= config.otpMaxAttempts) {
+    if (
+      !active ||
+      active.expires_at < now ||
+      active.attempts >= config.otpMaxAttempts ||
+      (expectedUserId !== undefined && active.user_id !== expectedUserId)
+    ) {
       throw new Error('invalid_otp');
     }
 

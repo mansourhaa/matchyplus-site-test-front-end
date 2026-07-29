@@ -1,9 +1,9 @@
 # Authentication
 
-End-to-end authentication flow between the Next.js frontend and Fastify API.
-
-See `doc/reviews/authentication-contract.md` for the full product/security contract this
-implementation follows.
+End-to-end authentication flow between the Next.js frontend and Fastify API. This is the
+binding reference for member authentication — code comments across the auth services that
+say "see doc/reviews/authentication-contract.md" mean this file (that path was a
+gitignored, never-committed local note; this committed doc is the real contract).
 
 ## Overview
 
@@ -217,6 +217,11 @@ account, using a `PHONE_LINK`-purpose OTP challenge:
    the OTP and writing the phone. A successful confirm also sets `phone_verified: true`
    — a completed OTP check is real proof of ownership, the same as signup, making the
    account eligible for phone+password login going forward.
+
+   Verification is also bound to the confirming caller's `userId`, not just phone +
+   code (`OtpChallengeService.verifyChallenge`'s `expectedUserId` param) — otherwise any
+   authenticated caller who obtained a valid code could confirm a challenge that was
+   requested by a different account.
 
 Both endpoints are rate-limited the same way as OTP send (`request`: 5 per 15 minutes).
 

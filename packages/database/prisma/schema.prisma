@@ -34,6 +34,14 @@ enum ReportStatus {
   DISMISSED
 }
 
+/// Set on the identity step of onboarding. INDIVIDUAL (old app: "Employé") looks for
+/// work/services; PROVIDER (old app: "Employeur") offers them — this determines whether
+/// the experience/education onboarding steps are shown at all.
+enum ProfileType {
+  INDIVIDUAL
+  PROVIDER
+}
+
 /// What an OTP challenge is verifying ownership for. Never used as a login method itself —
 /// see doc/reviews/authentication-contract.md.
 enum OtpPurpose {
@@ -99,18 +107,34 @@ model User {
   total_earnings Int       @default(0)
   last_login     DateTime?
 
+  // Onboarding wizard fields (identity/interests/experience/education/location steps).
+  // `job`, `bio`, `image`, `interests`, `languages`, `contact_modes`, `price`,
+  // `experience`, and `city` above are shared with the admin panel and reused here.
+  profile_type            ProfileType?
+  offer_service           Boolean      @default(false)
+  service_type            String?
+  sector                  String?
+  selected_goals          String[]     @default([])
+  experiences             Json?
+  education_level         String?
+  educations              Json?
+  availability_days       String[]     @default([])
+  availability_hours      String[]     @default([])
+  onboarding_completed_at DateTime?
+
   // Authentication fields.
   email_verified Boolean @default(false)
   google_id      String? @unique
   linkedin_id    String? @unique
   phone_verified Boolean @default(false)
 
-  /// Matching / discovery fields (scripted Discovery v5 in apps/api).
+  /// Matching / discovery fields (scripted Discovery v5 in apps/api). service_type and
+  /// profile_type are shared with the onboarding wizard above, not redeclared here —
+  /// profile_type's ProfileType enum values are plain strings at the TS level, so the
+  /// matching code's `string | null` typing already reads them compatibly.
   goals           String[] @default([])
   looking_for     String?  @db.Text()
   activity_sector String?
-  service_type    String?
-  profile_type    String?
   gps_latitude    Float?
   gps_longitude   Float?
 

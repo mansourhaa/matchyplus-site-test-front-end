@@ -88,7 +88,7 @@ export function LoginForm() {
 
   // Phone login is always phone + password — OTP is never a login mechanism itself,
   // only proof of phone ownership for signup, phone-link, or password reset (see
-  // doc/reviews/authentication-contract.md).
+  // doc/features/authentication.md).
   const [resetMode, setResetMode] = useState(false);
   const [resetCode, setResetCode] = useState('');
   const [newResetPassword, setNewResetPassword] = useState('');
@@ -108,8 +108,8 @@ export function LoginForm() {
     setResetInfo(null);
   };
 
-  const goToPostAuthDestination = () => {
-    router.push(resolvePostAuthDestination(searchParams.get('next')));
+  const goToPostAuthDestination = (onboardingCompleted: boolean) => {
+    router.push(resolvePostAuthDestination(searchParams.get('next'), onboardingCompleted));
     router.refresh();
   };
 
@@ -119,7 +119,7 @@ export function LoginForm() {
     setLocalError(null);
     const resultAction = await dispatch(loginPhone({ phone, password }));
     if (loginPhone.fulfilled.match(resultAction)) {
-      goToPostAuthDestination();
+      goToPostAuthDestination(resultAction.payload.user.onboarding_completed);
     } else {
       setLocalError(loginPhoneErrorMessage(resultAction.error.message));
     }

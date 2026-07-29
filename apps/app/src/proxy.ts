@@ -6,10 +6,12 @@ import type { NextRequest } from 'next/server';
 // login/register).
 const publicRoutes = ['/login', '/register'];
 
-// Always allowed regardless of auth state:
-// - /oauth-callback is reached via external redirect (OAuth provider callback), so
-//   bouncing based on a stale cookie would break the flow.
-// /otp-test is intentionally NOT here — it's a dev-only harness (see
+// Always allowed regardless of auth state — /oauth-callback is reached via external
+// redirect (OAuth provider callback), so bouncing based on a stale cookie would break
+// the flow. /onboarding is NOT here: credentials (phone + password + OTP) are collected
+// on /register first, so by the time /onboarding is reached a session always exists —
+// it uses the normal protected-by-default rule below.
+// /otp-test is intentionally NOT here either — it's a dev-only harness (see
 // app/otp-test/page.tsx, which 404s outside development), not part of the shipped
 // product flow, so it gets the same auth rules as any other route.
 const neutralRoutes = ['/oauth-callback'];
@@ -28,6 +30,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // /home is the right bounce target even for a user with incomplete onboarding: the
+  // access-token cookie is HttpOnly and carries only { id, email, phone } (see
+  // TokenService.signAccessToken) so the edge can't know onboarding status without either
+  // decoding+DB-querying here or embedding a completeness claim that would go stale until
+  // the next refresh. MatchyDashboardShell (which wraps /home) already client-side-bounces
+  // an incomplete profile to /onboarding, so this is a one-hop redirect, not a bypass.
   if (token && isPublicRoute) {
     return NextResponse.redirect(new URL('/home', request.url));
   }

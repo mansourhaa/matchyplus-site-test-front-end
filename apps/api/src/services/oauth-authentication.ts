@@ -4,6 +4,7 @@ import { config } from '../config.js';
 import { generateExchangeCode, hashExchangeCode } from '../lib/oauth-exchange-code.js';
 import { OAuthExchangePayload, OAuthProfilePayload, OAuthProviderName } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { toMemberSessionUser } from '../utils/session-user.js';
 import { TokenService } from './token.js';
 
 export class OAuthAuthenticationService {
@@ -32,7 +33,7 @@ export class OAuthAuthenticationService {
     if (email) {
       const existingByEmail = await this.prisma.user.findUnique({ where: { email } });
       if (existingByEmail) {
-        // Email is OAuth-only in this app (see doc/reviews/authentication-contract.md) — every
+        // Email is OAuth-only in this app (see doc/features/authentication.md) — every
         // provider that returns this address has already verified it on its own side, so an
         // unverified flag on our side (e.g. a stale value from before this account linked a
         // provider) is never a reason to refuse the merge.
@@ -115,7 +116,7 @@ export class OAuthAuthenticationService {
 
     return {
       ...tokens,
-      user,
+      user: toMemberSessionUser(user),
     };
   }
 }
