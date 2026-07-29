@@ -14,12 +14,17 @@ import os
 import shutil
 import subprocess
 
-REGISTRY_REPO = "mohamedazizaguir/dotit"
 COMPONENTS = ("api", "app", "ai")
 
 
 def env(name, default="(unknown)"):
     return os.environ.get(name, default) or default
+
+
+# Set as a Jenkins global environment variable, not hardcoded here - matches
+# the Jenkinsfile's REGISTRY_REPO, which is exported to this script's shell
+# environment. The fallback is a local/dev default only.
+REGISTRY_REPO = env("REGISTRY_REPO", "mohamedazizaguir/dotit")
 
 
 def commit_author():

@@ -17,9 +17,15 @@ pipeline {
     // docker tags can't have them. Falls back to GIT_BRANCH if BRANCH_NAME
     // isn't set (multibranch vs plain pipeline job).
     IMAGE_TAG = "matchy-${(env.BRANCH_NAME ?: (env.GIT_BRANCH ?: 'unknown').replaceFirst('^origin/', '')).replaceAll('/', '-')}-${env.BUILD_NUMBER}"
-    REGISTRY_REPO = "mohamedazizaguir/dotit"
-    SONAR_PROJECT = "matchyplus"
-    SONAR_URL = "http://sonarqube:9000"
+    // REGISTRY_REPO/SONAR_PROJECT/SONAR_URL are environment/ownership concerns,
+    // not pipeline logic - they're set as Jenkins global environment variables
+    // (Manage Jenkins > System > Global properties > Environment variables) so
+    // this file stays reusable across Jenkins instances instead of binding to
+    // one registry namespace. The values after ?: are local/dev fallbacks only,
+    // used if a Jenkins instance hasn't configured them.
+    REGISTRY_REPO = "${env.REGISTRY_REPO ?: 'mohamedazizaguir/dotit'}"
+    SONAR_PROJECT = "${env.SONAR_PROJECT ?: 'matchyplus'}"
+    SONAR_URL = "${env.SONAR_URL ?: 'http://sonarqube:9000'}"
   }
 
   stages {
