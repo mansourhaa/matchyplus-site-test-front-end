@@ -6,7 +6,7 @@ import { identityStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
 import { Check, User } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { OnboardingStepLayout, StepCtaRow, StepProgress } from './onboarding-step-layout';
 
@@ -60,6 +60,26 @@ export function IdentityStep({
   );
   const [error, setError] = useState<string | null>(null);
   const [requiredTouched, setRequiredTouched] = useState(false);
+
+  // `profile` is usually still null on first render — fetchOnboardingProfile is async —
+  // so the useState initializers above only capture resumed progress when this step
+  // happens to mount after that fetch already resolved. Once it arrives late, sync the
+  // form once (not on every subsequent profile change, which would clobber in-progress
+  // edits after a save).
+  const hydratedRef = useRef(Boolean(profile));
+  useEffect(() => {
+    if (hydratedRef.current || !profile) return;
+    hydratedRef.current = true;
+    const { firstName: resumedFirstName, lastName: resumedLastName } = splitName(
+      profile.name ?? '',
+    );
+    setFirstName(resumedFirstName);
+    setLastName(resumedLastName);
+    setJob(profile.job ?? '');
+    setBio(profile.bio ?? '');
+    setImage(profile.image ?? '');
+    setProfileType(profile.profile_type ?? 'INDIVIDUAL');
+  }, [profile]);
 
   const { user } = useAppSelector(selectAuth);
   const name = `${firstName} ${lastName}`.trim();

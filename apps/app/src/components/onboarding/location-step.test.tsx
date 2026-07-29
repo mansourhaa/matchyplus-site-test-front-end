@@ -8,6 +8,10 @@ function firstButton(name: string | RegExp) {
   return screen.getAllByRole('button', { name })[0];
 }
 
+function firstPlaceholder(text: string) {
+  return screen.getAllByPlaceholderText(text)[0];
+}
+
 const baseProfile: OnboardingProfile = {
   id: 'user-1',
   name: 'Jane Doe',
@@ -22,7 +26,6 @@ const baseProfile: OnboardingProfile = {
   price: null,
   interests: ['Bricolage'],
   selected_goals: ['Trouver un job'],
-  experience: null,
   availability_days: [],
   availability_hours: [],
   contact_modes: [],
@@ -31,6 +34,38 @@ const baseProfile: OnboardingProfile = {
 };
 
 describe('LocationStep', () => {
+  it('hydrates resumed progress once the profile fetch resolves after mount', () => {
+    // The wizard always mounts this step with profile={null} first — fetchOnboardingProfile
+    // is async — then re-renders with the real profile once it resolves. Without hydration,
+    // the city field below would stay blank forever, since useState only reads its initial
+    // value on the very first render.
+    const { rerender } = render(
+      <LocationStep
+        profile={null}
+        stepNumber={3}
+        totalSteps={3}
+        loading={false}
+        onFinish={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(firstPlaceholder('Votre ville (ex : Tunis, Sousse...)')).toHaveValue('');
+
+    rerender(
+      <LocationStep
+        profile={{ ...baseProfile, city: 'Tunis' }}
+        stepNumber={3}
+        totalSteps={3}
+        loading={false}
+        onFinish={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(firstPlaceholder('Votre ville (ex : Tunis, Sousse...)')).toHaveValue('Tunis');
+  });
+
   it('does not show availability chips or require them when not offering a service', async () => {
     const onFinish = vi.fn().mockResolvedValue(true);
     render(

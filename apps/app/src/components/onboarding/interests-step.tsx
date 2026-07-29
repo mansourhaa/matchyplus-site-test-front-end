@@ -9,7 +9,7 @@ import {
 import { interestsStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile } from '@/features/onboarding/types';
 import { Check, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { OnboardingStepLayout, StepCard, StepCtaRow, StepProgress } from './onboarding-step-layout';
 
@@ -43,6 +43,19 @@ export function InterestsStep({
   const [serviceType, setServiceType] = useState(profile?.service_type ?? '');
   const [price, setPrice] = useState(profile?.price ?? '');
   const [error, setError] = useState<string | null>(null);
+
+  // Same late-arriving-profile hydration fix as identity-step: fetchOnboardingProfile
+  // is async, so a user resuming at this step can mount before it resolves.
+  const hydratedRef = useRef(Boolean(profile));
+  useEffect(() => {
+    if (hydratedRef.current || !profile) return;
+    hydratedRef.current = true;
+    setInterests(profile.interests ?? []);
+    setSelectedGoals(profile.selected_goals ?? []);
+    setOfferService(profile.offer_service ?? false);
+    setServiceType(profile.service_type ?? '');
+    setPrice(profile.price ?? '');
+  }, [profile]);
 
   // "Offrir un service" only applies to INDIVIDUAL (Employé) profiles — matching the
   // old app's Inscription2, which hides this card entirely for Employeur.

@@ -14,7 +14,6 @@ export interface OnboardingProfile {
   price: string | null;
   interests: string[];
   selected_goals: string[];
-  experience: string | null;
   availability_days: string[];
   availability_hours: string[];
   contact_modes: string[];
@@ -34,7 +33,6 @@ export type OnboardingProfilePatch = Partial<{
   price: string;
   interests: string[];
   selectedGoals: string[];
-  experience: string;
   availabilityDays: string[];
   availabilityHours: string[];
   contactModes: string[];

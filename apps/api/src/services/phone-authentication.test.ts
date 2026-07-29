@@ -94,10 +94,15 @@ describe('PhoneAuthenticationService', () => {
       const { service, prisma } = createService();
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
+        email: null,
         phone: '+33612345678',
+        name: 'Jane Doe',
         password: await hashPassword('password123'),
+        auth_provider: 'phone',
+        email_verified: false,
         phone_verified: true,
         status: 'ACTIVE',
+        onboarding_completed_at: null,
       });
 
       const issueTokenPairSpy = vi
@@ -110,6 +115,17 @@ describe('PhoneAuthenticationService', () => {
       });
 
       expect(result.accessToken).toBe('access-token');
+      // The wire response must never carry the password hash or the raw
+      // onboarding_completed_at timestamp — only the derived boolean.
+      expect(result.user).toEqual({
+        id: 'user-1',
+        email: null,
+        phone: '+33612345678',
+        name: 'Jane Doe',
+        auth_provider: 'phone',
+        email_verified: false,
+        onboarding_completed: false,
+      });
       issueTokenPairSpy.mockRestore();
     });
 
@@ -176,10 +192,14 @@ describe('PhoneAuthenticationService', () => {
       prisma.user.findUnique.mockResolvedValue(null);
       prisma.user.create.mockResolvedValue({
         id: 'user-1',
+        email: null,
         phone: '+33612345678',
+        name: '+33612345678',
         auth_provider: 'phone',
+        email_verified: false,
         phone_verified: true,
         status: 'ACTIVE',
+        onboarding_completed_at: null,
       });
 
       const issueTokenPairSpy = vi
@@ -208,6 +228,15 @@ describe('PhoneAuthenticationService', () => {
         }),
       });
       expect(result.accessToken).toBe('access-token');
+      expect(result.user).toEqual({
+        id: 'user-1',
+        email: null,
+        phone: '+33612345678',
+        name: '+33612345678',
+        auth_provider: 'phone',
+        email_verified: false,
+        onboarding_completed: false,
+      });
 
       issueTokenPairSpy.mockRestore();
     });
@@ -226,7 +255,7 @@ describe('PhoneAuthenticationService', () => {
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
-    it('rejects when the phone was registered by someone else after the grant was issued', async () => {
+    it('rejects when the phone is already registered, without burning the signup grant', async () => {
       const { service, prisma } = createService();
       prisma.otpChallenge.updateMany.mockResolvedValue({ count: 1 });
       prisma.user.findUnique.mockResolvedValue({ id: 'other-user', phone: '+33612345678' });
@@ -239,6 +268,10 @@ describe('PhoneAuthenticationService', () => {
         }),
       ).rejects.toThrow('phone_already_registered');
       expect(prisma.user.create).not.toHaveBeenCalled();
+      // The duplicate-phone check must run before consuming the grant — otherwise a
+      // failed registration would burn a one-time signup grant for nothing, forcing the
+      // user back through the whole OTP flow to retry.
+      expect(prisma.otpChallenge.updateMany).not.toHaveBeenCalled();
     });
   });
 
@@ -460,6 +493,7 @@ describe('PhoneAuthenticationService', () => {
       const { service, prisma } = createService();
       const challenge = {
         id: 'challenge-1',
+        user_id: 'user-1',
         expires_at: new Date(Date.now() + 60_000),
         attempts: 0,
         code_hash: hashVerificationCode('123456'),
@@ -488,6 +522,7 @@ describe('PhoneAuthenticationService', () => {
       const { service, prisma } = createService();
       const challenge = {
         id: 'challenge-1',
+        user_id: 'user-1',
         expires_at: new Date(Date.now() + 60_000),
         attempts: 0,
         code_hash: hashVerificationCode('123456'),
@@ -501,6 +536,31 @@ describe('PhoneAuthenticationService', () => {
       await expect(
         service.confirmPhoneLink({ userId: 'user-1', phone: '+33612345678', code: '123456' }),
       ).rejects.toThrow('phone_already_registered');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects confirmation from a different account than the one that requested the challenge', async () => {
+      const { service, prisma } = createService();
+      const challenge = {
+        id: 'challenge-1',
+        user_id: 'user-1',
+        expires_at: new Date(Date.now() + 60_000),
+        attempts: 0,
+        code_hash: hashVerificationCode('123456'),
+      };
+      // 'attacker' is itself an eligible social account with no phone — the hijack must
+      // still be blocked purely by the challenge/caller mismatch, not by eligibility.
+      prisma.user.findUnique.mockResolvedValueOnce({
+        id: 'attacker',
+        auth_provider: 'google',
+        phone: null,
+      });
+      prisma.otpChallenge.findFirst.mockResolvedValue(challenge);
+
+      await expect(
+        service.confirmPhoneLink({ userId: 'attacker', phone: '+33612345678', code: '123456' }),
+      ).rejects.toThrow('invalid_otp');
+      expect(prisma.otpChallenge.updateMany).not.toHaveBeenCalled();
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });

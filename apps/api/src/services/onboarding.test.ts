@@ -19,6 +19,7 @@ function createService(prisma = createMockPrisma()) {
 const baseProfile = {
   id: 'user-1',
   name: 'Jane Doe',
+  auth_provider: 'phone',
   job: null,
   bio: null,
   image: null,
@@ -26,14 +27,9 @@ const baseProfile = {
   profile_type: null,
   offer_service: false,
   service_type: null,
-  sector: null,
   price: null,
   interests: [] as string[],
   selected_goals: [] as string[],
-  experience: null,
-  experiences: null,
-  education_level: null,
-  educations: null,
   availability_days: [] as string[],
   availability_hours: [] as string[],
   contact_modes: [] as string[],
@@ -81,7 +77,6 @@ describe('OnboardingService', () => {
         offerService: true,
         serviceType: 'Chauffeur / Transport',
         selectedGoals: ['Trouver un job'],
-        educationLevel: 'Licence (Bac+3)',
         availabilityDays: ['Lun', 'Mar'],
         availabilityHours: ['morning'],
         contactModes: ['whatsapp'],
@@ -94,7 +89,6 @@ describe('OnboardingService', () => {
           offer_service: true,
           service_type: 'Chauffeur / Transport',
           selected_goals: ['Trouver un job'],
-          education_level: 'Licence (Bac+3)',
           availability_days: ['Lun', 'Mar'],
           availability_hours: ['morning'],
           contact_modes: ['whatsapp'],
@@ -105,16 +99,24 @@ describe('OnboardingService', () => {
   });
 
   describe('completeOnboarding', () => {
+    // Every field required by at least one rule, all satisfied — individual tests below
+    // knock out exactly one to prove that rule is enforced.
+    const completeIndividual = {
+      name: 'Jane Doe',
+      job: 'Électricien',
+      auth_provider: 'google',
+      image: null,
+      profile_type: 'INDIVIDUAL',
+      interests: ['Bricolage'],
+      selected_goals: ['Trouver un job'],
+      offer_service: false,
+      service_type: null,
+      price: null,
+    };
+
     it('rejects when job is missing for an INDIVIDUAL (Employé) profile', async () => {
       const { service, prisma } = createService();
-      prisma.user.findUniqueOrThrow.mockResolvedValue({
-        job: null,
-        profile_type: 'INDIVIDUAL',
-        interests: ['Bricolage'],
-        offer_service: false,
-        service_type: null,
-        price: null,
-      });
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ ...completeIndividual, job: null });
 
       await expect(service.completeOnboarding({ userId: 'user-1' })).rejects.toThrow(
         'onboarding_incomplete',
@@ -125,12 +127,9 @@ describe('OnboardingService', () => {
     it('does not require job for a PROVIDER (Employeur) profile — profession is optional there', async () => {
       const { service, prisma } = createService();
       prisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...completeIndividual,
         job: null,
         profile_type: 'PROVIDER',
-        interests: ['Bricolage'],
-        offer_service: false,
-        service_type: null,
-        price: null,
       });
       prisma.user.update.mockResolvedValue({
         ...baseProfile,
@@ -142,26 +141,89 @@ describe('OnboardingService', () => {
       });
     });
 
+    it('rejects when profile_type is null, instead of silently skipping the INDIVIDUAL job rule', async () => {
+      const { service, prisma } = createService();
+      // job is present here — the point is that a null profile_type alone must still
+      // block completion (this was the exact bypass: `profile_type !== 'INDIVIDUAL'`
+      // was true for null too, so hasIdentity passed without job ever being checked).
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...completeIndividual,
+        profile_type: null,
+      });
+
+      await expect(service.completeOnboarding({ userId: 'user-1' })).rejects.toThrow(
+        'onboarding_incomplete',
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects when name is blank', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ ...completeIndividual, name: '   ' });
+
+      await expect(service.completeOnboarding({ userId: 'user-1' })).rejects.toThrow(
+        'onboarding_incomplete',
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
     it('rejects when there are no interests', async () => {
       const { service, prisma } = createService();
-      prisma.user.findUniqueOrThrow.mockResolvedValue({
-        job: 'Électricien',
-        interests: [],
-        offer_service: false,
-        service_type: null,
-        price: null,
-      });
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ ...completeIndividual, interests: [] });
 
       await expect(service.completeOnboarding({ userId: 'user-1' })).rejects.toThrow(
         'onboarding_incomplete',
       );
     });
 
+    it('rejects when there are no selected goals', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...completeIndividual,
+        selected_goals: [],
+      });
+
+      await expect(service.completeOnboarding({ userId: 'user-1' })).rejects.toThrow(
+        'onboarding_incomplete',
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects a phone-signup account with no photo', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...completeIndividual,
+        auth_provider: 'phone',
+        image: null,
+      });
+
+      await expect(service.completeOnboarding({ userId: 'user-1' })).rejects.toThrow(
+        'onboarding_incomplete',
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('does not require a photo for an OAuth account', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...completeIndividual,
+        auth_provider: 'google',
+        image: null,
+      });
+      prisma.user.update.mockResolvedValue({
+        ...baseProfile,
+        onboarding_completed_at: new Date('2026-01-01'),
+      });
+
+      await expect(service.completeOnboarding({ userId: 'user-1' })).resolves.toMatchObject({
+        onboardingCompleted: true,
+      });
+    });
+
     it('rejects a service offer missing service_type/price', async () => {
       const { service, prisma } = createService();
       prisma.user.findUniqueOrThrow.mockResolvedValue({
-        job: 'Électricien',
-        interests: ['Bricolage'],
+        ...completeIndividual,
         offer_service: true,
         service_type: null,
         price: null,
@@ -172,11 +234,12 @@ describe('OnboardingService', () => {
       );
     });
 
-    it('stamps onboarding_completed_at once job + interests (+ service details) are present', async () => {
+    it('stamps onboarding_completed_at once every rule is satisfied', async () => {
       const { service, prisma } = createService();
       prisma.user.findUniqueOrThrow.mockResolvedValue({
-        job: 'Électricien',
-        interests: ['Bricolage'],
+        ...completeIndividual,
+        auth_provider: 'phone',
+        image: 'data:image/png;base64,abc',
         offer_service: true,
         service_type: 'Chauffeur / Transport',
         price: '40',
@@ -198,13 +261,7 @@ describe('OnboardingService', () => {
 
     it('does not require service_type/price when offer_service is false', async () => {
       const { service, prisma } = createService();
-      prisma.user.findUniqueOrThrow.mockResolvedValue({
-        job: 'Électricien',
-        interests: ['Bricolage'],
-        offer_service: false,
-        service_type: null,
-        price: null,
-      });
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ ...completeIndividual });
       prisma.user.update.mockResolvedValue({
         ...baseProfile,
         onboarding_completed_at: new Date('2026-01-01'),

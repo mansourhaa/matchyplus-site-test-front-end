@@ -8,7 +8,7 @@ import {
 } from '../../../schemas/v1/index.js';
 import { OnboardingService } from '../../../services/onboarding.js';
 import { UsersService } from '../../../services/users.js';
-import { UpdateOnboardingProfilePayload } from '../../../types/onboarding.js';
+import { UpdateOnboardingProfileBody } from '../../../types/onboarding.js';
 
 const ERROR_STATUS: Record<string, 'badRequest'> = {
   onboarding_incomplete: 'badRequest',
@@ -65,7 +65,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   );
 
-  fastify.patch<{ Body: Omit<UpdateOnboardingProfilePayload, 'userId'> }>(
+  fastify.patch<{ Body: UpdateOnboardingProfileBody }>(
     '/me/profile',
     {
       schema: updateOnboardingProfileSchema,

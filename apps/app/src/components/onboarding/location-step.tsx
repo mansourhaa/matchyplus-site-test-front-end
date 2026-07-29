@@ -23,7 +23,7 @@ import {
   Sunset,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { OnboardingStepLayout, StepCard, StepCtaRow, StepProgress } from './onboarding-step-layout';
 
@@ -186,6 +186,17 @@ export function LocationStep({
   const [contactModes, setContactModes] = useState<string[]>(profile?.contact_modes ?? []);
   const [languages, setLanguages] = useState<string[]>(profile?.languages ?? []);
   const [error, setError] = useState<string | null>(null);
+
+  const hydratedRef = useRef(Boolean(profile));
+  useEffect(() => {
+    if (hydratedRef.current || !profile) return;
+    hydratedRef.current = true;
+    setCity(profile.city ?? '');
+    setAvailabilityDays(profile.availability_days ?? []);
+    setAvailabilityHours(profile.availability_hours ?? []);
+    setContactModes(profile.contact_modes ?? []);
+    setLanguages(profile.languages ?? []);
+  }, [profile]);
 
   const offerService = profile?.offer_service ?? false;
 

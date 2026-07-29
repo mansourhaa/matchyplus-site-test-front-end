@@ -3,10 +3,10 @@
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { fetchCurrentUser } from '@/features/auth/store/auth-slice';
 import {
+  TOTAL_FLOW_STEPS,
+  getFlowStepNumber,
   getNextStep,
   getPreviousStep,
-  getStepNumber,
-  getStepOrder,
 } from '@/features/onboarding/step-order';
 import {
   completeOnboarding,
@@ -88,8 +88,8 @@ export function OnboardingWizard() {
     return true;
   };
 
-  const stepNumber = getStepNumber(step);
-  const totalSteps = getStepOrder().length;
+  const stepNumber = getFlowStepNumber(step);
+  const totalSteps = TOTAL_FLOW_STEPS;
 
   switch (step) {
     case 'identity':

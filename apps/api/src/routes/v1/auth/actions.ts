@@ -256,9 +256,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await phoneAuthService.loginWithPhone(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send({
-          user: _.omit(data.user, ['password']),
-        });
+        return reply.code(200).send({ user: data.user });
       } catch (err) {
         throw mapError(err as Error, request);
       }
@@ -275,9 +273,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await phoneAuthService.registerWithPhone(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(201).send({
-          user: _.omit(data.user, ['password']),
-        });
+        return reply.code(201).send({ user: data.user });
       } catch (err) {
         throw mapError(err as Error, request);
       }
@@ -508,9 +504,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await oauthAuthService.consumeExchangeCode(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send({
-          user: _.omit(data.user, ['password']),
-        });
+        return reply.code(200).send({ user: data.user });
       } catch (err) {
         throw mapError(err as Error, request);
       }

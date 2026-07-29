@@ -2,17 +2,36 @@
 
 import { MatchyAppShell } from '@/components/matchy/matchy-app-shell';
 import { MatchyPrimaryShell } from '@/components/matchy/matchy-primary-shell';
+import { useAppSelector } from '@/features/auth/hooks';
+import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 
 const PRIMARY_PATHS = new Set(['/home', '/matches']);
 
 function DashboardChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { t } = useI18n();
   const isPrimary = PRIMARY_PATHS.has(pathname);
+
+  // `user` is null until fetchCurrentUser resolves (see useBootstrapSession) — only
+  // redirect once we actually know the profile is incomplete, not during that window.
+  // This is every route under (dashboard) — the shell users actually hit
+  const { user } = useAppSelector(selectAuth);
+  const needsOnboarding = Boolean(user && !user.onboarding_completed);
+
+  useEffect(() => {
+    if (needsOnboarding) {
+      router.replace('/onboarding');
+    }
+  }, [needsOnboarding, router]);
+
+  if (needsOnboarding) {
+    return null;
+  }
 
   const titleMap: Record<string, string> = {
     '/settings': t('nav.settings'),

@@ -30,6 +30,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // /home is the right bounce target even for a user with incomplete onboarding: the
+  // access-token cookie is HttpOnly and carries only { id, email, phone } (see
+  // TokenService.signAccessToken) so the edge can't know onboarding status without either
+  // decoding+DB-querying here or embedding a completeness claim that would go stale until
+  // the next refresh. MatchyDashboardShell (which wraps /home) already client-side-bounces
+  // an incomplete profile to /onboarding, so this is a one-hop redirect, not a bypass.
   if (token && isPublicRoute) {
     return NextResponse.redirect(new URL('/home', request.url));
   }

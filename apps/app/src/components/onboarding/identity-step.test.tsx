@@ -1,5 +1,6 @@
 import { renderWithAuthStore } from '@/test/render-with-auth-store';
 import { fireEvent, screen } from '@testing-library/react';
+import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { IdentityStep } from './identity-step';
@@ -152,6 +153,62 @@ describe('IdentityStep', () => {
     });
   });
 
+  it('hydrates resumed progress once the profile fetch resolves after mount', () => {
+    const resumedProfile = {
+      id: 'user-1',
+      name: 'Existing Name',
+      auth_provider: 'google' as const,
+      job: 'Plombier',
+      bio: null,
+      image: null,
+      city: null,
+      profile_type: 'INDIVIDUAL' as const,
+      offer_service: false,
+      service_type: null,
+      price: null,
+      interests: [],
+      selected_goals: [],
+      availability_days: [],
+      availability_hours: [],
+      contact_modes: [],
+      languages: [],
+      onboardingCompleted: false,
+    };
+
+    // The wizard always mounts this step with profile={null} first — fetchOnboardingProfile
+    // is async — then re-renders with the real profile once it resolves. Without hydration,
+    // the fields below would stay blank forever, since useState only reads its initial
+    // value on the very first render.
+    const { store, rerender } = renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        onNext={vi.fn()}
+      />,
+      oauthAuthState,
+    );
+
+    expect(firstPlaceholder('Votre prénom')).toHaveValue('');
+
+    rerender(
+      <Provider store={store}>
+        <IdentityStep
+          profile={resumedProfile}
+          stepNumber={1}
+          totalSteps={3}
+          loading={false}
+          onNext={vi.fn()}
+        />
+      </Provider>,
+    );
+
+    expect(firstPlaceholder('Votre prénom')).toHaveValue('Existing');
+    expect(firstPlaceholder('Votre nom de famille')).toHaveValue('Name');
+    expect(firstPlaceholder('Ingénieur, designer, chauffeur...')).toHaveValue('Plombier');
+  });
+
   it('prefills prénom/nom by splitting the existing name', () => {
     renderWithAuthStore(
       <IdentityStep
@@ -169,7 +226,6 @@ describe('IdentityStep', () => {
           price: null,
           interests: [],
           selected_goals: [],
-          experience: null,
           availability_days: [],
           availability_hours: [],
           contact_modes: [],

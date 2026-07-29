@@ -3,6 +3,7 @@
 import { MatchyLogo } from '@/components/matchy/matchy-logo';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
+import { TOTAL_FLOW_STEPS } from '@/features/onboarding/step-order';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { ArrowLeft, Check, Eye, EyeOff, Loader2, Lock, Phone, ShieldCheck, X } from 'lucide-react';
@@ -13,8 +14,9 @@ import { AuthLayout } from './auth-layout';
 import { PhoneInput } from './phone-input';
 
 // Credentials is always step 1 of the phone-signup flow — identity, interests, and
-// location follow on the onboarding wizard (see doc/reviews/authentication-contract.md).
-const TOTAL_STEPS = 4;
+// location follow on the onboarding wizard. TOTAL_FLOW_STEPS is shared with the wizard
+// so the two screens can never disagree on numbering again.
+const TOTAL_STEPS = TOTAL_FLOW_STEPS;
 
 export function RegisterForm() {
   const router = useRouter();

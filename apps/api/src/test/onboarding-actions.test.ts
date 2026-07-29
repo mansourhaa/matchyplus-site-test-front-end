@@ -111,8 +111,13 @@ describe('POST /api/v1/users/me/profile/complete', () => {
         user: {
           findUniqueOrThrow: vi.fn().mockResolvedValue({
             ...activeUser,
+            name: 'Jane Doe',
             job: null,
+            auth_provider: 'google',
+            image: null,
+            profile_type: 'INDIVIDUAL',
             interests: [],
+            selected_goals: [],
             offer_service: false,
             service_type: null,
             price: null,
@@ -132,14 +137,19 @@ describe('POST /api/v1/users/me/profile/complete', () => {
     expect(response.json()).toMatchObject({ code: 'onboarding_incomplete' });
   });
 
-  it('completes onboarding once job and interests are present', async () => {
+  it('completes onboarding once every required field is present', async () => {
     const app = await buildTestApp({
       prisma: {
         user: {
           findUniqueOrThrow: vi.fn().mockResolvedValue({
             ...activeUser,
+            name: 'Jane Doe',
             job: 'Électricien',
+            auth_provider: 'google',
+            image: null,
+            profile_type: 'INDIVIDUAL',
             interests: ['Bricolage'],
+            selected_goals: ['Trouver un job'],
             offer_service: false,
             service_type: null,
             price: null,

@@ -8,13 +8,17 @@ import onboardingReducer, {
   updateOnboardingProfile,
 } from './onboarding-slice';
 
-vi.mock('@/lib/api', () => ({
-  api: {
-    get: vi.fn(),
-    patch: vi.fn(),
-    post: vi.fn(),
-  },
-}));
+vi.mock('@/lib/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/api')>();
+  return {
+    ...actual,
+    api: {
+      get: vi.fn(),
+      patch: vi.fn(),
+      post: vi.fn(),
+    },
+  };
+});
 
 const profile = {
   id: 'user-1',
@@ -26,14 +30,9 @@ const profile = {
   profile_type: null,
   offer_service: false,
   service_type: null,
-  sector: null,
   price: null,
   interests: [] as string[],
   selected_goals: [] as string[],
-  experience: null,
-  experiences: null,
-  education_level: null,
-  educations: null,
   availability_days: [] as string[],
   availability_hours: [] as string[],
   contact_modes: [] as string[],
@@ -78,5 +77,26 @@ describe('onboarding-slice', () => {
 
     expect(api.post).toHaveBeenCalledWith('/users/me/profile/complete');
     expect(store.getState().onboarding.profile?.onboardingCompleted).toBe(true);
+  });
+
+  it('completeOnboarding surfaces the API error code instead of a generic axios message', async () => {
+    vi.mocked(api.post).mockRejectedValue({
+      isAxiosError: true,
+      response: { data: { code: 'onboarding_incomplete' } },
+    });
+
+    const store = buildStore();
+    await store.dispatch(completeOnboarding());
+
+    expect(store.getState().onboarding.error).toBe('onboarding_incomplete');
+  });
+
+  it('updateOnboardingProfile falls back to a stable code when the API gives none', async () => {
+    vi.mocked(api.patch).mockRejectedValue(new Error('Network Error'));
+
+    const store = buildStore();
+    await store.dispatch(updateOnboardingProfile({ job: 'Électricien' }));
+
+    expect(store.getState().onboarding.error).toBe('onboarding_update_failed');
   });
 });

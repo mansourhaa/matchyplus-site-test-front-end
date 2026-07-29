@@ -36,7 +36,7 @@ export function OtpTestForm() {
     const result = await dispatch(verifyOtp({ phone, code: code.trim() }));
     if (verifyOtp.fulfilled.match(result)) {
       // Verifying an OTP only proves phone ownership — it never creates a session by
-      // itself (see doc/reviews/authentication-contract.md), so this harness just
+      // itself (see doc/features/authentication.md), so this harness just
       // surfaces the grant register-phone would need, instead of redirecting.
       setSendInfo(`Code vérifié. signupToken: ${result.payload.signupToken}`);
     }

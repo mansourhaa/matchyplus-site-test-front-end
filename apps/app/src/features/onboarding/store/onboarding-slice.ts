@@ -1,4 +1,4 @@
-import { api } from '@/lib/api';
+import { api, getApiErrorCode } from '@/lib/api';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import type { OnboardingProfile, OnboardingProfilePatch } from '../types';
@@ -15,22 +15,37 @@ const initialState: OnboardingState = {
   profile: null,
 };
 
+// Same catch-and-rethrow-a-stable-code pattern as authSlice's loginPhone/registerPhone —
+// without it, action.error.message on rejection is axios's generic "Request failed with
+// status code ..." instead of the API's actual error code (e.g. onboarding_incomplete).
 export const fetchOnboardingProfile = createAsyncThunk('onboarding/fetchProfile', async () => {
-  const response = await api.get<OnboardingProfile>('/users/me/profile');
-  return response.data;
+  try {
+    const response = await api.get<OnboardingProfile>('/users/me/profile');
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorCode(error) ?? 'onboarding_fetch_failed');
+  }
 });
 
 export const updateOnboardingProfile = createAsyncThunk(
   'onboarding/updateProfile',
   async (patch: OnboardingProfilePatch) => {
-    const response = await api.patch<OnboardingProfile>('/users/me/profile', patch);
-    return response.data;
+    try {
+      const response = await api.patch<OnboardingProfile>('/users/me/profile', patch);
+      return response.data;
+    } catch (error) {
+      throw new Error(getApiErrorCode(error) ?? 'onboarding_update_failed');
+    }
   },
 );
 
 export const completeOnboarding = createAsyncThunk('onboarding/complete', async () => {
-  const response = await api.post<OnboardingProfile>('/users/me/profile/complete');
-  return response.data;
+  try {
+    const response = await api.post<OnboardingProfile>('/users/me/profile/complete');
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorCode(error) ?? 'onboarding_complete_failed');
+  }
 });
 
 const onboardingSlice = createSlice({
