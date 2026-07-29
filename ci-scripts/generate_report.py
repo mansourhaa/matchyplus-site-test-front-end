@@ -23,8 +23,11 @@ def env(name, default="(unknown)"):
 
 # Set as a Jenkins global environment variable, not hardcoded here - matches
 # the Jenkinsfile's REGISTRY_REPO, which is exported to this script's shell
-# environment. The fallback is a local/dev default only.
-REGISTRY_REPO = env("REGISTRY_REPO", "mohamedazizaguir/dotit")
+# environment. No personal default: the Jenkinsfile's own Validate CI config
+# stage already fails the build before this script runs if it's unset, so
+# this just falls back to the same "(unknown)" placeholder as every other
+# env() lookup in this file rather than any specific registry.
+REGISTRY_REPO = env("REGISTRY_REPO")
 
 
 def commit_author():

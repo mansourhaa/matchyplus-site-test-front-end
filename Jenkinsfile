@@ -18,17 +18,34 @@ pipeline {
     // isn't set (multibranch vs plain pipeline job).
     IMAGE_TAG = "matchy-${(env.BRANCH_NAME ?: (env.GIT_BRANCH ?: 'unknown').replaceFirst('^origin/', '')).replaceAll('/', '-')}-${env.BUILD_NUMBER}"
     // REGISTRY_REPO/SONAR_PROJECT/SONAR_URL are environment/ownership concerns,
-    // not pipeline logic - they're set as Jenkins global environment variables
-    // (Manage Jenkins > System > Global properties > Environment variables) so
-    // this file stays reusable across Jenkins instances instead of binding to
-    // one registry namespace. The values after ?: are local/dev fallbacks only,
-    // used if a Jenkins instance hasn't configured them.
-    REGISTRY_REPO = "${env.REGISTRY_REPO ?: 'mohamedazizaguir/dotit'}"
-    SONAR_PROJECT = "${env.SONAR_PROJECT ?: 'matchyplus'}"
-    SONAR_URL = "${env.SONAR_URL ?: 'http://sonarqube:9000'}"
+    // not pipeline logic - no personal default here. They must be set as
+    // Jenkins global environment variables (Manage Jenkins > System > Global
+    // properties > Environment variables); the Validate CI config stage below
+    // fails the build with a clear message if they're missing, instead of
+    // silently falling back to any particular registry.
+    REGISTRY_REPO = "${env.REGISTRY_REPO}"
+    SONAR_PROJECT = "${env.SONAR_PROJECT}"
+    SONAR_URL = "${env.SONAR_URL}"
   }
 
   stages {
+    stage('Validate CI config') {
+      steps {
+        script {
+          def missing = []
+          if (!env.REGISTRY_REPO?.trim()) missing << 'REGISTRY_REPO'
+          if (!env.SONAR_PROJECT?.trim()) missing << 'SONAR_PROJECT'
+          if (!env.SONAR_URL?.trim()) missing << 'SONAR_URL'
+          if (missing) {
+            error "Missing required Jenkins global environment variable(s): ${missing.join(', ')}. " +
+              "Set them under Manage Jenkins > System > Global properties > Environment variables " +
+              "before running this pipeline - this file intentionally has no personal/default registry " +
+              "to fall back to."
+          }
+        }
+      }
+    }
+
     stage('Prepare report dirs') {
       steps {
         sh 'mkdir -p reports/semgrep reports/trivy'
@@ -133,8 +150,8 @@ pipeline {
           script {
             env.SONAR_TOKEN_CAPTURED = env.SONAR_AUTH_TOKEN
           }
-          sh '''
-            set -eu
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
             rm -rf "$WORKSPACE/.scannerwork" "$WORKSPACE/reports/sonarqube"
             mkdir -p "$WORKSPACE/.scannerwork" "$WORKSPACE/reports/sonarqube"
             chmod 777 "$WORKSPACE/.scannerwork" "$WORKSPACE/reports/sonarqube"
@@ -174,7 +191,7 @@ pipeline {
 
             SCANNER_EXIT=${SCANNER_EXIT:-0}
 
-            CE_TASK_ID=$(grep 'api/ce/task?id=' "$WORKSPACE/reports/sonarqube/sonar-scanner.log" | sed 's|.*api/ce/task?id=||;s|[^A-Za-z0-9_-].*||' | head -1)
+            CE_TASK_ID=$(grep 'api/ce/task?id=' "$WORKSPACE/reports/sonarqube/sonar-scanner.log" | sed 's|.*api/ce/task?id=||;s|[^A-Za-z0-9_-].*||' | head -1 || true)
 
             if [ -n "$CE_TASK_ID" ]; then
               echo "ceTaskId=$CE_TASK_ID" > "$WORKSPACE/reports/sonarqube/report-task.txt"
@@ -198,9 +215,10 @@ pipeline {
       }
     }
 
-    // advisory only for now - marks the build unstable instead of failing it
-    // so a bad gate doesn't block the rest of the pipeline while we work
-    // through the coverage/reliability findings from the first real scan.
+    // logging only for now, doesn't affect build status at all - coverage is
+    // genuinely too low right now for a real gate to be meaningful (per
+    // Khalil), so this reports the result without failing or marking the
+    // build unstable. Tighten this back up once coverage catches up.
     stage('Quality Gate') {
       steps {
         script {
@@ -208,14 +226,17 @@ pipeline {
           def sonarUrl = env.SONAR_URL
           def projectKey = env.SONAR_PROJECT
 
+          // explicitly tolerant of a missing report-task.txt (e.g. the
+          // scanner failed before writing it) - 2>/dev/null + || true means
+          // this never throws, it just yields an empty ceTaskId, which the
+          // check right below already treats as "skip the gate, advisory only".
           def ceTaskId = sh(
             returnStdout: true,
-            script: 'grep "^ceTaskId=" "$WORKSPACE/reports/sonarqube/report-task.txt" | cut -d= -f2'
+            script: 'grep "^ceTaskId=" "$WORKSPACE/reports/sonarqube/report-task.txt" 2>/dev/null | cut -d= -f2 || true'
           ).trim()
 
           if (!ceTaskId) {
             echo "no ceTaskId found in report-task.txt, skipping quality gate check"
-            currentBuild.result = 'UNSTABLE'
             return
           }
 
@@ -239,7 +260,6 @@ pipeline {
 
           if (ceStatus != 'SUCCESS') {
             echo "compute engine task didn't succeed (status: ${ceStatus}), quality gate result unknown"
-            currentBuild.result = 'UNSTABLE'
             return
           }
 
@@ -253,7 +273,6 @@ pipeline {
 
           if (!qgResponse) {
             echo "quality gate returned an empty response"
-            currentBuild.result = 'UNSTABLE'
             return
           }
 
@@ -262,10 +281,8 @@ pipeline {
 
           if (qgStatus == 'ERROR') {
             echo "quality gate failed - see ${sonarUrl}/dashboard?id=${projectKey}"
-            currentBuild.result = 'UNSTABLE'
           } else if (qgStatus != 'OK') {
             echo "quality gate returned unexpected status: ${qgStatus}"
-            currentBuild.result = 'UNSTABLE'
           } else {
             echo "Quality Gate PASSED"
           }
@@ -283,22 +300,49 @@ pipeline {
       }
     }
 
+    // CRITICAL findings now actually surface as a failure (previously
+    // --exit-code 0 suppressed this entirely, so a scan riddled with
+    // CRITICAL CVEs still looked green). Wrapped in catchError so the stage
+    // is marked UNSTABLE rather than aborting outright, and every image is
+    // still scanned/reported even if an earlier one has findings - a plain
+    // --exit-code 1 would stop the script at the first failing scan and
+    // leave the rest with no report at all.
     stage('Trivy scan') {
       steps {
-        sh """
-          mkdir -p reports/trivy
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 0 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:api-${IMAGE_TAG} > reports/trivy/trivy-api-report.json
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 0 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:app-${IMAGE_TAG} > reports/trivy/trivy-app-report.json
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 0 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:ai-${IMAGE_TAG} > reports/trivy/trivy-ai-report.json
-        """
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+          sh """
+            mkdir -p reports/trivy
+            TRIVY_FAILED=0
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:api-${IMAGE_TAG} > reports/trivy/trivy-api-report.json || TRIVY_FAILED=1
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:app-${IMAGE_TAG} > reports/trivy/trivy-app-report.json || TRIVY_FAILED=1
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:ai-${IMAGE_TAG} > reports/trivy/trivy-ai-report.json || TRIVY_FAILED=1
+            if [ "\$TRIVY_FAILED" -ne 0 ]; then
+              echo "CRITICAL vulnerabilities found - see reports/trivy/*.json" >&2
+              exit 1
+            fi
+          """
+        }
       }
     }
 
     stage('Push images') {
       steps {
         withCredentials([usernamePassword(credentialsId: 'registry-creds', usernameVariable: 'REG_USER', passwordVariable: 'REG_PASS')]) {
+          // derive the registry host from REGISTRY_REPO instead of assuming
+          // Docker Hub - "user/repo" (no host segment) logs into Hub as
+          // before, but "ghcr.io/org/repo" or "host:port/repo" now logs into
+          // that host instead of silently hitting Hub with the wrong creds.
           sh """
-            echo "\$REG_PASS" | docker login -u "\$REG_USER" --password-stdin
+            FIRST_SEGMENT="\${REGISTRY_REPO%%/*}"
+            REGISTRY_HOST=""
+            case "\$FIRST_SEGMENT" in
+              *.*|*:*|localhost) REGISTRY_HOST="\$FIRST_SEGMENT" ;;
+            esac
+            if [ -n "\$REGISTRY_HOST" ]; then
+              echo "\$REG_PASS" | docker login "\$REGISTRY_HOST" -u "\$REG_USER" --password-stdin
+            else
+              echo "\$REG_PASS" | docker login -u "\$REG_USER" --password-stdin
+            fi
             docker push ${REGISTRY_REPO}:api-${IMAGE_TAG}
             docker push ${REGISTRY_REPO}:app-${IMAGE_TAG}
             docker push ${REGISTRY_REPO}:ai-${IMAGE_TAG}
