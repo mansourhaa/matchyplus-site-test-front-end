@@ -49,50 +49,41 @@ export class OnboardingService {
   }
 
   async getProfile(payload: GetOnboardingProfilePayload) {
-    try {
-      const user = await this.prisma.user.findUniqueOrThrow({
-        where: { id: payload.userId },
-        select: PROFILE_SELECT,
-      });
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: payload.userId },
+      select: PROFILE_SELECT,
+    });
 
-      return toProfileResult(user);
-    } catch (err) {
-      throw err;
-    }
+    return toProfileResult(user);
   }
 
   async updateProfile(payload: UpdateOnboardingProfilePayload) {
-    try {
-      const { userId, ...fields } = payload;
+    const { userId, ...fields } = payload;
 
-      const data: Prisma.UserUpdateInput = {};
-      if (fields.name !== undefined) data.name = fields.name;
-      if (fields.job !== undefined) data.job = fields.job;
-      if (fields.bio !== undefined) data.bio = fields.bio;
-      if (fields.image !== undefined) data.image = fields.image;
-      if (fields.city !== undefined) data.city = fields.city;
-      if (fields.profileType !== undefined) data.profile_type = fields.profileType;
-      if (fields.offerService !== undefined) data.offer_service = fields.offerService;
-      if (fields.serviceType !== undefined) data.service_type = fields.serviceType;
-      if (fields.price !== undefined) data.price = fields.price;
-      if (fields.interests !== undefined) data.interests = fields.interests;
-      if (fields.selectedGoals !== undefined) data.selected_goals = fields.selectedGoals;
-      if (fields.availabilityDays !== undefined) data.availability_days = fields.availabilityDays;
-      if (fields.availabilityHours !== undefined)
-        data.availability_hours = fields.availabilityHours;
-      if (fields.contactModes !== undefined) data.contact_modes = fields.contactModes;
-      if (fields.languages !== undefined) data.languages = fields.languages;
+    const data: Prisma.UserUpdateInput = {};
+    if (fields.name !== undefined) data.name = fields.name;
+    if (fields.job !== undefined) data.job = fields.job;
+    if (fields.bio !== undefined) data.bio = fields.bio;
+    if (fields.image !== undefined) data.image = fields.image;
+    if (fields.city !== undefined) data.city = fields.city;
+    if (fields.profileType !== undefined) data.profile_type = fields.profileType;
+    if (fields.offerService !== undefined) data.offer_service = fields.offerService;
+    if (fields.serviceType !== undefined) data.service_type = fields.serviceType;
+    if (fields.price !== undefined) data.price = fields.price;
+    if (fields.interests !== undefined) data.interests = fields.interests;
+    if (fields.selectedGoals !== undefined) data.selected_goals = fields.selectedGoals;
+    if (fields.availabilityDays !== undefined) data.availability_days = fields.availabilityDays;
+    if (fields.availabilityHours !== undefined) data.availability_hours = fields.availabilityHours;
+    if (fields.contactModes !== undefined) data.contact_modes = fields.contactModes;
+    if (fields.languages !== undefined) data.languages = fields.languages;
 
-      const user = await this.prisma.user.update({
-        where: { id: userId },
-        data,
-        select: PROFILE_SELECT,
-      });
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data,
+      select: PROFILE_SELECT,
+    });
 
-      return toProfileResult(user);
-    } catch (err) {
-      throw err;
-    }
+    return toProfileResult(user);
   }
 
   /**
@@ -110,52 +101,48 @@ export class OnboardingService {
    * skippable, matching the old app's "Passer" behavior on those two steps.
    */
   async completeOnboarding(payload: CompleteOnboardingPayload) {
-    try {
-      const user = await this.prisma.user.findUniqueOrThrow({
-        where: { id: payload.userId },
-        select: {
-          name: true,
-          job: true,
-          auth_provider: true,
-          image: true,
-          profile_type: true,
-          interests: true,
-          selected_goals: true,
-          offer_service: true,
-          service_type: true,
-          price: true,
-        },
-      });
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: payload.userId },
+      select: {
+        name: true,
+        job: true,
+        auth_provider: true,
+        image: true,
+        profile_type: true,
+        interests: true,
+        selected_goals: true,
+        offer_service: true,
+        service_type: true,
+        price: true,
+      },
+    });
 
-      const hasProfileType = user.profile_type !== null;
-      const hasName = Boolean(user.name?.trim());
-      const hasIdentity = user.profile_type !== 'INDIVIDUAL' || Boolean(user.job?.trim());
-      const hasInterest = user.interests.length > 0;
-      const hasGoals = user.selected_goals.length > 0;
-      const hasServiceDetails = !user.offer_service || Boolean(user.service_type && user.price);
-      const hasPhoto = user.auth_provider !== 'phone' || Boolean(user.image);
+    const hasProfileType = user.profile_type !== null;
+    const hasName = Boolean(user.name?.trim());
+    const hasIdentity = user.profile_type !== 'INDIVIDUAL' || Boolean(user.job?.trim());
+    const hasInterest = user.interests.length > 0;
+    const hasGoals = user.selected_goals.length > 0;
+    const hasServiceDetails = !user.offer_service || Boolean(user.service_type && user.price);
+    const hasPhoto = user.auth_provider !== 'phone' || Boolean(user.image);
 
-      if (
-        !hasProfileType ||
-        !hasName ||
-        !hasIdentity ||
-        !hasInterest ||
-        !hasGoals ||
-        !hasServiceDetails ||
-        !hasPhoto
-      ) {
-        throw new Error('onboarding_incomplete');
-      }
-
-      const updated = await this.prisma.user.update({
-        where: { id: payload.userId },
-        data: { onboarding_completed_at: new Date() },
-        select: PROFILE_SELECT,
-      });
-
-      return toProfileResult(updated);
-    } catch (err) {
-      throw err;
+    if (
+      !hasProfileType ||
+      !hasName ||
+      !hasIdentity ||
+      !hasInterest ||
+      !hasGoals ||
+      !hasServiceDetails ||
+      !hasPhoto
+    ) {
+      throw new Error('onboarding_incomplete');
     }
+
+    const updated = await this.prisma.user.update({
+      where: { id: payload.userId },
+      data: { onboarding_completed_at: new Date() },
+      select: PROFILE_SELECT,
+    });
+
+    return toProfileResult(updated);
   }
 }
