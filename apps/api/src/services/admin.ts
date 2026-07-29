@@ -410,6 +410,10 @@ export class AdminService {
 
     const isCurrentValid = await bcrypt.compare(payload.currentPassword, admin.password);
 
+    if (!isCurrentValid) {
+      throw forbidden('invalid current password');
+    }
+
     const hashed = await bcrypt.hash(payload.newPassword, await bcrypt.genSalt(10));
     await this.prisma.user.update({ where: { id: adminId }, data: { password: hashed } });
 
