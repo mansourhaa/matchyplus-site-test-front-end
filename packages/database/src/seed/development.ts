@@ -331,12 +331,8 @@ export default async function seedDev() {
 
   for (const member of MEMBERS) {
     const { password: _password, email, ...rest } = member;
-    // TEMPORARY - dev's own tsc error (email: string | null isn't assignable
-    // to a WhereUniqueInput's string | undefined). Coercing null->undefined
-    // just to unblock a one-off CI diagnostic run; this is dev's bug to fix
-    // for real, not this PR's - revert before merge.
     const row = await prisma.user.upsert({
-      where: { email: email ?? undefined },
+      where: { email },
       create: member,
       update: { ...rest },
     });
