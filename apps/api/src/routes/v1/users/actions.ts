@@ -20,6 +20,7 @@ import { badRequest } from '../../../utils/http-errors.js';
 
 const ERROR_STATUS: Record<string, 'badRequest'> = {
   onboarding_incomplete: 'badRequest',
+  foreign_photo_path: 'badRequest',
 };
 
 const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {

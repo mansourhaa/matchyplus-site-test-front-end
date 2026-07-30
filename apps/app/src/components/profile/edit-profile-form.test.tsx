@@ -189,7 +189,12 @@ describe('EditProfileForm', () => {
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Enregistrer' }),
     );
 
-    expect(await screen.findByText('Échec de la sauvegarde. Réessayez.')).toBeInTheDocument();
+    // The failure is surfaced both inside the still-open sheet and on the page banner —
+    // querying within the dialog proves it's visible where the user is actually looking,
+    // not just hidden behind the modal.
+    expect(
+      await within(screen.getByRole('dialog')).findByText('Échec de la sauvegarde. Réessayez.'),
+    ).toBeInTheDocument();
     expect(screen.queryByText('✓ Profil mis à jour')).not.toBeInTheDocument();
   });
 
@@ -230,5 +235,82 @@ describe('EditProfileForm', () => {
     fireEvent.click(await screen.findByText('Supprimer la photo'));
 
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/users/me/profile/photo'));
+  });
+
+  it('persists a new professional experience via PATCH instead of only local state', async () => {
+    const savedProfile = {
+      ...fetchedProfile,
+      experiences: [
+        {
+          id: 'exp-1',
+          title: 'Chef de chantier',
+          company: '',
+          type: '',
+          startDate: '',
+          endDate: '',
+          current: false,
+        },
+      ],
+    };
+    vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
+    vi.mocked(api.patch).mockResolvedValue({ data: savedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    const heading = await screen.findByRole('heading', { name: 'Expériences professionnelles' });
+    fireEvent.click(
+      within(heading.closest('section') as HTMLElement).getByRole('button', { name: 'Ajouter' }),
+    );
+    fireEvent.change(screen.getByLabelText('Intitulé du poste *'), {
+      target: { value: 'Chef de chantier' },
+    });
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Enregistrer' }),
+    );
+
+    await waitFor(() =>
+      expect(api.patch).toHaveBeenCalledWith(
+        '/users/me/profile',
+        expect.objectContaining({
+          experiences: [expect.objectContaining({ title: 'Chef de chantier' })],
+        }),
+      ),
+    );
+    expect(await screen.findByText('Chef de chantier')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows a failure message inside the experience editor when persisting fails, and keeps it open', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
+    vi.mocked(api.patch).mockRejectedValue(new Error('Network Error'));
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    const heading = await screen.findByRole('heading', { name: 'Expériences professionnelles' });
+    fireEvent.click(
+      within(heading.closest('section') as HTMLElement).getByRole('button', { name: 'Ajouter' }),
+    );
+    fireEvent.change(screen.getByLabelText('Intitulé du poste *'), {
+      target: { value: 'Chef de chantier' },
+    });
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Enregistrer' }),
+    );
+
+    expect(
+      await within(screen.getByRole('dialog')).findByText('Échec de la sauvegarde. Réessayez.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText("Aucune expérience pour l'instant")).toBeInTheDocument();
   });
 });

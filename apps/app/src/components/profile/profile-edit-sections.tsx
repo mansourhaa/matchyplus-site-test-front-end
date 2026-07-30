@@ -54,10 +54,12 @@ export function EditSheet({
   title,
   children,
   onClose,
+  error,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
+  error?: string | null;
 }) {
   return (
     <div
@@ -78,7 +80,14 @@ export function EditSheet({
             <X size={20} color="#888" />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-5">
+          {error && (
+            <p className="mb-4 text-xs text-[#E24E59]" role="alert">
+              {error}
+            </p>
+          )}
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -92,6 +101,7 @@ export function TagEditor({
   onChange,
   onClose,
   onSave,
+  error,
 }: {
   title: string;
   values: string[];
@@ -100,6 +110,7 @@ export function TagEditor({
   onChange: (values: string[]) => void;
   onClose: () => void;
   onSave: (values: string[]) => Promise<boolean>;
+  error?: string | null;
 }) {
   const [input, setInput] = useState('');
   const add = (raw: string) => {
@@ -110,7 +121,7 @@ export function TagEditor({
     setInput('');
   };
   return (
-    <EditSheet title={title} onClose={onClose}>
+    <EditSheet title={title} onClose={onClose} error={error}>
       <div className="mb-3 flex gap-2">
         <input
           value={input}
@@ -182,6 +193,7 @@ export function ChoiceEditor({
   onChange,
   onClose,
   onSave,
+  error,
 }: {
   title: string;
   values: { value: string; label: string }[];
@@ -190,9 +202,10 @@ export function ChoiceEditor({
   onChange: (values: string[]) => void;
   onClose: () => void;
   onSave: (values: string[]) => Promise<boolean>;
+  error?: string | null;
 }) {
   return (
-    <EditSheet title={title} onClose={onClose}>
+    <EditSheet title={title} onClose={onClose} error={error}>
       <div className="mb-4 space-y-2">
         {values.map((option) => {
           const active = selected.includes(option.value);
@@ -268,18 +281,47 @@ const emptyExperience = (): ProfileExperience => ({
 export function ExperienceSection({
   values,
   onChange,
+  onSave,
 }: {
   values: ProfileExperience[];
   onChange: (values: ProfileExperience[]) => void;
+  onSave: (values: ProfileExperience[]) => Promise<boolean>;
 }) {
   const [editing, setEditing] = useState<ProfileExperience | null>(null);
-  const save = (entry: ProfileExperience) => {
-    const value = { ...entry, id: entry.id || `exp-${Date.now()}` };
-    onChange(
-      entry.id ? values.map((item) => (item.id === entry.id ? value : item)) : [...values, value],
-    );
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const openEditor = (entry: ProfileExperience) => {
+    setSaveError(null);
+    setEditing(entry);
+  };
+  const closeEditor = () => {
+    setSaveError(null);
     setEditing(null);
   };
+  const persist = async (next: ProfileExperience[]) => {
+    setSaving(true);
+    setSaveError(null);
+    const persisted = await onSave(next);
+    setSaving(false);
+    if (persisted) {
+      onChange(next);
+      setEditing(null);
+    } else {
+      setSaveError('Échec de la sauvegarde. Réessayez.');
+    }
+  };
+  const save = (entry: ProfileExperience) => {
+    const value = { ...entry, id: entry.id || `exp-${Date.now()}` };
+    void persist(
+      entry.id ? values.map((item) => (item.id === entry.id ? value : item)) : [...values, value],
+    );
+  };
+  const remove = () => {
+    if (!editing?.id) return;
+    void persist(values.filter((item) => item.id !== editing.id));
+  };
+
   return (
     <>
       <ProfileCard>
@@ -293,7 +335,7 @@ export function ExperienceSection({
           action={
             <button
               type="button"
-              onClick={() => setEditing(emptyExperience())}
+              onClick={() => openEditor(emptyExperience())}
               className="flex items-center gap-1 rounded-lg bg-[#EEF5FF] px-2.5 py-1 text-xs font-semibold text-[#2F76BB]"
             >
               <Plus size={11} /> Ajouter
@@ -306,7 +348,7 @@ export function ExperienceSection({
               <button
                 type="button"
                 key={entry.id}
-                onClick={() => setEditing(entry)}
+                onClick={() => openEditor(entry)}
                 className="flex w-full gap-3 rounded-xl border border-[#E8F0FA] bg-[#F5F7FA] p-3 text-left"
               >
                 <Briefcase size={16} color="#2F76BB" />
@@ -333,15 +375,10 @@ export function ExperienceSection({
         <ExperienceEditor
           value={editing}
           onSave={save}
-          onDelete={
-            editing.id
-              ? () => {
-                  onChange(values.filter((item) => item.id !== editing.id));
-                  setEditing(null);
-                }
-              : undefined
-          }
-          onClose={() => setEditing(null)}
+          onDelete={editing.id ? remove : undefined}
+          onClose={closeEditor}
+          saving={saving}
+          error={saveError}
         />
       )}
     </>
@@ -353,17 +390,22 @@ function ExperienceEditor({
   onSave,
   onDelete,
   onClose,
+  saving,
+  error,
 }: {
   value: ProfileExperience;
   onSave: (value: ProfileExperience) => void;
   onDelete?: () => void;
   onClose: () => void;
+  saving: boolean;
+  error: string | null;
 }) {
   const [draft, setDraft] = useState(value);
   return (
     <EditSheet
       title={value.id ? "Modifier l'expérience" : 'Ajouter une expérience'}
       onClose={onClose}
+      error={error}
     >
       <EditorInput
         label="Intitulé du poste *"
@@ -410,14 +452,14 @@ function ExperienceEditor({
         Poste actuel
       </label>
       <div className="flex gap-2">
-        {onDelete && <DeleteButton onClick={onDelete} />}
+        {onDelete && <DeleteButton onClick={onDelete} disabled={saving} />}
         <button
           type="button"
-          disabled={!draft.title.trim()}
+          disabled={!draft.title.trim() || saving}
           onClick={() => onSave({ ...draft, title: draft.title.trim() })}
           className="flex-1 rounded-xl bg-[#2F76BB] py-3 text-sm font-bold text-white disabled:bg-[#DDD]"
         >
-          Enregistrer
+          {saving ? 'Enregistrement…' : 'Enregistrer'}
         </button>
       </div>
     </EditSheet>
@@ -437,18 +479,47 @@ const emptyEducation = (): ProfileEducation => ({
 export function EducationSection({
   values,
   onChange,
+  onSave,
 }: {
   values: ProfileEducation[];
   onChange: (values: ProfileEducation[]) => void;
+  onSave: (values: ProfileEducation[]) => Promise<boolean>;
 }) {
   const [editing, setEditing] = useState<ProfileEducation | null>(null);
-  const save = (entry: ProfileEducation) => {
-    const value = { ...entry, id: entry.id || `edu-${Date.now()}` };
-    onChange(
-      entry.id ? values.map((item) => (item.id === entry.id ? value : item)) : [...values, value],
-    );
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const openEditor = (entry: ProfileEducation) => {
+    setSaveError(null);
+    setEditing(entry);
+  };
+  const closeEditor = () => {
+    setSaveError(null);
     setEditing(null);
   };
+  const persist = async (next: ProfileEducation[]) => {
+    setSaving(true);
+    setSaveError(null);
+    const persisted = await onSave(next);
+    setSaving(false);
+    if (persisted) {
+      onChange(next);
+      setEditing(null);
+    } else {
+      setSaveError('Échec de la sauvegarde. Réessayez.');
+    }
+  };
+  const save = (entry: ProfileEducation) => {
+    const value = { ...entry, id: entry.id || `edu-${Date.now()}` };
+    void persist(
+      entry.id ? values.map((item) => (item.id === entry.id ? value : item)) : [...values, value],
+    );
+  };
+  const remove = () => {
+    if (!editing?.id) return;
+    void persist(values.filter((item) => item.id !== editing.id));
+  };
+
   return (
     <>
       <ProfileCard>
@@ -462,7 +533,7 @@ export function EducationSection({
           action={
             <button
               type="button"
-              onClick={() => setEditing(emptyEducation())}
+              onClick={() => openEditor(emptyEducation())}
               className="flex items-center gap-1 rounded-lg bg-[#E8F7F3] px-2.5 py-1 text-xs font-semibold text-[#2A8F76]"
             >
               <Plus size={11} /> Ajouter
@@ -474,7 +545,7 @@ export function EducationSection({
             <button
               type="button"
               key={entry.id}
-              onClick={() => setEditing(entry)}
+              onClick={() => openEditor(entry)}
               className="mb-2 flex w-full gap-3 rounded-xl border border-[#E8F0FA] bg-[#F5F7FA] p-3 text-left"
             >
               <GraduationCap size={16} color="#61BCA6" />
@@ -499,19 +570,14 @@ export function EducationSection({
       {editing && (
         <EditSheet
           title={editing.id ? 'Modifier la formation' : 'Ajouter une formation'}
-          onClose={() => setEditing(null)}
+          onClose={closeEditor}
+          error={saveError}
         >
           <EducationEditor
             value={editing}
             onSave={save}
-            onDelete={
-              editing.id
-                ? () => {
-                    onChange(values.filter((item) => item.id !== editing.id));
-                    setEditing(null);
-                  }
-                : undefined
-            }
+            onDelete={editing.id ? remove : undefined}
+            saving={saving}
           />
         </EditSheet>
       )}
@@ -523,10 +589,12 @@ function EducationEditor({
   value,
   onSave,
   onDelete,
+  saving,
 }: {
   value: ProfileEducation;
   onSave: (value: ProfileEducation) => void;
   onDelete?: () => void;
+  saving: boolean;
 }) {
   const [draft, setDraft] = useState(value);
   return (
@@ -566,14 +634,14 @@ function EducationEditor({
         onChange={(result) => setDraft({ ...draft, result })}
       />
       <div className="flex gap-2">
-        {onDelete && <DeleteButton onClick={onDelete} />}
+        {onDelete && <DeleteButton onClick={onDelete} disabled={saving} />}
         <button
           type="button"
-          disabled={!draft.school.trim()}
+          disabled={!draft.school.trim() || saving}
           onClick={() => onSave({ ...draft, school: draft.school.trim() })}
           className="flex-1 rounded-xl bg-[#61BCA6] py-3 text-sm font-bold text-white disabled:bg-[#DDD]"
         >
-          Enregistrer
+          {saving ? 'Enregistrement…' : 'Enregistrer'}
         </button>
       </div>
     </>
@@ -607,12 +675,13 @@ function EditorInput({
   );
 }
 
-function DeleteButton({ onClick }: { onClick: () => void }) {
+function DeleteButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="rounded-xl bg-[#FEE2E2] px-4 text-[#E24E59]"
+      disabled={disabled}
+      className="rounded-xl bg-[#FEE2E2] px-4 text-[#E24E59] disabled:opacity-50"
       aria-label="Supprimer"
     >
       <Trash2 size={16} />

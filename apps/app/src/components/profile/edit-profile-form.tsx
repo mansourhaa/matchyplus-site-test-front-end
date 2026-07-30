@@ -583,8 +583,16 @@ export function EditProfileForm() {
               onClick={() => setSheet('education')}
             />
           </ProfileCard>
-          <ExperienceSection values={experiences} onChange={setExperiences} />
-          <EducationSection values={educations} onChange={setEducations} />
+          <ExperienceSection
+            values={experiences}
+            onChange={setExperiences}
+            onSave={(values) => save({ experiences: values })}
+          />
+          <EducationSection
+            values={educations}
+            onChange={setEducations}
+            onSave={(values) => save({ educations: values })}
+          />
         </>
       )}
 
@@ -729,7 +737,11 @@ export function EditProfileForm() {
 
       <ProfileSheets
         sheet={sheet}
-        close={() => setSheet(null)}
+        close={() => {
+          setSheet(null);
+          setError(null);
+        }}
+        error={error}
         name={name}
         setName={setName}
         job={job}
@@ -826,6 +838,7 @@ function InfoRow({ label, value, onClick }: { label: string; value: string; onCl
 type SheetProps = {
   sheet: Sheet;
   close: () => void;
+  error: string | null;
   name: string;
   setName: (value: string) => void;
   job: string;
@@ -868,6 +881,7 @@ function ProfileSheets(props: SheetProps) {
         onChange={props.setInterests}
         onClose={props.close}
         onSave={(values) => props.persist({ interests: values })}
+        error={props.error}
       />
     );
   if (props.sheet === 'goals')
@@ -879,6 +893,7 @@ function ProfileSheets(props: SheetProps) {
         onChange={props.setGoals}
         onClose={props.close}
         onSave={(values) => props.persist({ goals: values })}
+        error={props.error}
       />
     );
   if (props.sheet === 'contact')
@@ -891,6 +906,7 @@ function ProfileSheets(props: SheetProps) {
         onChange={props.setContactModes}
         onClose={props.close}
         onSave={(values) => props.persist({ contactModes: values })}
+        error={props.error}
       />
     );
   if (props.sheet === 'experience')
@@ -902,6 +918,7 @@ function ProfileSheets(props: SheetProps) {
         onChange={([value = '']) => props.setExperience(value)}
         onClose={props.close}
         onSave={([value = '']) => props.persist({ experience: value })}
+        error={props.error}
       />
     );
   if (props.sheet === 'sector')
@@ -913,6 +930,7 @@ function ProfileSheets(props: SheetProps) {
         onChange={([value = '']) => props.setSector(value)}
         onClose={props.close}
         onSave={([value = '']) => props.persist({ sector: value })}
+        error={props.error}
       />
     );
   if (props.sheet === 'education')
@@ -924,6 +942,7 @@ function ProfileSheets(props: SheetProps) {
         onChange={([value = '']) => props.setEducation(value)}
         onClose={props.close}
         onSave={([value = '']) => props.persist({ education: value })}
+        error={props.error}
       />
     );
   if (props.sheet === 'languages')
@@ -936,11 +955,12 @@ function ProfileSheets(props: SheetProps) {
         onChange={props.setLanguages}
         onClose={props.close}
         onSave={(values) => props.persist({ languages: values })}
+        error={props.error}
       />
     );
   if (props.sheet === 'availability')
     return (
-      <EditSheet title="Disponibilités" onClose={props.close}>
+      <EditSheet title="Disponibilités" onClose={props.close} error={props.error}>
         <ChoiceGrid
           values={DAYS.map((day) => ({ value: day.short, label: day.long }))}
           selected={props.availabilityDays}
@@ -969,7 +989,7 @@ function ProfileSheets(props: SheetProps) {
   if (props.sheet === 'identity') return <IdentitySheet {...props} />;
   if (props.sheet === 'bio')
     return (
-      <EditSheet title="À propos de vous" onClose={props.close}>
+      <EditSheet title="À propos de vous" onClose={props.close} error={props.error}>
         <textarea
           value={props.bio}
           maxLength={250}
@@ -987,7 +1007,7 @@ function ProfileSheets(props: SheetProps) {
     );
   if (props.sheet === 'service')
     return (
-      <EditSheet title="Service proposé" onClose={props.close}>
+      <EditSheet title="Service proposé" onClose={props.close} error={props.error}>
         <label className="mb-4 block text-xs text-[#888]">
           Type de service
           <select
@@ -1033,7 +1053,7 @@ function IdentitySheet(props: SheetProps) {
   const [first, setFirst] = useState(split.firstName);
   const [last, setLast] = useState(split.lastName);
   return (
-    <EditSheet title="Nom et prénom" onClose={props.close}>
+    <EditSheet title="Nom et prénom" onClose={props.close} error={props.error}>
       <SheetInput label="Prénom" value={first} onChange={setFirst} />
       <SheetInput label="Nom" value={last} onChange={setLast} />
       <SheetInput label="Profession" value={props.job} onChange={props.setJob} />

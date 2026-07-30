@@ -6,6 +6,7 @@ import {
   UpdateOnboardingProfilePayload,
 } from '../types/onboarding.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { isStoredMediaPath } from '../utils/media-storage.js';
 
 // Never select password/tokens/verification codes — same convention as
 // AuthenticationService.authCheck().
@@ -70,6 +71,21 @@ export class OnboardingService {
 
   async updateProfile(payload: UpdateOnboardingProfilePayload) {
     const { userId, ...fields } = payload;
+
+    // `image` may be a legacy base64 data URL, but must never be an arbitrary
+    // `/uploads/photos/...` path unless it's the caller's own current value — otherwise a
+    // member could claim another member's stored photo path here (this endpoint has none
+    // of the ownership/upload bookkeeping that ProfileService.uploadPhoto has), and a
+    // later upload/delete through that pipeline would then remove the real owner's file.
+    if (fields.image !== undefined && isStoredMediaPath(fields.image, 'photos')) {
+      const current = await this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { image: true },
+      });
+      if (current.image !== fields.image) {
+        throw new Error('foreign_photo_path');
+      }
+    }
 
     const data: Prisma.UserUpdateInput = {};
     if (fields.name !== undefined) data.name = fields.name;

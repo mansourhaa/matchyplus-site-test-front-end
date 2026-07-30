@@ -67,6 +67,51 @@ describe('OnboardingService', () => {
       });
     });
 
+    it('rejects an image value pointing at another member’s stored photo path', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...baseProfile,
+        image: '/uploads/photos/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg',
+      });
+
+      await expect(
+        service.updateProfile({
+          userId: 'user-1',
+          image: '/uploads/photos/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg',
+        }),
+      ).rejects.toThrow('foreign_photo_path');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('accepts an image value that echoes the caller’s own current stored photo path', async () => {
+      const { service, prisma } = createService();
+      const ownPath = '/uploads/photos/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg';
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ ...baseProfile, image: ownPath });
+      prisma.user.update.mockResolvedValue({ ...baseProfile, image: ownPath });
+
+      await service.updateProfile({ userId: 'user-1', image: ownPath, job: 'Électricien' });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { image: ownPath, job: 'Électricien' },
+        select: expect.any(Object),
+      });
+    });
+
+    it('accepts a legacy base64 data URL without an ownership lookup', async () => {
+      const { service, prisma } = createService();
+      prisma.user.update.mockResolvedValue(baseProfile);
+
+      await service.updateProfile({ userId: 'user-1', image: 'data:image/png;base64,abc' });
+
+      expect(prisma.user.findUniqueOrThrow).not.toHaveBeenCalled();
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { image: 'data:image/png;base64,abc' },
+        select: expect.any(Object),
+      });
+    });
+
     it('maps camelCase payload keys to their snake_case columns', async () => {
       const { service, prisma } = createService();
       prisma.user.update.mockResolvedValue(baseProfile);
