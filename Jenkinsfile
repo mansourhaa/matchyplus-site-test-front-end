@@ -107,12 +107,24 @@ pipeline {
         SERVER_HOST = 'localhost'
       }
       steps {
+        // "pnpm test -- --coverage" used to forward --coverage into every
+        // workspace's own test script via turbo, including ai-contracts
+        // (node --test, not vitest) - --coverage isn't a valid node --test
+        // flag, so that's a hard "bad option" crash, not something vitest-only
+        // packages just ignore. It only looked fine because turbo's cache had
+        // ai-contracts:test cached from before --coverage was ever added; a
+        // cache miss reproduces the crash immediately. Coverage is now scoped
+        // to exactly the vitest apps Sonar reads (api/app/admin); ai-contracts
+        // runs its own test script unmodified. apps/ai's pnpm test isn't
+        // called here either way - its real tests run via pytest directly in
+        // the AI service tests stage below.
         sh '''
           corepack enable
           corepack prepare pnpm@10.12.4 --activate
           pnpm install --frozen-lockfile
           pnpm lint
-          pnpm test -- --coverage
+          pnpm turbo run test --filter=@saas-boilerplate/ai-contracts
+          pnpm turbo run test --filter=@saas-boilerplate/api --filter=@saas-boilerplate/app --filter=@saas-boilerplate/admin -- --coverage
         '''
       }
       post {
@@ -249,7 +261,12 @@ pipeline {
                   curl -s --max-time 30 -u "${token}:" "${sonarUrl}/api/ce/task?id=${ceTaskId}"
               """
             ).trim()
-            def ceJson = readJSON text: ceResponse
+            def ceJson = null
+            try {
+              ceJson = readJSON text: ceResponse
+            } catch (e) {
+              echo "  [CE Task] response wasn't valid JSON, treating as unknown (${e.message})"
+            }
             ceStatus = ceJson?.task?.status ?: 'UNKNOWN'
             echo "  [CE Task] status=${ceStatus} (attempt ${i + 1}/30)"
             if (ceStatus == 'SUCCESS' || ceStatus == 'FAILED' || ceStatus == 'CANCELED') {
@@ -276,7 +293,13 @@ pipeline {
             return
           }
 
-          def qgJson = readJSON text: qgResponse
+          def qgJson = null
+          try {
+            qgJson = readJSON text: qgResponse
+          } catch (e) {
+            echo "quality gate response wasn't valid JSON, skipping gate check (${e.message})"
+            return
+          }
           def qgStatus = qgJson?.projectStatus?.status ?: 'UNKNOWN'
 
           if (qgStatus == 'ERROR') {
@@ -361,8 +384,19 @@ pipeline {
           // file - Jenkins flags any sh block inside withCredentials that
           // uses a GString as insecure. REGISTRY_REPO/IMAGE_TAG are regular
           // env vars so plain $VAR works fine here too.
+          //
+          // pinned to a specific release + checksum (not :latest) so the
+          // binary that gets fetched and run here can't silently change
+          // out from under this pipeline - bump COSIGN_VERSION/COSIGN_SHA256
+          // together when upgrading, from the release's cosign_checksums.txt.
           sh '''
-            command -v cosign >/dev/null 2>&1 || { curl -sL -o /tmp/cosign https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 && chmod +x /tmp/cosign; }
+            COSIGN_VERSION=v3.1.2
+            COSIGN_SHA256=f7622ed3cf22e55e1ae6377c080979ff77a22da9981c11df222a2e444991e7cf
+            if ! command -v cosign >/dev/null 2>&1; then
+              curl -sL -o /tmp/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+              echo "${COSIGN_SHA256}  /tmp/cosign" | sha256sum -c -
+              chmod +x /tmp/cosign
+            fi
             COSIGN_BIN=$(command -v cosign || echo /tmp/cosign)
             "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes $REGISTRY_REPO:api-$IMAGE_TAG
             "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes $REGISTRY_REPO:app-$IMAGE_TAG
