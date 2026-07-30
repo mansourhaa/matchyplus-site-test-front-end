@@ -1062,16 +1062,20 @@ function IdentitySheet(props: SheetProps) {
   const split = splitName(props.name);
   const [first, setFirst] = useState(split.firstName);
   const [last, setLast] = useState(split.lastName);
+  const [job, setJob] = useState(props.job);
   return (
     <EditSheet title="Nom et prénom" onClose={props.close} error={props.error}>
       <SheetInput label="Prénom" value={first} onChange={setFirst} />
       <SheetInput label="Nom" value={last} onChange={setLast} />
-      <SheetInput label="Profession" value={props.job} onChange={props.setJob} />
+      <SheetInput label="Profession" value={job} onChange={setJob} />
       <SheetButton
         onClick={async () => {
           const nextName = `${first.trim()} ${last.trim()}`.trim();
-          props.setName(nextName);
-          if (await props.persist({ name: nextName, job: props.job })) props.close();
+          if (await props.persist({ name: nextName, job })) {
+            props.setName(nextName);
+            props.setJob(job);
+            props.close();
+          }
         }}
       />
     </EditSheet>

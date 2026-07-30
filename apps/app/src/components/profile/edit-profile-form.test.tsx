@@ -348,4 +348,38 @@ describe('EditProfileForm', () => {
       ),
     );
   });
+
+  it('discards an abandoned identity edit instead of letting it ride along on a later save', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
+    vi.mocked(api.patch).mockResolvedValue({ data: fetchedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Modifier le nom et la profession' }),
+    );
+    // Edit the profession inside the sheet, then dismiss without saving.
+    fireEvent.change(screen.getByDisplayValue('Électricien'), {
+      target: { value: 'Plombier' },
+    });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Fermer' }));
+
+    // The abandoned edit must not be visible outside the sheet.
+    expect(screen.getByText('Électricien')).toBeInTheDocument();
+
+    // An unrelated later save must not resend the abandoned profession edit.
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    await waitFor(() =>
+      expect(api.patch).toHaveBeenCalledWith(
+        '/users/me/profile',
+        expect.objectContaining({ job: 'Électricien' }),
+      ),
+    );
+  });
 });
