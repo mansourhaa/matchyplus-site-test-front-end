@@ -332,7 +332,7 @@ export default async function seedDev() {
   for (const member of MEMBERS) {
     const { password: _password, email, ...rest } = member;
     const row = await prisma.user.upsert({
-      where: { email: email ?? undefined },
+      where: { email },
       create: member,
       update: { ...rest },
     });
