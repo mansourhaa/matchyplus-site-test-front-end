@@ -16,7 +16,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from 'react';
 
 type I18nContextValue = {
@@ -28,6 +28,28 @@ type I18nContextValue = {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
+const localeListeners = new Set<() => void>();
+
+function emitLocaleChange() {
+  for (const listener of localeListeners) {
+    listener();
+  }
+}
+
+function subscribeLocale(onStoreChange: () => void) {
+  localeListeners.add(onStoreChange);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === LOCALE_STORAGE_KEY || event.key === null) {
+      onStoreChange();
+    }
+  };
+  window.addEventListener('storage', onStorage);
+  return () => {
+    localeListeners.delete(onStoreChange);
+    window.removeEventListener('storage', onStorage);
+  };
+}
+
 function readStoredLocale(): Locale {
   if (typeof window === 'undefined') return DEFAULT_LOCALE;
   const raw = window.localStorage.getItem(LOCALE_STORAGE_KEY);
@@ -36,20 +58,18 @@ function readStoredLocale(): Locale {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
-
-  useEffect(() => {
-    setLocaleState(readStoredLocale());
-  }, []);
+  // useSyncExternalStore keeps SSR/hydration on DEFAULT_LOCALE (getServerSnapshot)
+  // and reads localStorage only on the client without a post-mount setState.
+  const locale = useSyncExternalStore(subscribeLocale, readStoredLocale, () => DEFAULT_LOCALE);
 
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
-    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
   }, [locale]);
 
   const setLocale = useCallback((next: Locale) => {
-    setLocaleState(next);
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, next);
+    emitLocaleChange();
   }, []);
 
   const t = useCallback(
