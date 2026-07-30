@@ -30,6 +30,7 @@ import {
   updateOnboardingProfile,
 } from '@/features/onboarding/store/onboarding-slice';
 import type { ProfileEducation, ProfileExperience } from '@/features/onboarding/types';
+import { humanizeMediaError } from '@/features/profile/media-errors';
 import {
   deleteProfilePhoto,
   deleteProfileVideo,
@@ -316,21 +317,11 @@ export function EditProfileForm() {
 
     setSaving(true);
     try {
+      // The PATCH response is already the authoritative, fully-updated profile (see
+      // updateOnboardingProfile.fulfilled), so a follow-up GET-and-compare would only
+      // ever re-check a handful of fields and drift out of sync as fields are added —
+      // trust the fulfilled/rejected thunk result directly instead.
       await dispatch(updateOnboardingProfile(patch)).unwrap();
-      const confirmed = await dispatch(fetchOnboardingProfile()).unwrap();
-      const confirmedText = (value: string | null | undefined) => value ?? '';
-      if (
-        confirmedText(confirmed.name) !== patch.name ||
-        confirmedText(confirmed.job) !== patch.job ||
-        confirmedText(confirmed.bio) !== patch.bio ||
-        confirmedText(confirmed.sector) !== patch.sector ||
-        confirmedText(confirmed.education_level) !== patch.educationLevel ||
-        JSON.stringify(confirmed.interests) !== JSON.stringify(patch.interests) ||
-        JSON.stringify(confirmed.selected_goals) !== JSON.stringify(patch.selectedGoals) ||
-        JSON.stringify(confirmed.languages) !== JSON.stringify(patch.languages)
-      ) {
-        throw new Error('profile_confirmation_failed');
-      }
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2500);
       return true;
@@ -361,9 +352,9 @@ export function EditProfileForm() {
   }
 
   const profileTypeLabel = isIndividual
-    ? 'J’offre'
+    ? 'Je cherche'
     : profile?.profile_type === 'PROVIDER'
-      ? 'Je cherche'
+      ? 'J’offre'
       : 'Profil';
   const completionColor = completion >= 80 ? '#61BCA6' : completion >= 50 ? '#2F76BB' : '#F5A623';
   const completionBackground =
@@ -714,7 +705,7 @@ export function EditProfileForm() {
       <div className="mx-4 mb-4">
         {(error || mediaError) && (
           <p className="mb-2 text-center text-xs text-[#E24E59]" role="alert">
-            {error || mediaError}
+            {error || humanizeMediaError(mediaError)}
           </p>
         )}
         <button

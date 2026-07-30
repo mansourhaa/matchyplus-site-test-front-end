@@ -90,9 +90,7 @@ describe('EditProfileForm', () => {
 
   it('saves the edited fields and shows a confirmation', async () => {
     const savedProfile = { ...fetchedProfile, job: 'Plombier' };
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({ data: fetchedProfile })
-      .mockResolvedValueOnce({ data: savedProfile });
+    vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
     vi.mocked(api.patch).mockResolvedValue({ data: savedProfile });
     const store = buildStore();
 
@@ -112,7 +110,6 @@ describe('EditProfileForm', () => {
     );
 
     expect(await screen.findByText('✓ Profil mis à jour')).toBeInTheDocument();
-    expect(api.get).toHaveBeenCalledTimes(2);
     expect(api.patch).toHaveBeenCalledWith(
       '/users/me/profile',
       expect.objectContaining({ job: 'Plombier' }),
@@ -121,9 +118,7 @@ describe('EditProfileForm', () => {
 
   it('persists a biography from its section save action', async () => {
     const savedProfile = { ...fetchedProfile, bio: 'Nouvelle biographie' };
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({ data: fetchedProfile })
-      .mockResolvedValueOnce({ data: savedProfile });
+    vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
     vi.mocked(api.patch).mockResolvedValue({ data: savedProfile });
     const store = buildStore();
 
@@ -173,11 +168,9 @@ describe('EditProfileForm', () => {
     expect(screen.getByRole('button', { name: 'Supprimer la vidéo' })).toBeInTheDocument();
   });
 
-  it('does not show success when the profile reload does not confirm the saved values', async () => {
+  it('shows a failure message when the save request is rejected', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
-    vi.mocked(api.patch).mockResolvedValue({
-      data: { ...fetchedProfile, job: 'Plombier' },
-    });
+    vi.mocked(api.patch).mockRejectedValue(new Error('Network Error'));
     const store = buildStore();
 
     render(

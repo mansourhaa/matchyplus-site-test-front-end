@@ -132,7 +132,14 @@ export const getProfilePhotoFileSchema = {
   security: [{ http: [] }],
   headers: authenticatedHeadersSchema,
   params: mediaFilenameParams,
-  response: { ...errorResponses },
+  response: {
+    200: {
+      description: 'The photo file, streamed as binary image data',
+      type: 'string',
+      contentMediaType: 'image/*',
+    },
+    ...errorResponses,
+  },
 };
 
 export const getProfileVideoFileSchema = {
@@ -141,5 +148,17 @@ export const getProfileVideoFileSchema = {
   security: [{ http: [] }],
   headers: authenticatedHeadersSchema,
   params: mediaFilenameParams,
-  response: { ...errorResponses },
+  response: {
+    200: {
+      description: 'The full video file, streamed as binary video data',
+      type: 'string',
+      contentMediaType: 'video/*',
+    },
+    206: {
+      description: 'A single byte-range slice of the video, per the request Range header',
+      type: 'string',
+      contentMediaType: 'video/*',
+    },
+    ...errorResponses,
+  },
 };

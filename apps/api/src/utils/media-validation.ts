@@ -30,18 +30,6 @@ const MAGIC_RULES: MagicRule[] = [
 
 const FTYP_EXTS = new Set(['.mp4', '.mov', '.3gp', '.3g2']);
 
-export const ALLOWED_PHOTO_MIMES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-export const ALLOWED_VIDEO_MIMES = [
-  'video/mp4',
-  'video/quicktime',
-  'video/x-msvideo',
-  'video/x-matroska',
-  'video/webm',
-  'video/ogg',
-  'video/3gpp',
-  'video/3gpp2',
-];
-
 export function normalizeMime(mime = ''): string {
   return (String(mime).toLowerCase().split(';')[0] ?? '').trim();
 }

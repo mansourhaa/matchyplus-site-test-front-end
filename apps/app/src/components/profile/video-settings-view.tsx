@@ -7,6 +7,7 @@ import {
   patchOnboardingProfile,
   selectOnboarding,
 } from '@/features/onboarding/store/onboarding-slice';
+import { humanizeMediaError } from '@/features/profile/media-errors';
 import {
   deleteProfileVideo,
   selectProfile,
@@ -226,7 +227,7 @@ export function VideoSettingsView() {
             {clientError ||
               (authenticated.error || playbackError
                 ? 'Cette vidéo est inaccessible.'
-                : mediaError) ||
+                : humanizeMediaError(mediaError)) ||
               'Échec de la vidéo.'}
           </p>
         )}

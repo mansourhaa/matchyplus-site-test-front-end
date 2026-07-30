@@ -1,5 +1,11 @@
 import { Prisma, PrismaClient } from '@saas-boilerplate/types';
 
+import {
+  ALLOWED_PROFILE_PHOTO_MIMES,
+  ALLOWED_PROFILE_VIDEO_MIMES,
+  PROFILE_PHOTO_MAX_BYTES,
+  PROFILE_VIDEO_MAX_BYTES,
+} from '../constants.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import { badRequest, forbidden, notFound } from '../utils/http-errors.js';
 import { orderedUserPair } from '../utils/match-pair.js';
@@ -11,14 +17,7 @@ import {
   isStoredMediaPath,
   saveMediaFile,
 } from '../utils/media-storage.js';
-import {
-  ALLOWED_PHOTO_MIMES,
-  ALLOWED_VIDEO_MIMES,
-  validateUploadedFile,
-} from '../utils/media-validation.js';
-
-const PHOTO_MAX_BYTES = 8 * 1024 * 1024;
-const VIDEO_MAX_BYTES = 50 * 1024 * 1024;
+import { validateUploadedFile } from '../utils/media-validation.js';
 
 const PUBLIC_PROFILE_SELECT = {
   id: true,
@@ -67,16 +66,20 @@ export class ProfileService {
   }
 
   private async assertNotBlocked(a: string, b: string): Promise<void> {
-    const block = await this.prisma.userBlock.findFirst({
-      where: {
-        OR: [
-          { blocker_id: a, blocked_id: b },
-          { blocker_id: b, blocked_id: a },
-        ],
-      },
-      select: { id: true },
-    });
-    if (block) throw forbidden('interaction blocked with this user', 'blocked');
+    try {
+      const block = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blocker_id: a, blocked_id: b },
+            { blocker_id: b, blocked_id: a },
+          ],
+        },
+        select: { id: true },
+      });
+      if (block) throw forbidden('interaction blocked with this user', 'blocked');
+    } catch (err) {
+      throw err;
+    }
   }
 
   /**
@@ -86,38 +89,46 @@ export class ProfileService {
    * Unlike legacy, a blocked relationship is checked (legacy's getPublicProfile has none).
    */
   async getPublicProfile(viewerId: string, targetUserId: string) {
-    if (viewerId !== targetUserId) {
-      await this.assertNotBlocked(viewerId, targetUserId);
-    }
+    try {
+      if (viewerId !== targetUserId) {
+        await this.assertNotBlocked(viewerId, targetUserId);
+      }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: targetUserId },
-      select: PUBLIC_PROFILE_SELECT,
-    });
+      const user = await this.prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: PUBLIC_PROFILE_SELECT,
+      });
 
-    if (!user || user.status !== 'ACTIVE') {
-      throw notFound('profile not found', 'profile_not_found');
-    }
+      if (!user || user.status !== 'ACTIVE') {
+        throw notFound('profile not found', 'profile_not_found');
+      }
 
-    const result = toPublicProfileResult(user);
-    if (result.video && !(await this.canAccessVideo(viewerId, targetUserId))) {
-      result.video = null;
+      const result = toPublicProfileResult(user);
+      if (result.video && !(await this.canAccessVideo(viewerId, targetUserId))) {
+        result.video = null;
+      }
+      return result;
+    } catch (err) {
+      throw err;
     }
-    return result;
   }
 
   async assertCanViewProfile(viewerId: string, ownerId: string): Promise<void> {
-    if (viewerId !== ownerId) {
-      await this.assertNotBlocked(viewerId, ownerId);
-    }
+    try {
+      if (viewerId !== ownerId) {
+        await this.assertNotBlocked(viewerId, ownerId);
+      }
 
-    const owner = await this.prisma.user.findUnique({
-      where: { id: ownerId },
-      select: { status: true },
-    });
+      const owner = await this.prisma.user.findUnique({
+        where: { id: ownerId },
+        select: { status: true },
+      });
 
-    if (!owner || owner.status !== 'ACTIVE') {
-      throw notFound('profile not found', 'profile_not_found');
+      if (!owner || owner.status !== 'ACTIVE') {
+        throw notFound('profile not found', 'profile_not_found');
+      }
+    } catch (err) {
+      throw err;
     }
   }
 
@@ -127,106 +138,126 @@ export class ProfileService {
    * since no conversation/message model exists in this schema yet).
    */
   async canAccessVideo(viewerId: string, ownerId: string): Promise<boolean> {
-    if (viewerId === ownerId) return true;
-    const pair = orderedUserPair(viewerId, ownerId);
-    const match = await this.prisma.match.findUnique({
-      where: {
-        user_low_id_user_high_id: { user_low_id: pair.userLowId, user_high_id: pair.userHighId },
-      },
-      select: { id: true },
-    });
-    return Boolean(match);
+    try {
+      if (viewerId === ownerId) return true;
+      const pair = orderedUserPair(viewerId, ownerId);
+      const match = await this.prisma.match.findUnique({
+        where: {
+          user_low_id_user_high_id: { user_low_id: pair.userLowId, user_high_id: pair.userHighId },
+        },
+        select: { id: true },
+      });
+      return Boolean(match);
+    } catch (err) {
+      throw err;
+    }
   }
 
   async uploadPhoto(userId: string, file: UploadedFile) {
-    if (file.buffer.byteLength > PHOTO_MAX_BYTES) {
-      throw badRequest('photo exceeds the 8MB limit', 'photo_too_large');
-    }
-
-    const validation = validateUploadedFile({
-      buffer: file.buffer,
-      originalname: file.filename,
-      mimetype: file.mimetype,
-      allowedMimes: ALLOWED_PHOTO_MIMES,
-    });
-    if (!validation.ok) {
-      throw badRequest(validation.error, validation.error);
-    }
-
-    const existing = await this.prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { image: true },
-    });
-    const savedFilename = await saveMediaFile(PHOTOS_DIR, file.buffer, validation.ext);
-    const image = `/uploads/photos/${savedFilename}`;
     try {
-      await this.prisma.user.update({ where: { id: userId }, data: { image } });
-    } catch (error) {
-      await deleteMediaFile(PHOTOS_DIR, savedFilename);
-      throw error;
-    }
+      if (file.buffer.byteLength > PROFILE_PHOTO_MAX_BYTES) {
+        throw badRequest('photo exceeds the 8MB limit', 'photo_too_large');
+      }
 
-    if (isStoredMediaPath(existing.image, 'photos')) {
-      await deleteMediaFile(PHOTOS_DIR, filenameFromStoredPath(existing.image));
+      const validation = validateUploadedFile({
+        buffer: file.buffer,
+        originalname: file.filename,
+        mimetype: file.mimetype,
+        allowedMimes: ALLOWED_PROFILE_PHOTO_MIMES,
+      });
+      if (!validation.ok) {
+        throw badRequest(validation.error, validation.error);
+      }
+
+      const existing = await this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { image: true },
+      });
+      const savedFilename = await saveMediaFile(PHOTOS_DIR, file.buffer, validation.ext);
+      const image = `/uploads/photos/${savedFilename}`;
+      try {
+        await this.prisma.user.update({ where: { id: userId }, data: { image } });
+      } catch (error) {
+        await deleteMediaFile(PHOTOS_DIR, savedFilename);
+        throw error;
+      }
+
+      if (isStoredMediaPath(existing.image, 'photos')) {
+        await deleteMediaFile(PHOTOS_DIR, filenameFromStoredPath(existing.image));
+      }
+      return { image };
+    } catch (err) {
+      throw err;
     }
-    return { image };
   }
 
   async deletePhoto(userId: string) {
-    const existing = await this.prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { image: true },
-    });
-    await this.prisma.user.update({ where: { id: userId }, data: { image: null } });
-    if (isStoredMediaPath(existing.image, 'photos')) {
-      await deleteMediaFile(PHOTOS_DIR, filenameFromStoredPath(existing.image));
+    try {
+      const existing = await this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { image: true },
+      });
+      await this.prisma.user.update({ where: { id: userId }, data: { image: null } });
+      if (isStoredMediaPath(existing.image, 'photos')) {
+        await deleteMediaFile(PHOTOS_DIR, filenameFromStoredPath(existing.image));
+      }
+      return { image: null };
+    } catch (err) {
+      throw err;
     }
-    return { image: null };
   }
 
   async uploadVideo(userId: string, file: UploadedFile) {
-    if (file.buffer.byteLength > VIDEO_MAX_BYTES) {
-      throw badRequest('video exceeds the 50MB limit', 'video_too_large');
-    }
-
-    const validation = validateUploadedFile({
-      buffer: file.buffer,
-      originalname: file.filename,
-      mimetype: file.mimetype,
-      allowedMimes: ALLOWED_VIDEO_MIMES,
-    });
-    if (!validation.ok) {
-      throw badRequest(validation.error, validation.error);
-    }
-
-    const existing = await this.prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { video: true },
-    });
-    const savedFilename = await saveMediaFile(VIDEOS_DIR, file.buffer, validation.ext);
-    const video = `/uploads/videos/${savedFilename}`;
     try {
-      await this.prisma.user.update({ where: { id: userId }, data: { video } });
-    } catch (error) {
-      await deleteMediaFile(VIDEOS_DIR, savedFilename);
-      throw error;
-    }
+      if (file.buffer.byteLength > PROFILE_VIDEO_MAX_BYTES) {
+        throw badRequest('video exceeds the 50MB limit', 'video_too_large');
+      }
 
-    if (isStoredMediaPath(existing.video, 'videos')) {
-      await deleteMediaFile(VIDEOS_DIR, filenameFromStoredPath(existing.video));
+      const validation = validateUploadedFile({
+        buffer: file.buffer,
+        originalname: file.filename,
+        mimetype: file.mimetype,
+        allowedMimes: ALLOWED_PROFILE_VIDEO_MIMES,
+      });
+      if (!validation.ok) {
+        throw badRequest(validation.error, validation.error);
+      }
+
+      const existing = await this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { video: true },
+      });
+      const savedFilename = await saveMediaFile(VIDEOS_DIR, file.buffer, validation.ext);
+      const video = `/uploads/videos/${savedFilename}`;
+      try {
+        await this.prisma.user.update({ where: { id: userId }, data: { video } });
+      } catch (error) {
+        await deleteMediaFile(VIDEOS_DIR, savedFilename);
+        throw error;
+      }
+
+      if (isStoredMediaPath(existing.video, 'videos')) {
+        await deleteMediaFile(VIDEOS_DIR, filenameFromStoredPath(existing.video));
+      }
+      return { video };
+    } catch (err) {
+      throw err;
     }
-    return { video };
   }
 
   async deleteVideo(userId: string) {
-    const existing = await this.prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { video: true },
-    });
-    await this.prisma.user.update({ where: { id: userId }, data: { video: null } });
-    if (isStoredMediaPath(existing.video, 'videos')) {
-      await deleteMediaFile(VIDEOS_DIR, filenameFromStoredPath(existing.video));
+    try {
+      const existing = await this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { video: true },
+      });
+      await this.prisma.user.update({ where: { id: userId }, data: { video: null } });
+      if (isStoredMediaPath(existing.video, 'videos')) {
+        await deleteMediaFile(VIDEOS_DIR, filenameFromStoredPath(existing.video));
+      }
+      return { video: null };
+    } catch (err) {
+      throw err;
     }
-    return { video: null };
   }
 }

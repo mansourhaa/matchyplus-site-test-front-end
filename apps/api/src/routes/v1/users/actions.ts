@@ -1,6 +1,6 @@
-import { MultipartFile } from '@fastify/multipart';
 import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 
+import { PROFILE_PHOTO_RATE_LIMIT, PROFILE_VIDEO_RATE_LIMIT } from '../../../constants.js';
 import {
   completeOnboardingSchema,
   deleteProfilePhotoSchema,
@@ -15,6 +15,7 @@ import { OnboardingService } from '../../../services/onboarding.js';
 import { ProfileService } from '../../../services/profile.js';
 import { UsersService } from '../../../services/users.js';
 import { UpdateOnboardingProfileBody } from '../../../types/onboarding.js';
+import { UploadProfilePhotoBody, UploadProfileVideoBody } from '../../../types/profile.js';
 import { badRequest } from '../../../utils/http-errors.js';
 
 const ERROR_STATUS: Record<string, 'badRequest'> = {
@@ -109,11 +110,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   );
 
-  fastify.post<{ Body: { photo?: MultipartFile } }>(
+  fastify.post<{ Body: UploadProfilePhotoBody }>(
     '/me/profile/photo',
     {
       schema: uploadProfilePhotoSchema,
-      config: { rateLimit: { max: 10, timeWindow: '1 hour' } },
+      config: { rateLimit: PROFILE_PHOTO_RATE_LIMIT },
     },
     async (request, reply) => {
       try {
@@ -147,11 +148,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   );
 
-  fastify.post<{ Body: { video?: MultipartFile } }>(
+  fastify.post<{ Body: UploadProfileVideoBody }>(
     '/me/profile/video',
     {
       schema: uploadProfileVideoSchema,
-      config: { rateLimit: { max: 5, timeWindow: '1 hour' } },
+      config: { rateLimit: PROFILE_VIDEO_RATE_LIMIT },
     },
     async (request, reply) => {
       try {

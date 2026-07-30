@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { PROFILE_PHOTO_CONTENT_TYPES, PROFILE_VIDEO_CONTENT_TYPES } from '../../../constants.js';
 import {
   getProfilePhotoFileSchema,
   getProfileVideoFileSchema,
@@ -10,56 +11,8 @@ import {
 import { ProfileService } from '../../../services/profile.js';
 import { ProfileIdParams, ProfileMediaFilenameParams } from '../../../types/profile.js';
 import { badRequest, forbidden, notFound } from '../../../utils/http-errors.js';
+import { assertSafeFilename, extensionOf, parseRange } from '../../../utils/media-http.js';
 import { PHOTOS_DIR, VIDEOS_DIR } from '../../../utils/media-storage.js';
-
-const VIDEO_CONTENT_TYPES: Record<string, string> = {
-  '.mp4': 'video/mp4',
-  '.mov': 'video/quicktime',
-  '.avi': 'video/x-msvideo',
-  '.mkv': 'video/x-matroska',
-  '.webm': 'video/webm',
-  '.ogv': 'video/ogg',
-  '.3gp': 'video/3gpp',
-  '.3g2': 'video/3gpp2',
-};
-
-const PHOTO_CONTENT_TYPES: Record<string, string> = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.webp': 'image/webp',
-};
-
-function assertSafeFilename(filename: string) {
-  if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-    throw badRequest('invalid filename', 'invalid_filename');
-  }
-}
-
-function extensionOf(filename: string): string {
-  const match = filename.match(/\.[^.]+$/);
-  return match ? match[0].toLowerCase() : '';
-}
-
-function parseRange(
-  value: string | undefined,
-  size: number,
-): { start: number; end: number } | null {
-  if (!value) return null;
-  const match = /^bytes=(\d*)-(\d*)$/.exec(value.trim());
-  if (!match) throw badRequest('invalid range', 'invalid_range');
-
-  const requestedStart = match[1] ? Number(match[1]) : null;
-  const requestedEnd = match[2] ? Number(match[2]) : null;
-  let start = requestedStart ?? Math.max(size - (requestedEnd ?? 0), 0);
-  let end = requestedStart === null ? size - 1 : (requestedEnd ?? size - 1);
-  if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end < start) {
-    throw badRequest('invalid range', 'invalid_range');
-  }
-  start = Math.min(start, size - 1);
-  end = Math.min(end, size - 1);
-  return { start, end };
-}
 
 const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const { prisma } = fastify;
@@ -90,7 +43,7 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
       try {
         const { filename } = request.params;
         assertSafeFilename(filename);
-        const contentType = PHOTO_CONTENT_TYPES[extensionOf(filename)];
+        const contentType = PROFILE_PHOTO_CONTENT_TYPES[extensionOf(filename)];
         if (!contentType) throw badRequest('invalid filename', 'invalid_filename');
 
         const owner = await prisma.user.findFirst({
@@ -121,7 +74,7 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
       try {
         const { filename } = request.params;
         assertSafeFilename(filename);
-        const contentType = VIDEO_CONTENT_TYPES[extensionOf(filename)];
+        const contentType = PROFILE_VIDEO_CONTENT_TYPES[extensionOf(filename)];
         if (!contentType) throw badRequest('invalid filename', 'invalid_filename');
 
         const owner = await prisma.user.findFirst({
