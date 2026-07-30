@@ -39,14 +39,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
 
   useEffect(() => {
-    // TEMPORARY - dev's own recent i18n work trips react-hooks/set-state-in-effect
-    // here, but this is the correct pattern for this case: initial state must
-    // stay DEFAULT_LOCALE on both server and client to avoid a hydration
-    // mismatch, then read the real stored locale post-mount. A lazy useState
-    // initializer would read localStorage during the client's first render
-    // too, mismatching the server-rendered DEFAULT_LOCALE. Suppressing to
-    // unblock a CI diagnostic run - revert before merge, not this PR's bug.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocaleState(readStoredLocale());
   }, []);
 
