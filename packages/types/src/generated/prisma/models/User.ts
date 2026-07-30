@@ -61,6 +61,7 @@ export type UserMinAggregateOutputType = {
   city: string | null;
   bio: string | null;
   image: string | null;
+  video: string | null;
   experience: string | null;
   schedule: string | null;
   price: string | null;
@@ -103,6 +104,7 @@ export type UserMaxAggregateOutputType = {
   city: string | null;
   bio: string | null;
   image: string | null;
+  video: string | null;
   experience: string | null;
   schedule: string | null;
   price: string | null;
@@ -145,6 +147,7 @@ export type UserCountAggregateOutputType = {
   city: number;
   bio: number;
   image: number;
+  video: number;
   interests: number;
   languages: number;
   contact_modes: number;
@@ -217,6 +220,7 @@ export type UserMinAggregateInputType = {
   city?: true;
   bio?: true;
   image?: true;
+  video?: true;
   experience?: true;
   schedule?: true;
   price?: true;
@@ -259,6 +263,7 @@ export type UserMaxAggregateInputType = {
   city?: true;
   bio?: true;
   image?: true;
+  video?: true;
   experience?: true;
   schedule?: true;
   price?: true;
@@ -301,6 +306,7 @@ export type UserCountAggregateInputType = {
   city?: true;
   bio?: true;
   image?: true;
+  video?: true;
   interests?: true;
   languages?: true;
   contact_modes?: true;
@@ -440,6 +446,7 @@ export type UserGroupByOutputType = {
   city: string | null;
   bio: string | null;
   image: string | null;
+  video: string | null;
   interests: string[];
   languages: string[];
   contact_modes: string[];
@@ -511,6 +518,7 @@ export type UserWhereInput = {
   city?: Prisma.StringNullableFilter<'User'> | string | null;
   bio?: Prisma.StringNullableFilter<'User'> | string | null;
   image?: Prisma.StringNullableFilter<'User'> | string | null;
+  video?: Prisma.StringNullableFilter<'User'> | string | null;
   interests?: Prisma.StringNullableListFilter<'User'>;
   languages?: Prisma.StringNullableListFilter<'User'>;
   contact_modes?: Prisma.StringNullableListFilter<'User'>;
@@ -580,6 +588,7 @@ export type UserOrderByWithRelationInput = {
   city?: Prisma.SortOrderInput | Prisma.SortOrder;
   bio?: Prisma.SortOrderInput | Prisma.SortOrder;
   image?: Prisma.SortOrderInput | Prisma.SortOrder;
+  video?: Prisma.SortOrderInput | Prisma.SortOrder;
   interests?: Prisma.SortOrder;
   languages?: Prisma.SortOrder;
   contact_modes?: Prisma.SortOrder;
@@ -652,6 +661,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     city?: Prisma.StringNullableFilter<'User'> | string | null;
     bio?: Prisma.StringNullableFilter<'User'> | string | null;
     image?: Prisma.StringNullableFilter<'User'> | string | null;
+    video?: Prisma.StringNullableFilter<'User'> | string | null;
     interests?: Prisma.StringNullableListFilter<'User'>;
     languages?: Prisma.StringNullableListFilter<'User'>;
     contact_modes?: Prisma.StringNullableListFilter<'User'>;
@@ -721,6 +731,7 @@ export type UserOrderByWithAggregationInput = {
   city?: Prisma.SortOrderInput | Prisma.SortOrder;
   bio?: Prisma.SortOrderInput | Prisma.SortOrder;
   image?: Prisma.SortOrderInput | Prisma.SortOrder;
+  video?: Prisma.SortOrderInput | Prisma.SortOrder;
   interests?: Prisma.SortOrder;
   languages?: Prisma.SortOrder;
   contact_modes?: Prisma.SortOrder;
@@ -780,6 +791,7 @@ export type UserScalarWhereWithAggregatesInput = {
   city?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   bio?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   image?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  video?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   interests?: Prisma.StringNullableListFilter<'User'>;
   languages?: Prisma.StringNullableListFilter<'User'>;
   contact_modes?: Prisma.StringNullableListFilter<'User'>;
@@ -833,6 +845,7 @@ export type UserCreateInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -899,6 +912,7 @@ export type UserUncheckedCreateInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -965,6 +979,7 @@ export type UserUpdateInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -1033,6 +1048,7 @@ export type UserUncheckedUpdateInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -1101,6 +1117,7 @@ export type UserCreateManyInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -1152,6 +1169,7 @@ export type UserUpdateManyMutationInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -1205,6 +1223,7 @@ export type UserUncheckedUpdateManyInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -1258,6 +1277,7 @@ export type UserCountOrderByAggregateInput = {
   city?: Prisma.SortOrder;
   bio?: Prisma.SortOrder;
   image?: Prisma.SortOrder;
+  video?: Prisma.SortOrder;
   interests?: Prisma.SortOrder;
   languages?: Prisma.SortOrder;
   contact_modes?: Prisma.SortOrder;
@@ -1319,6 +1339,7 @@ export type UserMaxOrderByAggregateInput = {
   city?: Prisma.SortOrder;
   bio?: Prisma.SortOrder;
   image?: Prisma.SortOrder;
+  video?: Prisma.SortOrder;
   experience?: Prisma.SortOrder;
   schedule?: Prisma.SortOrder;
   price?: Prisma.SortOrder;
@@ -1361,6 +1382,7 @@ export type UserMinOrderByAggregateInput = {
   city?: Prisma.SortOrder;
   bio?: Prisma.SortOrder;
   image?: Prisma.SortOrder;
+  video?: Prisma.SortOrder;
   experience?: Prisma.SortOrder;
   schedule?: Prisma.SortOrder;
   price?: Prisma.SortOrder;
@@ -1908,6 +1930,7 @@ export type UserCreateWithoutRefresh_tokensInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -1973,6 +1996,7 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -2066,6 +2090,7 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -2133,6 +2158,7 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -2200,6 +2226,7 @@ export type UserCreateWithoutOtp_challengesInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -2265,6 +2292,7 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -2358,6 +2386,7 @@ export type UserUpdateWithoutOtp_challengesInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -2425,6 +2454,7 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -2492,6 +2522,7 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -2557,6 +2588,7 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -2650,6 +2682,7 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -2717,6 +2750,7 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -2784,6 +2818,7 @@ export type UserCreateWithoutReports_madeInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -2849,6 +2884,7 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -2922,6 +2958,7 @@ export type UserCreateWithoutReports_receivedInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -2987,6 +3024,7 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -3080,6 +3118,7 @@ export type UserUpdateWithoutReports_madeInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -3147,6 +3186,7 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -3234,6 +3274,7 @@ export type UserUpdateWithoutReports_receivedInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -3301,6 +3342,7 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -3368,6 +3410,7 @@ export type UserCreateWithoutSwipes_madeInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -3433,6 +3476,7 @@ export type UserUncheckedCreateWithoutSwipes_madeInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -3506,6 +3550,7 @@ export type UserCreateWithoutSwipes_receivedInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -3571,6 +3616,7 @@ export type UserUncheckedCreateWithoutSwipes_receivedInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -3664,6 +3710,7 @@ export type UserUpdateWithoutSwipes_madeInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -3731,6 +3778,7 @@ export type UserUncheckedUpdateWithoutSwipes_madeInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -3818,6 +3866,7 @@ export type UserUpdateWithoutSwipes_receivedInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -3885,6 +3934,7 @@ export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -3952,6 +4002,7 @@ export type UserCreateWithoutSwipe_logsInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -4017,6 +4068,7 @@ export type UserUncheckedCreateWithoutSwipe_logsInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -4090,6 +4142,7 @@ export type UserCreateWithoutSwipe_log_targetsInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -4155,6 +4208,7 @@ export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -4248,6 +4302,7 @@ export type UserUpdateWithoutSwipe_logsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -4315,6 +4370,7 @@ export type UserUncheckedUpdateWithoutSwipe_logsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -4402,6 +4458,7 @@ export type UserUpdateWithoutSwipe_log_targetsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -4469,6 +4526,7 @@ export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -4536,6 +4594,7 @@ export type UserCreateWithoutMatches_as_lowInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -4601,6 +4660,7 @@ export type UserUncheckedCreateWithoutMatches_as_lowInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -4674,6 +4734,7 @@ export type UserCreateWithoutMatches_as_highInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -4739,6 +4800,7 @@ export type UserUncheckedCreateWithoutMatches_as_highInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -4832,6 +4894,7 @@ export type UserUpdateWithoutMatches_as_lowInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -4899,6 +4962,7 @@ export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -4986,6 +5050,7 @@ export type UserUpdateWithoutMatches_as_highInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -5053,6 +5118,7 @@ export type UserUncheckedUpdateWithoutMatches_as_highInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -5120,6 +5186,7 @@ export type UserCreateWithoutLocationInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -5185,6 +5252,7 @@ export type UserUncheckedCreateWithoutLocationInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -5278,6 +5346,7 @@ export type UserUpdateWithoutLocationInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -5345,6 +5414,7 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -5412,6 +5482,7 @@ export type UserCreateWithoutBlocks_madeInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -5477,6 +5548,7 @@ export type UserUncheckedCreateWithoutBlocks_madeInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -5550,6 +5622,7 @@ export type UserCreateWithoutBlocks_receivedInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -5615,6 +5688,7 @@ export type UserUncheckedCreateWithoutBlocks_receivedInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -5708,6 +5782,7 @@ export type UserUpdateWithoutBlocks_madeInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -5775,6 +5850,7 @@ export type UserUncheckedUpdateWithoutBlocks_madeInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -5862,6 +5938,7 @@ export type UserUpdateWithoutBlocks_receivedInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -5929,6 +6006,7 @@ export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -5996,6 +6074,7 @@ export type UserCreateWithoutAiJobsInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -6061,6 +6140,7 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   city?: string | null;
   bio?: string | null;
   image?: string | null;
+  video?: string | null;
   interests?: Prisma.UserCreateinterestsInput | string[];
   languages?: Prisma.UserCreatelanguagesInput | string[];
   contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
@@ -6154,6 +6234,7 @@ export type UserUpdateWithoutAiJobsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -6221,6 +6302,7 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   interests?: Prisma.UserUpdateinterestsInput | string[];
   languages?: Prisma.UserUpdatelanguagesInput | string[];
   contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
@@ -6469,6 +6551,7 @@ export type UserSelect<
     city?: boolean;
     bio?: boolean;
     image?: boolean;
+    video?: boolean;
     interests?: boolean;
     languages?: boolean;
     contact_modes?: boolean;
@@ -6541,6 +6624,7 @@ export type UserSelectCreateManyAndReturn<
     city?: boolean;
     bio?: boolean;
     image?: boolean;
+    video?: boolean;
     interests?: boolean;
     languages?: boolean;
     contact_modes?: boolean;
@@ -6597,6 +6681,7 @@ export type UserSelectUpdateManyAndReturn<
     city?: boolean;
     bio?: boolean;
     image?: boolean;
+    video?: boolean;
     interests?: boolean;
     languages?: boolean;
     contact_modes?: boolean;
@@ -6650,6 +6735,7 @@ export type UserSelectScalar = {
   city?: boolean;
   bio?: boolean;
   image?: boolean;
+  video?: boolean;
   interests?: boolean;
   languages?: boolean;
   contact_modes?: boolean;
@@ -6703,6 +6789,7 @@ export type UserOmit<
   | 'city'
   | 'bio'
   | 'image'
+  | 'video'
   | 'interests'
   | 'languages'
   | 'contact_modes'
@@ -6803,6 +6890,12 @@ export type $UserPayload<
       city: string | null;
       bio: string | null;
       image: string | null;
+      /**
+       * Served path (e.g. `/uploads/videos/<uuid>.mp4`), never inline data — video is only
+       * ever set via the real upload pipeline in ProfileService, unlike `image` which may
+       * still hold a base64 data URL from onboarding until that's migrated to real uploads too.
+       */
+      video: string | null;
       interests: string[];
       languages: string[];
       contact_modes: string[];
@@ -7565,6 +7658,7 @@ export interface UserFieldRefs {
   readonly city: Prisma.FieldRef<'User', 'String'>;
   readonly bio: Prisma.FieldRef<'User', 'String'>;
   readonly image: Prisma.FieldRef<'User', 'String'>;
+  readonly video: Prisma.FieldRef<'User', 'String'>;
   readonly interests: Prisma.FieldRef<'User', 'String[]'>;
   readonly languages: Prisma.FieldRef<'User', 'String[]'>;
   readonly contact_modes: Prisma.FieldRef<'User', 'String[]'>;

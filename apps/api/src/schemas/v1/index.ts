@@ -5,3 +5,4 @@ export * from './report.js';
 export * from './users.js';
 export * from './ai.js';
 export * from './matching.js';
+export * from './profile.js';

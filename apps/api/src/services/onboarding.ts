@@ -19,6 +19,10 @@ const PROFILE_SELECT = {
   job: true,
   bio: true,
   image: true,
+  // Read-only here too: video is only ever written via ProfileService's upload/delete
+  // endpoints (apps/api/src/routes/v1/users/actions.ts's /me/profile/video), never
+  // accepted back through this service's updateProfile.
+  video: true,
   city: true,
   profile_type: true,
   offer_service: true,
@@ -30,6 +34,13 @@ const PROFILE_SELECT = {
   availability_hours: true,
   contact_modes: true,
   languages: true,
+  experience: true,
+  sector: true,
+  education_level: true,
+  experiences: true,
+  educations: true,
+  rating: true,
+  reviews: true,
   onboarding_completed_at: true,
 } satisfies Prisma.UserSelect;
 
@@ -76,6 +87,11 @@ export class OnboardingService {
     if (fields.availabilityHours !== undefined) data.availability_hours = fields.availabilityHours;
     if (fields.contactModes !== undefined) data.contact_modes = fields.contactModes;
     if (fields.languages !== undefined) data.languages = fields.languages;
+    if (fields.experience !== undefined) data.experience = fields.experience;
+    if (fields.sector !== undefined) data.sector = fields.sector;
+    if (fields.educationLevel !== undefined) data.education_level = fields.educationLevel;
+    if (fields.experiences !== undefined) data.experiences = fields.experiences;
+    if (fields.educations !== undefined) data.educations = fields.educations;
 
     const user = await this.prisma.user.update({
       where: { id: userId },

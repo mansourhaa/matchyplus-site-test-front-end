@@ -60,10 +60,20 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     return <MatchyPrimaryShell>{children}</MatchyPrimaryShell>;
   }
 
-  const title = pathname.startsWith('/chat') ? t('chat.title') : titleMap[pathname];
+  const title = pathname.startsWith('/chat')
+    ? t('chat.title')
+    : pathname.startsWith('/profile/')
+      ? 'Profil'
+      : titleMap[pathname];
+  const backPath =
+    pathname === '/edit-profile' || pathname === '/video-settings' ? '/settings' : '/home';
 
   return (
-    <MatchyAppShell title={title} backPath="/home" hideHeader={pathname.startsWith('/chat')}>
+    <MatchyAppShell
+      title={title}
+      backPath={backPath}
+      hideHeader={pathname.startsWith('/chat') || pathname.startsWith('/profile/')}
+    >
       {children}
     </MatchyAppShell>
   );

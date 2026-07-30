@@ -49,6 +49,7 @@ describe('GET /api/v1/users/me/profile', () => {
     });
 
     expect(response.statusCode).toBe(200);
+    expect(response.headers['cache-control']).toBe('private, no-store');
     expect(response.json()).toMatchObject({ onboardingCompleted: false });
     expect(response.body).not.toContain('password');
   });
@@ -88,6 +89,7 @@ describe('PATCH /api/v1/users/me/profile', () => {
     });
 
     expect(response.statusCode).toBe(200);
+    expect(response.headers['cache-control']).toBe('private, no-store');
     expect(updateMock).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'user-1' },

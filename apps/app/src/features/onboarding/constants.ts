@@ -90,3 +90,39 @@ export const LANGUAGE_OPTIONS = [
 ];
 
 export const MAX_INTERESTS = 5;
+
+export const EXPERIENCE_OPTIONS = [
+  "Moins d'1 an",
+  '1-2 ans',
+  '3-5 ans',
+  '5-10 ans',
+  'Plus de 10 ans',
+];
+
+export const SECTOR_OPTIONS = [
+  'Informatique / Tech',
+  'Marketing / Communication',
+  'Finance / Comptabilité',
+  'BTP / Artisanat',
+  'Santé / Médical',
+  'Education / Formation',
+  'Transport / Logistique',
+  'Restauration / Hôtellerie',
+  'Commerce / Vente',
+  "Garde d'enfants",
+  'Ménage',
+  'Plomberie / Sanitaire',
+  'Bâtiment et travaux',
+  'Autre',
+];
+
+export const EDUCATION_OPTIONS = [
+  'Bac',
+  'Bac+2 / BTS / DUT',
+  'Licence (Bac+3)',
+  'Master (Bac+5)',
+  'Mastère de recherche',
+  'Doctorat',
+  'Formation professionnelle',
+  'Autre',
+];

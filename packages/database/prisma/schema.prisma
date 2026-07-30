@@ -94,6 +94,10 @@ model User {
   city           String?
   bio            String?   @db.Text()
   image          String?   @db.Text()
+  /// Served path (e.g. `/uploads/videos/<uuid>.mp4`), never inline data — video is only
+  /// ever set via the real upload pipeline in ProfileService, unlike `image` which may
+  /// still hold a base64 data URL from onboarding until that's migrated to real uploads too.
+  video          String?   @db.Text()
   interests      String[]  @default([])
   languages      String[]  @default([])
   contact_modes  String[]  @default([])

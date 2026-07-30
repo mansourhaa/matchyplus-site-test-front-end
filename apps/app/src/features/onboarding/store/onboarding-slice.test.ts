@@ -55,7 +55,9 @@ describe('onboarding-slice', () => {
     const store = buildStore();
     await store.dispatch(fetchOnboardingProfile());
 
-    expect(api.get).toHaveBeenCalledWith('/users/me/profile');
+    expect(api.get).toHaveBeenCalledWith('/users/me/profile', {
+      headers: { 'Cache-Control': 'no-cache' },
+    });
     expect(store.getState().onboarding.profile).toEqual(profile);
   });
 

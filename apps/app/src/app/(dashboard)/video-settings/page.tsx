@@ -1,14 +1,9 @@
-'use client';
-
-import { StubScreen } from '@/components/matchy/stub-screen';
-import { useI18n } from '@/features/i18n/i18n-provider';
+import { VideoSettingsView } from '@/components/profile/video-settings-view';
 
 export default function VideoSettingsPage() {
-  const { t } = useI18n();
   return (
-    <StubScreen
-      title={t('settings.video')}
-      description="Record or upload your intro video when media APIs are ready."
-    />
+    <div className="h-full overflow-y-auto bg-[#F5F7FA] px-4 py-4 pb-8 md:px-8">
+      <VideoSettingsView />
+    </div>
   );
 }

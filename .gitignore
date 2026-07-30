@@ -63,3 +63,5 @@ doc/reviews/
 # .ssh_keys
 # local-meta
 
+# Local profile media uploads
+apps/api/uploads/
