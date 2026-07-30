@@ -112,12 +112,13 @@ export function TagEditor({
   onSave: (values: string[]) => Promise<boolean>;
   error?: string | null;
 }) {
+  const [draft, setDraft] = useState(values);
   const [input, setInput] = useState('');
   const add = (raw: string) => {
     const value = raw.trim();
-    if (!value || values.some((entry) => entry.toLowerCase() === value.toLowerCase())) return;
-    if (maxItems && values.length >= maxItems) return;
-    onChange([...values, value]);
+    if (!value || draft.some((entry) => entry.toLowerCase() === value.toLowerCase())) return;
+    if (maxItems && draft.length >= maxItems) return;
+    setDraft([...draft, value]);
     setInput('');
   };
   return (
@@ -145,15 +146,15 @@ export function TagEditor({
       </div>
       {maxItems && (
         <p className="mb-3 text-xs text-[#888]">
-          {values.length}/{maxItems} sélectionnés
+          {draft.length}/{maxItems} sélectionnés
         </p>
       )}
       <div className="mb-4 flex flex-wrap gap-2">
-        {values.map((value) => (
+        {draft.map((value) => (
           <button
             type="button"
             key={value}
-            onClick={() => onChange(values.filter((entry) => entry !== value))}
+            onClick={() => setDraft(draft.filter((entry) => entry !== value))}
             className="flex items-center gap-1 rounded-full border border-[#C5D8F0] bg-[#EEF5FF] px-3 py-1.5 text-xs font-semibold text-[#2F76BB]"
           >
             {value} <X size={12} />
@@ -163,13 +164,13 @@ export function TagEditor({
       <p className="mb-2 text-xs font-semibold text-[#777]">Suggestions</p>
       <div className="mb-5 flex flex-wrap gap-2">
         {suggestions
-          .filter((suggestion) => !values.includes(suggestion))
+          .filter((suggestion) => !draft.includes(suggestion))
           .map((suggestion) => (
             <button
               type="button"
               key={suggestion}
               onClick={() => add(suggestion)}
-              disabled={Boolean(maxItems && values.length >= maxItems)}
+              disabled={Boolean(maxItems && draft.length >= maxItems)}
               className="rounded-full border border-[#E0E0E0] bg-[#F5F7FA] px-3 py-2 text-xs font-semibold text-[#555] disabled:opacity-40"
             >
               + {suggestion}
@@ -178,7 +179,10 @@ export function TagEditor({
       </div>
       <SheetSave
         onClick={async () => {
-          if (await onSave(values)) onClose();
+          if (await onSave(draft)) {
+            onChange(draft);
+            onClose();
+          }
         }}
       />
     </EditSheet>
@@ -204,11 +208,16 @@ export function ChoiceEditor({
   onSave: (values: string[]) => Promise<boolean>;
   error?: string | null;
 }) {
+  // Same local-draft rule as TagEditor: selection only touches this draft. In multiple
+  // mode it commits on Enregistrer; in single-select mode there's no separate save
+  // button, so each tap attempts to persist immediately, but the parent only learns
+  // about it (via onChange) once that attempt actually succeeds.
+  const [draft, setDraft] = useState(selected);
   return (
     <EditSheet title={title} onClose={onClose} error={error}>
       <div className="mb-4 space-y-2">
         {values.map((option) => {
-          const active = selected.includes(option.value);
+          const active = draft.includes(option.value);
           return (
             <button
               type="button"
@@ -216,13 +225,16 @@ export function ChoiceEditor({
               onClick={() => {
                 const next = multiple
                   ? active
-                    ? selected.filter((value) => value !== option.value)
-                    : [...selected, option.value]
+                    ? draft.filter((value) => value !== option.value)
+                    : [...draft, option.value]
                   : [option.value];
-                onChange(next);
+                setDraft(next);
                 if (!multiple) {
                   void onSave(next).then((persisted) => {
-                    if (persisted) onClose();
+                    if (persisted) {
+                      onChange(next);
+                      onClose();
+                    }
                   });
                 }
               }}
@@ -248,7 +260,10 @@ export function ChoiceEditor({
       {multiple && (
         <SheetSave
           onClick={async () => {
-            if (await onSave(selected)) onClose();
+            if (await onSave(draft)) {
+              onChange(draft);
+              onClose();
+            }
           }}
         />
       )}

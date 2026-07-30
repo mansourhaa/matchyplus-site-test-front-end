@@ -958,94 +958,104 @@ function ProfileSheets(props: SheetProps) {
         error={props.error}
       />
     );
-  if (props.sheet === 'availability')
-    return (
-      <EditSheet title="Disponibilités" onClose={props.close} error={props.error}>
-        <ChoiceGrid
-          values={DAYS.map((day) => ({ value: day.short, label: day.long }))}
-          selected={props.availabilityDays}
-          onChange={props.setAvailabilityDays}
-        />
-        <div className="mt-5">
-          <ChoiceGrid
-            values={TIME_SLOTS}
-            selected={props.availabilityHours}
-            onChange={props.setAvailabilityHours}
-          />
-        </div>
-        <SheetButton
-          onClick={async () => {
-            if (
-              await props.persist({
-                availabilityDays: props.availabilityDays,
-                availabilityHours: props.availabilityHours,
-              })
-            )
-              props.close();
-          }}
-        />
-      </EditSheet>
-    );
+  if (props.sheet === 'availability') return <AvailabilitySheet {...props} />;
   if (props.sheet === 'identity') return <IdentitySheet {...props} />;
-  if (props.sheet === 'bio')
-    return (
-      <EditSheet title="À propos de vous" onClose={props.close} error={props.error}>
-        <textarea
-          value={props.bio}
-          maxLength={250}
-          rows={5}
-          onChange={(event) => props.setBio(event.target.value)}
-          className="w-full resize-none rounded-xl border border-[#E0E0E0] bg-[#F5F7FA] px-4 py-3 text-sm outline-none"
-        />
-        <p className="mt-1 text-right text-[11px] text-[#AAA]">{props.bio.length}/250</p>
-        <SheetButton
-          onClick={async () => {
-            if (await props.persist({ bio: props.bio })) props.close();
-          }}
-        />
-      </EditSheet>
-    );
-  if (props.sheet === 'service')
-    return (
-      <EditSheet title="Service proposé" onClose={props.close} error={props.error}>
-        <label className="mb-4 block text-xs text-[#888]">
-          Type de service
-          <select
-            value={props.serviceType}
-            onChange={(event) => props.setServiceType(event.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-[#E0E0E0] bg-[#F5F7FA] px-4 py-3 text-sm"
-          >
-            <option value="">Choisir</option>
-            {SERVICE_TYPES.map((value) => (
-              <option key={value}>{value}</option>
-            ))}
-          </select>
-        </label>
-        <label className="mb-4 block text-xs text-[#888]">
-          Prix (DT/heure)
-          <input
-            inputMode="decimal"
-            value={props.price}
-            onChange={(event) =>
-              props.setPrice(event.target.value.replace(/[^\d.,]/g, '').slice(0, 20))
-            }
-            className="mt-1.5 w-full rounded-xl border border-[#E0E0E0] bg-[#F5F7FA] px-4 py-3 text-sm"
-          />
-        </label>
-        <SheetButton
-          onClick={async () => {
-            if (
-              await props.persist({
-                serviceType: props.serviceType,
-                price: props.price,
-              })
-            )
-              props.close();
-          }}
-        />
-      </EditSheet>
-    );
+  if (props.sheet === 'bio') return <BioSheet {...props} />;
+  if (props.sheet === 'service') return <ServiceSheet {...props} />;
   return null;
+}
+
+// Local-draft rule: this sheet's inputs only ever write to local state, mirroring
+// TagEditor/ChoiceEditor — the parent's bio only changes once Enregistrer actually
+// persists, so dismissing without saving can never leak into a later, unrelated save.
+function BioSheet(props: SheetProps) {
+  const [draft, setDraft] = useState(props.bio);
+  return (
+    <EditSheet title="À propos de vous" onClose={props.close} error={props.error}>
+      <textarea
+        value={draft}
+        maxLength={250}
+        rows={5}
+        onChange={(event) => setDraft(event.target.value)}
+        className="w-full resize-none rounded-xl border border-[#E0E0E0] bg-[#F5F7FA] px-4 py-3 text-sm outline-none"
+      />
+      <p className="mt-1 text-right text-[11px] text-[#AAA]">{draft.length}/250</p>
+      <SheetButton
+        onClick={async () => {
+          if (await props.persist({ bio: draft })) {
+            props.setBio(draft);
+            props.close();
+          }
+        }}
+      />
+    </EditSheet>
+  );
+}
+
+function ServiceSheet(props: SheetProps) {
+  const [serviceType, setServiceType] = useState(props.serviceType);
+  const [price, setPrice] = useState(props.price);
+  return (
+    <EditSheet title="Service proposé" onClose={props.close} error={props.error}>
+      <label className="mb-4 block text-xs text-[#888]">
+        Type de service
+        <select
+          value={serviceType}
+          onChange={(event) => setServiceType(event.target.value)}
+          className="mt-1.5 w-full rounded-xl border border-[#E0E0E0] bg-[#F5F7FA] px-4 py-3 text-sm"
+        >
+          <option value="">Choisir</option>
+          {SERVICE_TYPES.map((value) => (
+            <option key={value}>{value}</option>
+          ))}
+        </select>
+      </label>
+      <label className="mb-4 block text-xs text-[#888]">
+        Prix (DT/heure)
+        <input
+          inputMode="decimal"
+          value={price}
+          onChange={(event) => setPrice(event.target.value.replace(/[^\d.,]/g, '').slice(0, 20))}
+          className="mt-1.5 w-full rounded-xl border border-[#E0E0E0] bg-[#F5F7FA] px-4 py-3 text-sm"
+        />
+      </label>
+      <SheetButton
+        onClick={async () => {
+          if (await props.persist({ serviceType, price })) {
+            props.setServiceType(serviceType);
+            props.setPrice(price);
+            props.close();
+          }
+        }}
+      />
+    </EditSheet>
+  );
+}
+
+function AvailabilitySheet(props: SheetProps) {
+  const [days, setDays] = useState(props.availabilityDays);
+  const [hours, setHours] = useState(props.availabilityHours);
+  return (
+    <EditSheet title="Disponibilités" onClose={props.close} error={props.error}>
+      <ChoiceGrid
+        values={DAYS.map((day) => ({ value: day.short, label: day.long }))}
+        selected={days}
+        onChange={setDays}
+      />
+      <div className="mt-5">
+        <ChoiceGrid values={TIME_SLOTS} selected={hours} onChange={setHours} />
+      </div>
+      <SheetButton
+        onClick={async () => {
+          if (await props.persist({ availabilityDays: days, availabilityHours: hours })) {
+            props.setAvailabilityDays(days);
+            props.setAvailabilityHours(hours);
+            props.close();
+          }
+        }}
+      />
+    </EditSheet>
+  );
 }
 
 function IdentitySheet(props: SheetProps) {

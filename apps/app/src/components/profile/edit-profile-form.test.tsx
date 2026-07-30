@@ -313,4 +313,39 @@ describe('EditProfileForm', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText("Aucune expérience pour l'instant")).toBeInTheDocument();
   });
+
+  it('discards an abandoned interests-sheet edit instead of letting it ride along on a later save', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
+    vi.mocked(api.patch).mockResolvedValue({ data: fetchedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    const interestsHeading = await screen.findByRole('heading', { name: 'Centres d’intérêt' });
+    fireEvent.click(
+      within(interestsHeading.closest('section') as HTMLElement).getByRole('button', {
+        name: 'Modifier',
+      }),
+    );
+    // Remove the only interest inside the sheet, then dismiss without saving.
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: /Bricolage/ }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Fermer' }));
+
+    // The chip must still be visible outside the sheet — the removal was never committed.
+    expect(screen.getByText('Bricolage')).toBeInTheDocument();
+
+    // An unrelated later save must not resend the removed-but-unsaved interest.
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    await waitFor(() =>
+      expect(api.patch).toHaveBeenCalledWith(
+        '/users/me/profile',
+        expect.objectContaining({ interests: ['Bricolage'] }),
+      ),
+    );
+  });
 });
