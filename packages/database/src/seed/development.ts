@@ -1,6 +1,13 @@
 import bcrypt from 'bcryptjs';
 
-import { Prisma, ReportStatus, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
+import {
+  Prisma,
+  ProfileType,
+  ReportStatus,
+  Role,
+  UserPlan,
+  UserStatus,
+} from '@saas-boilerplate/types';
 
 import { prisma } from '../client.js';
 import { seedMatching } from './matching.js';
@@ -36,7 +43,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     looking_for: 'proposer mes services électricité',
     activity_sector: 'Électricité',
     service_type: 'Électricité',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     gps_latitude: 34.7406,
     gps_longitude: 10.7603,
     last_login: new Date('2026-04-01'),
@@ -70,7 +77,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     looking_for: 'proposer mes services ménage',
     activity_sector: 'Ménage',
     service_type: 'Aide ménagère',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     gps_latitude: 36.8065,
     gps_longitude: 10.1815,
     last_login: new Date('2026-03-28'),
@@ -104,7 +111,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     looking_for: 'proposer mes services cuisine traiteur',
     activity_sector: 'Cuisine',
     service_type: 'Traiteur',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     gps_latitude: 36.812,
     gps_longitude: 10.19,
     last_login: new Date('2026-03-30'),
@@ -165,7 +172,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     looking_for: 'proposer mes services garde enfants',
     activity_sector: 'Garde enfants',
     service_type: 'Nounou',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     gps_latitude: 36.81,
     gps_longitude: 10.18,
     last_login: new Date('2026-04-01'),
@@ -226,7 +233,7 @@ const MEMBERS: Prisma.UserCreateInput[] = [
     looking_for: 'proposer mes services transport VTC',
     activity_sector: 'Transport',
     service_type: 'VTC',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     gps_latitude: 36.8065,
     gps_longitude: 10.1815,
     last_login: new Date('2026-04-01'),
@@ -281,7 +288,7 @@ export default async function seedDev() {
       looking_for: 'recruter hire prestataires tech',
       activity_sector: 'Tech',
       service_type: 'Product',
-      profile_type: 'recruiter',
+      profile_type: ProfileType.PROVIDER,
       gps_latitude: 36.8065,
       gps_longitude: 10.1815,
       interests: ['Startup', 'Product', 'Networking'],
@@ -295,7 +302,7 @@ export default async function seedDev() {
       looking_for: 'recruter hire prestataires tech',
       activity_sector: 'Tech',
       service_type: 'Product',
-      profile_type: 'recruiter',
+      profile_type: ProfileType.PROVIDER,
       gps_latitude: 36.8065,
       gps_longitude: 10.1815,
     },
@@ -331,6 +338,9 @@ export default async function seedDev() {
 
   for (const member of MEMBERS) {
     const { password: _password, email, ...rest } = member;
+    if (!email) {
+      throw new Error('Development seed members must have an email');
+    }
     const row = await prisma.user.upsert({
       where: { email },
       create: member,

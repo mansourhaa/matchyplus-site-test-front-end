@@ -1,6 +1,13 @@
 import bcrypt from 'bcryptjs';
 
-import { PrismaClient, Role, SwipeDirection, UserPlan, UserStatus } from '@saas-boilerplate/types';
+import {
+  PrismaClient,
+  ProfileType,
+  Role,
+  SwipeDirection,
+  UserPlan,
+  UserStatus,
+} from '@saas-boilerplate/types';
 
 /** Tunis metro + Cap Bon — covers common browser GPS along the coast. */
 const TUNIS = { lat: 36.8065, lon: 10.1815 };
@@ -18,7 +25,7 @@ type MatchingProfileSeed = {
   looking_for: string;
   activity_sector: string;
   service_type: string;
-  profile_type: string;
+  profile_type: ProfileType;
   image: string;
   plan?: UserPlan;
   lat: number;
@@ -44,7 +51,7 @@ export const MATCHING_TESTER = {
   looking_for: 'recruter hire freelances et trouver un prestataire près de moi',
   activity_sector: 'Tech',
   service_type: 'Product Management',
-  profile_type: 'recruiter',
+  profile_type: ProfileType.PROVIDER,
   lat: TUNIS.lat,
   lon: TUNIS.lon,
 };
@@ -62,7 +69,7 @@ const PROFILES: MatchingProfileSeed[] = [
     looking_for: 'job emploi mission CDI freelance',
     activity_sector: 'Tech',
     service_type: 'Développement web',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     plan: UserPlan.PREMIUM,
@@ -82,7 +89,7 @@ const PROFILES: MatchingProfileSeed[] = [
     looking_for: 'proposer mes services prestataire missions UX',
     activity_sector: 'Tech',
     service_type: 'UX Design',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1560250097-0b93528c311a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     lat: HAMMAMET.lat + 0.02,
@@ -101,7 +108,7 @@ const PROFILES: MatchingProfileSeed[] = [
     looking_for: 'proposer mes services growth marketing',
     activity_sector: 'Marketing',
     service_type: 'Growth Marketing',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     plan: UserPlan.PREMIUM,
@@ -120,7 +127,7 @@ const PROFILES: MatchingProfileSeed[] = [
     looking_for: 'job emploi mission devops',
     activity_sector: 'Tech',
     service_type: 'DevOps',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     lat: HAMMAMET.lat,
@@ -139,7 +146,7 @@ const PROFILES: MatchingProfileSeed[] = [
     looking_for: 'proposer mes services juridique',
     activity_sector: 'Juridique',
     service_type: 'Conseil juridique',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     lat: 36.43,
@@ -157,7 +164,7 @@ const PROFILES: MatchingProfileSeed[] = [
     looking_for: 'job emploi data analyst',
     activity_sector: 'Tech',
     service_type: 'Data Analysis',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     lat: 36.79,
@@ -175,7 +182,7 @@ const PROFILES: MatchingProfileSeed[] = [
     looking_for: 'proposer mes services photographie',
     activity_sector: 'Créatif',
     service_type: 'Photographie',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1544005313-94ddf0286df2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     lat: 36.85,
@@ -193,7 +200,7 @@ const PROFILES: MatchingProfileSeed[] = [
     looking_for: 'recruter hire et seek investment partenaires',
     activity_sector: 'Tech',
     service_type: 'Entrepreneuriat',
-    profile_type: 'recruiter',
+    profile_type: ProfileType.PROVIDER,
     image:
       'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     plan: UserPlan.PREMIUM_PLUS,
@@ -212,7 +219,7 @@ const PROFILES: MatchingProfileSeed[] = [
     looking_for: 'recruter hire candidats tech',
     activity_sector: 'RH',
     service_type: 'Recrutement',
-    profile_type: 'recruiter',
+    profile_type: ProfileType.PROVIDER,
     image:
       'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     lat: 36.805,
@@ -230,7 +237,7 @@ const PROFILES: MatchingProfileSeed[] = [
     looking_for: 'job emploi mission mobile',
     activity_sector: 'Tech',
     service_type: 'Développement mobile',
-    profile_type: 'freelancer',
+    profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     lat: 36.808,
@@ -257,7 +264,7 @@ async function upsertUserWithLocation(
     looking_for?: string;
     activity_sector?: string;
     service_type?: string;
-    profile_type?: string;
+    profile_type?: ProfileType;
     lat: number;
     lon: number;
   },
