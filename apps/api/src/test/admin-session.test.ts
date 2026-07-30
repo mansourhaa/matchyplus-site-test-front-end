@@ -32,6 +32,9 @@ async function buildAppWithAdmin() {
         findMany: vi.fn().mockResolvedValue([]),
         count: vi.fn().mockResolvedValue(0),
       },
+      // issueTokenPair persists the refresh token now - same mock shape
+      // already used in member-session.test.ts for the same reason.
+      refreshToken: { create: vi.fn().mockResolvedValue({}) },
     } as never,
   });
 }
