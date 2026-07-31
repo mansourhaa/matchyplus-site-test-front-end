@@ -1,3 +1,5 @@
+import authReducer from '@/features/auth/store/auth-slice';
+import type { AuthState, AuthUser } from '@/features/auth/types';
 import onboardingReducer from '@/features/onboarding/store/onboarding-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
@@ -19,8 +21,27 @@ vi.mock('@/lib/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-function buildStore() {
-  return configureStore({ reducer: { onboarding: onboardingReducer } });
+const authUser: AuthUser = {
+  id: 'user-1',
+  email: null,
+  phone: '+21600000000',
+  name: 'Jane Doe',
+  auth_provider: 'phone',
+  email_verified: true,
+  onboarding_completed: true,
+};
+
+function buildStore(preloadedAuthUser: AuthUser | null = authUser) {
+  const authState: AuthState = {
+    status: preloadedAuthUser ? 'authenticated' : 'unauthenticated',
+    loading: false,
+    error: null,
+    user: preloadedAuthUser,
+  };
+  return configureStore({
+    reducer: { auth: authReducer, onboarding: onboardingReducer },
+    preloadedState: { auth: authState },
+  });
 }
 
 const profile = {
@@ -77,6 +98,38 @@ describe('QrCodeView', () => {
     expect(screen.getByText('Électricien')).toBeInTheDocument();
     expect(screen.getByText('app.matchy.plus/profile/user-1')).toBeInTheDocument();
     expect(document.querySelector('svg')).toBeInTheDocument();
+    expect(document.querySelector('svg title')?.textContent).toBe(
+      'https://app.matchy.plus/profile/user-1',
+    );
+  });
+
+  it('does not show a previous user’s profile while the current user’s is loading', async () => {
+    let resolveFetch!: (value: { data: typeof profile }) => void;
+    vi.mocked(api.get).mockReturnValue(
+      new Promise((resolve) => {
+        resolveFetch = resolve;
+      }),
+    );
+    const store = buildStore(authUser);
+    // Simulate a stale profile left over in Redux from a previous session, belonging
+    // to a different user than the one now signed in.
+    store.dispatch({
+      type: 'onboarding/fetchProfile/fulfilled',
+      payload: { ...profile, id: 'user-99', name: 'Previous User' },
+    });
+
+    render(
+      <Provider store={store}>
+        <QrCodeView />
+      </Provider>,
+    );
+
+    expect(screen.queryByText('Previous User')).not.toBeInTheDocument();
+    expect(screen.getByText('Chargement du code QR…')).toBeInTheDocument();
+
+    resolveFetch({ data: profile });
+    expect(await screen.findByText('Jane Doe')).toBeInTheDocument();
+    expect(screen.queryByText('Previous User')).not.toBeInTheDocument();
   });
 
   it('copies the profile link to the clipboard', async () => {

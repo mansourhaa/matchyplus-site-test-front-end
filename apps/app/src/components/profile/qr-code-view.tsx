@@ -2,6 +2,7 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
+import { selectAuth } from '@/features/auth/store/auth-slice';
 import {
   fetchOnboardingProfile,
   selectOnboarding,
@@ -18,7 +19,8 @@ const LOGO_DATA_URI = `data:image/svg+xml,${encodeURIComponent(LOGO_SVG)}`;
 
 export function QrCodeView() {
   const dispatch = useAppDispatch();
-  const { profile, loading, error } = useAppSelector(selectOnboarding);
+  const { user } = useAppSelector(selectAuth);
+  const { profile: loadedProfile, loading, error } = useAppSelector(selectOnboarding);
   const [copied, setCopied] = useState(false);
   const codeRef = useRef<HTMLDivElement>(null);
 
@@ -26,10 +28,16 @@ export function QrCodeView() {
     dispatch(fetchOnboardingProfile());
   }, [dispatch]);
 
-  if (!profile && loading) {
+  // The onboarding profile lives in Redux state that isn't cleared on logout, so a
+  // profile fetched for a previous session can still be sitting there when a different
+  // user signs in. Only trust it once it's confirmed to belong to the signed-in user —
+  // otherwise treat it the same as "not loaded yet" so a stale QR never renders.
+  const ownProfile = loadedProfile && user && loadedProfile.id === user.id ? loadedProfile : null;
+
+  if (!ownProfile && loading) {
     return <div className="py-16 text-center text-sm text-[#888]">Chargement du code QR…</div>;
   }
-  if (!profile && error) {
+  if (!ownProfile && error) {
     return (
       <div className="mx-4 my-10 rounded-2xl bg-white p-6 text-center shadow-sm" role="alert">
         <p className="text-sm text-[#E24E59]">Impossible de charger votre profil.</p>
@@ -43,7 +51,8 @@ export function QrCodeView() {
       </div>
     );
   }
-  if (!profile) return null;
+  if (!ownProfile) return null;
+  const profile = ownProfile;
 
   // The public profile page is served by this same Next.js app, not the API, so the
   // link is built from window.location.origin rather than NEXT_PUBLIC_API_URL.
@@ -83,8 +92,14 @@ export function QrCodeView() {
     const link = document.createElement('a');
     link.href = url;
     link.download = `matchy-qr-${firstName}.svg`;
+    // The anchor must be in the document for the download to reliably start in every
+    // browser, and revoking the object URL immediately after click() can race with an
+    // async download start (notably in Firefox) and cancel it — clean up on a delay
+    // instead, after the browser has had a chance to pick up the file.
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   return (
@@ -103,10 +118,12 @@ export function QrCodeView() {
 
         <div
           ref={codeRef}
+          aria-label="Code QR de votre profil"
           className="mx-auto flex w-fit flex-col items-center rounded-2xl border border-[#E8F0FA] p-5"
         >
           <QRCodeSVG
             value={profileUrl}
+            title={profileUrl}
             size={200}
             level="H"
             fgColor={matchyBrand.textDark}

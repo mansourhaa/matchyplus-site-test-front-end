@@ -66,7 +66,9 @@ function DashboardChrome({ children }: { children: ReactNode }) {
       ? 'Profil'
       : titleMap[pathname];
   const backPath =
-    pathname === '/edit-profile' || pathname === '/video-settings' ? '/settings' : '/home';
+    pathname === '/edit-profile' || pathname === '/video-settings' || pathname === '/qr-code'
+      ? '/settings'
+      : '/home';
 
   return (
     <MatchyAppShell
