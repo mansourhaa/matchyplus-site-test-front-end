@@ -162,6 +162,8 @@ model User {
   location          UserLocation?
   blocks_made       UserBlock[]   @relation("BlocksMade")
   blocks_received   UserBlock[]   @relation("BlocksReceived")
+  ratings_given     Rating[]      @relation("RatingsGiven")
+  ratings_received  Rating[]      @relation("RatingsReceived")
 
   @@index([email])
   @@index([phone])
@@ -325,6 +327,22 @@ model UserBlock {
 
   @@unique([blocker_id, blocked_id])
   @@index([blocked_id])
+}
+
+/// One rating per (rater, ratee) pair, only allowed between matched users — insert-only,
+/// no edits once submitted. Aggregated into User.rating/reviews on every write rather
+/// than read live, so profile reads stay a single-row lookup.
+model Rating {
+  id         String   @id @default(cuid())
+  rater_id   String
+  rater      User     @relation("RatingsGiven", fields: [rater_id], references: [id], onDelete: Cascade)
+  ratee_id   String
+  ratee      User     @relation("RatingsReceived", fields: [ratee_id], references: [id], onDelete: Cascade)
+  value      Int
+  created_at DateTime @default(now())
+
+  @@unique([rater_id, ratee_id])
+  @@index([ratee_id])
 }
 
 enum AiJobType {

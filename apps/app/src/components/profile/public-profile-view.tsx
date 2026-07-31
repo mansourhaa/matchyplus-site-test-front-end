@@ -34,7 +34,6 @@ export function PublicProfileView({ userId }: { userId: string }) {
       profile={{
         ...viewedProfile,
         rating: viewedProfile.rating ?? 0,
-        activity_sector: null,
       }}
       onClose={() => {
         if (window.history.length > 1) window.history.back();

@@ -84,6 +84,7 @@ describe('ProfileService', () => {
         profile_type: 'INDIVIDUAL',
         rating: null,
         reviews: null,
+        matched: false,
       });
       expect(result).not.toHaveProperty('status');
     });

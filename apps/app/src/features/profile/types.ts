@@ -17,11 +17,21 @@ export type PublicProfile = {
   service_type: string | null;
   price: string | null;
   profile_type: ProfileType | null;
+  experience: string | null;
+  activity_sector: string | null;
+  looking_for: string | null;
+  selected_goals: string[];
   rating: number | null;
   reviews: number | null;
+  matched: boolean;
 };
 
 export type MediaUploadResult = {
   image?: string | null;
   video?: string | null;
+};
+
+export type RatingResult = {
+  rating: number;
+  reviews: number;
 };

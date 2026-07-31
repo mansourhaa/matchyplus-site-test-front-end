@@ -1,4 +1,5 @@
 import { I18nProvider } from '@/features/i18n/i18n-provider';
+import matchingReducer from '@/features/matching/store/matching-slice';
 import profileReducer from '@/features/profile/store/profile-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
@@ -19,7 +20,7 @@ vi.mock('@/lib/api', async (importOriginal) => {
 });
 
 function buildStore() {
-  return configureStore({ reducer: { profile: profileReducer } });
+  return configureStore({ reducer: { profile: profileReducer, matching: matchingReducer } });
 }
 
 const publicProfile = {

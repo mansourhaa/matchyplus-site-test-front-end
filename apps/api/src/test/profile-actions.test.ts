@@ -70,6 +70,7 @@ describe('GET /api/v1/profiles/:id', () => {
           findUnique: vi.fn().mockResolvedValue(activeUser),
         } as never,
         userBlock: { findFirst: vi.fn().mockResolvedValue(null) } as never,
+        match: { findUnique: vi.fn().mockResolvedValue(null) } as never,
       },
     });
     apps.push(app);
@@ -80,8 +81,13 @@ describe('GET /api/v1/profiles/:id', () => {
       headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ id: 'user-2', name: 'Jane Doe', rating: null });
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json()).toMatchObject({
+      id: 'user-2',
+      name: 'Jane Doe',
+      rating: null,
+      matched: false,
+    });
   });
 
   it('rejects with 403 when a block exists between viewer and target', async () => {
@@ -343,5 +349,112 @@ describe('GET /api/v1/profiles/media/videos/:filename', () => {
     });
 
     expect(response.statusCode).toBe(404);
+  });
+});
+
+describe('POST /api/v1/profiles/:id/rating', () => {
+  const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
+
+  afterEach(async () => {
+    await Promise.all(apps.map((app) => app.close()));
+    apps.length = 0;
+  });
+
+  it('requires authentication', async () => {
+    const app = await buildTestApp({});
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-2/rating',
+      payload: { rating: 5 },
+    });
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('rejects a rating outside 1-5 before touching the database', async () => {
+    const app = await buildTestApp({
+      prisma: { user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() } as never },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-2/rating',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      payload: { rating: 6 },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('rejects rating a profile you are not matched with', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() } as never,
+        match: { findUnique: vi.fn().mockResolvedValue(null) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-2/rating',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      payload: { rating: 5 },
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ code: 'not_matched' });
+  });
+
+  it('rejects rating the same matched profile twice', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() } as never,
+        match: { findUnique: vi.fn().mockResolvedValue({ id: 'match-1' }) } as never,
+        rating: { findUnique: vi.fn().mockResolvedValue({ id: 'rating-1' }) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-2/rating',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      payload: { rating: 5 },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toMatchObject({ code: 'already_rated' });
+  });
+
+  it('rates a matched profile and returns the recomputed average', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          update: vi.fn().mockResolvedValue({}),
+        } as never,
+        match: { findUnique: vi.fn().mockResolvedValue({ id: 'match-1' }) } as never,
+        rating: {
+          findUnique: vi.fn().mockResolvedValue(null),
+          create: vi.fn().mockResolvedValue({ id: 'rating-1' }),
+          aggregate: vi.fn().mockResolvedValue({ _avg: { value: 4 }, _count: 1 }),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-2/rating',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      payload: { rating: 4 },
+    });
+
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json()).toEqual({ rating: 4, reviews: 1 });
   });
 });

@@ -36,6 +36,10 @@ const PUBLIC_PROFILE_SELECT = {
   service_type: true,
   price: true,
   profile_type: true,
+  experience: true,
+  activity_sector: true,
+  looking_for: true,
+  selected_goals: true,
   rating: true,
   reviews: true,
   status: true,
@@ -87,6 +91,11 @@ export class ProfileService {
    * matchy-plus-legacy's actual (if confusingly-named) "public" profile behavior, which
    * really means "viewable by any signed-in member via link/QR", not anonymous-public.
    * Unlike legacy, a blocked relationship is checked (legacy's getPublicProfile has none).
+   *
+   * `matched` is computed here (rather than left for the client to infer from its own
+   * matches list) so that a profile opened directly — a shared link, a QR code, a
+   * notification — reports the real relationship immediately, without depending on
+   * whatever match data the client happens to already have loaded.
    */
   async getPublicProfile(viewerId: string, targetUserId: string) {
     try {
@@ -104,10 +113,11 @@ export class ProfileService {
       }
 
       const result = toPublicProfileResult(user);
-      if (result.video && !(await this.canAccessVideo(viewerId, targetUserId))) {
+      const matched = viewerId !== targetUserId && (await this.hasMatch(viewerId, targetUserId));
+      if (result.video && !(viewerId === targetUserId || matched)) {
         result.video = null;
       }
-      return result;
+      return { ...result, matched };
     } catch (err) {
       throw err;
     }
@@ -132,6 +142,21 @@ export class ProfileService {
     }
   }
 
+  private async hasMatch(a: string, b: string): Promise<boolean> {
+    try {
+      const pair = orderedUserPair(a, b);
+      const match = await this.prisma.match.findUnique({
+        where: {
+          user_low_id_user_high_id: { user_low_id: pair.userLowId, user_high_id: pair.userHighId },
+        },
+        select: { id: true },
+      });
+      return Boolean(match);
+    } catch (err) {
+      throw err;
+    }
+  }
+
   /**
    * Owner, an active match, or the viewer being the owner may stream the profile video —
    * matching legacy's canAccessProfileVideo (minus its "active conversation" branch,
@@ -140,14 +165,7 @@ export class ProfileService {
   async canAccessVideo(viewerId: string, ownerId: string): Promise<boolean> {
     try {
       if (viewerId === ownerId) return true;
-      const pair = orderedUserPair(viewerId, ownerId);
-      const match = await this.prisma.match.findUnique({
-        where: {
-          user_low_id_user_high_id: { user_low_id: pair.userLowId, user_high_id: pair.userHighId },
-        },
-        select: { id: true },
-      });
-      return Boolean(match);
+      return await this.hasMatch(viewerId, ownerId);
     } catch (err) {
       throw err;
     }

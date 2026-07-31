@@ -103,7 +103,7 @@ export function MatchesView() {
                       <button
                         key={`avatar-${row.match_id}`}
                         type="button"
-                        onClick={() => router.push(`/chat/${row.match_id}`)}
+                        onClick={() => router.push(`/profile/${profile.id}`)}
                         className="flex w-16 shrink-0 flex-col items-center gap-1"
                       >
                         <div
@@ -140,16 +140,17 @@ export function MatchesView() {
                     const profile = row.profile;
                     if (!profile) return null;
                     return (
-                      <button
+                      <div
                         key={row.match_id}
-                        type="button"
-                        onClick={() => router.push(`/chat/${row.match_id}`)}
-                        className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm"
+                        className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 shadow-sm"
                         style={{ border: `1px solid ${matchyBrand.border}` }}
                       >
-                        <div
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/profile/${profile.id}`)}
                           className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full text-lg font-bold text-white"
                           style={{ background: matchyBrand.gradient135 }}
+                          aria-label={`Voir le profil de ${profile.name}`}
                         >
                           {profile.image ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -161,17 +162,26 @@ export function MatchesView() {
                           ) : (
                             profile.name.slice(0, 1)
                           )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-bold" style={{ color: matchyBrand.textDark }}>
-                            {profile.name}
-                          </p>
-                          <p className="truncate text-xs text-[#777]">
-                            {profile.service_type || profile.job || profile.category}
-                          </p>
-                        </div>
-                        <MessageCircle size={18} color={matchyBrand.teal} />
-                      </button>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/chat/${row.match_id}`)}
+                          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className="truncate font-bold"
+                              style={{ color: matchyBrand.textDark }}
+                            >
+                              {profile.name}
+                            </p>
+                            <p className="truncate text-xs text-[#777]">
+                              {profile.service_type || profile.job || profile.category}
+                            </p>
+                          </div>
+                          <MessageCircle size={18} color={matchyBrand.teal} />
+                        </button>
+                      </div>
                     );
                   })}
                 </section>
