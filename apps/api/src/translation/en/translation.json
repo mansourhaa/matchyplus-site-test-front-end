@@ -19,5 +19,6 @@
   "user_already_exists": "An account with this email already exists.",
   "user_not_found": "User not found.",
   "admin_access_required": "Administrator access required",
-  "onboarding_incomplete": "Please complete your profile before finishing onboarding."
+  "onboarding_incomplete": "Please complete your profile before finishing onboarding.",
+  "foreign_photo_path": "This photo does not belong to your account."
 }

@@ -26,6 +26,7 @@ const baseProfile: OnboardingProfile = {
   job: 'Électricien',
   bio: null,
   image: null,
+  video: null,
   city: null,
   profile_type: 'INDIVIDUAL',
   offer_service: false,

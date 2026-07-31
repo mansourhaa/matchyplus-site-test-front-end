@@ -20,7 +20,9 @@ const initialState: OnboardingState = {
 // status code ..." instead of the API's actual error code (e.g. onboarding_incomplete).
 export const fetchOnboardingProfile = createAsyncThunk('onboarding/fetchProfile', async () => {
   try {
-    const response = await api.get<OnboardingProfile>('/users/me/profile');
+    const response = await api.get<OnboardingProfile>('/users/me/profile', {
+      headers: { 'Cache-Control': 'no-cache' },
+    });
     return response.data;
   } catch (error) {
     throw new Error(getApiErrorCode(error) ?? 'onboarding_fetch_failed');
@@ -51,7 +53,11 @@ export const completeOnboarding = createAsyncThunk('onboarding/complete', async 
 const onboardingSlice = createSlice({
   name: 'onboarding',
   initialState,
-  reducers: {},
+  reducers: {
+    patchOnboardingProfile: (state, action: PayloadAction<Partial<OnboardingProfile>>) => {
+      if (state.profile) Object.assign(state.profile, action.payload);
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchOnboardingProfile.pending, (state) => {
@@ -99,6 +105,7 @@ const onboardingSlice = createSlice({
   },
 });
 
+export const { patchOnboardingProfile } = onboardingSlice.actions;
 export const selectOnboarding = (state: { onboarding: OnboardingState }) => state.onboarding;
 
 export default onboardingSlice.reducer;

@@ -1,0 +1,347 @@
+import jwt from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { PHOTOS_DIR, VIDEOS_DIR } from '../utils/media-storage.js';
+import { buildTestApp } from './build-test-app.js';
+
+function signAccessToken(userId: string) {
+  return jwt.sign({ id: userId, email: 'user@example.com' }, 'test-access-token-secret');
+}
+
+// verifyToken (apps/api/src/plugins/authorization.ts) reloads the caller's own row via
+// findUniqueOrThrow on every request to re-check ACTIVE status — every test needs this
+// mocked regardless of what the route handler itself queries, or auth fails with a
+// misleading 401 before the route logic ever runs.
+function findUniqueOrThrowForAnyCaller() {
+  return vi
+    .fn()
+    .mockImplementation(({ where }: { where: { id: string } }) =>
+      Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER' }),
+    );
+}
+
+const activeUser = {
+  id: 'user-2',
+  name: 'Jane Doe',
+  job: 'Électricien',
+  bio: 'Bio text',
+  image: '/uploads/photos/abc.jpg',
+  video: null,
+  city: 'Tunis',
+  interests: ['Bricolage'],
+  languages: ['fr'],
+  contact_modes: ['whatsapp'],
+  offer_service: false,
+  service_type: null,
+  price: null,
+  profile_type: 'INDIVIDUAL',
+  rating: 0,
+  reviews: 0,
+  availability_days: [],
+  availability_hours: [],
+  status: 'ACTIVE',
+};
+
+describe('GET /api/v1/profiles/:id', () => {
+  const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
+
+  afterEach(async () => {
+    await Promise.all(apps.map((app) => app.close()));
+    apps.length = 0;
+  });
+
+  it('requires authentication', async () => {
+    const app = await buildTestApp({});
+    apps.push(app);
+
+    const response = await app.inject({ method: 'GET', url: '/api/v1/profiles/user-2' });
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  it("returns another user's public profile when not blocked", async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          findUnique: vi.fn().mockResolvedValue(activeUser),
+        } as never,
+        userBlock: { findFirst: vi.fn().mockResolvedValue(null) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/profiles/user-2',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ id: 'user-2', name: 'Jane Doe', rating: null });
+  });
+
+  it('rejects with 403 when a block exists between viewer and target', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          findUnique: vi.fn(),
+        } as never,
+        userBlock: { findFirst: vi.fn().mockResolvedValue({ id: 'block-1' }) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/profiles/user-2',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ code: 'blocked' });
+  });
+
+  it('returns 404 for a profile that does not exist', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          findUnique: vi.fn().mockResolvedValue(null),
+        } as never,
+        userBlock: { findFirst: vi.fn().mockResolvedValue(null) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/profiles/user-2',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toMatchObject({ code: 'profile_not_found' });
+  });
+});
+
+describe('GET /api/v1/profiles/media/photos/:filename', () => {
+  const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
+
+  afterEach(async () => {
+    await Promise.all(apps.map((app) => app.close()));
+    apps.length = 0;
+  });
+
+  it('rejects a path-traversal filename before touching the filesystem', async () => {
+    const app = await buildTestApp({
+      prisma: { user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() } as never },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/profiles/media/photos/..%2F..%2Fpackage.json',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('serves an existing photo to its active owner', async () => {
+    await mkdir(PHOTOS_DIR, { recursive: true });
+    const filename = `${randomUUID()}.jpg`;
+    const filePath = join(PHOTOS_DIR, filename);
+    await writeFile(filePath, Buffer.from([0xff, 0xd8, 0xff]));
+
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          findFirst: vi.fn().mockResolvedValue({ id: 'user-1' }),
+          findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/v1/profiles/media/photos/${filename}`,
+        headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      });
+
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.headers['content-type']).toBe('image/jpeg');
+    } finally {
+      await rm(filePath, { force: true });
+    }
+  });
+
+  it('returns 404 for a photo that does not exist on disk', async () => {
+    const filename = `${randomUUID()}.jpg`;
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          findFirst: vi.fn().mockResolvedValue({ id: 'user-1' }),
+          findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: `/api/v1/profiles/media/photos/${filename}`,
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode, response.body).toBe(404);
+  });
+
+  it('denies a blocked viewer even when the file exists', async () => {
+    const filename = `${randomUUID()}.jpg`;
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          findFirst: vi.fn().mockResolvedValue({ id: 'owner-1' }),
+        } as never,
+        userBlock: { findFirst: vi.fn().mockResolvedValue({ id: 'block-1' }) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: `/api/v1/profiles/media/photos/${filename}`,
+      headers: { authorization: `Bearer ${signAccessToken('viewer-1')}` },
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ code: 'blocked' });
+  });
+});
+
+describe('GET /api/v1/profiles/media/videos/:filename', () => {
+  const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
+
+  afterEach(async () => {
+    await Promise.all(apps.map((app) => app.close()));
+    apps.length = 0;
+  });
+
+  it('allows the owner to stream their own video', async () => {
+    await mkdir(VIDEOS_DIR, { recursive: true });
+    const filename = `${randomUUID()}.mp4`;
+    const filePath = join(VIDEOS_DIR, filename);
+    await writeFile(filePath, Buffer.from('fake video bytes'));
+
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          findFirst: vi.fn().mockResolvedValue({ id: 'user-1' }),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/v1/profiles/media/videos/${filename}`,
+        headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('video/mp4');
+    } finally {
+      await rm(filePath, { force: true });
+    }
+  });
+
+  it('rejects a viewer with no active match to the owner', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          findFirst: vi.fn().mockResolvedValue({ id: 'owner-1' }),
+        } as never,
+        match: { findUnique: vi.fn().mockResolvedValue(null) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/profiles/media/videos/some-video.mp4',
+      headers: { authorization: `Bearer ${signAccessToken('viewer-1')}` },
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ code: 'video_access_denied' });
+  });
+
+  it('streams a byte range to a viewer with an active match', async () => {
+    await mkdir(VIDEOS_DIR, { recursive: true });
+    const filename = `${randomUUID()}.mp4`;
+    const filePath = join(VIDEOS_DIR, filename);
+    await writeFile(filePath, Buffer.from('0123456789'));
+
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          findFirst: vi.fn().mockResolvedValue({ id: 'owner-1' }),
+        } as never,
+        match: { findUnique: vi.fn().mockResolvedValue({ id: 'match-1' }) } as never,
+      },
+    });
+    apps.push(app);
+
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/v1/profiles/media/videos/${filename}`,
+        headers: {
+          cookie: `access_token=${signAccessToken('viewer-1')}`,
+          range: 'bytes=2-5',
+        },
+      });
+
+      expect(response.statusCode, response.body).toBe(206);
+      expect(response.headers['content-range']).toBe('bytes 2-5/10');
+      expect(response.headers['accept-ranges']).toBe('bytes');
+      expect(response.body).toBe('2345');
+    } finally {
+      await rm(filePath, { force: true });
+    }
+  });
+
+  it('returns 404 when no user references the requested filename', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+          findFirst: vi.fn().mockResolvedValue(null),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/profiles/media/videos/unknown.mp4',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
+});

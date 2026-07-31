@@ -6,6 +6,7 @@ import {
   UpdateOnboardingProfilePayload,
 } from '../types/onboarding.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { isStoredMediaPath } from '../utils/media-storage.js';
 
 // Never select password/tokens/verification codes — same convention as
 // AuthenticationService.authCheck().
@@ -19,6 +20,10 @@ const PROFILE_SELECT = {
   job: true,
   bio: true,
   image: true,
+  // Read-only here too: video is only ever written via ProfileService's upload/delete
+  // endpoints (apps/api/src/routes/v1/users/actions.ts's /me/profile/video), never
+  // accepted back through this service's updateProfile.
+  video: true,
   city: true,
   profile_type: true,
   offer_service: true,
@@ -30,6 +35,13 @@ const PROFILE_SELECT = {
   availability_hours: true,
   contact_modes: true,
   languages: true,
+  experience: true,
+  sector: true,
+  education_level: true,
+  experiences: true,
+  educations: true,
+  rating: true,
+  reviews: true,
   onboarding_completed_at: true,
 } satisfies Prisma.UserSelect;
 
@@ -60,6 +72,21 @@ export class OnboardingService {
   async updateProfile(payload: UpdateOnboardingProfilePayload) {
     const { userId, ...fields } = payload;
 
+    // `image` may be a legacy base64 data URL, but must never be an arbitrary
+    // `/uploads/photos/...` path unless it's the caller's own current value — otherwise a
+    // member could claim another member's stored photo path here (this endpoint has none
+    // of the ownership/upload bookkeeping that ProfileService.uploadPhoto has), and a
+    // later upload/delete through that pipeline would then remove the real owner's file.
+    if (fields.image !== undefined && isStoredMediaPath(fields.image, 'photos')) {
+      const current = await this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { image: true },
+      });
+      if (current.image !== fields.image) {
+        throw new Error('foreign_photo_path');
+      }
+    }
+
     const data: Prisma.UserUpdateInput = {};
     if (fields.name !== undefined) data.name = fields.name;
     if (fields.job !== undefined) data.job = fields.job;
@@ -76,6 +103,11 @@ export class OnboardingService {
     if (fields.availabilityHours !== undefined) data.availability_hours = fields.availabilityHours;
     if (fields.contactModes !== undefined) data.contact_modes = fields.contactModes;
     if (fields.languages !== undefined) data.languages = fields.languages;
+    if (fields.experience !== undefined) data.experience = fields.experience;
+    if (fields.sector !== undefined) data.sector = fields.sector;
+    if (fields.educationLevel !== undefined) data.education_level = fields.educationLevel;
+    if (fields.experiences !== undefined) data.experiences = fields.experiences;
+    if (fields.educations !== undefined) data.educations = fields.educations;
 
     const user = await this.prisma.user.update({
       where: { id: userId },

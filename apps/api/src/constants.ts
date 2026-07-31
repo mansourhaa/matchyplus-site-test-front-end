@@ -34,3 +34,46 @@ export const DISCOVERY_RADIUS_M = Number(process.env.DISCOVERY_RADIUS_M || 25_00
 
 /** Default swipe-feed page size (env override: DISCOVERY_PAGE_SIZE). */
 export const DISCOVERY_PAGE_SIZE = Number(process.env.DISCOVERY_PAGE_SIZE || 20);
+
+/**
+ * Profile photo/video upload limits and MIME allow-lists, shared by ProfileService
+ * (size + content-sniffing validation), the multipart plugin (global body-size ceiling),
+ * and the users routes (per-endpoint rate limits) — kept in one place instead of
+ * duplicated across those files.
+ */
+export const PROFILE_PHOTO_MAX_BYTES = 8 * 1024 * 1024;
+export const PROFILE_VIDEO_MAX_BYTES = 50 * 1024 * 1024;
+
+export const PROFILE_PHOTO_RATE_LIMIT = { max: 10, timeWindow: '1 hour' };
+export const PROFILE_VIDEO_RATE_LIMIT = { max: 5, timeWindow: '1 hour' };
+
+export const ALLOWED_PROFILE_PHOTO_MIMES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+export const ALLOWED_PROFILE_VIDEO_MIMES = [
+  'video/mp4',
+  'video/quicktime',
+  'video/x-msvideo',
+  'video/x-matroska',
+  'video/webm',
+  'video/ogg',
+  'video/3gpp',
+  'video/3gpp2',
+];
+
+/** Content types served on GET /profiles/media/{photos,videos}/:filename, by extension. */
+export const PROFILE_PHOTO_CONTENT_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+};
+
+export const PROFILE_VIDEO_CONTENT_TYPES: Record<string, string> = {
+  '.mp4': 'video/mp4',
+  '.mov': 'video/quicktime',
+  '.avi': 'video/x-msvideo',
+  '.mkv': 'video/x-matroska',
+  '.webm': 'video/webm',
+  '.ogv': 'video/ogg',
+  '.3gp': 'video/3gpp',
+  '.3g2': 'video/3gpp2',
+};

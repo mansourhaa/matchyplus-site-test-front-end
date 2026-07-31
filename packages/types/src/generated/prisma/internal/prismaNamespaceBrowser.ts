@@ -115,6 +115,7 @@ export const UserScalarFieldEnum = {
   city: 'city',
   bio: 'bio',
   image: 'image',
+  video: 'video',
   interests: 'interests',
   languages: 'languages',
   contact_modes: 'contact_modes',
