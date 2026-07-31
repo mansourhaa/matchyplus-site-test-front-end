@@ -1,8 +1,10 @@
+import authReducer from '@/features/auth/store/auth-slice';
 import { I18nProvider } from '@/features/i18n/i18n-provider';
 import profileReducer from '@/features/profile/store/profile-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,8 +18,31 @@ vi.mock('@/lib/api', async (importOriginal) => {
   };
 });
 
-function buildStore() {
-  return configureStore({ reducer: { profile: profileReducer } });
+// `viewerId` seeds the auth slice ProfileDetailModal reads to decide whether to fire the
+// profile-view notification (see the notify-tests below) — null (the default) keeps every
+// other describe block's tests unaffected, since the notify effect no-ops without a user.
+function buildStore(viewerId: string | null = null) {
+  return configureStore({
+    reducer: { profile: profileReducer, auth: authReducer },
+    preloadedState: {
+      auth: {
+        status: viewerId ? ('authenticated' as const) : ('unknown' as const),
+        loading: false,
+        error: null,
+        user: viewerId
+          ? {
+              id: viewerId,
+              email: null,
+              phone: null,
+              name: 'Viewer',
+              auth_provider: 'phone',
+              email_verified: false,
+              onboarding_completed: true,
+            }
+          : null,
+      },
+    },
+  });
 }
 
 const profile: ProfileDetailData = {
@@ -335,5 +360,47 @@ describe('ProfileDetailModal — report account', () => {
       await screen.findByText('Merci de préciser la raison du signalement.'),
     ).toBeInTheDocument();
     expect(api.post).not.toHaveBeenCalled();
+  });
+});
+
+describe('ProfileDetailModal — profile view notification', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('notifies the profile owner when someone else views it, whether opened from discovery or /profile/[id]', async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: { notified: true } });
+    const store = buildStore('viewer-1');
+
+    renderModal(store);
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/profiles/user-2/view'));
+  });
+
+  it('does not notify when the signed-in viewer is the profile owner', async () => {
+    const store = buildStore('user-2');
+
+    renderModal(store, { id: 'user-2' });
+
+    await screen.findByText('Jane Doe');
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it('notifies only once per view even under React StrictMode double-invoked effects', async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: { notified: true } });
+    const store = buildStore('viewer-1');
+
+    render(
+      <StrictMode>
+        <Provider store={store}>
+          <I18nProvider>
+            <ProfileDetailModal profile={profile} onClose={() => {}} />
+          </I18nProvider>
+        </Provider>
+      </StrictMode>,
+    );
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/profiles/user-2/view'));
+    expect(api.post).toHaveBeenCalledTimes(1);
   });
 });

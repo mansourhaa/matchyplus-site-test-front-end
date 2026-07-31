@@ -34,6 +34,13 @@ export const fetchPublicProfile = createAsyncThunk(
   },
 );
 
+// Fire-and-forget: the caller doesn't need the result, so there's no loading/error state
+// for this one. A failure here (e.g. the profile no longer exists) shouldn't block the
+// viewer from seeing the page they're already looking at.
+export const notifyProfileView = createAsyncThunk('profile/notifyView', async (userId: string) => {
+  await api.post(`/profiles/${userId}/view`);
+});
+
 export const uploadProfilePhoto = createAsyncThunk('profile/uploadPhoto', async (file: File) => {
   try {
     const form = new FormData();

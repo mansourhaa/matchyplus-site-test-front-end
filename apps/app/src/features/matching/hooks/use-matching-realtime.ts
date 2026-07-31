@@ -17,19 +17,25 @@ import {
   setPeerTyping,
 } from '@/features/messaging/store/messaging-slice';
 import type { ChatMessage, MessagingRealtimePayload } from '@/features/messaging/types';
+import { fetchNotifications } from '@/features/notifications/store/notifications-slice';
 import { getCachedAuthUser } from '@/lib/auth';
 import type { RootState } from '@/lib/store';
-import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from 'react-redux';
 
-function buildRealtimeUrl(accessToken: string): string | null {
+import type { PushToastItem } from '../types';
+
+const PUSH_TOAST_LIFETIME_MS = 4200;
+const MAX_VISIBLE_PUSH_TOASTS = 3;
+
+function buildRealtimeUrl(): string | null {
   try {
     const apiBase = process.env.NEXT_PUBLIC_API_URL;
     if (!apiBase) return null;
 
     const url = new URL(`${apiBase.replace(/\/$/, '')}/realtime`);
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-    url.searchParams.set('access_token', accessToken);
     return url.toString();
   } catch {
     return null;
@@ -37,22 +43,41 @@ function buildRealtimeUrl(accessToken: string): string | null {
 }
 
 /**
- * Shared match + messaging realtime subscription.
+ * Shared match + messaging + profile-view-notification realtime subscription.
  * One socket avoids duplicate connections; HTTP write responses remain authoritative.
+ * The access token lives in an HttpOnly cookie (see lib/auth.ts), so it isn't read here —
+ * the browser attaches it to the WebSocket handshake automatically, the same way it does
+ * for any other same-site request, and the server falls back to that cookie in verifyToken.
  */
 export function useMatchingRealtime(enabled = true) {
   const dispatch = useAppDispatch();
   const store = useStore<RootState>();
   const socketRef = useRef<WebSocket | null>(null);
+  const [pushToasts, setPushToasts] = useState<PushToastItem[]>([]);
+  const nextToastId = useRef(0);
+  const dismissTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // Read on every render (not just at connect time) so a still-open socket knows whether
+  // the user is currently looking at the notifications page — a push card would be
+  // redundant there, since that page already shows the same event in the list.
+  const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(dismissTimers.current).forEach(clearTimeout);
+      dismissTimers.current = {};
+    };
+  }, []);
 
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') return;
 
     try {
-      const token = sessionStorage.getItem('access_token');
-      if (!token) return;
-
-      const url = buildRealtimeUrl(token);
+      const url = buildRealtimeUrl();
       if (!url) return;
 
       let closedByEffect = false;
@@ -168,6 +193,30 @@ export function useMatchingRealtime(enabled = true) {
                   }),
                 );
                 void dispatch(fetchInbox());
+                return;
+              }
+
+              if (message.event === 'notification_profile_view') {
+                void dispatch(fetchNotifications());
+                if (message.payload?.viewerName && pathnameRef.current !== '/notifications') {
+                  const id = String(nextToastId.current++);
+                  const viewerName = message.payload.viewerName;
+                  setPushToasts((prev) =>
+                    [
+                      {
+                        id,
+                        title: 'Vue de profil',
+                        body: `Quelqu'un nommé "${viewerName}" a consulté votre profil.`,
+                        viewerImage: message.payload?.viewerImage ?? null,
+                      },
+                      ...prev,
+                    ].slice(0, MAX_VISIBLE_PUSH_TOASTS),
+                  );
+                  dismissTimers.current[id] = setTimeout(() => {
+                    setPushToasts((prev) => prev.filter((item) => item.id !== id));
+                    delete dismissTimers.current[id];
+                  }, PUSH_TOAST_LIFETIME_MS);
+                }
               }
             } catch {
               // Ignore malformed payloads — keep the socket open.
@@ -198,4 +247,6 @@ export function useMatchingRealtime(enabled = true) {
       return undefined;
     }
   }, [dispatch, enabled, store]);
+
+  return { pushToasts };
 }

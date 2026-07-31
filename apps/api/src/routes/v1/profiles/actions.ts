@@ -7,8 +7,10 @@ import {
   getProfilePhotoFileSchema,
   getProfileVideoFileSchema,
   getPublicProfileSchema,
+  notifyProfileViewSchema,
   rateProfileSchema,
 } from '../../../schemas/v1/index.js';
+import { NotificationService } from '../../../services/notification.js';
 import { ProfileService } from '../../../services/profile.js';
 import { RatingService } from '../../../services/rating.js';
 import { ProfileIdParams, ProfileMediaFilenameParams } from '../../../types/profile.js';
@@ -21,6 +23,10 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const { prisma } = fastify;
   const profileService = new ProfileService({ prisma });
   const ratingService = new RatingService({ prisma });
+  const notifications = new NotificationService({
+    prisma,
+    push: (userId, event, payload) => fastify.notifyUser(userId, event, payload),
+  });
 
   fastify.get<{ Params: ProfileIdParams }>(
     '/:id',
@@ -49,6 +55,29 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
           request.body.rating,
         );
         return reply.code(200).send(data);
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
+
+  fastify.post<{ Params: ProfileIdParams }>(
+    '/:id/view',
+    { schema: notifyProfileViewSchema },
+    async (request, reply) => {
+      try {
+        const info = await profileService.getViewNotificationInfo(
+          request.loggedUser.id,
+          request.params.id,
+        );
+        if (info) {
+          await notifications.create({
+            userId: request.params.id,
+            type: 'PROFILE_VIEW',
+            data: info,
+          });
+        }
+        return reply.code(200).send({ notified: Boolean(info) });
       } catch (err) {
         throw err;
       }

@@ -123,6 +123,31 @@ export const deleteProfileVideoSchema = {
   response: mediaUploadResponseSchema,
 };
 
+export const notifyProfileViewSchema = {
+  tags: ['profiles'],
+  summary: 'Let a profile owner know their profile was viewed',
+  security: [{ http: [] }],
+  headers: authenticatedHeadersSchema,
+  params: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      description: 'Successful response — `notified` is false when viewing your own profile',
+      type: 'object',
+      properties: {
+        notified: { type: 'boolean' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
 const mediaFilenameParams = {
   type: 'object',
   additionalProperties: false,
