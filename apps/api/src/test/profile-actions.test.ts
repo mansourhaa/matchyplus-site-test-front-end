@@ -4,6 +4,8 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { Prisma } from '@saas-boilerplate/types';
+
 import { PHOTOS_DIR, VIDEOS_DIR } from '../utils/media-storage.js';
 import { buildTestApp } from './build-test-app.js';
 
@@ -71,6 +73,7 @@ describe('GET /api/v1/profiles/:id', () => {
         } as never,
         userBlock: { findFirst: vi.fn().mockResolvedValue(null) } as never,
         match: { findUnique: vi.fn().mockResolvedValue(null) } as never,
+        rating: { findUnique: vi.fn().mockResolvedValue(null) } as never,
       },
     });
     apps.push(app);
@@ -87,6 +90,7 @@ describe('GET /api/v1/profiles/:id', () => {
       name: 'Jane Doe',
       rating: null,
       matched: false,
+      viewer_has_rated: false,
     });
   });
 
@@ -389,13 +393,38 @@ describe('POST /api/v1/profiles/:id/rating', () => {
     expect(response.statusCode).toBe(400);
   });
 
-  it('rejects rating a profile you are not matched with', async () => {
-    const app = await buildTestApp({
-      prisma: {
-        user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() } as never,
-        match: { findUnique: vi.fn().mockResolvedValue(null) } as never,
-      },
+  it('rejects rating a profile you have a block with, before opening a transaction', async () => {
+    const prisma = {
+      user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() },
+      userBlock: { findFirst: vi.fn().mockResolvedValue({ id: 'block-1' }) },
+      $transaction: vi.fn(),
+    };
+    const app = await buildTestApp({ prisma: prisma as never });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-2/rating',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      payload: { rating: 5 },
     });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ code: 'blocked' });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects rating a profile you are not matched with', async () => {
+    const prisma = {
+      user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() },
+      userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
+      match: { findUnique: vi.fn().mockResolvedValue(null) },
+      $transaction: vi.fn(),
+    };
+    prisma.$transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
+      callback(prisma),
+    );
+    const app = await buildTestApp({ prisma: prisma as never });
     apps.push(app);
 
     const response = await app.inject({
@@ -409,14 +438,22 @@ describe('POST /api/v1/profiles/:id/rating', () => {
     expect(response.json()).toMatchObject({ code: 'not_matched' });
   });
 
-  it('rejects rating the same matched profile twice', async () => {
-    const app = await buildTestApp({
-      prisma: {
-        user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() } as never,
-        match: { findUnique: vi.fn().mockResolvedValue({ id: 'match-1' }) } as never,
-        rating: { findUnique: vi.fn().mockResolvedValue({ id: 'rating-1' }) } as never,
-      },
+  it('maps a concurrent duplicate rating to a clean already_rated conflict, not a raw 500', async () => {
+    const uniqueViolation = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: 'test',
     });
+    const prisma = {
+      user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() },
+      userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
+      match: { findUnique: vi.fn().mockResolvedValue({ id: 'match-1' }) },
+      rating: { create: vi.fn().mockRejectedValue(uniqueViolation) },
+      $transaction: vi.fn(),
+    };
+    prisma.$transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
+      callback(prisma),
+    );
+    const app = await buildTestApp({ prisma: prisma as never });
     apps.push(app);
 
     const response = await app.inject({
@@ -431,20 +468,23 @@ describe('POST /api/v1/profiles/:id/rating', () => {
   });
 
   it('rates a matched profile and returns the recomputed average', async () => {
-    const app = await buildTestApp({
-      prisma: {
-        user: {
-          findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
-          update: vi.fn().mockResolvedValue({}),
-        } as never,
-        match: { findUnique: vi.fn().mockResolvedValue({ id: 'match-1' }) } as never,
-        rating: {
-          findUnique: vi.fn().mockResolvedValue(null),
-          create: vi.fn().mockResolvedValue({ id: 'rating-1' }),
-          aggregate: vi.fn().mockResolvedValue({ _avg: { value: 4 }, _count: 1 }),
-        } as never,
+    const prisma = {
+      user: {
+        findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
+        update: vi.fn().mockResolvedValue({}),
       },
-    });
+      userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
+      match: { findUnique: vi.fn().mockResolvedValue({ id: 'match-1' }) },
+      rating: {
+        create: vi.fn().mockResolvedValue({ id: 'rating-1' }),
+        aggregate: vi.fn().mockResolvedValue({ _avg: { value: 4 }, _count: 1 }),
+      },
+      $transaction: vi.fn(),
+    };
+    prisma.$transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
+      callback(prisma),
+    );
+    const app = await buildTestApp({ prisma: prisma as never });
     apps.push(app);
 
     const response = await app.inject({

@@ -24,6 +24,7 @@ export type PublicProfile = {
   rating: number | null;
   reviews: number | null;
   matched: boolean;
+  viewer_has_rated: boolean;
 };
 
 export type MediaUploadResult = {

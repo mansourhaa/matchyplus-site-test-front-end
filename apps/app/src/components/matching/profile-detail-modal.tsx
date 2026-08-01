@@ -24,7 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 export type ProfileDetailData = {
   id: string;
@@ -55,6 +55,10 @@ export type ProfileDetailData = {
   // removes a profile from the feed). The public profile page always sets this from the
   // server's own check — never inferred from the client's possibly-unloaded matches list.
   matched?: boolean;
+  // Same reasoning as `matched`: told by the server on GET, so reopening an already-rated
+  // profile shows the "already rated" state immediately instead of the picker flashing
+  // until a submit attempt bounces off the API.
+  viewer_has_rated?: boolean;
 };
 
 type Props = {
@@ -139,7 +143,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
   const [selectedRating, setSelectedRating] = useState(0);
   const [isSavingRating, setIsSavingRating] = useState(false);
   const [ratingOutcome, setRatingOutcome] = useState<'saved' | 'already_rated' | 'error' | null>(
-    null,
+    profile.viewer_has_rated ? 'already_rated' : null,
   );
   const [showSavedBanner, setShowSavedBanner] = useState(false);
   const [ratedProfileId, setRatedProfileId] = useState(profile.id);
@@ -153,18 +157,29 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
     message: string;
   } | null>(null);
 
+  // Lets an in-flight rate/report request tell, after it resolves, whether the component
+  // is still displaying the profile it was submitted for — this component's instance can
+  // be reused across profiles (e.g. client-side navigation between two /profile/[id]
+  // pages), so a slow response for a profile the user has since navigated away from must
+  // not overwrite the next profile's state. Kept as a ref, not state: it needs to read as
+  // "whatever profile is showing right now" at the moment the response arrives, not the
+  // value captured in the async closure when the request was sent.
+  const displayedProfileIdRef = useRef(profile.id);
+  useLayoutEffect(() => {
+    displayedProfileIdRef.current = profile.id;
+  }, [profile.id]);
+
   // Ratings and reports are both one-shot-per-view actions tied to whichever profile is
   // currently displayed, so this local UI state must reset whenever the displayed profile
   // changes — otherwise a stale selection/outcome from a previous profile could carry over
-  // if this component's instance is reused across profiles (e.g. client-side navigation
-  // between two /profile/[id] pages). Adjusted directly during render rather than in an
-  // effect, per React's guidance for resetting state when a prop changes — it avoids the
-  // extra render pass an effect would cause.
+  // if this component's instance is reused across profiles. Adjusted directly during
+  // render rather than in an effect, per React's guidance for resetting state when a prop
+  // changes — it avoids the extra render pass an effect would cause.
   if (ratedProfileId !== profile.id) {
     setRatedProfileId(profile.id);
     setSelectedRating(0);
     setIsSavingRating(false);
-    setRatingOutcome(null);
+    setRatingOutcome(profile.viewer_has_rated ? 'already_rated' : null);
     setShowSavedBanner(false);
     setShowReportForm(false);
     setReportReason('fraude');
@@ -176,19 +191,27 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
   const handleSubmitRating = async () => {
     if (!isMatched || isSavingRating || selectedRating < 1) return;
 
+    const targetProfileId = profile.id;
     setIsSavingRating(true);
-    const resultAction = await dispatch(rateProfile({ userId: profile.id, value: selectedRating }));
-    if (rateProfile.fulfilled.match(resultAction)) {
-      setRatingOutcome('saved');
-      setShowSavedBanner(true);
-      window.setTimeout(() => setShowSavedBanner(false), 2200);
-      void dispatch(fetchMatchState());
-    } else if (resultAction.error.message === 'already_rated') {
-      setRatingOutcome('already_rated');
-    } else {
-      setRatingOutcome('error');
+    const resultAction = await dispatch(
+      rateProfile({ userId: targetProfileId, value: selectedRating }),
+    );
+
+    if (displayedProfileIdRef.current === targetProfileId) {
+      if (rateProfile.fulfilled.match(resultAction)) {
+        setRatingOutcome('saved');
+        setShowSavedBanner(true);
+        window.setTimeout(() => setShowSavedBanner(false), 2200);
+      } else if (resultAction.error.message === 'already_rated') {
+        setRatingOutcome('already_rated');
+      } else {
+        setRatingOutcome('error');
+      }
+      setIsSavingRating(false);
     }
-    setIsSavingRating(false);
+    if (rateProfile.fulfilled.match(resultAction)) {
+      void dispatch(fetchMatchState());
+    }
   };
 
   const handleSubmitReport = async () => {
@@ -199,26 +222,30 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
       return;
     }
 
+    const targetProfileId = profile.id;
     setIsReporting(true);
     setReportFeedback(null);
     const selectedLabel = REPORT_REASONS.find((entry) => entry.value === reportReason)?.label;
     const resultAction = await dispatch(
       reportProfile({
-        userId: profile.id,
+        userId: targetProfileId,
         reason: reportReason === 'other' ? cleanedDetails : (selectedLabel ?? reportReason),
       }),
     );
-    if (reportProfile.fulfilled.match(resultAction)) {
-      setReportFeedback({ type: 'success', message: 'Compte signalé avec succès.' });
-      setReportDetails('');
-      setShowReportForm(false);
-    } else {
-      setReportFeedback({
-        type: 'error',
-        message: 'Impossible de signaler ce compte pour le moment.',
-      });
+
+    if (displayedProfileIdRef.current === targetProfileId) {
+      if (reportProfile.fulfilled.match(resultAction)) {
+        setReportFeedback({ type: 'success', message: 'Compte signalé avec succès.' });
+        setReportDetails('');
+        setShowReportForm(false);
+      } else {
+        setReportFeedback({
+          type: 'error',
+          message: 'Impossible de signaler ce compte pour le moment.',
+        });
+      }
+      setIsReporting(false);
     }
-    setIsReporting(false);
   };
 
   return (

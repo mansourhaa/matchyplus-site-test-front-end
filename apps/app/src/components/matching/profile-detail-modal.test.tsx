@@ -95,6 +95,58 @@ describe('ProfileDetailModal — rating', () => {
     expect(screen.queryByText('Noter ce profil')).not.toBeInTheDocument();
   });
 
+  it('shows the already-rated state immediately when the server says the viewer already rated', () => {
+    renderModal(buildStore(), { matched: true, viewer_has_rated: true });
+
+    expect(screen.getByText('Vous avez déjà noté ce profil.')).toBeInTheDocument();
+    expect(screen.queryByText('Noter ce profil')).not.toBeInTheDocument();
+  });
+
+  it('does not apply a slow rating response to a different profile shown after switching', async () => {
+    let resolvePost!: (value: { data: { rating: number; reviews: number } }) => void;
+    vi.mocked(api.post).mockReturnValue(
+      new Promise((resolve) => {
+        resolvePost = resolve;
+      }),
+    );
+    const store = buildStore();
+    const { rerender } = render(
+      <Provider store={store}>
+        <I18nProvider>
+          <ProfileDetailModal profile={{ ...profile, matched: true }} onClose={() => {}} />
+        </I18nProvider>
+      </Provider>,
+    );
+
+    fireEvent.click(screen.getByLabelText('3 étoiles'));
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer la note' }));
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/profiles/user-2/rating', { rating: 3 }),
+    );
+
+    // Switch to a different (also matched) profile before the in-flight request resolves.
+    rerender(
+      <Provider store={store}>
+        <I18nProvider>
+          <ProfileDetailModal
+            profile={{ ...profile, id: 'user-3', name: 'John Doe', matched: true }}
+            onClose={() => {}}
+          />
+        </I18nProvider>
+      </Provider>,
+    );
+    expect(screen.getByText('Noter ce profil')).toBeInTheDocument();
+
+    resolvePost({ data: { rating: 3, reviews: 1 } });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // The now-displayed profile (user-3) must still show its own fresh picker, not the
+    // previous profile's "saved" outcome landing late.
+    expect(screen.getByText('Noter ce profil')).toBeInTheDocument();
+    expect(screen.queryByText('Votre avis a été bien enregistré')).not.toBeInTheDocument();
+  });
+
   it('resets the rating selection when the modal is reused for a different profile', () => {
     const store = buildStore();
     const { rerender } = render(

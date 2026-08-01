@@ -77,3 +77,7 @@ export const PROFILE_VIDEO_CONTENT_TYPES: Record<string, string> = {
   '.3gp': 'video/3gpp',
   '.3g2': 'video/3gpp2',
 };
+
+/** Valid star-rating bounds for POST /profiles/:id/rating. */
+export const MIN_RATING = 1;
+export const MAX_RATING = 5;

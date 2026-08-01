@@ -51,6 +51,7 @@ const publicProfileSchema = {
     rating: { type: 'number', nullable: true },
     reviews: { type: 'number', nullable: true },
     matched: { type: 'boolean' },
+    viewer_has_rated: { type: 'boolean' },
   },
 };
 

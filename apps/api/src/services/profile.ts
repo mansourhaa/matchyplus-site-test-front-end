@@ -117,7 +117,20 @@ export class ProfileService {
       if (result.video && !(viewerId === targetUserId || matched)) {
         result.video = null;
       }
-      return { ...result, matched };
+
+      // Told to the client for the same reason as `matched`: reopening a profile the
+      // viewer already rated should show that state immediately, not the rating picker
+      // flashing until a submit attempt bounces off with already_rated.
+      const viewerHasRated =
+        viewerId !== targetUserId &&
+        Boolean(
+          await this.prisma.rating.findUnique({
+            where: { rater_id_ratee_id: { rater_id: viewerId, ratee_id: targetUserId } },
+            select: { id: true },
+          }),
+        );
+
+      return { ...result, matched, viewer_has_rated: viewerHasRated };
     } catch (err) {
       throw err;
     }
