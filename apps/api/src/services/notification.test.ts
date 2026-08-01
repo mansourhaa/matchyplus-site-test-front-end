@@ -6,6 +6,7 @@ function createMockPrisma() {
   return {
     notification: {
       create: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       count: vi.fn(),
       updateMany: vi.fn(),
@@ -47,6 +48,46 @@ describe('NotificationService', () => {
         viewerName: 'Jane',
         viewerImage: null,
       });
+    });
+  });
+
+  describe('createIfNoRecentDuplicate', () => {
+    const payload = {
+      userId: 'user-2',
+      type: 'PROFILE_VIEW' as const,
+      data: { viewerId: 'user-1', viewerName: 'Jane', viewerImage: null },
+    };
+
+    it('creates and pushes when there is no recent notification from the same viewer', async () => {
+      const { service, prisma, push } = createService();
+      prisma.notification.findFirst.mockResolvedValue(null);
+      prisma.notification.create.mockResolvedValue({ id: 'notif-1' });
+
+      const result = await service.createIfNoRecentDuplicate(payload, 15 * 60 * 1000);
+
+      expect(prisma.notification.findFirst).toHaveBeenCalledWith({
+        where: {
+          user_id: 'user-2',
+          type: 'PROFILE_VIEW',
+          created_at: { gte: expect.any(Date) },
+          data: { path: ['viewerId'], equals: 'user-1' },
+        },
+        select: { id: true },
+      });
+      expect(prisma.notification.create).toHaveBeenCalled();
+      expect(push).toHaveBeenCalled();
+      expect(result).toEqual({ created: true });
+    });
+
+    it('skips the write and the push when the same viewer already notified this recipient recently', async () => {
+      const { service, prisma, push } = createService();
+      prisma.notification.findFirst.mockResolvedValue({ id: 'existing-notif' });
+
+      const result = await service.createIfNoRecentDuplicate(payload, 15 * 60 * 1000);
+
+      expect(prisma.notification.create).not.toHaveBeenCalled();
+      expect(push).not.toHaveBeenCalled();
+      expect(result).toEqual({ created: false });
     });
   });
 

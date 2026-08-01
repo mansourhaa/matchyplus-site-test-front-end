@@ -46,6 +46,10 @@ export const PROFILE_VIDEO_MAX_BYTES = 50 * 1024 * 1024;
 
 export const PROFILE_PHOTO_RATE_LIMIT = { max: 10, timeWindow: '1 hour' };
 export const PROFILE_VIDEO_RATE_LIMIT = { max: 5, timeWindow: '1 hour' };
+export const PROFILE_VIEW_RATE_LIMIT = { max: 30, timeWindow: '1 minute' };
+
+/** Reopening the same profile within this window doesn't create another view notification. */
+export const PROFILE_VIEW_NOTIFICATION_COOLDOWN_MS = 15 * 60 * 1000;
 
 export const ALLOWED_PROFILE_PHOTO_MIMES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 export const ALLOWED_PROFILE_VIDEO_MIMES = [

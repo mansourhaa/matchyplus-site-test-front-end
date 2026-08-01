@@ -73,6 +73,38 @@ describe('NotificationsView', () => {
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/notifications/notif-1/read'));
   });
 
+  it('keeps the already-loaded list visible when a background refetch fails', async () => {
+    const store = buildStore();
+    store.dispatch({
+      type: 'notifications/fetch/fulfilled',
+      payload: {
+        notifications: [
+          {
+            id: 'notif-1',
+            type: 'PROFILE_VIEW',
+            data: { viewerId: 'user-2', viewerName: 'Jane', viewerImage: null },
+            read: false,
+            created_at: new Date().toISOString(),
+          },
+        ],
+        unread_count: 1,
+      },
+    });
+    vi.mocked(api.get).mockRejectedValue(new Error('network error'));
+
+    render(
+      <Provider store={store}>
+        <NotificationsView />
+      </Provider>,
+    );
+
+    expect(screen.getByText('Vue de profil')).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Impossible d.actualiser vos notifications/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Aucune notification pour l’instant')).not.toBeInTheDocument();
+  });
+
   it('marks every notification as read from the header action', async () => {
     vi.mocked(api.get).mockResolvedValue({
       data: {

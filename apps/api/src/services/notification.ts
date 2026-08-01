@@ -60,6 +60,32 @@ export class NotificationService {
     }
   }
 
+  async createIfNoRecentDuplicate(
+    payload: CreateNotificationPayload,
+    cooldownMs: number,
+  ): Promise<{ created: boolean }> {
+    try {
+      const since = new Date(Date.now() - cooldownMs);
+      const recent = await this.prisma.notification.findFirst({
+        where: {
+          user_id: payload.userId,
+          type: payload.type,
+          created_at: { gte: since },
+          data: { path: ['viewerId'], equals: payload.data.viewerId },
+        },
+        select: { id: true },
+      });
+      if (recent) {
+        return { created: false };
+      }
+
+      await this.create(payload);
+      return { created: true };
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async list(userId: string): Promise<NotificationListItem[]> {
     try {
       const rows = await this.prisma.notification.findMany({

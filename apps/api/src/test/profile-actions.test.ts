@@ -196,7 +196,10 @@ describe('POST /api/v1/profiles/:id/view', () => {
           findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
         } as never,
         userBlock: { findFirst: vi.fn().mockResolvedValue(null) } as never,
-        notification: { create: notificationCreate } as never,
+        notification: {
+          findFirst: vi.fn().mockResolvedValue(null),
+          create: notificationCreate,
+        } as never,
       },
     });
     apps.push(app);
@@ -216,6 +219,42 @@ describe('POST /api/v1/profiles/:id/view', () => {
         data: { viewerId: 'user-1', viewerName: 'Jane', viewerImage: '/uploads/photos/jane.jpg' },
       },
     });
+  });
+
+  it('does not create a second notification when the same viewer reopens the profile within the cooldown', async () => {
+    const notificationCreate = vi.fn();
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: vi
+            .fn()
+            .mockImplementation(({ where }: { where: { id: string } }) =>
+              Promise.resolve(
+                where.id === 'user-1'
+                  ? { id: 'user-1', status: 'ACTIVE', role: 'USER', name: 'Jane Doe', image: null }
+                  : { id: where.id, status: 'ACTIVE', role: 'USER' },
+              ),
+            ),
+          findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+        } as never,
+        userBlock: { findFirst: vi.fn().mockResolvedValue(null) } as never,
+        notification: {
+          findFirst: vi.fn().mockResolvedValue({ id: 'existing-notif' }),
+          create: notificationCreate,
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-2/view',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json()).toEqual({ notified: false });
+    expect(notificationCreate).not.toHaveBeenCalled();
   });
 
   it('rejects with 403 when the target has blocked the viewer', async () => {

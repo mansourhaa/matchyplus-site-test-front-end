@@ -2,7 +2,12 @@ import { FastifyPluginAsync } from 'fastify';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { PROFILE_PHOTO_CONTENT_TYPES, PROFILE_VIDEO_CONTENT_TYPES } from '../../../constants.js';
+import {
+  PROFILE_PHOTO_CONTENT_TYPES,
+  PROFILE_VIDEO_CONTENT_TYPES,
+  PROFILE_VIEW_NOTIFICATION_COOLDOWN_MS,
+  PROFILE_VIEW_RATE_LIMIT,
+} from '../../../constants.js';
 import {
   getProfilePhotoFileSchema,
   getProfileVideoFileSchema,
@@ -63,21 +68,22 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
 
   fastify.post<{ Params: ProfileIdParams }>(
     '/:id/view',
-    { schema: notifyProfileViewSchema },
+    { schema: notifyProfileViewSchema, config: { rateLimit: PROFILE_VIEW_RATE_LIMIT } },
     async (request, reply) => {
       try {
         const info = await profileService.getViewNotificationInfo(
           request.loggedUser.id,
           request.params.id,
         );
+        let notified = false;
         if (info) {
-          await notifications.create({
-            userId: request.params.id,
-            type: 'PROFILE_VIEW',
-            data: info,
-          });
+          const result = await notifications.createIfNoRecentDuplicate(
+            { userId: request.params.id, type: 'PROFILE_VIEW', data: info },
+            PROFILE_VIEW_NOTIFICATION_COOLDOWN_MS,
+          );
+          notified = result.created;
         }
-        return reply.code(200).send({ notified: Boolean(info) });
+        return reply.code(200).send({ notified });
       } catch (err) {
         throw err;
       }

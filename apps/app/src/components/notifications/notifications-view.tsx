@@ -118,7 +118,7 @@ export function NotificationsView() {
             <Loader2 className="h-8 w-8 animate-spin text-[#61BCA6]" />
             <p>Chargement…</p>
           </div>
-        ) : error ? (
+        ) : error && items.length === 0 ? (
           <p className="rounded-2xl bg-white px-4 py-8 text-center text-sm text-[#E24E59]">
             Impossible de charger vos notifications.
           </p>
@@ -142,6 +142,11 @@ export function NotificationsView() {
           </div>
         ) : (
           <div className="space-y-2">
+            {error && (
+              <p className="rounded-xl bg-[#FFF0F0] px-4 py-2 text-center text-xs text-[#E24E59]">
+                Impossible d’actualiser vos notifications. Affichage de la dernière liste connue.
+              </p>
+            )}
             {items.map((item) => (
               <NotificationRow key={item.id} item={item} />
             ))}
