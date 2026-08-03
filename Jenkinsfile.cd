@@ -145,12 +145,26 @@ pipeline {
               echo "${COMPONENT} ${PREV}" | tee -a "$WORKSPACE/previous-images.txt"
             done
 
+            # Only rewrite image lines that ALREADY point at our registry.
+            #
+            # A blanket "s#image: .*#" looks equivalent and is not: these
+            # manifests also contain busybox initContainers that wait for
+            # postgres and redis. A previous version of this substitution
+            # rewrote those to the api image too, which silently replaced the
+            # dependency-wait containers with something that has no `nc` and
+            # would never have started. Matching on the registry prefix means
+            # busybox, postgres and redis images are left alone by
+            # construction, no matter what containers get added later.
             for COMPONENT in $IMAGE_COMPONENTS; do
               MANIFEST="${GITOPS_STAGING_PATH}/${COMPONENT}-deployment.yaml"
-              sed -i -E "s#^([[:space:]]*image:[[:space:]]*).*#\\1${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}#" "$MANIFEST"
+              sed -i -E "s#^([[:space:]]*image:[[:space:]]*)${REGISTRY_REPO}:.*#\\1${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}#" "$MANIFEST"
+              if ! grep -q "${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}" "$MANIFEST"; then
+                echo "image line in $MANIFEST was not updated - does it reference ${REGISTRY_REPO}?" >&2
+                exit 1
+              fi
             done
             # the migration hook runs the api image, so it moves in lockstep
-            sed -i -E "s#^([[:space:]]*image:[[:space:]]*).*#\\1${REGISTRY_REPO}:api-${IMAGE_TAG}#" \
+            sed -i -E "s#^([[:space:]]*image:[[:space:]]*)${REGISTRY_REPO}:.*#\\1${REGISTRY_REPO}:api-${IMAGE_TAG}#" \
               "${GITOPS_STAGING_PATH}/migrate-job.yaml"
 
             git config user.email "jenkins@matchy.local"
@@ -163,21 +177,64 @@ pipeline {
               git commit -m "ci(staging): deploy ${IMAGE_TAG}"
               git push origin HEAD
             fi
+
+            # the commit ArgoCD has to reach before staging is really running
+            # this build's images - recorded even when nothing changed, since
+            # in that case HEAD is already the revision we want deployed.
+            git rev-parse HEAD > "$WORKSPACE/deployed-sha.txt"
+            echo "target revision: $(cat "$WORKSPACE/deployed-sha.txt")"
           '''
         }
-        archiveArtifacts artifacts: 'previous-images.txt', allowEmptyArchive: true
+        archiveArtifacts artifacts: 'previous-images.txt,deployed-sha.txt', allowEmptyArchive: true
       }
     }
 
-    // ArgoCD syncs on its own schedule, so "pushed" is not "running". Without
-    // this, the checks below would test the PREVIOUS deployment and report a
-    // green result for code that was never deployed.
+    // ArgoCD syncs on its own schedule (3m by default), so "pushed" is not
+    // "running". An earlier version of this ran `rollout status` about two
+    // seconds after the push and failed with `deployments.apps "api" not
+    // found`, because ArgoCD had not created anything yet.
+    //
+    // So this waits in three explicit steps: ArgoCD observes the commit we
+    // just pushed, the Deployments exist, and only then the rollout finishes.
+    // Without the first two the checks below would either error out or, worse,
+    // pass against the PREVIOUS deployment and report green for code that was
+    // never deployed.
     stage('Wait for staging rollout') {
       steps {
         withCredentials([file(credentialsId: 'kubeconfig-staging', variable: 'KUBECONFIG_FILE')]) {
           sh '''#!/usr/bin/env bash
             set -euo pipefail
             export KUBECONFIG="$KUBECONFIG_FILE"
+
+            TARGET_SHA=$(cat "$WORKSPACE/deployed-sha.txt")
+            echo "waiting for ArgoCD to sync ${TARGET_SHA}"
+
+            # nudge ArgoCD instead of waiting out its poll interval
+            kubectl -n argocd annotate application matchy-plus-staging \
+              argocd.argoproj.io/refresh=normal --overwrite >/dev/null
+
+            for i in $(seq 1 60); do
+              SYNCED=$(kubectl -n argocd get application matchy-plus-staging \
+                -o jsonpath='{.status.sync.revision}' 2>/dev/null || echo "")
+              PHASE=$(kubectl -n argocd get application matchy-plus-staging \
+                -o jsonpath='{.status.operationState.phase}' 2>/dev/null || echo "")
+              if [ "$SYNCED" = "$TARGET_SHA" ] && [ "$PHASE" != "Running" ]; then
+                echo "ArgoCD synced ${TARGET_SHA} (phase=${PHASE})"
+                break
+              fi
+              [ $((i % 6)) -eq 0 ] && echo "  ... revision=${SYNCED:0:12} phase=${PHASE}"
+              sleep 10
+            done
+
+            # the Deployment objects have to exist before rollout status can
+            # say anything useful about them
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              for i in $(seq 1 30); do
+                kubectl -n "$K8S_NAMESPACE" get "deployment/$COMPONENT" >/dev/null 2>&1 && break
+                [ "$i" -eq 30 ] && { echo "deployment/$COMPONENT never appeared - is the ArgoCD sync stuck? check the PreSync hook" >&2; exit 1; }
+                sleep 10
+              done
+            done
 
             for COMPONENT in $IMAGE_COMPONENTS; do
               echo "--- waiting for $COMPONENT ---"
