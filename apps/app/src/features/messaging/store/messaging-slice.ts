@@ -28,6 +28,8 @@ const initialState: MessagingState = {
   hasMore: false,
   sendLoading: false,
   sendError: null,
+  sendErrorsByConversation: {},
+  toastSendError: null,
   quota: null,
   peerTyping: false,
 };
@@ -119,6 +121,10 @@ export const uploadVoiceNote = createAsyncThunk(
         }),
       ).unwrap();
     } catch (error) {
+      // unwrap() throws the rejectWithValue payload (i18n key string) from sendMessage.
+      if (typeof error === 'string') {
+        return rejectWithValue(error);
+      }
       return rejectWithValue(apiErrorKey(error, 'chat.errors.send'));
     }
   },
@@ -190,9 +196,23 @@ const messagingSlice = createSlice({
       }
       state.activeConversationId = action.payload;
       state.peerTyping = false;
+      // Surface a prior send/voice failure for this thread (e.g. voice failed after switch).
+      if (action.payload && state.sendErrorsByConversation[action.payload]) {
+        state.sendError = state.sendErrorsByConversation[action.payload];
+        // Avoid toasting an error that is now shown inline in the composer.
+        if (state.toastSendError?.conversationId === action.payload) {
+          state.toastSendError = null;
+        }
+      }
     },
     clearSendError(state) {
       state.sendError = null;
+      if (state.activeConversationId) {
+        delete state.sendErrorsByConversation[state.activeConversationId];
+      }
+    },
+    clearToastSendError(state) {
+      state.toastSendError = null;
     },
     applyRealtimeMessage(state, action: PayloadAction<ChatMessage & { viewer_id?: string }>) {
       const message = action.payload;
@@ -381,6 +401,7 @@ const messagingSlice = createSlice({
         state.messagesError = String(action.payload || action.error.message);
       })
       .addCase(sendMessage.pending, (state, action) => {
+        delete state.sendErrorsByConversation[action.meta.arg.conversationId];
         if (action.meta.arg.conversationId !== state.activeConversationId) return;
         state.sendLoading = true;
         state.sendError = null;
@@ -389,6 +410,7 @@ const messagingSlice = createSlice({
         if (action.meta.arg.conversationId === state.activeConversationId) {
           state.sendLoading = false;
         }
+        delete state.sendErrorsByConversation[action.meta.arg.conversationId];
         state.quota = action.payload.quota;
         const message = action.payload.message;
         if (
@@ -399,11 +421,18 @@ const messagingSlice = createSlice({
         }
       })
       .addCase(sendMessage.rejected, (state, action) => {
-        if (action.meta.arg.conversationId !== state.activeConversationId) return;
-        state.sendLoading = false;
-        state.sendError = String(action.payload || action.error.message);
+        const conversationId = action.meta.arg.conversationId;
+        const error = String(action.payload || action.error.message);
+        state.sendErrorsByConversation[conversationId] = error;
+        if (conversationId === state.activeConversationId) {
+          state.sendLoading = false;
+          state.sendError = error;
+        } else {
+          state.toastSendError = { conversationId, messageKey: error };
+        }
       })
       .addCase(uploadVoiceNote.pending, (state, action) => {
+        delete state.sendErrorsByConversation[action.meta.arg.conversationId];
         if (action.meta.arg.conversationId !== state.activeConversationId) return;
         state.sendLoading = true;
         state.sendError = null;
@@ -412,6 +441,7 @@ const messagingSlice = createSlice({
         if (action.meta.arg.conversationId === state.activeConversationId) {
           state.sendLoading = false;
         }
+        delete state.sendErrorsByConversation[action.meta.arg.conversationId];
         state.quota = action.payload.quota;
         const message = action.payload.message;
         if (
@@ -422,9 +452,19 @@ const messagingSlice = createSlice({
         }
       })
       .addCase(uploadVoiceNote.rejected, (state, action) => {
-        if (action.meta.arg.conversationId !== state.activeConversationId) return;
-        state.sendLoading = false;
-        state.sendError = String(action.payload || action.error.message);
+        const conversationId = action.meta.arg.conversationId;
+        const error = String(action.payload || action.error.message);
+        // Nested sendMessage.rejected may already have stored the precise key
+        // (e.g. quotaExceeded); do not overwrite it with a generic fallback.
+        const messageKey = state.sendErrorsByConversation[conversationId] ?? error;
+        state.sendErrorsByConversation[conversationId] = messageKey;
+        if (conversationId === state.activeConversationId) {
+          state.sendLoading = false;
+          state.sendError = messageKey;
+        } else if (state.toastSendError?.conversationId !== conversationId) {
+          // Switched away before upload finished — toast unless nested send already queued one.
+          state.toastSendError = { conversationId, messageKey };
+        }
       })
       .addCase(toggleMessageLike.fulfilled, (state, action) => {
         const message = state.messages.find((m) => m.id === action.payload.message_id);
@@ -440,6 +480,7 @@ export const {
   resetMessagingState,
   setActiveConversation,
   clearSendError,
+  clearToastSendError,
   applyRealtimeMessage,
   applyMessagesRead,
   applyLikeChanged,

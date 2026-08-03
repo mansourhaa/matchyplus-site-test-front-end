@@ -311,6 +311,33 @@ describe('messagingSlice', () => {
     });
     expect(state.sendLoading).toBe(false);
     expect(state.sendError).toBeNull();
+    expect(state.sendErrorsByConversation['conv-a']).toBe('chat.errors.send');
+    expect(state.toastSendError).toEqual({
+      conversationId: 'conv-a',
+      messageKey: 'chat.errors.send',
+    });
+  });
+
+  it('surfaces a voice upload failure after switching chats', () => {
+    let state = messagingReducer(undefined, setActiveConversation('conv-b'));
+
+    state = messagingReducer(state, {
+      type: 'messaging/uploadVoiceNote/rejected',
+      meta: { arg: { conversationId: 'conv-a', blob: new Blob() } },
+      payload: 'chat.errors.quotaExceeded',
+      error: { message: 'Rejected' },
+    });
+
+    expect(state.sendError).toBeNull();
+    expect(state.toastSendError).toEqual({
+      conversationId: 'conv-a',
+      messageKey: 'chat.errors.quotaExceeded',
+    });
+    expect(state.sendErrorsByConversation['conv-a']).toBe('chat.errors.quotaExceeded');
+
+    state = messagingReducer(state, setActiveConversation('conv-a'));
+    expect(state.sendError).toBe('chat.errors.quotaExceeded');
+    expect(state.toastSendError).toBeNull();
   });
 
   it('sets liked_by_me from realtime likes when the actor is the viewer', () => {

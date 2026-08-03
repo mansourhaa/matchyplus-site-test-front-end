@@ -121,6 +121,10 @@ export type MessagingState = {
   hasMore: boolean;
   sendLoading: boolean;
   sendError: string | null;
+  /** Per-conversation send/voice failures retained across chat switches. */
+  sendErrorsByConversation: Record<string, string>;
+  /** Background send failure to toast when the source thread is no longer open. */
+  toastSendError: { conversationId: string; messageKey: string } | null;
   quota: MessageQuota | null;
   peerTyping: boolean;
 };
