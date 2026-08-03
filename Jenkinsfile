@@ -48,6 +48,15 @@ pipeline {
     // here; ArgoCD does the actual apply.
     GITOPS_REPO = 'github.com/MohamedAzizAguir/Matchy-GitOps.git'
     GITOPS_STAGING_PATH = 'apps/staging/matchy-plus'
+
+    // Which branches are allowed to deploy to staging. Normally just 'dev'.
+    //
+    // TEMPORARY: feature/cd-staging-k3s is listed so the CD path can be
+    // rehearsed end-to-end before it is merged - deploying untested deploy
+    // automation straight onto dev is how you find out it is broken on dev.
+    // REMOVE that entry before merging; leaving it in means a feature branch
+    // can silently redeploy staging out from under dev.
+    STAGING_DEPLOY_BRANCHES = 'dev feature/cd-staging-k3s'
   }
 
   stages {
@@ -447,7 +456,7 @@ pipeline {
     // cluster write access for the deploy itself (only read access later, to
     // wait for the rollout).
     stage('Deploy to staging') {
-      when { branch 'dev' }
+      when { expression { isStagingDeployBranch() } }
       steps {
         withCredentials([usernamePassword(credentialsId: 'gitops-repo-creds', usernameVariable: 'GITOPS_USER', passwordVariable: 'GITOPS_TOKEN')]) {
           sh '''#!/usr/bin/env bash
@@ -488,7 +497,7 @@ pipeline {
     // otherwise ZAP/k6 would happily scan the PREVIOUS deployment and report
     // a green result for code that was never deployed.
     stage('Wait for staging rollout') {
-      when { branch 'dev' }
+      when { expression { isStagingDeployBranch() } }
       steps {
         withCredentials([file(credentialsId: 'kubeconfig-staging', variable: 'KUBECONFIG_FILE')]) {
           sh '''#!/usr/bin/env bash
@@ -519,7 +528,7 @@ pipeline {
     // Never fails the build: a new informational alert shouldn't block a
     // deploy that already passed the real gates.
     stage('DAST - OWASP ZAP') {
-      when { branch 'dev' }
+      when { expression { isStagingDeployBranch() } }
       steps {
         catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
           sh '''#!/usr/bin/env bash
@@ -551,7 +560,7 @@ pipeline {
     // Load test. Thresholds live in the k6 script; a breach marks the build
     // unstable rather than failing it, same policy as ZAP above.
     stage('Performance - k6') {
-      when { branch 'dev' }
+      when { expression { isStagingDeployBranch() } }
       steps {
         catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
           sh '''#!/usr/bin/env bash
@@ -575,7 +584,7 @@ pipeline {
     }
 
     stage('Publish security & performance report') {
-      when { branch 'dev' }
+      when { expression { isStagingDeployBranch() } }
       steps {
         sh 'python3 ci-scripts/generate_dast_report.py --dest reports/dast'
         publishHTML(target: [
@@ -613,4 +622,12 @@ pipeline {
       """
     }
   }
+}
+
+// Single gate for every CD stage. Keeping it in one place means enabling or
+// disabling staging deploys is one edit to STAGING_DEPLOY_BRANCHES, rather
+// than five `when` blocks that can drift apart or get half-reverted.
+boolean isStagingDeployBranch() {
+  def branch = env.BRANCH_NAME ?: (env.GIT_BRANCH ?: '').replaceFirst('^origin/', '')
+  return (env.STAGING_DEPLOY_BRANCHES ?: 'dev').split(/\s+/).contains(branch)
 }
