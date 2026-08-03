@@ -246,6 +246,73 @@ describe('messagingSlice', () => {
     });
   });
 
+  it('keeps the higher like_count when a peer like outpaces a stale history snapshot', () => {
+    let state = messagingReducer(undefined, setActiveConversation('conv-1'));
+    state = {
+      ...state,
+      messages: [
+        {
+          id: 'msg-1',
+          conversation_id: 'conv-1',
+          sender_id: 'me',
+          content: 'hello',
+          message_type: 'TEXT',
+          media_url: null,
+          is_read: false,
+          created_at: '2026-08-03T12:00:00.000Z',
+          liked_by_me: false,
+          like_count: 3,
+        },
+      ],
+    };
+
+    state = messagingReducer(state, {
+      type: 'messaging/fetchMessages/fulfilled',
+      meta: { arg: { conversationId: 'conv-1' } },
+      payload: {
+        conversationId: 'conv-1',
+        append: false,
+        messages: [
+          {
+            id: 'msg-1',
+            conversation_id: 'conv-1',
+            sender_id: 'me',
+            content: 'hello',
+            message_type: 'TEXT',
+            media_url: null,
+            is_read: false,
+            created_at: '2026-08-03T12:00:00.000Z',
+            liked_by_me: false,
+            like_count: 0,
+          },
+        ],
+        next_cursor: null,
+        has_more: false,
+      },
+    });
+
+    expect(state.messages[0]?.like_count).toBe(3);
+  });
+
+  it('ignores send pending/rejected for a non-active conversation', () => {
+    let state = messagingReducer(undefined, setActiveConversation('conv-b'));
+
+    state = messagingReducer(state, {
+      type: 'messaging/sendMessage/pending',
+      meta: { arg: { conversationId: 'conv-a', content: 'hi' } },
+    });
+    expect(state.sendLoading).toBe(false);
+
+    state = messagingReducer(state, {
+      type: 'messaging/sendMessage/rejected',
+      meta: { arg: { conversationId: 'conv-a', content: 'hi' } },
+      payload: 'chat.errors.send',
+      error: { message: 'Rejected' },
+    });
+    expect(state.sendLoading).toBe(false);
+    expect(state.sendError).toBeNull();
+  });
+
   it('sets liked_by_me from realtime likes when the actor is the viewer', () => {
     let state = messagingReducer(undefined, setActiveConversation('conv-1'));
     state = {
@@ -299,6 +366,7 @@ describe('messagingSlice', () => {
     let state = messagingReducer(undefined, setActiveConversation('conv-b'));
     state = messagingReducer(state, {
       type: 'messaging/sendMessage/fulfilled',
+      meta: { arg: { conversationId: 'conv-a', content: 'wrong thread' } },
       payload: {
         quota: {
           plan: 'FREE',

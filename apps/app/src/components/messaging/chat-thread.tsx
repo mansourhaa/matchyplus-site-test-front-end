@@ -43,18 +43,37 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordingGenerationRef = useRef(0);
   const chunksRef = useRef<Blob[]>([]);
   const myUserId = auth.user?.id;
+
+  const releaseMicrophone = useCallback(() => {
+    recordingGenerationRef.current += 1;
+    const recorder = mediaRecorderRef.current;
+    mediaRecorderRef.current = null;
+    if (recorder && recorder.state !== 'inactive') {
+      try {
+        recorder.stop();
+      } catch {
+        // Already stopped — still release tracks below.
+      }
+    }
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+    setRecording(false);
+  }, []);
 
   useEffect(() => {
     dispatch(setActiveConversation(conversationId));
     void dispatch(fetchConversation(conversationId));
     void dispatch(fetchMessages({ conversationId }));
     return () => {
+      releaseMicrophone();
       dispatch(setActiveConversation(null));
       if (typingTimer.current) clearTimeout(typingTimer.current);
     };
-  }, [conversationId, dispatch]);
+  }, [conversationId, dispatch, releaseMicrophone]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -91,12 +110,17 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
+      const generation = recordingGenerationRef.current;
       chunksRef.current = [];
+      mediaStreamRef.current = stream;
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
+        if (mediaStreamRef.current === stream) mediaStreamRef.current = null;
+        // Drop the clip if the user left this chat (or remounted) mid-record.
+        if (generation !== recordingGenerationRef.current) return;
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         if (blob.size > 0) {
           void dispatch(uploadVoiceNote({ conversationId, blob }));
@@ -111,9 +135,17 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
   };
 
   const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
+    const recorder = mediaRecorderRef.current;
     mediaRecorderRef.current = null;
     setRecording(false);
+    if (recorder && recorder.state !== 'inactive') {
+      try {
+        recorder.stop();
+      } catch {
+        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+    }
   };
 
   const name = messaging.conversation?.peer?.name || t('chat.title');

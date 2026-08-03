@@ -352,7 +352,8 @@ const messagingSlice = createSlice({
         } else {
           // Merge by id — realtime messages may have landed before this
           // response and must not be wiped from the open thread. Prefer local
-          // is_read / liked_by_me (and matching like_count) over the snapshot.
+          // is_read / liked_by_me; take the higher like_count so peer likes
+          // are not overwritten by a stale history snapshot.
           const localById = new Map(state.messages.map((m) => [m.id, m]));
           const merged = action.payload.messages.map((fetched) => {
             const local = localById.get(fetched.id);
@@ -361,8 +362,7 @@ const messagingSlice = createSlice({
               ...fetched,
               is_read: local.is_read || fetched.is_read,
               liked_by_me: local.liked_by_me,
-              like_count:
-                local.liked_by_me === fetched.liked_by_me ? fetched.like_count : local.like_count,
+              like_count: Math.max(local.like_count, fetched.like_count),
             };
           });
           const fetchedIds = new Set(merged.map((m) => m.id));
@@ -380,12 +380,15 @@ const messagingSlice = createSlice({
         state.messagesLoadingMore = false;
         state.messagesError = String(action.payload || action.error.message);
       })
-      .addCase(sendMessage.pending, (state) => {
+      .addCase(sendMessage.pending, (state, action) => {
+        if (action.meta.arg.conversationId !== state.activeConversationId) return;
         state.sendLoading = true;
         state.sendError = null;
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
-        state.sendLoading = false;
+        if (action.meta.arg.conversationId === state.activeConversationId) {
+          state.sendLoading = false;
+        }
         state.quota = action.payload.quota;
         const message = action.payload.message;
         if (
@@ -396,15 +399,19 @@ const messagingSlice = createSlice({
         }
       })
       .addCase(sendMessage.rejected, (state, action) => {
+        if (action.meta.arg.conversationId !== state.activeConversationId) return;
         state.sendLoading = false;
         state.sendError = String(action.payload || action.error.message);
       })
-      .addCase(uploadVoiceNote.pending, (state) => {
+      .addCase(uploadVoiceNote.pending, (state, action) => {
+        if (action.meta.arg.conversationId !== state.activeConversationId) return;
         state.sendLoading = true;
         state.sendError = null;
       })
       .addCase(uploadVoiceNote.fulfilled, (state, action) => {
-        state.sendLoading = false;
+        if (action.meta.arg.conversationId === state.activeConversationId) {
+          state.sendLoading = false;
+        }
         state.quota = action.payload.quota;
         const message = action.payload.message;
         if (
@@ -415,6 +422,7 @@ const messagingSlice = createSlice({
         }
       })
       .addCase(uploadVoiceNote.rejected, (state, action) => {
+        if (action.meta.arg.conversationId !== state.activeConversationId) return;
         state.sendLoading = false;
         state.sendError = String(action.payload || action.error.message);
       })
