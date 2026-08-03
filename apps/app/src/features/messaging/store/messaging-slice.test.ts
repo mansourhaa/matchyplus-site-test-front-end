@@ -75,6 +75,24 @@ describe('messagingSlice', () => {
 
   it('ignores stale message fetches after switching conversations', () => {
     let state = messagingReducer(undefined, setActiveConversation('conv-b'));
+    state = {
+      ...state,
+      inbox: [
+        {
+          conversation_id: 'conv-a',
+          match_id: 'match-a',
+          has_active_match: true,
+          peer: null,
+          last_message: null,
+          unread_count: 4,
+          i_blocked: false,
+          blocked_me: false,
+          can_send: true,
+          updated_at: '2026-08-03T12:00:00.000Z',
+          created_at: '2026-08-03T12:00:00.000Z',
+        },
+      ],
+    };
     state = messagingReducer(state, {
       type: 'messaging/fetchMessages/fulfilled',
       meta: { arg: { conversationId: 'conv-a' } },
@@ -101,6 +119,7 @@ describe('messagingSlice', () => {
     });
 
     expect(state.messages).toEqual([]);
+    expect(state.inbox[0]?.unread_count).toBe(0);
   });
 
   it('does not append a late send into a different active conversation', () => {

@@ -494,6 +494,10 @@ export class ConversationService {
       try {
         message = await this.prisma.$transaction(
           async (tx) => {
+            // Re-check match/block under Serializable isolation — unmatch/block
+            // can land after the pre-tx snapshot (e.g. during voice upload).
+            await this.assertSendableInTx(tx, conversationId, userId, peerId);
+
             if (mediaUrl) {
               await this.assertUnusedAudioInTx(tx, mediaUrl);
             }
@@ -575,6 +579,43 @@ export class ConversationService {
     );
     if (!pattern.test(mediaUrl)) {
       throw badRequest('invalid media_url', 'invalid_media_url');
+    }
+  }
+
+  private async assertSendableInTx(
+    tx: Prisma.TransactionClient,
+    conversationId: string,
+    userId: string,
+    peerId: string,
+  ): Promise<void> {
+    const conversation = await tx.conversation.findUnique({
+      where: { id: conversationId },
+      select: { match_id: true, user_low_id: true, user_high_id: true },
+    });
+    if (
+      !conversation ||
+      (conversation.user_low_id !== userId && conversation.user_high_id !== userId)
+    ) {
+      throw notFound('conversation not found');
+    }
+
+    const [iBlocked, blockedMe] = await Promise.all([
+      tx.userBlock.findFirst({
+        where: { blocker_id: userId, blocked_id: peerId },
+        select: { id: true },
+      }),
+      tx.userBlock.findFirst({
+        where: { blocker_id: peerId, blocked_id: userId },
+        select: { id: true },
+      }),
+    ]);
+    const i_blocked = Boolean(iBlocked);
+    const blocked_me = Boolean(blockedMe);
+    if (!this.canSend(Boolean(conversation.match_id), i_blocked, blocked_me)) {
+      if (i_blocked || blocked_me) {
+        throw forbidden('messaging blocked with this user');
+      }
+      throw forbidden('cannot send without an active match');
     }
   }
 

@@ -319,6 +319,15 @@ const messagingSlice = createSlice({
         }
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
+        // Server mark-reads on initial listMessages — clear badge even if the
+        // user switched away before this response landed.
+        if (!action.payload.append) {
+          const inboxRow = state.inbox.find(
+            (row) => row.conversation_id === action.payload.conversationId,
+          );
+          if (inboxRow) inboxRow.unread_count = 0;
+        }
+
         if (action.payload.conversationId !== state.activeConversationId) return;
         state.messagesLoading = false;
         state.messagesLoadingMore = false;
@@ -328,11 +337,6 @@ const messagingSlice = createSlice({
           state.messages = [...older, ...state.messages];
         } else {
           state.messages = action.payload.messages;
-          // Initial history fetch mark-reads on the server — clear local badge.
-          const inboxRow = state.inbox.find(
-            (row) => row.conversation_id === action.payload.conversationId,
-          );
-          if (inboxRow) inboxRow.unread_count = 0;
         }
         state.nextCursor = action.payload.next_cursor;
         state.hasMore = action.payload.has_more;

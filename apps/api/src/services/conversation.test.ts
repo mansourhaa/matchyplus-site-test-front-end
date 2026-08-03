@@ -237,6 +237,57 @@ describe('ConversationService', () => {
     expect(prisma.message.create).not.toHaveBeenCalled();
   });
 
+  it('rejects send when match is cleared inside the transaction', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique
+      .mockResolvedValueOnce({
+        id: 'conv-1',
+        match_id: 'match-1',
+        user_low_id: 'u1',
+        user_high_id: 'u2',
+      })
+      .mockResolvedValueOnce({
+        id: 'conv-1',
+        match_id: null,
+        user_low_id: 'u1',
+        user_high_id: 'u2',
+      });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue({ plan: UserPlan.FREE });
+    prisma.plan.findUnique.mockResolvedValue({ messages_per_day: -1 });
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', { content: 'hi', message_type: 'text' }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.message.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects send when a block lands inside the transaction', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    // Pre-tx: no blocks. In-tx: peer blocked sender.
+    prisma.userBlock.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'block-1' });
+    prisma.user.findUnique.mockResolvedValue({ plan: UserPlan.FREE });
+    prisma.plan.findUnique.mockResolvedValue({ messages_per_day: -1 });
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', { content: 'hi', message_type: 'text' }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+    expect(prisma.message.create).not.toHaveBeenCalled();
+  });
+
   it('rejects voice media_url that is not owned by the sender', async () => {
     const prisma = createMockPrisma();
     prisma.conversation.findUnique.mockResolvedValue({
