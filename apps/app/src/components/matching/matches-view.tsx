@@ -54,7 +54,19 @@ export function MatchesView() {
           <h2 className="mb-3 text-sm font-bold tracking-wide text-[#777] uppercase">
             {t('chat.inboxTitle')}
           </h2>
-          {messaging.inboxLoading && messaging.inbox.length === 0 ? (
+          {messaging.inboxError ? (
+            <div className="space-y-3 py-6 text-center">
+              <p className="text-sm text-[#E74C3C]">{t(messaging.inboxError)}</p>
+              <button
+                type="button"
+                onClick={() => void dispatch(fetchInbox())}
+                className="rounded-2xl px-4 py-2 text-sm font-bold text-white"
+                style={{ background: matchyBrand.gradient }}
+              >
+                {t('common.retry')}
+              </button>
+            </div>
+          ) : messaging.inboxLoading && messaging.inbox.length === 0 ? (
             <div className="flex justify-center py-6">
               <Loader2 className="animate-spin" color={matchyBrand.teal} />
             </div>
@@ -180,14 +192,12 @@ export function MatchesView() {
                       <button
                         key={row.match_id}
                         type="button"
-                        onClick={() =>
-                          router.push(
-                            row.conversation_id
-                              ? `/chat/${row.conversation_id}`
-                              : `/chat/${row.match_id}`,
-                          )
-                        }
-                        className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left"
+                        disabled={!row.conversation_id}
+                        onClick={() => {
+                          if (!row.conversation_id) return;
+                          router.push(`/chat/${row.conversation_id}`);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left disabled:opacity-50"
                         style={{ border: `1px solid ${matchyBrand.border}` }}
                       >
                         <div

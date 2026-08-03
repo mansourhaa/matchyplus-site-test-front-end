@@ -5,7 +5,7 @@ import { MessageType, UserPlan } from '@saas-boilerplate/types';
 import { ConversationService } from './conversation.js';
 
 function createMockPrisma() {
-  return {
+  const prisma = {
     user: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
@@ -38,6 +38,8 @@ function createMockPrisma() {
     },
     $transaction: vi.fn(),
   };
+  prisma.$transaction.mockImplementation(async (fn: (tx: typeof prisma) => unknown) => fn(prisma));
+  return prisma;
 }
 
 describe('ConversationService', () => {
@@ -49,9 +51,6 @@ describe('ConversationService', () => {
       user_low_id: 'u1',
       user_high_id: 'u2',
     };
-    prisma.$transaction.mockImplementation(async (fn: (tx: typeof prisma) => unknown) =>
-      fn(prisma),
-    );
     prisma.conversation.findUnique.mockResolvedValue(null);
     prisma.conversation.create.mockResolvedValue(created);
 
@@ -70,9 +69,6 @@ describe('ConversationService', () => {
 
   it('ensureForMatch reattaches match_id on rematch', async () => {
     const prisma = createMockPrisma();
-    prisma.$transaction.mockImplementation(async (fn: (tx: typeof prisma) => unknown) =>
-      fn(prisma),
-    );
     prisma.conversation.findUnique.mockResolvedValue({
       id: 'conv-1',
       match_id: null,
@@ -96,7 +92,7 @@ describe('ConversationService', () => {
     });
   });
 
-  it('detachOnUnmatch nulls match_id and notifies both users', async () => {
+  it('detachOnUnmatch nulls match_id without notifying', async () => {
     const prisma = createMockPrisma();
     const notify = vi.fn();
     prisma.conversation.findUnique.mockResolvedValue({
@@ -115,12 +111,38 @@ describe('ConversationService', () => {
       where: { id: 'conv-1' },
       data: { match_id: null },
     });
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it('notifyUnmatchedStatus fans out read-only status after detach', async () => {
+    const prisma = createMockPrisma();
+    const notify = vi.fn();
+    prisma.conversation.findUnique.mockResolvedValue({ id: 'conv-1' });
+
+    const service = new ConversationService({ prisma: prisma as never, notify });
+    await service.notifyUnmatchedStatus('u1', 'u2');
+
     expect(notify).toHaveBeenCalledTimes(2);
     expect(notify).toHaveBeenCalledWith(
       'u1',
       'conversation_status_changed',
       expect.objectContaining({ conversation_id: 'conv-1', can_send: false }),
     );
+  });
+
+  it('returns the same 404 for missing and non-participant conversations', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(service.getConversation('u3', 'conv-1')).rejects.toMatchObject({
+      statusCode: 404,
+    });
   });
 
   it('rejects send without an active match', async () => {
@@ -176,12 +198,13 @@ describe('ConversationService', () => {
       content: 'hello',
       message_type: MessageType.TEXT,
     });
+    expect(prisma.$transaction).toHaveBeenCalled();
     expect(notify).toHaveBeenCalledWith('u2', 'new_message', expect.any(Object));
     expect(notify).toHaveBeenCalledWith('u1', 'new_message', expect.any(Object));
     expect(notify).toHaveBeenCalledWith('u2', 'notification_message', expect.any(Object));
   });
 
-  it('enforces daily message quota', async () => {
+  it('enforces daily message quota inside the send transaction', async () => {
     const prisma = createMockPrisma();
     prisma.conversation.findUnique.mockResolvedValue({
       id: 'conv-1',
@@ -198,6 +221,26 @@ describe('ConversationService', () => {
     await expect(
       service.sendMessage('u1', 'conv-1', { content: 'hi', message_type: 'text' }),
     ).rejects.toMatchObject({ statusCode: 429, code: 'message_quota_exceeded' });
+    expect(prisma.message.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects voice media_url that is not owned by the sender', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', {
+        message_type: 'voice',
+        media_url: '/uploads/audio/u2_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.webm',
+      }),
+    ).rejects.toMatchObject({ statusCode: 400, code: 'invalid_media_url' });
   });
 
   it('toggles message likes', async () => {

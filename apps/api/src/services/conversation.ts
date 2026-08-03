@@ -1,3 +1,8 @@
+import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 import { MessageType, Prisma, PrismaClient } from '@saas-boilerplate/types';
 
 import {
@@ -16,8 +21,9 @@ import {
 import { AbstractServiceOptions } from '../types/services.js';
 import { badRequest, forbidden, notFound, tooManyRequests } from '../utils/http-errors.js';
 import { orderedUserPair, otherUserId } from '../utils/match-pair.js';
-import { AUDIO_DIR, saveMediaFile } from '../utils/media-storage.js';
+import { AUDIO_DIR } from '../utils/media-storage.js';
 import { validateUploadedFile } from '../utils/media-validation.js';
+import { utcDayBounds } from '../utils/utc-day.js';
 import { MessageQuotaService } from './message-quota.js';
 
 export type ConversationNotifier = (
@@ -62,9 +68,12 @@ export class ConversationService {
       const conversation = await this.prisma.conversation.findUnique({
         where: { id: conversationId },
       });
-      if (!conversation) throw notFound('conversation not found');
-      if (conversation.user_low_id !== userId && conversation.user_high_id !== userId) {
-        throw forbidden('not a participant in this conversation');
+      // Same 404 for missing and non-participant — avoid conversation-id enumeration.
+      if (
+        !conversation ||
+        (conversation.user_low_id !== userId && conversation.user_high_id !== userId)
+      ) {
+        throw notFound('conversation not found');
       }
       return conversation;
     } catch (err) {
@@ -169,14 +178,20 @@ export class ConversationService {
     }
   }
 
-  /** Null match_id before Match delete; keeps message history (legacy keep-history). */
+  /**
+   * Null match_id and keep history. Call only after Match delete has succeeded
+   * (or inside the same transaction as that delete) so a failed unmatch cannot
+   * leave an active Match with can_send already false.
+   */
   async detachOnUnmatch(
     userId: string,
     otherUserId: string,
+    tx?: Prisma.TransactionClient,
   ): Promise<{ conversation_id: string | null }> {
     try {
+      const db = tx ?? this.prisma;
       const pair = orderedUserPair(userId, otherUserId);
-      const conversation = await this.prisma.conversation.findUnique({
+      const conversation = await db.conversation.findUnique({
         where: {
           user_low_id_user_high_id: {
             user_low_id: pair.userLowId,
@@ -186,10 +201,33 @@ export class ConversationService {
       });
       if (!conversation) return { conversation_id: null };
 
-      await this.prisma.conversation.update({
-        where: { id: conversation.id },
-        data: { match_id: null },
+      if (conversation.match_id !== null) {
+        await db.conversation.update({
+          where: { id: conversation.id },
+          data: { match_id: null },
+        });
+      }
+
+      return { conversation_id: conversation.id };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** Fan-out read-only status after a successful unmatch detach. */
+  async notifyUnmatchedStatus(userId: string, otherUserId: string): Promise<void> {
+    try {
+      const pair = orderedUserPair(userId, otherUserId);
+      const conversation = await this.prisma.conversation.findUnique({
+        where: {
+          user_low_id_user_high_id: {
+            user_low_id: pair.userLowId,
+            user_high_id: pair.userHighId,
+          },
+        },
+        select: { id: true },
       });
+      if (!conversation) return;
 
       const payload = {
         conversation_id: conversation.id,
@@ -198,8 +236,6 @@ export class ConversationService {
       };
       this.notify(userId, 'conversation_status_changed', payload);
       this.notify(otherUserId, 'conversation_status_changed', payload);
-
-      return { conversation_id: conversation.id };
     } catch (err) {
       throw err;
     }
@@ -448,32 +484,46 @@ export class ConversationService {
       if (messageType === MessageType.VOICE && !mediaUrl) {
         throw badRequest('media_url is required for voice messages');
       }
-      if (mediaUrl && !mediaUrl.startsWith('/uploads/audio/')) {
-        throw badRequest('invalid media_url');
+      if (mediaUrl) {
+        await this.assertOwnedUnusedAudio(userId, mediaUrl);
       }
 
-      const { unlimited } = await this.quota.resolveMessageQuota(userId);
-      if (!unlimited) {
-        const snapshot = await this.quota.buildQuotaSnapshot(userId);
-        if ((snapshot.remaining ?? 0) <= 0) {
-          throw tooManyRequests('daily message limit reached', 'message_quota_exceeded');
-        }
-      }
+      const { unlimited, limit } = await this.quota.resolveMessageQuota(userId);
 
-      const message = await this.prisma.message.create({
-        data: {
-          conversation_id: conversationId,
-          sender_id: userId,
-          content: messageType === MessageType.VOICE ? content || '' : content,
-          message_type: messageType,
-          media_url: mediaUrl,
+      const message = await this.prisma.$transaction(
+        async (tx) => {
+          if (!unlimited) {
+            const { start, end } = utcDayBounds();
+            const used = await tx.message.count({
+              where: {
+                sender_id: userId,
+                created_at: { gte: start, lt: end },
+              },
+            });
+            if (used >= (limit ?? 0)) {
+              throw tooManyRequests('daily message limit reached', 'message_quota_exceeded');
+            }
+          }
+
+          const created = await tx.message.create({
+            data: {
+              conversation_id: conversationId,
+              sender_id: userId,
+              content: messageType === MessageType.VOICE ? content || '' : content,
+              message_type: messageType,
+              media_url: mediaUrl,
+            },
+          });
+
+          await tx.conversation.update({
+            where: { id: conversationId },
+            data: { updated_at: new Date() },
+          });
+
+          return created;
         },
-      });
-
-      await this.prisma.conversation.update({
-        where: { id: conversationId },
-        data: { updated_at: new Date() },
-      });
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
 
       const payload = {
         id: message.id,
@@ -499,6 +549,36 @@ export class ConversationService {
 
       const quota = await this.quota.buildQuotaSnapshot(userId);
       return { message: payload, quota };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /** Voice URLs must be caller-owned (`{userId}_{uuid}.ext`) and unused by any message. */
+  private async assertOwnedUnusedAudio(userId: string, mediaUrl: string): Promise<void> {
+    try {
+      const escapedUserId = userId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(
+        `^/uploads/audio/${escapedUserId}_([0-9a-f-]{36}\\.[a-z0-9]+)$`,
+        'i',
+      );
+      if (!pattern.test(mediaUrl)) {
+        throw badRequest('invalid media_url', 'invalid_media_url');
+      }
+
+      const filename = mediaUrl.slice('/uploads/audio/'.length);
+      const filePath = join(AUDIO_DIR, filename);
+      if (!existsSync(filePath)) {
+        throw badRequest('audio file not found', 'audio_not_found');
+      }
+
+      const existing = await this.prisma.message.findFirst({
+        where: { media_url: mediaUrl },
+        select: { id: true },
+      });
+      if (existing) {
+        throw badRequest('audio already used', 'audio_already_used');
+      }
     } catch (err) {
       throw err;
     }
@@ -586,8 +666,12 @@ export class ConversationService {
         throw badRequest(validation.error, validation.error);
       }
 
-      const savedFilename = await saveMediaFile(AUDIO_DIR, file.buffer, validation.ext);
-      return { url: `/uploads/audio/${savedFilename}` };
+      // Prefix with uploader id so sendMessage can prove ownership without a side table.
+      const ext = validation.ext.startsWith('.') ? validation.ext : `.${validation.ext}`;
+      const filename = `${userId}_${randomUUID()}${ext}`;
+      await mkdir(AUDIO_DIR, { recursive: true });
+      await writeFile(join(AUDIO_DIR, filename), file.buffer);
+      return { url: `/uploads/audio/${filename}` };
     } catch (err) {
       throw err;
     }

@@ -271,21 +271,33 @@ export class SwipeService {
       });
       const byId = new Map(users.map((u) => [u.id, u]));
 
-      return {
-        matches: rows.map((row) => {
-          const matchedUserId = otherUserId(
-            { userLowId: row.user_low_id, userHighId: row.user_high_id },
-            userId,
+      const matches = [];
+      for (const row of rows) {
+        const matchedUserId = otherUserId(
+          { userLowId: row.user_low_id, userHighId: row.user_high_id },
+          userId,
+        );
+        let conversationId = row.conversation?.id ?? null;
+        if (!conversationId) {
+          const ensured = await this.conversations.ensureForMatch(
+            row.id,
+            row.user_low_id,
+            row.user_high_id,
           );
-          return {
-            match_id: row.id,
-            matched_at: row.matched_at,
-            matched_user_id: matchedUserId,
-            conversation_id: row.conversation?.id ?? null,
-            profile: byId.get(matchedUserId) || null,
-          };
-        }),
-        count: rows.length,
+          conversationId = ensured.id;
+        }
+        matches.push({
+          match_id: row.id,
+          matched_at: row.matched_at,
+          matched_user_id: matchedUserId,
+          conversation_id: conversationId,
+          profile: byId.get(matchedUserId) || null,
+        });
+      }
+
+      return {
+        matches,
+        count: matches.length,
       };
     } catch (err) {
       throw err;
@@ -402,8 +414,6 @@ export class SwipeService {
 
       const pair = orderedUserPair(userId, otherUserId);
 
-      await this.conversations.detachOnUnmatch(userId, otherUserId);
-
       await this.prisma.$transaction(async (tx) => {
         await tx.swipe.deleteMany({
           where: {
@@ -427,8 +437,11 @@ export class SwipeService {
             user_high_id: pair.userHighId,
           },
         });
+        // Detach inside the same transaction after Match delete succeeds in this tx.
+        await this.conversations.detachOnUnmatch(userId, otherUserId, tx);
       });
 
+      await this.conversations.notifyUnmatchedStatus(userId, otherUserId);
       this.notify(userId, 'match_removed', { matched_user_id: otherUserId });
       this.notify(otherUserId, 'match_removed', { matched_user_id: userId });
 

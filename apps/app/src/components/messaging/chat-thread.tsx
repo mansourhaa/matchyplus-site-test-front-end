@@ -180,6 +180,18 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
           <div className="flex justify-center py-12">
             <Loader2 className="animate-spin" color={matchyBrand.teal} />
           </div>
+        ) : messaging.messagesError && messaging.messages.length === 0 ? (
+          <div className="space-y-3 py-12 text-center">
+            <p className="text-sm text-[#E74C3C]">{t(messaging.messagesError)}</p>
+            <button
+              type="button"
+              onClick={() => void dispatch(fetchMessages({ conversationId }))}
+              className="rounded-2xl px-4 py-2 text-sm font-bold text-white"
+              style={{ background: matchyBrand.gradient }}
+            >
+              {t('common.retry')}
+            </button>
+          </div>
         ) : messaging.messages.length === 0 ? (
           <p className="py-12 text-center text-sm text-[#777]">{t('chat.emptyThread')}</p>
         ) : (

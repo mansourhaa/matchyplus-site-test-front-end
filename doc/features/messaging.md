@@ -57,8 +57,21 @@ In-process only today — multi-instance needs Redis pub/sub later. HTTP write r
 
 ## Chat URL
 
-`/chat/[conversationId]`. Matches list includes `conversation_id` from `/swipe/matches`.
+`/chat/[conversationId]`. Matches list includes `conversation_id` from `/swipe/matches`
+(backfilled via `ensureForMatch` for older matches). The UI never opens chat by `match_id`.
+
+## Authz notes
+
+- Missing conversation and non-participant both return **404** (no enumeration via 403).
+- `blocked_me` / `i_blocked` are returned to participants so the composer can explain
+  read-only state; they are not exposed to non-participants.
+
+## Voice ownership
+
+Upload writes `/uploads/audio/{userId}_{uuid}.ext`. Send rejects any `media_url` that is
+not owned by the caller, missing on disk, or already attached to a message.
 
 ## Quota
 
-`Plan.messages_per_day` (`-1` = unlimited), counted from `Message` rows in the current UTC day (same pattern as swipe quota).
+`Plan.messages_per_day` (`-1` = unlimited). Count + create run in one **Serializable**
+transaction so concurrent sends cannot exceed the daily limit.

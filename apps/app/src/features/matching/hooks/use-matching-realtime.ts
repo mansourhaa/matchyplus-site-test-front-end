@@ -12,6 +12,7 @@ import {
   setPeerTyping,
 } from '@/features/messaging/store/messaging-slice';
 import type { ChatMessage, MessagingRealtimePayload } from '@/features/messaging/types';
+import { getCachedAuthUser } from '@/lib/auth';
 import { useEffect, useRef } from 'react';
 
 function buildRealtimeUrl(accessToken: string): string | null {
@@ -77,7 +78,13 @@ export function useMatchingRealtime(enabled = true) {
 
               if (message.event === 'new_message' && message.payload?.id) {
                 const chatMessage = message.payload as unknown as ChatMessage;
-                dispatch(applyRealtimeMessage(chatMessage));
+                const viewer = getCachedAuthUser<{ id?: string }>();
+                dispatch(
+                  applyRealtimeMessage({
+                    ...chatMessage,
+                    viewer_id: viewer?.id,
+                  }),
+                );
                 return;
               }
 

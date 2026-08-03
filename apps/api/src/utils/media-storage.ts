@@ -43,7 +43,8 @@ export async function deleteMediaFile(dir: string, filename: string): Promise<vo
  * pipeline below (`/uploads/photos/<uuid>.ext`) — this tells the two apart so callers
  * never try to unlink a data URL as if it were a filename on disk.
  */
-const STORED_MEDIA_PATH = /^\/uploads\/(photos|videos|audio)\/([0-9a-f-]{36}\.[a-z0-9]+)$/i;
+const STORED_MEDIA_PATH =
+  /^\/uploads\/(photos|videos)\/([0-9a-f-]{36}\.[a-z0-9]+)$|^\/uploads\/(audio)\/([a-z0-9]+_[0-9a-f-]{36}\.[a-z0-9]+)$/i;
 
 export function isStoredMediaPath(
   value: string | null | undefined,
@@ -51,14 +52,17 @@ export function isStoredMediaPath(
 ): value is string {
   if (!value) return false;
   const match = value.match(STORED_MEDIA_PATH);
-  return Boolean(match && (!kind || match[1] === kind));
+  if (!match) return false;
+  const matchedKind = (match[1] || match[3]) as 'photos' | 'videos' | 'audio' | undefined;
+  return Boolean(matchedKind && (!kind || matchedKind === kind));
 }
 
 /** Extracts the on-disk filename from a stored `/uploads/<kind>/<filename>` path. */
 export function filenameFromStoredPath(storedPath: string): string {
   const match = storedPath.match(STORED_MEDIA_PATH);
-  if (!match?.[2]) {
+  const filename = match?.[2] || match?.[4];
+  if (!filename) {
     throw new Error('invalid_stored_media_path');
   }
-  return match[2];
+  return filename;
 }

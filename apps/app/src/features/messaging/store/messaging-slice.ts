@@ -174,13 +174,21 @@ const messagingSlice = createSlice({
       return initialState;
     },
     setActiveConversation(state, action: PayloadAction<string | null>) {
+      if (state.activeConversationId !== action.payload) {
+        state.conversation = null;
+        state.messages = [];
+        state.nextCursor = null;
+        state.hasMore = false;
+        state.messagesError = null;
+        state.conversationError = null;
+      }
       state.activeConversationId = action.payload;
       state.peerTyping = false;
     },
     clearSendError(state) {
       state.sendError = null;
     },
-    applyRealtimeMessage(state, action: PayloadAction<ChatMessage>) {
+    applyRealtimeMessage(state, action: PayloadAction<ChatMessage & { viewer_id?: string }>) {
       const message = action.payload;
       if (state.activeConversationId === message.conversation_id) {
         if (!state.messages.some((m) => m.id === message.id)) {
@@ -199,14 +207,9 @@ const messagingSlice = createSlice({
           created_at: message.created_at,
         };
         inboxRow.updated_at = message.created_at;
-        if (
-          state.activeConversationId !== message.conversation_id &&
-          message.sender_id !== state.conversation?.peer?.id
-        ) {
-          // Unread bump for other threads is refined when inbox refetches;
-          // still increment when not viewing this thread.
-        }
-        if (state.activeConversationId !== message.conversation_id) {
+        const viewerId = action.payload.viewer_id;
+        const isOwnMessage = Boolean(viewerId && message.sender_id === viewerId);
+        if (state.activeConversationId !== message.conversation_id && !isOwnMessage) {
           inboxRow.unread_count += 1;
         }
       }
@@ -296,15 +299,18 @@ const messagingSlice = createSlice({
         state.conversationError = null;
       })
       .addCase(fetchConversation.fulfilled, (state, action) => {
+        // Ignore late responses after the user switched chats.
+        if (action.meta.arg !== state.activeConversationId) return;
         state.conversationLoading = false;
         state.conversation = action.payload;
-        state.activeConversationId = action.payload.conversation_id;
       })
       .addCase(fetchConversation.rejected, (state, action) => {
+        if (action.meta.arg !== state.activeConversationId) return;
         state.conversationLoading = false;
         state.conversationError = String(action.payload || action.error.message);
       })
       .addCase(fetchMessages.pending, (state, action) => {
+        if (action.meta.arg.conversationId !== state.activeConversationId) return;
         if (action.meta.arg.cursor) {
           state.messagesLoadingMore = true;
         } else {
@@ -313,6 +319,7 @@ const messagingSlice = createSlice({
         }
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
+        if (action.payload.conversationId !== state.activeConversationId) return;
         state.messagesLoading = false;
         state.messagesLoadingMore = false;
         if (action.payload.append) {
@@ -326,6 +333,7 @@ const messagingSlice = createSlice({
         state.hasMore = action.payload.has_more;
       })
       .addCase(fetchMessages.rejected, (state, action) => {
+        if (action.meta.arg.conversationId !== state.activeConversationId) return;
         state.messagesLoading = false;
         state.messagesLoadingMore = false;
         state.messagesError = String(action.payload || action.error.message);
