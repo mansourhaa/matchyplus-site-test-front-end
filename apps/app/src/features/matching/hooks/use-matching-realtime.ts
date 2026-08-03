@@ -140,12 +140,14 @@ export function useMatchingRealtime(enabled = true) {
               }
 
               if (message.event === 'message_like_changed' && message.payload?.message_id) {
+                const viewer = getCachedAuthUser<{ id?: string }>();
                 dispatch(
                   applyLikeChanged({
                     message_id: message.payload.message_id,
                     liked: Boolean(message.payload.liked),
                     like_count: Number(message.payload.like_count ?? 0),
                     user_id: String(message.payload.user_id || ''),
+                    viewer_id: viewer?.id,
                   }),
                 );
                 return;

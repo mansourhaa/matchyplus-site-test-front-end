@@ -181,6 +181,12 @@ const messagingSlice = createSlice({
         state.hasMore = false;
         state.messagesError = null;
         state.conversationError = null;
+        // Drop in-flight send/history loading from the previous thread so the
+        // new composer is not stuck disabled / spinner-locked.
+        state.messagesLoading = false;
+        state.messagesLoadingMore = false;
+        state.sendLoading = false;
+        state.sendError = null;
       }
       state.activeConversationId = action.payload;
       state.peerTyping = false;
@@ -232,11 +238,15 @@ const messagingSlice = createSlice({
         liked: boolean;
         like_count: number;
         user_id: string;
+        viewer_id?: string;
       }>,
     ) {
       const message = state.messages.find((m) => m.id === action.payload.message_id);
       if (!message) return;
       message.like_count = action.payload.like_count;
+      if (action.payload.viewer_id && action.payload.user_id === action.payload.viewer_id) {
+        message.liked_by_me = action.payload.liked;
+      }
     },
     setLikedByMe(
       state,
@@ -328,7 +338,11 @@ const messagingSlice = createSlice({
           if (inboxRow) inboxRow.unread_count = 0;
         }
 
-        if (action.payload.conversationId !== state.activeConversationId) return;
+        if (action.payload.conversationId !== state.activeConversationId) {
+          // Loading was reset in setActiveConversation on switch — do not
+          // clear the active thread's in-flight spinner here.
+          return;
+        }
         state.messagesLoading = false;
         state.messagesLoadingMore = false;
         if (action.payload.append) {
@@ -337,10 +351,23 @@ const messagingSlice = createSlice({
           state.messages = [...older, ...state.messages];
         } else {
           // Merge by id — realtime messages may have landed before this
-          // response and must not be wiped from the open thread.
-          const fetchedIds = new Set(action.payload.messages.map((m) => m.id));
+          // response and must not be wiped from the open thread. Prefer local
+          // is_read / liked_by_me (and matching like_count) over the snapshot.
+          const localById = new Map(state.messages.map((m) => [m.id, m]));
+          const merged = action.payload.messages.map((fetched) => {
+            const local = localById.get(fetched.id);
+            if (!local) return fetched;
+            return {
+              ...fetched,
+              is_read: local.is_read || fetched.is_read,
+              liked_by_me: local.liked_by_me,
+              like_count:
+                local.liked_by_me === fetched.liked_by_me ? fetched.like_count : local.like_count,
+            };
+          });
+          const fetchedIds = new Set(merged.map((m) => m.id));
           const liveExtras = state.messages.filter((m) => !fetchedIds.has(m.id));
-          state.messages = [...action.payload.messages, ...liveExtras].sort(
+          state.messages = [...merged, ...liveExtras].sort(
             (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
           );
         }

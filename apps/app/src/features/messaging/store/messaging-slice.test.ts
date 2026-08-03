@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import messagingReducer, {
+  applyLikeChanged,
   applyRealtimeMessage,
   resetMessagingState,
   setActiveConversation,
@@ -73,6 +74,25 @@ describe('messagingSlice', () => {
     expect(state.inbox[0]?.unread_count).toBe(0);
   });
 
+  it('clears send and messages loading when switching conversations', () => {
+    let state = messagingReducer(undefined, setActiveConversation('conv-a'));
+    state = {
+      ...state,
+      sendLoading: true,
+      sendError: 'chat.errors.send',
+      messagesLoading: true,
+      messagesLoadingMore: true,
+    };
+
+    state = messagingReducer(state, setActiveConversation('conv-b'));
+
+    expect(state.sendLoading).toBe(false);
+    expect(state.sendError).toBeNull();
+    expect(state.messagesLoading).toBe(false);
+    expect(state.messagesLoadingMore).toBe(false);
+    expect(state.activeConversationId).toBe('conv-b');
+  });
+
   it('ignores stale message fetches after switching conversations', () => {
     let state = messagingReducer(undefined, setActiveConversation('conv-b'));
     state = {
@@ -93,6 +113,10 @@ describe('messagingSlice', () => {
         },
       ],
     };
+    // After switch, active thread may be loading — stale fulfill for A must
+    // not clear B's spinner or apply A's messages.
+    state = { ...state, messagesLoading: true };
+
     state = messagingReducer(state, {
       type: 'messaging/fetchMessages/fulfilled',
       meta: { arg: { conversationId: 'conv-a' } },
@@ -120,6 +144,7 @@ describe('messagingSlice', () => {
 
     expect(state.messages).toEqual([]);
     expect(state.inbox[0]?.unread_count).toBe(0);
+    expect(state.messagesLoading).toBe(true);
   });
 
   it('keeps realtime messages when the initial fetch lands late', () => {
@@ -166,6 +191,108 @@ describe('messagingSlice', () => {
     });
 
     expect(state.messages.map((m) => m.id)).toEqual(['msg-old', 'msg-live']);
+  });
+
+  it('preserves local is_read and liked_by_me when merging overlapping fetch ids', () => {
+    let state = messagingReducer(undefined, setActiveConversation('conv-1'));
+    state = {
+      ...state,
+      messages: [
+        {
+          id: 'msg-1',
+          conversation_id: 'conv-1',
+          sender_id: 'peer',
+          content: 'hello',
+          message_type: 'TEXT',
+          media_url: null,
+          is_read: true,
+          created_at: '2026-08-03T12:00:00.000Z',
+          liked_by_me: true,
+          like_count: 2,
+        },
+      ],
+    };
+
+    state = messagingReducer(state, {
+      type: 'messaging/fetchMessages/fulfilled',
+      meta: { arg: { conversationId: 'conv-1' } },
+      payload: {
+        conversationId: 'conv-1',
+        append: false,
+        messages: [
+          {
+            id: 'msg-1',
+            conversation_id: 'conv-1',
+            sender_id: 'peer',
+            content: 'hello',
+            message_type: 'TEXT',
+            media_url: null,
+            is_read: false,
+            created_at: '2026-08-03T12:00:00.000Z',
+            liked_by_me: false,
+            like_count: 1,
+          },
+        ],
+        next_cursor: null,
+        has_more: false,
+      },
+    });
+
+    expect(state.messages[0]).toMatchObject({
+      id: 'msg-1',
+      is_read: true,
+      liked_by_me: true,
+      like_count: 2,
+    });
+  });
+
+  it('sets liked_by_me from realtime likes when the actor is the viewer', () => {
+    let state = messagingReducer(undefined, setActiveConversation('conv-1'));
+    state = {
+      ...state,
+      messages: [
+        {
+          id: 'msg-1',
+          conversation_id: 'conv-1',
+          sender_id: 'peer',
+          content: 'hello',
+          message_type: 'TEXT',
+          media_url: null,
+          is_read: true,
+          created_at: '2026-08-03T12:00:00.000Z',
+          liked_by_me: false,
+          like_count: 0,
+        },
+      ],
+    };
+
+    state = messagingReducer(
+      state,
+      applyLikeChanged({
+        message_id: 'msg-1',
+        liked: true,
+        like_count: 1,
+        user_id: 'me',
+        viewer_id: 'me',
+      }),
+    );
+
+    expect(state.messages[0]?.liked_by_me).toBe(true);
+    expect(state.messages[0]?.like_count).toBe(1);
+
+    state = messagingReducer(
+      state,
+      applyLikeChanged({
+        message_id: 'msg-1',
+        liked: true,
+        like_count: 2,
+        user_id: 'peer',
+        viewer_id: 'me',
+      }),
+    );
+
+    expect(state.messages[0]?.liked_by_me).toBe(true);
+    expect(state.messages[0]?.like_count).toBe(2);
   });
 
   it('does not append a late send into a different active conversation', () => {
