@@ -100,4 +100,37 @@ describe('notifications-slice', () => {
     expect(store.getState().notifications.items[0].read).toBe(true);
     expect(store.getState().notifications.unreadCount).toBe(0);
   });
+
+  it('forces a stale unread row the client never saw locally to read once it predates a completed mark-all, without bumping the unread count', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: listResponse });
+    vi.mocked(api.post).mockResolvedValue({ data: undefined });
+    const store = buildStore();
+    await store.dispatch(fetchNotifications());
+    await store.dispatch(markAllNotificationsRead());
+    expect(store.getState().notifications.unreadCount).toBe(0);
+
+    // Simulates a slower GET, in flight before the mark-all above, resolving afterwards
+    // with a notification this client had never loaded before — still reported unread,
+    // but its created_at predates the mark-all, so the mark-all already covered it.
+    vi.mocked(api.get).mockResolvedValueOnce({
+      data: {
+        notifications: [
+          ...listResponse.notifications,
+          {
+            id: 'notif-0',
+            type: 'PROFILE_VIEW' as const,
+            data: { viewerId: 'user-4', viewerName: 'Amel' },
+            read: false,
+            created_at: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+        unread_count: 1,
+      },
+    });
+    await store.dispatch(fetchNotifications());
+
+    const state = store.getState().notifications;
+    expect(state.items.find((item) => item.id === 'notif-0')?.read).toBe(true);
+    expect(state.unreadCount).toBe(0);
+  });
 });
