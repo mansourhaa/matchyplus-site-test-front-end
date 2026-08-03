@@ -41,17 +41,19 @@ Prisma models in `packages/database/prisma/schema.prisma`:
 7. Cross-sector under sector-strict intents → low-priority **suggestion** group, not hard drop.
 8. Quota reset labeled `midnight_utc` deliberately.
 
-## Match → conversation (deferred)
+## Match → conversation
 
 Legacy Matchy created a conversation row on reciprocal match.
 
-In this codebase, **conversation / messaging is a separate feature**. Matching only:
+In this codebase, **conversation / messaging is a separate feature** (see [messaging.md](./messaging.md)). Matching:
 
 - creates the `Match` row
-- notifies both users (`notification_match`)
-- exposes matches in `/swipe/matches`
+- calls `ConversationService.ensureForMatch` (messaging-owned)
+- notifies both users (`notification_match` includes `conversation_id`)
+- exposes `conversation_id` on `/swipe/matches`
+- on unmatch, calls `ConversationService.detachOnUnmatch` before deleting the Match (history kept)
 
-Conversation thread creation must land with the conversations feature so matching does not own messaging schema or inbox lifecycle.
+Matching must not own messaging schema or inbox lifecycle beyond these thin hooks.
 
 ## Endpoints (JWT required)
 
@@ -69,7 +71,7 @@ Prefix: `/api/v1`
 | GET | `/swipe/stats` | Aggregates + quota |
 | GET | `/swipe/who-liked-me` | Incoming likes (premium+) |
 | POST | `/swipe/unmatch/:userId` | Unmatch + clear pair logs/swipes |
-| GET | `/realtime` (WebSocket) | `notification_match`, `match_removed` |
+| GET | `/realtime` (WebSocket) | `notification_match`, `match_removed`, messaging events (see messaging.md) |
 
 ### POST swipe body
 

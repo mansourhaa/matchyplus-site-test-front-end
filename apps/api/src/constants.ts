@@ -77,3 +77,32 @@ export const PROFILE_VIDEO_CONTENT_TYPES: Record<string, string> = {
   '.3gp': 'video/3gpp',
   '.3g2': 'video/3gpp2',
 };
+
+/** Voice-note upload limits for messaging. */
+export const VOICE_AUDIO_MAX_BYTES = 10 * 1024 * 1024;
+export const VOICE_AUDIO_RATE_LIMIT = { max: 30, timeWindow: '1 hour' };
+
+export const ALLOWED_VOICE_AUDIO_MIMES = [
+  'audio/webm',
+  'audio/ogg',
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/m4a',
+  'audio/x-m4a',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/aac',
+];
+
+export const VOICE_AUDIO_CONTENT_TYPES: Record<string, string> = {
+  '.webm': 'audio/webm',
+  '.ogg': 'audio/ogg',
+  '.mp3': 'audio/mpeg',
+  '.m4a': 'audio/mp4',
+  '.wav': 'audio/wav',
+  '.aac': 'audio/aac',
+};
+
+/** Default page size for conversation message history. */
+export const MESSAGES_PAGE_SIZE = 50;
+export const MESSAGES_PAGE_SIZE_MAX = 100;

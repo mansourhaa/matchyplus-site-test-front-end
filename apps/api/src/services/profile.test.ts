@@ -26,6 +26,9 @@ function createMockPrisma() {
     match: {
       findUnique: vi.fn(),
     },
+    conversation: {
+      findUnique: vi.fn(),
+    },
   };
 }
 
@@ -159,13 +162,24 @@ describe('ProfileService', () => {
       expect(result).toBe(true);
     });
 
-    it('rejects a viewer with no match', async () => {
+    it('rejects a viewer with no match or conversation', async () => {
       const { service, prisma } = createService();
       prisma.match.findUnique.mockResolvedValue(null);
+      prisma.conversation.findUnique.mockResolvedValue(null);
 
       const result = await service.canAccessVideo('user-1', 'user-2');
 
       expect(result).toBe(false);
+    });
+
+    it('allows a viewer with a conversation after unmatch', async () => {
+      const { service, prisma } = createService();
+      prisma.match.findUnique.mockResolvedValue(null);
+      prisma.conversation.findUnique.mockResolvedValue({ id: 'conv-1' });
+
+      const result = await service.canAccessVideo('user-1', 'user-2');
+
+      expect(result).toBe(true);
     });
   });
 

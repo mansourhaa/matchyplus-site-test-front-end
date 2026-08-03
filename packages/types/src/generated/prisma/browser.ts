@@ -74,6 +74,22 @@ export type SwipeLog = Prisma.SwipeLogModel;
  */
 export type Match = Prisma.MatchModel;
 /**
+ * Model Conversation
+ * 1:1 thread owned by the messaging feature. Created on mutual match; match_id is
+ * nulled on unmatch so history survives (composer stays read-only until rematch).
+ */
+export type Conversation = Prisma.ConversationModel;
+/**
+ * Model Message
+ *
+ */
+export type Message = Prisma.MessageModel;
+/**
+ * Model MessageLike
+ * Persisted double-tap like on a message (legacy Matchy had client-only likes).
+ */
+export type MessageLike = Prisma.MessageLikeModel;
+/**
  * Model UserLocation
  * Dynamic GPS for discovery radius (preferred over static User.gps_*).
  */

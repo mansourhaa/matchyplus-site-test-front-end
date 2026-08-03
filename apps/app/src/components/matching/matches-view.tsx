@@ -9,6 +9,7 @@ import {
   selectMatching,
   withdrawPending,
 } from '@/features/matching/store/matching-slice';
+import { fetchInbox, selectMessaging } from '@/features/messaging/store/messaging-slice';
 import { Heart, Loader2, MessageCircle, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -19,10 +20,17 @@ export function MatchesView() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const matching = useAppSelector(selectMatching);
+  const messaging = useAppSelector(selectMessaging);
 
   useEffect(() => {
     void dispatch(fetchMatchState());
+    void dispatch(fetchInbox());
   }, [dispatch]);
+
+  const refresh = () => {
+    void dispatch(fetchMatchState());
+    void dispatch(fetchInbox());
+  };
 
   return (
     <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }}>
@@ -33,7 +41,7 @@ export function MatchesView() {
           </h1>
           <button
             type="button"
-            onClick={() => void dispatch(fetchMatchState())}
+            onClick={refresh}
             className="rounded-full p-2"
             style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
             aria-label={t('common.retry')}
@@ -41,6 +49,72 @@ export function MatchesView() {
             <RefreshCw size={16} />
           </button>
         </div>
+
+        <section>
+          <h2 className="mb-3 text-sm font-bold tracking-wide text-[#777] uppercase">
+            {t('chat.inboxTitle')}
+          </h2>
+          {messaging.inboxLoading && messaging.inbox.length === 0 ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="animate-spin" color={matchyBrand.teal} />
+            </div>
+          ) : messaging.inbox.length === 0 ? (
+            <p
+              className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-[#777]"
+              style={{ border: `1px solid ${matchyBrand.border}` }}
+            >
+              {t('chat.emptyInbox')}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {messaging.inbox.map((row) => {
+                const name = row.peer?.name || t('chat.title');
+                const preview =
+                  row.last_message?.message_type === 'VOICE'
+                    ? t('chat.voicePreview')
+                    : row.last_message?.content || t('chat.noMessages');
+                return (
+                  <button
+                    key={row.conversation_id}
+                    type="button"
+                    onClick={() => router.push(`/chat/${row.conversation_id}`)}
+                    className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left"
+                    style={{ border: `1px solid ${matchyBrand.border}` }}
+                  >
+                    <div
+                      className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-white"
+                      style={{ background: matchyBrand.gradient135 }}
+                    >
+                      {row.peer?.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={row.peer.image} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        name.slice(0, 1)
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="truncate font-bold" style={{ color: matchyBrand.textDark }}>
+                          {name}
+                        </p>
+                        {row.unread_count > 0 && (
+                          <span
+                            className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+                            style={{ background: matchyBrand.teal }}
+                          >
+                            {row.unread_count}
+                          </span>
+                        )}
+                      </div>
+                      <p className="truncate text-xs text-[#777]">{preview}</p>
+                    </div>
+                    <MessageCircle size={16} color={matchyBrand.teal} />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         {matching.swipeError && (
           <div className="flex items-center justify-between rounded-2xl bg-[#FFF0F0] px-4 py-3 text-sm text-[#E74C3C]">
@@ -79,7 +153,7 @@ export function MatchesView() {
                   className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
                   style={{ background: 'linear-gradient(135deg, #E8F7F3, #E8F0FA)' }}
                 >
-                  <Heart size={28} color={matchyBrand.teal} fill={matchyBrand.teal} />
+                  <Heart size={28} color={matchyBrand.teal} />
                 </div>
                 <p className="font-bold" style={{ color: matchyBrand.textDark }}>
                   {t('matching.noMatches')}
@@ -87,55 +161,18 @@ export function MatchesView() {
                 <p className="mt-2 text-sm text-[#777]">{t('matching.noMatchesDesc')}</p>
                 <Link
                   href="/home"
-                  className="mt-4 inline-flex rounded-2xl px-4 py-2 text-sm font-bold text-white"
+                  className="mt-5 inline-flex rounded-2xl px-4 py-2 text-sm font-bold text-white"
                   style={{ background: matchyBrand.gradient }}
                 >
                   {t('matching.exploreProfiles')}
                 </Link>
               </div>
             ) : (
-              <>
-                <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
-                  {matching.matches.map((row) => {
-                    const profile = row.profile;
-                    if (!profile) return null;
-                    return (
-                      <button
-                        key={`avatar-${row.match_id}`}
-                        type="button"
-                        onClick={() => router.push(`/chat/${row.match_id}`)}
-                        className="flex w-16 shrink-0 flex-col items-center gap-1"
-                      >
-                        <div
-                          className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full text-lg font-bold text-white"
-                          style={{
-                            background: matchyBrand.gradient135,
-                            boxShadow: `0 0 0 2px ${matchyBrand.teal}`,
-                          }}
-                        >
-                          {profile.image ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={profile.image}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            profile.name.slice(0, 1)
-                          )}
-                        </div>
-                        <span className="w-full truncate text-center text-[10px] font-semibold text-[#555]">
-                          {profile.name.split(' ')[0]}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <section className="space-y-2">
-                  <h2 className="text-sm font-bold tracking-wide text-[#777] uppercase">
-                    {t('matching.myMatches')}
-                  </h2>
+              <section>
+                <h2 className="mb-3 text-sm font-bold tracking-wide text-[#777] uppercase">
+                  {t('matching.myMatches')}
+                </h2>
+                <div className="space-y-2">
                   {matching.matches.map((row) => {
                     const profile = row.profile;
                     if (!profile) return null;
@@ -143,8 +180,14 @@ export function MatchesView() {
                       <button
                         key={row.match_id}
                         type="button"
-                        onClick={() => router.push(`/chat/${row.match_id}`)}
-                        className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm"
+                        onClick={() =>
+                          router.push(
+                            row.conversation_id
+                              ? `/chat/${row.conversation_id}`
+                              : `/chat/${row.match_id}`,
+                          )
+                        }
+                        className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left"
                         style={{ border: `1px solid ${matchyBrand.border}` }}
                       >
                         <div
@@ -174,8 +217,8 @@ export function MatchesView() {
                       </button>
                     );
                   })}
-                </section>
-              </>
+                </div>
+              </section>
             )}
 
             <section>
@@ -199,8 +242,8 @@ export function MatchesView() {
                       style={{ border: `1px solid ${matchyBrand.border}` }}
                     >
                       <div
-                        className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-white"
-                        style={{ background: matchyBrand.blue }}
+                        className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-white"
+                        style={{ background: matchyBrand.gradient135 }}
                       >
                         {row.profile.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -214,33 +257,25 @@ export function MatchesView() {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p
-                          className="truncate font-semibold"
-                          style={{ color: matchyBrand.textDark }}
-                        >
+                        <p className="truncate font-bold" style={{ color: matchyBrand.textDark }}>
                           {row.profile.name}
                         </p>
                         <p className="truncate text-xs text-[#777]">
-                          {row.profile.service_type || row.profile.job}
+                          {row.profile.service_type || row.profile.job || row.profile.category}
                         </p>
                       </div>
                       <button
                         type="button"
                         disabled={matching.withdrawLoadingId === row.profile.id}
-                        onClick={() => {
-                          void (async () => {
-                            try {
-                              await dispatch(withdrawPending(row.profile.id));
-                            } catch {
-                              // Errors are stored on the matching slice via rejectWithValue.
-                            }
-                          })();
-                        }}
-                        className="rounded-xl border border-[#F5C6C6] px-3 py-2 text-xs font-bold text-[#E74C3C] disabled:opacity-50"
+                        onClick={() => void dispatch(withdrawPending(row.profile.id))}
+                        className="rounded-xl px-3 py-2 text-xs font-bold"
+                        style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
                       >
-                        {matching.withdrawLoadingId === row.profile.id
-                          ? t('matching.withdrawing')
-                          : t('matching.cancelPending')}
+                        {matching.withdrawLoadingId === row.profile.id ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          t('matching.cancelPending')
+                        )}
                       </button>
                     </div>
                   ))}

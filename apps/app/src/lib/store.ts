@@ -1,5 +1,6 @@
 import { resetAuthState } from '@/features/auth/store/auth-slice';
 import rootReducer from '@/features/auth/store/root-reducer';
+import { resetMessagingState } from '@/features/messaging/store/messaging-slice';
 import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
@@ -28,6 +29,7 @@ export const persistor = persistStore(store);
 // axios interceptor and Redux, kept out of lib/api.ts to avoid a circular import.
 setAuthFailureHandler(() => {
   store.dispatch(resetAuthState());
+  store.dispatch(resetMessagingState());
 });
 
 export type RootState = ReturnType<typeof store.getState>;

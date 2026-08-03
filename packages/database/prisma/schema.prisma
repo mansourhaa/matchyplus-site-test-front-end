@@ -163,6 +163,11 @@ model User {
   blocks_made       UserBlock[]   @relation("BlocksMade")
   blocks_received   UserBlock[]   @relation("BlocksReceived")
 
+  conversations_as_low  Conversation[] @relation("ConversationsAsLow")
+  conversations_as_high Conversation[] @relation("ConversationsAsHigh")
+  messages_sent         Message[]      @relation("MessagesSent")
+  message_likes         MessageLike[]
+
   @@index([email])
   @@index([phone])
   @@index([status])
@@ -295,9 +300,68 @@ model Match {
   user_high    User     @relation("MatchesAsHigh", fields: [user_high_id], references: [id], onDelete: Cascade)
   matched_at   DateTime @default(now())
 
+  conversation Conversation?
+
   @@unique([user_low_id, user_high_id])
   @@index([user_low_id])
   @@index([user_high_id])
+}
+
+enum MessageType {
+  TEXT
+  VOICE
+}
+
+/// 1:1 thread owned by the messaging feature. Created on mutual match; match_id is
+/// nulled on unmatch so history survives (composer stays read-only until rematch).
+model Conversation {
+  id           String   @id @default(cuid())
+  match_id     String?  @unique
+  match        Match?   @relation(fields: [match_id], references: [id], onDelete: SetNull)
+  user_low_id  String
+  user_low     User     @relation("ConversationsAsLow", fields: [user_low_id], references: [id], onDelete: Cascade)
+  user_high_id String
+  user_high    User     @relation("ConversationsAsHigh", fields: [user_high_id], references: [id], onDelete: Cascade)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  messages Message[]
+
+  @@unique([user_low_id, user_high_id])
+  @@index([user_low_id])
+  @@index([user_high_id])
+}
+
+model Message {
+  id              String       @id @default(cuid())
+  conversation_id String
+  conversation    Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  sender_id       String
+  sender          User         @relation("MessagesSent", fields: [sender_id], references: [id], onDelete: Cascade)
+  content         String       @default("") @db.Text
+  message_type    MessageType  @default(TEXT)
+  media_url       String?
+  is_read         Boolean      @default(false)
+  created_at      DateTime     @default(now())
+
+  likes MessageLike[]
+
+  @@index([conversation_id, created_at])
+  @@index([conversation_id, is_read])
+  @@index([sender_id, created_at])
+}
+
+/// Persisted double-tap like on a message (legacy Matchy had client-only likes).
+model MessageLike {
+  id         String   @id @default(cuid())
+  message_id String
+  message    Message  @relation(fields: [message_id], references: [id], onDelete: Cascade)
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+
+  @@unique([message_id, user_id])
+  @@index([user_id])
 }
 
 /// Dynamic GPS for discovery radius (preferred over static User.gps_*).

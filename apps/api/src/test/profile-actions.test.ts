@@ -275,6 +275,7 @@ describe('GET /api/v1/profiles/media/videos/:filename', () => {
           findFirst: vi.fn().mockResolvedValue({ id: 'owner-1' }),
         } as never,
         match: { findUnique: vi.fn().mockResolvedValue(null) } as never,
+        conversation: { findUnique: vi.fn().mockResolvedValue(null) } as never,
       },
     });
     apps.push(app);

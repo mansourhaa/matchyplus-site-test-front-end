@@ -3,15 +3,14 @@
  * from the browser is never trusted alone (it frequently lies, e.g. a WebM file labeled
  * video/mp4), so every upload is checked against its actual magic bytes. Ported from
  * matchy-plus-legacy's backend/src/utils/fileValidation.js, trimmed to only the
- * image/video rules this app actually uses (legacy's audio rules are dropped — no
- * audio-upload feature exists here).
+ * image/video/audio rules this app uses (voice notes for messaging).
  */
 
 type MagicRule = {
   mime: string;
   exts: string[];
   bytes: number[][];
-  kind?: 'ftyp' | 'riff-webp' | 'riff-avi';
+  kind?: 'ftyp' | 'riff-webp' | 'riff-avi' | 'riff-wave';
 };
 
 const MAGIC_RULES: MagicRule[] = [
@@ -26,6 +25,31 @@ const MAGIC_RULES: MagicRule[] = [
   { mime: 'video/ogg', exts: ['.ogv'], bytes: [[0x4f, 0x67, 0x67, 0x53]] },
   { mime: 'video/3gpp', exts: ['.3gp'], bytes: [[0x00, 0x00, 0x00]], kind: 'ftyp' },
   { mime: 'video/3gpp2', exts: ['.3g2'], bytes: [[0x00, 0x00, 0x00]], kind: 'ftyp' },
+  { mime: 'audio/webm', exts: ['.webm'], bytes: [[0x1a, 0x45, 0xdf, 0xa3]] },
+  { mime: 'audio/ogg', exts: ['.ogg'], bytes: [[0x4f, 0x67, 0x67, 0x53]] },
+  {
+    mime: 'audio/mpeg',
+    exts: ['.mp3'],
+    bytes: [
+      [0xff, 0xfb],
+      [0xff, 0xf3],
+      [0xff, 0xf2],
+      [0x49, 0x44, 0x33],
+    ],
+  },
+  { mime: 'audio/mp4', exts: ['.m4a'], bytes: [[0x00, 0x00, 0x00]], kind: 'ftyp' },
+  { mime: 'audio/m4a', exts: ['.m4a'], bytes: [[0x00, 0x00, 0x00]], kind: 'ftyp' },
+  { mime: 'audio/x-m4a', exts: ['.m4a'], bytes: [[0x00, 0x00, 0x00]], kind: 'ftyp' },
+  { mime: 'audio/wav', exts: ['.wav'], bytes: [[0x52, 0x49, 0x46, 0x46]], kind: 'riff-wave' },
+  { mime: 'audio/x-wav', exts: ['.wav'], bytes: [[0x52, 0x49, 0x46, 0x46]], kind: 'riff-wave' },
+  {
+    mime: 'audio/aac',
+    exts: ['.aac'],
+    bytes: [
+      [0xff, 0xf1],
+      [0xff, 0xf9],
+    ],
+  },
 ];
 
 const FTYP_EXTS = new Set(['.mp4', '.mov', '.3gp', '.3g2']);
@@ -56,6 +80,7 @@ function matchesRiffForm(head: Buffer, form: string): boolean {
 function ruleMatchesHead(rule: MagicRule, head: Buffer, ext: string): boolean {
   if (rule.kind === 'riff-avi') return matchesRiffForm(head, 'AVI ');
   if (rule.kind === 'riff-webp') return matchesRiffForm(head, 'WEBP');
+  if (rule.kind === 'riff-wave') return matchesRiffForm(head, 'WAVE');
 
   if (matchesMagic(head, rule.bytes)) return true;
 

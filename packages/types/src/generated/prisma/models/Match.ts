@@ -174,6 +174,10 @@ export type MatchWhereInput = {
   matched_at?: Prisma.DateTimeFilter<'Match'> | Date | string;
   user_low?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
   user_high?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
+  conversation?: Prisma.XOR<
+    Prisma.ConversationNullableScalarRelationFilter,
+    Prisma.ConversationWhereInput
+  > | null;
 };
 
 export type MatchOrderByWithRelationInput = {
@@ -183,6 +187,7 @@ export type MatchOrderByWithRelationInput = {
   matched_at?: Prisma.SortOrder;
   user_low?: Prisma.UserOrderByWithRelationInput;
   user_high?: Prisma.UserOrderByWithRelationInput;
+  conversation?: Prisma.ConversationOrderByWithRelationInput;
 };
 
 export type MatchWhereUniqueInput = Prisma.AtLeast<
@@ -197,6 +202,10 @@ export type MatchWhereUniqueInput = Prisma.AtLeast<
     matched_at?: Prisma.DateTimeFilter<'Match'> | Date | string;
     user_low?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
     user_high?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
+    conversation?: Prisma.XOR<
+      Prisma.ConversationNullableScalarRelationFilter,
+      Prisma.ConversationWhereInput
+    > | null;
   },
   'id' | 'user_low_id_user_high_id'
 >;
@@ -226,6 +235,7 @@ export type MatchCreateInput = {
   matched_at?: Date | string;
   user_low: Prisma.UserCreateNestedOneWithoutMatches_as_lowInput;
   user_high: Prisma.UserCreateNestedOneWithoutMatches_as_highInput;
+  conversation?: Prisma.ConversationCreateNestedOneWithoutMatchInput;
 };
 
 export type MatchUncheckedCreateInput = {
@@ -233,6 +243,7 @@ export type MatchUncheckedCreateInput = {
   user_low_id: string;
   user_high_id: string;
   matched_at?: Date | string;
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutMatchInput;
 };
 
 export type MatchUpdateInput = {
@@ -240,6 +251,7 @@ export type MatchUpdateInput = {
   matched_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   user_low?: Prisma.UserUpdateOneRequiredWithoutMatches_as_lowNestedInput;
   user_high?: Prisma.UserUpdateOneRequiredWithoutMatches_as_highNestedInput;
+  conversation?: Prisma.ConversationUpdateOneWithoutMatchNestedInput;
 };
 
 export type MatchUncheckedUpdateInput = {
@@ -247,6 +259,7 @@ export type MatchUncheckedUpdateInput = {
   user_low_id?: Prisma.StringFieldUpdateOperationsInput | string;
   user_high_id?: Prisma.StringFieldUpdateOperationsInput | string;
   matched_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutMatchNestedInput;
 };
 
 export type MatchCreateManyInput = {
@@ -302,6 +315,11 @@ export type MatchMinOrderByAggregateInput = {
   user_low_id?: Prisma.SortOrder;
   user_high_id?: Prisma.SortOrder;
   matched_at?: Prisma.SortOrder;
+};
+
+export type MatchNullableScalarRelationFilter = {
+  is?: Prisma.MatchWhereInput | null;
+  isNot?: Prisma.MatchWhereInput | null;
 };
 
 export type MatchCreateNestedManyWithoutUser_lowInput = {
@@ -476,16 +494,46 @@ export type MatchUncheckedUpdateManyWithoutUser_highNestedInput = {
   deleteMany?: Prisma.MatchScalarWhereInput | Prisma.MatchScalarWhereInput[];
 };
 
+export type MatchCreateNestedOneWithoutConversationInput = {
+  create?: Prisma.XOR<
+    Prisma.MatchCreateWithoutConversationInput,
+    Prisma.MatchUncheckedCreateWithoutConversationInput
+  >;
+  connectOrCreate?: Prisma.MatchCreateOrConnectWithoutConversationInput;
+  connect?: Prisma.MatchWhereUniqueInput;
+};
+
+export type MatchUpdateOneWithoutConversationNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.MatchCreateWithoutConversationInput,
+    Prisma.MatchUncheckedCreateWithoutConversationInput
+  >;
+  connectOrCreate?: Prisma.MatchCreateOrConnectWithoutConversationInput;
+  upsert?: Prisma.MatchUpsertWithoutConversationInput;
+  disconnect?: Prisma.MatchWhereInput | boolean;
+  delete?: Prisma.MatchWhereInput | boolean;
+  connect?: Prisma.MatchWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.MatchUpdateToOneWithWhereWithoutConversationInput,
+      Prisma.MatchUpdateWithoutConversationInput
+    >,
+    Prisma.MatchUncheckedUpdateWithoutConversationInput
+  >;
+};
+
 export type MatchCreateWithoutUser_lowInput = {
   id?: string;
   matched_at?: Date | string;
   user_high: Prisma.UserCreateNestedOneWithoutMatches_as_highInput;
+  conversation?: Prisma.ConversationCreateNestedOneWithoutMatchInput;
 };
 
 export type MatchUncheckedCreateWithoutUser_lowInput = {
   id?: string;
   user_high_id: string;
   matched_at?: Date | string;
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutMatchInput;
 };
 
 export type MatchCreateOrConnectWithoutUser_lowInput = {
@@ -505,12 +553,14 @@ export type MatchCreateWithoutUser_highInput = {
   id?: string;
   matched_at?: Date | string;
   user_low: Prisma.UserCreateNestedOneWithoutMatches_as_lowInput;
+  conversation?: Prisma.ConversationCreateNestedOneWithoutMatchInput;
 };
 
 export type MatchUncheckedCreateWithoutUser_highInput = {
   id?: string;
   user_low_id: string;
   matched_at?: Date | string;
+  conversation?: Prisma.ConversationUncheckedCreateNestedOneWithoutMatchInput;
 };
 
 export type MatchCreateOrConnectWithoutUser_highInput = {
@@ -592,6 +642,62 @@ export type MatchUpdateManyWithWhereWithoutUser_highInput = {
   >;
 };
 
+export type MatchCreateWithoutConversationInput = {
+  id?: string;
+  matched_at?: Date | string;
+  user_low: Prisma.UserCreateNestedOneWithoutMatches_as_lowInput;
+  user_high: Prisma.UserCreateNestedOneWithoutMatches_as_highInput;
+};
+
+export type MatchUncheckedCreateWithoutConversationInput = {
+  id?: string;
+  user_low_id: string;
+  user_high_id: string;
+  matched_at?: Date | string;
+};
+
+export type MatchCreateOrConnectWithoutConversationInput = {
+  where: Prisma.MatchWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.MatchCreateWithoutConversationInput,
+    Prisma.MatchUncheckedCreateWithoutConversationInput
+  >;
+};
+
+export type MatchUpsertWithoutConversationInput = {
+  update: Prisma.XOR<
+    Prisma.MatchUpdateWithoutConversationInput,
+    Prisma.MatchUncheckedUpdateWithoutConversationInput
+  >;
+  create: Prisma.XOR<
+    Prisma.MatchCreateWithoutConversationInput,
+    Prisma.MatchUncheckedCreateWithoutConversationInput
+  >;
+  where?: Prisma.MatchWhereInput;
+};
+
+export type MatchUpdateToOneWithWhereWithoutConversationInput = {
+  where?: Prisma.MatchWhereInput;
+  data: Prisma.XOR<
+    Prisma.MatchUpdateWithoutConversationInput,
+    Prisma.MatchUncheckedUpdateWithoutConversationInput
+  >;
+};
+
+export type MatchUpdateWithoutConversationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  matched_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  user_low?: Prisma.UserUpdateOneRequiredWithoutMatches_as_lowNestedInput;
+  user_high?: Prisma.UserUpdateOneRequiredWithoutMatches_as_highNestedInput;
+};
+
+export type MatchUncheckedUpdateWithoutConversationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  user_low_id?: Prisma.StringFieldUpdateOperationsInput | string;
+  user_high_id?: Prisma.StringFieldUpdateOperationsInput | string;
+  matched_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+};
+
 export type MatchCreateManyUser_lowInput = {
   id?: string;
   user_high_id: string;
@@ -608,12 +714,14 @@ export type MatchUpdateWithoutUser_lowInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   matched_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   user_high?: Prisma.UserUpdateOneRequiredWithoutMatches_as_highNestedInput;
+  conversation?: Prisma.ConversationUpdateOneWithoutMatchNestedInput;
 };
 
 export type MatchUncheckedUpdateWithoutUser_lowInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   user_high_id?: Prisma.StringFieldUpdateOperationsInput | string;
   matched_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutMatchNestedInput;
 };
 
 export type MatchUncheckedUpdateManyWithoutUser_lowInput = {
@@ -626,12 +734,14 @@ export type MatchUpdateWithoutUser_highInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   matched_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   user_low?: Prisma.UserUpdateOneRequiredWithoutMatches_as_lowNestedInput;
+  conversation?: Prisma.ConversationUpdateOneWithoutMatchNestedInput;
 };
 
 export type MatchUncheckedUpdateWithoutUser_highInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   user_low_id?: Prisma.StringFieldUpdateOperationsInput | string;
   matched_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  conversation?: Prisma.ConversationUncheckedUpdateOneWithoutMatchNestedInput;
 };
 
 export type MatchUncheckedUpdateManyWithoutUser_highInput = {
@@ -650,6 +760,7 @@ export type MatchSelect<
     matched_at?: boolean;
     user_low?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
     user_high?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+    conversation?: boolean | Prisma.Match$conversationArgs<ExtArgs>;
   },
   ExtArgs['result']['match']
 >;
@@ -700,6 +811,7 @@ export type MatchInclude<
 > = {
   user_low?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
   user_high?: boolean | Prisma.UserDefaultArgs<ExtArgs>;
+  conversation?: boolean | Prisma.Match$conversationArgs<ExtArgs>;
 };
 export type MatchIncludeCreateManyAndReturn<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
@@ -721,6 +833,7 @@ export type $MatchPayload<
   objects: {
     user_low: Prisma.$UserPayload<ExtArgs>;
     user_high: Prisma.$UserPayload<ExtArgs>;
+    conversation: Prisma.$ConversationPayload<ExtArgs> | null;
   };
   scalars: runtime.Types.Extensions.GetPayloadResult<
     {
@@ -1266,6 +1379,19 @@ export interface Prisma__MatchClient<
     ExtArgs,
     GlobalOmitOptions
   >;
+  conversation<T extends Prisma.Match$conversationArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.Match$conversationArgs<ExtArgs>>,
+  ): Prisma.Prisma__ConversationClient<
+    runtime.Types.Result.GetResult<
+      Prisma.$ConversationPayload<ExtArgs>,
+      T,
+      'findUniqueOrThrow',
+      GlobalOmitOptions
+    > | null,
+    null,
+    ExtArgs,
+    GlobalOmitOptions
+  >;
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1726,6 +1852,27 @@ export type MatchDeleteManyArgs<
    * Limit how many Matches to delete.
    */
   limit?: number;
+};
+
+/**
+ * Match.conversation
+ */
+export type Match$conversationArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Conversation
+   */
+  select?: Prisma.ConversationSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Conversation
+   */
+  omit?: Prisma.ConversationOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ConversationInclude<ExtArgs> | null;
+  where?: Prisma.ConversationWhereInput;
 };
 
 /**

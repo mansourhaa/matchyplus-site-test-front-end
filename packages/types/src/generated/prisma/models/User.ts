@@ -571,6 +571,10 @@ export type UserWhereInput = {
   > | null;
   blocks_made?: Prisma.UserBlockListRelationFilter;
   blocks_received?: Prisma.UserBlockListRelationFilter;
+  conversations_as_low?: Prisma.ConversationListRelationFilter;
+  conversations_as_high?: Prisma.ConversationListRelationFilter;
+  messages_sent?: Prisma.MessageListRelationFilter;
+  message_likes?: Prisma.MessageLikeListRelationFilter;
 };
 
 export type UserOrderByWithRelationInput = {
@@ -638,6 +642,10 @@ export type UserOrderByWithRelationInput = {
   location?: Prisma.UserLocationOrderByWithRelationInput;
   blocks_made?: Prisma.UserBlockOrderByRelationAggregateInput;
   blocks_received?: Prisma.UserBlockOrderByRelationAggregateInput;
+  conversations_as_low?: Prisma.ConversationOrderByRelationAggregateInput;
+  conversations_as_high?: Prisma.ConversationOrderByRelationAggregateInput;
+  messages_sent?: Prisma.MessageOrderByRelationAggregateInput;
+  message_likes?: Prisma.MessageLikeOrderByRelationAggregateInput;
 };
 
 export type UserWhereUniqueInput = Prisma.AtLeast<
@@ -712,6 +720,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     > | null;
     blocks_made?: Prisma.UserBlockListRelationFilter;
     blocks_received?: Prisma.UserBlockListRelationFilter;
+    conversations_as_low?: Prisma.ConversationListRelationFilter;
+    conversations_as_high?: Prisma.ConversationListRelationFilter;
+    messages_sent?: Prisma.MessageListRelationFilter;
+    message_likes?: Prisma.MessageLikeListRelationFilter;
   },
   'id' | 'email' | 'phone' | 'google_id' | 'linkedin_id'
 >;
@@ -895,6 +907,10 @@ export type UserCreateInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateInput = {
@@ -962,6 +978,10 @@ export type UserUncheckedCreateInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserUpdateInput = {
@@ -1031,6 +1051,10 @@ export type UserUpdateInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateInput = {
@@ -1100,6 +1124,10 @@ export type UserUncheckedUpdateInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateManyInput = {
@@ -1809,6 +1837,110 @@ export type UserUpdateOneRequiredWithoutMatches_as_highNestedInput = {
   >;
 };
 
+export type UserCreateNestedOneWithoutConversations_as_lowInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutConversations_as_lowInput,
+    Prisma.UserUncheckedCreateWithoutConversations_as_lowInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversations_as_lowInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserCreateNestedOneWithoutConversations_as_highInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutConversations_as_highInput,
+    Prisma.UserUncheckedCreateWithoutConversations_as_highInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversations_as_highInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutConversations_as_lowNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutConversations_as_lowInput,
+    Prisma.UserUncheckedCreateWithoutConversations_as_lowInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversations_as_lowInput;
+  upsert?: Prisma.UserUpsertWithoutConversations_as_lowInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutConversations_as_lowInput,
+      Prisma.UserUpdateWithoutConversations_as_lowInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutConversations_as_lowInput
+  >;
+};
+
+export type UserUpdateOneRequiredWithoutConversations_as_highNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutConversations_as_highInput,
+    Prisma.UserUncheckedCreateWithoutConversations_as_highInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversations_as_highInput;
+  upsert?: Prisma.UserUpsertWithoutConversations_as_highInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutConversations_as_highInput,
+      Prisma.UserUpdateWithoutConversations_as_highInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutConversations_as_highInput
+  >;
+};
+
+export type UserCreateNestedOneWithoutMessages_sentInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutMessages_sentInput,
+    Prisma.UserUncheckedCreateWithoutMessages_sentInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMessages_sentInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutMessages_sentNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutMessages_sentInput,
+    Prisma.UserUncheckedCreateWithoutMessages_sentInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMessages_sentInput;
+  upsert?: Prisma.UserUpsertWithoutMessages_sentInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutMessages_sentInput,
+      Prisma.UserUpdateWithoutMessages_sentInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutMessages_sentInput
+  >;
+};
+
+export type UserCreateNestedOneWithoutMessage_likesInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutMessage_likesInput,
+    Prisma.UserUncheckedCreateWithoutMessage_likesInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMessage_likesInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutMessage_likesNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutMessage_likesInput,
+    Prisma.UserUncheckedCreateWithoutMessage_likesInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMessage_likesInput;
+  upsert?: Prisma.UserUpsertWithoutMessage_likesInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutMessage_likesInput,
+      Prisma.UserUpdateWithoutMessage_likesInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutMessage_likesInput
+  >;
+};
+
 export type UserCreateNestedOneWithoutLocationInput = {
   create?: Prisma.XOR<
     Prisma.UserCreateWithoutLocationInput,
@@ -1979,6 +2111,10 @@ export type UserCreateWithoutRefresh_tokensInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutRefresh_tokensInput = {
@@ -2045,6 +2181,10 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutRefresh_tokensInput = {
@@ -2141,6 +2281,10 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
@@ -2209,6 +2353,10 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutOtp_challengesInput = {
@@ -2275,6 +2423,10 @@ export type UserCreateWithoutOtp_challengesInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutOtp_challengesInput = {
@@ -2341,6 +2493,10 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutOtp_challengesInput = {
@@ -2437,6 +2593,10 @@ export type UserUpdateWithoutOtp_challengesInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutOtp_challengesInput = {
@@ -2505,6 +2665,10 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutOauth_exchange_codesInput = {
@@ -2571,6 +2735,10 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
@@ -2637,6 +2805,10 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutOauth_exchange_codesInput = {
@@ -2733,6 +2905,10 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
@@ -2801,6 +2977,10 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutReports_madeInput = {
@@ -2867,6 +3047,10 @@ export type UserCreateWithoutReports_madeInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutReports_madeInput = {
@@ -2933,6 +3117,10 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutReports_madeInput = {
@@ -3007,6 +3195,10 @@ export type UserCreateWithoutReports_receivedInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutReports_receivedInput = {
@@ -3073,6 +3265,10 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutReports_receivedInput = {
@@ -3169,6 +3365,10 @@ export type UserUpdateWithoutReports_madeInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutReports_madeInput = {
@@ -3237,6 +3437,10 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUpsertWithoutReports_receivedInput = {
@@ -3325,6 +3529,10 @@ export type UserUpdateWithoutReports_receivedInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutReports_receivedInput = {
@@ -3393,6 +3601,10 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutSwipes_madeInput = {
@@ -3459,6 +3671,10 @@ export type UserCreateWithoutSwipes_madeInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutSwipes_madeInput = {
@@ -3525,6 +3741,10 @@ export type UserUncheckedCreateWithoutSwipes_madeInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutSwipes_madeInput = {
@@ -3599,6 +3819,10 @@ export type UserCreateWithoutSwipes_receivedInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutSwipes_receivedInput = {
@@ -3665,6 +3889,10 @@ export type UserUncheckedCreateWithoutSwipes_receivedInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutSwipes_receivedInput = {
@@ -3761,6 +3989,10 @@ export type UserUpdateWithoutSwipes_madeInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutSwipes_madeInput = {
@@ -3829,6 +4061,10 @@ export type UserUncheckedUpdateWithoutSwipes_madeInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUpsertWithoutSwipes_receivedInput = {
@@ -3917,6 +4153,10 @@ export type UserUpdateWithoutSwipes_receivedInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
@@ -3985,6 +4225,10 @@ export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutSwipe_logsInput = {
@@ -4051,6 +4295,10 @@ export type UserCreateWithoutSwipe_logsInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutSwipe_logsInput = {
@@ -4117,6 +4365,10 @@ export type UserUncheckedCreateWithoutSwipe_logsInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutSwipe_logsInput = {
@@ -4191,6 +4443,10 @@ export type UserCreateWithoutSwipe_log_targetsInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
@@ -4257,6 +4513,10 @@ export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutSwipe_log_targetsInput = {
@@ -4353,6 +4613,10 @@ export type UserUpdateWithoutSwipe_logsInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutSwipe_logsInput = {
@@ -4421,6 +4685,10 @@ export type UserUncheckedUpdateWithoutSwipe_logsInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUpsertWithoutSwipe_log_targetsInput = {
@@ -4509,6 +4777,10 @@ export type UserUpdateWithoutSwipe_log_targetsInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
@@ -4577,6 +4849,10 @@ export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutMatches_as_lowInput = {
@@ -4643,6 +4919,10 @@ export type UserCreateWithoutMatches_as_lowInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutMatches_as_lowInput = {
@@ -4709,6 +4989,10 @@ export type UserUncheckedCreateWithoutMatches_as_lowInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutMatches_as_lowInput = {
@@ -4783,6 +5067,10 @@ export type UserCreateWithoutMatches_as_highInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutMatches_as_highInput = {
@@ -4849,6 +5137,10 @@ export type UserUncheckedCreateWithoutMatches_as_highInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutMatches_as_highInput = {
@@ -4945,6 +5237,10 @@ export type UserUpdateWithoutMatches_as_lowInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
@@ -5013,6 +5309,10 @@ export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUpsertWithoutMatches_as_highInput = {
@@ -5101,6 +5401,10 @@ export type UserUpdateWithoutMatches_as_highInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutMatches_as_highInput = {
@@ -5169,6 +5473,1258 @@ export type UserUncheckedUpdateWithoutMatches_as_highInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserCreateWithoutConversations_as_lowInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
+};
+
+export type UserUncheckedCreateWithoutConversations_as_lowInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
+};
+
+export type UserCreateOrConnectWithoutConversations_as_lowInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutConversations_as_lowInput,
+    Prisma.UserUncheckedCreateWithoutConversations_as_lowInput
+  >;
+};
+
+export type UserCreateWithoutConversations_as_highInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
+};
+
+export type UserUncheckedCreateWithoutConversations_as_highInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
+};
+
+export type UserCreateOrConnectWithoutConversations_as_highInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutConversations_as_highInput,
+    Prisma.UserUncheckedCreateWithoutConversations_as_highInput
+  >;
+};
+
+export type UserUpsertWithoutConversations_as_lowInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutConversations_as_lowInput,
+    Prisma.UserUncheckedUpdateWithoutConversations_as_lowInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutConversations_as_lowInput,
+    Prisma.UserUncheckedCreateWithoutConversations_as_lowInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutConversations_as_lowInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutConversations_as_lowInput,
+    Prisma.UserUncheckedUpdateWithoutConversations_as_lowInput
+  >;
+};
+
+export type UserUpdateWithoutConversations_as_lowInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutConversations_as_lowInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUpsertWithoutConversations_as_highInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutConversations_as_highInput,
+    Prisma.UserUncheckedUpdateWithoutConversations_as_highInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutConversations_as_highInput,
+    Prisma.UserUncheckedCreateWithoutConversations_as_highInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutConversations_as_highInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutConversations_as_highInput,
+    Prisma.UserUncheckedUpdateWithoutConversations_as_highInput
+  >;
+};
+
+export type UserUpdateWithoutConversations_as_highInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutConversations_as_highInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserCreateWithoutMessages_sentInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
+};
+
+export type UserUncheckedCreateWithoutMessages_sentInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
+};
+
+export type UserCreateOrConnectWithoutMessages_sentInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutMessages_sentInput,
+    Prisma.UserUncheckedCreateWithoutMessages_sentInput
+  >;
+};
+
+export type UserUpsertWithoutMessages_sentInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutMessages_sentInput,
+    Prisma.UserUncheckedUpdateWithoutMessages_sentInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutMessages_sentInput,
+    Prisma.UserUncheckedCreateWithoutMessages_sentInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutMessages_sentInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutMessages_sentInput,
+    Prisma.UserUncheckedUpdateWithoutMessages_sentInput
+  >;
+};
+
+export type UserUpdateWithoutMessages_sentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutMessages_sentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserCreateWithoutMessage_likesInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+};
+
+export type UserUncheckedCreateWithoutMessage_likesInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+};
+
+export type UserCreateOrConnectWithoutMessage_likesInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutMessage_likesInput,
+    Prisma.UserUncheckedCreateWithoutMessage_likesInput
+  >;
+};
+
+export type UserUpsertWithoutMessage_likesInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutMessage_likesInput,
+    Prisma.UserUncheckedUpdateWithoutMessage_likesInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutMessage_likesInput,
+    Prisma.UserUncheckedCreateWithoutMessage_likesInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutMessage_likesInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutMessage_likesInput,
+    Prisma.UserUncheckedUpdateWithoutMessage_likesInput
+  >;
+};
+
+export type UserUpdateWithoutMessage_likesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutMessage_likesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
 };
 
 export type UserCreateWithoutLocationInput = {
@@ -5235,6 +6791,10 @@ export type UserCreateWithoutLocationInput = {
   matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutLocationInput = {
@@ -5301,6 +6861,10 @@ export type UserUncheckedCreateWithoutLocationInput = {
   matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutLocationInput = {
@@ -5397,6 +6961,10 @@ export type UserUpdateWithoutLocationInput = {
   matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutLocationInput = {
@@ -5465,6 +7033,10 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutBlocks_madeInput = {
@@ -5531,6 +7103,10 @@ export type UserCreateWithoutBlocks_madeInput = {
   matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutBlocks_madeInput = {
@@ -5597,6 +7173,10 @@ export type UserUncheckedCreateWithoutBlocks_madeInput = {
   matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutBlocks_madeInput = {
@@ -5671,6 +7251,10 @@ export type UserCreateWithoutBlocks_receivedInput = {
   matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutBlocks_receivedInput = {
@@ -5737,6 +7321,10 @@ export type UserUncheckedCreateWithoutBlocks_receivedInput = {
   matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutBlocks_receivedInput = {
@@ -5833,6 +7421,10 @@ export type UserUpdateWithoutBlocks_madeInput = {
   matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutBlocks_madeInput = {
@@ -5901,6 +7493,10 @@ export type UserUncheckedUpdateWithoutBlocks_madeInput = {
   matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUpsertWithoutBlocks_receivedInput = {
@@ -5989,6 +7585,10 @@ export type UserUpdateWithoutBlocks_receivedInput = {
   matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
@@ -6057,6 +7657,10 @@ export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
   matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutAiJobsInput = {
@@ -6123,6 +7727,10 @@ export type UserCreateWithoutAiJobsInput = {
   location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutAiJobsInput = {
@@ -6189,6 +7797,10 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutAiJobsInput = {
@@ -6285,6 +7897,10 @@ export type UserUpdateWithoutAiJobsInput = {
   location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutAiJobsInput = {
@@ -6353,6 +7969,10 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 /**
@@ -6374,6 +7994,10 @@ export type UserCountOutputType = {
   matches_as_high: number;
   blocks_made: number;
   blocks_received: number;
+  conversations_as_low: number;
+  conversations_as_high: number;
+  messages_sent: number;
+  message_likes: number;
 };
 
 export type UserCountOutputTypeSelect<
@@ -6393,6 +8017,10 @@ export type UserCountOutputTypeSelect<
   matches_as_high?: boolean | UserCountOutputTypeCountMatches_as_highArgs;
   blocks_made?: boolean | UserCountOutputTypeCountBlocks_madeArgs;
   blocks_received?: boolean | UserCountOutputTypeCountBlocks_receivedArgs;
+  conversations_as_low?: boolean | UserCountOutputTypeCountConversations_as_lowArgs;
+  conversations_as_high?: boolean | UserCountOutputTypeCountConversations_as_highArgs;
+  messages_sent?: boolean | UserCountOutputTypeCountMessages_sentArgs;
+  message_likes?: boolean | UserCountOutputTypeCountMessage_likesArgs;
 };
 
 /**
@@ -6533,6 +8161,42 @@ export type UserCountOutputTypeCountBlocks_receivedArgs<
   where?: Prisma.UserBlockWhereInput;
 };
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountConversations_as_lowArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.ConversationWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountConversations_as_highArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.ConversationWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountMessages_sentArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.MessageWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountMessage_likesArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.MessageLikeWhereInput;
+};
+
 export type UserSelect<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = runtime.Types.Extensions.GetSelect<
@@ -6601,6 +8265,10 @@ export type UserSelect<
     location?: boolean | Prisma.User$locationArgs<ExtArgs>;
     blocks_made?: boolean | Prisma.User$blocks_madeArgs<ExtArgs>;
     blocks_received?: boolean | Prisma.User$blocks_receivedArgs<ExtArgs>;
+    conversations_as_low?: boolean | Prisma.User$conversations_as_lowArgs<ExtArgs>;
+    conversations_as_high?: boolean | Prisma.User$conversations_as_highArgs<ExtArgs>;
+    messages_sent?: boolean | Prisma.User$messages_sentArgs<ExtArgs>;
+    message_likes?: boolean | Prisma.User$message_likesArgs<ExtArgs>;
     _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
   },
   ExtArgs['result']['user']
@@ -6844,6 +8512,10 @@ export type UserInclude<
   location?: boolean | Prisma.User$locationArgs<ExtArgs>;
   blocks_made?: boolean | Prisma.User$blocks_madeArgs<ExtArgs>;
   blocks_received?: boolean | Prisma.User$blocks_receivedArgs<ExtArgs>;
+  conversations_as_low?: boolean | Prisma.User$conversations_as_lowArgs<ExtArgs>;
+  conversations_as_high?: boolean | Prisma.User$conversations_as_highArgs<ExtArgs>;
+  messages_sent?: boolean | Prisma.User$messages_sentArgs<ExtArgs>;
+  message_likes?: boolean | Prisma.User$message_likesArgs<ExtArgs>;
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type UserIncludeCreateManyAndReturn<
@@ -6873,6 +8545,10 @@ export type $UserPayload<
     location: Prisma.$UserLocationPayload<ExtArgs> | null;
     blocks_made: Prisma.$UserBlockPayload<ExtArgs>[];
     blocks_received: Prisma.$UserBlockPayload<ExtArgs>[];
+    conversations_as_low: Prisma.$ConversationPayload<ExtArgs>[];
+    conversations_as_high: Prisma.$ConversationPayload<ExtArgs>[];
+    messages_sent: Prisma.$MessagePayload<ExtArgs>[];
+    message_likes: Prisma.$MessageLikePayload<ExtArgs>[];
   };
   scalars: runtime.Types.Extensions.GetPayloadResult<
     {
@@ -7607,6 +9283,50 @@ export interface Prisma__UserClient<
   ): Prisma.PrismaPromise<
     | runtime.Types.Result.GetResult<
         Prisma.$UserBlockPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  conversations_as_low<T extends Prisma.User$conversations_as_lowArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$conversations_as_lowArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$ConversationPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  conversations_as_high<T extends Prisma.User$conversations_as_highArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$conversations_as_highArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$ConversationPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  messages_sent<T extends Prisma.User$messages_sentArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$messages_sentArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$MessagePayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  message_likes<T extends Prisma.User$message_likesArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$message_likesArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$MessageLikePayload<ExtArgs>,
         T,
         'findMany',
         GlobalOmitOptions
@@ -8499,6 +10219,113 @@ export type User$blocks_receivedArgs<
   take?: number;
   skip?: number;
   distinct?: Prisma.UserBlockScalarFieldEnum | Prisma.UserBlockScalarFieldEnum[];
+};
+
+/**
+ * User.conversations_as_low
+ */
+export type User$conversations_as_lowArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Conversation
+   */
+  select?: Prisma.ConversationSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Conversation
+   */
+  omit?: Prisma.ConversationOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ConversationInclude<ExtArgs> | null;
+  where?: Prisma.ConversationWhereInput;
+  orderBy?:
+    Prisma.ConversationOrderByWithRelationInput | Prisma.ConversationOrderByWithRelationInput[];
+  cursor?: Prisma.ConversationWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.ConversationScalarFieldEnum | Prisma.ConversationScalarFieldEnum[];
+};
+
+/**
+ * User.conversations_as_high
+ */
+export type User$conversations_as_highArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Conversation
+   */
+  select?: Prisma.ConversationSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Conversation
+   */
+  omit?: Prisma.ConversationOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ConversationInclude<ExtArgs> | null;
+  where?: Prisma.ConversationWhereInput;
+  orderBy?:
+    Prisma.ConversationOrderByWithRelationInput | Prisma.ConversationOrderByWithRelationInput[];
+  cursor?: Prisma.ConversationWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.ConversationScalarFieldEnum | Prisma.ConversationScalarFieldEnum[];
+};
+
+/**
+ * User.messages_sent
+ */
+export type User$messages_sentArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Message
+   */
+  select?: Prisma.MessageSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Message
+   */
+  omit?: Prisma.MessageOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MessageInclude<ExtArgs> | null;
+  where?: Prisma.MessageWhereInput;
+  orderBy?: Prisma.MessageOrderByWithRelationInput | Prisma.MessageOrderByWithRelationInput[];
+  cursor?: Prisma.MessageWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.MessageScalarFieldEnum | Prisma.MessageScalarFieldEnum[];
+};
+
+/**
+ * User.message_likes
+ */
+export type User$message_likesArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the MessageLike
+   */
+  select?: Prisma.MessageLikeSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the MessageLike
+   */
+  omit?: Prisma.MessageLikeOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MessageLikeInclude<ExtArgs> | null;
+  where?: Prisma.MessageLikeWhereInput;
+  orderBy?:
+    Prisma.MessageLikeOrderByWithRelationInput | Prisma.MessageLikeOrderByWithRelationInput[];
+  cursor?: Prisma.MessageLikeWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.MessageLikeScalarFieldEnum | Prisma.MessageLikeScalarFieldEnum[];
 };
 
 /**

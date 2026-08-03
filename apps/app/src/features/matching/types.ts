@@ -43,6 +43,7 @@ export type MatchRow = {
   match_id: string;
   matched_at: string;
   matched_user_id: string;
+  conversation_id: string | null;
   profile: MatchingProfile | null;
 };
 
@@ -56,6 +57,7 @@ export type MatchSummary = {
   match_id: string;
   matched_at: string;
   matched_user_id: string;
+  conversation_id?: string | null;
 };
 
 export type SwipeResult = {

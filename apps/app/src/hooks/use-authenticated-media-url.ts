@@ -32,7 +32,7 @@ export function useAuthenticatedMediaUrl(
   });
   const resolved = resolveMediaUrl(storedValue);
   const isProtected = Boolean(
-    storedValue?.match(/^\/uploads\/(photos|videos)\/[0-9a-f-]{36}\.[a-z0-9]+$/i),
+    storedValue?.match(/^\/uploads\/(photos|videos|audio)\/[0-9a-f-]{36}\.[a-z0-9]+$/i),
   );
   const streamDirectly = Boolean(options.stream && storedValue?.startsWith('/uploads/videos/'));
 
