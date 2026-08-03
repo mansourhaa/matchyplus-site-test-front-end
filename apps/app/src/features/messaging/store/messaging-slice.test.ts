@@ -122,6 +122,52 @@ describe('messagingSlice', () => {
     expect(state.inbox[0]?.unread_count).toBe(0);
   });
 
+  it('keeps realtime messages when the initial fetch lands late', () => {
+    let state = messagingReducer(undefined, setActiveConversation('conv-1'));
+    state = messagingReducer(
+      state,
+      applyRealtimeMessage({
+        id: 'msg-live',
+        conversation_id: 'conv-1',
+        sender_id: 'peer',
+        content: 'arrived over the socket',
+        message_type: 'TEXT',
+        media_url: null,
+        is_read: false,
+        created_at: '2026-08-03T12:05:00.000Z',
+        liked_by_me: false,
+        like_count: 0,
+      }),
+    );
+
+    state = messagingReducer(state, {
+      type: 'messaging/fetchMessages/fulfilled',
+      meta: { arg: { conversationId: 'conv-1' } },
+      payload: {
+        conversationId: 'conv-1',
+        append: false,
+        messages: [
+          {
+            id: 'msg-old',
+            conversation_id: 'conv-1',
+            sender_id: 'peer',
+            content: 'from history',
+            message_type: 'TEXT',
+            media_url: null,
+            is_read: true,
+            created_at: '2026-08-03T12:00:00.000Z',
+            liked_by_me: false,
+            like_count: 0,
+          },
+        ],
+        next_cursor: null,
+        has_more: false,
+      },
+    });
+
+    expect(state.messages.map((m) => m.id)).toEqual(['msg-old', 'msg-live']);
+  });
+
   it('does not append a late send into a different active conversation', () => {
     let state = messagingReducer(undefined, setActiveConversation('conv-b'));
     state = messagingReducer(state, {

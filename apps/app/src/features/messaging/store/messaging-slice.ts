@@ -336,7 +336,13 @@ const messagingSlice = createSlice({
           const older = action.payload.messages.filter((m) => !existing.has(m.id));
           state.messages = [...older, ...state.messages];
         } else {
-          state.messages = action.payload.messages;
+          // Merge by id — realtime messages may have landed before this
+          // response and must not be wiped from the open thread.
+          const fetchedIds = new Set(action.payload.messages.map((m) => m.id));
+          const liveExtras = state.messages.filter((m) => !fetchedIds.has(m.id));
+          state.messages = [...action.payload.messages, ...liveExtras].sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+          );
         }
         state.nextCursor = action.payload.next_cursor;
         state.hasMore = action.payload.has_more;
