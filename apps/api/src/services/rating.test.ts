@@ -59,7 +59,7 @@ describe('RatingService', () => {
       },
     );
 
-    it('rejects when the two users have a block between them, before opening a transaction', async () => {
+    it('rejects when the two users have a block between them, checked inside the same transaction as the match/insert', async () => {
       const { service, prisma } = createService();
       prisma.userBlock.findFirst.mockResolvedValue({ id: 'block-1' });
 
@@ -67,7 +67,12 @@ describe('RatingService', () => {
         statusCode: 403,
         code: 'blocked',
       });
-      expect(prisma.$transaction).not.toHaveBeenCalled();
+      // The block check runs inside the transaction, before the match check — so a race
+      // where a block is created right after some other pre-check can't slip a rating
+      // through, since there is no separate pre-check to race against.
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.match.findUnique).not.toHaveBeenCalled();
+      expect(prisma.rating.create).not.toHaveBeenCalled();
     });
 
     it('rejects when the two users are not matched', async () => {
@@ -92,6 +97,7 @@ describe('RatingService', () => {
       const result = await service.rate('user-1', 'user-2', 5);
 
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.userBlock.findFirst).toHaveBeenCalled();
       expect(prisma.match.findUnique).toHaveBeenCalledWith({
         where: { user_low_id_user_high_id: { user_low_id: 'user-1', user_high_id: 'user-2' } },
         select: { id: true },

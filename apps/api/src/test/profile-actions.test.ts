@@ -393,12 +393,16 @@ describe('POST /api/v1/profiles/:id/rating', () => {
     expect(response.statusCode).toBe(400);
   });
 
-  it('rejects rating a profile you have a block with, before opening a transaction', async () => {
+  it('rejects rating a profile you have a block with, checked inside the transaction', async () => {
     const prisma = {
       user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() },
       userBlock: { findFirst: vi.fn().mockResolvedValue({ id: 'block-1' }) },
+      match: { findUnique: vi.fn() },
       $transaction: vi.fn(),
     };
+    prisma.$transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
+      callback(prisma),
+    );
     const app = await buildTestApp({ prisma: prisma as never });
     apps.push(app);
 
@@ -411,7 +415,8 @@ describe('POST /api/v1/profiles/:id/rating', () => {
 
     expect(response.statusCode).toBe(403);
     expect(response.json()).toMatchObject({ code: 'blocked' });
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.match.findUnique).not.toHaveBeenCalled();
   });
 
   it('rejects rating a profile you are not matched with', async () => {

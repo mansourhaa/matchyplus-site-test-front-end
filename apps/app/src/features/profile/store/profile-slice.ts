@@ -172,6 +172,9 @@ const profileSlice = createSlice({
         if (state.viewedProfile && state.viewedProfile.id === action.payload.userId) {
           state.viewedProfile.rating = action.payload.rating;
           state.viewedProfile.reviews = action.payload.reviews;
+          // Without this, reopening the same cached profile shows the star picker again
+          // until another submit attempt bounces off the API with already_rated.
+          state.viewedProfile.viewer_has_rated = true;
         }
       });
   },

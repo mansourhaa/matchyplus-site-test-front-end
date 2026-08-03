@@ -36,27 +36,29 @@ export class RatingService {
         throw badRequest('rating must be a whole number from 1 to 5', 'invalid_rating');
       }
 
-      const block = await this.prisma.userBlock.findFirst({
-        where: {
-          OR: [
-            { blocker_id: raterId, blocked_id: rateeId },
-            { blocker_id: rateeId, blocked_id: raterId },
-          ],
-        },
-        select: { id: true },
-      });
-      if (block) {
-        throw forbidden('interaction blocked with this user', 'blocked');
-      }
-
-      // The match check, duplicate check, insert, aggregate, and User update all run as
-      // one transaction — otherwise a second request racing the same rater/ratee pair can
-      // pass the pre-insert duplicate check before either commits, hit the unique index on
-      // the actual insert, and surface as a raw 500 instead of the intended already_rated
-      // response; worse, a failure partway through would leave a Rating row whose ratee
-      // never got their aggregate recomputed, breaking the "always a true average" guarantee.
+      // The block check, match check, duplicate check, insert, aggregate, and User update
+      // all run as one transaction — otherwise a second request racing the same rater/ratee
+      // pair can pass the pre-insert duplicate check before either commits, hit the unique
+      // index on the actual insert, and surface as a raw 500 instead of the intended
+      // already_rated response; worse, a failure partway through would leave a Rating row
+      // whose ratee never got their aggregate recomputed, breaking the "always a true
+      // average" guarantee. The block check is in here too — otherwise a block created
+      // between the pre-check and the insert could still let a rating commit.
       try {
         return await this.prisma.$transaction(async (tx) => {
+          const block = await tx.userBlock.findFirst({
+            where: {
+              OR: [
+                { blocker_id: raterId, blocked_id: rateeId },
+                { blocker_id: rateeId, blocked_id: raterId },
+              ],
+            },
+            select: { id: true },
+          });
+          if (block) {
+            throw forbidden('interaction blocked with this user', 'blocked');
+          }
+
           const pair = orderedUserPair(raterId, rateeId);
           const match = await tx.match.findUnique({
             where: {

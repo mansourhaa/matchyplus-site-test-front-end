@@ -6,6 +6,7 @@ import profileReducer, {
   deleteProfilePhoto,
   deleteProfileVideo,
   fetchPublicProfile,
+  rateProfile,
   uploadProfilePhoto,
   uploadProfileVideo,
 } from './profile-slice';
@@ -128,5 +129,23 @@ describe('profile-slice', () => {
     await store.dispatch(deleteProfileVideo());
 
     expect(api.delete).toHaveBeenCalledWith('/users/me/profile/video');
+  });
+
+  it('rateProfile marks the cached viewed profile as already rated, so reopening it does not show the picker again', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: { ...publicProfile, viewer_has_rated: false },
+    });
+    vi.mocked(api.post).mockResolvedValue({ data: { rating: 4.5, reviews: 3 } });
+    const store = buildStore();
+    await store.dispatch(fetchPublicProfile('user-2'));
+
+    await store.dispatch(rateProfile({ userId: 'user-2', value: 5 }));
+
+    expect(api.post).toHaveBeenCalledWith('/profiles/user-2/rating', { rating: 5 });
+    expect(store.getState().profile.viewedProfile).toMatchObject({
+      rating: 4.5,
+      reviews: 3,
+      viewer_has_rated: true,
+    });
   });
 });
