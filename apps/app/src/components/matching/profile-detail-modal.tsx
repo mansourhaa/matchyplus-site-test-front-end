@@ -147,6 +147,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
   );
   const [showSavedBanner, setShowSavedBanner] = useState(false);
   const [ratedProfileId, setRatedProfileId] = useState(profile.id);
+  const [syncedViewerHasRated, setSyncedViewerHasRated] = useState(profile.viewer_has_rated);
 
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportReason, setReportReason] = useState('fraude');
@@ -177,6 +178,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
   // changes — it avoids the extra render pass an effect would cause.
   if (ratedProfileId !== profile.id) {
     setRatedProfileId(profile.id);
+    setSyncedViewerHasRated(profile.viewer_has_rated);
     setSelectedRating(0);
     setIsSavingRating(false);
     setRatingOutcome(profile.viewer_has_rated ? 'already_rated' : null);
@@ -186,6 +188,19 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
     setReportDetails('');
     setIsReporting(false);
     setReportFeedback(null);
+  } else if (profile.viewer_has_rated !== syncedViewerHasRated) {
+    // Same profile, but viewer_has_rated changed — e.g. a background refresh of the
+    // viewed profile elsewhere in the app, not this component's own submit. The reset
+    // above only fires on an id change, so this keeps the picker from lingering once the
+    // prop catches up, without waiting for another submit to bounce off already_rated.
+    setSyncedViewerHasRated(profile.viewer_has_rated);
+    if (
+      profile.viewer_has_rated &&
+      ratingOutcome !== 'saved' &&
+      ratingOutcome !== 'already_rated'
+    ) {
+      setRatingOutcome('already_rated');
+    }
   }
 
   const handleSubmitRating = async () => {

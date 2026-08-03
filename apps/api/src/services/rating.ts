@@ -73,6 +73,13 @@ export class RatingService {
             throw forbidden('you can only rate a matched profile', 'not_matched');
           }
 
+          // Locks the ratee's own row for the rest of this transaction, so a second rater
+          // hitting the same ratee at the same time blocks here until this transaction
+          // commits — without it, both transactions can aggregate before either's insert
+          // is visible to the other and each overwrite User.rating/reviews with a partial
+          // average, losing one rater's contribution even though both Rating rows exist.
+          await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${rateeId} FOR UPDATE`;
+
           await tx.rating.create({ data: { rater_id: raterId, ratee_id: rateeId, value } });
 
           const aggregate = await tx.rating.aggregate({

@@ -10,6 +10,7 @@ function createMockPrisma() {
     match: { findUnique: vi.fn() },
     rating: { create: vi.fn(), aggregate: vi.fn() },
     user: { update: vi.fn() },
+    $queryRaw: vi.fn().mockResolvedValue(undefined),
     $transaction: vi.fn(),
   };
 }
@@ -102,6 +103,13 @@ describe('RatingService', () => {
         where: { user_low_id_user_high_id: { user_low_id: 'user-1', user_high_id: 'user-2' } },
         select: { id: true },
       });
+      // The ratee's row is locked for the rest of the transaction before the insert, so a
+      // concurrent rater targeting the same ratee serializes on this lock instead of both
+      // aggregating from a partial view of the Rating table.
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(prisma.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+        prisma.rating.create.mock.invocationCallOrder[0],
+      );
       expect(prisma.rating.create).toHaveBeenCalledWith({
         data: { rater_id: 'user-1', ratee_id: 'user-2', value: 5 },
       });

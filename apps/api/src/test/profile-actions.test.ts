@@ -453,6 +453,7 @@ describe('POST /api/v1/profiles/:id/rating', () => {
       userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
       match: { findUnique: vi.fn().mockResolvedValue({ id: 'match-1' }) },
       rating: { create: vi.fn().mockRejectedValue(uniqueViolation) },
+      $queryRaw: vi.fn().mockResolvedValue(undefined),
       $transaction: vi.fn(),
     };
     prisma.$transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
@@ -484,6 +485,7 @@ describe('POST /api/v1/profiles/:id/rating', () => {
         create: vi.fn().mockResolvedValue({ id: 'rating-1' }),
         aggregate: vi.fn().mockResolvedValue({ _avg: { value: 4 }, _count: 1 }),
       },
+      $queryRaw: vi.fn().mockResolvedValue(undefined),
       $transaction: vi.fn(),
     };
     prisma.$transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>

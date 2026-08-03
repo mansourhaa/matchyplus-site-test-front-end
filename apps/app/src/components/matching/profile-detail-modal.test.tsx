@@ -147,6 +147,35 @@ describe('ProfileDetailModal — rating', () => {
     expect(screen.queryByText('Votre avis a été bien enregistré')).not.toBeInTheDocument();
   });
 
+  it('syncs the already-rated state when viewer_has_rated flips to true for the same profile (e.g. a background refresh)', () => {
+    const store = buildStore();
+    const { rerender } = render(
+      <Provider store={store}>
+        <I18nProvider>
+          <ProfileDetailModal
+            profile={{ ...profile, matched: true, viewer_has_rated: false }}
+            onClose={() => {}}
+          />
+        </I18nProvider>
+      </Provider>,
+    );
+    expect(screen.getByText('Noter ce profil')).toBeInTheDocument();
+
+    rerender(
+      <Provider store={store}>
+        <I18nProvider>
+          <ProfileDetailModal
+            profile={{ ...profile, matched: true, viewer_has_rated: true }}
+            onClose={() => {}}
+          />
+        </I18nProvider>
+      </Provider>,
+    );
+
+    expect(screen.getByText('Vous avez déjà noté ce profil.')).toBeInTheDocument();
+    expect(screen.queryByText('Noter ce profil')).not.toBeInTheDocument();
+  });
+
   it('resets the rating selection when the modal is reused for a different profile', () => {
     const store = buildStore();
     const { rerender } = render(
