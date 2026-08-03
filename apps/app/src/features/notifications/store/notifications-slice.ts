@@ -8,11 +8,12 @@ type NotificationsState = {
   unreadCount: number;
   loading: boolean;
   error: string | null;
-  // Set when markAllNotificationsRead commits. A slower, already-in-flight fetch can
-  // resolve afterwards with a snapshot taken before that commit — this timestamp lets
-  // the merge below force any such stale-but-unread row to read, even one this client
-  // has never seen locally before (e.g. a view that landed just ahead of the mark-all).
-  markAllReadAt: string | null;
+  // Bumped by every mark-read / mark-all-read commit. fetchNotifications captures this
+  // value when it starts (see revisionAtStart below); if it no longer matches by the
+  // time the fetch resolves, a mark committed while that request was in flight and its
+  // snapshot can't be trusted — the fulfilled handler discards it instead of risking a
+  // stale unread row, or a stale unread_count, undoing what the mark already applied.
+  revision: number;
 };
 
 const initialState: NotificationsState = {
@@ -20,7 +21,7 @@ const initialState: NotificationsState = {
   unreadCount: 0,
   loading: false,
   error: null,
-  markAllReadAt: null,
+  revision: 0,
 };
 
 type ListResponse = {
@@ -28,14 +29,19 @@ type ListResponse = {
   unread_count: number;
 };
 
-export const fetchNotifications = createAsyncThunk('notifications/fetch', async () => {
-  try {
-    const response = await api.get<ListResponse>('/notifications');
-    return response.data;
-  } catch (error) {
-    throw new Error(getApiErrorCode(error) ?? 'notifications_fetch_failed');
-  }
-});
+export const fetchNotifications = createAsyncThunk(
+  'notifications/fetch',
+  async (_: void, { getState }) => {
+    const revisionAtStart = (getState() as { notifications: NotificationsState }).notifications
+      .revision;
+    try {
+      const response = await api.get<ListResponse>('/notifications');
+      return { ...response.data, revisionAtStart };
+    } catch (error) {
+      throw new Error(getApiErrorCode(error) ?? 'notifications_fetch_failed');
+    }
+  },
+);
 
 export const markNotificationRead = createAsyncThunk(
   'notifications/markRead',
@@ -67,32 +73,19 @@ const notificationsSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchNotifications.fulfilled, (state, action: PayloadAction<ListResponse>) => {
-        state.loading = false;
-        // A refetch triggered by a realtime push can land after a locally-applied
-        // mark-read/mark-all-read, but reflect a server snapshot taken before that commit —
-        // without this merge, that stale response would flip items back to unread. An item
-        // already known read locally stays read; one covered by a mark-all (its created_at
-        // predates markAllReadAt) is forced read too, even if this client never had it
-        // locally — otherwise a view that landed just ahead of the mark-all could resurface
-        // as unread. unreadCount comes from the server's total count (accurate beyond the
-        // paginated `items` page), only adjusted for exactly the rows this merge forced.
-        const locallyReadIds = new Set(
-          state.items.filter((item) => item.read).map((item) => item.id),
-        );
-        let forcedReadCount = 0;
-        state.items = action.payload.notifications.map((item) => {
-          if (item.read) return item;
-          const coveredByMarkAll =
-            state.markAllReadAt !== null && item.created_at <= state.markAllReadAt;
-          if (locallyReadIds.has(item.id) || coveredByMarkAll) {
-            forcedReadCount += 1;
-            return { ...item, read: true };
-          }
-          return item;
-        });
-        state.unreadCount = Math.max(0, action.payload.unread_count - forcedReadCount);
-      })
+      .addCase(
+        fetchNotifications.fulfilled,
+        (state, action: PayloadAction<ListResponse & { revisionAtStart: number }>) => {
+          state.loading = false;
+          // A mark-read/mark-all-read committed after this request started but before it
+          // resolved — its snapshot may predate that commit, so it's dropped rather than
+          // trusted. The next fetch (e.g. the one a realtime push triggers) will capture
+          // the current revision and apply cleanly.
+          if (action.payload.revisionAtStart !== state.revision) return;
+          state.items = action.payload.notifications;
+          state.unreadCount = action.payload.unread_count;
+        },
+      )
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'notifications_fetch_failed';
@@ -103,13 +96,14 @@ const notificationsSlice = createSlice({
           item.read = true;
           state.unreadCount = Math.max(0, state.unreadCount - 1);
         }
+        state.revision += 1;
       })
       .addCase(markAllNotificationsRead.fulfilled, (state) => {
         state.items.forEach((item) => {
           item.read = true;
         });
         state.unreadCount = 0;
-        state.markAllReadAt = new Date().toISOString();
+        state.revision += 1;
       });
   },
 });

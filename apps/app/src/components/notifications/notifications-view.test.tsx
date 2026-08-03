@@ -88,6 +88,10 @@ describe('NotificationsView', () => {
           },
         ],
         unread_count: 1,
+        // Matches the store's initial revision (0) — the reducer discards a fetch
+        // response whose revisionAtStart doesn't match the current revision, so this
+        // preload must look like a fetch dispatched before any mark action ran.
+        revisionAtStart: 0,
       },
     });
     vi.mocked(api.get).mockRejectedValue(new Error('network error'));

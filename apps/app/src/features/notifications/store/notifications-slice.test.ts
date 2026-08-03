@@ -85,23 +85,37 @@ describe('notifications-slice', () => {
     expect(store.getState().notifications.unreadCount).toBe(0);
   });
 
-  it('does not let a stale refetch (started before a mark-read committed) revert it back to unread', async () => {
-    vi.mocked(api.get).mockResolvedValue({ data: listResponse });
+  it('discards a fetch response entirely when a mark-read commits while it was still in flight', async () => {
+    let resolveFetch!: (value: { data: typeof listResponse }) => void;
+    vi.mocked(api.get).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveFetch = resolve;
+      }),
+    );
     vi.mocked(api.post).mockResolvedValue({ data: undefined });
     const store = buildStore();
-    await store.dispatch(fetchNotifications());
+
+    // Dispatched while state.revision is still 0 — this is what the fetch captures as
+    // revisionAtStart, before its GET has resolved.
+    const fetchPromise = store.dispatch(fetchNotifications());
+
+    // A mark-read commits (bumping revision to 1) before the GET above resolves.
     await store.dispatch(markNotificationRead('notif-1'));
-    expect(store.getState().notifications.items[0].read).toBe(true);
+    expect(store.getState().notifications.revision).toBe(1);
 
-    // Simulates a realtime-triggered refetch whose GET was in flight before the mark-read
-    // above committed server-side — it still reports notif-1 as unread.
-    await store.dispatch(fetchNotifications());
+    // The GET finally resolves with a stale snapshot (captured before the mark-read).
+    resolveFetch({ data: listResponse });
+    await fetchPromise;
 
-    expect(store.getState().notifications.items[0].read).toBe(true);
+    // revisionAtStart (0) no longer matches the current revision (1) — the response is
+    // dropped rather than applied, so it can neither resurrect notif-1 as unread nor
+    // overwrite unreadCount with a stale total.
+    expect(store.getState().notifications.items).toEqual([]);
     expect(store.getState().notifications.unreadCount).toBe(0);
+    expect(store.getState().notifications.loading).toBe(false);
   });
 
-  it('forces a stale unread row the client never saw locally to read once it predates a completed mark-all, without bumping the unread count', async () => {
+  it('applies a fetch dispatched after mark-all-read normally, trusting the server snapshot directly', async () => {
     vi.mocked(api.get).mockResolvedValueOnce({ data: listResponse });
     vi.mocked(api.post).mockResolvedValue({ data: undefined });
     const store = buildStore();
@@ -109,28 +123,14 @@ describe('notifications-slice', () => {
     await store.dispatch(markAllNotificationsRead());
     expect(store.getState().notifications.unreadCount).toBe(0);
 
-    // Simulates a slower GET, in flight before the mark-all above, resolving afterwards
-    // with a notification this client had never loaded before — still reported unread,
-    // but its created_at predates the mark-all, so the mark-all already covered it.
+    // A fresh fetch dispatched after the mark-all committed — its revisionAtStart matches
+    // the current revision, so it's trusted directly (a real server response at this
+    // point would already reflect the mark-all, unlike this canned mock).
     vi.mocked(api.get).mockResolvedValueOnce({
-      data: {
-        notifications: [
-          ...listResponse.notifications,
-          {
-            id: 'notif-0',
-            type: 'PROFILE_VIEW' as const,
-            data: { viewerId: 'user-4', viewerName: 'Amel' },
-            read: false,
-            created_at: '2026-01-01T00:00:00.000Z',
-          },
-        ],
-        unread_count: 1,
-      },
+      data: { notifications: listResponse.notifications, unread_count: 0 },
     });
     await store.dispatch(fetchNotifications());
 
-    const state = store.getState().notifications;
-    expect(state.items.find((item) => item.id === 'notif-0')?.read).toBe(true);
-    expect(state.unreadCount).toBe(0);
+    expect(store.getState().notifications.unreadCount).toBe(0);
   });
 });
