@@ -103,6 +103,75 @@ describe('messagingSlice', () => {
     expect(state.messages).toEqual([]);
   });
 
+  it('does not append a late send into a different active conversation', () => {
+    let state = messagingReducer(undefined, setActiveConversation('conv-b'));
+    state = messagingReducer(state, {
+      type: 'messaging/sendMessage/fulfilled',
+      payload: {
+        quota: {
+          plan: 'FREE',
+          unlimited: true,
+          used: null,
+          limit: null,
+          remaining: null,
+          resets_at: 'midnight_utc',
+        },
+        message: {
+          id: 'msg-late',
+          conversation_id: 'conv-a',
+          sender_id: 'me',
+          content: 'wrong thread',
+          message_type: 'TEXT',
+          media_url: null,
+          is_read: false,
+          created_at: '2026-08-03T12:02:00.000Z',
+          liked_by_me: false,
+          like_count: 0,
+        },
+      },
+    });
+
+    expect(state.sendLoading).toBe(false);
+    expect(state.quota?.unlimited).toBe(true);
+    expect(state.messages).toEqual([]);
+  });
+
+  it('clears inbox unread after the initial messages fetch', () => {
+    let state = messagingReducer(undefined, setActiveConversation('conv-1'));
+    state = {
+      ...state,
+      inbox: [
+        {
+          conversation_id: 'conv-1',
+          match_id: 'match-1',
+          has_active_match: true,
+          peer: null,
+          last_message: null,
+          unread_count: 3,
+          i_blocked: false,
+          blocked_me: false,
+          can_send: true,
+          updated_at: '2026-08-03T12:00:00.000Z',
+          created_at: '2026-08-03T12:00:00.000Z',
+        },
+      ],
+    };
+
+    state = messagingReducer(state, {
+      type: 'messaging/fetchMessages/fulfilled',
+      meta: { arg: { conversationId: 'conv-1' } },
+      payload: {
+        conversationId: 'conv-1',
+        append: false,
+        messages: [],
+        next_cursor: null,
+        has_more: false,
+      },
+    });
+
+    expect(state.inbox[0]?.unread_count).toBe(0);
+  });
+
   it('tracks peer typing for the active conversation only', () => {
     let state = messagingReducer(undefined, setActiveConversation('conv-1'));
     state = messagingReducer(state, setPeerTyping({ conversation_id: 'conv-1', typing: true }));

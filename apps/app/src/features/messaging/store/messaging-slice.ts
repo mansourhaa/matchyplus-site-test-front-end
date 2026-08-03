@@ -328,6 +328,11 @@ const messagingSlice = createSlice({
           state.messages = [...older, ...state.messages];
         } else {
           state.messages = action.payload.messages;
+          // Initial history fetch mark-reads on the server — clear local badge.
+          const inboxRow = state.inbox.find(
+            (row) => row.conversation_id === action.payload.conversationId,
+          );
+          if (inboxRow) inboxRow.unread_count = 0;
         }
         state.nextCursor = action.payload.next_cursor;
         state.hasMore = action.payload.has_more;
@@ -345,8 +350,12 @@ const messagingSlice = createSlice({
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.sendLoading = false;
         state.quota = action.payload.quota;
-        if (!state.messages.some((m) => m.id === action.payload.message.id)) {
-          state.messages.push(action.payload.message);
+        const message = action.payload.message;
+        if (
+          message.conversation_id === state.activeConversationId &&
+          !state.messages.some((m) => m.id === message.id)
+        ) {
+          state.messages.push(message);
         }
       })
       .addCase(sendMessage.rejected, (state, action) => {
@@ -360,8 +369,12 @@ const messagingSlice = createSlice({
       .addCase(uploadVoiceNote.fulfilled, (state, action) => {
         state.sendLoading = false;
         state.quota = action.payload.quota;
-        if (!state.messages.some((m) => m.id === action.payload.message.id)) {
-          state.messages.push(action.payload.message);
+        const message = action.payload.message;
+        if (
+          message.conversation_id === state.activeConversationId &&
+          !state.messages.some((m) => m.id === message.id)
+        ) {
+          state.messages.push(message);
         }
       })
       .addCase(uploadVoiceNote.rejected, (state, action) => {

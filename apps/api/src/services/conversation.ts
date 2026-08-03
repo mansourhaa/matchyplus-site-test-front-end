@@ -485,45 +485,57 @@ export class ConversationService {
         throw badRequest('media_url is required for voice messages');
       }
       if (mediaUrl) {
-        await this.assertOwnedUnusedAudio(userId, mediaUrl);
+        this.assertOwnedAudioUrl(userId, mediaUrl);
       }
 
       const { unlimited, limit } = await this.quota.resolveMessageQuota(userId);
 
-      const message = await this.prisma.$transaction(
-        async (tx) => {
-          if (!unlimited) {
-            const { start, end } = utcDayBounds();
-            const used = await tx.message.count({
-              where: {
+      let message;
+      try {
+        message = await this.prisma.$transaction(
+          async (tx) => {
+            if (mediaUrl) {
+              await this.assertUnusedAudioInTx(tx, mediaUrl);
+            }
+
+            if (!unlimited) {
+              const { start, end } = utcDayBounds();
+              const used = await tx.message.count({
+                where: {
+                  sender_id: userId,
+                  created_at: { gte: start, lt: end },
+                },
+              });
+              if (used >= (limit ?? 0)) {
+                throw tooManyRequests('daily message limit reached', 'message_quota_exceeded');
+              }
+            }
+
+            const created = await tx.message.create({
+              data: {
+                conversation_id: conversationId,
                 sender_id: userId,
-                created_at: { gte: start, lt: end },
+                content: messageType === MessageType.VOICE ? content || '' : content,
+                message_type: messageType,
+                media_url: mediaUrl,
               },
             });
-            if (used >= (limit ?? 0)) {
-              throw tooManyRequests('daily message limit reached', 'message_quota_exceeded');
-            }
-          }
 
-          const created = await tx.message.create({
-            data: {
-              conversation_id: conversationId,
-              sender_id: userId,
-              content: messageType === MessageType.VOICE ? content || '' : content,
-              message_type: messageType,
-              media_url: mediaUrl,
-            },
-          });
+            await tx.conversation.update({
+              where: { id: conversationId },
+              data: { updated_at: new Date() },
+            });
 
-          await tx.conversation.update({
-            where: { id: conversationId },
-            data: { updated_at: new Date() },
-          });
-
-          return created;
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      );
+            return created;
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        );
+      } catch (err) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+          throw badRequest('audio already used', 'audio_already_used');
+        }
+        throw err;
+      }
 
       const payload = {
         id: message.id,
@@ -554,25 +566,30 @@ export class ConversationService {
     }
   }
 
-  /** Voice URLs must be caller-owned (`{userId}_{uuid}.ext`) and unused by any message. */
-  private async assertOwnedUnusedAudio(userId: string, mediaUrl: string): Promise<void> {
-    try {
-      const escapedUserId = userId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const pattern = new RegExp(
-        `^/uploads/audio/${escapedUserId}_([0-9a-f-]{36}\\.[a-z0-9]+)$`,
-        'i',
-      );
-      if (!pattern.test(mediaUrl)) {
-        throw badRequest('invalid media_url', 'invalid_media_url');
-      }
+  /** Ownership format check only (no race). Disk + unused run inside the send transaction. */
+  private assertOwnedAudioUrl(userId: string, mediaUrl: string): void {
+    const escapedUserId = userId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(
+      `^/uploads/audio/${escapedUserId}_([0-9a-f-]{36}\\.[a-z0-9]+)$`,
+      'i',
+    );
+    if (!pattern.test(mediaUrl)) {
+      throw badRequest('invalid media_url', 'invalid_media_url');
+    }
+  }
 
+  private async assertUnusedAudioInTx(
+    tx: Prisma.TransactionClient,
+    mediaUrl: string,
+  ): Promise<void> {
+    try {
       const filename = mediaUrl.slice('/uploads/audio/'.length);
       const filePath = join(AUDIO_DIR, filename);
       if (!existsSync(filePath)) {
         throw badRequest('audio file not found', 'audio_not_found');
       }
 
-      const existing = await this.prisma.message.findFirst({
+      const existing = await tx.message.findFirst({
         where: { media_url: mediaUrl },
         select: { id: true },
       });

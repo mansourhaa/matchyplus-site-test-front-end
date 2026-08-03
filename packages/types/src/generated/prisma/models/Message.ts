@@ -225,6 +225,7 @@ export type MessageOrderByWithRelationInput = {
 export type MessageWhereUniqueInput = Prisma.AtLeast<
   {
     id?: string;
+    media_url?: string;
     AND?: Prisma.MessageWhereInput | Prisma.MessageWhereInput[];
     OR?: Prisma.MessageWhereInput[];
     NOT?: Prisma.MessageWhereInput | Prisma.MessageWhereInput[];
@@ -232,7 +233,6 @@ export type MessageWhereUniqueInput = Prisma.AtLeast<
     sender_id?: Prisma.StringFilter<'Message'> | string;
     content?: Prisma.StringFilter<'Message'> | string;
     message_type?: Prisma.EnumMessageTypeFilter<'Message'> | $Enums.MessageType;
-    media_url?: Prisma.StringNullableFilter<'Message'> | string | null;
     is_read?: Prisma.BoolFilter<'Message'> | boolean;
     created_at?: Prisma.DateTimeFilter<'Message'> | Date | string;
     conversation?: Prisma.XOR<
@@ -242,7 +242,7 @@ export type MessageWhereUniqueInput = Prisma.AtLeast<
     sender?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>;
     likes?: Prisma.MessageLikeListRelationFilter;
   },
-  'id'
+  'id' | 'media_url'
 >;
 
 export type MessageOrderByWithAggregationInput = {

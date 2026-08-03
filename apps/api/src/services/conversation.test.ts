@@ -1,8 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { existsSync } from 'node:fs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MessageType, UserPlan } from '@saas-boilerplate/types';
+import { MessageType, Prisma, UserPlan } from '@saas-boilerplate/types';
 
 import { ConversationService } from './conversation.js';
+
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs')>();
+  return {
+    ...actual,
+    existsSync: vi.fn(() => true),
+  };
+});
 
 function createMockPrisma() {
   const prisma = {
@@ -43,6 +52,10 @@ function createMockPrisma() {
 }
 
 describe('ConversationService', () => {
+  beforeEach(() => {
+    vi.mocked(existsSync).mockReturnValue(true);
+  });
+
   it('ensureForMatch creates a conversation for a new pair', async () => {
     const prisma = createMockPrisma();
     const created = {
@@ -241,6 +254,64 @@ describe('ConversationService', () => {
         media_url: '/uploads/audio/u2_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.webm',
       }),
     ).rejects.toMatchObject({ statusCode: 400, code: 'invalid_media_url' });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects reused voice media_url inside the send transaction', async () => {
+    const prisma = createMockPrisma();
+    const mediaUrl = '/uploads/audio/u1_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.webm';
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue({ plan: UserPlan.FREE });
+    prisma.plan.findUnique.mockResolvedValue({ messages_per_day: -1 });
+    prisma.message.findFirst.mockResolvedValue({ id: 'existing-msg' });
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', {
+        message_type: 'voice',
+        media_url: mediaUrl,
+      }),
+    ).rejects.toMatchObject({ statusCode: 400, code: 'audio_already_used' });
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.message.findFirst).toHaveBeenCalledWith({
+      where: { media_url: mediaUrl },
+      select: { id: true },
+    });
+    expect(prisma.message.create).not.toHaveBeenCalled();
+  });
+
+  it('maps unique media_url conflicts to audio_already_used', async () => {
+    const prisma = createMockPrisma();
+    const mediaUrl = '/uploads/audio/u1_bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.webm';
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue({ plan: UserPlan.FREE });
+    prisma.plan.findUnique.mockResolvedValue({ messages_per_day: -1 });
+    prisma.message.findFirst.mockResolvedValue(null);
+    const conflict = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: 'test',
+    });
+    prisma.message.create.mockRejectedValue(conflict);
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', {
+        message_type: 'voice',
+        media_url: mediaUrl,
+      }),
+    ).rejects.toMatchObject({ statusCode: 400, code: 'audio_already_used' });
   });
 
   it('toggles message likes', async () => {

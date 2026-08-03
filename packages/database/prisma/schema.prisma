@@ -340,7 +340,7 @@ model Message {
   sender          User         @relation("MessagesSent", fields: [sender_id], references: [id], onDelete: Cascade)
   content         String       @default("") @db.Text
   message_type    MessageType  @default(TEXT)
-  media_url       String?
+  media_url       String?      @unique
   is_read         Boolean      @default(false)
   created_at      DateTime     @default(now())
 
