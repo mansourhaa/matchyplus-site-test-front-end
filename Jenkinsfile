@@ -1,6 +1,9 @@
-// CI/CD. On every branch this is a build/scan/test gate; on dev it additionally
-// deploys to the staging environment on k3s via GitOps (see the CD stages at the
-// bottom), then runs OWASP ZAP + k6 against the deployed result.
+// CI only - runs on every branch, deploys nothing.
+//
+// This pipeline builds, scans, signs and pushes images, then stops. Promoting
+// any of those images to an environment is a separate, manually triggered job
+// driven by Jenkinsfile.cd, so a push can never deploy by itself and a deploy
+// never rebuilds. The image tag is the contract between the two.
 
 pipeline {
   agent any
@@ -34,29 +37,12 @@ pipeline {
     // app means editing this line and the build stage - not four stages.
     IMAGE_COMPONENTS = 'api app admin landing ai'
 
-    // staging hostnames (k3s + nginx ingress, resolved via the hosts file).
-    // NEXT_PUBLIC_* values are baked into the Next.js bundle at BUILD time, so
-    // the API URL has to be known here - it can't be injected at deploy time
-    // like a normal runtime env var.
-    STAGING_LANDING_HOST = 'staging.matchy.local'
-    STAGING_APP_HOST = 'app.staging.matchy.local'
-    STAGING_ADMIN_HOST = 'admin.staging.matchy.local'
-    STAGING_API_HOST = 'api.staging.matchy.local'
+    // Baked into the app/admin bundles at BUILD time. Next.js inlines
+    // NEXT_PUBLIC_* into the client bundle during the build, so this cannot be
+    // injected later as a runtime env var on the Deployment - the browser
+    // would call the Dockerfile's localhost default instead. It therefore has
+    // to live in CI even though it names a deploy-time environment.
     STAGING_API_URL = "http://api.staging.matchy.local/api/v1"
-
-    // GitOps repo that ArgoCD watches. Deploying = committing a new image tag
-    // here; ArgoCD does the actual apply.
-    GITOPS_REPO = 'github.com/MohamedAzizAguir/Matchy-GitOps.git'
-    GITOPS_STAGING_PATH = 'apps/staging/matchy-plus'
-
-    // Which branches are allowed to deploy to staging. Normally just 'dev'.
-    //
-    // TEMPORARY: feature/cd-staging-k3s is listed so the CD path can be
-    // rehearsed end-to-end before it is merged - deploying untested deploy
-    // automation straight onto dev is how you find out it is broken on dev.
-    // REMOVE that entry before merging; leaving it in means a feature branch
-    // can silently redeploy staging out from under dev.
-    STAGING_DEPLOY_BRANCHES = 'dev feature/cd-staging-k3s'
   }
 
   stages {
@@ -447,157 +433,6 @@ pipeline {
       }
     }
 
-    // ---------------------------------------------------------------- CD ---
-    // Everything below only runs on dev. Other branches stop at the CI gate -
-    // they build, scan and sign images, but never touch the staging cluster.
-
-    // Deploying = committing the new image tags to the GitOps repo. ArgoCD
-    // watches that repo and does the actual apply, so Jenkins never needs
-    // cluster write access for the deploy itself (only read access later, to
-    // wait for the rollout).
-    stage('Deploy to staging') {
-      when { expression { isStagingDeployBranch() } }
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'gitops-repo-creds', usernameVariable: 'GITOPS_USER', passwordVariable: 'GITOPS_TOKEN')]) {
-          sh '''#!/usr/bin/env bash
-            set -euo pipefail
-
-            rm -rf /tmp/gitops
-            git clone --depth 1 "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops
-            cd /tmp/gitops
-
-            for COMPONENT in $IMAGE_COMPONENTS; do
-              MANIFEST="${GITOPS_STAGING_PATH}/${COMPONENT}-deployment.yaml"
-              if [ ! -f "$MANIFEST" ]; then
-                echo "expected manifest missing: $MANIFEST" >&2
-                exit 1
-              fi
-              # each component deployment has exactly one image: line, so an
-              # anchored substitution is unambiguous here.
-              sed -i -E "s#^([[:space:]]*image:[[:space:]]*).*#\\1${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}#" "$MANIFEST"
-            done
-
-            git config user.email "jenkins@matchy.local"
-            git config user.name "Jenkins CI"
-
-            if git diff --quiet; then
-              echo "image tags already current, nothing to commit"
-            else
-              git add -A
-              git commit -m "ci(staging): deploy ${IMAGE_TAG}"
-              git push origin HEAD
-            fi
-          '''
-        }
-      }
-    }
-
-    // ArgoCD syncs on its own schedule, so "pushed" is not "running". This
-    // waits for the actual rollout before any test touches the environment -
-    // otherwise ZAP/k6 would happily scan the PREVIOUS deployment and report
-    // a green result for code that was never deployed.
-    stage('Wait for staging rollout') {
-      when { expression { isStagingDeployBranch() } }
-      steps {
-        withCredentials([file(credentialsId: 'kubeconfig-staging', variable: 'KUBECONFIG_FILE')]) {
-          sh '''#!/usr/bin/env bash
-            set -euo pipefail
-            export KUBECONFIG="$KUBECONFIG_FILE"
-
-            # give ArgoCD a chance to notice the commit before we start waiting
-            # on rollouts (default poll interval is 3m; this nudges it).
-            for i in $(seq 1 30); do
-              if kubectl -n argocd get application matchy-plus-staging \
-                   -o jsonpath='{.status.sync.revision}' 2>/dev/null | grep -q .; then
-                break
-              fi
-              sleep 5
-            done
-
-            for COMPONENT in $IMAGE_COMPONENTS; do
-              echo "--- waiting for $COMPONENT ---"
-              kubectl -n matchy-staging rollout status "deployment/$COMPONENT" --timeout=5m
-            done
-          '''
-        }
-      }
-    }
-
-    // DAST. Baseline scan = passive only (no attack traffic), which is the
-    // right call for an env that shares a host with the CI that builds it.
-    // Never fails the build: a new informational alert shouldn't block a
-    // deploy that already passed the real gates.
-    stage('DAST - OWASP ZAP') {
-      when { expression { isStagingDeployBranch() } }
-      steps {
-        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
-          sh '''#!/usr/bin/env bash
-            set -uo pipefail
-            mkdir -p reports/zap
-
-            # *.matchy.local only resolves via the hosts file on the k3s node,
-            # so the scanner container needs the mapping injected explicitly.
-            INGRESS_IP=$(getent hosts "$STAGING_API_HOST" | awk '{print $1}' | head -1)
-            INGRESS_IP="${INGRESS_IP:-192.168.137.200}"
-
-            for TARGET_HOST in "$STAGING_APP_HOST" "$STAGING_API_HOST"; do
-              SAFE_NAME=$(echo "$TARGET_HOST" | tr '.' '-')
-              docker run --rm \
-                --add-host "${TARGET_HOST}:${INGRESS_IP}" \
-                -v "$WORKSPACE/reports/zap:/zap/wrk:rw" \
-                ghcr.io/zaproxy/zaproxy:stable \
-                zap-baseline.py \
-                  -t "http://${TARGET_HOST}" \
-                  -J "zap-${SAFE_NAME}.json" \
-                  -r "zap-${SAFE_NAME}.html" \
-                  -m 2 -T 5 || echo "ZAP flagged findings for ${TARGET_HOST} (non-blocking)"
-            done
-          '''
-        }
-      }
-    }
-
-    // Load test. Thresholds live in the k6 script; a breach marks the build
-    // unstable rather than failing it, same policy as ZAP above.
-    stage('Performance - k6') {
-      when { expression { isStagingDeployBranch() } }
-      steps {
-        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
-          sh '''#!/usr/bin/env bash
-            set -uo pipefail
-            mkdir -p reports/k6
-
-            INGRESS_IP=$(getent hosts "$STAGING_API_HOST" | awk '{print $1}' | head -1)
-            INGRESS_IP="${INGRESS_IP:-192.168.137.200}"
-
-            docker run --rm \
-              --add-host "${STAGING_API_HOST}:${INGRESS_IP}" \
-              -e "API_BASE=http://${STAGING_API_HOST}" \
-              -v "$WORKSPACE/ci-scripts:/scripts:ro" \
-              -v "$WORKSPACE/reports/k6:/out:rw" \
-              grafana/k6:latest run \
-                --summary-export=/out/k6-summary.json \
-                /scripts/k6-staging-smoke.js
-          '''
-        }
-      }
-    }
-
-    stage('Publish security & performance report') {
-      when { expression { isStagingDeployBranch() } }
-      steps {
-        sh 'python3 ci-scripts/generate_dast_report.py --dest reports/dast'
-        publishHTML(target: [
-          reportDir: 'reports/dast',
-          reportFiles: 'index.html',
-          reportName: 'Matchy+ Staging DAST & Performance',
-          keepAll: true,
-          alwaysLinkToLastBuild: true
-        ])
-        archiveArtifacts artifacts: 'reports/zap/**,reports/k6/**,reports/dast/**', allowEmptyArchive: true
-      }
-    }
-
     stage('Publish report') {
       steps {
         sh 'python3 ci-scripts/generate_report.py --type dev --dest reports/final'
@@ -622,12 +457,4 @@ pipeline {
       """
     }
   }
-}
-
-// Single gate for every CD stage. Keeping it in one place means enabling or
-// disabling staging deploys is one edit to STAGING_DEPLOY_BRANCHES, rather
-// than five `when` blocks that can drift apart or get half-reverted.
-boolean isStagingDeployBranch() {
-  def branch = env.BRANCH_NAME ?: (env.GIT_BRANCH ?: '').replaceFirst('^origin/', '')
-  return (env.STAGING_DEPLOY_BRANCHES ?: 'dev').split(/\s+/).contains(branch)
 }

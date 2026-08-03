@@ -1,0 +1,289 @@
+// CD only. Deploys an already-built, already-signed set of images to staging.
+//
+// This is deliberately a separate job from the CI pipeline (Jenkinsfile):
+//
+//   CI  - multibranch, runs on every branch, on every push. Builds, scans,
+//         signs and pushes images. Never touches a cluster.
+//   CD  - this file. One job, manual trigger, deploys a chosen IMAGE_TAG.
+//
+// The image tag is the contract between them: CI produces tags, CD consumes
+// one. That means a deploy never rebuilds anything - what reaches staging is
+// bit-for-bit what CI scanned and signed, which is the whole point of signing
+// images in the first place.
+//
+// Job setup in Jenkins (Pipeline job, NOT multibranch):
+//   Definition:  Pipeline script from SCM
+//   SCM:         git, this repo, credentials jenkins-matchyplus-checkout
+//   Branch:      */dev
+//   Script Path: Jenkinsfile.cd
+//   Do NOT add a build trigger - this job is started by a human.
+
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+  }
+
+  parameters {
+    string(
+      name: 'IMAGE_TAG',
+      defaultValue: '',
+      description: 'Tag produced by a CI build, without the component prefix. ' +
+                   'e.g. matchy-dev-42 (CI pushed api-matchy-dev-42, app-matchy-dev-42, ...). ' +
+                   'Find it in the CI build log or on Docker Hub.'
+    )
+    booleanParam(
+      name: 'VERIFY_SIGNATURES',
+      defaultValue: true,
+      description: 'Verify every image Cosign signature before deploying. Leave on unless the signing key has been rotated and old images are not yet re-signed.'
+    )
+    booleanParam(
+      name: 'RUN_ZAP',
+      defaultValue: true,
+      description: 'Run the OWASP ZAP baseline scan after the rollout.'
+    )
+    booleanParam(
+      name: 'RUN_K6',
+      defaultValue: true,
+      description: 'Run the k6 load test after the rollout.'
+    )
+  }
+
+  environment {
+    REGISTRY_REPO = "${env.REGISTRY_REPO}"
+
+    IMAGE_COMPONENTS = 'api app admin landing ai'
+
+    STAGING_LANDING_HOST = 'staging.matchy.local'
+    STAGING_APP_HOST = 'app.staging.matchy.local'
+    STAGING_ADMIN_HOST = 'admin.staging.matchy.local'
+    STAGING_API_HOST = 'api.staging.matchy.local'
+
+    GITOPS_REPO = 'github.com/MohamedAzizAguir/Matchy-GitOps.git'
+    GITOPS_STAGING_PATH = 'apps/staging/matchy-plus'
+    K8S_NAMESPACE = 'matchy-staging'
+  }
+
+  stages {
+    stage('Validate CD config') {
+      steps {
+        script {
+          def missing = []
+          if (!env.REGISTRY_REPO?.trim()) missing << 'REGISTRY_REPO (Jenkins global env var)'
+          if (!params.IMAGE_TAG?.trim()) missing << 'IMAGE_TAG (build parameter)'
+          if (missing) {
+            error("Cannot deploy - missing: ${missing.join(', ')}")
+          }
+          // a tag with a component prefix is the most likely mistake here, and
+          // it fails much later and far less clearly if it goes unchecked.
+          for (c in env.IMAGE_COMPONENTS.split(' ')) {
+            if (params.IMAGE_TAG.startsWith("${c}-")) {
+              error("IMAGE_TAG should not include the '${c}-' component prefix. " +
+                    "Use '${params.IMAGE_TAG.substring(c.length() + 1)}' instead.")
+            }
+          }
+          currentBuild.displayName = "#${env.BUILD_NUMBER} ${params.IMAGE_TAG}"
+        }
+      }
+    }
+
+    // Signing images in CI is only worth anything if something verifies them
+    // before they run. This is that something: it fails the deploy if a tag is
+    // missing from the registry or its signature does not check out against
+    // our public key - i.e. if the image was replaced after CI signed it.
+    stage('Verify signed images') {
+      when { expression { params.VERIFY_SIGNATURES } }
+      steps {
+        withCredentials([file(credentialsId: 'cosign-public-key', variable: 'COSIGN_PUB')]) {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+
+            COSIGN_VERSION=v3.1.2
+            COSIGN_SHA256=f7622ed3cf22e55e1ae6377c080979ff77a22da9981c11df222a2e444991e7cf
+            if ! command -v cosign >/dev/null 2>&1; then
+              curl -sL -o /tmp/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+              echo "${COSIGN_SHA256}  /tmp/cosign" | sha256sum -c -
+              chmod +x /tmp/cosign
+            fi
+            COSIGN_BIN=$(command -v cosign || echo /tmp/cosign)
+
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              IMAGE="${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"
+              echo "--- verifying $IMAGE"
+              "$COSIGN_BIN" verify --key "$COSIGN_PUB" "$IMAGE" > /dev/null
+              echo "    signature OK"
+            done
+          '''
+        }
+      }
+    }
+
+    // Deploying = committing the new image tags to the GitOps repo. ArgoCD
+    // applies them, so this job never needs cluster write access.
+    //
+    // The previous tags are captured first so a failed deploy can be rolled
+    // back to exactly what was running before, rather than to "whatever main
+    // happened to say".
+    stage('Deploy to staging') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'gitops-repo-creds', usernameVariable: 'GITOPS_USER', passwordVariable: 'GITOPS_TOKEN')]) {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+
+            rm -rf /tmp/gitops-cd
+            git clone --depth 1 "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-cd
+            cd /tmp/gitops-cd
+
+            echo "--- image tags currently deployed (rollback target) ---"
+            : > "$WORKSPACE/previous-images.txt"
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              MANIFEST="${GITOPS_STAGING_PATH}/${COMPONENT}-deployment.yaml"
+              PREV=$(grep -E "^[[:space:]]*image:" "$MANIFEST" | head -1 | sed -E "s/^[[:space:]]*image:[[:space:]]*//")
+              echo "${COMPONENT} ${PREV}" | tee -a "$WORKSPACE/previous-images.txt"
+            done
+
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              MANIFEST="${GITOPS_STAGING_PATH}/${COMPONENT}-deployment.yaml"
+              sed -i -E "s#^([[:space:]]*image:[[:space:]]*).*#\\1${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}#" "$MANIFEST"
+            done
+            # the migration hook runs the api image, so it moves in lockstep
+            sed -i -E "s#^([[:space:]]*image:[[:space:]]*).*#\\1${REGISTRY_REPO}:api-${IMAGE_TAG}#" \
+              "${GITOPS_STAGING_PATH}/migrate-job.yaml"
+
+            git config user.email "jenkins@matchy.local"
+            git config user.name "Jenkins CD"
+
+            if git diff --quiet; then
+              echo "already deployed - image tags unchanged"
+            else
+              git add -A
+              git commit -m "ci(staging): deploy ${IMAGE_TAG}"
+              git push origin HEAD
+            fi
+          '''
+        }
+        archiveArtifacts artifacts: 'previous-images.txt', allowEmptyArchive: true
+      }
+    }
+
+    // ArgoCD syncs on its own schedule, so "pushed" is not "running". Without
+    // this, the checks below would test the PREVIOUS deployment and report a
+    // green result for code that was never deployed.
+    stage('Wait for staging rollout') {
+      steps {
+        withCredentials([file(credentialsId: 'kubeconfig-staging', variable: 'KUBECONFIG_FILE')]) {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+            export KUBECONFIG="$KUBECONFIG_FILE"
+
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              echo "--- waiting for $COMPONENT ---"
+              kubectl -n "$K8S_NAMESPACE" rollout status "deployment/$COMPONENT" --timeout=6m
+            done
+
+            echo "--- deployed images ---"
+            kubectl -n "$K8S_NAMESPACE" get deployments -o \
+              custom-columns=NAME:.metadata.name,IMAGE:.spec.template.spec.containers[0].image
+          '''
+        }
+      }
+    }
+
+    stage('DAST - OWASP ZAP') {
+      when { expression { params.RUN_ZAP } }
+      steps {
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+          sh '''#!/usr/bin/env bash
+            set -uo pipefail
+            mkdir -p reports/zap
+
+            INGRESS_IP=$(getent hosts "$STAGING_API_HOST" | awk '{print $1}' | head -1)
+            INGRESS_IP="${INGRESS_IP:-192.168.137.200}"
+
+            for TARGET_HOST in "$STAGING_APP_HOST" "$STAGING_API_HOST"; do
+              SAFE_NAME=$(echo "$TARGET_HOST" | tr '.' '-')
+              docker run --rm \
+                --add-host "${TARGET_HOST}:${INGRESS_IP}" \
+                -v "$WORKSPACE/reports/zap:/zap/wrk:rw" \
+                -u root \
+                ghcr.io/zaproxy/zaproxy:stable \
+                zap-baseline.py \
+                  -t "http://${TARGET_HOST}" \
+                  -J "zap-${SAFE_NAME}.json" \
+                  -r "zap-${SAFE_NAME}.html" \
+                  -m 2 -T 5 || echo "ZAP flagged findings for ${TARGET_HOST} (non-blocking)"
+            done
+          '''
+        }
+      }
+    }
+
+    stage('Performance - k6') {
+      when { expression { params.RUN_K6 } }
+      steps {
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+          sh '''#!/usr/bin/env bash
+            set -uo pipefail
+            mkdir -p reports/k6
+
+            INGRESS_IP=$(getent hosts "$STAGING_API_HOST" | awk '{print $1}' | head -1)
+            INGRESS_IP="${INGRESS_IP:-192.168.137.200}"
+
+            docker run --rm \
+              --add-host "${STAGING_API_HOST}:${INGRESS_IP}" \
+              -e "API_BASE=http://${STAGING_API_HOST}" \
+              -v "$WORKSPACE/ci-scripts:/scripts:ro" \
+              -v "$WORKSPACE/reports/k6:/out:rw" \
+              grafana/k6:latest run \
+                --summary-export=/out/k6-summary.json \
+                /scripts/k6-staging-smoke.js
+          '''
+        }
+      }
+    }
+
+    stage('Publish deploy report') {
+      steps {
+        sh 'python3 ci-scripts/generate_dast_report.py --dest reports/dast'
+        publishHTML(target: [
+          reportDir: 'reports/dast',
+          reportFiles: 'index.html',
+          reportName: 'Matchy+ Staging Deploy Report',
+          keepAll: true,
+          alwaysLinkToLastBuild: true
+        ])
+        archiveArtifacts artifacts: 'reports/**', allowEmptyArchive: true
+      }
+    }
+  }
+
+  post {
+    success {
+      echo "Deployed ${params.IMAGE_TAG} to ${env.K8S_NAMESPACE}."
+    }
+    unstable {
+      echo "Deployed ${params.IMAGE_TAG}, but ZAP or k6 reported findings - see the deploy report."
+    }
+    failure {
+      // Rollback is intentionally NOT automatic. A failure here can mean the
+      // rollout never completed, in which case the old pods are still serving
+      // and reverting would be a no-op - or it can mean the new version is up
+      // but broken, where reverting is right. Those need a human to tell
+      // apart, and an automatic revert during a partial rollout can leave the
+      // cluster in a worse state than it started.
+      echo """
+        DEPLOY FAILED for ${params.IMAGE_TAG}.
+
+        The previously deployed image tags were captured before this deploy and
+        are archived on this build as previous-images.txt.
+
+        To roll back, re-run this job with IMAGE_TAG set to the previous tag
+        from that file, or revert the last 'ci(staging): deploy ...' commit in
+        the GitOps repo and let ArgoCD reconcile.
+      """.stripIndent()
+    }
+  }
+}
