@@ -1,4 +1,6 @@
-// CI only, no deploy - dev is a build/scan/test gate, not an environment.
+// CI/CD. On every branch this is a build/scan/test gate; on dev it additionally
+// deploys to the staging environment on k3s via GitOps (see the CD stages at the
+// bottom), then runs OWASP ZAP + k6 against the deployed result.
 
 pipeline {
   agent any
@@ -26,6 +28,26 @@ pipeline {
     REGISTRY_REPO = "${env.REGISTRY_REPO}"
     SONAR_PROJECT = "${env.SONAR_PROJECT}"
     SONAR_URL = "${env.SONAR_URL}"
+
+    // every app that ships as a container. The scan/push/sign stages iterate
+    // this list instead of repeating themselves per image, so adding a sixth
+    // app means editing this line and the build stage - not four stages.
+    IMAGE_COMPONENTS = 'api app admin landing ai'
+
+    // staging hostnames (k3s + nginx ingress, resolved via the hosts file).
+    // NEXT_PUBLIC_* values are baked into the Next.js bundle at BUILD time, so
+    // the API URL has to be known here - it can't be injected at deploy time
+    // like a normal runtime env var.
+    STAGING_LANDING_HOST = 'staging.matchy.local'
+    STAGING_APP_HOST = 'app.staging.matchy.local'
+    STAGING_ADMIN_HOST = 'admin.staging.matchy.local'
+    STAGING_API_HOST = 'api.staging.matchy.local'
+    STAGING_API_URL = "http://api.staging.matchy.local/api/v1"
+
+    // GitOps repo that ArgoCD watches. Deploying = committing a new image tag
+    // here; ArgoCD does the actual apply.
+    GITOPS_REPO = 'github.com/MohamedAzizAguir/Matchy-GitOps.git'
+    GITOPS_STAGING_PATH = 'apps/staging/matchy-plus'
   }
 
   stages {
@@ -313,11 +335,18 @@ pipeline {
       }
     }
 
+    // app and admin get NEXT_PUBLIC_API_URL baked in here on purpose: Next.js
+    // inlines NEXT_PUBLIC_* into the client bundle at build time, so a runtime
+    // env var on the Deployment would be ignored and the browser would call
+    // the Dockerfile's localhost:8000 default instead of the staging API.
+    // landing reads no NEXT_PUBLIC_* vars, and ai is a python service.
     stage('Build images') {
       steps {
         sh """
           docker build --pull -t ${REGISTRY_REPO}:api-${IMAGE_TAG} -f apps/api/Dockerfile .
-          docker build --pull -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${STAGING_API_URL} -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${STAGING_API_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
+          docker build --pull -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
           docker build --pull -t ${REGISTRY_REPO}:ai-${IMAGE_TAG} -f apps/ai/Dockerfile apps/ai
         """
       }
@@ -336,9 +365,12 @@ pipeline {
           sh """
             mkdir -p reports/trivy
             TRIVY_FAILED=0
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:api-${IMAGE_TAG} > reports/trivy/trivy-api-report.json || TRIVY_FAILED=1
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:app-${IMAGE_TAG} > reports/trivy/trivy-app-report.json || TRIVY_FAILED=1
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:ai-${IMAGE_TAG} > reports/trivy/trivy-ai-report.json || TRIVY_FAILED=1
+            for COMPONENT in ${IMAGE_COMPONENTS}; do
+              docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image \
+                --exit-code 1 --severity CRITICAL --ignore-unfixed --format json \
+                ${REGISTRY_REPO}:\${COMPONENT}-${IMAGE_TAG} \
+                > reports/trivy/trivy-\${COMPONENT}-report.json || TRIVY_FAILED=1
+            done
             if [ "\$TRIVY_FAILED" -ne 0 ]; then
               echo "CRITICAL vulnerabilities found - see reports/trivy/*.json" >&2
               exit 1
@@ -366,9 +398,9 @@ pipeline {
             else
               echo "\$REG_PASS" | docker login -u "\$REG_USER" --password-stdin
             fi
-            docker push ${REGISTRY_REPO}:api-${IMAGE_TAG}
-            docker push ${REGISTRY_REPO}:app-${IMAGE_TAG}
-            docker push ${REGISTRY_REPO}:ai-${IMAGE_TAG}
+            for COMPONENT in ${IMAGE_COMPONENTS}; do
+              docker push ${REGISTRY_REPO}:\${COMPONENT}-${IMAGE_TAG}
+            done
           """
         }
       }
@@ -398,11 +430,162 @@ pipeline {
               chmod +x /tmp/cosign
             fi
             COSIGN_BIN=$(command -v cosign || echo /tmp/cosign)
-            "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes $REGISTRY_REPO:api-$IMAGE_TAG
-            "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes $REGISTRY_REPO:app-$IMAGE_TAG
-            "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes $REGISTRY_REPO:ai-$IMAGE_TAG
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes "$REGISTRY_REPO:$COMPONENT-$IMAGE_TAG"
+            done
           '''
         }
+      }
+    }
+
+    // ---------------------------------------------------------------- CD ---
+    // Everything below only runs on dev. Other branches stop at the CI gate -
+    // they build, scan and sign images, but never touch the staging cluster.
+
+    // Deploying = committing the new image tags to the GitOps repo. ArgoCD
+    // watches that repo and does the actual apply, so Jenkins never needs
+    // cluster write access for the deploy itself (only read access later, to
+    // wait for the rollout).
+    stage('Deploy to staging') {
+      when { branch 'dev' }
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'gitops-repo-creds', usernameVariable: 'GITOPS_USER', passwordVariable: 'GITOPS_TOKEN')]) {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+
+            rm -rf /tmp/gitops
+            git clone --depth 1 "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops
+            cd /tmp/gitops
+
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              MANIFEST="${GITOPS_STAGING_PATH}/${COMPONENT}-deployment.yaml"
+              if [ ! -f "$MANIFEST" ]; then
+                echo "expected manifest missing: $MANIFEST" >&2
+                exit 1
+              fi
+              # each component deployment has exactly one image: line, so an
+              # anchored substitution is unambiguous here.
+              sed -i -E "s#^([[:space:]]*image:[[:space:]]*).*#\\1${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}#" "$MANIFEST"
+            done
+
+            git config user.email "jenkins@matchy.local"
+            git config user.name "Jenkins CI"
+
+            if git diff --quiet; then
+              echo "image tags already current, nothing to commit"
+            else
+              git add -A
+              git commit -m "ci(staging): deploy ${IMAGE_TAG}"
+              git push origin HEAD
+            fi
+          '''
+        }
+      }
+    }
+
+    // ArgoCD syncs on its own schedule, so "pushed" is not "running". This
+    // waits for the actual rollout before any test touches the environment -
+    // otherwise ZAP/k6 would happily scan the PREVIOUS deployment and report
+    // a green result for code that was never deployed.
+    stage('Wait for staging rollout') {
+      when { branch 'dev' }
+      steps {
+        withCredentials([file(credentialsId: 'kubeconfig-staging', variable: 'KUBECONFIG_FILE')]) {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+            export KUBECONFIG="$KUBECONFIG_FILE"
+
+            # give ArgoCD a chance to notice the commit before we start waiting
+            # on rollouts (default poll interval is 3m; this nudges it).
+            for i in $(seq 1 30); do
+              if kubectl -n argocd get application matchy-plus-staging \
+                   -o jsonpath='{.status.sync.revision}' 2>/dev/null | grep -q .; then
+                break
+              fi
+              sleep 5
+            done
+
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              echo "--- waiting for $COMPONENT ---"
+              kubectl -n matchy-staging rollout status "deployment/$COMPONENT" --timeout=5m
+            done
+          '''
+        }
+      }
+    }
+
+    // DAST. Baseline scan = passive only (no attack traffic), which is the
+    // right call for an env that shares a host with the CI that builds it.
+    // Never fails the build: a new informational alert shouldn't block a
+    // deploy that already passed the real gates.
+    stage('DAST - OWASP ZAP') {
+      when { branch 'dev' }
+      steps {
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+          sh '''#!/usr/bin/env bash
+            set -uo pipefail
+            mkdir -p reports/zap
+
+            # *.matchy.local only resolves via the hosts file on the k3s node,
+            # so the scanner container needs the mapping injected explicitly.
+            INGRESS_IP=$(getent hosts "$STAGING_API_HOST" | awk '{print $1}' | head -1)
+            INGRESS_IP="${INGRESS_IP:-192.168.137.200}"
+
+            for TARGET_HOST in "$STAGING_APP_HOST" "$STAGING_API_HOST"; do
+              SAFE_NAME=$(echo "$TARGET_HOST" | tr '.' '-')
+              docker run --rm \
+                --add-host "${TARGET_HOST}:${INGRESS_IP}" \
+                -v "$WORKSPACE/reports/zap:/zap/wrk:rw" \
+                ghcr.io/zaproxy/zaproxy:stable \
+                zap-baseline.py \
+                  -t "http://${TARGET_HOST}" \
+                  -J "zap-${SAFE_NAME}.json" \
+                  -r "zap-${SAFE_NAME}.html" \
+                  -m 2 -T 5 || echo "ZAP flagged findings for ${TARGET_HOST} (non-blocking)"
+            done
+          '''
+        }
+      }
+    }
+
+    // Load test. Thresholds live in the k6 script; a breach marks the build
+    // unstable rather than failing it, same policy as ZAP above.
+    stage('Performance - k6') {
+      when { branch 'dev' }
+      steps {
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+          sh '''#!/usr/bin/env bash
+            set -uo pipefail
+            mkdir -p reports/k6
+
+            INGRESS_IP=$(getent hosts "$STAGING_API_HOST" | awk '{print $1}' | head -1)
+            INGRESS_IP="${INGRESS_IP:-192.168.137.200}"
+
+            docker run --rm \
+              --add-host "${STAGING_API_HOST}:${INGRESS_IP}" \
+              -e "API_BASE=http://${STAGING_API_HOST}" \
+              -v "$WORKSPACE/ci-scripts:/scripts:ro" \
+              -v "$WORKSPACE/reports/k6:/out:rw" \
+              grafana/k6:latest run \
+                --summary-export=/out/k6-summary.json \
+                /scripts/k6-staging-smoke.js
+          '''
+        }
+      }
+    }
+
+    stage('Publish security & performance report') {
+      when { branch 'dev' }
+      steps {
+        sh 'python3 ci-scripts/generate_dast_report.py --dest reports/dast'
+        publishHTML(target: [
+          reportDir: 'reports/dast',
+          reportFiles: 'index.html',
+          reportName: 'Matchy+ Staging DAST & Performance',
+          keepAll: true,
+          alwaysLinkToLastBuild: true
+        ])
+        archiveArtifacts artifacts: 'reports/zap/**,reports/k6/**,reports/dast/**', allowEmptyArchive: true
       }
     }
 
@@ -423,7 +606,11 @@ pipeline {
 
   post {
     always {
-      sh "docker rmi ${REGISTRY_REPO}:api-${IMAGE_TAG} ${REGISTRY_REPO}:app-${IMAGE_TAG} ${REGISTRY_REPO}:ai-${IMAGE_TAG} || true"
+      sh """
+        for COMPONENT in ${IMAGE_COMPONENTS}; do
+          docker rmi ${REGISTRY_REPO}:\${COMPONENT}-${IMAGE_TAG} || true
+        done
+      """
     }
   }
 }
