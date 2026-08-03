@@ -2,7 +2,7 @@ import { I18nProvider } from '@/features/i18n/i18n-provider';
 import profileReducer from '@/features/profile/store/profile-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -78,6 +78,75 @@ describe('ProfileDetailModal — rating', () => {
     );
     expect(await screen.findByText('Votre avis a été bien enregistré')).toBeInTheDocument();
     expect(screen.queryByText('Noter ce profil')).not.toBeInTheDocument();
+  });
+
+  it('shows the persistent already-rated message once the saved-confirmation banner auto-hides', async () => {
+    vi.useFakeTimers();
+    vi.mocked(api.post).mockResolvedValue({ data: { rating: 4, reviews: 1 } });
+
+    renderModal(buildStore(), { matched: true });
+
+    fireEvent.click(screen.getByLabelText('4 étoiles'));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Enregistrer la note' }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText('Votre avis a été bien enregistré')).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(2200);
+    });
+
+    expect(screen.queryByText('Votre avis a été bien enregistré')).not.toBeInTheDocument();
+    expect(screen.getByText('Vous avez déjà noté ce profil.')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('does not let a banner timer from a previous profile fire against the profile shown now', async () => {
+    vi.useFakeTimers();
+    vi.mocked(api.post).mockResolvedValue({ data: { rating: 4, reviews: 1 } });
+    const store = buildStore();
+    const { rerender } = render(
+      <Provider store={store}>
+        <I18nProvider>
+          <ProfileDetailModal profile={{ ...profile, matched: true }} onClose={() => {}} />
+        </I18nProvider>
+      </Provider>,
+    );
+
+    fireEvent.click(screen.getByLabelText('4 étoiles'));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Enregistrer la note' }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText('Votre avis a été bien enregistré')).toBeInTheDocument();
+
+    // Switch to a different profile before the 2200ms banner timer fires.
+    rerender(
+      <Provider store={store}>
+        <I18nProvider>
+          <ProfileDetailModal
+            profile={{ ...profile, id: 'user-3', name: 'John Doe', matched: true }}
+            onClose={() => {}}
+          />
+        </I18nProvider>
+      </Provider>,
+    );
+    expect(screen.getByText('Noter ce profil')).toBeInTheDocument();
+
+    // The cancelled timer from user-2 must not fire and disturb user-3's fresh picker.
+    await act(async () => {
+      vi.advanceTimersByTime(2200);
+    });
+
+    expect(screen.getByText('Noter ce profil')).toBeInTheDocument();
+    expect(screen.queryByText('Votre avis a été bien enregistré')).not.toBeInTheDocument();
+    expect(screen.queryByText('Vous avez déjà noté ce profil.')).not.toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 
   it('shows a dedicated message when the profile was already rated in a previous session', async () => {

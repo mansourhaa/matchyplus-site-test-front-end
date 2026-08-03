@@ -166,8 +166,18 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
   // "whatever profile is showing right now" at the moment the response arrives, not the
   // value captured in the async closure when the request was sent.
   const displayedProfileIdRef = useRef(profile.id);
+  // Tracks the pending "hide the saved banner" timeout so it can be cancelled — otherwise
+  // a timer started for profile A fires after the modal has moved on to profile B (same
+  // component instance) and clobbers whatever banner/outcome state B is showing.
+  const savedBannerTimeoutRef = useRef<number | null>(null);
   useLayoutEffect(() => {
     displayedProfileIdRef.current = profile.id;
+    return () => {
+      if (savedBannerTimeoutRef.current !== null) {
+        window.clearTimeout(savedBannerTimeoutRef.current);
+        savedBannerTimeoutRef.current = null;
+      }
+    };
   }, [profile.id]);
 
   // Ratings and reports are both one-shot-per-view actions tied to whichever profile is
@@ -216,7 +226,17 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
       if (rateProfile.fulfilled.match(resultAction)) {
         setRatingOutcome('saved');
         setShowSavedBanner(true);
-        window.setTimeout(() => setShowSavedBanner(false), 2200);
+        if (savedBannerTimeoutRef.current !== null) {
+          window.clearTimeout(savedBannerTimeoutRef.current);
+        }
+        // Once the confirmation banner auto-hides, fall through to the persistent
+        // "already rated" block instead of leaving the outcome stuck at 'saved' with
+        // nothing on screen for the rest of the session on this profile.
+        savedBannerTimeoutRef.current = window.setTimeout(() => {
+          setShowSavedBanner(false);
+          setRatingOutcome('already_rated');
+          savedBannerTimeoutRef.current = null;
+        }, 2200);
       } else if (resultAction.error.message === 'already_rated') {
         setRatingOutcome('already_rated');
       } else {
