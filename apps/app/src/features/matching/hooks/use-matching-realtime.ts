@@ -4,16 +4,23 @@ import { useAppDispatch } from '@/features/auth/hooks/use-app-dispatch';
 import { fetchMatchState } from '@/features/matching/store/matching-slice';
 import type { RealtimeMessage } from '@/features/matching/types';
 import {
+  createDebouncedMarkRead,
+  shouldMarkActiveThreadRead,
+} from '@/features/messaging/lib/active-thread-read';
+import {
   applyConversationStatus,
   applyLikeChanged,
   applyMessagesRead,
   applyRealtimeMessage,
   fetchInbox,
+  markConversationRead,
   setPeerTyping,
 } from '@/features/messaging/store/messaging-slice';
 import type { ChatMessage, MessagingRealtimePayload } from '@/features/messaging/types';
 import { getCachedAuthUser } from '@/lib/auth';
+import type { RootState } from '@/lib/store';
 import { useEffect, useRef } from 'react';
+import { useStore } from 'react-redux';
 
 function buildRealtimeUrl(accessToken: string): string | null {
   try {
@@ -35,6 +42,7 @@ function buildRealtimeUrl(accessToken: string): string | null {
  */
 export function useMatchingRealtime(enabled = true) {
   const dispatch = useAppDispatch();
+  const store = useStore<RootState>();
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -49,6 +57,9 @@ export function useMatchingRealtime(enabled = true) {
 
       let closedByEffect = false;
       let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+      const markReadScheduler = createDebouncedMarkRead((conversationId) => {
+        void dispatch(markConversationRead(conversationId));
+      });
 
       const connect = () => {
         if (closedByEffect) return;
@@ -85,6 +96,16 @@ export function useMatchingRealtime(enabled = true) {
                     viewer_id: viewer?.id,
                   }),
                 );
+                if (
+                  shouldMarkActiveThreadRead({
+                    activeConversationId: store.getState().messaging.activeConversationId,
+                    conversationId: chatMessage.conversation_id,
+                    senderId: chatMessage.sender_id,
+                    viewerId: viewer?.id,
+                  })
+                ) {
+                  markReadScheduler.schedule(chatMessage.conversation_id);
+                }
                 return;
               }
 
@@ -166,6 +187,7 @@ export function useMatchingRealtime(enabled = true) {
 
       return () => {
         closedByEffect = true;
+        markReadScheduler.cancelAll();
         if (reconnectTimer) clearTimeout(reconnectTimer);
         socketRef.current?.close();
         socketRef.current = null;
@@ -173,5 +195,5 @@ export function useMatchingRealtime(enabled = true) {
     } catch {
       return undefined;
     }
-  }, [dispatch, enabled]);
+  }, [dispatch, enabled, store]);
 }
