@@ -45,14 +45,36 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const recordingGenerationRef = useRef(0);
-  const chunksRef = useRef<Blob[]>([]);
+  const acquireEpochRef = useRef(0);
+  const acquireInFlightRef = useRef(false);
+  const activeRecordingSessionRef = useRef<{
+    conversationId: string;
+    uploadOnStop: boolean;
+  } | null>(null);
+  const conversationIdRef = useRef(conversationId);
   const myUserId = auth.user?.id;
 
+  conversationIdRef.current = conversationId;
+
+  /**
+   * Abort in-flight mic acquire or active recording.
+   * Do not bump recording generation / clear uploadOnStop for a deliberate stop
+   * whose onstop is still pending (including when a new acquire is in flight).
+   */
   const releaseMicrophone = useCallback(() => {
-    recordingGenerationRef.current += 1;
     const recorder = mediaRecorderRef.current;
+    const active = Boolean(recorder && recorder.state !== 'inactive');
+    if (acquireInFlightRef.current) {
+      acquireEpochRef.current += 1;
+    }
+    if (active) {
+      recordingGenerationRef.current += 1;
+      if (activeRecordingSessionRef.current) {
+        activeRecordingSessionRef.current.uploadOnStop = false;
+      }
+    }
     mediaRecorderRef.current = null;
-    if (recorder && recorder.state !== 'inactive') {
+    if (active && recorder) {
       try {
         recorder.stop();
       } catch {
@@ -69,9 +91,14 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
     void dispatch(fetchConversation(conversationId));
     void dispatch(fetchMessages({ conversationId }));
     return () => {
+      if (typingTimer.current) {
+        clearTimeout(typingTimer.current);
+        typingTimer.current = null;
+      }
+      // Clear peer “Typing…” for the thread we are leaving.
+      void dispatch(sendTyping({ conversationId, isTyping: false }));
       releaseMicrophone();
       dispatch(setActiveConversation(null));
-      if (typingTimer.current) clearTimeout(typingTimer.current);
     };
   }, [conversationId, dispatch, releaseMicrophone]);
 
@@ -98,7 +125,11 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
     if (!content || !messaging.conversation?.can_send) return;
     setDraft('');
     emitTyping(false);
-    await dispatch(sendMessage({ conversationId, content, message_type: 'text' }));
+    try {
+      await dispatch(sendMessage({ conversationId, content, message_type: 'text' }));
+    } catch {
+      // Thunk maps errors into sendError; keep composer usable.
+    }
   };
 
   const onToggleLike = (messageId: string) => {
@@ -106,24 +137,48 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
   };
 
   const startRecording = async () => {
-    if (!messaging.conversation?.can_send || recording) return;
+    if (!messaging.conversation?.can_send || recording || acquireInFlightRef.current) return;
+    const intendedConversationId = conversationId;
+    const generation = recordingGenerationRef.current;
+    const acquireEpoch = acquireEpochRef.current;
+    acquireInFlightRef.current = true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const leftOrSwitched =
+        acquireEpoch !== acquireEpochRef.current ||
+        generation !== recordingGenerationRef.current ||
+        conversationIdRef.current !== intendedConversationId;
+      if (leftOrSwitched) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      const session = {
+        conversationId: intendedConversationId,
+        uploadOnStop: false,
+      };
+      const chunks: Blob[] = [];
       const recorder = new MediaRecorder(stream);
-      const generation = recordingGenerationRef.current;
-      chunksRef.current = [];
       mediaStreamRef.current = stream;
+      activeRecordingSessionRef.current = session;
       recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data);
+        if (event.data.size > 0) chunks.push(event.data);
       };
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
         if (mediaStreamRef.current === stream) mediaStreamRef.current = null;
-        // Drop the clip if the user left this chat (or remounted) mid-record.
-        if (generation !== recordingGenerationRef.current) return;
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        if (activeRecordingSessionRef.current === session) {
+          activeRecordingSessionRef.current = null;
+        }
+        // uploadOnStop is set only by deliberate stopRecording. Leave/abort clears
+        // it on the active session; do not also require generation match or a later
+        // mid-record abort of a new take can suppress this finished clip's upload.
+        const shouldUpload = session.uploadOnStop;
+        session.uploadOnStop = false;
+        if (!shouldUpload) return;
+        const blob = new Blob(chunks, { type: 'audio/webm' });
         if (blob.size > 0) {
-          void dispatch(uploadVoiceNote({ conversationId, blob }));
+          void dispatch(uploadVoiceNote({ conversationId: session.conversationId, blob }));
         }
       };
       mediaRecorderRef.current = recorder;
@@ -131,17 +186,23 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
       setRecording(true);
     } catch {
       // Mic permission denied — leave composer usable for text.
+    } finally {
+      acquireInFlightRef.current = false;
     }
   };
 
   const stopRecording = () => {
     const recorder = mediaRecorderRef.current;
+    const session = activeRecordingSessionRef.current;
     mediaRecorderRef.current = null;
     setRecording(false);
     if (recorder && recorder.state !== 'inactive') {
+      // Deliberate stop — allow this session's onstop to upload; do not bump generation.
+      if (session) session.uploadOnStop = true;
       try {
         recorder.stop();
       } catch {
+        if (session) session.uploadOnStop = false;
         mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
       }
