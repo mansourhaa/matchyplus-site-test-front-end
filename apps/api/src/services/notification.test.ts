@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { Prisma } from '@saas-boilerplate/types';
+
 import { NotificationService } from './notification.js';
 
 function createMockPrisma() {
-  return {
+  const prisma = {
     notification: {
       create: vi.fn(),
       findFirst: vi.fn(),
@@ -11,7 +13,12 @@ function createMockPrisma() {
       count: vi.fn(),
       updateMany: vi.fn(),
     },
+    $transaction: vi.fn(),
   };
+  prisma.$transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
+    callback(prisma),
+  );
+  return prisma;
 }
 
 function createService(prisma = createMockPrisma()) {
@@ -88,6 +95,42 @@ describe('NotificationService', () => {
       expect(prisma.notification.create).not.toHaveBeenCalled();
       expect(push).not.toHaveBeenCalled();
       expect(result).toEqual({ created: false });
+    });
+
+    it('runs the dedupe check and the insert inside a serializable transaction', async () => {
+      const { service, prisma } = createService();
+      prisma.notification.findFirst.mockResolvedValue(null);
+      prisma.notification.create.mockResolvedValue({ id: 'notif-1' });
+
+      await service.createIfNoRecentDuplicate(payload, 15 * 60 * 1000);
+
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+    });
+
+    it('treats a concurrent write-conflict as a clean dedupe instead of a raw failure', async () => {
+      const { service, prisma, push } = createService();
+      prisma.$transaction.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('write conflict', {
+          code: 'P2034',
+          clientVersion: 'test',
+        }),
+      );
+
+      const result = await service.createIfNoRecentDuplicate(payload, 15 * 60 * 1000);
+
+      expect(result).toEqual({ created: false });
+      expect(push).not.toHaveBeenCalled();
+    });
+
+    it('propagates an unrelated transaction failure', async () => {
+      const { service, prisma } = createService();
+      prisma.$transaction.mockRejectedValue(new Error('connection lost'));
+
+      await expect(service.createIfNoRecentDuplicate(payload, 15 * 60 * 1000)).rejects.toThrow(
+        'connection lost',
+      );
     });
   });
 

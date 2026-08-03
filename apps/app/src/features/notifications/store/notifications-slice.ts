@@ -63,8 +63,17 @@ const notificationsSlice = createSlice({
       })
       .addCase(fetchNotifications.fulfilled, (state, action: PayloadAction<ListResponse>) => {
         state.loading = false;
-        state.items = action.payload.notifications;
-        state.unreadCount = action.payload.unread_count;
+        // A refetch triggered by a realtime push can land after a locally-applied
+        // mark-read, but reflect a server snapshot taken before that mark-read committed —
+        // without this merge, that stale response would flip the item back to unread.
+        // Once read locally, an item stays read regardless of what a slower fetch says.
+        const locallyReadIds = new Set(
+          state.items.filter((item) => item.read).map((item) => item.id),
+        );
+        state.items = action.payload.notifications.map((item) =>
+          !item.read && locallyReadIds.has(item.id) ? { ...item, read: true } : item,
+        );
+        state.unreadCount = state.items.filter((item) => !item.read).length;
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.loading = false;

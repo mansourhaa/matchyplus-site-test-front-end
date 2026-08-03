@@ -177,29 +177,35 @@ describe('POST /api/v1/profiles/:id/view', () => {
 
   it('creates a notification for the target when the view is allowed', async () => {
     const notificationCreate = vi.fn().mockResolvedValue({ id: 'notif-1' });
+    const prismaOverrides = {
+      user: {
+        findUniqueOrThrow: vi.fn().mockImplementation(({ where }: { where: { id: string } }) =>
+          Promise.resolve(
+            where.id === 'user-1'
+              ? {
+                  id: 'user-1',
+                  status: 'ACTIVE',
+                  role: 'USER',
+                  name: 'Jane Doe',
+                  image: '/uploads/photos/jane.jpg',
+                }
+              : { id: where.id, status: 'ACTIVE', role: 'USER' },
+          ),
+        ),
+        findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+      },
+      userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
+      notification: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: notificationCreate,
+      },
+    };
     const app = await buildTestApp({
       prisma: {
-        user: {
-          findUniqueOrThrow: vi.fn().mockImplementation(({ where }: { where: { id: string } }) =>
-            Promise.resolve(
-              where.id === 'user-1'
-                ? {
-                    id: 'user-1',
-                    status: 'ACTIVE',
-                    role: 'USER',
-                    name: 'Jane Doe',
-                    image: '/uploads/photos/jane.jpg',
-                  }
-                : { id: where.id, status: 'ACTIVE', role: 'USER' },
-            ),
-          ),
-          findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
-        } as never,
-        userBlock: { findFirst: vi.fn().mockResolvedValue(null) } as never,
-        notification: {
-          findFirst: vi.fn().mockResolvedValue(null),
-          create: notificationCreate,
-        } as never,
+        ...prismaOverrides,
+        $transaction: vi
+          .fn()
+          .mockImplementation(async (callback) => callback(prismaOverrides)) as never,
       },
     });
     apps.push(app);
@@ -223,25 +229,31 @@ describe('POST /api/v1/profiles/:id/view', () => {
 
   it('does not create a second notification when the same viewer reopens the profile within the cooldown', async () => {
     const notificationCreate = vi.fn();
+    const prismaOverrides = {
+      user: {
+        findUniqueOrThrow: vi
+          .fn()
+          .mockImplementation(({ where }: { where: { id: string } }) =>
+            Promise.resolve(
+              where.id === 'user-1'
+                ? { id: 'user-1', status: 'ACTIVE', role: 'USER', name: 'Jane Doe', image: null }
+                : { id: where.id, status: 'ACTIVE', role: 'USER' },
+            ),
+          ),
+        findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+      },
+      userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
+      notification: {
+        findFirst: vi.fn().mockResolvedValue({ id: 'existing-notif' }),
+        create: notificationCreate,
+      },
+    };
     const app = await buildTestApp({
       prisma: {
-        user: {
-          findUniqueOrThrow: vi
-            .fn()
-            .mockImplementation(({ where }: { where: { id: string } }) =>
-              Promise.resolve(
-                where.id === 'user-1'
-                  ? { id: 'user-1', status: 'ACTIVE', role: 'USER', name: 'Jane Doe', image: null }
-                  : { id: where.id, status: 'ACTIVE', role: 'USER' },
-              ),
-            ),
-          findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
-        } as never,
-        userBlock: { findFirst: vi.fn().mockResolvedValue(null) } as never,
-        notification: {
-          findFirst: vi.fn().mockResolvedValue({ id: 'existing-notif' }),
-          create: notificationCreate,
-        } as never,
+        ...prismaOverrides,
+        $transaction: vi
+          .fn()
+          .mockImplementation(async (callback) => callback(prismaOverrides)) as never,
       },
     });
     apps.push(app);

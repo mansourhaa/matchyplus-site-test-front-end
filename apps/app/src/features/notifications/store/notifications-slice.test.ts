@@ -84,4 +84,20 @@ describe('notifications-slice', () => {
     expect(store.getState().notifications.items.every((item) => item.read)).toBe(true);
     expect(store.getState().notifications.unreadCount).toBe(0);
   });
+
+  it('does not let a stale refetch (started before a mark-read committed) revert it back to unread', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: listResponse });
+    vi.mocked(api.post).mockResolvedValue({ data: undefined });
+    const store = buildStore();
+    await store.dispatch(fetchNotifications());
+    await store.dispatch(markNotificationRead('notif-1'));
+    expect(store.getState().notifications.items[0].read).toBe(true);
+
+    // Simulates a realtime-triggered refetch whose GET was in flight before the mark-read
+    // above committed server-side — it still reports notif-1 as unread.
+    await store.dispatch(fetchNotifications());
+
+    expect(store.getState().notifications.items[0].read).toBe(true);
+    expect(store.getState().notifications.unreadCount).toBe(0);
+  });
 });

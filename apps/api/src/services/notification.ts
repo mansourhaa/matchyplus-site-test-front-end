@@ -1,4 +1,4 @@
-import { PrismaClient } from '@saas-boilerplate/types';
+import { Prisma, PrismaClient } from '@saas-boilerplate/types';
 
 import {
   CreateNotificationPayload,
@@ -7,6 +7,13 @@ import {
 } from '../types/notification.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import { notFound } from '../utils/http-errors.js';
+
+// P2034: "Transaction failed due to a write conflict or a deadlock" — Postgres's
+// serializable-isolation write-skew detection. For a check-then-insert like the one below,
+// this is exactly the signal that a concurrent call already resolved the same race.
+function isSerializationFailure(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034';
+}
 
 export type NotificationPusher = (
   userId: string,
@@ -64,24 +71,48 @@ export class NotificationService {
     payload: CreateNotificationPayload,
     cooldownMs: number,
   ): Promise<{ created: boolean }> {
+    // The dedupe check and the insert run as one serializable transaction — otherwise two
+    // concurrent /view calls for the same (recipient, viewer) pair can both pass the
+    // find-first check before either commits and both insert, duplicating the row and the
+    // push. Serializable isolation makes Postgres detect that write-skew and abort one of
+    // the two transactions instead, which is caught below and treated as a clean dedupe.
     try {
-      const since = new Date(Date.now() - cooldownMs);
-      const recent = await this.prisma.notification.findFirst({
-        where: {
-          user_id: payload.userId,
-          type: payload.type,
-          created_at: { gte: since },
-          data: { path: ['viewerId'], equals: payload.data.viewerId },
+      const created = await this.prisma.$transaction(
+        async (tx) => {
+          const since = new Date(Date.now() - cooldownMs);
+          const recent = await tx.notification.findFirst({
+            where: {
+              user_id: payload.userId,
+              type: payload.type,
+              created_at: { gte: since },
+              data: { path: ['viewerId'], equals: payload.data.viewerId },
+            },
+            select: { id: true },
+          });
+          if (recent) {
+            return false;
+          }
+
+          await tx.notification.create({
+            data: {
+              user_id: payload.userId,
+              type: payload.type,
+              data: payload.data,
+            },
+          });
+          return true;
         },
-        select: { id: true },
-      });
-      if (recent) {
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+
+      if (created) {
+        this.push(payload.userId, `notification_${payload.type.toLowerCase()}`, payload.data);
+      }
+      return { created };
+    } catch (err) {
+      if (isSerializationFailure(err)) {
         return { created: false };
       }
-
-      await this.create(payload);
-      return { created: true };
-    } catch (err) {
       throw err;
     }
   }
