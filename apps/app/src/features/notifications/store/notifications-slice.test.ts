@@ -1,3 +1,4 @@
+import { logout, resetAuthState } from '@/features/auth/store/auth-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -132,5 +133,50 @@ describe('notifications-slice', () => {
     await store.dispatch(fetchNotifications());
 
     expect(store.getState().notifications.unreadCount).toBe(0);
+  });
+
+  it('clears items, unread count, and error on logout, and bumps revision so an old in-flight fetch cannot resurface after it', async () => {
+    let resolveFetch!: (value: { data: typeof listResponse }) => void;
+    vi.mocked(api.get).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveFetch = resolve;
+      }),
+    );
+    const store = buildStore();
+
+    // A fetch for the outgoing user is still in flight (revisionAtStart captured as 0).
+    const fetchPromise = store.dispatch(fetchNotifications());
+
+    store.dispatch(logout.fulfilled(undefined, 'req-1', undefined));
+
+    expect(store.getState().notifications).toMatchObject({
+      items: [],
+      unreadCount: 0,
+      error: null,
+      revision: 1,
+    });
+
+    // The stale GET for the previous account resolves after logout — it must not
+    // repopulate the now-logged-out (or next-logged-in) state with the old user's data.
+    resolveFetch({ data: listResponse });
+    await fetchPromise;
+
+    expect(store.getState().notifications.items).toEqual([]);
+    expect(store.getState().notifications.unreadCount).toBe(0);
+  });
+
+  it('clears notifications on resetAuthState (a failed token refresh), the same as an explicit logout', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: listResponse });
+    const store = buildStore();
+    await store.dispatch(fetchNotifications());
+    expect(store.getState().notifications.items).toHaveLength(2);
+
+    store.dispatch(resetAuthState());
+
+    expect(store.getState().notifications).toMatchObject({
+      items: [],
+      unreadCount: 0,
+      revision: 1,
+    });
   });
 });

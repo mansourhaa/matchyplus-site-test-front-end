@@ -1,3 +1,10 @@
+import {
+  changePassword,
+  deleteAccount,
+  fetchCurrentUser,
+  logout,
+  resetAuthState,
+} from '@/features/auth/store/auth-slice';
 import { api, getApiErrorCode } from '@/lib/api';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
@@ -63,6 +70,14 @@ export const markAllNotificationsRead = createAsyncThunk('notifications/markAllR
   }
 });
 
+function resetForNewSession(state: NotificationsState) {
+  state.items = [];
+  state.unreadCount = 0;
+  state.loading = false;
+  state.error = null;
+  state.revision += 1;
+}
+
 const notificationsSlice = createSlice({
   name: 'notifications',
   initialState,
@@ -104,7 +119,18 @@ const notificationsSlice = createSlice({
         });
         state.unreadCount = 0;
         state.revision += 1;
-      });
+      })
+      // Every path that ends the session — explicit logout, a forced logout after a
+      // password change or account deletion, and the silent auth-reset a failed token
+      // refresh triggers — must drop this account's notifications immediately. Otherwise
+      // a soft logout leaves the previous user's feed mounted for whoever logs in next,
+      // and the revision bump (not a reset to a fixed value) guarantees an in-flight
+      // fetch from the old session can never match again and apply its stale data.
+      .addCase(logout.fulfilled, resetForNewSession)
+      .addCase(resetAuthState, resetForNewSession)
+      .addCase(changePassword.fulfilled, resetForNewSession)
+      .addCase(deleteAccount.fulfilled, resetForNewSession)
+      .addCase(fetchCurrentUser.rejected, resetForNewSession);
   },
 });
 
