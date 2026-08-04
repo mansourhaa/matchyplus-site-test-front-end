@@ -42,7 +42,12 @@ pipeline {
     // injected later as a runtime env var on the Deployment - the browser
     // would call the Dockerfile's localhost default instead. It therefore has
     // to live in CI even though it names a deploy-time environment.
-    STAGING_API_URL = "http://api.staging.matchy.local/api/v1"
+    // https, matching the staging ingress. This is baked into the client
+    // bundle, so it cannot be corrected at deploy time - an http value here
+    // makes the browser issue http requests from an https page, which it
+    // blocks as mixed content. Changing the staging scheme therefore requires
+    // rebuilding app and admin, not just editing the ConfigMap.
+    STAGING_API_URL = "https://api.staging.matchy.local/api/v1"
   }
 
   stages {
