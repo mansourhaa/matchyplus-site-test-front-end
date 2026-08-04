@@ -7,9 +7,12 @@ import {
   getProfilePhotoFileSchema,
   getProfileVideoFileSchema,
   getPublicProfileSchema,
+  rateProfileSchema,
 } from '../../../schemas/v1/index.js';
 import { ProfileService } from '../../../services/profile.js';
+import { RatingService } from '../../../services/rating.js';
 import { ProfileIdParams, ProfileMediaFilenameParams } from '../../../types/profile.js';
+import { RateProfileBody } from '../../../types/rating.js';
 import { badRequest, forbidden, notFound } from '../../../utils/http-errors.js';
 import { assertSafeFilename, extensionOf, parseRange } from '../../../utils/media-http.js';
 import { PHOTOS_DIR, VIDEOS_DIR } from '../../../utils/media-storage.js';
@@ -17,6 +20,7 @@ import { PHOTOS_DIR, VIDEOS_DIR } from '../../../utils/media-storage.js';
 const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const { prisma } = fastify;
   const profileService = new ProfileService({ prisma });
+  const ratingService = new RatingService({ prisma });
 
   fastify.get<{ Params: ProfileIdParams }>(
     '/:id',
@@ -26,6 +30,23 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
         const data = await profileService.getPublicProfile(
           request.loggedUser.id,
           request.params.id,
+        );
+        return reply.code(200).send(data);
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
+
+  fastify.post<{ Params: ProfileIdParams; Body: RateProfileBody }>(
+    '/:id/rating',
+    { schema: rateProfileSchema },
+    async (request, reply) => {
+      try {
+        const data = await ratingService.rate(
+          request.loggedUser.id,
+          request.params.id,
+          request.body.rating,
         );
         return reply.code(200).send(data);
       } catch (err) {

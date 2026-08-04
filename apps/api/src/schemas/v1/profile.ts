@@ -44,8 +44,14 @@ const publicProfileSchema = {
     service_type: { type: 'string', nullable: true },
     price: { type: 'string', nullable: true },
     profile_type: { type: 'string', enum: ['INDIVIDUAL', 'PROVIDER'], nullable: true },
+    experience: { type: 'string', nullable: true },
+    activity_sector: { type: 'string', nullable: true },
+    looking_for: { type: 'string', nullable: true },
+    selected_goals: { type: 'array', items: { type: 'string' } },
     rating: { type: 'number', nullable: true },
     reviews: { type: 'number', nullable: true },
+    matched: { type: 'boolean' },
+    viewer_has_rated: { type: 'boolean' },
   },
 };
 
@@ -137,6 +143,40 @@ export const getProfilePhotoFileSchema = {
       description: 'The photo file, streamed as binary image data',
       type: 'string',
       contentMediaType: 'image/*',
+    },
+    ...errorResponses,
+  },
+};
+
+export const rateProfileSchema = {
+  tags: ['profiles'],
+  summary: "Rate a matched user's profile — one rating per pair, cannot be changed once set",
+  security: [{ http: [] }],
+  headers: authenticatedHeadersSchema,
+  params: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
+  body: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['rating'],
+    properties: {
+      rating: { type: 'integer', minimum: 1, maximum: 5 },
+    },
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        rating: { type: 'number' },
+        reviews: { type: 'integer' },
+      },
     },
     ...errorResponses,
   },
