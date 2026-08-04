@@ -10,6 +10,11 @@ const DEFAULT_AUTH_STATE: AuthState = {
   loading: false,
   error: null,
   user: null,
+  // Most callers are testing authenticated-behavior, not the rehydration race itself —
+  // default to "checked" so passing status: 'authenticated' alone still behaves as a
+  // validated session everywhere else this helper is used. Tests exercising the race
+  // pass sessionChecked: false explicitly.
+  sessionChecked: true,
 };
 
 export function createAuthTestStore(authState: Partial<AuthState> = {}) {

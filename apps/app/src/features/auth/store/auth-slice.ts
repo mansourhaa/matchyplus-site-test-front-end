@@ -35,6 +35,7 @@ const initialState: AuthState = {
   loading: false,
   error: null,
   user: getCachedAuthUser<AuthUser>(),
+  sessionChecked: false,
 };
 
 export const sendOtp = createAsyncThunk('auth/sendOtp', async ({ phone }: SendOtpInput) => {
@@ -248,9 +249,11 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action: PayloadAction<SessionResponse>) => {
         applySession(state, action.payload.user);
+        state.sessionChecked = true;
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
         clearSession(state);
+        state.sessionChecked = true;
       })
       .addCase(logout.fulfilled, (state) => {
         clearSession(state);

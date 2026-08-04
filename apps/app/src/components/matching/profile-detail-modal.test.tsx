@@ -29,6 +29,7 @@ function buildStore(viewerId: string | null = null) {
         status: viewerId ? ('authenticated' as const) : ('unknown' as const),
         loading: false,
         error: null,
+        sessionChecked: true,
         user: viewerId
           ? {
               id: viewerId,
