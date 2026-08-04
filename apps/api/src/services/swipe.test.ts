@@ -5,7 +5,7 @@ import { SwipeDirection, UserPlan } from '@saas-boilerplate/types';
 import { SwipeService } from './swipe.js';
 
 function createMockPrisma() {
-  return {
+  const prisma = {
     user: {
       findUnique: vi.fn(),
       updateMany: vi.fn(),
@@ -29,11 +29,18 @@ function createMockPrisma() {
       create: vi.fn(),
       deleteMany: vi.fn(),
     },
+    conversation: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
     plan: {
       findUnique: vi.fn(),
     },
     $transaction: vi.fn(),
   };
+  prisma.$transaction.mockImplementation(async (fn: (tx: typeof prisma) => unknown) => fn(prisma));
+  return prisma;
 }
 
 describe('SwipeService', () => {
@@ -70,6 +77,13 @@ describe('SwipeService', () => {
       matched_at: matchedAt,
     });
     prisma.user.updateMany.mockResolvedValue({ count: 2 });
+    prisma.conversation.findUnique.mockResolvedValue(null);
+    prisma.conversation.create.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
 
     const service = new SwipeService({ prisma: prisma as never, notify });
     const result = await service.postSwipe('u1', {
@@ -84,6 +98,7 @@ describe('SwipeService', () => {
         match_id: 'match-1',
         matched_at: matchedAt,
         matched_user_id: 'u2',
+        conversation_id: 'conv-1',
       },
       quota: {
         unlimited: false,
@@ -95,6 +110,13 @@ describe('SwipeService', () => {
 
     expect(prisma.match.create).toHaveBeenCalledWith({
       data: {
+        user_low_id: 'u1',
+        user_high_id: 'u2',
+      },
+    });
+    expect(prisma.conversation.create).toHaveBeenCalledWith({
+      data: {
+        match_id: 'match-1',
         user_low_id: 'u1',
         user_high_id: 'u2',
       },
@@ -123,6 +145,7 @@ describe('SwipeService', () => {
         event_type: 'match',
         match_id: 'match-1',
         matched_user_id: 'u2',
+        conversation_id: 'conv-1',
       }),
     );
     expect(notify).toHaveBeenNthCalledWith(
@@ -133,6 +156,7 @@ describe('SwipeService', () => {
         event_type: 'match',
         match_id: 'match-1',
         matched_user_id: 'u1',
+        conversation_id: 'conv-1',
       }),
     );
   });

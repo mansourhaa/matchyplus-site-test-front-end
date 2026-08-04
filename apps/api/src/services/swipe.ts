@@ -10,6 +10,7 @@ import {
   tooManyRequests,
 } from '../utils/http-errors.js';
 import { orderedUserPair, otherUserId } from '../utils/match-pair.js';
+import { ConversationService } from './conversation.js';
 import { SwipeQuotaService } from './swipe-quota.js';
 
 export type MatchNotifier = (
@@ -21,16 +22,22 @@ export type MatchNotifier = (
 /**
  * Swipe / match domain. Quota always re-read from SwipeLog after writes.
  * Withdraw uses WITHDRAWN — never LEFT — so feed eligibility is preserved.
+ * Conversation lifecycle is owned by ConversationService (thin hooks only).
  */
 export class SwipeService {
   prisma: PrismaClient;
   quota: SwipeQuotaService;
+  conversations: ConversationService;
   notify: MatchNotifier;
 
   constructor(options: AbstractServiceOptions & { notify?: MatchNotifier }) {
     this.prisma = options.prisma;
     this.quota = new SwipeQuotaService({ prisma: options.prisma });
     this.notify = options.notify ?? (() => undefined);
+    this.conversations = new ConversationService({
+      prisma: options.prisma,
+      notify: this.notify,
+    });
   }
 
   private async assertNotBlocked(a: string, b: string): Promise<void> {
@@ -182,31 +189,37 @@ export class SwipeService {
 
         const detected = await this.detectMatch(userId, targetId);
 
-        if (detected?.created) {
-          const payload = {
-            event_type: 'match',
-            match_id: detected.match_id,
-            matched_at: detected.matched_at,
-            // Conversation thread creation is owned by the conversations feature.
-            // Matching only establishes the mutual-like graph + notifies both users.
-            body: 'New match! Open your matches to continue.',
-          };
-          // Bilateral notify — both users get the same match event.
-          this.notify(userId, 'notification_match', {
-            ...payload,
-            matched_user_id: targetId,
-          });
-          this.notify(targetId, 'notification_match', {
-            ...payload,
-            matched_user_id: userId,
-          });
-        }
-
         if (detected) {
+          const conversation = await this.conversations.ensureForMatch(
+            detected.match_id,
+            userId,
+            targetId,
+          );
+
+          if (detected.created) {
+            const payload = {
+              event_type: 'match',
+              match_id: detected.match_id,
+              matched_at: detected.matched_at,
+              conversation_id: conversation.id,
+              body: 'New match! Open your matches to continue.',
+            };
+            // Bilateral notify — both users get the same match event.
+            this.notify(userId, 'notification_match', {
+              ...payload,
+              matched_user_id: targetId,
+            });
+            this.notify(targetId, 'notification_match', {
+              ...payload,
+              matched_user_id: userId,
+            });
+          }
+
           match = {
             match_id: detected.match_id,
             matched_at: detected.matched_at,
             matched_user_id: detected.matched_user_id,
+            conversation_id: conversation.id,
           };
         }
       }
@@ -232,6 +245,9 @@ export class SwipeService {
           OR: [{ user_low_id: userId }, { user_high_id: userId }],
         },
         orderBy: { matched_at: 'desc' },
+        include: {
+          conversation: { select: { id: true } },
+        },
       });
 
       const otherIds = rows.map((row) =>
@@ -255,20 +271,33 @@ export class SwipeService {
       });
       const byId = new Map(users.map((u) => [u.id, u]));
 
-      return {
-        matches: rows.map((row) => {
-          const matchedUserId = otherUserId(
-            { userLowId: row.user_low_id, userHighId: row.user_high_id },
-            userId,
+      const matches = [];
+      for (const row of rows) {
+        const matchedUserId = otherUserId(
+          { userLowId: row.user_low_id, userHighId: row.user_high_id },
+          userId,
+        );
+        let conversationId = row.conversation?.id ?? null;
+        if (!conversationId) {
+          const ensured = await this.conversations.ensureForMatch(
+            row.id,
+            row.user_low_id,
+            row.user_high_id,
           );
-          return {
-            match_id: row.id,
-            matched_at: row.matched_at,
-            matched_user_id: matchedUserId,
-            profile: byId.get(matchedUserId) || null,
-          };
-        }),
-        count: rows.length,
+          conversationId = ensured.id;
+        }
+        matches.push({
+          match_id: row.id,
+          matched_at: row.matched_at,
+          matched_user_id: matchedUserId,
+          conversation_id: conversationId,
+          profile: byId.get(matchedUserId) || null,
+        });
+      }
+
+      return {
+        matches,
+        count: matches.length,
       };
     } catch (err) {
       throw err;
@@ -408,8 +437,11 @@ export class SwipeService {
             user_high_id: pair.userHighId,
           },
         });
+        // Detach inside the same transaction after Match delete succeeds in this tx.
+        await this.conversations.detachOnUnmatch(userId, otherUserId, tx);
       });
 
+      await this.conversations.notifyUnmatchedStatus(userId, otherUserId);
       this.notify(userId, 'match_removed', { matched_user_id: otherUserId });
       this.notify(otherUserId, 'match_removed', { matched_user_id: userId });
 

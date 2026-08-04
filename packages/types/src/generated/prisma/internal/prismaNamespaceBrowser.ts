@@ -56,6 +56,9 @@ export const ModelName = {
   Swipe: 'Swipe',
   SwipeLog: 'SwipeLog',
   Match: 'Match',
+  Conversation: 'Conversation',
+  Message: 'Message',
+  MessageLike: 'MessageLike',
   UserLocation: 'UserLocation',
   UserBlock: 'UserBlock',
   Rating: 'Rating',
@@ -241,6 +244,42 @@ export const MatchScalarFieldEnum = {
 } as const;
 
 export type MatchScalarFieldEnum = (typeof MatchScalarFieldEnum)[keyof typeof MatchScalarFieldEnum];
+
+export const ConversationScalarFieldEnum = {
+  id: 'id',
+  match_id: 'match_id',
+  user_low_id: 'user_low_id',
+  user_high_id: 'user_high_id',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+} as const;
+
+export type ConversationScalarFieldEnum =
+  (typeof ConversationScalarFieldEnum)[keyof typeof ConversationScalarFieldEnum];
+
+export const MessageScalarFieldEnum = {
+  id: 'id',
+  conversation_id: 'conversation_id',
+  sender_id: 'sender_id',
+  content: 'content',
+  message_type: 'message_type',
+  media_url: 'media_url',
+  is_read: 'is_read',
+  created_at: 'created_at',
+} as const;
+
+export type MessageScalarFieldEnum =
+  (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum];
+
+export const MessageLikeScalarFieldEnum = {
+  id: 'id',
+  message_id: 'message_id',
+  user_id: 'user_id',
+  created_at: 'created_at',
+} as const;
+
+export type MessageLikeScalarFieldEnum =
+  (typeof MessageLikeScalarFieldEnum)[keyof typeof MessageLikeScalarFieldEnum];
 
 export const UserLocationScalarFieldEnum = {
   id: 'id',

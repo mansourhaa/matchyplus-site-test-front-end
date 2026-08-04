@@ -92,6 +92,7 @@ const matchSummary = {
     match_id: { type: 'string' },
     matched_at: { type: 'string' },
     matched_user_id: { type: 'string' },
+    conversation_id: { type: 'string', nullable: true },
   },
 };
 
@@ -101,6 +102,7 @@ const matchRow = {
     match_id: { type: 'string' },
     matched_at: { type: 'string' },
     matched_user_id: { type: 'string' },
+    conversation_id: { type: 'string', nullable: true },
     profile: { ...matchingProfile, nullable: true },
   },
 };
@@ -330,7 +332,7 @@ export const unmatchSchema = {
   tags: ['swipe'],
   summary: 'Unmatch a user',
   description:
-    'Deletes the Match row and clears both sides’ swipe + swipe-log history for the pair. Requires JWT.',
+    'Deletes the Match row and clears both sides’ swipe + swipe-log history for the pair. Detaches the conversation (keeps message history, nulls match_id). Requires JWT.',
   security: [{ http: [] }],
   params: targetUserParams,
   response: {
@@ -350,7 +352,7 @@ export const realtimeSchema = {
   tags: ['realtime'],
   summary: 'Match realtime WebSocket',
   description:
-    'Authenticated WebSocket for `notification_match` and `match_removed` events. Pass Bearer JWT, or `?access_token=` for browser clients. Server pushes JSON `{ event, payload }`.',
+    'Authenticated WebSocket for match and messaging events (`notification_match`, `match_removed`, `new_message`, `messages_read`, typing, likes). Pass Bearer JWT, or `?access_token=` for browser clients. Server pushes JSON `{ event, payload }`. Clients may send `{ event: "typing"|"stop_typing", payload: { conversation_id } }`.',
   security: [{ http: [] }],
   querystring: {
     type: 'object',

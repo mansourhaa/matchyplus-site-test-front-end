@@ -3,9 +3,9 @@ import fp from 'fastify-plugin';
 import type { WebSocket } from 'ws';
 
 /**
- * In-process user realtime fan-out for match events.
+ * In-process user realtime fan-out for match and messaging events.
  * Multi-instance deployments should later bridge via Redis pub/sub;
- * HTTP match payloads remain the source of truth for the acting swiper.
+ * HTTP payloads remain the source of truth for the acting user on writes.
  */
 declare module 'fastify' {
   interface FastifyInstance {

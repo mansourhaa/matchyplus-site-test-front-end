@@ -43,6 +43,7 @@ export type MatchSummary = {
   match_id: string;
   matched_at: Date;
   matched_user_id: string;
+  conversation_id?: string | null;
 };
 
 export type SwipeResult = {

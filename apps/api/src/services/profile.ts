@@ -171,14 +171,26 @@ export class ProfileService {
   }
 
   /**
-   * Owner, an active match, or the viewer being the owner may stream the profile video —
-   * matching legacy's canAccessProfileVideo (minus its "active conversation" branch,
-   * since no conversation/message model exists in this schema yet).
+   * Owner, an active match, or an existing conversation (post-unmatch history) may
+   * stream the profile video — matching legacy canAccessProfileVideo.
    */
   async canAccessVideo(viewerId: string, ownerId: string): Promise<boolean> {
     try {
       if (viewerId === ownerId) return true;
-      return await this.hasMatch(viewerId, ownerId);
+      if (await this.hasMatch(viewerId, ownerId)) return true;
+
+      // Post-unmatch: allow video if a conversation thread still exists for history.
+      const pair = orderedUserPair(viewerId, ownerId);
+      const conversation = await this.prisma.conversation.findUnique({
+        where: {
+          user_low_id_user_high_id: {
+            user_low_id: pair.userLowId,
+            user_high_id: pair.userHighId,
+          },
+        },
+        select: { id: true },
+      });
+      return Boolean(conversation);
     } catch (err) {
       throw err;
     }

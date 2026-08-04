@@ -6,6 +6,7 @@ import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import matchingReducer from '../../features/matching/store/matching-slice';
+import messagingReducer from '../../features/messaging/store/messaging-slice';
 import { MatchesView } from './matches-view';
 
 const pushMock = vi.fn();
@@ -25,6 +26,7 @@ const matchRow = {
   match_id: 'match-1',
   matched_at: '2026-01-01T00:00:00.000Z',
   matched_user_id: 'user-2',
+  conversation_id: 'conv-1',
   profile: {
     id: 'user-2',
     name: 'Jane Doe',
@@ -44,9 +46,12 @@ function renderMatches() {
   vi.mocked(api.get).mockImplementation((url: string) => {
     if (url === '/swipe/matches') return Promise.resolve({ data: { matches: [matchRow] } });
     if (url === '/swipe/pending') return Promise.resolve({ data: { pending: [] } });
+    if (url === '/conversations') return Promise.resolve({ data: { conversations: [] } });
     return Promise.reject(new Error(`unexpected request: ${url}`));
   });
-  const store = configureStore({ reducer: { matching: matchingReducer } });
+  const store = configureStore({
+    reducer: { matching: matchingReducer, messaging: messagingReducer },
+  });
 
   return render(
     <Provider store={store}>
@@ -75,6 +80,6 @@ describe('MatchesView', () => {
 
     fireEvent.click(await screen.findByText('Jane Doe'));
 
-    expect(pushMock).toHaveBeenCalledWith('/chat/match-1');
+    expect(pushMock).toHaveBeenCalledWith('/chat/conv-1');
   });
 });

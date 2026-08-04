@@ -65,6 +65,13 @@ export const SwipeDirection = {
 
 export type SwipeDirection = (typeof SwipeDirection)[keyof typeof SwipeDirection];
 
+export const MessageType = {
+  TEXT: 'TEXT',
+  VOICE: 'VOICE',
+} as const;
+
+export type MessageType = (typeof MessageType)[keyof typeof MessageType];
+
 export const AiJobType = {
   ANALYZE_VIDEO: 'ANALYZE_VIDEO',
   VERIFY_IDENTITY: 'VERIFY_IDENTITY',
