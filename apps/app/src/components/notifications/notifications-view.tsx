@@ -34,12 +34,21 @@ function NotificationRow({ item }: { item: NotificationItem }) {
   );
   const { title, body } = pushCopy(item);
 
+  const handleMarkRead = async () => {
+    if (item.read) return;
+    const result = await dispatch(markNotificationRead(item.id));
+    // The mark bumps the store's revision, which can discard a fetch that was already
+    // in flight (e.g. one a realtime push triggered) — this follow-up fetch recovers
+    // whatever that discarded snapshot would have shown, now that the mark has settled.
+    if (markNotificationRead.fulfilled.match(result)) {
+      void dispatch(fetchNotifications());
+    }
+  };
+
   return (
     <button
       type="button"
-      onClick={() => {
-        if (!item.read) void dispatch(markNotificationRead(item.id));
-      }}
+      onClick={() => void handleMarkRead()}
       className="flex w-full items-start gap-3 rounded-2xl bg-white p-3 text-left shadow-sm"
       style={{ border: `1px solid ${item.read ? matchyBrand.border : matchyBrand.blue}` }}
     >
@@ -94,6 +103,15 @@ export function NotificationsView() {
     void dispatch(fetchNotifications());
   }, [dispatch]);
 
+  const handleMarkAllRead = async () => {
+    const result = await dispatch(markAllNotificationsRead());
+    // Same reasoning as the per-row mark: recover whatever a fetch discarded by this
+    // mark's revision bump would have shown, now that it's settled.
+    if (markAllNotificationsRead.fulfilled.match(result)) {
+      void dispatch(fetchNotifications());
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }}>
       <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-4 md:px-8">
@@ -104,7 +122,7 @@ export function NotificationsView() {
           {unreadCount > 0 && (
             <button
               type="button"
-              onClick={() => void dispatch(markAllNotificationsRead())}
+              onClick={() => void handleMarkAllRead()}
               className="text-xs font-bold"
               style={{ color: matchyBrand.blue }}
             >

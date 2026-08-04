@@ -71,6 +71,9 @@ describe('NotificationsView', () => {
     fireEvent.click(entry);
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/notifications/notif-1/read'));
+    // The mark bumps the store's revision, which can discard a concurrently in-flight
+    // fetch — a follow-up fetch recovers from that, so it must fire after every mark.
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
   });
 
   it('keeps the already-loaded list visible when a background refetch fails', async () => {
@@ -136,5 +139,6 @@ describe('NotificationsView', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Tout marquer comme lu' }));
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/notifications/read-all'));
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
   });
 });

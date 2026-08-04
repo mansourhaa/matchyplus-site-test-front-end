@@ -86,11 +86,11 @@ describe('notifications-slice', () => {
     expect(store.getState().notifications.unreadCount).toBe(0);
   });
 
-  it('discards a fetch response entirely when a mark-read commits while it was still in flight', async () => {
-    let resolveFetch!: (value: { data: typeof listResponse }) => void;
+  it('discards a stale fetch response — including its loading flag — when a mark-read commits while it was still in flight', async () => {
+    let resolveStaleFetch!: (value: { data: typeof listResponse }) => void;
     vi.mocked(api.get).mockReturnValueOnce(
       new Promise((resolve) => {
-        resolveFetch = resolve;
+        resolveStaleFetch = resolve;
       }),
     );
     vi.mocked(api.post).mockResolvedValue({ data: undefined });
@@ -98,22 +98,98 @@ describe('notifications-slice', () => {
 
     // Dispatched while state.revision is still 0 — this is what the fetch captures as
     // revisionAtStart, before its GET has resolved.
-    const fetchPromise = store.dispatch(fetchNotifications());
+    const stalePromise = store.dispatch(fetchNotifications());
 
     // A mark-read commits (bumping revision to 1) before the GET above resolves.
     await store.dispatch(markNotificationRead('notif-1'));
     expect(store.getState().notifications.revision).toBe(1);
 
     // The GET finally resolves with a stale snapshot (captured before the mark-read).
-    resolveFetch({ data: listResponse });
-    await fetchPromise;
+    // Its loading=false is dropped too — a fresher fetch (dispatched right after the
+    // mark, see notifications-view.tsx) is what will actually settle loading, and this
+    // stale settle must not flip it to false out from under that still-pending fetch.
+    resolveStaleFetch({ data: listResponse });
+    await stalePromise;
 
-    // revisionAtStart (0) no longer matches the current revision (1) — the response is
-    // dropped rather than applied, so it can neither resurrect notif-1 as unread nor
-    // overwrite unreadCount with a stale total.
     expect(store.getState().notifications.items).toEqual([]);
     expect(store.getState().notifications.unreadCount).toBe(0);
+    expect(store.getState().notifications.loading).toBe(true);
+
+    // The fresh fetch that follows the mark captures the now-current revision and
+    // applies (and settles loading) cleanly.
+    vi.mocked(api.get).mockResolvedValueOnce({ data: { notifications: [], unread_count: 0 } });
+    await store.dispatch(fetchNotifications());
+
     expect(store.getState().notifications.loading).toBe(false);
+  });
+
+  it('discards a stale fetch rejection the same way — a 401 from a superseded request must not set error', async () => {
+    let rejectStaleFetch!: (reason: unknown) => void;
+    vi.mocked(api.get).mockReturnValueOnce(
+      new Promise((_, reject) => {
+        rejectStaleFetch = reject;
+      }),
+    );
+    vi.mocked(api.post).mockResolvedValue({ data: undefined });
+    const store = buildStore();
+
+    const stalePromise = store.dispatch(fetchNotifications());
+    await store.dispatch(markNotificationRead('notif-1'));
+    expect(store.getState().notifications.revision).toBe(1);
+
+    rejectStaleFetch(new Error('network error'));
+    await stalePromise;
+
+    expect(store.getState().notifications.error).toBeNull();
+  });
+
+  it('ignores a mark-read that resolves after the session was reset while it was in flight', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: listResponse });
+    const store = buildStore();
+    await store.dispatch(fetchNotifications());
+
+    let resolveMark!: (value: { data: undefined }) => void;
+    vi.mocked(api.post).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveMark = resolve;
+      }),
+    );
+    const markPromise = store.dispatch(markNotificationRead('notif-1'));
+
+    store.dispatch(logout.fulfilled(undefined, 'req-1', undefined));
+    expect(store.getState().notifications.revision).toBe(1);
+
+    resolveMark({ data: undefined });
+    await markPromise;
+
+    // The mark's revisionAtStart (0) no longer matches — applying it now (including the
+    // revision bump, which would wrongly invalidate the next session's own in-flight
+    // fetch) would be acting on a session that no longer exists.
+    expect(store.getState().notifications.revision).toBe(1);
+    expect(store.getState().notifications.items).toEqual([]);
+  });
+
+  it('ignores a mark-all-read that resolves after the session was reset while it was in flight', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: listResponse });
+    const store = buildStore();
+    await store.dispatch(fetchNotifications());
+
+    let resolveMarkAll!: (value: { data: undefined }) => void;
+    vi.mocked(api.post).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveMarkAll = resolve;
+      }),
+    );
+    const markAllPromise = store.dispatch(markAllNotificationsRead());
+
+    store.dispatch(logout.fulfilled(undefined, 'req-1', undefined));
+    expect(store.getState().notifications.revision).toBe(1);
+
+    resolveMarkAll({ data: undefined });
+    await markAllPromise;
+
+    expect(store.getState().notifications.revision).toBe(1);
+    expect(store.getState().notifications.items).toEqual([]);
   });
 
   it('applies a fetch dispatched after mark-all-read normally, trusting the server snapshot directly', async () => {
