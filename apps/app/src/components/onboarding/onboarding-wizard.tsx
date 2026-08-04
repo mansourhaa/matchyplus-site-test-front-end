@@ -17,7 +17,7 @@ import {
 import type { OnboardingProfilePatch, OnboardingStep } from '@/features/onboarding/types';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 import { IdentityStep } from './identity-step';
 import { InterestsStep } from './interests-step';
@@ -34,21 +34,23 @@ export function OnboardingWizard() {
   const { isAuthenticated } = useAppSelector(selectAuth);
   const { profile, loading } = useAppSelector(selectOnboarding);
 
+  // Set by IdentityStep the instant registerPhone succeeds, before it saves the identity
+  // patch, and cleared once that save actually succeeds (see goToNextStep/finishOnboarding
+  // below) — never on a failed save, so a stale ?step= can't tear the user away from
+  // identity (OTP modal included) while there's still no saved name/photo/job to show
+  // elsewhere, or before the save has even been retried successfully.
+  const [justRegistered, setJustRegistered] = useState(false);
+
   const requestedStep = searchParams.get('step');
   // A brand-new visitor has no session yet, so only the identity step (which also
   // collects credentials for them) is reachable — any other requested step would just
-  // render a form whose save always 401s. Ignore ?step= entirely until authenticated.
+  // render a form whose save always 401s. Ignore ?step= entirely until authenticated,
+  // and keep ignoring it through the brief registered-but-not-yet-saved window too.
   const step: OnboardingStep =
-    isAuthenticated && VALID_STEPS.includes(requestedStep as OnboardingStep)
+    isAuthenticated && !justRegistered && VALID_STEPS.includes(requestedStep as OnboardingStep)
       ? (requestedStep as OnboardingStep)
       : 'identity';
   const nextParam = searchParams.get('next');
-
-  // Set by IdentityStep the instant registerPhone succeeds, before it saves the
-  // identity patch — tells the effect below to skip its fetch for that specific
-  // unauthenticated -> authenticated transition (see the fetchOnboardingProfile call
-  // below).
-  const justRegisteredRef = useRef(false);
 
   useEffect(() => {
     // A brand-new visitor has no session yet — fetching their profile would just 401.
@@ -56,8 +58,11 @@ export function OnboardingWizard() {
     // progress to resume for an account that didn't exist a moment ago, and identity's
     // own save (about to follow) is the authoritative data — a GET racing that save
     // could resolve after it and overwrite the just-saved fields with the still-empty
-    // brand-new profile.
-    if (isAuthenticated && !justRegisteredRef.current) dispatch(fetchOnboardingProfile());
+    // brand-new profile. Deliberately not depending on `justRegistered` — this should
+    // only re-evaluate when auth state itself changes, not again when the guard later
+    // clears (which would just re-fetch the same data the save already put in state).
+    if (isAuthenticated && !justRegistered) dispatch(fetchOnboardingProfile());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
@@ -87,6 +92,7 @@ export function OnboardingWizard() {
     const saved = await saveStep(patch);
     if (!saved) return false;
 
+    setJustRegistered(false);
     const next = getNextStep(step);
     if (next) router.push(buildStepUrl(next));
     return true;
@@ -96,6 +102,7 @@ export function OnboardingWizard() {
     const saved = await saveStep(patch);
     if (!saved) return false;
 
+    setJustRegistered(false);
     const result = await dispatch(completeOnboarding());
     if (!completeOnboarding.fulfilled.match(result)) return false;
 
@@ -117,9 +124,7 @@ export function OnboardingWizard() {
           totalSteps={totalSteps}
           loading={loading}
           isAuthenticated={isAuthenticated}
-          onRegistered={() => {
-            justRegisteredRef.current = true;
-          }}
+          onRegistered={() => setJustRegistered(true)}
           onNext={goToNextStep}
         />
       );

@@ -202,6 +202,7 @@ export function IdentityStep({
   };
 
   const handleVerifyOtp = async () => {
+    if (otpVerifying) return;
     if (code.trim().length < 4) {
       setOtpError('Entrez le code à 6 chiffres.');
       return;

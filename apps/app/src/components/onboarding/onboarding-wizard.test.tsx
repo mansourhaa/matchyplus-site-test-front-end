@@ -3,21 +3,21 @@ import type { AuthState } from '@/features/auth/types';
 import onboardingReducer from '@/features/onboarding/store/onboarding-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { OnboardingWizard } from './onboarding-wizard';
 
-const { pushMock, replaceMock, refreshMock, searchParamsRef, registeredCallbackRef } = vi.hoisted(
-  () => ({
+const { pushMock, replaceMock, refreshMock, searchParamsRef, registeredCallbackRef, onNextRef } =
+  vi.hoisted(() => ({
     pushMock: vi.fn(),
     replaceMock: vi.fn(),
     refreshMock: vi.fn(),
     searchParamsRef: { current: new URLSearchParams() },
     registeredCallbackRef: { current: undefined as (() => void) | undefined },
-  }),
-);
+    onNextRef: { current: undefined as ((patch: unknown) => Promise<boolean>) | undefined },
+  }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock, replace: replaceMock, refresh: refreshMock }),
@@ -34,11 +34,16 @@ vi.mock('@/lib/api', async (importOriginal) => {
 
 // Isolates the wizard's own orchestration (step gating, the fetch-vs-register-race fix)
 // from IdentityStep's internal form/OTP complexity, which identity-step.test.tsx already
-// covers in full. Captures the real onRegistered callback so a test can invoke it exactly
-// like the real component does — right when registerPhone succeeds, before its onNext save.
+// covers in full. Captures the real onRegistered/onNext callbacks so a test can invoke
+// them exactly like the real component does — onRegistered right when registerPhone
+// succeeds, onNext once its own identity save is ready to run.
 vi.mock('./identity-step', () => ({
-  IdentityStep: (props: { onRegistered?: () => void }) => {
+  IdentityStep: (props: {
+    onRegistered?: () => void;
+    onNext: (patch: unknown) => Promise<boolean>;
+  }) => {
     registeredCallbackRef.current = props.onRegistered;
+    onNextRef.current = props.onNext;
     return <div>Votre identité (stub)</div>;
   },
 }));
@@ -105,6 +110,7 @@ describe('OnboardingWizard', () => {
     vi.clearAllMocks();
     searchParamsRef.current = new URLSearchParams();
     registeredCallbackRef.current = undefined;
+    onNextRef.current = undefined;
   });
 
   it('ignores ?step=interests and renders identity for an unauthenticated visitor', () => {
@@ -148,5 +154,39 @@ describe('OnboardingWizard', () => {
 
     await waitFor(() => expect(screen.queryByText('Votre identité (stub)')).toBeInTheDocument());
     expect(api.get).not.toHaveBeenCalled();
+  });
+
+  it('stays on identity, ignoring a stale ?step=interests, while the post-register save is still in flight', async () => {
+    searchParamsRef.current = new URLSearchParams('step=interests');
+    const store = renderWizard({ status: 'unauthenticated', user: null });
+
+    store.dispatch({ type: 'auth/registerPhone/fulfilled', payload: { user: registeredUser } });
+    registeredCallbackRef.current?.();
+
+    // isAuthenticated is now true and ?step=interests is present, but the save hasn't
+    // resolved yet — identity (OTP modal included) must not be torn down.
+    await waitFor(() => expect(screen.getByText('Votre identité (stub)')).toBeInTheDocument());
+    expect(screen.queryByText('Vos objectifs')).not.toBeInTheDocument();
+  });
+
+  it('clears the sticky guard and navigates normally once the post-register save succeeds', async () => {
+    searchParamsRef.current = new URLSearchParams();
+    vi.mocked(api.patch).mockResolvedValue({ data: fullProfile });
+    const store = renderWizard({ status: 'unauthenticated', user: null });
+
+    act(() => {
+      store.dispatch({ type: 'auth/registerPhone/fulfilled', payload: { user: registeredUser } });
+      registeredCallbackRef.current?.();
+    });
+    // Re-render lands with isAuthenticated=true and justRegisteredRef still true — grab
+    // this render's onNext (goToNextStep), the same one IdentityStep would actually call.
+    await act(async () => {
+      await onNextRef.current?.({ name: 'Jane Doe', profileType: 'INDIVIDUAL' });
+    });
+
+    // The successful save clears the sticky guard and advances exactly like a normal
+    // (already-authenticated) save would — the guard only ever blocks the brief
+    // in-flight window, never navigation after a real success.
+    expect(pushMock).toHaveBeenCalledWith('/onboarding?step=interests');
   });
 });

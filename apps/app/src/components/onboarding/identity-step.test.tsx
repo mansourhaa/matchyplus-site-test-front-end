@@ -566,6 +566,54 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     expect(firstButton(/Renvoyer/)).toBeDisabled();
   });
 
+  it('does not re-enter verification (e.g. via a repeated Enter keypress) while one is already in flight', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    let registerCalls = 0;
+    vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/otp/send') {
+        return { data: { message: 'sent', phone: '+21612345678' } };
+      }
+      if (url === '/auth/otp/verify') {
+        return {
+          data: { verified: true, phone: '+21612345678', signupToken: 'valid-grant-token' },
+        };
+      }
+      if (url === '/auth/register-phone') {
+        registerCalls += 1;
+        // Never resolves — keeps otpVerifying true for the rest of this test.
+        return new Promise(() => {});
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    renderWithAuthStore(
+      <IdentityStep
+        profile={unauthenticatedProfileWithPhoto}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onNext={onNext}
+      />,
+      unauthenticatedState,
+    );
+
+    fillIdentityAndCredentials();
+    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
+      target: { value: 'secret123' },
+    });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    const codeInput = await findFirstPlaceholder('------');
+    fireEvent.change(codeInput, { target: { value: '123456' } });
+    fireEvent.keyDown(codeInput, { key: 'Enter' });
+    fireEvent.keyDown(codeInput, { key: 'Enter' });
+    fireEvent.keyDown(codeInput, { key: 'Enter' });
+
+    await waitFor(() => expect(registerCalls).toBeGreaterThan(0));
+    expect(registerCalls).toBe(1);
+  });
+
   it('shows an error and does not register or save when the OTP code is rejected', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     vi.mocked(api.post).mockImplementation(async (url: string) => {
