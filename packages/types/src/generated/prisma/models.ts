@@ -21,5 +21,6 @@ export type * from './models/Message.js';
 export type * from './models/MessageLike.js';
 export type * from './models/UserLocation.js';
 export type * from './models/UserBlock.js';
+export type * from './models/Rating.js';
 export type * from './models/AiJob.js';
 export type * from './commonInputTypes.js';

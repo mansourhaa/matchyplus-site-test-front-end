@@ -61,6 +61,7 @@ export const ModelName = {
   MessageLike: 'MessageLike',
   UserLocation: 'UserLocation',
   UserBlock: 'UserBlock',
+  Rating: 'Rating',
   AiJob: 'AiJob',
 } as const;
 
@@ -304,6 +305,17 @@ export const UserBlockScalarFieldEnum = {
 
 export type UserBlockScalarFieldEnum =
   (typeof UserBlockScalarFieldEnum)[keyof typeof UserBlockScalarFieldEnum];
+
+export const RatingScalarFieldEnum = {
+  id: 'id',
+  rater_id: 'rater_id',
+  ratee_id: 'ratee_id',
+  value: 'value',
+  created_at: 'created_at',
+} as const;
+
+export type RatingScalarFieldEnum =
+  (typeof RatingScalarFieldEnum)[keyof typeof RatingScalarFieldEnum];
 
 export const AiJobScalarFieldEnum = {
   id: 'id',

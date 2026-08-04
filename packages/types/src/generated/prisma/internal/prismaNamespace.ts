@@ -404,6 +404,7 @@ export const ModelName = {
   MessageLike: 'MessageLike',
   UserLocation: 'UserLocation',
   UserBlock: 'UserBlock',
+  Rating: 'Rating',
   AiJob: 'AiJob',
 } as const;
 
@@ -439,6 +440,7 @@ export type TypeMap<
       | 'messageLike'
       | 'userLocation'
       | 'userBlock'
+      | 'rating'
       | 'aiJob';
     txIsolationLevel: TransactionIsolationLevel;
   };
@@ -1484,6 +1486,80 @@ export type TypeMap<
         };
       };
     };
+    Rating: {
+      payload: Prisma.$RatingPayload<ExtArgs>;
+      fields: Prisma.RatingFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.RatingFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.RatingFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload>;
+        };
+        findFirst: {
+          args: Prisma.RatingFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.RatingFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload>;
+        };
+        findMany: {
+          args: Prisma.RatingFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload>[];
+        };
+        create: {
+          args: Prisma.RatingCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload>;
+        };
+        createMany: {
+          args: Prisma.RatingCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.RatingCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload>[];
+        };
+        delete: {
+          args: Prisma.RatingDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload>;
+        };
+        update: {
+          args: Prisma.RatingUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload>;
+        };
+        deleteMany: {
+          args: Prisma.RatingDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.RatingUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.RatingUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload>[];
+        };
+        upsert: {
+          args: Prisma.RatingUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RatingPayload>;
+        };
+        aggregate: {
+          args: Prisma.RatingAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRating>;
+        };
+        groupBy: {
+          args: Prisma.RatingGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.RatingGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.RatingCountArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.RatingCountAggregateOutputType> | number;
+        };
+      };
+    };
     AiJob: {
       payload: Prisma.$AiJobPayload<ExtArgs>;
       fields: Prisma.AiJobFieldRefs;
@@ -1821,6 +1897,17 @@ export const UserBlockScalarFieldEnum = {
 
 export type UserBlockScalarFieldEnum =
   (typeof UserBlockScalarFieldEnum)[keyof typeof UserBlockScalarFieldEnum];
+
+export const RatingScalarFieldEnum = {
+  id: 'id',
+  rater_id: 'rater_id',
+  ratee_id: 'ratee_id',
+  value: 'value',
+  created_at: 'created_at',
+} as const;
+
+export type RatingScalarFieldEnum =
+  (typeof RatingScalarFieldEnum)[keyof typeof RatingScalarFieldEnum];
 
 export const AiJobScalarFieldEnum = {
   id: 'id',
@@ -2263,6 +2350,7 @@ export type GlobalOmitConfig = {
   messageLike?: Prisma.MessageLikeOmit;
   userLocation?: Prisma.UserLocationOmit;
   userBlock?: Prisma.UserBlockOmit;
+  rating?: Prisma.RatingOmit;
   aiJob?: Prisma.AiJobOmit;
 };
 

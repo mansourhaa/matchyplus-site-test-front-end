@@ -1,7 +1,7 @@
 import { api, getApiErrorCode } from '@/lib/api';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
-import type { MediaUploadResult, PublicProfile } from '../types';
+import type { MediaUploadResult, PublicProfile, RatingResult } from '../types';
 
 type ProfileState = {
   viewedProfile: PublicProfile | null;
@@ -74,6 +74,38 @@ export const deleteProfileVideo = createAsyncThunk('profile/deleteVideo', async 
   }
 });
 
+// Only allowed between matched users, one rating per pair — the API enforces both and
+// rejects a second attempt with 'already_rated', which the caller handles explicitly
+// rather than treating it as a generic failure.
+export const rateProfile = createAsyncThunk(
+  'profile/rate',
+  async ({ userId, value }: { userId: string; value: number }) => {
+    try {
+      const response = await api.post<RatingResult>(`/profiles/${userId}/rating`, {
+        rating: value,
+      });
+      return { userId, ...response.data };
+    } catch (error) {
+      throw new Error(getApiErrorCode(error) ?? 'rating_failed');
+    }
+  },
+);
+
+export const reportProfile = createAsyncThunk(
+  'profile/report',
+  async ({ userId, reason, details }: { userId: string; reason: string; details?: string }) => {
+    try {
+      const response = await api.post<{ reportId: string; status: string; message: string }>(
+        `/reports/profiles/${userId}`,
+        { reason, details },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getApiErrorCode(error) ?? 'report_failed');
+    }
+  },
+);
+
 const profileSlice = createSlice({
   name: 'profile',
   initialState,
@@ -135,6 +167,15 @@ const profileSlice = createSlice({
       .addCase(deleteProfileVideo.rejected, (state, action) => {
         state.mediaUploading = false;
         state.mediaError = action.error.message || 'video_delete_failed';
+      })
+      .addCase(rateProfile.fulfilled, (state, action) => {
+        if (state.viewedProfile && state.viewedProfile.id === action.payload.userId) {
+          state.viewedProfile.rating = action.payload.rating;
+          state.viewedProfile.reviews = action.payload.reviews;
+          // Without this, reopening the same cached profile shows the star picker again
+          // until another submit attempt bounces off the API with already_rated.
+          state.viewedProfile.viewer_has_rated = true;
+        }
       });
   },
 });

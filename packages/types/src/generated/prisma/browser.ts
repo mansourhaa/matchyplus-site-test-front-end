@@ -100,6 +100,13 @@ export type UserLocation = Prisma.UserLocationModel;
  */
 export type UserBlock = Prisma.UserBlockModel;
 /**
+ * Model Rating
+ * One rating per (rater, ratee) pair, only allowed between matched users — insert-only,
+ * no edits once submitted. Aggregated into User.rating/reviews on every write rather
+ * than read live, so profile reads stay a single-row lookup.
+ */
+export type Rating = Prisma.RatingModel;
+/**
  * Model AiJob
  * Durable AI job record. Redis Streams is the queue transport;
  * this table is the source of truth for status polling and audits.

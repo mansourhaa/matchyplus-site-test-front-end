@@ -29,6 +29,9 @@ function createMockPrisma() {
     conversation: {
       findUnique: vi.fn(),
     },
+    rating: {
+      findUnique: vi.fn(),
+    },
   };
 }
 
@@ -87,6 +90,8 @@ describe('ProfileService', () => {
         profile_type: 'INDIVIDUAL',
         rating: null,
         reviews: null,
+        matched: false,
+        viewer_has_rated: false,
       });
       expect(result).not.toHaveProperty('status');
     });
@@ -100,6 +105,31 @@ describe('ProfileService', () => {
 
       expect(result.rating).toBe(4.5);
       expect(result.reviews).toBe(3);
+    });
+
+    it('reports viewer_has_rated: true when the viewer already rated this profile', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue(activeUser);
+      prisma.userBlock.findFirst.mockResolvedValue(null);
+      prisma.rating.findUnique.mockResolvedValue({ id: 'rating-1' });
+
+      const result = await service.getPublicProfile('user-1', 'user-2');
+
+      expect(prisma.rating.findUnique).toHaveBeenCalledWith({
+        where: { rater_id_ratee_id: { rater_id: 'user-1', ratee_id: 'user-2' } },
+        select: { id: true },
+      });
+      expect(result.viewer_has_rated).toBe(true);
+    });
+
+    it('never checks viewer_has_rated when viewing your own profile', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue(activeUser);
+
+      const result = await service.getPublicProfile('user-2', 'user-2');
+
+      expect(prisma.rating.findUnique).not.toHaveBeenCalled();
+      expect(result.viewer_has_rated).toBe(false);
     });
 
     it('rejects with profile_not_found when the target does not exist', async () => {

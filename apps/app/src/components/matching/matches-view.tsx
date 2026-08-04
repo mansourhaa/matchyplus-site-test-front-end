@@ -180,29 +180,24 @@ export function MatchesView() {
                 </Link>
               </div>
             ) : (
-              <section>
-                <h2 className="mb-3 text-sm font-bold tracking-wide text-[#777] uppercase">
-                  {t('matching.myMatches')}
-                </h2>
-                <div className="space-y-2">
+              <>
+                <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
                   {matching.matches.map((row) => {
                     const profile = row.profile;
                     if (!profile) return null;
                     return (
                       <button
-                        key={row.match_id}
+                        key={`avatar-${row.match_id}`}
                         type="button"
-                        disabled={!row.conversation_id}
-                        onClick={() => {
-                          if (!row.conversation_id) return;
-                          router.push(`/chat/${row.conversation_id}`);
-                        }}
-                        className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left disabled:opacity-50"
-                        style={{ border: `1px solid ${matchyBrand.border}` }}
+                        onClick={() => router.push(`/profile/${profile.id}`)}
+                        className="flex w-16 shrink-0 flex-col items-center gap-1"
                       >
                         <div
-                          className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full text-lg font-bold text-white"
-                          style={{ background: matchyBrand.gradient135 }}
+                          className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full text-lg font-bold text-white"
+                          style={{
+                            background: matchyBrand.gradient135,
+                            boxShadow: `0 0 0 2px ${matchyBrand.teal}`,
+                          }}
                         >
                           {profile.image ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -215,20 +210,72 @@ export function MatchesView() {
                             profile.name.slice(0, 1)
                           )}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-bold" style={{ color: matchyBrand.textDark }}>
-                            {profile.name}
-                          </p>
-                          <p className="truncate text-xs text-[#777]">
-                            {profile.service_type || profile.job || profile.category}
-                          </p>
-                        </div>
-                        <MessageCircle size={18} color={matchyBrand.teal} />
+                        <span className="w-full truncate text-center text-[10px] font-semibold text-[#555]">
+                          {profile.name.split(' ')[0]}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
-              </section>
+
+                <section className="space-y-2">
+                  <h2 className="text-sm font-bold tracking-wide text-[#777] uppercase">
+                    {t('matching.myMatches')}
+                  </h2>
+                  {matching.matches.map((row) => {
+                    const profile = row.profile;
+                    if (!profile) return null;
+                    return (
+                      <div
+                        key={row.match_id}
+                        className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 shadow-sm"
+                        style={{ border: `1px solid ${matchyBrand.border}` }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/profile/${profile.id}`)}
+                          className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full text-lg font-bold text-white"
+                          style={{ background: matchyBrand.gradient135 }}
+                          aria-label={`Voir le profil de ${profile.name}`}
+                        >
+                          {profile.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={profile.image}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            profile.name.slice(0, 1)
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!row.conversation_id}
+                          onClick={() => {
+                            if (!row.conversation_id) return;
+                            router.push(`/chat/${row.conversation_id}`);
+                          }}
+                          className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:opacity-50"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className="truncate font-bold"
+                              style={{ color: matchyBrand.textDark }}
+                            >
+                              {profile.name}
+                            </p>
+                            <p className="truncate text-xs text-[#777]">
+                              {profile.service_type || profile.job || profile.category}
+                            </p>
+                          </div>
+                          <MessageCircle size={18} color={matchyBrand.teal} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </section>
+              </>
             )}
 
             <section>

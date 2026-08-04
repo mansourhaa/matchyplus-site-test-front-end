@@ -106,3 +106,7 @@ export const VOICE_AUDIO_CONTENT_TYPES: Record<string, string> = {
 /** Default page size for conversation message history. */
 export const MESSAGES_PAGE_SIZE = 50;
 export const MESSAGES_PAGE_SIZE_MAX = 100;
+
+/** Valid star-rating bounds for POST /profiles/:id/rating. */
+export const MIN_RATING = 1;
+export const MAX_RATING = 5;
