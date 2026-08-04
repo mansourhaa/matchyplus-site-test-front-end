@@ -21,12 +21,3 @@ export function getPreviousStep(step: OnboardingStep): OnboardingStep | null {
   const index = ORDER.indexOf(step);
   return index > 0 ? ORDER[index - 1] : null;
 }
-
-// The full user-facing flow is credentials (RegisterForm, always step 1) followed by
-// this 3-step wizard — kept in one place so the two screens never disagree on numbering
-// (RegisterForm previously said "Étape 1 sur 4" while the wizard separately said "sur 3").
-export const TOTAL_FLOW_STEPS = ORDER.length + 1;
-
-export function getFlowStepNumber(step: OnboardingStep): number {
-  return getStepNumber(step) + 1;
-}

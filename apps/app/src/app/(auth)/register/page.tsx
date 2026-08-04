@@ -1,10 +1,5 @@
-import { RegisterForm } from '@/components/auth/register-form';
-import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 
 export default function RegisterPage() {
-  return (
-    <Suspense>
-      <RegisterForm />
-    </Suspense>
-  );
+  redirect('/onboarding');
 }

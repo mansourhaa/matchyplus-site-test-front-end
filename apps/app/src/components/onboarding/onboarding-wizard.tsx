@@ -1,12 +1,12 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { fetchCurrentUser } from '@/features/auth/store/auth-slice';
+import { fetchCurrentUser, selectAuth } from '@/features/auth/store/auth-slice';
 import {
-  TOTAL_FLOW_STEPS,
-  getFlowStepNumber,
   getNextStep,
   getPreviousStep,
+  getStepNumber,
+  getStepOrder,
 } from '@/features/onboarding/step-order';
 import {
   completeOnboarding,
@@ -25,12 +25,13 @@ import { LocationStep } from './location-step';
 
 const VALID_STEPS: OnboardingStep[] = ['identity', 'interests', 'location'];
 
-// Credentials (phone + password + OTP) happen on /register, before this wizard is ever
-// reached — by the time /onboarding renders, a session always already exists.
+// Reachable by both a brand-new, unauthenticated visitor (identity step also collects
+// credentials in that case — see IdentityStep) and an authenticated-but-incomplete user.
 export function OnboardingWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+  const { isAuthenticated } = useAppSelector(selectAuth);
   const { profile, loading } = useAppSelector(selectOnboarding);
 
   const requestedStep = searchParams.get('step');
@@ -40,8 +41,9 @@ export function OnboardingWizard() {
   const nextParam = searchParams.get('next');
 
   useEffect(() => {
-    dispatch(fetchOnboardingProfile());
-  }, [dispatch]);
+    // A brand-new visitor has no session yet — fetching their profile would just 401.
+    if (isAuthenticated) dispatch(fetchOnboardingProfile());
+  }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
     if (profile?.onboardingCompleted) {
@@ -88,8 +90,8 @@ export function OnboardingWizard() {
     return true;
   };
 
-  const stepNumber = getFlowStepNumber(step);
-  const totalSteps = TOTAL_FLOW_STEPS;
+  const stepNumber = getStepNumber(step);
+  const totalSteps = getStepOrder().length;
 
   switch (step) {
     case 'identity':
@@ -99,6 +101,7 @@ export function OnboardingWizard() {
           stepNumber={stepNumber}
           totalSteps={totalSteps}
           loading={loading}
+          isAuthenticated={isAuthenticated}
           onNext={goToNextStep}
         />
       );

@@ -3,6 +3,10 @@ const ONBOARDING_ROUTE = '/onboarding';
 
 // Routes that must never be treated as a valid post-auth destination — bouncing back
 // into one of these would loop the user through the auth flow again.
+// /register still exists as a live route (it only redirects to /onboarding — see
+// app/(auth)/register/page.tsx) — kept disallowed here so `next=/register` can't force
+// a pointless auth-flow -> /register -> /onboarding bounce instead of going straight to
+// the real destination.
 const DISALLOWED_PREFIXES = ['/login', '/register', '/oauth-callback', '/api', '/onboarding'];
 
 function sanitizeNext(nextParam?: string | null): string | null {
