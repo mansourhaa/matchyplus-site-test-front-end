@@ -466,6 +466,106 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     );
   });
 
+  it('calls onRegistered before onNext once registration succeeds, so the wizard can skip its own redundant fetch', async () => {
+    const callOrder: string[] = [];
+    const onRegistered = vi.fn(() => callOrder.push('onRegistered'));
+    const onNext = vi.fn(async () => {
+      callOrder.push('onNext');
+      return true;
+    });
+    vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/otp/send') {
+        return { data: { message: 'sent', phone: '+21612345678' } };
+      }
+      if (url === '/auth/otp/verify') {
+        return {
+          data: { verified: true, phone: '+21612345678', signupToken: 'valid-grant-token' },
+        };
+      }
+      if (url === '/auth/register-phone') {
+        return {
+          data: { access_token: 'access-1', refresh_token: 'refresh-1', user: registeredUser },
+        };
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    renderWithAuthStore(
+      <IdentityStep
+        profile={unauthenticatedProfileWithPhoto}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onRegistered={onRegistered}
+        onNext={onNext}
+      />,
+      unauthenticatedState,
+    );
+
+    fillIdentityAndCredentials();
+    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
+      target: { value: 'secret123' },
+    });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    const codeInput = await findFirstPlaceholder('------');
+    fireEvent.change(codeInput, { target: { value: '123456' } });
+    fireEvent.click(firstButton('Confirmer'));
+
+    await waitFor(() => expect(onNext).toHaveBeenCalled());
+    expect(callOrder).toEqual(['onRegistered', 'onNext']);
+  });
+
+  it('disables closing and resending the OTP modal while verification is in flight', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/otp/send') {
+        return { data: { message: 'sent', phone: '+21612345678' } };
+      }
+      if (url === '/auth/otp/verify') {
+        return {
+          data: { verified: true, phone: '+21612345678', signupToken: 'valid-grant-token' },
+        };
+      }
+      if (url === '/auth/register-phone') {
+        // Never resolves within this test — keeps otpVerifying true so the guard can be
+        // observed.
+        return new Promise(() => {});
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    renderWithAuthStore(
+      <IdentityStep
+        profile={unauthenticatedProfileWithPhoto}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onNext={onNext}
+      />,
+      unauthenticatedState,
+    );
+
+    fillIdentityAndCredentials();
+    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
+      target: { value: 'secret123' },
+    });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    const codeInput = await findFirstPlaceholder('------');
+    fireEvent.change(codeInput, { target: { value: '123456' } });
+    fireEvent.click(firstButton('Confirmer'));
+
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/auth/register-phone', expect.anything()),
+    );
+
+    expect(screen.getByLabelText('Fermer')).toBeDisabled();
+    expect(firstButton(/Renvoyer/)).toBeDisabled();
+  });
+
   it('shows an error and does not register or save when the OTP code is rejected', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     vi.mocked(api.post).mockImplementation(async (url: string) => {

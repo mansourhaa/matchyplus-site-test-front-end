@@ -22,6 +22,11 @@ type IdentityStepProps = {
   // handleNext below). True for every other case (OAuth account, resumed phone
   // signup, already-authenticated-but-incomplete profile).
   isAuthenticated: boolean;
+  // Called the moment registerPhone succeeds, before onNext's save — lets the wizard
+  // know a real profile save is about to happen so it can skip its own redundant
+  // fetch-on-authenticated effect (a GET racing that save could resolve after it and
+  // overwrite the just-saved fields with the still-empty brand-new profile).
+  onRegistered?: () => void;
   onNext: (patch: {
     name: string;
     job?: string;
@@ -56,6 +61,7 @@ export function IdentityStep({
   totalSteps,
   loading,
   isAuthenticated,
+  onRegistered,
   onNext,
 }: IdentityStepProps) {
   const dispatch = useAppDispatch();
@@ -221,6 +227,7 @@ export function IdentityStep({
 
     setShowOtpModal(false);
     setOtpVerifying(false);
+    onRegistered?.();
     const saved = await onNext(identityPatch());
     if (!saved) {
       setError('Échec de la sauvegarde. Réessayez.');
@@ -494,7 +501,10 @@ export function IdentityStep({
           >
             <button
               type="button"
-              onClick={() => setShowOtpModal(false)}
+              onClick={() => {
+                if (!otpVerifying) setShowOtpModal(false);
+              }}
+              disabled={otpVerifying}
               className="absolute top-4 right-4"
               aria-label="Fermer"
             >
@@ -569,12 +579,12 @@ export function IdentityStep({
             <button
               type="button"
               onClick={() => void requestOtp()}
-              disabled={otpSending || resendCooldown > 0}
+              disabled={otpSending || otpVerifying || resendCooldown > 0}
               className="mt-3 w-full rounded-xl py-2"
               style={{
                 fontSize: '13px',
                 fontWeight: 600,
-                color: resendCooldown > 0 || otpSending ? '#AAA' : '#2F76BB',
+                color: resendCooldown > 0 || otpSending || otpVerifying ? '#AAA' : '#2F76BB',
                 background: 'transparent',
               }}
             >

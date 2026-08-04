@@ -17,7 +17,7 @@ import {
 import type { OnboardingProfilePatch, OnboardingStep } from '@/features/onboarding/types';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { IdentityStep } from './identity-step';
 import { InterestsStep } from './interests-step';
@@ -35,14 +35,29 @@ export function OnboardingWizard() {
   const { profile, loading } = useAppSelector(selectOnboarding);
 
   const requestedStep = searchParams.get('step');
-  const step: OnboardingStep = VALID_STEPS.includes(requestedStep as OnboardingStep)
-    ? (requestedStep as OnboardingStep)
-    : 'identity';
+  // A brand-new visitor has no session yet, so only the identity step (which also
+  // collects credentials for them) is reachable — any other requested step would just
+  // render a form whose save always 401s. Ignore ?step= entirely until authenticated.
+  const step: OnboardingStep =
+    isAuthenticated && VALID_STEPS.includes(requestedStep as OnboardingStep)
+      ? (requestedStep as OnboardingStep)
+      : 'identity';
   const nextParam = searchParams.get('next');
+
+  // Set by IdentityStep the instant registerPhone succeeds, before it saves the
+  // identity patch — tells the effect below to skip its fetch for that specific
+  // unauthenticated -> authenticated transition (see the fetchOnboardingProfile call
+  // below).
+  const justRegisteredRef = useRef(false);
 
   useEffect(() => {
     // A brand-new visitor has no session yet — fetching their profile would just 401.
-    if (isAuthenticated) dispatch(fetchOnboardingProfile());
+    // And right after they register, skip this fetch entirely: there's no prior
+    // progress to resume for an account that didn't exist a moment ago, and identity's
+    // own save (about to follow) is the authoritative data — a GET racing that save
+    // could resolve after it and overwrite the just-saved fields with the still-empty
+    // brand-new profile.
+    if (isAuthenticated && !justRegisteredRef.current) dispatch(fetchOnboardingProfile());
   }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
@@ -102,6 +117,9 @@ export function OnboardingWizard() {
           totalSteps={totalSteps}
           loading={loading}
           isAuthenticated={isAuthenticated}
+          onRegistered={() => {
+            justRegisteredRef.current = true;
+          }}
           onNext={goToNextStep}
         />
       );
