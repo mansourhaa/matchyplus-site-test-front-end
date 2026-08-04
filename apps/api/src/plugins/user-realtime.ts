@@ -58,7 +58,18 @@ async function userRealtime(fastify: FastifyInstance) {
       warn: (obj, msg) => fastify.log.warn(obj, msg),
       error: (obj, msg) => fastify.log.error(obj, msg),
     },
+    // Create the group before traffic when possible; consumer loop still retries.
+    startConsumer: false,
   });
+
+  if (fastify.redisClient) {
+    try {
+      await fanout.ensureConsumerGroup(fastify.redisClient);
+    } catch (err) {
+      fastify.log.error({ err }, 'realtime stream initial group ensure failed');
+    }
+    fanout.start();
+  }
 
   function notifyUser(userId: string, event: string, payload: Record<string, unknown>) {
     fanout.notifyUser(userId, event, payload);

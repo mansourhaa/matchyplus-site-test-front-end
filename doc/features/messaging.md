@@ -55,9 +55,18 @@ Clients may send `{ event: "typing"|"stop_typing", payload: { conversation_id } 
 Clients may also send `{ event: "ping" }` for keepalive; the server replies `{ event: "pong" }`.
 
 When `REDIS_URL` is set, `notifyUser` delivers to local sockets and `XADD`s to Redis Streams
-(`REALTIME_STREAM_KEY`, default `realtime:events`). Each API instance consumes with its own
-consumer group (`realtime:inst:{INSTANCE_ID}`) so every node can reach sockets it owns.
+(`REALTIME_STREAM_KEY`, default `realtime:events`) with approximate `MINID ~` retention
+(30 minutes). Each API instance consumes with its own consumer group
+(`realtime:inst:{INSTANCE_ID}`) from the start of the retained stream (`0`) so late
+bootstrap still catches peer publishes within the retention window; entries older than
+process start are skipped so clients do not get historical replay.
 Events include `originInstanceId` so the publishing instance does not double-deliver.
+
+**`INSTANCE_ID` must be unique per replica** in staging/prod (e.g. Kubernetes pod name).
+Reusing the same value across pods makes them share one consumer group; Redis then
+load-balances entries and peers on other pods miss events. A random UUID default is fine
+for single-instance local/dev.
+
 Without Redis, fan-out stays in-process (single instance). HTTP write responses remain
 authoritative for the acting user.
 

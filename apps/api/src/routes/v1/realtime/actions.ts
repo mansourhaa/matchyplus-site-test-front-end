@@ -3,6 +3,7 @@ import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import {
   REALTIME_MAX_INBOUND_BYTES,
   REALTIME_TYPING_MIN_INTERVAL_MS,
+  shouldThrottleTypingEvent,
 } from '../../../constants/realtime.js';
 import { realtimeSchema } from '../../../schemas/v1/matching.js';
 import { ConversationService } from '../../../services/conversation.js';
@@ -31,8 +32,22 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
     notify: (userId, event, payload) => fastify.notifyUser(userId, event, payload),
   });
 
-  /** userId:conversationId → last typing emit timestamp */
+  /** userId:conversationId → last *typing* emit timestamp (`stop_typing` is never throttled). */
   const typingThrottle = new Map<string, number>();
+  /** Serialize setTyping per key so stop cannot lose a race to an in-flight typing. */
+  const typingOpChain = new Map<string, Promise<void>>();
+
+  function enqueueTypingOp(key: string, op: () => Promise<void>): void {
+    const prev = typingOpChain.get(key) ?? Promise.resolve();
+    const next = prev
+      .catch(() => undefined)
+      .then(op)
+      .catch(() => undefined)
+      .finally(() => {
+        if (typingOpChain.get(key) === next) typingOpChain.delete(key);
+      });
+    typingOpChain.set(key, next);
+  }
 
   async function bindQueryToken(request: FastifyRequest<{ Querystring: RealtimeQuery }>) {
     try {
@@ -84,10 +99,20 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
               const key = `${userId}:${conversationId}`;
               const now = Date.now();
               const last = typingThrottle.get(key) ?? 0;
-              if (now - last < REALTIME_TYPING_MIN_INTERVAL_MS) return;
-              typingThrottle.set(key, now);
+              if (
+                shouldThrottleTypingEvent(parsed.event, last, now, REALTIME_TYPING_MIN_INTERVAL_MS)
+              ) {
+                return;
+              }
+              if (parsed.event === 'typing') {
+                typingThrottle.set(key, now);
+              } else {
+                // Clear so the next typing after stop is never blocked by the prior stamp.
+                typingThrottle.delete(key);
+              }
 
-              await conversations.setTyping(userId, conversationId, parsed.event === 'typing');
+              const isTyping = parsed.event === 'typing';
+              enqueueTypingOp(key, () => conversations.setTyping(userId, conversationId, isTyping));
             }
           } catch {
             // Ignore malformed client frames — keep the socket open.

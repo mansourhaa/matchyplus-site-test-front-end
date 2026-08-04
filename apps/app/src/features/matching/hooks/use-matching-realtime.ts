@@ -26,6 +26,8 @@ import { useStore } from 'react-redux';
 
 import type { PushToastItem } from '../types';
 
+/** Keep in sync with apps/api `REALTIME_PING_INTERVAL_MS`. */
+const REALTIME_PING_INTERVAL_MS = 25_000;
 const PUSH_TOAST_LIFETIME_MS = 4200;
 const MAX_VISIBLE_PUSH_TOASTS = 3;
 
@@ -100,7 +102,7 @@ export function useMatchingRealtime(enabled = true) {
               if (socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ event: 'ping', payload: {} }));
               }
-            }, 25_000);
+            }, REALTIME_PING_INTERVAL_MS);
           };
 
           socket.onmessage = (event) => {
