@@ -9,7 +9,9 @@
     "REDIS_URL",
     "AI_STREAM_KEY",
     "AI_CONSUMER_GROUP",
-    "AI_CACHE_TTL_SECONDS"
+    "AI_CACHE_TTL_SECONDS",
+    "REALTIME_STREAM_KEY",
+    "INSTANCE_ID"
   ],
   "tasks": {
     "build": {

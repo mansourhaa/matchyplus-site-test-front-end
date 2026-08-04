@@ -1,5 +1,9 @@
 import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 
+import {
+  REALTIME_MAX_INBOUND_BYTES,
+  REALTIME_TYPING_MIN_INTERVAL_MS,
+} from '../../../constants/realtime.js';
 import { realtimeSchema } from '../../../schemas/v1/matching.js';
 import { ConversationService } from '../../../services/conversation.js';
 import { RealtimeQuery } from '../../../types/matching.js';
@@ -14,7 +18,7 @@ type InboundRealtime = {
 
 /**
  * Authenticated websocket for match + messaging realtime events.
- * Client may send typing pings as JSON `{ event, payload }`.
+ * Client may send typing pings / keepalive as JSON `{ event, payload }`.
  * Server pushes JSON `{ event, payload }`.
  *
  * Browsers cannot set Authorization on the WebSocket constructor, so the
@@ -26,6 +30,9 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
     prisma: fastify.prisma,
     notify: (userId, event, payload) => fastify.notifyUser(userId, event, payload),
   });
+
+  /** userId:conversationId → last typing emit timestamp */
+  const typingThrottle = new Map<string, number>();
 
   async function bindQueryToken(request: FastifyRequest<{ Querystring: RealtimeQuery }>) {
     try {
@@ -56,11 +63,30 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
       socket.on('message', (raw) => {
         void (async () => {
           try {
-            const parsed = JSON.parse(String(raw)) as InboundRealtime;
+            const rawStr = String(raw);
+            if (Buffer.byteLength(rawStr, 'utf8') > REALTIME_MAX_INBOUND_BYTES) {
+              return;
+            }
+
+            const parsed = JSON.parse(rawStr) as InboundRealtime;
+
+            if (parsed.event === 'ping') {
+              if (socket.readyState === socket.OPEN) {
+                socket.send(JSON.stringify({ event: 'pong', payload: {} }));
+              }
+              return;
+            }
+
             const conversationId = parsed.payload?.conversation_id;
             if (!conversationId) return;
 
             if (parsed.event === 'typing' || parsed.event === 'stop_typing') {
+              const key = `${userId}:${conversationId}`;
+              const now = Date.now();
+              const last = typingThrottle.get(key) ?? 0;
+              if (now - last < REALTIME_TYPING_MIN_INTERVAL_MS) return;
+              typingThrottle.set(key, now);
+
               await conversations.setTyping(userId, conversationId, parsed.event === 'typing');
             }
           } catch {
@@ -71,6 +97,9 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
 
       socket.on('close', () => {
         fastify.userRealtime.unsubscribe(userId, socket);
+        for (const key of typingThrottle.keys()) {
+          if (key.startsWith(`${userId}:`)) typingThrottle.delete(key);
+        }
       });
     },
   );

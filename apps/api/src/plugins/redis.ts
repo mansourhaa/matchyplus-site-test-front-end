@@ -15,6 +15,7 @@ declare module 'fastify' {
 /**
  * Redis plugin for Option C:
  * - AI job queue (Streams)
+ * - match/messaging WebSocket fan-out (Streams, `realtime:events`)
  * - optional response cache
  * - shared rate-limit store when configured
  */

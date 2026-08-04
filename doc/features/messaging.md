@@ -52,8 +52,14 @@ Via `/realtime` WebSocket (`fastify.notifyUser`):
 - Messaging: `new_message`, `notification_message`, `messages_read`, `user_typing`, `user_stop_typing`, `message_like_changed`, `conversation_status_changed`, `conversation_block_status_changed`
 
 Clients may send `{ event: "typing"|"stop_typing", payload: { conversation_id } }` on the same socket.
+Clients may also send `{ event: "ping" }` for keepalive; the server replies `{ event: "pong" }`.
 
-In-process only today — multi-instance needs Redis pub/sub later. HTTP write responses remain authoritative for the acting user.
+When `REDIS_URL` is set, `notifyUser` delivers to local sockets and `XADD`s to Redis Streams
+(`REALTIME_STREAM_KEY`, default `realtime:events`). Each API instance consumes with its own
+consumer group (`realtime:inst:{INSTANCE_ID}`) so every node can reach sockets it owns.
+Events include `originInstanceId` so the publishing instance does not double-deliver.
+Without Redis, fan-out stays in-process (single instance). HTTP write responses remain
+authoritative for the acting user.
 
 ## Chat URL
 

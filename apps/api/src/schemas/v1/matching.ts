@@ -352,7 +352,7 @@ export const realtimeSchema = {
   tags: ['realtime'],
   summary: 'Match realtime WebSocket',
   description:
-    'Authenticated WebSocket for match and messaging events (`notification_match`, `match_removed`, `new_message`, `messages_read`, typing, likes). Pass Bearer JWT, or `?access_token=` for browser clients. Server pushes JSON `{ event, payload }`. Clients may send `{ event: "typing"|"stop_typing", payload: { conversation_id } }`.',
+    'Authenticated WebSocket for match and messaging events (`notification_match`, `match_removed`, `new_message`, `messages_read`, typing, likes). Pass Bearer JWT, or `?access_token=` for browser clients. Server pushes JSON `{ event, payload }`. Clients may send `{ event: "typing"|"stop_typing", payload: { conversation_id } }` or `{ event: "ping" }` (server replies `pong`). Multi-instance fan-out uses Redis Streams when `REDIS_URL` is set.',
   security: [{ http: [] }],
   querystring: {
     type: 'object',
