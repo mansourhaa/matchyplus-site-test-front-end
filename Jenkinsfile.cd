@@ -260,6 +260,8 @@ pipeline {
             INGRESS_IP=$(getent hosts "$STAGING_API_HOST" | awk '{print $1}' | head -1)
             INGRESS_IP="${INGRESS_IP:-192.168.137.200}"
 
+            # https, for the same reason as k6 below: scanning the http URL now
+            # only ever sees the 308 redirect, so the scan reports on nothing.
             for TARGET_HOST in "$STAGING_APP_HOST" "$STAGING_API_HOST"; do
               SAFE_NAME=$(echo "$TARGET_HOST" | tr '.' '-')
               docker run --rm \
@@ -268,7 +270,7 @@ pipeline {
                 -u root \
                 ghcr.io/zaproxy/zaproxy:stable \
                 zap-baseline.py \
-                  -t "http://${TARGET_HOST}" \
+                  -t "https://${TARGET_HOST}" \
                   -J "zap-${SAFE_NAME}.json" \
                   -r "zap-${SAFE_NAME}.html" \
                   -m 2 -T 5 || echo "ZAP flagged findings for ${TARGET_HOST} (non-blocking)"
@@ -295,19 +297,35 @@ pipeline {
             #   "could not open '/out/k6-summary.json': permission denied"
             # which surfaced only as "k6 missing" in the report, with a green
             # build. Ownership is normalised in the post block below.
+            # https: the ingress redirects http to https, and a 308 is neither
+            # 200 nor 429, so every check failed against the http URL while the
+            # service was perfectly healthy.
+            K6_EXIT=0
             docker run --rm \
               --add-host "${STAGING_API_HOST}:${INGRESS_IP}" \
-              -e "API_BASE=http://${STAGING_API_HOST}" \
+              -e "API_BASE=https://${STAGING_API_HOST}" \
               -u root \
               -v "$WORKSPACE/ci-scripts:/scripts:ro" \
               -v "$WORKSPACE/reports/k6:/out:rw" \
               grafana/k6:latest run \
                 --summary-export=/out/k6-summary.json \
-                /scripts/k6-staging-smoke.js
+                /scripts/k6-staging-smoke.js || K6_EXIT=$?
 
             if [ ! -s "$WORKSPACE/reports/k6/k6-summary.json" ]; then
               echo "k6 ran but produced no summary - the report would silently omit it" >&2
               exit 1
+            fi
+
+            # This block is the difference between having thresholds and only
+            # appearing to. The stage runs under `set -uo pipefail` without -e,
+            # so k6's exit 99 on a breached threshold was discarded and the
+            # stage returned the exit status of the check above instead. A run
+            # with checks at 60% against a required 95% was reported as a clean
+            # SUCCESS. Propagating the code lets the surrounding catchError do
+            # its job and mark the build unstable.
+            if [ "$K6_EXIT" -ne 0 ]; then
+              echo "k6 exited ${K6_EXIT} - thresholds breached, see the summary above" >&2
+              exit "$K6_EXIT"
             fi
           '''
         }

@@ -19,12 +19,17 @@ import http from 'k6/http';
 import { check, group, sleep } from 'k6';
 import { Rate } from 'k6/metrics';
 
-const API_BASE = __ENV.API_BASE || 'http://api.staging.matchy.local';
+const API_BASE = __ENV.API_BASE || 'https://api.staging.matchy.local';
 
 const failureRate = new Rate('failed_requests');
 const rateLimited = new Rate('rate_limited_responses');
 
 export const options = {
+  // Staging terminates TLS with a self-signed certificate, which k6 rejects by
+  // default - every request fails at the TLS handshake and the results look
+  // like an outage rather than a cert policy. Acceptable here precisely
+  // because the target is a known .local host, not an arbitrary endpoint.
+  insecureSkipTLSVerify: true,
   // 2 VUs with a 3s sleep and 2 requests per iteration is ~1.3 req/s, which
   // stays under the API's limit while still exercising it concurrently.
   stages: [
