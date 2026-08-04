@@ -289,14 +289,26 @@ pipeline {
             INGRESS_IP=$(getent hosts "$STAGING_API_HOST" | awk '{print $1}' | head -1)
             INGRESS_IP="${INGRESS_IP:-192.168.137.200}"
 
+            # -u root: the k6 image runs as an unprivileged uid that cannot
+            # write into the jenkins-owned workspace. Without it the test
+            # itself passes and then silently loses its results:
+            #   "could not open '/out/k6-summary.json': permission denied"
+            # which surfaced only as "k6 missing" in the report, with a green
+            # build. Ownership is normalised in the post block below.
             docker run --rm \
               --add-host "${STAGING_API_HOST}:${INGRESS_IP}" \
               -e "API_BASE=http://${STAGING_API_HOST}" \
+              -u root \
               -v "$WORKSPACE/ci-scripts:/scripts:ro" \
               -v "$WORKSPACE/reports/k6:/out:rw" \
               grafana/k6:latest run \
                 --summary-export=/out/k6-summary.json \
                 /scripts/k6-staging-smoke.js
+
+            if [ ! -s "$WORKSPACE/reports/k6/k6-summary.json" ]; then
+              echo "k6 ran but produced no summary - the report would silently omit it" >&2
+              exit 1
+            fi
           '''
         }
       }
@@ -318,6 +330,13 @@ pipeline {
   }
 
   post {
+    always {
+      // ZAP and k6 run as root so they can write into the workspace, which
+      // leaves root-owned files behind. The next build's checkout runs as
+      // jenkins and fails on them, so ownership is handed back here - same
+      // reason the CI pipeline does this after Semgrep.
+      sh 'chown -R "$(stat -c "%u:%g" .)" reports 2>/dev/null || true'
+    }
     success {
       echo "Deployed ${params.IMAGE_TAG} to ${env.K8S_NAMESPACE}."
     }
