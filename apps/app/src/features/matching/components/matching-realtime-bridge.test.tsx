@@ -1,7 +1,45 @@
-import { renderWithAuthStore } from '@/test/render-with-auth-store';
+import authReducer from '@/features/auth/store/auth-slice';
+import type { AuthState } from '@/features/auth/types';
+import { I18nProvider } from '@/features/i18n/i18n-provider';
+import messagingReducer from '@/features/messaging/store/messaging-slice';
+import { configureStore } from '@reduxjs/toolkit';
+import { render } from '@testing-library/react';
+import { Provider } from 'react-redux';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MatchingRealtimeBridge } from './matching-realtime-bridge';
+
+// MatchingRealtimeBridge also mounts MessagingSendErrorToaster (from the messaging
+// feature), which reads `state.messaging` and needs an I18nProvider ancestor — so this
+// test's store carries that reducer too, and renderWithAuthStore's single-reducer
+// (auth-only) store isn't enough here.
+function buildStore(authState: Partial<AuthState>) {
+  const defaultAuthState: AuthState = {
+    status: 'unknown',
+    loading: false,
+    error: null,
+    user: null,
+    sessionChecked: true,
+  };
+  return configureStore({
+    reducer: { auth: authReducer, messaging: messagingReducer },
+    preloadedState: {
+      auth: { ...defaultAuthState, ...authState },
+    },
+  });
+}
+
+function renderBridge(authState: Partial<AuthState>) {
+  const store = buildStore(authState);
+  render(
+    <Provider store={store}>
+      <I18nProvider>
+        <MatchingRealtimeBridge />
+      </I18nProvider>
+    </Provider>,
+  );
+  return store;
+}
 
 describe('MatchingRealtimeBridge', () => {
   const OriginalWebSocket = global.WebSocket;
@@ -20,7 +58,7 @@ describe('MatchingRealtimeBridge', () => {
     // @ts-expect-error minimal stub — only whether the constructor gets called matters here
     global.WebSocket = WebSocketSpy;
 
-    renderWithAuthStore(<MatchingRealtimeBridge />, { status: 'unauthenticated', user: null });
+    renderBridge({ status: 'unauthenticated', user: null });
 
     // Mounted at the app root (ClientProvider), reachable on /login and an unauthenticated
     // /onboarding — the socket itself must stay closed there instead of failing auth and
@@ -33,7 +71,7 @@ describe('MatchingRealtimeBridge', () => {
     // @ts-expect-error minimal stub — only whether the constructor gets called matters here
     global.WebSocket = WebSocketSpy;
 
-    renderWithAuthStore(<MatchingRealtimeBridge />, {
+    renderBridge({
       status: 'authenticated',
       user: {
         id: 'user-1',
@@ -57,7 +95,7 @@ describe('MatchingRealtimeBridge', () => {
     // redux-persist can rehydrate a stale `status: 'authenticated'` before
     // useBootstrapSession's fetchCurrentUser call confirms the cookie is still valid —
     // sessionChecked stays false during that window.
-    const { store } = renderWithAuthStore(<MatchingRealtimeBridge />, {
+    const store = renderBridge({
       status: 'authenticated',
       sessionChecked: false,
       user: {
