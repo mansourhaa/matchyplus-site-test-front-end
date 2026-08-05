@@ -184,24 +184,26 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   }
 
   type RefreshTokenSource =
-    { token: string; source: 'cookie' | 'body' } | { token?: undefined; source: 'none' };
+    | { token: string; source: 'cookie' | 'body' }
+    | { token?: undefined; source: 'none' };
 
   function readRefreshToken(request: FastifyRequest): RefreshTokenSource {
+    const body = request.body as { refreshToken?: string } | null;
+    const fromBody = body?.refreshToken?.trim();
+
+    // Authorized Cap may still receive Set-Cookie on login. Prefer an explicit body
+    // refreshToken so memberRefreshResponse can return rotated JWTs for Bearer storage.
+    // Cookie-only (no body) stays cookie-sourced and never emits body JWTs — browsers
+    // that lack the mobile secret cannot take this path.
+    if (isAuthorizedMobileClient(request) && fromBody) {
+      return { token: fromBody, source: 'body' };
+    }
+
     const fromCookie = request.cookies?.[MEMBER_REFRESH_COOKIE];
     if (fromCookie) {
       return { token: fromCookie, source: 'cookie' };
     }
 
-    // Body refresh is Cap-only — never accept a raw body refreshToken from browsers.
-    if (!isAuthorizedMobileClient(request)) {
-      return { source: 'none' };
-    }
-
-    const body = request.body as { refreshToken?: string } | null;
-    const fromBody = body?.refreshToken?.trim();
-    if (fromBody) {
-      return { token: fromBody, source: 'body' };
-    }
     return { source: 'none' };
   }
 

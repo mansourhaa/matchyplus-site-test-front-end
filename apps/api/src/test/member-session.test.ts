@@ -161,6 +161,63 @@ describe('member session cookies', () => {
     expect(response.json().refreshToken).toEqual(expect.any(String));
   });
 
+  it('prefers body refreshToken over cookie for authorized Cap so rotated JWTs are returned', async () => {
+    const { createHash } = await import('node:crypto');
+    const jwt = await import('jsonwebtoken');
+    const bodyRefresh = jwt.default.sign(
+      { sub: 'user-1', jti: 'jti-body', type: 'refresh' },
+      'test-refresh-token-secret',
+      { expiresIn: '1h' },
+    );
+    const cookieRefresh = jwt.default.sign(
+      { sub: 'user-1', jti: 'jti-cookie-ignored', type: 'refresh' },
+      'test-refresh-token-secret',
+      { expiresIn: '1h' },
+    );
+    const bodyHash = createHash('sha256').update(bodyRefresh).digest('hex');
+
+    const app = await buildTestApp({
+      prisma: {
+        refreshToken: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'jti-body',
+            user_id: 'user-1',
+            token_hash: bodyHash,
+            expires_at: new Date(Date.now() + 60_000),
+            revoked_at: null,
+          }),
+          update: vi.fn().mockResolvedValue({}),
+          create: vi.fn().mockResolvedValue({}),
+        } as never,
+        user: {
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: null,
+            phone: '+21612345678',
+            status: 'ACTIVE',
+          }),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      headers: {
+        'x-matchy-client': 'mobile',
+        'x-matchy-mobile-key': 'test-mobile-client-secret',
+      },
+      cookies: { refresh_token: cookieRefresh },
+      payload: { refreshToken: bodyRefresh },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().ok).toBe(true);
+    expect(response.json().accessToken).toEqual(expect.any(String));
+    expect(response.json().refreshToken).toEqual(expect.any(String));
+  });
+
   it('does not return body JWTs on refresh when the HttpOnly cookie was the source', async () => {
     const { createHash } = await import('node:crypto');
     const jwt = await import('jsonwebtoken');

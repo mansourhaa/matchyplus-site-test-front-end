@@ -148,10 +148,11 @@ clients opt into Bearer auth. Body JWTs are **not** gated on a spoofable header 
 3. Cap stores those JWTs in `localStorage` (`apps/app/src/lib/mobile-tokens.ts`) and
    attaches `Authorization: Bearer …` on axios calls.
 4. `POST /auth/refresh` accepts `{ refreshToken }` in the body **only** for authorized
-   mobile clients. When refresh uses the HttpOnly cookie (even if Cap headers are
-   present), the response stays `{ ok: true }` with **no** body JWTs — so a
-   credentialed browser XSS that spoofs the mobile label cannot exfiltrate a refresh
-   JWT via refresh.
+   mobile clients. When an authorized Cap request includes a body refresh token, that
+   body token is preferred over any HttpOnly refresh cookie (so rotated JWTs are
+   returned for Bearer storage even if login also set cookies). Cookie-only refresh
+   (no body) still returns `{ ok: true }` with **no** body JWTs — a credentialed
+   browser XSS that lacks the mobile secret cannot exfiltrate a refresh JWT this way.
 5. `verifyToken` already accepts Bearer (see [API authorization](#api-authorization)).
 6. Realtime WebSocket uses `?access_token=` on Cap (API already promotes the query param).
 7. A non-HttpOnly `access_token` cookie is mirrored onto the **Next.js app origin** so
