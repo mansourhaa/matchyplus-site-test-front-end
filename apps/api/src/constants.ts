@@ -114,3 +114,17 @@ export const MESSAGES_PAGE_SIZE_MAX = 100;
 /** Valid star-rating bounds for POST /profiles/:id/rating. */
 export const MIN_RATING = 1;
 export const MAX_RATING = 5;
+
+/**
+ * IP geolocation / reverse-geocode proxy limits.
+ * Stricter than the global 100/min budget because each call fans out to upstream providers.
+ */
+export const GEOLOCATION_RATE_LIMIT = { max: 20, timeWindow: '1 minute' };
+
+/** Upstream fetch timeouts (ms). */
+export const IP_GEOLOCATION_TIMEOUT_MS = Number(process.env.IP_GEOLOCATION_TIMEOUT_MS || 5_000);
+export const REVERSE_GEOCODE_TIMEOUT_MS = Number(process.env.REVERSE_GEOCODE_TIMEOUT_MS || 8_000);
+
+/** Nominatim requires a descriptive User-Agent. */
+export const NOMINATIM_USER_AGENT =
+  process.env.NOMINATIM_USER_AGENT || 'MatchyPlus/1.0 (contact@matchyplus.com)';

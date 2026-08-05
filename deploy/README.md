@@ -109,6 +109,14 @@ chmod +x deploy/scripts/bootstrap-secrets.sh
 ./deploy/scripts/bootstrap-secrets.sh saas-staging .env.staging
 ```
 
+Smoke check after bootstrapping secrets:
+
+```bash
+kubectl -n saas-staging get secret saas-api-env -o jsonpath='{.data.TRUST_PROXY}' | base64 -d && echo
+```
+
+Expected output: `true`
+
 For production:
 
 ```bash

@@ -20,6 +20,7 @@ export async function buildTestApp(
   const app = fastify({
     logger: false,
     pluginTimeout: 20000,
+    trustProxy: true,
     ajv: {
       customOptions: {
         allowUnionTypes: true,

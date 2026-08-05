@@ -55,4 +55,12 @@ Create secrets before the first sync:
 ./deploy/scripts/bootstrap-secrets.sh saas-production .env.production
 ```
 
+Verify the API secret includes `TRUST_PROXY=true` before syncing so Fastify trusts
+forwarded client IPs behind Ingress:
+
+```bash
+kubectl -n saas-staging get secret saas-api-env -o jsonpath='{.data.TRUST_PROXY}' | base64 -d && echo
+kubectl -n saas-production get secret saas-api-env -o jsonpath='{.data.TRUST_PROXY}' | base64 -d && echo
+```
+
 ArgoCD syncs manifests only — it does not create application secrets.

@@ -1,9 +1,20 @@
 'use client';
 
+import { api } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 const LOCATION_GRANTED_KEY = 'matchy_location_permission_granted';
 const LOCATION_COORDS_KEY = 'matchy_location_coords';
+
+const IP_FALLBACK_NOTICE =
+  'Using approximate location from your network because precise GPS is unavailable.';
+
+type IpGeolocationResponse = {
+  success: boolean;
+  latitude: number | null;
+  longitude: number | null;
+};
 
 type LocationContextValue = {
   latitude: number | null;
@@ -39,6 +50,11 @@ function readStoredCoords(): { latitude: number; longitude: number } | null {
   return null;
 }
 
+function storeCoords(next: { latitude: number; longitude: number }) {
+  window.localStorage.setItem(LOCATION_GRANTED_KEY, '1');
+  window.localStorage.setItem(LOCATION_COORDS_KEY, JSON.stringify(next));
+}
+
 export function LocationProvider({ children }: { children: ReactNode }) {
   const stored = typeof window !== 'undefined' ? readStoredCoords() : null;
   const [latitude, setLatitude] = useState<number | null>(stored?.latitude ?? null);
@@ -48,11 +64,48 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [activating, setActivating] = useState(false);
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
 
+  const syncCoords = useCallback((next: { latitude: number; longitude: number }) => {
+    setLatitude(next.latitude);
+    setLongitude(next.longitude);
+    setLocationSynced(true);
+    setPermissionDenied(false);
+    storeCoords(next);
+  }, []);
+
+  const requestIpFallback = useCallback(async () => {
+    try {
+      const { data } = await api.get<IpGeolocationResponse>('/location/ip-geolocation');
+      if (
+        data.success &&
+        typeof data.latitude === 'number' &&
+        Number.isFinite(data.latitude) &&
+        typeof data.longitude === 'number' &&
+        Number.isFinite(data.longitude)
+      ) {
+        syncCoords({ latitude: data.latitude, longitude: data.longitude });
+        // Overlay unmounts once locationSynced is true, so disclose via toast.
+        toast.message(IP_FALLBACK_NOTICE);
+        setAccessMessage(null);
+        return true;
+      }
+      setAccessMessage('Could not determine your location from your network. Try again later.');
+      return false;
+    } catch {
+      setAccessMessage('Could not determine your location from your network. Try again later.');
+      return false;
+    }
+  }, [syncCoords]);
+
   const requestBrowserLocation = useCallback(async () => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
-      setAccessMessage('Geolocation is not supported in this browser.');
+      setAccessMessage('Geolocation is not supported in this browser. Trying network fallback.');
       setPermissionDenied(true);
-      return false;
+      setActivating(true);
+      try {
+        return await requestIpFallback();
+      } finally {
+        setActivating(false);
+      }
     }
 
     setActivating(true);
@@ -71,31 +124,27 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       };
-      setLatitude(next.latitude);
-      setLongitude(next.longitude);
-      setLocationSynced(true);
-      setPermissionDenied(false);
-      window.localStorage.setItem(LOCATION_GRANTED_KEY, '1');
-      window.localStorage.setItem(LOCATION_COORDS_KEY, JSON.stringify(next));
+      syncCoords(next);
+      setAccessMessage(null);
       return true;
     } catch (error) {
       const code =
         error && typeof error === 'object' && 'code' in error ? Number(error.code) : null;
       if (code === 1) {
         setPermissionDenied(true);
-        setAccessMessage(
-          'Location access was denied. Allow it in your browser settings, then try again.',
-        );
+        setAccessMessage('Precise location was denied. Trying approximate network fallback.');
+        return await requestIpFallback();
       } else if (code === 3) {
-        setAccessMessage('Timed out while getting your position. Check GPS signal and retry.');
+        setAccessMessage('Precise location timed out. Trying approximate network fallback.');
+        return await requestIpFallback();
       } else {
-        setAccessMessage('Could not get your position. Enable location and try again.');
+        setAccessMessage('Could not get your precise position. Trying network fallback.');
+        return await requestIpFallback();
       }
-      return false;
     } finally {
       setActivating(false);
     }
-  }, []);
+  }, [requestIpFallback, syncCoords]);
 
   const value = useMemo(
     () => ({

@@ -73,6 +73,19 @@ flowchart LR
 | `SERVER_HOST`               | No       | Fastify bind address         | `localhost` |
 | `FASTIFY_CLOSE_GRACE_DELAY` | No       | Graceful shutdown delay (ms) | `500`       |
 
+### Location proxies (IP geolocation / reverse geocode)
+
+| Variable                     | Required | Description                                                                 | Default                                   |
+| ---------------------------- | -------- | --------------------------------------------------------------------------- | ----------------------------------------- |
+| `TRUST_PROXY`                | No       | Set `true`/`1` behind Nginx Ingress so `X-Forwarded-For` is trusted for `request.ip` | unset (false)                      |
+| `IP_GEOLOCATION_TIMEOUT_MS`  | No       | Per-provider timeout for IP geolocation                                     | `5000`                                    |
+| `REVERSE_GEOCODE_TIMEOUT_MS` | No       | Per-provider timeout for reverse geocode                                    | `8000`                                    |
+| `NOMINATIM_USER_AGENT`       | No       | User-Agent sent to OpenStreetMap Nominatim                                  | `MatchyPlus/1.0 (contact@matchyplus.com)` |
+
+Staging/production API pods behind Ingress **must** set `TRUST_PROXY=true`. Leave unset for local direct access so clients cannot spoof IPs via `X-Forwarded-For`.
+
+See [location.md](../features/location.md).
+
 ### Authentication
 
 | Variable              | Required           | Description                      |

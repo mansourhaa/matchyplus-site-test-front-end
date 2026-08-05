@@ -8,3 +8,4 @@ export * from './matching.js';
 export * from './notification.js';
 export * from './profile.js';
 export * from './conversations.js';
+export * from './location.js';

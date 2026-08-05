@@ -75,6 +75,7 @@ flowchart LR
         Users[v1/users/actions.ts]
         AI[v1/ai/actions.ts]
         Admin[v1/admin/actions.ts]
+        Location[v1/location/actions.ts]
         Health[v1/actions.ts]
         V2[v2/actions.ts]
     end
@@ -84,6 +85,7 @@ flowchart LR
         U2["/api/v1/users/*"]
         U6["/api/v1/ai/*"]
         U3["/api/v1/admin/*"]
+        U7["/api/v1/location/*"]
         U4["/api/v1/health"]
         U5["/api/v2/*"]
     end
@@ -92,6 +94,7 @@ flowchart LR
     Users --> U2
     AI --> U6
     Admin --> U3
+    Location --> U7
     Health --> U4
     V2 --> U5
 ```
@@ -103,6 +106,7 @@ Files named `autohooks.ts` in route directories apply hooks to all routes in tha
 - `v1/users/autohooks.ts` — user route guards
 - `v1/ai/autohooks.ts` — JWT required for AI job routes
 - `v1/admin/autohooks.ts` — admin-only access
+- `v1/location/autohooks.ts` — JWT required for IP geolocation / reverse-geocode proxies
 
 Async AI job design is documented in [AI Async Jobs (Option C)](./ai-async-jobs.md).
 
