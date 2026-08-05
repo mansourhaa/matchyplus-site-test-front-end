@@ -79,8 +79,9 @@ pipeline {
     PROD_ADMIN_HOST = 'admin.matchyplus.com'
     PROD_API_HOST = 'api.matchyplus.com'
 
-    GITOPS_REPO = "${env.GITOPS_REPO ?: 'github.com/MohamedAzizAguir/Matchy-GitOps.git'}"
-    GITOPS_PROD_PATH = 'apps/prod/matchy-plus'
+    GITOPS_REPO = "${env.GITOPS_REPO ?: 'github.com/matchy-plus/matchy-plus-gitops.git'}"
+    // Kustomize overlay, not plain manifests - see the promote stage.
+    GITOPS_PROD_PATH = 'k8s/overlays/production'
     K8S_NAMESPACE = 'matchy-prod'
 
     // ArgoCD instance running ON the prod cluster, reached over https. Set as
@@ -182,30 +183,39 @@ pipeline {
             git clone --depth 1 "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-prod
             cd /tmp/gitops-prod
 
+            cd "${GITOPS_PROD_PATH}"
+
             echo "--- currently deployed (rollback target) ---"
             : > "$WORKSPACE/previous-images.txt"
             for COMPONENT in $IMAGE_COMPONENTS; do
-              MANIFEST="${GITOPS_PROD_PATH}/${COMPONENT}-deployment.yaml"
-              PREV=$(grep -E "^[[:space:]]*image:" "$MANIFEST" | grep "${REGISTRY_REPO}" | head -1 | sed -E "s/^[[:space:]]*image:[[:space:]]*//")
-              echo "${COMPONENT} ${PREV}" | tee -a "$WORKSPACE/previous-images.txt"
+              PREV=$(grep -A2 "name: matchy-${COMPONENT}$" kustomization.yaml                      | sed -n 's/^[[:space:]]*newTag:[[:space:]]*//p' | head -1)
+              echo "${COMPONENT} ${REGISTRY_REPO}:${PREV}" | tee -a "$WORKSPACE/previous-images.txt"
             done
 
-            # Only rewrite image lines already pointing at our registry. A
-            # blanket substitution also clobbers third-party images such as the
-            # busybox dependency-wait initContainers, replacing them with the
-            # app image - which has no nc, so the pod never starts and it
-            # presents as a broken application rather than a broken deploy.
+            # The GitOps repo is Kustomize: image tags live in the overlay's
+            # kustomization.yaml, not in the deployment YAML. Editing the
+            # deployments would be silently overridden by the overlay, so the
+            # job would report a successful promotion that changed nothing.
+            #
+            # kustomize runs pinned, in a container, like every other tool in
+            # these pipelines. `kustomize edit` exists only in the standalone
+            # binary - the copy embedded in kubectl can build but not edit.
+            KUSTOMIZE="docker run --rm -u $(id -u):$(id -g) -v $PWD:/work -w /work registry.k8s.io/kustomize/kustomize:v5.4.3"
             for COMPONENT in $IMAGE_COMPONENTS; do
-              MANIFEST="${GITOPS_PROD_PATH}/${COMPONENT}-deployment.yaml"
-              sed -i -E "s#^([[:space:]]*image:[[:space:]]*)${REGISTRY_REPO}:.*#\\1${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}#" "$MANIFEST"
-              if ! grep -q "${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}" "$MANIFEST"; then
-                echo "image line in $MANIFEST was not updated - does it reference ${REGISTRY_REPO}?" >&2
+              $KUSTOMIZE edit set image "matchy-${COMPONENT}=${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"
+            done
+
+            echo "--- rendered image lines after the edit ---"
+            kubectl kustomize . | grep -E "^[[:space:]]+image:" | sort -u | sed 's/^/  /'
+
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              if ! kubectl kustomize . | grep -q "${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"; then
+                echo "rendered output is missing ${COMPONENT}-${IMAGE_TAG} - check the images: keys in kustomization.yaml" >&2
                 exit 1
               fi
             done
-            # migration hook runs the api image, so it moves in lockstep
-            sed -i -E "s#^([[:space:]]*image:[[:space:]]*)${REGISTRY_REPO}:.*#\\1${REGISTRY_REPO}:api-${IMAGE_TAG}#" \
-              "${GITOPS_PROD_PATH}/migrate-job.yaml"
+
+            cd /tmp/gitops-prod
 
             git config user.email "jenkins@matchyplus.com"
             git config user.name "Jenkins CD"

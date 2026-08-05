@@ -62,8 +62,11 @@ pipeline {
     STAGING_ADMIN_HOST = 'admin.staging.matchy.local'
     STAGING_API_HOST = 'api.staging.matchy.local'
 
-    GITOPS_REPO = 'github.com/MohamedAzizAguir/Matchy-GitOps.git'
-    GITOPS_STAGING_PATH = 'apps/staging/matchy-plus'
+    GITOPS_REPO = 'github.com/matchy-plus/matchy-plus-gitops.git'
+    // Kustomize overlay, not a directory of plain manifests: the deploy stage
+    // runs `kustomize edit set image` here rather than editing deployment YAML,
+    // which the overlay would override anyway.
+    GITOPS_STAGING_PATH = 'k8s/overlays/staging'
     K8S_NAMESPACE = 'matchy-staging'
   }
 
@@ -137,35 +140,53 @@ pipeline {
             git clone --depth 1 "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-cd
             cd /tmp/gitops-cd
 
+            cd "${GITOPS_STAGING_PATH}"
+
             echo "--- image tags currently deployed (rollback target) ---"
             : > "$WORKSPACE/previous-images.txt"
             for COMPONENT in $IMAGE_COMPONENTS; do
-              MANIFEST="${GITOPS_STAGING_PATH}/${COMPONENT}-deployment.yaml"
-              PREV=$(grep -E "^[[:space:]]*image:" "$MANIFEST" | head -1 | sed -E "s/^[[:space:]]*image:[[:space:]]*//")
-              echo "${COMPONENT} ${PREV}" | tee -a "$WORKSPACE/previous-images.txt"
+              PREV=$(grep -A2 "name: matchy-${COMPONENT}$" kustomization.yaml \
+                     | sed -n 's/^[[:space:]]*newTag:[[:space:]]*//p' | head -1)
+              echo "${COMPONENT} ${REGISTRY_REPO}:${PREV}" | tee -a "$WORKSPACE/previous-images.txt"
             done
 
-            # Only rewrite image lines that ALREADY point at our registry.
+            # The GitOps repo is Kustomize: image tags live in the overlay's
+            # kustomization.yaml under images:, NOT in the deployment YAML.
+            # Editing the deployments directly - as this stage used to - would
+            # be silently overridden by the overlay, so the pipeline would
+            # report a successful deploy that changed nothing.
             #
-            # A blanket "s#image: .*#" looks equivalent and is not: these
-            # manifests also contain busybox initContainers that wait for
-            # postgres and redis. A previous version of this substitution
-            # rewrote those to the api image too, which silently replaced the
-            # dependency-wait containers with something that has no `nc` and
-            # would never have started. Matching on the registry prefix means
-            # busybox, postgres and redis images are left alone by
-            # construction, no matter what containers get added later.
+            # kustomize edit is also safer than sed by construction: it only
+            # touches entries that exist under images:, so third-party images
+            # (busybox dependency-waits, postgres, redis) cannot be caught by
+            # a substitution the way they were once before.
+            #
+            # Each app is keyed by a logical name (matchy-api, matchy-app, ...)
+            # because kustomize matches on image NAME, and all five share one
+            # repository differing only by tag prefix.
+            # kustomize runs in a container, pinned, rather than as a host
+            # dependency - same as trivy, zap and k6 elsewhere in these
+            # pipelines. Note `kustomize edit` exists only in the standalone
+            # binary: the copy embedded in kubectl can build but not edit.
+            KUSTOMIZE="docker run --rm -u $(id -u):$(id -g) -v $PWD:/work -w /work registry.k8s.io/kustomize/kustomize:v5.4.3"
             for COMPONENT in $IMAGE_COMPONENTS; do
-              MANIFEST="${GITOPS_STAGING_PATH}/${COMPONENT}-deployment.yaml"
-              sed -i -E "s#^([[:space:]]*image:[[:space:]]*)${REGISTRY_REPO}:.*#\\1${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}#" "$MANIFEST"
-              if ! grep -q "${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}" "$MANIFEST"; then
-                echo "image line in $MANIFEST was not updated - does it reference ${REGISTRY_REPO}?" >&2
+              $KUSTOMIZE edit set image "matchy-${COMPONENT}=${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"
+            done
+
+            echo "--- rendered image lines after the edit ---"
+            kubectl kustomize . | grep -E "^[[:space:]]+image:" | sort -u | sed 's/^/  /'
+
+            # Fail loudly if the render does not actually contain the tag we
+            # asked for - a typo in a logical name would otherwise leave the
+            # old tag deployed while this stage reported success.
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              if ! kubectl kustomize . | grep -q "${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"; then
+                echo "rendered output is missing ${COMPONENT}-${IMAGE_TAG} - check the images: keys in kustomization.yaml" >&2
                 exit 1
               fi
             done
-            # the migration hook runs the api image, so it moves in lockstep
-            sed -i -E "s#^([[:space:]]*image:[[:space:]]*)${REGISTRY_REPO}:.*#\\1${REGISTRY_REPO}:api-${IMAGE_TAG}#" \
-              "${GITOPS_STAGING_PATH}/migrate-job.yaml"
+
+            cd /tmp/gitops-cd
 
             git config user.email "jenkins@matchy.local"
             git config user.name "Jenkins CD"
