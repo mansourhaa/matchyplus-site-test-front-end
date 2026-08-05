@@ -90,7 +90,12 @@ WebSocket `close` / `stop_typing` enqueues stop only when no other claim remains
 that user/conversation. Claims are per-socket (Redis SET + per-claim key with TTL when
 Redis is on, else an in-process Set) so multi-tab — including tabs on different API
 replicas — does not clear the peer indicator while another tab is still typing, and a
-TTL expiry on one claim cannot undercount the others.
+TTL expiry on one claim cannot undercount the others. A shared per-user+conversation
+throttle may drop duplicate `typing` fan-outs, but a new socket still acquires its own
+claim on a throttled frame so it remains a holder.
+
+After a successful stream `XADD`, published-entry memory is best-effort (retry `SADD`
+only). A remember failure never re-publishes the same logical event to the stream.
 
 Without Redis, fan-out stays in-process (single instance).
 

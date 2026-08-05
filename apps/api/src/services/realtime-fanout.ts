@@ -142,9 +142,9 @@ export class RealtimeFanoutService {
           'ts',
           new Date().toISOString(),
         )) as string;
-        // Remember ids we published so a consumer-group recreate with the same
-        // restart-stable INSTANCE_ID cannot redeliver our own retained rows.
-        if (entryId) await this.rememberPublishedEntry(entryId);
+        // Remember separately from XADD — never re-XADD on remember failure
+        // (that would duplicate peer deliveries for the same logical event).
+        if (entryId) await this.rememberPublishedEntryBestEffort(entryId);
         return;
       } catch (err) {
         lastErr = err;
@@ -158,6 +158,33 @@ export class RealtimeFanoutService {
       }
     }
     throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+  }
+
+  /**
+   * Persist published entry id after a successful XADD. Retries SADD only —
+   * never re-publishes to the stream. Logs and returns if remember still fails.
+   */
+  async rememberPublishedEntryBestEffort(entryId: string): Promise<void> {
+    let lastErr: unknown;
+    for (let attempt = 1; attempt <= this.publishMaxAttempts; attempt++) {
+      try {
+        await this.rememberPublishedEntry(entryId);
+        return;
+      } catch (err) {
+        lastErr = err;
+        this.log.warn(
+          { err, entryId, attempt, maxAttempts: this.publishMaxAttempts },
+          'realtime published-entry remember failed after XADD',
+        );
+        if (attempt < this.publishMaxAttempts) {
+          await this.delay(this.retryDelayMs * attempt);
+        }
+      }
+    }
+    this.log.warn(
+      { err: lastErr, entryId },
+      'realtime published-entry remember exhausted; stream entry already written',
+    );
   }
 
   /**
@@ -272,7 +299,11 @@ export class RealtimeFanoutService {
     if (!this.redis) return;
     const key = this.publishedEntriesKey();
     await this.redis.sadd(key, entryId);
-    await this.redis.pexpire(key, this.streamRetentionMs);
+    try {
+      await this.redis.pexpire(key, this.streamRetentionMs);
+    } catch (err) {
+      this.log.warn({ err, entryId }, 'realtime published set TTL refresh failed');
+    }
   }
 
   async wasPublishedHere(entryId: string): Promise<boolean> {

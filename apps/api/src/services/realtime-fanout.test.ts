@@ -118,6 +118,76 @@ describe('RealtimeFanoutService', () => {
     await fanout.stop();
   });
 
+  it('does not re-XADD when rememberPublishedEntry fails after a successful write', async () => {
+    const redis = createMockRedis();
+    redis.duplicate.mockReturnValue(redis);
+    redis.xadd.mockResolvedValue('7-0');
+    redis.sadd
+      .mockRejectedValueOnce(new Error('OOM'))
+      .mockRejectedValueOnce(new Error('OOM'))
+      .mockResolvedValue(1);
+    const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+    const fanout = new RealtimeFanoutService({
+      redis: redis as never,
+      deliverLocal: vi.fn(),
+      log,
+      instanceId: 'inst-a',
+      streamKey: 'realtime:events',
+      publishMaxAttempts: 3,
+      retryDelayMs: 5,
+      startConsumer: false,
+    });
+
+    fanout.notifyUser('u1', 'new_message', { id: 'm1' });
+
+    await vi.waitFor(() =>
+      expect(log.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ entryId: '7-0', attempt: 1 }),
+        'realtime published-entry remember failed after XADD',
+      ),
+    );
+    await vi.waitFor(() =>
+      expect(redis.sadd).toHaveBeenCalledWith('realtime:fanout:published:inst-a', '7-0'),
+    );
+    expect(redis.xadd).toHaveBeenCalledTimes(1);
+    expect(log.error).not.toHaveBeenCalled();
+
+    await fanout.stop();
+  });
+
+  it('logs and returns without re-XADD when remember remains exhausted', async () => {
+    const redis = createMockRedis();
+    redis.duplicate.mockReturnValue(redis);
+    redis.xadd.mockResolvedValue('8-0');
+    redis.sadd.mockRejectedValue(new Error('OOM'));
+    const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+    const fanout = new RealtimeFanoutService({
+      redis: redis as never,
+      deliverLocal: vi.fn(),
+      log,
+      instanceId: 'inst-a',
+      streamKey: 'realtime:events',
+      publishMaxAttempts: 2,
+      retryDelayMs: 5,
+      startConsumer: false,
+    });
+
+    fanout.notifyUser('u1', 'new_message', { id: 'm1' });
+
+    await vi.waitFor(() =>
+      expect(log.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ entryId: '8-0' }),
+        'realtime published-entry remember exhausted; stream entry already written',
+      ),
+    );
+    expect(redis.xadd).toHaveBeenCalledTimes(1);
+    expect(log.error).not.toHaveBeenCalled();
+
+    await fanout.stop();
+  });
+
   it('delivers locally only when Redis is disabled', async () => {
     const deliverLocal = vi.fn();
     const fanout = new RealtimeFanoutService({

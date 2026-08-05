@@ -216,13 +216,24 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
               if (
                 shouldThrottleTypingEvent(parsed.event, last, now, REALTIME_TYPING_MIN_INTERVAL_MS)
               ) {
-                // Refresh an existing claim only — do not create orphan holders without
-                // a matching setTyping(true) fan-out.
-                if (isTyping && !socketClosed && claimByConversation.has(conversationId)) {
+                // Still acquire/refresh a claim so a second tab becomes a holder without
+                // re-fanning setTyping(true) (peer already has typing=true from first emit).
+                if (isTyping && !socketClosed) {
                   void enqueueTypingOp(key, async () => {
                     if (socketClosed) return;
-                    const claimId = claimByConversation.get(conversationId);
-                    if (!claimId) return;
+                    let claimId = claimByConversation.get(conversationId);
+                    if (!claimId) {
+                      claimId = randomUUID();
+                      claimByConversation.set(conversationId, claimId);
+                      await claimTyping(key, claimId);
+                      if (socketClosed || claimByConversation.get(conversationId) !== claimId) {
+                        if (claimByConversation.get(conversationId) === claimId) {
+                          claimByConversation.delete(conversationId);
+                          await releaseTyping(key, claimId);
+                        }
+                      }
+                      return;
+                    }
                     await touchTyping(key, claimId);
                   });
                 }
