@@ -125,6 +125,62 @@ describe('auth-slice', () => {
       expect(store.getState().auth.user).toBeNull();
       expect(sessionStorage.getItem(AUTH_USER_KEY)).toBeNull();
     });
+
+    it('does not clear a session established by registerPhone while this bootstrap check was still in flight', async () => {
+      // useBootstrapSession fires fetchCurrentUser on every page load, unconditionally,
+      // before it's known whether a cookie even exists — on /onboarding, a fresh visitor
+      // can finish phone signup (registerPhone) before that request resolves. A late 401
+      // correctly reflects the pre-signup state, but must not clear the session signup
+      // just established.
+      let resolveGet!: (value: unknown) => void;
+      vi.mocked(api.get).mockReturnValue(
+        new Promise((_resolve, reject) => {
+          resolveGet = reject;
+        }),
+      );
+      const store = buildStore({ status: 'unknown', loading: false, error: null, user: null });
+
+      const pendingFetch = store.dispatch(fetchCurrentUser());
+
+      // registerPhone completes first, establishing a real session.
+      vi.mocked(api.post).mockResolvedValue({ data: { user } });
+      await store.dispatch(
+        registerPhone({ phone: '+21612345678', password: 'secret123', signupToken: 'grant' }),
+      );
+      expect(store.getState().auth.status).toBe('authenticated');
+
+      // The stale bootstrap authcheck finally rejects (401, reflecting the pre-signup
+      // cookie state).
+      resolveGet(new Error('401'));
+      await pendingFetch;
+
+      expect(store.getState().auth.status).toBe('authenticated');
+      expect(store.getState().auth.user).toEqual(user);
+    });
+
+    it('does not apply a stale fulfilled authcheck either, once a newer session has been established', async () => {
+      let resolveGet!: (value: unknown) => void;
+      vi.mocked(api.get).mockReturnValue(
+        new Promise((resolve) => {
+          resolveGet = resolve;
+        }),
+      );
+      const store = buildStore({ status: 'unknown', loading: false, error: null, user: null });
+
+      const pendingFetch = store.dispatch(fetchCurrentUser());
+
+      const newerUser: AuthUser = { ...user, id: 'user-2', name: 'Someone Else' };
+      vi.mocked(api.post).mockResolvedValue({ data: { user: newerUser } });
+      await store.dispatch(
+        registerPhone({ phone: '+21699999999', password: 'secret123', signupToken: 'grant' }),
+      );
+
+      // The stale bootstrap authcheck finally resolves with the OLD (pre-signup) user.
+      resolveGet({ data: { user } });
+      await pendingFetch;
+
+      expect(store.getState().auth.user).toEqual(newerUser);
+    });
   });
 
   describe('deleteAccount', () => {

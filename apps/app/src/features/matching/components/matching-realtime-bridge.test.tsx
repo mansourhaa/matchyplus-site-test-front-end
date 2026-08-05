@@ -20,6 +20,7 @@ function buildStore(authState: Partial<AuthState>) {
     error: null,
     user: null,
     sessionChecked: true,
+    sessionGeneration: 0,
   };
   return configureStore({
     reducer: { auth: authReducer, messaging: messagingReducer },
@@ -113,7 +114,10 @@ describe('MatchingRealtimeBridge', () => {
 
     // fetchCurrentUser.rejected: the cookie had actually expired. The already-mounted
     // component re-renders from this dispatch alone (it's subscribed via useSelector).
-    store.dispatch({ type: 'auth/fetchCurrentUser/rejected' });
+    // generationAtStart must match the store's current sessionGeneration (0, the default
+    // from buildStore) — auth-slice discards a stale-generation response, so a raw
+    // dispatch without it would otherwise be a no-op against the real reducer.
+    store.dispatch({ type: 'auth/fetchCurrentUser/rejected', payload: { generationAtStart: 0 } });
 
     expect(WebSocketSpy).not.toHaveBeenCalled();
   });

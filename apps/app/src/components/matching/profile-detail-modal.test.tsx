@@ -30,6 +30,7 @@ function buildStore(viewerId: string | null = null) {
         loading: false,
         error: null,
         sessionChecked: true,
+        sessionGeneration: 0,
         user: viewerId
           ? {
               id: viewerId,

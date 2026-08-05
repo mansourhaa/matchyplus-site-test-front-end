@@ -37,6 +37,7 @@ function buildStore(preloadedAuthUser: AuthUser | null = authUser) {
     loading: false,
     error: null,
     sessionChecked: true,
+    sessionGeneration: 0,
     user: preloadedAuthUser,
   };
   return configureStore({

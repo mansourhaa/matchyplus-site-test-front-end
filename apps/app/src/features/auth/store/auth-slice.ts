@@ -36,7 +36,12 @@ const initialState: AuthState = {
   error: null,
   user: getCachedAuthUser<AuthUser>(),
   sessionChecked: false,
+  sessionGeneration: 0,
 };
+
+function currentGeneration(getState: () => unknown): number {
+  return (getState() as { auth: AuthState }).auth.sessionGeneration;
+}
 
 export const sendOtp = createAsyncThunk('auth/sendOtp', async ({ phone }: SendOtpInput) => {
   const response = await api.post<{ message: string; phone: string }>('/auth/otp/send', {
@@ -107,9 +112,24 @@ export const confirmPasswordReset = createAsyncThunk(
   },
 );
 
-export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async () => {
-  const response = await api.get<SessionResponse>('/auth/authcheck');
-  return response.data;
+// useBootstrapSession fires this on every page load, unconditionally, before it's known
+// whether the visitor even has a valid cookie yet — on /onboarding that request can still
+// be in flight when a fresh visitor finishes phone signup. Captures the generation at
+// dispatch time and carries it through both outcomes (rejectWithValue, since
+// action.error.message can't carry extra data) so a late response can be recognized as
+// stale and discarded instead of clobbering whatever session exists by the time it settles.
+export const fetchCurrentUser = createAsyncThunk<
+  SessionResponse & { generationAtStart: number },
+  void,
+  { rejectValue: { generationAtStart: number } }
+>('auth/fetchCurrentUser', async (_, { getState, rejectWithValue }) => {
+  const generationAtStart = currentGeneration(getState);
+  try {
+    const response = await api.get<SessionResponse>('/auth/authcheck');
+    return { ...response.data, generationAtStart };
+  } catch {
+    return rejectWithValue({ generationAtStart });
+  }
 });
 
 // Backend revokes all refresh tokens on a successful password change (real "force
@@ -180,14 +200,17 @@ function applySession(state: AuthState, user: AuthUser) {
   // Any successful session-establishing action (login, register, OAuth exchange, or the
   // bootstrap authcheck) is just as valid a "we know this session is real" signal as
   // fetchCurrentUser settling — sessionChecked must not stay false (blocking realtime,
-  // etc.) until an unrelated bootstrap request also happens to resolve.
+  // deep-linked onboarding steps, etc.) until an unrelated bootstrap request also
+  // happens to resolve.
   state.sessionChecked = true;
+  state.sessionGeneration += 1;
   persistAuthUser(user);
 }
 
 function clearSession(state: AuthState) {
   state.status = 'unauthenticated';
   state.user = null;
+  state.sessionGeneration += 1;
   clearAuthSession();
 }
 
@@ -252,13 +275,28 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to register';
       })
-      .addCase(fetchCurrentUser.fulfilled, (state, action: PayloadAction<SessionResponse>) => {
-        applySession(state, action.payload.user);
-      })
-      .addCase(fetchCurrentUser.rejected, (state) => {
-        clearSession(state);
-        state.sessionChecked = true;
-      })
+      .addCase(
+        fetchCurrentUser.fulfilled,
+        (state, action: PayloadAction<SessionResponse & { generationAtStart: number }>) => {
+          // A newer session (login/register/OAuth, or another authcheck) already applied
+          // while this request was in flight — this response no longer reflects the
+          // current session and must not overwrite it.
+          if (action.payload.generationAtStart !== state.sessionGeneration) return;
+          applySession(state, action.payload.user);
+        },
+      )
+      .addCase(
+        fetchCurrentUser.rejected,
+        (state, action: PayloadAction<{ generationAtStart: number } | undefined>) => {
+          // Same staleness guard as fulfilled — a late 401 reflecting the pre-signup
+          // state must not log out a session established since this request started.
+          if (!action.payload || action.payload.generationAtStart !== state.sessionGeneration) {
+            return;
+          }
+          clearSession(state);
+          state.sessionChecked = true;
+        },
+      )
       .addCase(logout.fulfilled, (state) => {
         clearSession(state);
         state.error = null;
