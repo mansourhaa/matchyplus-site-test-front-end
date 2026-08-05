@@ -1,0 +1,410 @@
+// Production CD. Promotes an already-built, already-signed image set to prod.
+//
+// Deliberately a sibling of Jenkinsfile.cd rather than the same file with a
+// parameter. Prod differs from staging in ways that are easy to get wrong if
+// they are one boolean apart from each other:
+//
+//   - a human has to approve, and the approval is recorded
+//   - the images must be a tag that already ran on staging
+//   - the rollout is watched through the ArgoCD API over 443, never kubectl,
+//     so the cluster's API server does not need to be exposed to the internet
+//   - load testing is OFF by default: pointing k6 at prod generates synthetic
+//     traffic on a live system, which is a decision, not a default
+//
+// Prod runs on its own cluster (OVH) with its own ArgoCD. That ArgoCD PULLS
+// from the GitOps repo, so this job never needs inbound access to prod - it
+// only pushes a commit to GitHub and then asks ArgoCD whether it landed. A
+// Jenkins behind NAT can therefore deploy to a public cloud server safely.
+//
+// Job setup in Jenkins (Pipeline job, NOT multibranch):
+//   Definition:  Pipeline script from SCM
+//   SCM:         git, this repo, credentials jenkins-matchyplus-checkout
+//   Branch:      */main          <-- prod ships from main, not dev
+//   Script Path: Jenkinsfile.prod.cd
+//   No build trigger. This job is started by a human, every time.
+
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '60'))
+  }
+
+  parameters {
+    string(
+      name: 'IMAGE_TAG',
+      defaultValue: '',
+      description: 'Tag to promote, without the component prefix - e.g. matchy-dev-42. ' +
+                   'This MUST be a tag that has already been deployed to staging and checked. ' +
+                   'Prod never builds anything; it promotes what staging proved.'
+    )
+    booleanParam(
+      name: 'CONFIRM_BACKUP',
+      defaultValue: false,
+      description: 'I have confirmed a recent database backup exists and is restorable. ' +
+                   'Migrations run automatically as part of the sync and are not reversible.'
+    )
+    booleanParam(
+      name: 'VERIFY_SIGNATURES',
+      defaultValue: true,
+      description: 'Verify every image Cosign signature before promoting. Turning this off for a ' +
+                   'production deploy needs a reason you are willing to write down.'
+    )
+    booleanParam(
+      name: 'RUN_ZAP',
+      defaultValue: false,
+      description: 'OWASP ZAP baseline scan after the rollout. Passive only, but it still puts ' +
+                   'crawl traffic on production - off by default.'
+    )
+    booleanParam(
+      name: 'RUN_K6',
+      defaultValue: false,
+      description: 'k6 load test against PRODUCTION. Off by default on purpose: this generates ' +
+                   'synthetic load on a live system and will show up in real metrics.'
+    )
+  }
+
+  environment {
+    REGISTRY_REPO = "${env.REGISTRY_REPO}"
+
+    IMAGE_COMPONENTS = 'api app admin landing ai'
+
+    // Public prod hostnames. Real DNS and a real certificate, unlike staging's
+    // .local names and self-signed cert - which is also why OAuth works here
+    // and cannot work on staging.
+    PROD_LANDING_HOST = 'matchyplus.com'
+    PROD_APP_HOST = 'app.matchyplus.com'
+    PROD_ADMIN_HOST = 'admin.matchyplus.com'
+    PROD_API_HOST = 'api.matchyplus.com'
+
+    GITOPS_REPO = "${env.GITOPS_REPO ?: 'github.com/MohamedAzizAguir/Matchy-GitOps.git'}"
+    GITOPS_PROD_PATH = 'apps/prod/matchy-plus'
+    K8S_NAMESPACE = 'matchy-prod'
+
+    // ArgoCD instance running ON the prod cluster, reached over https. Set as
+    // a Jenkins global environment variable so this file carries no
+    // environment-specific host; the validate stage below fails fast if it is
+    // missing rather than guessing.
+    ARGOCD_SERVER = "${env.ARGOCD_PROD_SERVER}"
+    ARGOCD_APP = 'matchy-plus-prod'
+  }
+
+  stages {
+    stage('Validate release') {
+      steps {
+        script {
+          def missing = []
+          if (!env.REGISTRY_REPO?.trim()) missing << 'REGISTRY_REPO (Jenkins global env var)'
+          if (!env.ARGOCD_SERVER?.trim()) missing << 'ARGOCD_PROD_SERVER (Jenkins global env var)'
+          if (!params.IMAGE_TAG?.trim()) missing << 'IMAGE_TAG (build parameter)'
+          if (missing) {
+            error("Cannot promote - missing: ${missing.join(', ')}")
+          }
+          for (c in env.IMAGE_COMPONENTS.split(' ')) {
+            if (params.IMAGE_TAG.startsWith("${c}-")) {
+              error("IMAGE_TAG should not include the '${c}-' component prefix. " +
+                    "Use '${params.IMAGE_TAG.substring(c.length() + 1)}' instead.")
+            }
+          }
+          if (!params.CONFIRM_BACKUP) {
+            error("CONFIRM_BACKUP is not ticked. The sync runs prisma migrate deploy against the " +
+                  "production database, and a migration that drops or rewrites data cannot be " +
+                  "undone by redeploying the previous image. Confirm a restorable backup first.")
+          }
+          currentBuild.displayName = "#${env.BUILD_NUMBER} prod ${params.IMAGE_TAG}"
+        }
+      }
+    }
+
+    // Signing images is only worth anything if something refuses to run an
+    // unsigned one. This is that something, and on prod it runs before the
+    // human is even asked to approve - no point approving a release whose
+    // provenance does not check out.
+    stage('Verify signed images') {
+      when { expression { params.VERIFY_SIGNATURES } }
+      steps {
+        withCredentials([file(credentialsId: 'cosign-public-key', variable: 'COSIGN_PUB')]) {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+
+            COSIGN_VERSION=v3.1.2
+            COSIGN_SHA256=f7622ed3cf22e55e1ae6377c080979ff77a22da9981c11df222a2e444991e7cf
+            if ! command -v cosign >/dev/null 2>&1; then
+              curl -sL -o /tmp/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+              echo "${COSIGN_SHA256}  /tmp/cosign" | sha256sum -c -
+              chmod +x /tmp/cosign
+            fi
+            COSIGN_BIN=$(command -v cosign || echo /tmp/cosign)
+
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              IMAGE="${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"
+              echo "--- verifying $IMAGE"
+              "$COSIGN_BIN" verify --key "$COSIGN_PUB" "$IMAGE" > /dev/null
+              echo "    signature OK"
+            done
+          '''
+        }
+      }
+    }
+
+    // Everything above is read-only. This is the last point at which nothing
+    // has changed in production, so it is where the human decision belongs.
+    // Jenkins records who approved and when, which is the audit trail.
+    stage('Approve production release') {
+      steps {
+        script {
+          def approver = input(
+            id: 'promote',
+            message: "Promote ${params.IMAGE_TAG} to PRODUCTION?",
+            ok: 'Promote',
+            submitterParameter: 'APPROVED_BY'
+          )
+          env.APPROVED_BY = approver instanceof Map ? approver['APPROVED_BY'] : approver
+          echo "approved by: ${env.APPROVED_BY}"
+          currentBuild.description = "prod ${params.IMAGE_TAG} - approved by ${env.APPROVED_BY}"
+        }
+      }
+    }
+
+    // Deploying = committing the image tags. ArgoCD on the prod cluster
+    // applies them. The previously deployed tags are captured first so a
+    // rollback targets exactly what was running, not whatever main happens to
+    // say afterwards.
+    stage('Promote to production') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'gitops-repo-creds', usernameVariable: 'GITOPS_USER', passwordVariable: 'GITOPS_TOKEN')]) {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+
+            rm -rf /tmp/gitops-prod
+            git clone --depth 1 "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-prod
+            cd /tmp/gitops-prod
+
+            echo "--- currently deployed (rollback target) ---"
+            : > "$WORKSPACE/previous-images.txt"
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              MANIFEST="${GITOPS_PROD_PATH}/${COMPONENT}-deployment.yaml"
+              PREV=$(grep -E "^[[:space:]]*image:" "$MANIFEST" | grep "${REGISTRY_REPO}" | head -1 | sed -E "s/^[[:space:]]*image:[[:space:]]*//")
+              echo "${COMPONENT} ${PREV}" | tee -a "$WORKSPACE/previous-images.txt"
+            done
+
+            # Only rewrite image lines already pointing at our registry. A
+            # blanket substitution also clobbers third-party images such as the
+            # busybox dependency-wait initContainers, replacing them with the
+            # app image - which has no nc, so the pod never starts and it
+            # presents as a broken application rather than a broken deploy.
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              MANIFEST="${GITOPS_PROD_PATH}/${COMPONENT}-deployment.yaml"
+              sed -i -E "s#^([[:space:]]*image:[[:space:]]*)${REGISTRY_REPO}:.*#\\1${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}#" "$MANIFEST"
+              if ! grep -q "${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}" "$MANIFEST"; then
+                echo "image line in $MANIFEST was not updated - does it reference ${REGISTRY_REPO}?" >&2
+                exit 1
+              fi
+            done
+            # migration hook runs the api image, so it moves in lockstep
+            sed -i -E "s#^([[:space:]]*image:[[:space:]]*)${REGISTRY_REPO}:.*#\\1${REGISTRY_REPO}:api-${IMAGE_TAG}#" \
+              "${GITOPS_PROD_PATH}/migrate-job.yaml"
+
+            git config user.email "jenkins@matchyplus.com"
+            git config user.name "Jenkins CD"
+
+            if git diff --quiet; then
+              echo "already deployed - image tags unchanged"
+            else
+              git add -A
+              git commit -m "release(prod): ${IMAGE_TAG}" -m "Approved by: ${APPROVED_BY}"
+              git push origin HEAD
+            fi
+
+            git rev-parse HEAD > "$WORKSPACE/deployed-sha.txt"
+            echo "target revision: $(cat "$WORKSPACE/deployed-sha.txt")"
+          '''
+        }
+        archiveArtifacts artifacts: 'previous-images.txt,deployed-sha.txt', allowEmptyArchive: true
+      }
+    }
+
+    // Watched through the ArgoCD API over https, not kubectl. The prod
+    // cluster's API server (6443) stays closed to the internet; ArgoCD is
+    // already published behind its own ingress, so this needs no extra
+    // exposure and no VPN back to Jenkins.
+    stage('Wait for production rollout') {
+      steps {
+        withCredentials([string(credentialsId: 'argocd-token', variable: 'ARGOCD_TOKEN')]) {
+          sh '''#!/usr/bin/env bash
+            set -uo pipefail
+
+            TARGET_SHA=$(cat "$WORKSPACE/deployed-sha.txt")
+            echo "waiting for ArgoCD to sync ${TARGET_SHA} on ${ARGOCD_SERVER}"
+
+            api() {
+              curl -s --max-time 25 \
+                -H "Authorization: Bearer ${ARGOCD_TOKEN}" \
+                "${ARGOCD_SERVER}/api/v1/applications/${ARGOCD_APP}$1"
+            }
+
+            # nudge ArgoCD rather than waiting out its poll interval
+            curl -s -o /dev/null --max-time 25 -X POST \
+              -H "Authorization: Bearer ${ARGOCD_TOKEN}" \
+              "${ARGOCD_SERVER}/api/v1/applications/${ARGOCD_APP}?refresh=normal" || true
+
+            for i in $(seq 1 90); do
+              BODY=$(api "")
+              REV=$(echo "$BODY" | sed -n 's/.*"revision":"\\([a-f0-9]\\{40\\}\\)".*/\\1/p' | head -1)
+              HEALTH=$(echo "$BODY" | sed -n 's/.*"health":{"status":"\\([A-Za-z]*\\)".*/\\1/p' | head -1)
+              SYNC=$(echo "$BODY" | sed -n 's/.*"sync":{"status":"\\([A-Za-z]*\\)".*/\\1/p' | head -1)
+
+              if [ "$REV" = "$TARGET_SHA" ] && [ "$SYNC" = "Synced" ] && [ "$HEALTH" = "Healthy" ]; then
+                echo "ArgoCD reports Synced + Healthy at ${TARGET_SHA}"
+                exit 0
+              fi
+              [ $((i % 6)) -eq 0 ] && echo "  ... rev=${REV:0:12} sync=${SYNC} health=${HEALTH}"
+              sleep 10
+            done
+
+            echo "timed out waiting for ArgoCD to report Synced + Healthy at ${TARGET_SHA}" >&2
+            echo "check ${ARGOCD_SERVER}/applications/${ARGOCD_APP} - a stuck PreSync hook is the usual cause" >&2
+            exit 1
+          '''
+        }
+      }
+    }
+
+    // The point of this stage is to notice a deploy that rolled out cleanly
+    // and is still broken - pods can be Healthy while the app returns 500.
+    stage('Post-deploy smoke test') {
+      steps {
+        sh '''#!/usr/bin/env bash
+          set -uo pipefail
+          FAILED=0
+
+          check() { # url, expected, label
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$1")
+            if [ "$CODE" = "$2" ]; then
+              printf '  %-52s %s\\n' "$3" "$CODE"
+            else
+              printf '  %-52s %s (expected %s)\\n' "$3" "$CODE" "$2"; FAILED=1
+            fi
+          }
+
+          check "https://${PROD_API_HOST}/api/v1/health" 200 "api health"
+          check "https://${PROD_LANDING_HOST}/"          200 "landing"
+
+          echo "  --- api health payload ---"
+          curl -s --max-time 20 "https://${PROD_API_HOST}/api/v1/health" | head -c 200; echo
+
+          # A real certificate is part of working, not a nicety: session
+          # cookies are marked Secure outside development, so a broken chain
+          # silently breaks login while every pod still reports healthy.
+          echo "  --- certificate ---"
+          echo | openssl s_client -connect "${PROD_API_HOST}:443" -servername "${PROD_API_HOST}" 2>/dev/null \
+            | openssl x509 -noout -issuer -dates 2>/dev/null | sed 's/^/    /'
+
+          [ "$FAILED" -eq 0 ] || { echo "smoke test failed - production is serving errors" >&2; exit 1; }
+        '''
+      }
+    }
+
+    stage('DAST - OWASP ZAP') {
+      when { expression { params.RUN_ZAP } }
+      steps {
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+          sh '''#!/usr/bin/env bash
+            set -uo pipefail
+            mkdir -p reports/zap
+            for TARGET_HOST in "$PROD_APP_HOST" "$PROD_API_HOST"; do
+              SAFE_NAME=$(echo "$TARGET_HOST" | tr '.' '-')
+              docker run --rm -u root \
+                -v "$WORKSPACE/reports/zap:/zap/wrk:rw" \
+                ghcr.io/zaproxy/zaproxy:stable \
+                zap-baseline.py -t "https://${TARGET_HOST}" \
+                  -J "zap-${SAFE_NAME}.json" -r "zap-${SAFE_NAME}.html" \
+                  -m 2 -T 5 || echo "ZAP flagged findings for ${TARGET_HOST} (non-blocking)"
+            done
+          '''
+        }
+      }
+    }
+
+    stage('Performance - k6') {
+      when { expression { params.RUN_K6 } }
+      steps {
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+          sh '''#!/usr/bin/env bash
+            set -uo pipefail
+            mkdir -p reports/k6
+            echo "WARNING: generating synthetic load against PRODUCTION"
+            K6_EXIT=0
+            docker run --rm -u root \
+              -e "API_BASE=https://${PROD_API_HOST}" \
+              -v "$WORKSPACE/ci-scripts:/scripts:ro" \
+              -v "$WORKSPACE/reports/k6:/out:rw" \
+              grafana/k6:latest run --summary-export=/out/k6-summary.json \
+                /scripts/k6-staging-smoke.js || K6_EXIT=$?
+
+            [ -s "$WORKSPACE/reports/k6/k6-summary.json" ] || { echo "k6 produced no summary" >&2; exit 1; }
+            # without this the stage swallows k6's exit code and a breached
+            # threshold reports as a clean pass
+            [ "$K6_EXIT" -eq 0 ] || { echo "k6 exited ${K6_EXIT} - thresholds breached" >&2; exit "$K6_EXIT"; }
+          '''
+        }
+      }
+    }
+
+    stage('Publish release report') {
+      when { expression { params.RUN_ZAP || params.RUN_K6 } }
+      steps {
+        sh 'python3 ci-scripts/generate_dast_report.py --dest reports/dast'
+        publishHTML(target: [
+          reportDir: 'reports/dast',
+          reportFiles: 'index.html',
+          reportName: 'Matchy+ Production Release Report',
+          keepAll: true,
+          alwaysLinkToLastBuild: true
+        ])
+        archiveArtifacts artifacts: 'reports/**', allowEmptyArchive: true
+      }
+    }
+  }
+
+  post {
+    always {
+      // ZAP and k6 run as root so they can write into the workspace; hand
+      // ownership back or the next build's checkout fails on root-owned files.
+      sh 'chown -R "$(stat -c "%u:%g" .)" reports 2>/dev/null || true'
+    }
+    success {
+      echo "Promoted ${params.IMAGE_TAG} to production (approved by ${env.APPROVED_BY})."
+    }
+    failure {
+      // Rollback stays manual on purpose. A failure here can mean the rollout
+      // never completed - old pods still serving, nothing to undo - or that
+      // the new version is live and broken, where reverting is right. Those
+      // need a human to tell apart, and an automatic revert mid-rollout can
+      // leave production worse than it started.
+      //
+      // Note also that reverting images does NOT undo a migration. If the
+      // failure came after prisma migrate deploy ran, the schema has already
+      // moved and the previous image may not run against it - that is what
+      // the backup is for.
+      script {
+        def prev = fileExists('previous-images.txt') ? readFile('previous-images.txt').trim() : '(not captured)'
+        echo """
+          PRODUCTION DEPLOY FAILED - ${params.IMAGE_TAG}
+
+          Previously deployed images:
+          ${prev}
+
+          To roll back, re-run this job with IMAGE_TAG set to the previous tag
+          above, or revert the last 'release(prod):' commit in the GitOps repo
+          and let ArgoCD reconcile.
+
+          If migrations had already run, rolling the image back is not enough -
+          restore the database from backup first.
+        """.stripIndent()
+      }
+    }
+  }
+}
