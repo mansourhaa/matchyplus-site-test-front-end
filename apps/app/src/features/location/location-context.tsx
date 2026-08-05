@@ -221,3 +221,7 @@ export function useLocationContext() {
   }
   return ctx;
 }
+
+/** Canonical hook name used by matching views / tests. */
+export const useLocationGate = useLocationContext;
+

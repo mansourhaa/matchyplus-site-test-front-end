@@ -86,9 +86,6 @@ export function useMatchingRealtime(enabled = true) {
     if (!enabled || typeof window === 'undefined') return;
 
     try {
-      const url = buildRealtimeUrl();
-      if (!url) return;
-
       let closedByEffect = false;
       let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
       let pingTimer: ReturnType<typeof setInterval> | null = null;
@@ -98,6 +95,10 @@ export function useMatchingRealtime(enabled = true) {
 
       const connect = () => {
         if (closedByEffect) return;
+
+        // Rebuild on every connect so Cap picks up a rotated access_token from storage.
+        const url = buildRealtimeUrl();
+        if (!url) return;
 
         try {
           const socket = new WebSocket(url);

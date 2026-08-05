@@ -3,6 +3,7 @@
 // read it). On Capacitor, lib/mobile-tokens.ts mirrors a Path=/ cookie onto the app
 // origin so proxy.ts still works when the API cookie Domain does not cover the WebView.
 import { mobileTokenStorage } from './mobile-tokens';
+import { clearMobileClientKeyCache } from './native';
 
 export const AUTH_COOKIE = 'access_token';
 export const AUTH_USER_KEY = 'user';
@@ -17,6 +18,7 @@ export function clearAuthSession() {
   if (typeof window === 'undefined') return;
   sessionStorage.removeItem(AUTH_USER_KEY);
   mobileTokenStorage.clear();
+  clearMobileClientKeyCache();
 }
 
 export function getCachedAuthUser<T = unknown>(): T | null {

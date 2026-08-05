@@ -25,22 +25,32 @@ export const MATCHY_MOBILE_CLIENT_HEADER = 'mobile';
 /** Header name for the Cap build secret (`MOBILE_CLIENT_SECRET`). */
 export const MATCHY_MOBILE_KEY_HEADER = 'X-Matchy-Mobile-Key';
 
-let cachedMobileKey: string | null | undefined;
+/** `undefined` = not fetched yet; string = cached key; never cache hard failures. */
+let cachedMobileKey: string | undefined;
 
 /**
  * Native-only shared secret from BuildConfig via MobileClient plugin.
  * Empty in browsers (plugin unavailable) — API then refuses body JWTs.
+ * Plugin throws / bridge misses are not cached so the next call can retry.
  */
 export async function getMobileClientKey(): Promise<string | null> {
   if (!isNativeMobileClient()) return null;
   if (cachedMobileKey !== undefined) return cachedMobileKey;
   try {
     const { key } = await MobileClient.getClientKey();
-    cachedMobileKey = key?.trim() ? key.trim() : null;
+    const trimmed = key?.trim() ?? '';
+    // Empty string means the build has no secret configured — cache that so we
+    // do not hammer the bridge every request. Real bridge failures throw below.
+    cachedMobileKey = trimmed;
+    return trimmed || null;
   } catch {
-    cachedMobileKey = null;
+    return null;
   }
-  return cachedMobileKey;
+}
+
+/** Drop a cached key (e.g. after logout) so the next Cap session re-reads BuildConfig. */
+export function clearMobileClientKeyCache() {
+  cachedMobileKey = undefined;
 }
 
 /** Headers Cap must attach for authorized mobile auth (client label + secret). */

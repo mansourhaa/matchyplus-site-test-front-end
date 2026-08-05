@@ -23,6 +23,9 @@ See [Authentication — Mobile (Capacitor)](../../doc/features/authentication.md
 Release signing passwords live only in gitignored `keystore.properties` — never in
 `build.gradle`. Debug builds use the default debug keystore.
 
+**JDK:** Android builds target **JDK 21**. Set `JAVA_HOME` (or Android Studio’s JDK) accordingly.
+Do not commit `org.gradle.java.home` — use a local override if you must pin a path.
+
 ## Layout
 
 ```
