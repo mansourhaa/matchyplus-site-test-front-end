@@ -1,10 +1,14 @@
 'use client';
 
 import { api } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 const LOCATION_GRANTED_KEY = 'matchy_location_permission_granted';
 const LOCATION_COORDS_KEY = 'matchy_location_coords';
+
+const IP_FALLBACK_NOTICE =
+  'Using approximate location from your network because precise GPS is unavailable.';
 
 type IpGeolocationResponse = {
   success: boolean;
@@ -79,9 +83,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         Number.isFinite(data.longitude)
       ) {
         syncCoords({ latitude: data.latitude, longitude: data.longitude });
-        setAccessMessage(
-          'Using approximate location from your network because precise GPS is unavailable.',
-        );
+        // Overlay unmounts once locationSynced is true, so disclose via toast.
+        toast.message(IP_FALLBACK_NOTICE);
+        setAccessMessage(null);
         return true;
       }
       setAccessMessage('Could not determine your location from your network. Try again later.');

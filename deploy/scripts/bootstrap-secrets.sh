@@ -42,7 +42,8 @@ kubectl -n "${NAMESPACE}" create secret generic saas-api-env \
   --from-literal=SERVER_PORT="${SERVER_PORT}" \
   --from-literal=SERVER_HOST="${SERVER_HOST}" \
   --from-literal=TRUST_PROXY="${TRUST_PROXY}" \
-  --from-literal=DATABASE_URL="${DATABASE_URL}" \  --from-literal=ACCESS_TOKEN_SECRET="${ACCESS_TOKEN_SECRET}" \
+  --from-literal=DATABASE_URL="${DATABASE_URL}" \
+  --from-literal=ACCESS_TOKEN_SECRET="${ACCESS_TOKEN_SECRET}" \
   --from-literal=ACCESS_TOKEN_TTL="${ACCESS_TOKEN_TTL}" \
   --from-literal=COOKIE_SECRET="${COOKIE_SECRET}" \
   --from-literal=REDIS_URL="${REDIS_URL}" \

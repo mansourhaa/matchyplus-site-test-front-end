@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +8,10 @@ import { LocationProvider, useLocationGate } from './location-context';
 
 vi.mock('@/lib/api', () => ({
   api: { get: vi.fn() },
+}));
+
+vi.mock('@/lib/toast', () => ({
+  toast: { message: vi.fn(), success: vi.fn(), error: vi.fn() },
 }));
 
 describe('LocationProvider', () => {
@@ -46,7 +51,9 @@ describe('LocationProvider', () => {
     expect(result.current.latitude).toBe(36.8065);
     expect(result.current.longitude).toBe(10.1815);
     expect(result.current.locationRequired).toBe(false);
-    expect(result.current.accessMessage).toContain('approximate location');
+    expect(toast.message).toHaveBeenCalledWith(
+      'Using approximate location from your network because precise GPS is unavailable.',
+    );
   });
 
   it('keeps location required when GPS and IP fallback both fail', async () => {
@@ -78,5 +85,6 @@ describe('LocationProvider', () => {
     );
     expect(result.current.locationSynced).toBe(false);
     expect(result.current.locationRequired).toBe(true);
+    expect(toast.message).not.toHaveBeenCalled();
   });
 });
