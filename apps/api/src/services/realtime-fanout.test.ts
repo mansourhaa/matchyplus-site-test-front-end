@@ -15,6 +15,7 @@ function createMockRedis() {
     xack: vi.fn().mockResolvedValue(1),
     time: vi.fn().mockResolvedValue(['1722772800', '0']),
     sadd: vi.fn().mockResolvedValue(1),
+    srem: vi.fn().mockResolvedValue(1),
     sismember: vi.fn().mockResolvedValue(0),
     pexpire: vi.fn().mockResolvedValue(1),
     duplicate: vi.fn(),
@@ -420,9 +421,8 @@ describe('RealtimeFanoutService', () => {
     const redis = createMockRedis();
     const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
     const entryId = `${startedAtMs + 1_000}-0`;
-    redis.sismember.mockImplementation(async (key: string) =>
-      key.includes(':delivered:') ? 1 : 0,
-    );
+    // SADD returns 0 → already claimed / delivered.
+    redis.sadd.mockResolvedValue(0);
     const deliverLocal = vi.fn();
 
     const fanout = new RealtimeFanoutService({
@@ -446,15 +446,23 @@ describe('RealtimeFanoutService', () => {
       entryId,
     );
 
-    expect(redis.sismember).toHaveBeenCalledWith('realtime:fanout:delivered:saas-api-0', entryId);
+    expect(redis.sadd).toHaveBeenCalledWith('realtime:fanout:delivered:saas-api-0', entryId);
     expect(deliverLocal).not.toHaveBeenCalled();
   });
 
-  it('remembers delivered stream entry ids after local fan-in', async () => {
+  it('claims delivered stream entry id before local fan-in', async () => {
     const redis = createMockRedis();
     const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
     const entryId = `${startedAtMs + 1_000}-0`;
     const deliverLocal = vi.fn();
+    const callOrder: string[] = [];
+    redis.sadd.mockImplementation(async (key: string) => {
+      if (String(key).includes(':delivered:')) callOrder.push('claim');
+      return 1;
+    });
+    deliverLocal.mockImplementation(() => {
+      callOrder.push('deliver');
+    });
 
     const fanout = new RealtimeFanoutService({
       redis: redis as never,
@@ -478,12 +486,48 @@ describe('RealtimeFanoutService', () => {
       entryId,
     );
 
-    expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'peer' });
+    expect(callOrder).toEqual(['claim', 'deliver']);
     expect(redis.sadd).toHaveBeenCalledWith('realtime:fanout:delivered:saas-api-0', entryId);
     expect(redis.pexpire).toHaveBeenCalledWith(
       'realtime:fanout:delivered:saas-api-0',
       30 * 60 * 1000,
     );
+    expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'peer' });
+  });
+
+  it('forgets delivered claim when local push throws so reclaim can retry', async () => {
+    const redis = createMockRedis();
+    const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
+    const entryId = `${startedAtMs + 1_000}-0`;
+    const deliverLocal = vi.fn(() => {
+      throw new Error('socket boom');
+    });
+
+    const fanout = new RealtimeFanoutService({
+      redis: redis as never,
+      deliverLocal,
+      log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      instanceId: 'saas-api-0',
+      startedAtMs,
+      catchUpGraceMs: 5_000,
+      startConsumer: false,
+    });
+
+    await expect(
+      fanout.handleStreamEntry(
+        {
+          userId: 'u1',
+          event: 'new_message',
+          payload: '{"id":"peer"}',
+          originInstanceId: 'saas-api-1',
+          ts: '2026-08-04T12:00:01.000Z',
+        },
+        entryId,
+      ),
+    ).rejects.toThrow('socket boom');
+
+    expect(redis.sadd).toHaveBeenCalledWith('realtime:fanout:delivered:saas-api-0', entryId);
+    expect(redis.srem).toHaveBeenCalledWith('realtime:fanout:delivered:saas-api-0', entryId);
   });
 
   it('remembers published stream entry ids after XADD', async () => {

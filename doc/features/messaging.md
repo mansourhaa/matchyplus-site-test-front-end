@@ -68,13 +68,15 @@ instance was still ensuring the consumer group. Event age prefers the Redis stre
 id millisecond prefix (not publisher ISO `ts`) so a future `ts` cannot replay stale
 retained rows and a lagging `ts` cannot hide live rows. Idle pending entries are
 reclaimed via `XAUTOCLAIM` so a failed deliver/ACK or crash does not permanently
-miss events. Delivered stream entry ids are remembered in Redis
-(`realtime:fanout:delivered:{INSTANCE_ID}`) so reclaim after a crash between local
-push and `XACK` does not push the same peer event twice. Events include
-`originInstanceId` so the publishing instance does not double-deliver while that id
-is unchanged. Published stream entry ids are also remembered in Redis
-(`realtime:fanout:published:{INSTANCE_ID}`) for the retention window so a
-consumer-group recreate with the same id cannot replay this replica’s own retained rows.
+miss events. Delivered stream entry ids are **claimed in Redis before** the local
+WebSocket push (`realtime:fanout:delivered:{INSTANCE_ID}`), so a crash between push
+and `XACK` cannot re-push the same peer event on reclaim (at-most-once for that
+entry on this replica). If the local push itself throws, the claim is cleared so
+reclaim can retry. Events include `originInstanceId` so the publishing instance does
+not double-deliver while that id is unchanged. Published stream entry ids are also
+remembered in Redis (`realtime:fanout:published:{INSTANCE_ID}`) for the retention
+window so a consumer-group recreate with the same id cannot replay this replica’s
+own retained rows.
 
 **`INSTANCE_ID` is required whenever Redis fan-out is enabled.** It must be unique per
 replica **and stable across restarts** (Kubernetes StatefulSet pod name via Downward

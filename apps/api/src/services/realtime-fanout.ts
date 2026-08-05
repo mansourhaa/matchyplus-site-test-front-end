@@ -220,15 +220,14 @@ export class RealtimeFanoutService {
   /**
    * Apply a stream entry on this instance. Skips self-origin (live id match or
    * remembered publish ids), entries already delivered on this replica (PEL
-   * reclaim after deliver-before-ack crash), and entries older than catch-up.
-   * Event time prefers Redis stream id ms so publisher clock skew cannot drop
-   * live events or revive stale rows via a future ISO `ts`.
+   * reclaim), and entries older than catch-up.
+   * Delivery is claimed in Redis **before** `deliverLocal` so a crash between
+   * push and ack cannot re-push on XAUTOCLAIM (at-most-once for that entry).
    */
   async handleStreamEntry(fields: Record<string, string>, entryId?: string): Promise<void> {
     const originInstanceId = fields.originInstanceId || '';
     if (originInstanceId === this.instanceId) return;
     if (entryId && (await this.wasPublishedHere(entryId))) return;
-    if (entryId && (await this.wasDeliveredHere(entryId))) return;
 
     const eventMs = RealtimeFanoutService.eventTimeMs(fields.ts, entryId);
     if (eventMs === null || eventMs < this.catchUpCutoffMs) {
@@ -247,9 +246,16 @@ export class RealtimeFanoutService {
       return;
     }
 
-    this.deliverLocal(userId, event, payload);
-    // Mark after local push so XAUTOCLAIM after a crash mid-ack does not re-push.
-    if (entryId) await this.rememberDeliveredEntry(entryId);
+    // Claim before push so PEL reclaim cannot duplicate after deliver-before-ack crash.
+    if (entryId && !(await this.claimDeliveredEntry(entryId))) return;
+
+    try {
+      this.deliverLocal(userId, event, payload);
+    } catch (err) {
+      // Allow a later reclaim retry if the local push itself failed.
+      if (entryId) await this.forgetDeliveredEntry(entryId);
+      throw err;
+    }
   }
 
   /** Redis key for stream entry ids this INSTANCE_ID has already published. */
@@ -274,11 +280,25 @@ export class RealtimeFanoutService {
     return (await this.redis.sismember(this.publishedEntriesKey(), entryId)) === 1;
   }
 
-  async rememberDeliveredEntry(entryId: string): Promise<void> {
-    if (!this.redis) return;
+  /**
+   * Atomically claim an entry for local delivery. Returns false if this replica
+   * already claimed it (skip push). Refreshes the set TTL on every claim attempt.
+   */
+  async claimDeliveredEntry(entryId: string): Promise<boolean> {
+    if (!this.redis) return true;
     const key = this.deliveredEntriesKey();
-    await this.redis.sadd(key, entryId);
-    await this.redis.pexpire(key, this.streamRetentionMs);
+    const added = await this.redis.sadd(key, entryId);
+    try {
+      await this.redis.pexpire(key, this.streamRetentionMs);
+    } catch (err) {
+      this.log.warn({ err, entryId }, 'realtime delivered set TTL refresh failed');
+    }
+    return added === 1;
+  }
+
+  async forgetDeliveredEntry(entryId: string): Promise<void> {
+    if (!this.redis) return;
+    await this.redis.srem(this.deliveredEntriesKey(), entryId);
   }
 
   async wasDeliveredHere(entryId: string): Promise<boolean> {
