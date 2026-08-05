@@ -73,6 +73,16 @@ flowchart LR
 | `SERVER_HOST`               | No       | Fastify bind address         | `localhost` |
 | `FASTIFY_CLOSE_GRACE_DELAY` | No       | Graceful shutdown delay (ms) | `500`       |
 
+### Location proxies (IP geolocation / reverse geocode)
+
+| Variable                    | Required | Description                                      | Default                                      |
+| --------------------------- | -------- | ------------------------------------------------ | -------------------------------------------- |
+| `IP_GEOLOCATION_TIMEOUT_MS` | No       | Per-provider timeout for IP geolocation          | `5000`                                       |
+| `REVERSE_GEOCODE_TIMEOUT_MS`| No       | Per-provider timeout for reverse geocode         | `8000`                                       |
+| `NOMINATIM_USER_AGENT`      | No       | User-Agent sent to OpenStreetMap Nominatim       | `MatchyPlus/1.0 (contact@matchyplus.com)`    |
+
+See [location.md](../features/location.md).
+
 ### Authentication
 
 | Variable              | Required           | Description                      |

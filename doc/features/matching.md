@@ -72,6 +72,8 @@ Prefix: `/api/v1`
 | GET | `/swipe/who-liked-me` | Incoming likes (premium+) |
 | POST | `/swipe/unmatch/:userId` | Unmatch + clear pair logs/swipes |
 | GET | `/realtime` (WebSocket) | `notification_match`, `match_removed`, messaging events (see messaging.md) |
+| GET | `/location/ip-geolocation` | Approximate GPS via IP (fallback when browser geolocation is blocked) — see [location.md](./location.md) |
+| GET | `/location/reverse-geocode` | Address label from coordinates — see [location.md](./location.md) |
 
 ### POST swipe body
 
@@ -99,12 +101,16 @@ apps/api/src/
   services/discovery.ts         # DiscoveryService class
   services/swipe.ts             # SwipeService class
   services/swipe-quota.ts       # SwipeQuotaService class
+  services/geolocation.ts       # IP / reverse-geocode HTTPS proxies
   plugins/user-realtime.ts
   routes/v1/discovery/
   routes/v1/swipe/
   routes/v1/realtime/
+  routes/v1/location/           # IP geolocation + reverse geocode (JWT)
   schemas/v1/matching.ts
+  schemas/v1/location.ts
   types/matching.ts
+  types/geolocation.ts
 
 apps/app/src/
   features/matching/store/matching-slice.ts

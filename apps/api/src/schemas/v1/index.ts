@@ -7,3 +7,4 @@ export * from './ai.js';
 export * from './matching.js';
 export * from './profile.js';
 export * from './conversations.js';
+export * from './location.js';
