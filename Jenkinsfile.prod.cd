@@ -81,6 +81,11 @@ pipeline {
 
     GITOPS_REPO = "${env.GITOPS_REPO ?: 'github.com/matchy-plus/matchy-plus-gitops.git'}"
     // Kustomize overlay, not plain manifests - see the promote stage.
+    // Production reads its own branch, exactly as staging reads 'staging'.
+    // The default branch is main, so cloning without -b would commit prod
+    // image tags somewhere ArgoCD never looks - and the build would then
+    // block waiting for a revision production is never going to reach.
+    GITOPS_BRANCH = 'production'
     GITOPS_PROD_PATH = 'k8s/overlays/production'
     K8S_NAMESPACE = 'matchy-prod'
 
@@ -180,7 +185,7 @@ pipeline {
             set -euo pipefail
 
             rm -rf /tmp/gitops-prod
-            git clone --depth 1 "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-prod
+            git clone --depth 1 -b "${GITOPS_BRANCH}" \n              "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-prod
             cd /tmp/gitops-prod
 
             cd "${GITOPS_PROD_PATH}"
@@ -225,7 +230,7 @@ pipeline {
             else
               git add -A
               git commit -m "release(prod): ${IMAGE_TAG}" -m "Approved by: ${APPROVED_BY}"
-              git push origin HEAD
+              git push origin "HEAD:${GITOPS_BRANCH}"
             fi
 
             git rev-parse HEAD > "$WORKSPACE/deployed-sha.txt"

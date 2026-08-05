@@ -63,6 +63,11 @@ pipeline {
     STAGING_API_HOST = 'api.staging.matchy.local'
 
     GITOPS_REPO = 'github.com/matchy-plus/matchy-plus-gitops.git'
+    // The branch ArgoCD's staging Application reads (targetRevision). This must
+    // be set explicitly: the repo's default branch is main, so a plain clone
+    // would commit image tags to a branch nothing deploys from, and the build
+    // would then wait for a revision ArgoCD is never going to reach.
+    GITOPS_BRANCH = 'staging'
     // Kustomize overlay, not a directory of plain manifests: the deploy stage
     // runs `kustomize edit set image` here rather than editing deployment YAML,
     // which the overlay would override anyway.
@@ -137,7 +142,8 @@ pipeline {
             set -euo pipefail
 
             rm -rf /tmp/gitops-cd
-            git clone --depth 1 "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-cd
+            git clone --depth 1 -b "${GITOPS_BRANCH}" \
+              "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-cd
             cd /tmp/gitops-cd
 
             cd "${GITOPS_STAGING_PATH}"
@@ -196,7 +202,7 @@ pipeline {
             else
               git add -A
               git commit -m "ci(staging): deploy ${IMAGE_TAG}"
-              git push origin HEAD
+              git push origin "HEAD:${GITOPS_BRANCH}"
             fi
 
             # the commit ArgoCD has to reach before staging is really running
