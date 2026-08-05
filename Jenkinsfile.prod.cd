@@ -81,11 +81,10 @@ pipeline {
 
     GITOPS_REPO = "${env.GITOPS_REPO ?: 'github.com/matchy-plus/matchy-plus-gitops.git'}"
     // Kustomize overlay, not plain manifests - see the promote stage.
-    // Production reads its own branch, exactly as staging reads 'staging'.
-    // The default branch is main, so cloning without -b would commit prod
-    // image tags somewhere ArgoCD never looks - and the build would then
-    // block waiting for a revision production is never going to reach.
-    GITOPS_BRANCH = 'production'
+    // main IS production in the GitOps repo; 'staging' is staging. Named
+    // explicitly rather than relying on the clone default, so this keeps
+    // working if the repo's default branch ever changes.
+    GITOPS_BRANCH = 'main'
     GITOPS_PROD_PATH = 'k8s/overlays/production'
     K8S_NAMESPACE = 'matchy-prod'
 
