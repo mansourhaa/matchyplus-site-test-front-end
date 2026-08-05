@@ -30,9 +30,9 @@ export type RealtimeFanoutOptions = {
   instanceId?: string;
   /** How long to retain stream entries (XADD MINID ~). */
   streamRetentionMs?: number;
-  /** Process start time — entries with older `ts` are not delivered to clients. */
+  /** Process start time — entries with older event times are not delivered. */
   startedAtMs?: number;
-  /** Clock-skew grace before `startedAtMs` when filtering historical entries. */
+  /** Clock-skew grace before catch-up cutoff when filtering historical entries. */
   catchUpGraceMs?: number;
   /** Min idle ms before reclaiming PEL entries via XAUTOCLAIM. */
   pelMinIdleMs?: number;
@@ -60,6 +60,9 @@ export class RealtimeFanoutService {
   readonly pelMinIdleMs: number;
   readonly publishMaxAttempts: number;
 
+  /** Entries with event time below this cutoff are treated as historical replay. */
+  private catchUpCutoffMs: number;
+
   private readonly redis: Redis | null;
   private readonly deliverLocal: RealtimeDeliver;
   private readonly log: RealtimeFanoutLogger;
@@ -79,6 +82,7 @@ export class RealtimeFanoutService {
     this.streamRetentionMs = options.streamRetentionMs ?? REALTIME_STREAM_RETENTION_MS;
     this.startedAtMs = options.startedAtMs ?? Date.now();
     this.catchUpGraceMs = options.catchUpGraceMs ?? REALTIME_CATCH_UP_GRACE_MS;
+    this.catchUpCutoffMs = this.startedAtMs - this.catchUpGraceMs;
     this.pelMinIdleMs = options.pelMinIdleMs ?? REALTIME_PEL_MIN_IDLE_MS;
     this.publishMaxAttempts = Math.max(1, options.publishMaxAttempts ?? 3);
     this.retryDelayMs = options.retryDelayMs ?? 1000;
@@ -88,6 +92,11 @@ export class RealtimeFanoutService {
     }
   }
 
+  /** Current catch-up cutoff (after Redis TIME sync when available). */
+  getCatchUpCutoffMs(): number {
+    return this.catchUpCutoffMs;
+  }
+
   /** Start the consumer loop if it is not already running. */
   start(): void {
     if (!this.redis || this.loopPromise || this.stopped) return;
@@ -95,10 +104,11 @@ export class RealtimeFanoutService {
   }
 
   /**
-   * Deliver to sockets on this process, then publish for other instances.
+   * Deliver to sockets on this process, then best-effort publish for peers.
    * Always XADDs when Redis is up — peers may be connected elsewhere.
-   * Publish retries transient Redis failures so a single XADD blip does not
-   * permanently drop cross-instance delivery.
+   * Publish retries transient Redis failures; after all attempts fail the error
+   * is logged only — local delivery already happened and HTTP write responses
+   * remain authoritative for the acting user.
    */
   notifyUser(userId: string, event: string, payload: Record<string, unknown>): void {
     this.deliverLocal(userId, event, payload);
@@ -150,7 +160,7 @@ export class RealtimeFanoutService {
   /**
    * Create this instance’s consumer group from the start of the retained stream
    * (`0`) so bootstrap retries still catch peer publishes. Client-facing
-   * historical replay is filtered in `handleStreamEntry` via `startedAtMs`.
+   * historical replay is filtered in `handleStreamEntry` via catch-up cutoff.
    */
   async ensureConsumerGroup(client: Redis = this.redis!): Promise<void> {
     try {
@@ -167,11 +177,34 @@ export class RealtimeFanoutService {
     }
   }
 
+  /**
+   * Anchor catch-up cutoff to Redis TIME while preserving process-start semantics.
+   * Maps `startedAtMs` onto Redis's clock via the local/Redis offset at sync time so
+   * (1) a consumer clock ahead of Redis cannot drop live stream ids, and
+   * (2) a long bootstrap retry cannot advance the cutoff past peer events published
+   * while this instance was still ensuring the consumer group.
+   * Throws when TIME is unusable so bootstrap retries instead of keeping a local-only
+   * cutoff that can permanently skip live peer entries.
+   */
+  async syncCatchUpCutoffFromRedis(client: Redis): Promise<void> {
+    const reply = (await client.time()) as unknown as [string, string];
+    const sec = Number(reply[0]);
+    const usec = Number(reply[1]);
+    if (!Number.isFinite(sec) || !Number.isFinite(usec)) {
+      throw new Error(`realtime Redis TIME unusable: ${JSON.stringify(reply)}`);
+    }
+    const redisMs = sec * 1000 + Math.floor(usec / 1000);
+    const localNow = Date.now();
+    const startedAtOnRedisTimeline = redisMs - (localNow - this.startedAtMs);
+    this.catchUpCutoffMs = startedAtOnRedisTimeline - this.catchUpGraceMs;
+  }
+
   /** Retry group ensure until success or `stop()` — used by the consumer loop. */
   async bootstrapConsumerGroup(client: Redis): Promise<boolean> {
     while (!this.stopped) {
       try {
         await this.ensureConsumerGroup(client);
+        await this.syncCatchUpCutoffFromRedis(client);
         return true;
       } catch (err) {
         this.log.error({ err }, 'realtime stream bootstrap failed');
@@ -183,16 +216,16 @@ export class RealtimeFanoutService {
 
   /**
    * Apply a stream entry on this instance. Skips self-origin and entries older
-   * than this process start (historical replay within the retained stream).
-   * Event time is `max(publisher ts, stream id ms)` so publisher clock lag
-   * cannot drop live peer events that Redis already accepted.
+   * than the catch-up cutoff (historical replay within the retained stream).
+   * Event time prefers Redis stream id ms so publisher clock skew cannot drop
+   * live events or revive stale rows via a future ISO `ts`.
    */
   handleStreamEntry(fields: Record<string, string>, entryId?: string): void {
     const originInstanceId = fields.originInstanceId || '';
     if (originInstanceId === this.instanceId) return;
 
     const eventMs = RealtimeFanoutService.eventTimeMs(fields.ts, entryId);
-    if (eventMs === null || eventMs < this.startedAtMs - this.catchUpGraceMs) {
+    if (eventMs === null || eventMs < this.catchUpCutoffMs) {
       return;
     }
 
@@ -212,23 +245,21 @@ export class RealtimeFanoutService {
   }
 
   /**
-   * Catch-up filter time: max of publisher ISO `ts` and Redis stream id (`ms-seq`).
-   * Preferring only `ts` would drop live events when the publisher clock lags
-   * beyond `REALTIME_CATCH_UP_GRACE_MS`.
+   * Catch-up filter time: prefer Redis stream id (`ms-seq`) when present so a
+   * future publisher `ts` cannot replay stale retained entries, and a lagging
+   * publisher `ts` cannot hide live stream rows. Fall back to ISO `ts` only for
+   * legacy entries without an id.
    */
   static eventTimeMs(ts: string | undefined, entryId?: string): number | null {
-    let fromTs: number | null = null;
-    let fromId: number | null = null;
-    if (ts) {
-      const parsed = Date.parse(ts);
-      if (!Number.isNaN(parsed)) fromTs = parsed;
-    }
     if (entryId) {
       const msPart = Number(entryId.split('-')[0]);
-      if (Number.isFinite(msPart)) fromId = msPart;
+      if (Number.isFinite(msPart)) return msPart;
     }
-    if (fromTs !== null && fromId !== null) return Math.max(fromTs, fromId);
-    return fromTs ?? fromId;
+    if (ts) {
+      const parsed = Date.parse(ts);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+    return null;
   }
 
   static fieldsFromFlat(flat: string[]): Record<string, string> {
@@ -306,6 +337,7 @@ export class RealtimeFanoutService {
           instanceId: this.instanceId,
           startId: REALTIME_CONSUMER_GROUP_START_ID,
           pelMinIdleMs: this.pelMinIdleMs,
+          catchUpCutoffMs: this.catchUpCutoffMs,
         },
         'realtime stream consumer started',
       );

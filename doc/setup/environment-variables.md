@@ -143,7 +143,7 @@ Optional OTP lifecycle tuning — all have sensible defaults if left unset:
 | `AI_INTERNAL_TOKEN` | Staging/prod | Protects AI internal endpoints | — |
 | `AI_DATABASE_URL` | Local compose | DB URL seen from AI container | `host.docker.internal` DSN |
 | `REALTIME_STREAM_KEY` | No | Redis Streams key for WebSocket fan-out | `realtime:events` |
-| `INSTANCE_ID` | **Required when `REDIS_URL` is set**; unique per replica | Consumer group suffix (`realtime:inst:{id}`). Reusing the same id across replicas breaks fan-out (shared group = load-balanced delivery). Prefer the pod name (K8s Downward API). Random UUID is only allowed without Redis. | — (throws if Redis on and unset) |
+| `INSTANCE_ID` | **Required when `REDIS_URL` is set**; unique per replica | Consumer group suffix (`realtime:inst:{id}`). Reusing the same id across replicas breaks fan-out. Prefer the pod name (K8s Downward API). Pod name changes on restart — brief self-origin redelivery within catch-up grace is an accepted duplicate window. Random UUID is only allowed without Redis. | — (throws if Redis on and unset) |
 
 Local Redis/AI: `pnpm infra:up` (`compose.dev.yaml`).  
 Staging/prod: Kubernetes Services `saas-redis` + `saas-ai` (see [AI Async Jobs](../features/ai-async-jobs.md)).

@@ -27,7 +27,8 @@ spec:
             - secretRef:
                 name: saas-api-env
           env:
-            # Stable unique id per replica for Redis Streams consumer groups.
+            # Unique per replica while the pod lives (pod name). Changes on restart —
+            # brief self-origin redelivery within catch-up grace is accepted; see messaging.md.
             - name: INSTANCE_ID
               valueFrom:
                 fieldRef:

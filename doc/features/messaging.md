@@ -54,25 +54,39 @@ Via `/realtime` WebSocket (`fastify.notifyUser`):
 Clients may send `{ event: "typing"|"stop_typing", payload: { conversation_id } }` on the same socket.
 Clients may also send `{ event: "ping" }` for keepalive; the server replies `{ event: "pong" }`.
 
-When `REDIS_URL` is set, `notifyUser` delivers to local sockets and `XADD`s to Redis Streams
-(`REALTIME_STREAM_KEY`, default `realtime:events`) with approximate `MINID ~` retention
-(30 minutes). Each API instance consumes with its own consumer group
-(`realtime:inst:{INSTANCE_ID}`) from the start of the retained stream (`0`) so late
-bootstrap still catches peer publishes within the retention window; entries older than
-process start are skipped so clients do not get historical replay. Idle pending entries
-are reclaimed via `XAUTOCLAIM` so a failed deliver/ACK or crash does not permanently
-miss events. Catch-up uses `max(publisher ts, stream id ms)` so publisher clock skew
-cannot drop live peer events.
-Events include `originInstanceId` so the publishing instance does not double-deliver.
+When `REDIS_URL` is set, `notifyUser` delivers to local sockets and best-effort `XADD`s
+to Redis Streams (`REALTIME_STREAM_KEY`, default `realtime:events`) with approximate
+`MINID ~` retention (30 minutes). Transient publish failures are retried a few times;
+if they still fail the error is logged only — local delivery already happened and HTTP
+write responses remain authoritative for the acting user. Each API instance consumes
+with its own consumer group (`realtime:inst:{INSTANCE_ID}`) from the start of the
+retained stream (`0`) so late bootstrap still catches peer publishes within the
+retention window. Catch-up cutoff maps process start onto Redis `TIME` (minus grace)
+so a consumer clock ahead of Redis cannot drop live peer entries, while a long
+bootstrap retry cannot advance the cutoff past peer events published while this
+instance was still ensuring the consumer group. Event age prefers the Redis stream
+id millisecond prefix (not publisher ISO `ts`) so a future `ts` cannot replay stale
+retained rows and a lagging `ts` cannot hide live rows. Idle pending entries are
+reclaimed via `XAUTOCLAIM` so a failed deliver/ACK or crash does not permanently
+miss events. Events include `originInstanceId` so the publishing instance does not
+double-deliver while that id is unchanged.
 
 **`INSTANCE_ID` is required whenever Redis fan-out is enabled** and must be unique per
 replica (e.g. Kubernetes pod name via Downward API). Reusing the same value across pods
 makes them share one consumer group; Redis then load-balances entries and peers on other
-pods miss events. A random UUID every boot is not allowed with Redis — after restart,
-retained self-publishes would no longer match `originInstanceId` and could replay to
-reconnecting clients.
-Without Redis, fan-out stays in-process (single instance). HTTP write responses remain
-authoritative for the acting user.
+pods miss events. A random UUID every boot is not allowed with Redis. Pod name is unique
+while the pod lives but **changes on restart** — entries published by the previous pod
+within the catch-up grace window may briefly redeliver to reconnecting clients (accepted
+duplicate window; clients should treat HTTP / message ids as authoritative). Prefer a
+sticky per-replica id if that window must be zero.
+
+WebSocket `close` / `stop_typing` enqueues stop only when no other claim remains for
+that user/conversation. Claims are per-socket (Redis SET + per-claim key with TTL when
+Redis is on, else an in-process Set) so multi-tab — including tabs on different API
+replicas — does not clear the peer indicator while another tab is still typing, and a
+TTL expiry on one claim cannot undercount the others.
+
+Without Redis, fan-out stays in-process (single instance).
 
 ## Chat URL
 

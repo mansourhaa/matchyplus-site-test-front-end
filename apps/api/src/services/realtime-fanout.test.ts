@@ -13,6 +13,7 @@ function createMockRedis() {
     xreadgroup: vi.fn().mockResolvedValue(null),
     xautoclaim: vi.fn().mockResolvedValue(['0-0', []]),
     xack: vi.fn().mockResolvedValue(1),
+    time: vi.fn().mockResolvedValue(['1722772800', '0']),
     duplicate: vi.fn(),
     quit: vi.fn().mockResolvedValue('OK'),
     disconnect: vi.fn(),
@@ -253,6 +254,111 @@ describe('RealtimeFanoutService', () => {
     expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'skewed' });
   });
 
+  it('skips stale retained entries even when publisher ts is in the future', () => {
+    const deliverLocal = vi.fn();
+    const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
+    const fanout = new RealtimeFanoutService({
+      redis: null,
+      deliverLocal,
+      log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      instanceId: 'inst-a',
+      startedAtMs,
+      catchUpGraceMs: 5_000,
+      startConsumer: false,
+    });
+
+    fanout.handleStreamEntry(
+      {
+        userId: 'u1',
+        event: 'new_message',
+        payload: '{"id":"stale"}',
+        originInstanceId: 'inst-b',
+        ts: '2026-08-04T12:30:00.000Z',
+      },
+      `${startedAtMs - 60_000}-0`,
+    );
+    expect(deliverLocal).not.toHaveBeenCalled();
+  });
+
+  it('delivers live peer events when consumer clock is ahead of Redis stream id', async () => {
+    const deliverLocal = vi.fn();
+    const redisMs = Date.parse('2026-08-04T12:00:00.000Z');
+    // Local boot time is 30s ahead of Redis — without TIME sync this would drop live ids.
+    const startedAtMs = redisMs + 30_000;
+    const redis = createMockRedis();
+    // Sync happens at "now" = startedAtMs + 1s on the local clock; Redis TIME matches real era.
+    const localNow = startedAtMs + 1_000;
+    const redisNow = redisMs + 1_000;
+    redis.time.mockResolvedValue([String(Math.floor(redisNow / 1000)), '0']);
+
+    vi.spyOn(Date, 'now').mockReturnValue(localNow);
+
+    const fanout = new RealtimeFanoutService({
+      redis: redis as never,
+      deliverLocal,
+      log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      instanceId: 'inst-a',
+      startedAtMs,
+      catchUpGraceMs: 5_000,
+      startConsumer: false,
+    });
+
+    await fanout.syncCatchUpCutoffFromRedis(redis as never);
+    // startedAt mapped onto Redis timeline ≈ redisMs, minus grace.
+    expect(fanout.getCatchUpCutoffMs()).toBe(redisMs - 5_000);
+
+    fanout.handleStreamEntry(
+      {
+        userId: 'u1',
+        event: 'new_message',
+        payload: '{"id":"live"}',
+        originInstanceId: 'inst-b',
+        ts: '2026-08-04T11:00:00.000Z',
+      },
+      `${redisMs + 1_000}-0`,
+    );
+    expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'live' });
+  });
+
+  it('keeps peer events published during a long bootstrap when Redis TIME is synced late', async () => {
+    const deliverLocal = vi.fn();
+    const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
+    const graceMs = 5_000;
+    // Bootstrap took 60s — Redis TIME at sync is far past startedAt + grace.
+    const bootstrapDurationMs = 60_000;
+    const redis = createMockRedis();
+    redis.time.mockResolvedValue([
+      String(Math.floor((startedAtMs + bootstrapDurationMs) / 1000)),
+      '0',
+    ]);
+    vi.spyOn(Date, 'now').mockReturnValue(startedAtMs + bootstrapDurationMs);
+
+    const fanout = new RealtimeFanoutService({
+      redis: redis as never,
+      deliverLocal,
+      log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      instanceId: 'inst-a',
+      startedAtMs,
+      catchUpGraceMs: graceMs,
+      startConsumer: false,
+    });
+
+    await fanout.syncCatchUpCutoffFromRedis(redis as never);
+    expect(fanout.getCatchUpCutoffMs()).toBe(startedAtMs - graceMs);
+
+    // Peer event published mid-bootstrap (after start, before sync).
+    fanout.handleStreamEntry(
+      {
+        userId: 'u1',
+        event: 'new_message',
+        payload: '{"id":"during-bootstrap"}',
+        originInstanceId: 'inst-b',
+      },
+      `${startedAtMs + 10_000}-0`,
+    );
+    expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'during-bootstrap' });
+  });
+
   it('drops entries with no usable timestamp', () => {
     const deliverLocal = vi.fn();
     const fanout = new RealtimeFanoutService({
@@ -385,6 +491,7 @@ describe('RealtimeFanoutService', () => {
 
     expect(ok).toBe(true);
     expect(redis.xgroup).toHaveBeenCalledTimes(2);
+    expect(redis.time).toHaveBeenCalled();
     expect(log.error).toHaveBeenCalledWith(
       expect.objectContaining({ err: expect.any(Error) }),
       'realtime stream bootstrap failed',
