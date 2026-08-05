@@ -164,16 +164,15 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   }
 
   /**
-   * Body JWTs on refresh only when the presented refresh token came from the body
-   * (Cap without cookies). A credentialed browser that spoofs the mobile label but
-   * still sends the HttpOnly refresh cookie must never receive JWTs in JSON.
+   * Authorized Cap (label + MOBILE_CLIENT_SECRET) gets rotated JWTs in the body so
+   * Bearer storage can update. Browsers lack the secret, so spoofing X-Matchy-Client
+   * alone never yields body JWTs.
    */
   function memberRefreshResponse(
     request: FastifyRequest,
     tokens: { accessToken: string; refreshToken: string },
-    source: 'cookie' | 'body',
   ) {
-    if (!isAuthorizedMobileClient(request) || source !== 'body') {
+    if (!isAuthorizedMobileClient(request)) {
       return { ok: true as const };
     }
     return {
@@ -191,10 +190,8 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     const body = request.body as { refreshToken?: string } | null;
     const fromBody = body?.refreshToken?.trim();
 
-    // Authorized Cap may still receive Set-Cookie on login. Prefer an explicit body
-    // refreshToken so memberRefreshResponse can return rotated JWTs for Bearer storage.
-    // Cookie-only (no body) stays cookie-sourced and never emits body JWTs — browsers
-    // that lack the mobile secret cannot take this path.
+    // Prefer body for authorized Cap so Bearer storage stays the primary Cap path.
+    // Stale body + valid cookie is handled by falling back in the refresh route.
     if (isAuthorizedMobileClient(request) && fromBody) {
       return { token: fromBody, source: 'body' };
     }
@@ -205,6 +202,10 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     }
 
     return { source: 'none' };
+  }
+
+  function cookieRefreshToken(request: FastifyRequest): string | undefined {
+    return request.cookies?.[MEMBER_REFRESH_COOKIE] || undefined;
   }
 
   /**
@@ -353,9 +354,26 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           throw new Error('invalid_refresh_token');
         }
 
-        const data = await tokenService.refreshAccessToken(presented.token);
+        let data: { accessToken: string; refreshToken: string };
+        try {
+          data = await tokenService.refreshAccessToken(presented.token);
+        } catch (err) {
+          // Cap may send a stale localStorage refresh alongside a still-valid cookie.
+          const cookieToken = cookieRefreshToken(request);
+          if (
+            presented.source === 'body' &&
+            cookieToken &&
+            cookieToken !== presented.token &&
+            (err as Error).message === 'invalid_refresh_token'
+          ) {
+            data = await tokenService.refreshAccessToken(cookieToken);
+          } else {
+            throw err;
+          }
+        }
+
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send(memberRefreshResponse(request, data, presented.source));
+        return reply.code(200).send(memberRefreshResponse(request, data));
       } catch (err) {
         throw mapError(err as Error, request);
       }

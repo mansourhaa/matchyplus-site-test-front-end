@@ -218,7 +218,7 @@ describe('member session cookies', () => {
     expect(response.json().refreshToken).toEqual(expect.any(String));
   });
 
-  it('does not return body JWTs on refresh when the HttpOnly cookie was the source', async () => {
+  it('returns body JWTs for authorized Cap even when refresh used the HttpOnly cookie', async () => {
     const { createHash } = await import('node:crypto');
     const jwt = await import('jsonwebtoken');
     const refreshToken = jwt.default.sign(
@@ -266,8 +266,79 @@ describe('member session cookies', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json().ok).toBe(true);
-    expect(response.json()).not.toHaveProperty('accessToken');
-    expect(response.json()).not.toHaveProperty('refreshToken');
+    expect(response.json().accessToken).toEqual(expect.any(String));
+    expect(response.json().refreshToken).toEqual(expect.any(String));
+  });
+
+  it('falls back to the cookie when authorized Cap sends a stale body refreshToken', async () => {
+    const { createHash } = await import('node:crypto');
+    const jwt = await import('jsonwebtoken');
+    const staleBody = jwt.default.sign(
+      { sub: 'user-1', jti: 'jti-stale', type: 'refresh' },
+      'test-refresh-token-secret',
+      { expiresIn: '1h' },
+    );
+    const cookieRefresh = jwt.default.sign(
+      { sub: 'user-1', jti: 'jti-cookie-ok', type: 'refresh' },
+      'test-refresh-token-secret',
+      { expiresIn: '1h' },
+    );
+    const cookieHash = createHash('sha256').update(cookieRefresh).digest('hex');
+
+    const app = await buildTestApp({
+      prisma: {
+        refreshToken: {
+          findUnique: vi.fn().mockImplementation(async ({ where }: { where: { id: string } }) => {
+            if (where.id === 'jti-stale') {
+              return {
+                id: 'jti-stale',
+                user_id: 'user-1',
+                token_hash: 'not-the-stale-body-hash',
+                expires_at: new Date(Date.now() + 60_000),
+                revoked_at: null,
+              };
+            }
+            if (where.id === 'jti-cookie-ok') {
+              return {
+                id: 'jti-cookie-ok',
+                user_id: 'user-1',
+                token_hash: cookieHash,
+                expires_at: new Date(Date.now() + 60_000),
+                revoked_at: null,
+              };
+            }
+            return null;
+          }),
+          update: vi.fn().mockResolvedValue({}),
+          create: vi.fn().mockResolvedValue({}),
+        } as never,
+        user: {
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: null,
+            phone: '+21612345678',
+            status: 'ACTIVE',
+          }),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      headers: {
+        'x-matchy-client': 'mobile',
+        'x-matchy-mobile-key': 'test-mobile-client-secret',
+      },
+      cookies: { refresh_token: cookieRefresh },
+      payload: { refreshToken: staleBody },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().ok).toBe(true);
+    expect(response.json().accessToken).toEqual(expect.any(String));
+    expect(response.json().refreshToken).toEqual(expect.any(String));
   });
 
   it('reads the refresh token from the cookie, not the body, and rotates both cookies', async () => {
