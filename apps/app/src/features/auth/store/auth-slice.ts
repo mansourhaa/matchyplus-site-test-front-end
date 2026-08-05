@@ -180,7 +180,8 @@ function applySession(state: AuthState, user: AuthUser) {
   // Any successful session-establishing action (login, register, OAuth exchange, or the
   // bootstrap authcheck) is just as valid a "we know this session is real" signal as
   // fetchCurrentUser settling — sessionChecked must not stay false (blocking realtime,
-  // etc.) until an unrelated bootstrap request also happens to resolve.
+  // deep-linked onboarding steps, etc.) until an unrelated bootstrap request also
+  // happens to resolve.
   state.sessionChecked = true;
   persistAuthUser(user);
 }

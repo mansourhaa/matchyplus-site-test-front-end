@@ -31,39 +31,48 @@ export function OnboardingWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  const { isAuthenticated } = useAppSelector(selectAuth);
+  const { isAuthenticated, sessionChecked } = useAppSelector(selectAuth);
   const { profile, loading } = useAppSelector(selectOnboarding);
 
-  // Set by IdentityStep the instant registerPhone succeeds, before it saves the identity
-  // patch, and cleared once that save actually succeeds (see goToNextStep/finishOnboarding
-  // below) — never on a failed save, so a stale ?step= can't tear the user away from
-  // identity (OTP modal included) while there's still no saved name/photo/job to show
-  // elsewhere, or before the save has even been retried successfully.
+  // Set by IdentityStep the instant it's about to attempt registerPhone, and cleared
+  // once the following identity save actually succeeds (see goToNextStep/
+  // finishOnboarding below) — never on a failed save, so a stale ?step= can't tear the
+  // user away from identity (OTP modal included) while there's still no saved
+  // name/photo/job to show elsewhere, or before the save has even been retried
+  // successfully.
   const [justRegistered, setJustRegistered] = useState(false);
 
+  // A validated session requires both: isAuthenticated can be true from a redux-persist
+  // rehydration before the bootstrap authcheck has actually confirmed the cookie is
+  // still valid. Trusting that alone would let an expired persisted session briefly
+  // honor a deep-linked later step and hit authenticated APIs that 401.
+  const hasValidatedSession = isAuthenticated && sessionChecked;
+
   const requestedStep = searchParams.get('step');
-  // A brand-new visitor has no session yet, so only the identity step (which also
-  // collects credentials for them) is reachable — any other requested step would just
-  // render a form whose save always 401s. Ignore ?step= entirely until authenticated,
-  // and keep ignoring it through the brief registered-but-not-yet-saved window too.
+  // A brand-new visitor (or one whose session hasn't been validated yet) has no
+  // confirmed session, so only the identity step (which also collects credentials for a
+  // new visitor) is reachable — any other requested step would just render a form whose
+  // save always 401s. Ignore ?step= entirely until validated, and keep ignoring it
+  // through the brief registered-but-not-yet-saved window too.
   const step: OnboardingStep =
-    isAuthenticated && !justRegistered && VALID_STEPS.includes(requestedStep as OnboardingStep)
+    hasValidatedSession && !justRegistered && VALID_STEPS.includes(requestedStep as OnboardingStep)
       ? (requestedStep as OnboardingStep)
       : 'identity';
   const nextParam = searchParams.get('next');
 
   useEffect(() => {
-    // A brand-new visitor has no session yet — fetching their profile would just 401.
-    // And right after they register, skip this fetch entirely: there's no prior
-    // progress to resume for an account that didn't exist a moment ago, and identity's
-    // own save (about to follow) is the authoritative data — a GET racing that save
-    // could resolve after it and overwrite the just-saved fields with the still-empty
-    // brand-new profile. Deliberately not depending on `justRegistered` — this should
-    // only re-evaluate when auth state itself changes, not again when the guard later
-    // clears (which would just re-fetch the same data the save already put in state).
-    if (isAuthenticated && !justRegistered) dispatch(fetchOnboardingProfile());
+    // An unvalidated session has no confirmed profile to fetch — fetching now would
+    // just 401 (or, worse, race a not-yet-validated session's stale cookie). And right
+    // after registering, skip this fetch entirely: there's no prior progress to resume
+    // for an account that didn't exist a moment ago, and identity's own save (about to
+    // follow) is the authoritative data — a GET racing that save could resolve after it
+    // and overwrite the just-saved fields with the still-empty brand-new profile.
+    // Deliberately not depending on `justRegistered` — this should only re-evaluate when
+    // auth state itself changes, not again when the guard later clears (which would
+    // just re-fetch the same data the save already put in state).
+    if (hasValidatedSession && !justRegistered) dispatch(fetchOnboardingProfile());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, isAuthenticated]);
+  }, [dispatch, hasValidatedSession]);
 
   useEffect(() => {
     if (profile?.onboardingCompleted) {

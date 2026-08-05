@@ -369,6 +369,34 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     expect(firstButton('Enregistrer et continuer')).toBeInTheDocument();
   });
 
+  it('still requires a photo for a fresh phone signup even with a stale rehydrated OAuth user left over in Redux', () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    // A previous OAuth session's user can still be sitting in Redux (e.g. redux-persist)
+    // even though isAuthenticated is false for THIS visitor — auth_provider: 'google'
+    // here must not be trusted to waive the phone-signup photo requirement.
+    renderWithAuthStore(
+      <IdentityStep
+        profile={{ ...unauthenticatedProfileWithPhoto, image: null }}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onNext={onNext}
+      />,
+      { status: 'unauthenticated', user: oauthAuthState.user },
+    );
+
+    fillIdentityAndCredentials();
+    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
+      target: { value: 'secret123' },
+    });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    expect(api.post).not.toHaveBeenCalled();
+    expect(screen.getAllByText('La photo de profil est obligatoire.')[0]).toBeInTheDocument();
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
   it('does not send an OTP when the password is too short', () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
@@ -466,7 +494,11 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     );
   });
 
-  it('calls onRegistered before onNext once registration succeeds, so the wizard can skip its own redundant fetch', async () => {
+  it('calls onRegistered before even attempting registerPhone, not just before onNext', async () => {
+    // The wizard's guard must be raised before isAuthenticated has any chance to flip —
+    // calling onRegistered only after registerPhone resolves would leave a gap, since
+    // that state change and this callback aren't guaranteed to land in the same React
+    // render (they're separated by an await).
     const callOrder: string[] = [];
     const onRegistered = vi.fn(() => callOrder.push('onRegistered'));
     const onNext = vi.fn(async () => {
@@ -483,6 +515,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
         };
       }
       if (url === '/auth/register-phone') {
+        callOrder.push('register-phone-call');
         return {
           data: { access_token: 'access-1', refresh_token: 'refresh-1', user: registeredUser },
         };
@@ -514,7 +547,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     fireEvent.click(firstButton('Confirmer'));
 
     await waitFor(() => expect(onNext).toHaveBeenCalled());
-    expect(callOrder).toEqual(['onRegistered', 'onNext']);
+    expect(callOrder).toEqual(['onRegistered', 'register-phone-call', 'onNext']);
   });
 
   it('disables closing and resending the OTP modal while verification is in flight', async () => {

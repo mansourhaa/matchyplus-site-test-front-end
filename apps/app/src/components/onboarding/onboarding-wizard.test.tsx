@@ -86,6 +86,10 @@ function buildStore(authState: Partial<AuthState>) {
     loading: false,
     error: null,
     user: null,
+    // Most tests here are exercising step-gating, not the rehydration race itself —
+    // default to "checked" so passing status: 'authenticated' alone still behaves as a
+    // validated session. Tests exercising the race pass sessionChecked: false explicitly.
+    sessionChecked: true,
   };
   return configureStore({
     reducer: { auth: authReducer, onboarding: onboardingReducer },
@@ -188,5 +192,46 @@ describe('OnboardingWizard', () => {
     // (already-authenticated) save would — the guard only ever blocks the brief
     // in-flight window, never navigation after a real success.
     expect(pushMock).toHaveBeenCalledWith('/onboarding?step=interests');
+  });
+
+  it('does not honor a deep-linked step for a persisted-but-unvalidated session, and does not fetch its profile', () => {
+    searchParamsRef.current = new URLSearchParams('step=interests');
+
+    // redux-persist can rehydrate a stale `status: 'authenticated'` before
+    // useBootstrapSession's fetchCurrentUser call confirms the cookie is still valid —
+    // sessionChecked stays false during that window. Honoring ?step= here would let an
+    // expired session briefly hit an authenticated-only API that just 401s.
+    renderWizard({ status: 'authenticated', sessionChecked: false, user: registeredUser });
+
+    expect(screen.getByText('Votre identité (stub)')).toBeInTheDocument();
+    expect(screen.queryByText('Vos objectifs')).not.toBeInTheDocument();
+    expect(api.get).not.toHaveBeenCalled();
+  });
+
+  it('honors the deep-linked step and fetches the profile once the session is validated', async () => {
+    searchParamsRef.current = new URLSearchParams('step=interests');
+    vi.mocked(api.get).mockResolvedValue({ data: fullProfile });
+
+    const store = renderWizard({
+      status: 'authenticated',
+      sessionChecked: false,
+      user: registeredUser,
+    });
+
+    expect(screen.getByText('Votre identité (stub)')).toBeInTheDocument();
+
+    // fetchCurrentUser.fulfilled: the bootstrap authcheck settles and confirms the
+    // cookie is still valid.
+    act(() => {
+      store.dispatch({
+        type: 'auth/fetchCurrentUser/fulfilled',
+        payload: { user: registeredUser },
+      });
+    });
+
+    expect((await screen.findAllByText('Vos objectifs'))[0]).toBeInTheDocument();
+    await waitFor(() =>
+      expect(api.get).toHaveBeenCalledWith('/users/me/profile', expect.anything()),
+    );
   });
 });

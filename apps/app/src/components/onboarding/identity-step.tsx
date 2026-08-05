@@ -22,10 +22,13 @@ type IdentityStepProps = {
   // handleNext below). True for every other case (OAuth account, resumed phone
   // signup, already-authenticated-but-incomplete profile).
   isAuthenticated: boolean;
-  // Called the moment registerPhone succeeds, before onNext's save — lets the wizard
-  // know a real profile save is about to happen so it can skip its own redundant
-  // fetch-on-authenticated effect (a GET racing that save could resolve after it and
-  // overwrite the just-saved fields with the still-empty brand-new profile).
+  // Called right before attempting registerPhone (not after) — lets the wizard raise
+  // its guard before isAuthenticated has any chance to flip, so it can skip its own
+  // redundant fetch-on-authenticated effect and step-navigation (a GET racing the
+  // upcoming identity save could resolve after it and overwrite the just-saved fields
+  // with the still-empty brand-new profile). Calling this only after registerPhone
+  // resolves would leave a gap — React doesn't guarantee that state change and this
+  // one land in the same render, since they're separated by an await.
   onRegistered?: () => void;
   onNext: (patch: {
     name: string;
@@ -127,7 +130,13 @@ export function IdentityStep({
   // Only a phone-signup account ever needs a real profile photo — matching the old
   // app's Inscription1 (`requiresPhoto = isPhoneSignupFlow() || Boolean(data.phone)`).
   // An OAuth account already has a provider avatar concept and never collected a phone.
-  const authProvider = user?.auth_provider ?? profile?.auth_provider ?? 'phone';
+  // While !isAuthenticated, this is unconditionally a fresh phone signup — the only kind
+  // of account reachable without a session — so user/profile.auth_provider is ignored
+  // entirely rather than trusted: a stale rehydrated OAuth `user` left over in Redux from
+  // a previous session must not waive the photo requirement for this new signup.
+  const authProvider = isAuthenticated
+    ? (user?.auth_provider ?? profile?.auth_provider ?? 'phone')
+    : 'phone';
   const isPhotoRequired = authProvider === 'phone';
   const missingPhoto = requiredTouched && isPhotoRequired && !image;
 
@@ -217,6 +226,7 @@ export function IdentityStep({
       return;
     }
 
+    onRegistered?.();
     const registerAction = await dispatch(
       registerPhone({ phone, password, signupToken: verifyAction.payload.signupToken }),
     );
@@ -228,7 +238,6 @@ export function IdentityStep({
 
     setShowOtpModal(false);
     setOtpVerifying(false);
-    onRegistered?.();
     const saved = await onNext(identityPatch());
     if (!saved) {
       setError('Échec de la sauvegarde. Réessayez.');
