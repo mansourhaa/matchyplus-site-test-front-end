@@ -6,9 +6,6 @@ export async function createServerApp(opts: FastifyServerOptions = {}) {
   const isDevelopment = process.env.NODE_ENV !== 'production';
 
   const app = fastify({
-    // Nginx Ingress / reverse proxies set X-Forwarded-For; required for accurate
-    // request.ip (rate limits + IP geolocation fallback for discovery).
-    trustProxy: opts.trustProxy ?? true,
     logger: opts.logger ?? (isDevelopment ? false : true),
     pluginTimeout: opts.pluginTimeout ?? 20000,
     ajv: opts.ajv ?? {
@@ -19,6 +16,10 @@ export async function createServerApp(opts: FastifyServerOptions = {}) {
       plugins: [ajvFormat as never, ajvFilePlugin as never],
     },
     ...opts,
+    // After `...opts` so callers cannot accidentally clear proxy trust.
+    // Nginx Ingress sets X-Forwarded-For; required for accurate request.ip
+    // (rate limits + IP geolocation fallback for discovery).
+    trustProxy: opts.trustProxy ?? true,
   });
 
   await app.register(import('./app.js'));
