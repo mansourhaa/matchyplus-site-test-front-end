@@ -132,7 +132,11 @@ export function OnboardingWizard() {
           stepNumber={stepNumber}
           totalSteps={totalSteps}
           loading={loading}
-          isAuthenticated={isAuthenticated}
+          // Not raw isAuthenticated — redux-persist can rehydrate that as true before
+          // sessionChecked confirms it, which would otherwise hide signup credentials,
+          // weaken the phone-signup photo rule, and route "Continuer" through the
+          // authenticated PATCH save instead of OTP signup for a stale/expired session.
+          isAuthenticated={hasValidatedSession}
           onRegistered={() => setJustRegistered(true)}
           onNext={goToNextStep}
         />

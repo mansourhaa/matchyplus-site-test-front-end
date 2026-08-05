@@ -9,15 +9,23 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { OnboardingWizard } from './onboarding-wizard';
 
-const { pushMock, replaceMock, refreshMock, searchParamsRef, registeredCallbackRef, onNextRef } =
-  vi.hoisted(() => ({
-    pushMock: vi.fn(),
-    replaceMock: vi.fn(),
-    refreshMock: vi.fn(),
-    searchParamsRef: { current: new URLSearchParams() },
-    registeredCallbackRef: { current: undefined as (() => void) | undefined },
-    onNextRef: { current: undefined as ((patch: unknown) => Promise<boolean>) | undefined },
-  }));
+const {
+  pushMock,
+  replaceMock,
+  refreshMock,
+  searchParamsRef,
+  registeredCallbackRef,
+  onNextRef,
+  isAuthenticatedPropRef,
+} = vi.hoisted(() => ({
+  pushMock: vi.fn(),
+  replaceMock: vi.fn(),
+  refreshMock: vi.fn(),
+  searchParamsRef: { current: new URLSearchParams() },
+  registeredCallbackRef: { current: undefined as (() => void) | undefined },
+  onNextRef: { current: undefined as ((patch: unknown) => Promise<boolean>) | undefined },
+  isAuthenticatedPropRef: { current: undefined as boolean | undefined },
+}));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock, replace: replaceMock, refresh: refreshMock }),
@@ -39,11 +47,13 @@ vi.mock('@/lib/api', async (importOriginal) => {
 // succeeds, onNext once its own identity save is ready to run.
 vi.mock('./identity-step', () => ({
   IdentityStep: (props: {
+    isAuthenticated: boolean;
     onRegistered?: () => void;
     onNext: (patch: unknown) => Promise<boolean>;
   }) => {
     registeredCallbackRef.current = props.onRegistered;
     onNextRef.current = props.onNext;
+    isAuthenticatedPropRef.current = props.isAuthenticated;
     return <div>Votre identité (stub)</div>;
   },
 }));
@@ -115,6 +125,7 @@ describe('OnboardingWizard', () => {
     searchParamsRef.current = new URLSearchParams();
     registeredCallbackRef.current = undefined;
     onNextRef.current = undefined;
+    isAuthenticatedPropRef.current = undefined;
   });
 
   it('ignores ?step=interests and renders identity for an unauthenticated visitor', () => {
@@ -233,5 +244,22 @@ describe('OnboardingWizard', () => {
     await waitFor(() =>
       expect(api.get).toHaveBeenCalledWith('/users/me/profile', expect.anything()),
     );
+  });
+
+  it('passes a validated isAuthenticated (not persist-only) into IdentityStep, so a stale session cannot hide signup credentials', () => {
+    // status: 'authenticated' alone (e.g. rehydrated by redux-persist before the
+    // bootstrap authcheck confirms the cookie) must not read as authenticated inside
+    // IdentityStep — otherwise it would hide the phone/password fields, weaken the
+    // phone-signup photo rule, and route the save through the wrong (PATCH) path for a
+    // session that turns out to be expired.
+    renderWizard({ status: 'authenticated', sessionChecked: false, user: registeredUser });
+
+    expect(isAuthenticatedPropRef.current).toBe(false);
+  });
+
+  it('passes isAuthenticated: true into IdentityStep once the session is actually validated', () => {
+    renderWizard({ status: 'authenticated', sessionChecked: true, user: registeredUser });
+
+    expect(isAuthenticatedPropRef.current).toBe(true);
   });
 });
