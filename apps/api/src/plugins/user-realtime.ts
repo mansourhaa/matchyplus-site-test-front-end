@@ -2,10 +2,13 @@ import { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 import type { WebSocket } from 'ws';
 
+import { RealtimeFanoutService } from '../services/realtime-fanout.js';
+
 /**
- * In-process user realtime fan-out for match and messaging events.
- * Multi-instance deployments should later bridge via Redis pub/sub;
- * HTTP payloads remain the source of truth for the acting user on writes.
+ * User realtime fan-out for match and messaging events.
+ * Delivers to local WebSocket rooms and, when Redis is configured, fans out
+ * via Redis Streams so every API instance can reach sockets it owns.
+ * HTTP write responses remain authoritative for the acting user.
  */
 declare module 'fastify' {
   interface FastifyInstance {
@@ -36,7 +39,7 @@ async function userRealtime(fastify: FastifyInstance) {
     if (set.size === 0) rooms.delete(userId);
   }
 
-  function notifyUser(userId: string, event: string, payload: Record<string, unknown>) {
+  function deliverLocal(userId: string, event: string, payload: Record<string, unknown>) {
     const set = rooms.get(userId);
     if (!set?.size) return;
     const message = JSON.stringify({ event, payload });
@@ -47,11 +50,40 @@ async function userRealtime(fastify: FastifyInstance) {
     }
   }
 
+  const fanout = new RealtimeFanoutService({
+    redis: fastify.redisClient ?? null,
+    deliverLocal,
+    log: {
+      info: (obj, msg) => fastify.log.info(obj, msg),
+      warn: (obj, msg) => fastify.log.warn(obj, msg),
+      error: (obj, msg) => fastify.log.error(obj, msg),
+    },
+    // Create the group before traffic when possible; consumer loop still retries.
+    startConsumer: false,
+  });
+
+  if (fastify.redisClient) {
+    try {
+      await fanout.ensureConsumerGroup(fastify.redisClient);
+    } catch (err) {
+      fastify.log.error({ err }, 'realtime stream initial group ensure failed');
+    }
+    fanout.start();
+  }
+
+  function notifyUser(userId: string, event: string, payload: Record<string, unknown>) {
+    fanout.notifyUser(userId, event, payload);
+  }
+
   fastify.decorate('notifyUser', notifyUser);
   fastify.decorate('userRealtime', { subscribe, unsubscribe });
+
+  fastify.addHook('onClose', async () => {
+    await fanout.stop();
+  });
 }
 
 export default fp(userRealtime, {
   name: 'user-realtime',
-  dependencies: ['websocket'],
+  dependencies: ['websocket', 'redis'],
 });

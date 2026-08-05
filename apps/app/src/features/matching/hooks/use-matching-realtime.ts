@@ -26,6 +26,8 @@ import { useStore } from 'react-redux';
 
 import type { PushToastItem } from '../types';
 
+/** Keep in sync with apps/api `REALTIME_PING_INTERVAL_MS`. */
+const REALTIME_PING_INTERVAL_MS = 25_000;
 const PUSH_TOAST_LIFETIME_MS = 4200;
 const MAX_VISIBLE_PUSH_TOASTS = 3;
 
@@ -82,6 +84,7 @@ export function useMatchingRealtime(enabled = true) {
 
       let closedByEffect = false;
       let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+      let pingTimer: ReturnType<typeof setInterval> | null = null;
       const markReadScheduler = createDebouncedMarkRead((conversationId) => {
         void dispatch(markConversationRead(conversationId));
       });
@@ -93,10 +96,21 @@ export function useMatchingRealtime(enabled = true) {
           const socket = new WebSocket(url);
           socketRef.current = socket;
 
+          socket.onopen = () => {
+            if (pingTimer) clearInterval(pingTimer);
+            pingTimer = setInterval(() => {
+              if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ event: 'ping', payload: {} }));
+              }
+            }, REALTIME_PING_INTERVAL_MS);
+          };
+
           socket.onmessage = (event) => {
             try {
               const message = JSON.parse(String(event.data)) as RealtimeMessage &
                 MessagingRealtimePayload;
+
+              if (message.event === 'pong') return;
 
               if (
                 message.event === 'notification_match' &&
@@ -225,6 +239,10 @@ export function useMatchingRealtime(enabled = true) {
 
           socket.onclose = () => {
             socketRef.current = null;
+            if (pingTimer) {
+              clearInterval(pingTimer);
+              pingTimer = null;
+            }
             if (closedByEffect) return;
             reconnectTimer = setTimeout(connect, 3000);
           };
@@ -240,6 +258,7 @@ export function useMatchingRealtime(enabled = true) {
         closedByEffect = true;
         markReadScheduler.cancelAll();
         if (reconnectTimer) clearTimeout(reconnectTimer);
+        if (pingTimer) clearInterval(pingTimer);
         socketRef.current?.close();
         socketRef.current = null;
       };

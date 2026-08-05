@@ -88,6 +88,8 @@ Identities are **User ids** (cuid), not legacy integer profile ids.
 - Browser connects to `/api/v1/realtime?access_token=<token>` because WebSocket cannot set `Authorization`
 - Server promotes the query token to Bearer before `verifyToken`
 - App bridge: `features/matching/hooks/use-matching-realtime.ts` refreshes match/pending state on `notification_match` (`event_type: match`) and `match_removed`
+- Client sends periodic `{ event: "ping" }` keepalive; server replies `pong`
+- Multi-instance: `notifyUser` fans out over Redis Streams (`realtime:events`) when `REDIS_URL` is set — see [messaging.md](./messaging.md)
 
 ## Directory map
 
@@ -103,6 +105,8 @@ apps/api/src/
   services/swipe-quota.ts       # SwipeQuotaService class
   services/geolocation.ts       # IP / reverse-geocode HTTPS proxies
   plugins/user-realtime.ts
+  services/realtime-fanout.ts
+  constants/realtime.ts
   routes/v1/discovery/
   routes/v1/swipe/
   routes/v1/realtime/
