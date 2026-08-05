@@ -219,7 +219,8 @@ export class RealtimeFanoutService {
 
   /**
    * Apply a stream entry on this instance. Skips self-origin (live id match or
-   * remembered publish ids), and entries older than the catch-up cutoff.
+   * remembered publish ids), entries already delivered on this replica (PEL
+   * reclaim after deliver-before-ack crash), and entries older than catch-up.
    * Event time prefers Redis stream id ms so publisher clock skew cannot drop
    * live events or revive stale rows via a future ISO `ts`.
    */
@@ -227,6 +228,7 @@ export class RealtimeFanoutService {
     const originInstanceId = fields.originInstanceId || '';
     if (originInstanceId === this.instanceId) return;
     if (entryId && (await this.wasPublishedHere(entryId))) return;
+    if (entryId && (await this.wasDeliveredHere(entryId))) return;
 
     const eventMs = RealtimeFanoutService.eventTimeMs(fields.ts, entryId);
     if (eventMs === null || eventMs < this.catchUpCutoffMs) {
@@ -246,11 +248,18 @@ export class RealtimeFanoutService {
     }
 
     this.deliverLocal(userId, event, payload);
+    // Mark after local push so XAUTOCLAIM after a crash mid-ack does not re-push.
+    if (entryId) await this.rememberDeliveredEntry(entryId);
   }
 
   /** Redis key for stream entry ids this INSTANCE_ID has already published. */
   publishedEntriesKey(): string {
     return `realtime:fanout:published:${this.instanceId}`;
+  }
+
+  /** Redis key for stream entry ids this INSTANCE_ID has already delivered locally. */
+  deliveredEntriesKey(): string {
+    return `realtime:fanout:delivered:${this.instanceId}`;
   }
 
   async rememberPublishedEntry(entryId: string): Promise<void> {
@@ -263,6 +272,18 @@ export class RealtimeFanoutService {
   async wasPublishedHere(entryId: string): Promise<boolean> {
     if (!this.redis) return false;
     return (await this.redis.sismember(this.publishedEntriesKey(), entryId)) === 1;
+  }
+
+  async rememberDeliveredEntry(entryId: string): Promise<void> {
+    if (!this.redis) return;
+    const key = this.deliveredEntriesKey();
+    await this.redis.sadd(key, entryId);
+    await this.redis.pexpire(key, this.streamRetentionMs);
+  }
+
+  async wasDeliveredHere(entryId: string): Promise<boolean> {
+    if (!this.redis) return false;
+    return (await this.redis.sismember(this.deliveredEntriesKey(), entryId)) === 1;
   }
 
   /**
@@ -325,6 +346,8 @@ export class RealtimeFanoutService {
   /**
    * Reclaim idle PEL entries (failed deliver/ACK or crash after XREADGROUP).
    * Without this, only `>` is read and pending entries are never retried.
+   * Already-delivered entry ids are skipped in `handleStreamEntry` so reclaim
+   * after deliver-before-ack does not push duplicates to WebSockets.
    */
   async reclaimPendingEntries(client: Redis, consumerName: string): Promise<number> {
     const result = (await client.xautoclaim(

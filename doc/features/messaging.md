@@ -68,9 +68,12 @@ instance was still ensuring the consumer group. Event age prefers the Redis stre
 id millisecond prefix (not publisher ISO `ts`) so a future `ts` cannot replay stale
 retained rows and a lagging `ts` cannot hide live rows. Idle pending entries are
 reclaimed via `XAUTOCLAIM` so a failed deliver/ACK or crash does not permanently
-miss events. Events include `originInstanceId` so the publishing instance does not
-double-deliver while that id is unchanged. Published stream entry ids are also remembered
-in Redis (`realtime:fanout:published:{INSTANCE_ID}`) for the retention window so a
+miss events. Delivered stream entry ids are remembered in Redis
+(`realtime:fanout:delivered:{INSTANCE_ID}`) so reclaim after a crash between local
+push and `XACK` does not push the same peer event twice. Events include
+`originInstanceId` so the publishing instance does not double-deliver while that id
+is unchanged. Published stream entry ids are also remembered in Redis
+(`realtime:fanout:published:{INSTANCE_ID}`) for the retention window so a
 consumer-group recreate with the same id cannot replay this replica’s own retained rows.
 
 **`INSTANCE_ID` is required whenever Redis fan-out is enabled.** It must be unique per
