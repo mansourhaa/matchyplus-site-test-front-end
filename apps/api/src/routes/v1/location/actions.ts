@@ -9,8 +9,8 @@ import {
   ReverseGeocodeQuery,
   ReverseGeocodeResult,
 } from '../../../types/geolocation.js';
-import { badRequest } from '../../../utils/http-errors.js';
 import { parseLatLon } from '../../../utils/geo-coords.js';
+import { badRequest } from '../../../utils/http-errors.js';
 import { parseIpAddress } from '../../../utils/ip.js';
 
 const CACHE_CONTROL_NO_STORE = 'private, no-store';
@@ -36,8 +36,26 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
           }
           ip = parsed;
         } else {
-          // Prefer Fastify's resolved client IP (trustProxy enabled in createServerApp).
+          // Fastify request.ip (honors X-Forwarded-For only when TRUST_PROXY is enabled).
           ip = parseIpAddress(request.ip) ?? undefined;
+        }
+
+        // Never call upstream without a concrete IP — bare provider URLs geolocate
+        // the API egress address and would look like a successful user location.
+        if (!ip) {
+          reply.header('Cache-Control', CACHE_CONTROL_NO_STORE);
+          return reply.code(200).send({
+            success: false,
+            provider: null,
+            latitude: null,
+            longitude: null,
+            city: null,
+            region: null,
+            country: null,
+            formattedAddress: null,
+            error: 'Unable to determine client IP',
+            isDefault: false,
+          });
         }
 
         const result = await geolocation.getIpGeolocation(ip);

@@ -200,6 +200,27 @@ describe('GET /api/v1/location/ip-geolocation', () => {
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({ code: 'invalid_ip' });
   });
+
+  it('does not call upstream when client IP cannot be determined', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/location/ip-geolocation',
+      remoteAddress: 'not-a-valid-ip',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(response.json()).toMatchObject({
+      success: false,
+      error: 'Unable to determine client IP',
+    });
+  });
 });
 
 describe('GET /api/v1/location/reverse-geocode', () => {

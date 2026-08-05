@@ -39,7 +39,7 @@ describe('GeolocationService', () => {
         }),
       );
 
-      const result = await service.getIpGeolocation();
+      const result = await service.getIpGeolocation('8.8.8.8');
 
       expect(result).toEqual({
         success: true,
@@ -65,7 +65,7 @@ describe('GeolocationService', () => {
         }),
       );
 
-      const result = await service.getIpGeolocation();
+      const result = await service.getIpGeolocation('8.8.8.8');
 
       expect(result.success).toBe(true);
       expect(result.latitude).toBe(0);
@@ -87,26 +87,21 @@ describe('GeolocationService', () => {
 
       await service.getIpGeolocation('2001:db8::1');
 
-      expect(fetchFn).toHaveBeenCalledWith(
-        'https://ipwho.is/2001%3Adb8%3A%3A1',
-        expect.anything(),
-      );
+      expect(fetchFn).toHaveBeenCalledWith('https://ipwho.is/2001%3Adb8%3A%3A1', expect.anything());
     });
 
     it('falls back to the next provider when one fails', async () => {
-      fetchFn
-        .mockRejectedValueOnce(new Error('timeout'))
-        .mockResolvedValueOnce(
-          okResponse({
-            latitude: 36.8065,
-            longitude: 10.1815,
-            city: 'Tunis',
-            region: 'Tunis Governorate',
-            country_name: 'Tunisia',
-          }),
-        );
+      fetchFn.mockRejectedValueOnce(new Error('timeout')).mockResolvedValueOnce(
+        okResponse({
+          latitude: 36.8065,
+          longitude: 10.1815,
+          city: 'Tunis',
+          region: 'Tunis Governorate',
+          country_name: 'Tunisia',
+        }),
+      );
 
-      const result = await service.getIpGeolocation();
+      const result = await service.getIpGeolocation('8.8.8.8');
 
       expect(result).toEqual({
         success: true,
@@ -123,7 +118,7 @@ describe('GeolocationService', () => {
     it('returns fallback when all providers fail', async () => {
       fetchFn.mockRejectedValue(new Error('network error'));
 
-      const result = await service.getIpGeolocation();
+      const result = await service.getIpGeolocation('8.8.8.8');
 
       expect(result).toEqual({
         success: false,
@@ -140,19 +135,17 @@ describe('GeolocationService', () => {
     });
 
     it('skips provider that returns null from its parse function', async () => {
-      fetchFn
-        .mockResolvedValueOnce(okResponse({ success: false }))
-        .mockResolvedValueOnce(
-          okResponse({
-            latitude: 34.0522,
-            longitude: -118.2437,
-            city: 'Los Angeles',
-            region: 'California',
-            country_name: 'United States',
-          }),
-        );
+      fetchFn.mockResolvedValueOnce(okResponse({ success: false })).mockResolvedValueOnce(
+        okResponse({
+          latitude: 34.0522,
+          longitude: -118.2437,
+          city: 'Los Angeles',
+          region: 'California',
+          country_name: 'United States',
+        }),
+      );
 
-      const result = await service.getIpGeolocation();
+      const result = await service.getIpGeolocation('8.8.8.8');
 
       expect(result.provider).toBe('ipapi.co');
       expect(result.city).toBe('Los Angeles');
@@ -172,7 +165,7 @@ describe('GeolocationService', () => {
           }),
         );
 
-      const result = await service.getIpGeolocation();
+      const result = await service.getIpGeolocation('8.8.8.8');
 
       expect(result).toEqual({
         success: true,
@@ -225,15 +218,13 @@ describe('GeolocationService', () => {
     });
 
     it('falls back when Nominatim returns no address', async () => {
-      fetchFn
-        .mockResolvedValueOnce(okResponse({}))
-        .mockResolvedValueOnce(
-          okResponse({
-            city: 'Sfax',
-            principalSubdivision: 'Sfax Governorate',
-            countryName: 'Tunisia',
-          }),
-        );
+      fetchFn.mockResolvedValueOnce(okResponse({})).mockResolvedValueOnce(
+        okResponse({
+          city: 'Sfax',
+          principalSubdivision: 'Sfax Governorate',
+          countryName: 'Tunisia',
+        }),
+      );
 
       const result = await service.reverseGeocode(34.7406, 10.7603);
 

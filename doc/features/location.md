@@ -23,8 +23,9 @@ Both responses set `Cache-Control: private, no-store` and use a stricter per-rou
 ### IP selection
 
 1. Non-empty trimmed `?ip=` when it is a valid IPv4/IPv6 literal
-2. Else `request.ip` (Fastify `trustProxy: true` so Nginx Ingress `X-Forwarded-For` is honored)
-3. Empty `?ip=` falls through to the client IP (does not geolocate the API egress address by mistake)
+2. Else `request.ip` (honors `X-Forwarded-For` **only** when `TRUST_PROXY=true`)
+3. Empty `?ip=` falls through to the client IP
+4. If no usable client IP can be parsed → `200` with `success: false` / `Unable to determine client IP` and **no** upstream calls (avoids geolocating the API egress address)
 
 Invalid `?ip=` → `400` / `invalid_ip`.
 

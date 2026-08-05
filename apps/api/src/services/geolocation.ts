@@ -24,7 +24,7 @@ type ParsedReverseLocation = {
 
 type IpProvider = {
   name: string;
-  url: (ip?: string) => string;
+  url: (ip: string) => string;
   parse: (data: Record<string, unknown>) => ParsedIpLocation | null;
 };
 
@@ -48,7 +48,7 @@ function asNullableString(value: unknown): string | null {
 const IP_PROVIDERS: IpProvider[] = [
   {
     name: 'ipwho.is',
-    url: (ip) => (ip ? `https://ipwho.is/${encodeIpForPath(ip)}` : 'https://ipwho.is/'),
+    url: (ip) => `https://ipwho.is/${encodeIpForPath(ip)}`,
     parse: (d) => {
       if (d.success === false) return null;
       const coords = parseLatLon(d.latitude, d.longitude);
@@ -63,7 +63,7 @@ const IP_PROVIDERS: IpProvider[] = [
   },
   {
     name: 'ipapi.co',
-    url: (ip) => (ip ? `https://ipapi.co/${encodeIpForPath(ip)}/json/` : 'https://ipapi.co/json/'),
+    url: (ip) => `https://ipapi.co/${encodeIpForPath(ip)}/json/`,
     parse: (d) => {
       if (typeof d.error === 'boolean' && d.error) return null;
       const coords = parseLatLon(d.latitude, d.longitude);
@@ -78,8 +78,7 @@ const IP_PROVIDERS: IpProvider[] = [
   },
   {
     name: 'freeipapi.com',
-    url: (ip) =>
-      ip ? `https://freeipapi.com/api/json/${encodeIpForPath(ip)}` : 'https://freeipapi.com/api/json',
+    url: (ip) => `https://freeipapi.com/api/json/${encodeIpForPath(ip)}`,
     parse: (d) => {
       const coords = parseLatLon(d.latitude, d.longitude);
       if (!coords) return null;
@@ -115,7 +114,8 @@ const REVERSE_PROVIDERS: ReverseProvider[] = [
         city,
         region,
         country,
-        formattedAddress: asNullableString(d.display_name) ?? formatAddressParts(city, region, country) ?? city,
+        formattedAddress:
+          asNullableString(d.display_name) ?? formatAddressParts(city, region, country) ?? city,
       };
     },
   },
@@ -184,15 +184,11 @@ export class GeolocationService {
     this.reverseTimeoutMs = deps.reverseTimeoutMs ?? REVERSE_GEOCODE_TIMEOUT_MS;
   }
 
-  async getIpGeolocation(ip?: string): Promise<IpGeolocationResult> {
+  async getIpGeolocation(ip: string): Promise<IpGeolocationResult> {
     try {
       for (const provider of IP_PROVIDERS) {
         try {
-          const data = await fetchJson(
-            this.fetchFn,
-            provider.url(ip),
-            this.ipTimeoutMs,
-          );
+          const data = await fetchJson(this.fetchFn, provider.url(ip), this.ipTimeoutMs);
           if (!data) continue;
           const result = provider.parse(data);
           if (!result) continue;
