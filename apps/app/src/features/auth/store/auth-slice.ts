@@ -177,6 +177,11 @@ export const logout = createAsyncThunk('auth/logout', async () => {
 function applySession(state: AuthState, user: AuthUser) {
   state.status = 'authenticated';
   state.user = user;
+  // Any successful session-establishing action (login, register, OAuth exchange, or the
+  // bootstrap authcheck) is just as valid a "we know this session is real" signal as
+  // fetchCurrentUser settling — sessionChecked must not stay false (blocking realtime,
+  // etc.) until an unrelated bootstrap request also happens to resolve.
+  state.sessionChecked = true;
   persistAuthUser(user);
 }
 
@@ -249,7 +254,6 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action: PayloadAction<SessionResponse>) => {
         applySession(state, action.payload.user);
-        state.sessionChecked = true;
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
         clearSession(state);
