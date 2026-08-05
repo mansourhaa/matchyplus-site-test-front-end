@@ -1,21 +1,57 @@
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
 /**
  * Capacitor / native platform helpers for the member app.
- * Detection mirrors Matchy-FullStack: Capacitor.isNativePlatform().
  */
+
+interface MobileClientPlugin {
+  getClientKey(): Promise<{ key: string }>;
+}
+
+const MobileClient = registerPlugin<MobileClientPlugin>('MobileClient');
 
 export function isNativeMobileClient(): boolean {
   if (typeof window === 'undefined') return false;
   try {
-    const cap = (
-      window as unknown as {
-        Capacitor?: { isNativePlatform?: () => boolean };
-      }
-    ).Capacitor;
-    return Boolean(cap?.isNativePlatform?.());
+    return Capacitor.isNativePlatform();
   } catch {
     return false;
   }
 }
 
-/** Header value for `X-Matchy-Client` — API returns body tokens when this is set. */
+/** Header value for `X-Matchy-Client`. */
 export const MATCHY_MOBILE_CLIENT_HEADER = 'mobile';
+
+/** Header name for the Cap build secret (`MOBILE_CLIENT_SECRET`). */
+export const MATCHY_MOBILE_KEY_HEADER = 'X-Matchy-Mobile-Key';
+
+let cachedMobileKey: string | null | undefined;
+
+/**
+ * Native-only shared secret from BuildConfig via MobileClient plugin.
+ * Empty in browsers (plugin unavailable) — API then refuses body JWTs.
+ */
+export async function getMobileClientKey(): Promise<string | null> {
+  if (!isNativeMobileClient()) return null;
+  if (cachedMobileKey !== undefined) return cachedMobileKey;
+  try {
+    const { key } = await MobileClient.getClientKey();
+    cachedMobileKey = key?.trim() ? key.trim() : null;
+  } catch {
+    cachedMobileKey = null;
+  }
+  return cachedMobileKey;
+}
+
+/** Headers Cap must attach for authorized mobile auth (client label + secret). */
+export async function getMobileAuthHeaders(): Promise<Record<string, string>> {
+  if (!isNativeMobileClient()) return {};
+  const key = await getMobileClientKey();
+  const headers: Record<string, string> = {
+    'X-Matchy-Client': MATCHY_MOBILE_CLIENT_HEADER,
+  };
+  if (key) {
+    headers[MATCHY_MOBILE_KEY_HEADER] = key;
+  }
+  return headers;
+}

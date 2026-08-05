@@ -13,9 +13,15 @@ Auth against the Fastify API uses the **new `/api/v1` routes** with:
 | Client | Session |
 |--------|---------|
 | Browser | HttpOnly cookies (unchanged) |
-| Capacitor | `X-Matchy-Client: mobile` → body `accessToken` / `refreshToken` + Bearer on API calls |
+| Capacitor | `X-Matchy-Client: mobile` + `X-Matchy-Mobile-Key` (`MOBILE_CLIENT_SECRET` via native plugin) → body tokens + Bearer |
+
+Set the same `MOBILE_CLIENT_SECRET` in the API env and in the Android build
+(`MOBILE_CLIENT_SECRET` env when running Gradle, or `android/keystore.properties`).
 
 See [Authentication — Mobile (Capacitor)](../../doc/features/authentication.md#mobile-capacitor).
+
+Release signing passwords live only in gitignored `keystore.properties` — never in
+`build.gradle`. Debug builds use the default debug keystore.
 
 ## Layout
 

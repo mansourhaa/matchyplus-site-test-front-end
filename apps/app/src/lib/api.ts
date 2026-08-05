@@ -3,7 +3,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { clearAuthSession } from './auth';
 import { notifyAuthFailure } from './auth-events';
 import { captureMobileTokensFromBody, mobileTokenStorage } from './mobile-tokens';
-import { MATCHY_MOBILE_CLIENT_HEADER, isNativeMobileClient } from './native';
+import { getMobileAuthHeaders, isNativeMobileClient } from './native';
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -27,20 +27,21 @@ let refreshPromise: Promise<void> | null = null;
 async function refreshSession(): Promise<void> {
   const native = isNativeMobileClient();
   const refreshToken = native ? mobileTokenStorage.getRefresh() : null;
+  const mobileHeaders = native ? await getMobileAuthHeaders() : {};
 
   // Web: no body — refresh travels as HttpOnly cookie (utils/member-session.ts).
-  // Cap: send body refreshToken and X-Matchy-Client so the API returns rotated JWTs.
+  // Cap: body refreshToken + mobile client label/secret so the API returns rotated JWTs.
   const response = await axios.post(
     `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
     native && refreshToken ? { refreshToken } : undefined,
     {
       withCredentials: true,
-      headers: native
-        ? {
-            'X-Matchy-Client': MATCHY_MOBILE_CLIENT_HEADER,
-            ...(refreshToken ? { Authorization: `Bearer ${mobileTokenStorage.getAccess()}` } : {}),
-          }
-        : undefined,
+      headers: {
+        ...mobileHeaders,
+        ...(native && refreshToken
+          ? { Authorization: `Bearer ${mobileTokenStorage.getAccess()}` }
+          : {}),
+      },
     },
   );
 
@@ -49,10 +50,13 @@ async function refreshSession(): Promise<void> {
   }
 }
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
   if (!isNativeMobileClient()) return config;
 
-  config.headers.set('X-Matchy-Client', MATCHY_MOBILE_CLIENT_HEADER);
+  const mobileHeaders = await getMobileAuthHeaders();
+  for (const [key, value] of Object.entries(mobileHeaders)) {
+    config.headers.set(key, value);
+  }
   const access = mobileTokenStorage.getAccess();
   if (access) {
     config.headers.set('Authorization', `Bearer ${access}`);

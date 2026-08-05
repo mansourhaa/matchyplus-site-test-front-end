@@ -59,7 +59,7 @@ describe('member session cookies', () => {
     expect(refreshCookie).toContain('Path=/api/v1/auth');
   });
 
-  it('returns body tokens for Capacitor clients while still setting HttpOnly cookies', async () => {
+  it('returns body tokens only for authorized Cap clients (label + mobile key)', async () => {
     const hashedPassword = await hashPassword('password123');
     const app = await buildTestApp({
       prisma: {
@@ -77,20 +77,33 @@ describe('member session cookies', () => {
     });
     apps.push(app);
 
-    const response = await app.inject({
+    const spoofed = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/login-phone',
       headers: { 'x-matchy-client': 'mobile' },
       payload: { phone: '+21612345678', password: 'password123' },
     });
+    expect(spoofed.statusCode).toBe(200);
+    expect(spoofed.json()).not.toHaveProperty('accessToken');
+    expect(spoofed.json()).not.toHaveProperty('refreshToken');
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json().accessToken).toEqual(expect.any(String));
-    expect(response.json().refreshToken).toEqual(expect.any(String));
-    expect(findCookie(response.headers['set-cookie'], 'access_token')).toContain('HttpOnly');
+    const authorized = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login-phone',
+      headers: {
+        'x-matchy-client': 'mobile',
+        'x-matchy-mobile-key': 'test-mobile-client-secret',
+      },
+      payload: { phone: '+21612345678', password: 'password123' },
+    });
+
+    expect(authorized.statusCode).toBe(200);
+    expect(authorized.json().accessToken).toEqual(expect.any(String));
+    expect(authorized.json().refreshToken).toEqual(expect.any(String));
+    expect(findCookie(authorized.headers['set-cookie'], 'access_token')).toContain('HttpOnly');
   });
 
-  it('accepts refreshToken from the body for Capacitor clients', async () => {
+  it('accepts body refreshToken only for authorized Cap clients and returns rotated body JWTs', async () => {
     const { createHash } = await import('node:crypto');
     const jwt = await import('jsonwebtoken');
     const refreshToken = jwt.default.sign(
@@ -125,10 +138,20 @@ describe('member session cookies', () => {
     });
     apps.push(app);
 
+    const rejected = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      payload: { refreshToken },
+    });
+    expect(rejected.statusCode).toBe(401);
+
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/refresh',
-      headers: { 'x-matchy-client': 'mobile' },
+      headers: {
+        'x-matchy-client': 'mobile',
+        'x-matchy-mobile-key': 'test-mobile-client-secret',
+      },
       payload: { refreshToken },
     });
 
@@ -136,6 +159,58 @@ describe('member session cookies', () => {
     expect(response.json().ok).toBe(true);
     expect(response.json().accessToken).toEqual(expect.any(String));
     expect(response.json().refreshToken).toEqual(expect.any(String));
+  });
+
+  it('does not return body JWTs on refresh when the HttpOnly cookie was the source', async () => {
+    const { createHash } = await import('node:crypto');
+    const jwt = await import('jsonwebtoken');
+    const refreshToken = jwt.default.sign(
+      { sub: 'user-1', jti: 'jti-cookie', type: 'refresh' },
+      'test-refresh-token-secret',
+      { expiresIn: '1h' },
+    );
+    const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
+
+    const app = await buildTestApp({
+      prisma: {
+        refreshToken: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'jti-cookie',
+            user_id: 'user-1',
+            token_hash: tokenHash,
+            expires_at: new Date(Date.now() + 60_000),
+            revoked_at: null,
+          }),
+          update: vi.fn().mockResolvedValue({}),
+          create: vi.fn().mockResolvedValue({}),
+        } as never,
+        user: {
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: null,
+            phone: '+21612345678',
+            status: 'ACTIVE',
+          }),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      headers: {
+        'x-matchy-client': 'mobile',
+        'x-matchy-mobile-key': 'test-mobile-client-secret',
+      },
+      cookies: { refresh_token: refreshToken },
+      payload: {},
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().ok).toBe(true);
+    expect(response.json()).not.toHaveProperty('accessToken');
+    expect(response.json()).not.toHaveProperty('refreshToken');
   });
 
   it('reads the refresh token from the cookie, not the body, and rotates both cookies', async () => {

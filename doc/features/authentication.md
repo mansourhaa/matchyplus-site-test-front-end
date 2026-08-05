@@ -135,22 +135,30 @@ resolves. See `apps/app/src/lib/auth.ts`.
 `CAPACITOR_SERVER_URL` (remote WebView). See `apps/mobile/README.md`.
 
 Cross-origin WebViews cannot reliably use the browser cookie session alone, so native
-clients opt into Bearer auth:
+clients opt into Bearer auth. Body JWTs are **not** gated on a spoofable header alone:
 
-1. Every API request from Cap sends `X-Matchy-Client: mobile` (see `apps/app/src/lib/native.ts`).
-2. Session-issuing routes (`login-phone`, `register-phone`, `oauth/exchange`, `refresh`)
-   still set HttpOnly cookies **and**, when that header is present, also return
-   `accessToken` + `refreshToken` in the JSON body.
+1. Cap attaches `X-Matchy-Client: mobile` **and** `X-Matchy-Mobile-Key` matching
+   `MOBILE_CLIENT_SECRET`. The key comes from the native `MobileClient` plugin
+   (`BuildConfig`), not from `NEXT_PUBLIC_*` or the web bundle — a normal browser
+   cannot forge it.
+2. Session-issuing routes still set HttpOnly cookies for everyone. They return
+   `accessToken` + `refreshToken` in JSON **only** when the request is an
+   authorized mobile client (label + secret). If `MOBILE_CLIENT_SECRET` is unset,
+   body issuance is disabled (fail closed).
 3. Cap stores those JWTs in `localStorage` (`apps/app/src/lib/mobile-tokens.ts`) and
-   attaches `Authorization: Bearer …` on axios calls. `POST /auth/refresh` accepts
-   `{ refreshToken }` in the body when the cookie is missing.
-4. `verifyToken` already accepts Bearer (see [API authorization](#api-authorization)).
-5. Realtime WebSocket uses `?access_token=` on Cap (API already promotes the query param).
-6. A non-HttpOnly `access_token` cookie is mirrored onto the **Next.js app origin** so
+   attaches `Authorization: Bearer …` on axios calls.
+4. `POST /auth/refresh` accepts `{ refreshToken }` in the body **only** for authorized
+   mobile clients. When refresh uses the HttpOnly cookie (even if Cap headers are
+   present), the response stays `{ ok: true }` with **no** body JWTs — so a
+   credentialed browser XSS that spoofs the mobile label cannot exfiltrate a refresh
+   JWT via refresh.
+5. `verifyToken` already accepts Bearer (see [API authorization](#api-authorization)).
+6. Realtime WebSocket uses `?access_token=` on Cap (API already promotes the query param).
+7. A non-HttpOnly `access_token` cookie is mirrored onto the **Next.js app origin** so
    `proxy.ts` can still gate routes when `MEMBER_COOKIE_DOMAIN` does not cover the
    WebView host (local emulator).
 
-Browser clients omit `X-Matchy-Client` and never receive tokens in the body — the
+Browser clients never send the mobile key and never receive tokens in the body — the
 cookie-only contract above is unchanged for them.
 
 ## Route protection (Next.js)
@@ -345,6 +353,7 @@ the remaining gap (e.g. a plain HTML form POST) with no separate CSRF-token mach
 | `API_BASE_URL` / `FRONTEND_URL`                                                                 | API — OAuth callback URL and SPA redirect target                                                                                                                  |
 | `OAUTH_EXCHANGE_CODE_TTL_SECONDS`                                                                | API — OAuth exchange code lifetime (default 60s)                                                                                                                  |
 | `CORS_ORIGINS`                                                                                   | API — allowed browser origins, shared by the CORS plugin and the Origin/Referer CSRF guard (see [CSRF](#csrf-originreferer-validation))                          |
+| `MOBILE_CLIENT_SECRET`                                                                           | API + Cap Android build — shared secret for authorized Capacitor body JWTs (see [Mobile (Capacitor)](#mobile-capacitor)); never `NEXT_PUBLIC_*`                 |
 | `ADMIN_COOKIE_DOMAIN` / `MEMBER_COOKIE_DOMAIN`                                                   | API — cookie `Domain` attribute, only needed when the API and the panel/app sit on different subdomains                                                          |
 
 ## Security notes

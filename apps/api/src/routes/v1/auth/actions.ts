@@ -53,7 +53,7 @@ import {
   memberAccessCookieOptions,
   memberRefreshCookieOptions,
 } from '../../../utils/member-session.js';
-import { isMobileClientRequest } from '../../../utils/mobile-client.js';
+import { isAuthorizedMobileClient } from '../../../utils/mobile-client.js';
 
 const ERROR_STATUS: Record<
   string,
@@ -132,9 +132,9 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     return request.t(code, { defaultValue: code });
   }
 
-  // Browser: tokens leave only as HttpOnly cookies. Capacitor (`X-Matchy-Client: mobile`)
-  // also gets accessToken/refreshToken in the JSON body for Bearer auth — see
-  // doc/features/authentication.md § Mobile (Capacitor).
+  // Browser: tokens leave only as HttpOnly cookies.
+  // Capacitor: authorized mobile clients (label + MOBILE_CLIENT_SECRET) also get
+  // accessToken/refreshToken in the JSON body — see doc/features/authentication.md.
   function setMemberSessionCookies(
     reply: import('fastify').FastifyReply,
     tokens: { accessToken: string; refreshToken: string },
@@ -153,7 +153,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     tokens: { accessToken: string; refreshToken: string },
     user: unknown,
   ) {
-    if (!isMobileClientRequest(request)) {
+    if (!isAuthorizedMobileClient(request)) {
       return { user };
     }
     return {
@@ -163,11 +163,17 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     };
   }
 
+  /**
+   * Body JWTs on refresh only when the presented refresh token came from the body
+   * (Cap without cookies). A credentialed browser that spoofs the mobile label but
+   * still sends the HttpOnly refresh cookie must never receive JWTs in JSON.
+   */
   function memberRefreshResponse(
     request: FastifyRequest,
     tokens: { accessToken: string; refreshToken: string },
+    source: 'cookie' | 'body',
   ) {
-    if (!isMobileClientRequest(request)) {
+    if (!isAuthorizedMobileClient(request) || source !== 'body') {
       return { ok: true as const };
     }
     return {
@@ -177,12 +183,26 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     };
   }
 
-  function readRefreshToken(request: FastifyRequest): string | undefined {
+  type RefreshTokenSource =
+    { token: string; source: 'cookie' | 'body' } | { token?: undefined; source: 'none' };
+
+  function readRefreshToken(request: FastifyRequest): RefreshTokenSource {
     const fromCookie = request.cookies?.[MEMBER_REFRESH_COOKIE];
-    if (fromCookie) return fromCookie;
+    if (fromCookie) {
+      return { token: fromCookie, source: 'cookie' };
+    }
+
+    // Body refresh is Cap-only — never accept a raw body refreshToken from browsers.
+    if (!isAuthorizedMobileClient(request)) {
+      return { source: 'none' };
+    }
+
     const body = request.body as { refreshToken?: string } | null;
     const fromBody = body?.refreshToken?.trim();
-    return fromBody || undefined;
+    if (fromBody) {
+      return { token: fromBody, source: 'body' };
+    }
+    return { source: 'none' };
   }
 
   /**
@@ -326,14 +346,14 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
     async (request, reply) => {
       try {
-        const refreshToken = readRefreshToken(request);
-        if (!refreshToken) {
+        const presented = readRefreshToken(request);
+        if (!presented.token) {
           throw new Error('invalid_refresh_token');
         }
 
-        const data = await tokenService.refreshAccessToken(refreshToken);
+        const data = await tokenService.refreshAccessToken(presented.token);
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send(memberRefreshResponse(request, data));
+        return reply.code(200).send(memberRefreshResponse(request, data, presented.source));
       } catch (err) {
         throw mapError(err as Error, request);
       }
@@ -342,11 +362,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
   fastify.post<{ Body: { refreshToken?: string } }>('/logout', {}, async (request, reply) => {
     try {
-      const refreshToken = readRefreshToken(request);
-      if (refreshToken) {
+      const presented = readRefreshToken(request);
+      if (presented.token) {
         // Best-effort: an already-expired or already-revoked token must not block the
         // client from clearing its own (now-stale) cookies / stored tokens.
-        await tokenService.revokeRefreshToken(refreshToken).catch(() => undefined);
+        await tokenService.revokeRefreshToken(presented.token).catch(() => undefined);
       }
 
       clearMemberSessionCookies(reply);
