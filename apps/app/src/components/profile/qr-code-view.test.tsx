@@ -36,6 +36,7 @@ function buildStore(preloadedAuthUser: AuthUser | null = authUser) {
     status: preloadedAuthUser ? 'authenticated' : 'unauthenticated',
     loading: false,
     error: null,
+    sessionChecked: true,
     user: preloadedAuthUser,
   };
   return configureStore({

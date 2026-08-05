@@ -1,10 +1,15 @@
 'use client';
 
-import { useAppDispatch } from '@/features/auth/hooks';
+import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
+import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { fetchMatchState } from '@/features/matching/store/matching-slice';
 import type { FeedProfile } from '@/features/matching/types';
-import { rateProfile, reportProfile } from '@/features/profile/store/profile-slice';
+import {
+  notifyProfileView,
+  rateProfile,
+  reportProfile,
+} from '@/features/profile/store/profile-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import {
   Award,
@@ -24,7 +29,7 @@ import {
   X,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export type ProfileDetailData = {
   id: string;
@@ -134,10 +139,24 @@ const REPORT_REASONS = [
 export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }: Props) {
   const { t } = useI18n();
   const dispatch = useAppDispatch();
+  const { user } = useAppSelector(selectAuth);
   const photo = useAuthenticatedMediaUrl(profile.image);
   const video = useAuthenticatedMediaUrl(profile.video, { stream: true });
   const title =
     profile.service_type || profile.job || profile.activity_sector || profile.category || '';
+  const notifiedProfileId = useRef<string | null>(null);
+
+  // This modal is the single surface for "looking at someone's profile details", whether
+  // opened from the discovery feed's quick-view or the dedicated /profile/[id] page — so
+  // it owns the view notification rather than each caller wiring it up separately. Guarded
+  // by a ref rather than dependency-array alone: this is a create, not a read, so it must
+  // stay a one-shot per mount even under React's dev-mode double effect invocation.
+  useEffect(() => {
+    if (!user || user.id === profile.id) return;
+    if (notifiedProfileId.current === profile.id) return;
+    notifiedProfileId.current = profile.id;
+    void dispatch(notifyProfileView(profile.id));
+  }, [dispatch, user, profile.id]);
 
   const isMatched = Boolean(profile.matched);
   const [selectedRating, setSelectedRating] = useState(0);

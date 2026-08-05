@@ -19,6 +19,13 @@ export interface AuthState {
   loading: boolean;
   error: string | null;
   user: AuthUser | null;
+  // True once fetchCurrentUser has settled (fulfilled or rejected) at least once this
+  // page load. redux-persist can rehydrate a stale `status: 'authenticated'` before that
+  // happens — code that must not act on an unconfirmed session (e.g. opening a realtime
+  // socket) should gate on `sessionChecked`, not on `status` alone. Deliberately excluded
+  // from persistence (see the nested persistReducer in store/root-reducer.ts) so it
+  // always starts false again on the next page load.
+  sessionChecked: boolean;
 }
 
 export interface SendOtpInput {

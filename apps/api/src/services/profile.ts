@@ -303,4 +303,31 @@ export class ProfileService {
       throw err;
     }
   }
+
+  /**
+   * Resolves who should be told about a profile view, or `null` when there's nothing to
+   * tell (viewing your own profile). Validates the same visibility rules as
+   * `getPublicProfile` so a blocked or unknown profile can't be used to probe for a
+   * notification side effect. The viewer's name is trimmed to a first name and prefers
+   * that safe fallback for a blank one, since this is only ever shown as a quick
+   * "someone viewed you" hint, never a full identity reveal.
+   */
+  async getViewNotificationInfo(
+    viewerId: string,
+    targetId: string,
+  ): Promise<{ viewerId: string; viewerName: string; viewerImage: string | null } | null> {
+    try {
+      if (viewerId === targetId) return null;
+      await this.assertCanViewProfile(viewerId, targetId);
+
+      const viewer = await this.prisma.user.findUniqueOrThrow({
+        where: { id: viewerId },
+        select: { name: true, image: true },
+      });
+      const viewerName = viewer.name.trim().split(/\s+/)[0] || "Quelqu'un";
+      return { viewerId, viewerName, viewerImage: viewer.image };
+    } catch (err) {
+      throw err;
+    }
+  }
 }

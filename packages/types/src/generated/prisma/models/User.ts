@@ -557,6 +557,7 @@ export type UserWhereInput = {
   refresh_tokens?: Prisma.RefreshTokenListRelationFilter;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeListRelationFilter;
   otp_challenges?: Prisma.OtpChallengeListRelationFilter;
+  notifications?: Prisma.NotificationListRelationFilter;
   reports_made?: Prisma.ReportListRelationFilter;
   reports_received?: Prisma.ReportListRelationFilter;
   swipes_made?: Prisma.SwipeListRelationFilter;
@@ -633,6 +634,7 @@ export type UserOrderByWithRelationInput = {
   refresh_tokens?: Prisma.RefreshTokenOrderByRelationAggregateInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeOrderByRelationAggregateInput;
   otp_challenges?: Prisma.OtpChallengeOrderByRelationAggregateInput;
+  notifications?: Prisma.NotificationOrderByRelationAggregateInput;
   reports_made?: Prisma.ReportOrderByRelationAggregateInput;
   reports_received?: Prisma.ReportOrderByRelationAggregateInput;
   swipes_made?: Prisma.SwipeOrderByRelationAggregateInput;
@@ -710,6 +712,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     refresh_tokens?: Prisma.RefreshTokenListRelationFilter;
     oauth_exchange_codes?: Prisma.OAuthExchangeCodeListRelationFilter;
     otp_challenges?: Prisma.OtpChallengeListRelationFilter;
+    notifications?: Prisma.NotificationListRelationFilter;
     reports_made?: Prisma.ReportListRelationFilter;
     reports_received?: Prisma.ReportListRelationFilter;
     swipes_made?: Prisma.SwipeListRelationFilter;
@@ -902,6 +905,7 @@ export type UserCreateInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -975,6 +979,7 @@ export type UserUncheckedCreateInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -1050,6 +1055,7 @@ export type UserUpdateInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -1125,6 +1131,7 @@ export type UserUncheckedUpdateInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -2085,6 +2092,32 @@ export type UserUpdateOneRequiredWithoutRatings_receivedNestedInput = {
   >;
 };
 
+export type UserCreateNestedOneWithoutNotificationsInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutNotificationsInput,
+    Prisma.UserUncheckedCreateWithoutNotificationsInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutNotificationsInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutNotificationsInput,
+    Prisma.UserUncheckedCreateWithoutNotificationsInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutNotificationsInput;
+  upsert?: Prisma.UserUpsertWithoutNotificationsInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutNotificationsInput,
+      Prisma.UserUpdateWithoutNotificationsInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutNotificationsInput
+  >;
+};
+
 export type UserCreateNestedOneWithoutAiJobsInput = {
   create?: Prisma.XOR<
     Prisma.UserCreateWithoutAiJobsInput,
@@ -2166,6 +2199,7 @@ export type UserCreateWithoutRefresh_tokensInput = {
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -2238,6 +2272,7 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -2340,6 +2375,7 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -2414,6 +2450,7 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -2486,6 +2523,7 @@ export type UserCreateWithoutOtp_challengesInput = {
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -2558,6 +2596,7 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -2660,6 +2699,7 @@ export type UserUpdateWithoutOtp_challengesInput = {
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -2734,6 +2774,7 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -2806,6 +2847,7 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -2878,6 +2920,7 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -2980,6 +3023,7 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -3054,6 +3098,7 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -3127,6 +3172,7 @@ export type UserCreateWithoutReports_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
   swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
@@ -3199,6 +3245,7 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
   swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
@@ -3279,6 +3326,7 @@ export type UserCreateWithoutReports_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
   swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
@@ -3351,6 +3399,7 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
   swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
@@ -3453,6 +3502,7 @@ export type UserUpdateWithoutReports_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
   swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
@@ -3527,6 +3577,7 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
   swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
@@ -3621,6 +3672,7 @@ export type UserUpdateWithoutReports_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
   swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
@@ -3695,6 +3747,7 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
   swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
@@ -3767,6 +3820,7 @@ export type UserCreateWithoutSwipes_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
@@ -3839,6 +3893,7 @@ export type UserUncheckedCreateWithoutSwipes_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
@@ -3919,6 +3974,7 @@ export type UserCreateWithoutSwipes_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -3991,6 +4047,7 @@ export type UserUncheckedCreateWithoutSwipes_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -4093,6 +4150,7 @@ export type UserUpdateWithoutSwipes_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
@@ -4167,6 +4225,7 @@ export type UserUncheckedUpdateWithoutSwipes_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
@@ -4261,6 +4320,7 @@ export type UserUpdateWithoutSwipes_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -4335,6 +4395,7 @@ export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -4407,6 +4468,7 @@ export type UserCreateWithoutSwipe_logsInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -4479,6 +4541,7 @@ export type UserUncheckedCreateWithoutSwipe_logsInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -4559,6 +4622,7 @@ export type UserCreateWithoutSwipe_log_targetsInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -4631,6 +4695,7 @@ export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -4733,6 +4798,7 @@ export type UserUpdateWithoutSwipe_logsInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -4807,6 +4873,7 @@ export type UserUncheckedUpdateWithoutSwipe_logsInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -4901,6 +4968,7 @@ export type UserUpdateWithoutSwipe_log_targetsInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -4975,6 +5043,7 @@ export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -5047,6 +5116,7 @@ export type UserCreateWithoutMatches_as_lowInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -5119,6 +5189,7 @@ export type UserUncheckedCreateWithoutMatches_as_lowInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -5199,6 +5270,7 @@ export type UserCreateWithoutMatches_as_highInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -5271,6 +5343,7 @@ export type UserUncheckedCreateWithoutMatches_as_highInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -5373,6 +5446,7 @@ export type UserUpdateWithoutMatches_as_lowInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -5447,6 +5521,7 @@ export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -5541,6 +5616,7 @@ export type UserUpdateWithoutMatches_as_highInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -5615,6 +5691,7 @@ export type UserUncheckedUpdateWithoutMatches_as_highInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -5687,6 +5764,7 @@ export type UserCreateWithoutConversations_as_lowInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -5759,6 +5837,7 @@ export type UserUncheckedCreateWithoutConversations_as_lowInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -5839,6 +5918,7 @@ export type UserCreateWithoutConversations_as_highInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -5911,6 +5991,7 @@ export type UserUncheckedCreateWithoutConversations_as_highInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -6013,6 +6094,7 @@ export type UserUpdateWithoutConversations_as_lowInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -6087,6 +6169,7 @@ export type UserUncheckedUpdateWithoutConversations_as_lowInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -6181,6 +6264,7 @@ export type UserUpdateWithoutConversations_as_highInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -6255,6 +6339,7 @@ export type UserUncheckedUpdateWithoutConversations_as_highInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -6327,6 +6412,7 @@ export type UserCreateWithoutMessages_sentInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -6399,6 +6485,7 @@ export type UserUncheckedCreateWithoutMessages_sentInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -6501,6 +6588,7 @@ export type UserUpdateWithoutMessages_sentInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -6575,6 +6663,7 @@ export type UserUncheckedUpdateWithoutMessages_sentInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -6647,6 +6736,7 @@ export type UserCreateWithoutMessage_likesInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -6719,6 +6809,7 @@ export type UserUncheckedCreateWithoutMessage_likesInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -6821,6 +6912,7 @@ export type UserUpdateWithoutMessage_likesInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -6895,6 +6987,7 @@ export type UserUncheckedUpdateWithoutMessage_likesInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -6967,6 +7060,7 @@ export type UserCreateWithoutLocationInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -7039,6 +7133,7 @@ export type UserUncheckedCreateWithoutLocationInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -7141,6 +7236,7 @@ export type UserUpdateWithoutLocationInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -7215,6 +7311,7 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -7287,6 +7384,7 @@ export type UserCreateWithoutBlocks_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -7359,6 +7457,7 @@ export type UserUncheckedCreateWithoutBlocks_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -7439,6 +7538,7 @@ export type UserCreateWithoutBlocks_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -7511,6 +7611,7 @@ export type UserUncheckedCreateWithoutBlocks_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -7613,6 +7714,7 @@ export type UserUpdateWithoutBlocks_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -7687,6 +7789,7 @@ export type UserUncheckedUpdateWithoutBlocks_madeInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -7781,6 +7884,7 @@ export type UserUpdateWithoutBlocks_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -7855,6 +7959,7 @@ export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -7927,6 +8032,7 @@ export type UserCreateWithoutRatings_givenInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -7999,6 +8105,7 @@ export type UserUncheckedCreateWithoutRatings_givenInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -8079,6 +8186,7 @@ export type UserCreateWithoutRatings_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -8151,6 +8259,7 @@ export type UserUncheckedCreateWithoutRatings_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -8253,6 +8362,7 @@ export type UserUpdateWithoutRatings_givenInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -8327,6 +8437,7 @@ export type UserUncheckedUpdateWithoutRatings_givenInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -8421,6 +8532,7 @@ export type UserUpdateWithoutRatings_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -8495,6 +8607,7 @@ export type UserUncheckedUpdateWithoutRatings_receivedInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -8507,6 +8620,330 @@ export type UserUncheckedUpdateWithoutRatings_receivedInput = {
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserCreateWithoutNotificationsInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
+  ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
+};
+
+export type UserUncheckedCreateWithoutNotificationsInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
+  ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
+};
+
+export type UserCreateOrConnectWithoutNotificationsInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutNotificationsInput,
+    Prisma.UserUncheckedCreateWithoutNotificationsInput
+  >;
+};
+
+export type UserUpsertWithoutNotificationsInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutNotificationsInput,
+    Prisma.UserUncheckedUpdateWithoutNotificationsInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutNotificationsInput,
+    Prisma.UserUncheckedCreateWithoutNotificationsInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutNotificationsInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutNotificationsInput,
+    Prisma.UserUncheckedUpdateWithoutNotificationsInput
+  >;
+};
+
+export type UserUpdateWithoutNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
+  ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
+  ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -8566,6 +9003,7 @@ export type UserCreateWithoutAiJobsInput = {
   refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
@@ -8638,6 +9076,7 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
   reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
   reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
   swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
@@ -8740,6 +9179,7 @@ export type UserUpdateWithoutAiJobsInput = {
   refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
@@ -8814,6 +9254,7 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
   oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
   otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
   reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
   reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
   swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
@@ -8842,6 +9283,7 @@ export type UserCountOutputType = {
   refresh_tokens: number;
   oauth_exchange_codes: number;
   otp_challenges: number;
+  notifications: number;
   reports_made: number;
   reports_received: number;
   swipes_made: number;
@@ -8867,6 +9309,7 @@ export type UserCountOutputTypeSelect<
   refresh_tokens?: boolean | UserCountOutputTypeCountRefresh_tokensArgs;
   oauth_exchange_codes?: boolean | UserCountOutputTypeCountOauth_exchange_codesArgs;
   otp_challenges?: boolean | UserCountOutputTypeCountOtp_challengesArgs;
+  notifications?: boolean | UserCountOutputTypeCountNotificationsArgs;
   reports_made?: boolean | UserCountOutputTypeCountReports_madeArgs;
   reports_received?: boolean | UserCountOutputTypeCountReports_receivedArgs;
   swipes_made?: boolean | UserCountOutputTypeCountSwipes_madeArgs;
@@ -8931,6 +9374,15 @@ export type UserCountOutputTypeCountOtp_challengesArgs<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
   where?: Prisma.OtpChallengeWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountNotificationsArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.NotificationWhereInput;
 };
 
 /**
@@ -9134,6 +9586,7 @@ export type UserSelect<
     refresh_tokens?: boolean | Prisma.User$refresh_tokensArgs<ExtArgs>;
     oauth_exchange_codes?: boolean | Prisma.User$oauth_exchange_codesArgs<ExtArgs>;
     otp_challenges?: boolean | Prisma.User$otp_challengesArgs<ExtArgs>;
+    notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>;
     reports_made?: boolean | Prisma.User$reports_madeArgs<ExtArgs>;
     reports_received?: boolean | Prisma.User$reports_receivedArgs<ExtArgs>;
     swipes_made?: boolean | Prisma.User$swipes_madeArgs<ExtArgs>;
@@ -9383,6 +9836,7 @@ export type UserInclude<
   refresh_tokens?: boolean | Prisma.User$refresh_tokensArgs<ExtArgs>;
   oauth_exchange_codes?: boolean | Prisma.User$oauth_exchange_codesArgs<ExtArgs>;
   otp_challenges?: boolean | Prisma.User$otp_challengesArgs<ExtArgs>;
+  notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>;
   reports_made?: boolean | Prisma.User$reports_madeArgs<ExtArgs>;
   reports_received?: boolean | Prisma.User$reports_receivedArgs<ExtArgs>;
   swipes_made?: boolean | Prisma.User$swipes_madeArgs<ExtArgs>;
@@ -9418,6 +9872,7 @@ export type $UserPayload<
     refresh_tokens: Prisma.$RefreshTokenPayload<ExtArgs>[];
     oauth_exchange_codes: Prisma.$OAuthExchangeCodePayload<ExtArgs>[];
     otp_challenges: Prisma.$OtpChallengePayload<ExtArgs>[];
+    notifications: Prisma.$NotificationPayload<ExtArgs>[];
     reports_made: Prisma.$ReportPayload<ExtArgs>[];
     reports_received: Prisma.$ReportPayload<ExtArgs>[];
     swipes_made: Prisma.$SwipePayload<ExtArgs>[];
@@ -10046,6 +10501,17 @@ export interface Prisma__UserClient<
   ): Prisma.PrismaPromise<
     | runtime.Types.Result.GetResult<
         Prisma.$OtpChallengePayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$NotificationPayload<ExtArgs>,
         T,
         'findMany',
         GlobalOmitOptions
@@ -10846,6 +11312,33 @@ export type User$otp_challengesArgs<
   take?: number;
   skip?: number;
   distinct?: Prisma.OtpChallengeScalarFieldEnum | Prisma.OtpChallengeScalarFieldEnum[];
+};
+
+/**
+ * User.notifications
+ */
+export type User$notificationsArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Notification
+   */
+  select?: Prisma.NotificationSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Notification
+   */
+  omit?: Prisma.NotificationOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationInclude<ExtArgs> | null;
+  where?: Prisma.NotificationWhereInput;
+  orderBy?:
+    Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[];
+  cursor?: Prisma.NotificationWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[];
 };
 
 /**

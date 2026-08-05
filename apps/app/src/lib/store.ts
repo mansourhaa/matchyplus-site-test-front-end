@@ -2,21 +2,15 @@ import { resetAuthState } from '@/features/auth/store/auth-slice';
 import rootReducer from '@/features/auth/store/root-reducer';
 import { resetMessagingState } from '@/features/messaging/store/messaging-slice';
 import { configureStore } from '@reduxjs/toolkit';
-import { persistReducer, persistStore } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import { persistStore } from 'redux-persist';
 
 import { setAuthFailureHandler } from './auth-events';
 
-const persistConfig = {
-  key: 'root',
-  storage,
-  whitelist: ['auth'],
-};
-
-const persistedReducer = persistReducer(persistConfig, rootReducer);
-
+// Only `auth` is persisted, via its own nested persistReducer in root-reducer.ts (so a
+// field within it can be excluded from persistence) — every other slice here is plain,
+// in-memory-only state.
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,

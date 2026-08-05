@@ -72,6 +72,12 @@ export const MessageType = {
 
 export type MessageType = (typeof MessageType)[keyof typeof MessageType];
 
+export const NotificationType = {
+  PROFILE_VIEW: 'PROFILE_VIEW',
+} as const;
+
+export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType];
+
 export const AiJobType = {
   ANALYZE_VIDEO: 'ANALYZE_VIDEO',
   VERIFY_IDENTITY: 'VERIFY_IDENTITY',

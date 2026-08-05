@@ -1,9 +1,10 @@
+import authReducer from '@/features/auth/store/auth-slice';
 import { I18nProvider } from '@/features/i18n/i18n-provider';
 import matchingReducer from '@/features/matching/store/matching-slice';
 import profileReducer from '@/features/profile/store/profile-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -15,12 +16,34 @@ vi.mock('@/lib/api', async (importOriginal) => {
     ...actual,
     api: {
       get: vi.fn(),
+      post: vi.fn(),
     },
   };
 });
 
-function buildStore() {
-  return configureStore({ reducer: { profile: profileReducer, matching: matchingReducer } });
+function buildStore(viewerId: string | null) {
+  return configureStore({
+    reducer: { profile: profileReducer, auth: authReducer, matching: matchingReducer },
+    preloadedState: {
+      auth: {
+        status: viewerId ? ('authenticated' as const) : ('unknown' as const),
+        loading: false,
+        error: null,
+        sessionChecked: true,
+        user: viewerId
+          ? {
+              id: viewerId,
+              email: null,
+              phone: null,
+              name: 'Viewer',
+              auth_provider: 'phone',
+              email_verified: false,
+              onboarding_completed: true,
+            }
+          : null,
+      },
+    },
+  });
 }
 
 const publicProfile = {
@@ -49,7 +72,7 @@ describe('PublicProfileView', () => {
 
   it('fetches and renders the profile', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: publicProfile });
-    const store = buildStore();
+    const store = buildStore('viewer-1');
 
     render(
       <Provider store={store}>
@@ -73,7 +96,7 @@ describe('PublicProfileView', () => {
       isAxiosError: true,
       response: { data: { code: 'blocked' } },
     });
-    const store = buildStore();
+    const store = buildStore('viewer-1');
 
     render(
       <Provider store={store}>
@@ -86,5 +109,37 @@ describe('PublicProfileView', () => {
     expect(
       await screen.findByText('Ce profil est introuvable ou inaccessible.'),
     ).toBeInTheDocument();
+  });
+
+  it('lets the profile owner know they were viewed, when the viewer is someone else', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: publicProfile });
+    vi.mocked(api.post).mockResolvedValue({ data: { notified: true } });
+    const store = buildStore('viewer-1');
+
+    render(
+      <Provider store={store}>
+        <I18nProvider>
+          <PublicProfileView userId="user-2" />
+        </I18nProvider>
+      </Provider>,
+    );
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/profiles/user-2/view'));
+  });
+
+  it('does not send a view notification when viewing your own profile', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: { ...publicProfile, id: 'viewer-1' } });
+    const store = buildStore('viewer-1');
+
+    render(
+      <Provider store={store}>
+        <I18nProvider>
+          <PublicProfileView userId="viewer-1" />
+        </I18nProvider>
+      </Provider>,
+    );
+
+    await screen.findByText('Jane Doe');
+    expect(api.post).not.toHaveBeenCalled();
   });
 });

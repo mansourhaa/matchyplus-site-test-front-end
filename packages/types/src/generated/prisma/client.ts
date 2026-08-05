@@ -135,6 +135,14 @@ export type UserBlock = Prisma.UserBlockModel;
  */
 export type Rating = Prisma.RatingModel;
 /**
+ * Model Notification
+ * In-app notification feed. A row is created the moment the triggering event happens,
+ * independent of whether the recipient is online — a connected client also gets a live
+ * realtime push for immediate feedback, but the row is what makes the notification show
+ * up next time the recipient opens the app, even if they were offline when it happened.
+ */
+export type Notification = Prisma.NotificationModel;
+/**
  * Model AiJob
  * Durable AI job record. Redis Streams is the queue transport;
  * this table is the source of truth for status polling and audits.

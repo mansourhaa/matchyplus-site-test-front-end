@@ -372,4 +372,57 @@ describe('ProfileService', () => {
       expect(deleteMediaFile).not.toHaveBeenCalled();
     });
   });
+
+  describe('getViewNotificationInfo', () => {
+    it('returns null for a self-view, without checking blocks or fetching the profile', async () => {
+      const { service, prisma } = createService();
+
+      const result = await service.getViewNotificationInfo('user-1', 'user-1');
+
+      expect(result).toBeNull();
+      expect(prisma.userBlock.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('rejects when the target profile is blocked or inactive', async () => {
+      const { service, prisma } = createService();
+      prisma.userBlock.findFirst.mockResolvedValue({ id: 'block-1' });
+
+      await expect(service.getViewNotificationInfo('user-1', 'user-2')).rejects.toMatchObject({
+        code: 'blocked',
+      });
+    });
+
+    it('returns the viewer id, first name, and photo for a valid view of another profile', async () => {
+      const { service, prisma } = createService();
+      prisma.userBlock.findFirst.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue({ status: 'ACTIVE' });
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        name: 'Jane Doe',
+        image: '/uploads/photos/jane.jpg',
+      });
+
+      const result = await service.getViewNotificationInfo('user-1', 'user-2');
+
+      expect(result).toEqual({
+        viewerId: 'user-1',
+        viewerName: 'Jane',
+        viewerImage: '/uploads/photos/jane.jpg',
+      });
+    });
+
+    it('falls back to a generic name when the viewer has none set', async () => {
+      const { service, prisma } = createService();
+      prisma.userBlock.findFirst.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue({ status: 'ACTIVE' });
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ name: '  ', image: null });
+
+      const result = await service.getViewNotificationInfo('user-1', 'user-2');
+
+      expect(result).toEqual({
+        viewerId: 'user-1',
+        viewerName: "Quelqu'un",
+        viewerImage: null,
+      });
+    });
+  });
 });

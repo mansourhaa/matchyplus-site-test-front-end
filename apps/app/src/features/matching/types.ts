@@ -100,7 +100,16 @@ export type RealtimeMessage = {
   payload?: {
     event_type?: string;
     matched_user_id?: string;
+    viewerName?: string;
+    viewerImage?: string | null;
   };
+};
+
+export type PushToastItem = {
+  id: string;
+  title: string;
+  body: string;
+  viewerImage: string | null;
 };
 
 export type MatchingState = {

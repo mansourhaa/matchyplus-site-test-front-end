@@ -6,7 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthUser } from '../types';
 import authReducer, {
   deleteAccount,
+  exchangeOAuthCode,
   fetchCurrentUser,
+  loginPhone,
   registerPhone,
   resetAuthState,
 } from './auth-slice';
@@ -67,6 +69,34 @@ describe('auth-slice', () => {
       });
       expect(store.getState().auth.user).toEqual(user);
       expect(store.getState().auth.status).toBe('authenticated');
+      // A successful interactive registration is just as valid a "session confirmed"
+      // signal as the bootstrap authcheck — code gating on sessionChecked (e.g. the
+      // realtime bridge) must not stay blocked waiting on that unrelated request too.
+      expect(store.getState().auth.sessionChecked).toBe(true);
+    });
+  });
+
+  describe('loginPhone', () => {
+    it('sets sessionChecked on success, same as a successful authcheck', async () => {
+      vi.mocked(api.post).mockResolvedValue({ data: { user } });
+
+      const store = buildStore();
+      await store.dispatch(loginPhone({ phone: '+21612345678', password: 'secret123' }));
+
+      expect(store.getState().auth.status).toBe('authenticated');
+      expect(store.getState().auth.sessionChecked).toBe(true);
+    });
+  });
+
+  describe('exchangeOAuthCode', () => {
+    it('sets sessionChecked on success, same as a successful authcheck', async () => {
+      vi.mocked(api.post).mockResolvedValue({ data: { user } });
+
+      const store = buildStore();
+      await store.dispatch(exchangeOAuthCode({ code: 'oauth-code' }));
+
+      expect(store.getState().auth.status).toBe('authenticated');
+      expect(store.getState().auth.sessionChecked).toBe(true);
     });
   });
 

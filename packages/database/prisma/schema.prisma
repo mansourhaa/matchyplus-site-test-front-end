@@ -149,6 +149,7 @@ model User {
   refresh_tokens       RefreshToken[]
   oauth_exchange_codes OAuthExchangeCode[]
   otp_challenges       OtpChallenge[]
+  notifications        Notification[]
 
   reports_made     Report[] @relation("ReportsMade")
   reports_received Report[] @relation("ReportsReceived")
@@ -407,6 +408,29 @@ model Rating {
 
   @@unique([rater_id, ratee_id])
   @@index([ratee_id])
+}
+
+/// What kind of event a Notification row represents. Kept as an enum (rather than a free
+/// string) so the set of event types the app can send stays explicit and query-able.
+enum NotificationType {
+  PROFILE_VIEW
+}
+
+/// In-app notification feed. A row is created the moment the triggering event happens,
+/// independent of whether the recipient is online — a connected client also gets a live
+/// realtime push for immediate feedback, but the row is what makes the notification show
+/// up next time the recipient opens the app, even if they were offline when it happened.
+model Notification {
+  id         String           @id @default(cuid())
+  user_id    String
+  user       User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  type       NotificationType
+  data       Json
+  read_at    DateTime?
+  created_at DateTime         @default(now())
+
+  @@index([user_id, created_at])
+  @@index([user_id, read_at])
 }
 
 enum AiJobType {

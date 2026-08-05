@@ -2,13 +2,20 @@ import { FastifyPluginAsync } from 'fastify';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { PROFILE_PHOTO_CONTENT_TYPES, PROFILE_VIDEO_CONTENT_TYPES } from '../../../constants.js';
+import {
+  PROFILE_PHOTO_CONTENT_TYPES,
+  PROFILE_VIDEO_CONTENT_TYPES,
+  PROFILE_VIEW_NOTIFICATION_COOLDOWN_MS,
+  PROFILE_VIEW_RATE_LIMIT,
+} from '../../../constants.js';
 import {
   getProfilePhotoFileSchema,
   getProfileVideoFileSchema,
   getPublicProfileSchema,
+  notifyProfileViewSchema,
   rateProfileSchema,
 } from '../../../schemas/v1/index.js';
+import { NotificationService } from '../../../services/notification.js';
 import { ProfileService } from '../../../services/profile.js';
 import { RatingService } from '../../../services/rating.js';
 import { ProfileIdParams, ProfileMediaFilenameParams } from '../../../types/profile.js';
@@ -21,6 +28,10 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const { prisma } = fastify;
   const profileService = new ProfileService({ prisma });
   const ratingService = new RatingService({ prisma });
+  const notifications = new NotificationService({
+    prisma,
+    push: (userId, event, payload) => fastify.notifyUser(userId, event, payload),
+  });
 
   fastify.get<{ Params: ProfileIdParams }>(
     '/:id',
@@ -49,6 +60,30 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
           request.body.rating,
         );
         return reply.code(200).send(data);
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
+
+  fastify.post<{ Params: ProfileIdParams }>(
+    '/:id/view',
+    { schema: notifyProfileViewSchema, config: { rateLimit: PROFILE_VIEW_RATE_LIMIT } },
+    async (request, reply) => {
+      try {
+        const info = await profileService.getViewNotificationInfo(
+          request.loggedUser.id,
+          request.params.id,
+        );
+        let notified = false;
+        if (info) {
+          const result = await notifications.createIfNoRecentDuplicate(
+            { userId: request.params.id, type: 'PROFILE_VIEW', data: info },
+            PROFILE_VIEW_NOTIFICATION_COOLDOWN_MS,
+          );
+          notified = result.created;
+        }
+        return reply.code(200).send({ notified });
       } catch (err) {
         throw err;
       }

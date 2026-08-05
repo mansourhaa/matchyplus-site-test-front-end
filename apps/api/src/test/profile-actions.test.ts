@@ -139,6 +139,157 @@ describe('GET /api/v1/profiles/:id', () => {
   });
 });
 
+describe('POST /api/v1/profiles/:id/view', () => {
+  const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
+
+  afterEach(async () => {
+    await Promise.all(apps.map((app) => app.close()));
+    apps.length = 0;
+  });
+
+  it('requires authentication', async () => {
+    const app = await buildTestApp({});
+    apps.push(app);
+
+    const response = await app.inject({ method: 'POST', url: '/api/v1/profiles/user-2/view' });
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('is a no-op when viewing your own profile', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() } as never,
+        notification: { create: vi.fn() } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-1/view',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ notified: false });
+  });
+
+  it('creates a notification for the target when the view is allowed', async () => {
+    const notificationCreate = vi.fn().mockResolvedValue({ id: 'notif-1' });
+    const prismaOverrides = {
+      user: {
+        findUniqueOrThrow: vi.fn().mockImplementation(({ where }: { where: { id: string } }) =>
+          Promise.resolve(
+            where.id === 'user-1'
+              ? {
+                  id: 'user-1',
+                  status: 'ACTIVE',
+                  role: 'USER',
+                  name: 'Jane Doe',
+                  image: '/uploads/photos/jane.jpg',
+                }
+              : { id: where.id, status: 'ACTIVE', role: 'USER' },
+          ),
+        ),
+        findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+      },
+      userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
+      notification: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: notificationCreate,
+      },
+    };
+    const app = await buildTestApp({
+      prisma: {
+        ...prismaOverrides,
+        $transaction: vi
+          .fn()
+          .mockImplementation(async (callback) => callback(prismaOverrides)) as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-2/view',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json()).toEqual({ notified: true });
+    expect(notificationCreate).toHaveBeenCalledWith({
+      data: {
+        user_id: 'user-2',
+        type: 'PROFILE_VIEW',
+        data: { viewerId: 'user-1', viewerName: 'Jane', viewerImage: '/uploads/photos/jane.jpg' },
+      },
+    });
+  });
+
+  it('does not create a second notification when the same viewer reopens the profile within the cooldown', async () => {
+    const notificationCreate = vi.fn();
+    const prismaOverrides = {
+      user: {
+        findUniqueOrThrow: vi
+          .fn()
+          .mockImplementation(({ where }: { where: { id: string } }) =>
+            Promise.resolve(
+              where.id === 'user-1'
+                ? { id: 'user-1', status: 'ACTIVE', role: 'USER', name: 'Jane Doe', image: null }
+                : { id: where.id, status: 'ACTIVE', role: 'USER' },
+            ),
+          ),
+        findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+      },
+      userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
+      notification: {
+        findFirst: vi.fn().mockResolvedValue({ id: 'existing-notif' }),
+        create: notificationCreate,
+      },
+    };
+    const app = await buildTestApp({
+      prisma: {
+        ...prismaOverrides,
+        $transaction: vi
+          .fn()
+          .mockImplementation(async (callback) => callback(prismaOverrides)) as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-2/view',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json()).toEqual({ notified: false });
+    expect(notificationCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects with 403 when the target has blocked the viewer', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller() } as never,
+        userBlock: { findFirst: vi.fn().mockResolvedValue({ id: 'block-1' }) } as never,
+        notification: { create: vi.fn() } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/profiles/user-2/view',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ code: 'blocked' });
+  });
+});
+
 describe('GET /api/v1/profiles/media/photos/:filename', () => {
   const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
 
