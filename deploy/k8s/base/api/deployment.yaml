@@ -26,6 +26,12 @@ spec:
           envFrom:
             - secretRef:
                 name: saas-api-env
+          env:
+            # Stable unique id per replica for Redis Streams consumer groups.
+            - name: INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           readinessProbe:
             httpGet:
               path: /api/v1/health

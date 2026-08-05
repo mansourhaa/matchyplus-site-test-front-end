@@ -11,6 +11,7 @@ function createMockRedis() {
     xadd: vi.fn().mockResolvedValue('1-0'),
     xgroup: vi.fn().mockResolvedValue('OK'),
     xreadgroup: vi.fn().mockResolvedValue(null),
+    xautoclaim: vi.fn().mockResolvedValue(['0-0', []]),
     xack: vi.fn().mockResolvedValue(1),
     duplicate: vi.fn(),
     quit: vi.fn().mockResolvedValue('OK'),
@@ -78,6 +79,36 @@ describe('RealtimeFanoutService', () => {
       'ts',
       expect.any(String),
     );
+
+    await fanout.stop();
+  });
+
+  it('retries XADD publish on transient Redis failure then succeeds', async () => {
+    const redis = createMockRedis();
+    redis.duplicate.mockReturnValue(redis);
+    redis.xadd.mockRejectedValueOnce(new Error('READONLY')).mockResolvedValue('2-0');
+    const deliverLocal = vi.fn();
+    const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+    const fanout = new RealtimeFanoutService({
+      redis: redis as never,
+      deliverLocal,
+      log,
+      instanceId: 'inst-a',
+      streamKey: 'realtime:events',
+      publishMaxAttempts: 3,
+      retryDelayMs: 5,
+      startConsumer: false,
+    });
+
+    fanout.notifyUser('u1', 'new_message', { id: 'm1' });
+
+    await vi.waitFor(() => expect(redis.xadd).toHaveBeenCalledTimes(2));
+    expect(log.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ attempt: 1, maxAttempts: 3 }),
+      'realtime stream publish attempt failed',
+    );
+    expect(log.error).not.toHaveBeenCalled();
 
     await fanout.stop();
   });
@@ -195,6 +226,33 @@ describe('RealtimeFanoutService', () => {
     expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'fresh' });
   });
 
+  it('keeps live peer events when publisher ts lags behind stream id time', () => {
+    const deliverLocal = vi.fn();
+    const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
+    const fanout = new RealtimeFanoutService({
+      redis: null,
+      deliverLocal,
+      log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      instanceId: 'inst-a',
+      startedAtMs,
+      catchUpGraceMs: 5_000,
+      startConsumer: false,
+    });
+
+    // Publisher clock is 10 minutes behind; Redis stream id is after process start.
+    fanout.handleStreamEntry(
+      {
+        userId: 'u1',
+        event: 'new_message',
+        payload: '{"id":"skewed"}',
+        originInstanceId: 'inst-b',
+        ts: '2026-08-04T11:50:00.000Z',
+      },
+      `${startedAtMs + 2_000}-0`,
+    );
+    expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'skewed' });
+  });
+
   it('drops entries with no usable timestamp', () => {
     const deliverLocal = vi.fn();
     const fanout = new RealtimeFanoutService({
@@ -213,6 +271,76 @@ describe('RealtimeFanoutService', () => {
       originInstanceId: 'inst-b',
     });
     expect(deliverLocal).not.toHaveBeenCalled();
+  });
+
+  it('requires a stable INSTANCE_ID when Redis fan-out is enabled', () => {
+    const prev = process.env.INSTANCE_ID;
+    delete process.env.INSTANCE_ID;
+    const redis = createMockRedis();
+    expect(
+      () =>
+        new RealtimeFanoutService({
+          redis: redis as never,
+          deliverLocal: vi.fn(),
+          log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+          startConsumer: false,
+        }),
+    ).toThrow(/INSTANCE_ID is required/);
+    if (prev === undefined) delete process.env.INSTANCE_ID;
+    else process.env.INSTANCE_ID = prev;
+  });
+
+  it('reclaims idle PEL entries via XAUTOCLAIM then ACKs', async () => {
+    const redis = createMockRedis();
+    const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
+    const entryId = `${startedAtMs + 1_000}-0`;
+    redis.xautoclaim.mockResolvedValue([
+      '0-0',
+      [
+        [
+          entryId,
+          [
+            'userId',
+            'u1',
+            'event',
+            'new_message',
+            'payload',
+            '{"id":"reclaimed"}',
+            'originInstanceId',
+            'inst-b',
+            'ts',
+            '2026-08-04T12:00:01.000Z',
+          ],
+        ],
+      ],
+    ]);
+    const deliverLocal = vi.fn();
+
+    const fanout = new RealtimeFanoutService({
+      redis: redis as never,
+      deliverLocal,
+      log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      instanceId: 'inst-a',
+      streamKey: 'realtime:events',
+      startedAtMs,
+      pelMinIdleMs: 5_000,
+      startConsumer: false,
+    });
+
+    const count = await fanout.reclaimPendingEntries(redis as never, 'c-inst-a');
+
+    expect(count).toBe(1);
+    expect(redis.xautoclaim).toHaveBeenCalledWith(
+      'realtime:events',
+      'realtime:inst:inst-a',
+      'c-inst-a',
+      5_000,
+      '0-0',
+      'COUNT',
+      32,
+    );
+    expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'reclaimed' });
+    expect(redis.xack).toHaveBeenCalledWith('realtime:events', 'realtime:inst:inst-a', entryId);
   });
 
   it('creates consumer groups at 0 so late bootstrap can catch peer publishes', async () => {

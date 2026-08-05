@@ -143,7 +143,7 @@ Optional OTP lifecycle tuning — all have sensible defaults if left unset:
 | `AI_INTERNAL_TOKEN` | Staging/prod | Protects AI internal endpoints | — |
 | `AI_DATABASE_URL` | Local compose | DB URL seen from AI container | `host.docker.internal` DSN |
 | `REALTIME_STREAM_KEY` | No | Redis Streams key for WebSocket fan-out | `realtime:events` |
-| `INSTANCE_ID` | Staging/prod multi-replica: **required unique per pod** | Consumer group suffix (`realtime:inst:{id}`). Reusing the same id across replicas breaks fan-out (shared group = load-balanced delivery). Prefer the pod name. | random UUID at boot (OK for single instance) |
+| `INSTANCE_ID` | **Required when `REDIS_URL` is set**; unique per replica | Consumer group suffix (`realtime:inst:{id}`). Reusing the same id across replicas breaks fan-out (shared group = load-balanced delivery). Prefer the pod name (K8s Downward API). Random UUID is only allowed without Redis. | — (throws if Redis on and unset) |
 
 Local Redis/AI: `pnpm infra:up` (`compose.dev.yaml`).  
 Staging/prod: Kubernetes Services `saas-redis` + `saas-ai` (see [AI Async Jobs](../features/ai-async-jobs.md)).
@@ -167,8 +167,8 @@ REDIS_URL=redis://localhost:6379/0
 AI_STREAM_KEY=ai:jobs
 AI_CONSUMER_GROUP=ai-workers
 REALTIME_STREAM_KEY=realtime:events
-# Must be unique per replica in multi-pod deploys (e.g. pod name). Shared values break fan-out.
-# INSTANCE_ID=api-1
+# Required when REDIS_URL is set; must be unique per replica in multi-pod deploys (e.g. pod name).
+INSTANCE_ID=api-local
 ```
 
 ### Staging (`.env.staging`)

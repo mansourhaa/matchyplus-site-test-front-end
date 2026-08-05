@@ -3,6 +3,7 @@ import type { Redis } from 'ioredis';
 import {
   REALTIME_CATCH_UP_GRACE_MS,
   REALTIME_CONSUMER_GROUP_START_ID,
+  REALTIME_PEL_MIN_IDLE_MS,
   REALTIME_STREAM_RETENTION_MS,
   realtimeConsumerGroup,
   realtimeInstanceId,
@@ -33,11 +34,17 @@ export type RealtimeFanoutOptions = {
   startedAtMs?: number;
   /** Clock-skew grace before `startedAtMs` when filtering historical entries. */
   catchUpGraceMs?: number;
+  /** Min idle ms before reclaiming PEL entries via XAUTOCLAIM. */
+  pelMinIdleMs?: number;
+  /** Max XADD attempts (initial try + retries) for cross-instance publish. */
+  publishMaxAttempts?: number;
   /** Override for tests — skip starting the consumer loop. */
   startConsumer?: boolean;
   /** Backoff between bootstrap/read failures (ms). */
   retryDelayMs?: number;
 };
+
+type StreamMessages = [string, string[]][];
 
 /**
  * Local WebSocket deliver + Redis Streams fan-out for multi-instance APIs.
@@ -50,6 +57,8 @@ export class RealtimeFanoutService {
   readonly streamRetentionMs: number;
   readonly startedAtMs: number;
   readonly catchUpGraceMs: number;
+  readonly pelMinIdleMs: number;
+  readonly publishMaxAttempts: number;
 
   private readonly redis: Redis | null;
   private readonly deliverLocal: RealtimeDeliver;
@@ -64,11 +73,14 @@ export class RealtimeFanoutService {
     this.deliverLocal = options.deliverLocal;
     this.log = options.log;
     this.streamKey = options.streamKey || realtimeStreamKey();
-    this.instanceId = options.instanceId || realtimeInstanceId();
+    this.instanceId =
+      options.instanceId || realtimeInstanceId({ requireStable: Boolean(this.redis) });
     this.consumerGroup = realtimeConsumerGroup(this.instanceId);
     this.streamRetentionMs = options.streamRetentionMs ?? REALTIME_STREAM_RETENTION_MS;
     this.startedAtMs = options.startedAtMs ?? Date.now();
     this.catchUpGraceMs = options.catchUpGraceMs ?? REALTIME_CATCH_UP_GRACE_MS;
+    this.pelMinIdleMs = options.pelMinIdleMs ?? REALTIME_PEL_MIN_IDLE_MS;
+    this.publishMaxAttempts = Math.max(1, options.publishMaxAttempts ?? 3);
     this.retryDelayMs = options.retryDelayMs ?? 1000;
 
     if (this.redis && options.startConsumer !== false) {
@@ -85,35 +97,54 @@ export class RealtimeFanoutService {
   /**
    * Deliver to sockets on this process, then publish for other instances.
    * Always XADDs when Redis is up — peers may be connected elsewhere.
+   * Publish retries transient Redis failures so a single XADD blip does not
+   * permanently drop cross-instance delivery.
    */
   notifyUser(userId: string, event: string, payload: Record<string, unknown>): void {
     this.deliverLocal(userId, event, payload);
     if (!this.redis) return;
     void this.publish(userId, event, payload).catch((err) => {
-      this.log.error({ err, userId, event }, 'realtime stream publish failed');
+      this.log.error({ err, userId, event }, 'realtime stream publish failed after retries');
     });
   }
 
   async publish(userId: string, event: string, payload: Record<string, unknown>): Promise<void> {
     if (!this.redis) return;
-    const minId = `${Date.now() - this.streamRetentionMs}-0`;
-    await this.redis.xadd(
-      this.streamKey,
-      'MINID',
-      '~',
-      minId,
-      '*',
-      'userId',
-      userId,
-      'event',
-      event,
-      'payload',
-      JSON.stringify(payload ?? {}),
-      'originInstanceId',
-      this.instanceId,
-      'ts',
-      new Date().toISOString(),
-    );
+
+    let lastErr: unknown;
+    for (let attempt = 1; attempt <= this.publishMaxAttempts; attempt++) {
+      try {
+        const minId = `${Date.now() - this.streamRetentionMs}-0`;
+        await this.redis.xadd(
+          this.streamKey,
+          'MINID',
+          '~',
+          minId,
+          '*',
+          'userId',
+          userId,
+          'event',
+          event,
+          'payload',
+          JSON.stringify(payload ?? {}),
+          'originInstanceId',
+          this.instanceId,
+          'ts',
+          new Date().toISOString(),
+        );
+        return;
+      } catch (err) {
+        lastErr = err;
+        this.log.warn(
+          { err, userId, event, attempt, maxAttempts: this.publishMaxAttempts },
+          'realtime stream publish attempt failed',
+        );
+        if (attempt < this.publishMaxAttempts) {
+          await this.delay(this.retryDelayMs * attempt);
+        }
+      }
+    }
+    throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
   }
 
   /**
@@ -153,7 +184,8 @@ export class RealtimeFanoutService {
   /**
    * Apply a stream entry on this instance. Skips self-origin and entries older
    * than this process start (historical replay within the retained stream).
-   * Uses `ts` when present; otherwise the Redis stream id’s millisecond prefix.
+   * Event time is `max(publisher ts, stream id ms)` so publisher clock lag
+   * cannot drop live peer events that Redis already accepted.
    */
   handleStreamEntry(fields: Record<string, string>, entryId?: string): void {
     const originInstanceId = fields.originInstanceId || '';
@@ -179,17 +211,24 @@ export class RealtimeFanoutService {
     this.deliverLocal(userId, event, payload);
   }
 
-  /** Prefer ISO `ts` field; fall back to Redis stream id (`ms-seq`). */
+  /**
+   * Catch-up filter time: max of publisher ISO `ts` and Redis stream id (`ms-seq`).
+   * Preferring only `ts` would drop live events when the publisher clock lags
+   * beyond `REALTIME_CATCH_UP_GRACE_MS`.
+   */
   static eventTimeMs(ts: string | undefined, entryId?: string): number | null {
+    let fromTs: number | null = null;
+    let fromId: number | null = null;
     if (ts) {
       const parsed = Date.parse(ts);
-      if (!Number.isNaN(parsed)) return parsed;
+      if (!Number.isNaN(parsed)) fromTs = parsed;
     }
     if (entryId) {
       const msPart = Number(entryId.split('-')[0]);
-      if (Number.isFinite(msPart)) return msPart;
+      if (Number.isFinite(msPart)) fromId = msPart;
     }
-    return null;
+    if (fromTs !== null && fromId !== null) return Math.max(fromTs, fromId);
+    return fromTs ?? fromId;
   }
 
   static fieldsFromFlat(flat: string[]): Record<string, string> {
@@ -220,6 +259,38 @@ export class RealtimeFanoutService {
     await new Promise((r) => setTimeout(r, ms));
   }
 
+  private async processStreamMessages(client: Redis, messages: StreamMessages): Promise<void> {
+    for (const [id, flat] of messages) {
+      try {
+        this.handleStreamEntry(RealtimeFanoutService.fieldsFromFlat(flat), id);
+        await client.xack(this.streamKey, this.consumerGroup, id);
+      } catch (err) {
+        this.log.error({ err, id }, 'realtime stream entry failed');
+      }
+    }
+  }
+
+  /**
+   * Reclaim idle PEL entries (failed deliver/ACK or crash after XREADGROUP).
+   * Without this, only `>` is read and pending entries are never retried.
+   */
+  async reclaimPendingEntries(client: Redis, consumerName: string): Promise<number> {
+    const result = (await client.xautoclaim(
+      this.streamKey,
+      this.consumerGroup,
+      consumerName,
+      this.pelMinIdleMs,
+      '0-0',
+      'COUNT',
+      32,
+    )) as [string, StreamMessages, string[]?] | null;
+
+    const messages = result?.[1];
+    if (!messages?.length) return 0;
+    await this.processStreamMessages(client, messages);
+    return messages.length;
+  }
+
   private async startConsumerLoop(): Promise<void> {
     if (!this.redis) return;
 
@@ -234,6 +305,7 @@ export class RealtimeFanoutService {
           consumerGroup: this.consumerGroup,
           instanceId: this.instanceId,
           startId: REALTIME_CONSUMER_GROUP_START_ID,
+          pelMinIdleMs: this.pelMinIdleMs,
         },
         'realtime stream consumer started',
       );
@@ -241,6 +313,9 @@ export class RealtimeFanoutService {
       const consumerName = `c-${this.instanceId}`;
       while (!this.stopped) {
         try {
+          await this.reclaimPendingEntries(this.reader, consumerName);
+          if (this.stopped) break;
+
           const result = await this.reader.xreadgroup(
             'GROUP',
             this.consumerGroup,
@@ -255,15 +330,8 @@ export class RealtimeFanoutService {
           );
           if (!result || this.stopped) continue;
 
-          for (const [, messages] of result as [string, [string, string[]][]][]) {
-            for (const [id, flat] of messages) {
-              try {
-                this.handleStreamEntry(RealtimeFanoutService.fieldsFromFlat(flat), id);
-                await this.reader.xack(this.streamKey, this.consumerGroup, id);
-              } catch (err) {
-                this.log.error({ err, id }, 'realtime stream entry failed');
-              }
-            }
+          for (const [, messages] of result as [string, StreamMessages][]) {
+            await this.processStreamMessages(this.reader, messages);
           }
         } catch (err) {
           if (this.stopped) break;

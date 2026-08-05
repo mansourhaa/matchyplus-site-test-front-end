@@ -23,20 +23,42 @@ export const REALTIME_STREAM_RETENTION_MS = 30 * 60 * 1000;
 /** Ignore stream entries older than process start minus this grace (clock skew). */
 export const REALTIME_CATCH_UP_GRACE_MS = 5_000;
 
+/**
+ * Min idle time (ms) before `XAUTOCLAIM` reclaims PEL entries after a failed
+ * deliver/ACK or process crash. Avoids tight retry spins on persistent failures.
+ */
+export const REALTIME_PEL_MIN_IDLE_MS = 5_000;
+
 export function realtimeStreamKey(): string {
   return process.env.REALTIME_STREAM_KEY?.trim() || REALTIME_STREAM_KEY_DEFAULT;
 }
 
+export type RealtimeInstanceIdOptions = {
+  /**
+   * When true (Redis fan-out enabled), `INSTANCE_ID` must be set so restarts
+   * keep the same consumer group and self-publishes stay skippable.
+   */
+  requireStable?: boolean;
+};
+
 /**
  * Unique id for this API process’s consumer group.
- * Staging/prod must set a **distinct** value per replica (e.g. Kubernetes pod name).
- * Reusing the same INSTANCE_ID across pods makes them share one consumer group, so
- * Redis load-balances entries and peers on other pods miss events.
- * Default random UUID is fine for single-instance / local when historical
- * deliveries are filtered by process start time.
+ * Must be **distinct** per replica (e.g. Kubernetes pod name). Reusing the same
+ * INSTANCE_ID across pods makes them share one consumer group, so Redis
+ * load-balances entries and peers on other pods miss events.
+ * When Redis fan-out is on, a stable `INSTANCE_ID` is required — a random UUID
+ * every boot would replay recent self-publishes to reconnecting clients.
+ * Random UUID is only for in-process (no Redis) / unit tests.
  */
-export function realtimeInstanceId(): string {
-  return process.env.INSTANCE_ID?.trim() || randomUUID();
+export function realtimeInstanceId(options: RealtimeInstanceIdOptions = {}): string {
+  const id = process.env.INSTANCE_ID?.trim();
+  if (id) return id;
+  if (options.requireStable) {
+    throw new Error(
+      'INSTANCE_ID is required when Redis realtime fan-out is enabled (set a stable unique value per replica, e.g. the pod name)',
+    );
+  }
+  return randomUUID();
 }
 
 export function realtimeConsumerGroup(instanceId: string): string {

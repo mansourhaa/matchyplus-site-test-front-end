@@ -59,14 +59,18 @@ When `REDIS_URL` is set, `notifyUser` delivers to local sockets and `XADD`s to R
 (30 minutes). Each API instance consumes with its own consumer group
 (`realtime:inst:{INSTANCE_ID}`) from the start of the retained stream (`0`) so late
 bootstrap still catches peer publishes within the retention window; entries older than
-process start are skipped so clients do not get historical replay.
+process start are skipped so clients do not get historical replay. Idle pending entries
+are reclaimed via `XAUTOCLAIM` so a failed deliver/ACK or crash does not permanently
+miss events. Catch-up uses `max(publisher ts, stream id ms)` so publisher clock skew
+cannot drop live peer events.
 Events include `originInstanceId` so the publishing instance does not double-deliver.
 
-**`INSTANCE_ID` must be unique per replica** in staging/prod (e.g. Kubernetes pod name).
-Reusing the same value across pods makes them share one consumer group; Redis then
-load-balances entries and peers on other pods miss events. A random UUID default is fine
-for single-instance local/dev.
-
+**`INSTANCE_ID` is required whenever Redis fan-out is enabled** and must be unique per
+replica (e.g. Kubernetes pod name via Downward API). Reusing the same value across pods
+makes them share one consumer group; Redis then load-balances entries and peers on other
+pods miss events. A random UUID every boot is not allowed with Redis — after restart,
+retained self-publishes would no longer match `originInstanceId` and could replay to
+reconnecting clients.
 Without Redis, fan-out stays in-process (single instance). HTTP write responses remain
 authoritative for the acting user.
 

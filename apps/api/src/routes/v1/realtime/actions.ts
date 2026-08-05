@@ -104,15 +104,24 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
               ) {
                 return;
               }
-              if (parsed.event === 'typing') {
+
+              const isTyping = parsed.event === 'typing';
+              // Stamp before enqueue so rapid frames stay throttled while setTyping
+              // is in flight; clear the stamp if delivery fails so peers can retry.
+              if (isTyping) {
                 typingThrottle.set(key, now);
               } else {
                 // Clear so the next typing after stop is never blocked by the prior stamp.
                 typingThrottle.delete(key);
               }
 
-              const isTyping = parsed.event === 'typing';
-              enqueueTypingOp(key, () => conversations.setTyping(userId, conversationId, isTyping));
+              enqueueTypingOp(key, async () => {
+                try {
+                  await conversations.setTyping(userId, conversationId, isTyping);
+                } catch {
+                  if (isTyping) typingThrottle.delete(key);
+                }
+              });
             }
           } catch {
             // Ignore malformed client frames — keep the socket open.
