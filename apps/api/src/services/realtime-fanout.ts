@@ -125,7 +125,7 @@ export class RealtimeFanoutService {
     for (let attempt = 1; attempt <= this.publishMaxAttempts; attempt++) {
       try {
         const minId = `${Date.now() - this.streamRetentionMs}-0`;
-        await this.redis.xadd(
+        const entryId = (await this.redis.xadd(
           this.streamKey,
           'MINID',
           '~',
@@ -141,7 +141,10 @@ export class RealtimeFanoutService {
           this.instanceId,
           'ts',
           new Date().toISOString(),
-        );
+        )) as string;
+        // Remember ids we published so a consumer-group recreate with the same
+        // restart-stable INSTANCE_ID cannot redeliver our own retained rows.
+        if (entryId) await this.rememberPublishedEntry(entryId);
         return;
       } catch (err) {
         lastErr = err;
@@ -215,14 +218,15 @@ export class RealtimeFanoutService {
   }
 
   /**
-   * Apply a stream entry on this instance. Skips self-origin and entries older
-   * than the catch-up cutoff (historical replay within the retained stream).
+   * Apply a stream entry on this instance. Skips self-origin (live id match or
+   * remembered publish ids), and entries older than the catch-up cutoff.
    * Event time prefers Redis stream id ms so publisher clock skew cannot drop
    * live events or revive stale rows via a future ISO `ts`.
    */
-  handleStreamEntry(fields: Record<string, string>, entryId?: string): void {
+  async handleStreamEntry(fields: Record<string, string>, entryId?: string): Promise<void> {
     const originInstanceId = fields.originInstanceId || '';
     if (originInstanceId === this.instanceId) return;
+    if (entryId && (await this.wasPublishedHere(entryId))) return;
 
     const eventMs = RealtimeFanoutService.eventTimeMs(fields.ts, entryId);
     if (eventMs === null || eventMs < this.catchUpCutoffMs) {
@@ -242,6 +246,23 @@ export class RealtimeFanoutService {
     }
 
     this.deliverLocal(userId, event, payload);
+  }
+
+  /** Redis key for stream entry ids this INSTANCE_ID has already published. */
+  publishedEntriesKey(): string {
+    return `realtime:fanout:published:${this.instanceId}`;
+  }
+
+  async rememberPublishedEntry(entryId: string): Promise<void> {
+    if (!this.redis) return;
+    const key = this.publishedEntriesKey();
+    await this.redis.sadd(key, entryId);
+    await this.redis.pexpire(key, this.streamRetentionMs);
+  }
+
+  async wasPublishedHere(entryId: string): Promise<boolean> {
+    if (!this.redis) return false;
+    return (await this.redis.sismember(this.publishedEntriesKey(), entryId)) === 1;
   }
 
   /**
@@ -293,7 +314,7 @@ export class RealtimeFanoutService {
   private async processStreamMessages(client: Redis, messages: StreamMessages): Promise<void> {
     for (const [id, flat] of messages) {
       try {
-        this.handleStreamEntry(RealtimeFanoutService.fieldsFromFlat(flat), id);
+        await this.handleStreamEntry(RealtimeFanoutService.fieldsFromFlat(flat), id);
         await client.xack(this.streamKey, this.consumerGroup, id);
       } catch (err) {
         this.log.error({ err, id }, 'realtime stream entry failed');

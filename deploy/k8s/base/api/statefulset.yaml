@@ -1,11 +1,12 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: saas-api
   labels:
     app.kubernetes.io/name: saas-api
     app.kubernetes.io/component: api
 spec:
+  serviceName: saas-api-headless
   replicas: 1
   selector:
     matchLabels:
@@ -27,8 +28,8 @@ spec:
             - secretRef:
                 name: saas-api-env
           env:
-            # Unique per replica while the pod lives (pod name). Changes on restart —
-            # brief self-origin redelivery within catch-up grace is accepted; see messaging.md.
+            # Restart-stable unique id per replica (saas-api-0, saas-api-1, …).
+            # Same id across restarts keeps the Redis consumer group and self-origin skip working.
             - name: INSTANCE_ID
               valueFrom:
                 fieldRef:

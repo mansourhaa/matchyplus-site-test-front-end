@@ -14,6 +14,9 @@ function createMockRedis() {
     xautoclaim: vi.fn().mockResolvedValue(['0-0', []]),
     xack: vi.fn().mockResolvedValue(1),
     time: vi.fn().mockResolvedValue(['1722772800', '0']),
+    sadd: vi.fn().mockResolvedValue(1),
+    sismember: vi.fn().mockResolvedValue(0),
+    pexpire: vi.fn().mockResolvedValue(1),
     duplicate: vi.fn(),
     quit: vi.fn().mockResolvedValue('OK'),
     disconnect: vi.fn(),
@@ -114,7 +117,7 @@ describe('RealtimeFanoutService', () => {
     await fanout.stop();
   });
 
-  it('delivers locally only when Redis is disabled', () => {
+  it('delivers locally only when Redis is disabled', async () => {
     const deliverLocal = vi.fn();
     const fanout = new RealtimeFanoutService({
       redis: null,
@@ -127,7 +130,7 @@ describe('RealtimeFanoutService', () => {
     expect(deliverLocal).toHaveBeenCalledTimes(1);
   });
 
-  it('skips stream entries that originated on this instance', () => {
+  it('skips stream entries that originated on this instance', async () => {
     const deliverLocal = vi.fn();
     const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
     const fanout = new RealtimeFanoutService({
@@ -139,7 +142,7 @@ describe('RealtimeFanoutService', () => {
       startConsumer: false,
     });
 
-    fanout.handleStreamEntry({
+    await fanout.handleStreamEntry({
       userId: 'u1',
       event: 'new_message',
       payload: '{"id":"m1"}',
@@ -148,7 +151,7 @@ describe('RealtimeFanoutService', () => {
     });
     expect(deliverLocal).not.toHaveBeenCalled();
 
-    fanout.handleStreamEntry({
+    await fanout.handleStreamEntry({
       userId: 'u1',
       event: 'new_message',
       payload: '{"id":"m1"}',
@@ -158,7 +161,7 @@ describe('RealtimeFanoutService', () => {
     expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'm1' });
   });
 
-  it('skips historical stream entries older than process start', () => {
+  it('skips historical stream entries older than process start', async () => {
     const deliverLocal = vi.fn();
     const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
     const fanout = new RealtimeFanoutService({
@@ -171,7 +174,7 @@ describe('RealtimeFanoutService', () => {
       startConsumer: false,
     });
 
-    fanout.handleStreamEntry({
+    await fanout.handleStreamEntry({
       userId: 'u1',
       event: 'new_message',
       payload: '{"id":"old"}',
@@ -181,7 +184,7 @@ describe('RealtimeFanoutService', () => {
     expect(deliverLocal).not.toHaveBeenCalled();
 
     // Peer publish during bootstrap (after start) is still delivered.
-    fanout.handleStreamEntry({
+    await fanout.handleStreamEntry({
       userId: 'u1',
       event: 'new_message',
       payload: '{"id":"live"}',
@@ -191,7 +194,7 @@ describe('RealtimeFanoutService', () => {
     expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'live' });
   });
 
-  it('skips legacy entries without ts using the Redis stream id time', () => {
+  it('skips legacy entries without ts using the Redis stream id time', async () => {
     const deliverLocal = vi.fn();
     const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
     const fanout = new RealtimeFanoutService({
@@ -204,7 +207,7 @@ describe('RealtimeFanoutService', () => {
       startConsumer: false,
     });
 
-    fanout.handleStreamEntry(
+    await fanout.handleStreamEntry(
       {
         userId: 'u1',
         event: 'new_message',
@@ -215,7 +218,7 @@ describe('RealtimeFanoutService', () => {
     );
     expect(deliverLocal).not.toHaveBeenCalled();
 
-    fanout.handleStreamEntry(
+    await fanout.handleStreamEntry(
       {
         userId: 'u1',
         event: 'new_message',
@@ -227,7 +230,7 @@ describe('RealtimeFanoutService', () => {
     expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'fresh' });
   });
 
-  it('keeps live peer events when publisher ts lags behind stream id time', () => {
+  it('keeps live peer events when publisher ts lags behind stream id time', async () => {
     const deliverLocal = vi.fn();
     const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
     const fanout = new RealtimeFanoutService({
@@ -241,7 +244,7 @@ describe('RealtimeFanoutService', () => {
     });
 
     // Publisher clock is 10 minutes behind; Redis stream id is after process start.
-    fanout.handleStreamEntry(
+    await fanout.handleStreamEntry(
       {
         userId: 'u1',
         event: 'new_message',
@@ -254,7 +257,7 @@ describe('RealtimeFanoutService', () => {
     expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'skewed' });
   });
 
-  it('skips stale retained entries even when publisher ts is in the future', () => {
+  it('skips stale retained entries even when publisher ts is in the future', async () => {
     const deliverLocal = vi.fn();
     const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
     const fanout = new RealtimeFanoutService({
@@ -267,7 +270,7 @@ describe('RealtimeFanoutService', () => {
       startConsumer: false,
     });
 
-    fanout.handleStreamEntry(
+    await fanout.handleStreamEntry(
       {
         userId: 'u1',
         event: 'new_message',
@@ -307,7 +310,7 @@ describe('RealtimeFanoutService', () => {
     // startedAt mapped onto Redis timeline ≈ redisMs, minus grace.
     expect(fanout.getCatchUpCutoffMs()).toBe(redisMs - 5_000);
 
-    fanout.handleStreamEntry(
+    await fanout.handleStreamEntry(
       {
         userId: 'u1',
         event: 'new_message',
@@ -347,7 +350,7 @@ describe('RealtimeFanoutService', () => {
     expect(fanout.getCatchUpCutoffMs()).toBe(startedAtMs - graceMs);
 
     // Peer event published mid-bootstrap (after start, before sync).
-    fanout.handleStreamEntry(
+    await fanout.handleStreamEntry(
       {
         userId: 'u1',
         event: 'new_message',
@@ -359,7 +362,7 @@ describe('RealtimeFanoutService', () => {
     expect(deliverLocal).toHaveBeenCalledWith('u1', 'new_message', { id: 'during-bootstrap' });
   });
 
-  it('drops entries with no usable timestamp', () => {
+  it('drops entries with no usable timestamp', async () => {
     const deliverLocal = vi.fn();
     const fanout = new RealtimeFanoutService({
       redis: null,
@@ -370,13 +373,69 @@ describe('RealtimeFanoutService', () => {
       startConsumer: false,
     });
 
-    fanout.handleStreamEntry({
+    await fanout.handleStreamEntry({
       userId: 'u1',
       event: 'new_message',
       payload: '{"id":"no-ts"}',
       originInstanceId: 'inst-b',
     });
     expect(deliverLocal).not.toHaveBeenCalled();
+  });
+
+  it('skips retained self-publishes remembered by stream entry id', async () => {
+    const redis = createMockRedis();
+    redis.xadd.mockResolvedValue('99-0');
+    redis.sismember.mockResolvedValue(1);
+    const deliverLocal = vi.fn();
+    const startedAtMs = Date.parse('2026-08-04T12:00:00.000Z');
+
+    const fanout = new RealtimeFanoutService({
+      redis: redis as never,
+      deliverLocal,
+      log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      instanceId: 'saas-api-0',
+      startedAtMs,
+      catchUpGraceMs: 5_000,
+      startConsumer: false,
+    });
+
+    await fanout.handleStreamEntry(
+      {
+        userId: 'u1',
+        event: 'new_message',
+        payload: '{"id":"self"}',
+        // Different origin string simulates a misconfigured id; remembered entry still skips.
+        originInstanceId: 'saas-api-0-old',
+        ts: '2026-08-04T12:00:01.000Z',
+      },
+      '99-0',
+    );
+    expect(redis.sismember).toHaveBeenCalledWith('realtime:fanout:published:saas-api-0', '99-0');
+    expect(deliverLocal).not.toHaveBeenCalled();
+  });
+
+  it('remembers published stream entry ids after XADD', async () => {
+    const redis = createMockRedis();
+    redis.duplicate.mockReturnValue(redis);
+    redis.xadd.mockResolvedValue('42-0');
+    const fanout = new RealtimeFanoutService({
+      redis: redis as never,
+      deliverLocal: vi.fn(),
+      log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      instanceId: 'saas-api-0',
+      streamKey: 'realtime:events',
+      streamRetentionMs: 30 * 60 * 1000,
+      startConsumer: false,
+    });
+
+    fanout.notifyUser('u1', 'new_message', { id: 'm1' });
+    await vi.waitFor(() => expect(redis.sadd).toHaveBeenCalled());
+    expect(redis.sadd).toHaveBeenCalledWith('realtime:fanout:published:saas-api-0', '42-0');
+    expect(redis.pexpire).toHaveBeenCalledWith(
+      'realtime:fanout:published:saas-api-0',
+      30 * 60 * 1000,
+    );
+    await fanout.stop();
   });
 
   it('requires a stable INSTANCE_ID when Redis fan-out is enabled', () => {

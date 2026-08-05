@@ -43,17 +43,12 @@ export type RealtimeInstanceIdOptions = {
 
 /**
  * Unique id for this API process’s consumer group.
- * Must be **distinct** per replica (e.g. Kubernetes pod name). Reusing the same
- * INSTANCE_ID across pods makes them share one consumer group, so Redis
- * load-balances entries and peers on other pods miss events.
- * When Redis fan-out is on, `INSTANCE_ID` is required — a random UUID every boot
- * would replay recent self-publishes to reconnecting clients.
- *
- * Pod name via Downward API is unique per replica while the pod lives, but
- * **changes on restart**. Entries published by the previous pod within the
- * catch-up grace window may briefly redeliver to reconnecting clients (accepted
- * duplicate window; HTTP remains authoritative). Prefer StatefulSet ordinals or
- * a sticky id if that window must be zero.
+ * Must be **distinct** per replica and **stable across restarts** when Redis
+ * fan-out is on (e.g. Kubernetes StatefulSet pod name `saas-api-0`). Reusing the
+ * same INSTANCE_ID across pods makes them share one consumer group, so Redis
+ * load-balances entries and peers on other pods miss events. Changing the id on
+ * every restart creates a new consumer group that re-reads retained self-publishes
+ * and can replay realtime events to reconnecting clients.
  * Random UUID is only for in-process (no Redis) / unit tests.
  */
 export function realtimeInstanceId(options: RealtimeInstanceIdOptions = {}): string {
@@ -61,7 +56,7 @@ export function realtimeInstanceId(options: RealtimeInstanceIdOptions = {}): str
   if (id) return id;
   if (options.requireStable) {
     throw new Error(
-      'INSTANCE_ID is required when Redis realtime fan-out is enabled (set a unique value per replica, e.g. the pod name)',
+      'INSTANCE_ID is required when Redis realtime fan-out is enabled (set a unique restart-stable value per replica, e.g. StatefulSet pod name)',
     );
   }
   return randomUUID();

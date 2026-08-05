@@ -143,7 +143,7 @@ Optional OTP lifecycle tuning — all have sensible defaults if left unset:
 | `AI_INTERNAL_TOKEN` | Staging/prod | Protects AI internal endpoints | — |
 | `AI_DATABASE_URL` | Local compose | DB URL seen from AI container | `host.docker.internal` DSN |
 | `REALTIME_STREAM_KEY` | No | Redis Streams key for WebSocket fan-out | `realtime:events` |
-| `INSTANCE_ID` | **Required when `REDIS_URL` is set**; unique per replica | Consumer group suffix (`realtime:inst:{id}`). Reusing the same id across replicas breaks fan-out. Prefer the pod name (K8s Downward API). Pod name changes on restart — brief self-origin redelivery within catch-up grace is an accepted duplicate window. Random UUID is only allowed without Redis. | — (throws if Redis on and unset) |
+| `INSTANCE_ID` | **Required when `REDIS_URL` is set**; unique per replica and **stable across restarts** | Consumer group suffix (`realtime:inst:{id}`). Prefer StatefulSet pod name (K8s Downward API, e.g. `saas-api-0`). Reusing across pods breaks fan-out; changing on restart can replay self-origin events. Random UUID is only allowed without Redis. | — (throws if Redis on and unset) |
 
 Local Redis/AI: `pnpm infra:up` (`compose.dev.yaml`).  
 Staging/prod: Kubernetes Services `saas-redis` + `saas-ai` (see [AI Async Jobs](../features/ai-async-jobs.md)).
@@ -167,7 +167,7 @@ REDIS_URL=redis://localhost:6379/0
 AI_STREAM_KEY=ai:jobs
 AI_CONSUMER_GROUP=ai-workers
 REALTIME_STREAM_KEY=realtime:events
-# Required when REDIS_URL is set; must be unique per replica in multi-pod deploys (e.g. pod name).
+# Required when REDIS_URL is set; must be unique per replica and stable across restarts (e.g. StatefulSet pod name).
 INSTANCE_ID=api-local
 ```
 

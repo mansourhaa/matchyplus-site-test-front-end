@@ -69,16 +69,17 @@ id millisecond prefix (not publisher ISO `ts`) so a future `ts` cannot replay st
 retained rows and a lagging `ts` cannot hide live rows. Idle pending entries are
 reclaimed via `XAUTOCLAIM` so a failed deliver/ACK or crash does not permanently
 miss events. Events include `originInstanceId` so the publishing instance does not
-double-deliver while that id is unchanged.
+double-deliver while that id is unchanged. Published stream entry ids are also remembered
+in Redis (`realtime:fanout:published:{INSTANCE_ID}`) for the retention window so a
+consumer-group recreate with the same id cannot replay this replica’s own retained rows.
 
-**`INSTANCE_ID` is required whenever Redis fan-out is enabled** and must be unique per
-replica (e.g. Kubernetes pod name via Downward API). Reusing the same value across pods
-makes them share one consumer group; Redis then load-balances entries and peers on other
-pods miss events. A random UUID every boot is not allowed with Redis. Pod name is unique
-while the pod lives but **changes on restart** — entries published by the previous pod
-within the catch-up grace window may briefly redeliver to reconnecting clients (accepted
-duplicate window; clients should treat HTTP / message ids as authoritative). Prefer a
-sticky per-replica id if that window must be zero.
+**`INSTANCE_ID` is required whenever Redis fan-out is enabled.** It must be unique per
+replica **and stable across restarts** (Kubernetes StatefulSet pod name via Downward
+API, e.g. `saas-api-0`). Reusing the same value across pods makes them share one
+consumer group; Redis then load-balances entries and peers on other pods miss events.
+A random UUID every boot is not allowed with Redis. Deployment pod names that change on
+restart are not suitable — they create a new consumer group and can replay self-origin
+events within the catch-up window.
 
 WebSocket `close` / `stop_typing` enqueues stop only when no other claim remains for
 that user/conversation. Claims are per-socket (Redis SET + per-claim key with TTL when
