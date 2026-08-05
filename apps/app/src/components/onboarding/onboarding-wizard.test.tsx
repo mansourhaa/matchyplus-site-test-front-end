@@ -1,6 +1,7 @@
 import authReducer from '@/features/auth/store/auth-slice';
 import type { AuthState } from '@/features/auth/types';
 import onboardingReducer from '@/features/onboarding/store/onboarding-slice';
+import type { OnboardingProfile } from '@/features/onboarding/types';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { act, render, screen, waitFor } from '@testing-library/react';
@@ -17,6 +18,7 @@ const {
   registeredCallbackRef,
   onNextRef,
   isAuthenticatedPropRef,
+  profilePropRef,
 } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   replaceMock: vi.fn(),
@@ -25,6 +27,7 @@ const {
   registeredCallbackRef: { current: undefined as (() => void) | undefined },
   onNextRef: { current: undefined as ((patch: unknown) => Promise<boolean>) | undefined },
   isAuthenticatedPropRef: { current: undefined as boolean | undefined },
+  profilePropRef: { current: undefined as unknown },
 }));
 
 vi.mock('next/navigation', () => ({
@@ -48,12 +51,14 @@ vi.mock('@/lib/api', async (importOriginal) => {
 vi.mock('./identity-step', () => ({
   IdentityStep: (props: {
     isAuthenticated: boolean;
+    profile: unknown;
     onRegistered?: () => void;
     onNext: (patch: unknown) => Promise<boolean>;
   }) => {
     registeredCallbackRef.current = props.onRegistered;
     onNextRef.current = props.onNext;
     isAuthenticatedPropRef.current = props.isAuthenticated;
+    profilePropRef.current = props.profile;
     return <div>Votre identité (stub)</div>;
   },
 }));
@@ -68,7 +73,7 @@ const registeredUser = {
   onboarding_completed: false,
 };
 
-const fullProfile = {
+const fullProfile: OnboardingProfile = {
   id: 'user-1',
   name: 'Jane Doe',
   auth_provider: 'phone',
@@ -90,7 +95,10 @@ const fullProfile = {
   onboardingCompleted: false,
 };
 
-function buildStore(authState: Partial<AuthState>) {
+function buildStore(
+  authState: Partial<AuthState>,
+  onboardingState: { profile?: OnboardingProfile | null } = {},
+) {
   const defaultAuthState: AuthState = {
     status: 'unknown',
     loading: false,
@@ -100,17 +108,22 @@ function buildStore(authState: Partial<AuthState>) {
     // default to "checked" so passing status: 'authenticated' alone still behaves as a
     // validated session. Tests exercising the race pass sessionChecked: false explicitly.
     sessionChecked: true,
+    sessionGeneration: 0,
   };
   return configureStore({
     reducer: { auth: authReducer, onboarding: onboardingReducer },
     preloadedState: {
       auth: { ...defaultAuthState, ...authState },
+      onboarding: { loading: false, error: null, profile: onboardingState.profile ?? null },
     },
   });
 }
 
-function renderWizard(authState: Partial<AuthState>) {
-  const store = buildStore(authState);
+function renderWizard(
+  authState: Partial<AuthState>,
+  onboardingState: { profile?: OnboardingProfile | null } = {},
+) {
+  const store = buildStore(authState, onboardingState);
   render(
     <Provider store={store}>
       <OnboardingWizard />
@@ -126,6 +139,7 @@ describe('OnboardingWizard', () => {
     registeredCallbackRef.current = undefined;
     onNextRef.current = undefined;
     isAuthenticatedPropRef.current = undefined;
+    profilePropRef.current = undefined;
   });
 
   it('ignores ?step=interests and renders identity for an unauthenticated visitor', () => {
@@ -236,7 +250,11 @@ describe('OnboardingWizard', () => {
     act(() => {
       store.dispatch({
         type: 'auth/fetchCurrentUser/fulfilled',
-        payload: { user: registeredUser },
+        // generationAtStart must match the store's current sessionGeneration (0, the
+        // default from buildStore) — auth-slice discards a fulfilled/rejected response
+        // whose generation is stale, so a raw dispatch without it would otherwise be a
+        // no-op against the real reducer.
+        payload: { user: registeredUser, generationAtStart: 0 },
       });
     });
 
@@ -261,5 +279,43 @@ describe('OnboardingWizard', () => {
     renderWizard({ status: 'authenticated', sessionChecked: true, user: registeredUser });
 
     expect(isAuthenticatedPropRef.current).toBe(true);
+  });
+
+  it('does not redirect away from identity, or leak a stale completed profile into it, for an unvalidated session', () => {
+    // Onboarding's own Redux state is only cleared on an explicit logout/resetAuthState
+    // (see onboarding-slice's resetForNewSession) — a completed profile from a *previous*
+    // session (soft logout via client navigation) can still be sitting in memory for a
+    // brief moment. Without gating on hasValidatedSession, this would immediately bounce
+    // a fresh anonymous signup away from identity, or pre-fill its fields.
+    const staleCompletedProfile = { ...fullProfile, onboardingCompleted: true };
+
+    renderWizard({ status: 'unauthenticated', user: null }, { profile: staleCompletedProfile });
+
+    expect(replaceMock).not.toHaveBeenCalled();
+    expect(screen.getByText('Votre identité (stub)')).toBeInTheDocument();
+    expect(profilePropRef.current).toBeNull();
+  });
+
+  it('does the same for a persisted-but-unvalidated session (status authenticated, sessionChecked false)', () => {
+    const staleCompletedProfile = { ...fullProfile, onboardingCompleted: true };
+
+    renderWizard(
+      { status: 'authenticated', sessionChecked: false, user: registeredUser },
+      { profile: staleCompletedProfile },
+    );
+
+    expect(replaceMock).not.toHaveBeenCalled();
+    expect(profilePropRef.current).toBeNull();
+  });
+
+  it('does redirect and pass the real profile through once the session is actually validated', () => {
+    const completedProfile = { ...fullProfile, onboardingCompleted: true };
+
+    renderWizard(
+      { status: 'authenticated', sessionChecked: true, user: registeredUser },
+      { profile: completedProfile },
+    );
+
+    expect(replaceMock).toHaveBeenCalledWith('/');
   });
 });

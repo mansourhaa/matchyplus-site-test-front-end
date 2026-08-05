@@ -75,11 +75,16 @@ export function OnboardingWizard() {
   }, [dispatch, hasValidatedSession]);
 
   useEffect(() => {
-    if (profile?.onboardingCompleted) {
+    // Also gated on hasValidatedSession: onboarding's own Redux state is only cleared on
+    // an explicit logout/resetAuthState (see onboarding-slice's resetForNewSession), not
+    // on every render, so a completed profile can still be sitting in memory for a brief
+    // moment after a soft (client-navigation) logout. Without this gate, that stale
+    // profile could immediately bounce a fresh anonymous visitor off identity.
+    if (hasValidatedSession && profile?.onboardingCompleted) {
       router.replace(resolvePostAuthDestination(nextParam, true));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.onboardingCompleted]);
+  }, [hasValidatedSession, profile?.onboardingCompleted]);
 
   const buildStepUrl = (target: OnboardingStep) => {
     const query = new URLSearchParams({ step: target });
@@ -128,7 +133,9 @@ export function OnboardingWizard() {
     case 'identity':
       return (
         <IdentityStep
-          profile={profile}
+          // Not raw `profile` — an anonymous visitor must never see (or have prefilled
+          // from) a profile left over from a previous, unrelated session.
+          profile={hasValidatedSession ? profile : null}
           stepNumber={stepNumber}
           totalSteps={totalSteps}
           loading={loading}

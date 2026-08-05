@@ -1,3 +1,9 @@
+import {
+  changePassword,
+  deleteAccount,
+  logout,
+  resetAuthState,
+} from '@/features/auth/store/auth-slice';
 import { api, getApiErrorCode } from '@/lib/api';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
@@ -50,6 +56,21 @@ export const completeOnboarding = createAsyncThunk('onboarding/complete', async 
   }
 });
 
+// /onboarding is reachable by an anonymous visitor now (identity also collects
+// credentials for a fresh phone signup) — without this, a completed profile left over
+// from a *previous* session (soft logout via client navigation, no full page reload)
+// could bounce a new anonymous signup straight off identity, or pre-fill its fields.
+// Deliberately NOT wired to fetchCurrentUser.rejected like notifications' equivalent
+// reset: that bootstrap authcheck can still be in flight when a fresh visitor finishes
+// phone signup, and a late (correctly stale) rejection must not wipe the profile that
+// signup just started building — see the sessionGeneration guard in auth-slice.ts, which
+// already prevents that same stale response from clearing the session itself.
+function resetForNewSession(state: OnboardingState) {
+  state.profile = null;
+  state.loading = false;
+  state.error = null;
+}
+
 const onboardingSlice = createSlice({
   name: 'onboarding',
   initialState,
@@ -60,6 +81,10 @@ const onboardingSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(logout.fulfilled, resetForNewSession)
+      .addCase(resetAuthState, resetForNewSession)
+      .addCase(changePassword.fulfilled, resetForNewSession)
+      .addCase(deleteAccount.fulfilled, resetForNewSession)
       .addCase(fetchOnboardingProfile.pending, (state) => {
         state.loading = true;
         state.error = null;

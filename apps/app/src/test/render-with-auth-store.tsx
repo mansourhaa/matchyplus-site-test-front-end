@@ -15,6 +15,7 @@ const DEFAULT_AUTH_STATE: AuthState = {
   // validated session everywhere else this helper is used. Tests exercising the race
   // pass sessionChecked: false explicitly.
   sessionChecked: true,
+  sessionGeneration: 0,
 };
 
 export function createAuthTestStore(authState: Partial<AuthState> = {}) {

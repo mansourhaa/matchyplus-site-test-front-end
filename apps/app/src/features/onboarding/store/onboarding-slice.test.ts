@@ -101,4 +101,42 @@ describe('onboarding-slice', () => {
 
     expect(store.getState().onboarding.error).toBe('onboarding_update_failed');
   });
+
+  describe('session reset', () => {
+    it("clears the profile on logout, so a fresh anonymous visitor never sees a previous session's completed profile", async () => {
+      vi.mocked(api.get).mockResolvedValue({ data: profile });
+      const store = buildStore();
+      await store.dispatch(fetchOnboardingProfile());
+      expect(store.getState().onboarding.profile).not.toBeNull();
+
+      store.dispatch({ type: 'auth/logout/fulfilled' });
+
+      expect(store.getState().onboarding.profile).toBeNull();
+    });
+
+    it('clears the profile on resetAuthState (e.g. a failed token refresh)', async () => {
+      vi.mocked(api.get).mockResolvedValue({ data: profile });
+      const store = buildStore();
+      await store.dispatch(fetchOnboardingProfile());
+
+      store.dispatch({ type: 'auth/resetAuthState' });
+
+      expect(store.getState().onboarding.profile).toBeNull();
+    });
+
+    it('does not clear the profile on a stale fetchCurrentUser rejection, since that would race a signup in progress', async () => {
+      // The bootstrap authcheck can still be in flight when a fresh visitor finishes
+      // phone signup on /onboarding — a late (correctly stale) rejection must not wipe
+      // the profile that signup just started building. See sessionGeneration in
+      // auth-slice.ts, which already prevents that same response from clearing the
+      // session itself.
+      vi.mocked(api.get).mockResolvedValue({ data: profile });
+      const store = buildStore();
+      await store.dispatch(fetchOnboardingProfile());
+
+      store.dispatch({ type: 'auth/fetchCurrentUser/rejected' });
+
+      expect(store.getState().onboarding.profile).toEqual(profile);
+    });
+  });
 });
