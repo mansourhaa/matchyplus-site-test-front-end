@@ -15,19 +15,15 @@ Prefix: `/api/v1/location`
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/ip-geolocation` | Approximate lat/lon (+ city/region/country) from client IP or optional `?ip=` |
+| GET | `/ip-geolocation` | Approximate lat/lon (+ city/region/country) from the authenticated client IP |
 | GET | `/reverse-geocode` | Address label from `?lat=&lon=` |
 
 Both responses set `Cache-Control: private, no-store` and use a stricter per-route rate limit (`GEOLOCATION_RATE_LIMIT`).
 
 ### IP selection
 
-1. Non-empty trimmed `?ip=` when it is a valid IPv4/IPv6 literal
-2. Else `request.ip` (honors `X-Forwarded-For` **only** when `TRUST_PROXY=true`)
-3. Empty `?ip=` falls through to the client IP
-4. If no usable client IP can be parsed → `200` with `success: false` / `Unable to determine client IP` and **no** upstream calls (avoids geolocating the API egress address)
-
-Invalid `?ip=` → `400` / `invalid_ip`.
+1. `request.ip` only (honors `X-Forwarded-For` **only** when `TRUST_PROXY=true`)
+2. If no usable client IP can be parsed → `200` with `success: false` / `Unable to determine client IP` and **no** upstream calls (avoids geolocating the API egress address)
 
 ### Providers (HTTPS only)
 
@@ -52,6 +48,9 @@ apps/api/src/
   utils/ip.ts
   utils/geo-coords.ts
   test/location-actions.test.ts
+
+apps/app/src/
+  features/location/location-context.tsx  # GPS first, then /location/ip-geolocation fallback
 ```
 
 ## Out of scope

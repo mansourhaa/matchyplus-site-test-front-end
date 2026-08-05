@@ -94,7 +94,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
     });
   });
 
-  it('uses the requester IP when no ip query param is provided', async () => {
+  it('uses the requester IP', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -125,80 +125,18 @@ describe('GET /api/v1/location/ip-geolocation', () => {
     expect(fetchMock).toHaveBeenCalledWith('https://ipwho.is/203.0.113.42', expect.anything());
   });
 
-  it('falls back to requester IP when ip query is empty', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          success: true,
-          latitude: 36.8065,
-          longitude: 10.1815,
-          city: 'Tunis',
-          region: 'Tunis',
-          country: 'Tunisia',
-        }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      ),
-    );
-
-    const app = await buildTestApp({ prisma: activeUserPrisma() });
-    apps.push(app);
-
-    const response = await app.inject({
-      method: 'GET',
-      url: '/api/v1/location/ip-geolocation?ip=',
-      headers: {
-        authorization: `Bearer ${signAccessToken('user-1')}`,
-        'x-forwarded-for': '203.0.113.42',
-      },
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(fetchMock).toHaveBeenCalledWith('https://ipwho.is/203.0.113.42', expect.anything());
-  });
-
-  it('prefers a valid ip query param over the requester IP', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          success: true,
-          latitude: 48.8566,
-          longitude: 2.3522,
-          city: 'Paris',
-          region: 'Île-de-France',
-          country: 'France',
-        }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      ),
-    );
-
+  it('rejects arbitrary ip query lookups', async () => {
     const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/location/ip-geolocation?ip=8.8.8.8',
-      headers: {
-        authorization: `Bearer ${signAccessToken('user-1')}`,
-        'x-forwarded-for': '203.0.113.42',
-      },
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(fetchMock).toHaveBeenCalledWith('https://ipwho.is/8.8.8.8', expect.anything());
-  });
-
-  it('rejects invalid ip query values', async () => {
-    const app = await buildTestApp({ prisma: activeUserPrisma() });
-    apps.push(app);
-
-    const response = await app.inject({
-      method: 'GET',
-      url: '/api/v1/location/ip-geolocation?ip=not-an-ip',
       headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(400);
-    expect(response.json()).toMatchObject({ code: 'invalid_ip' });
+    expect(response.json()).toMatchObject({ code: 'FST_ERR_VALIDATION' });
   });
 
   it('does not call upstream when client IP cannot be determined', async () => {

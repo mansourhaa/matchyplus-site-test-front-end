@@ -26,19 +26,8 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
     },
     async (request, reply) => {
       try {
-        const queryIp = request.query.ip?.trim() || undefined;
-        let ip: string | undefined;
-
-        if (queryIp) {
-          const parsed = parseIpAddress(queryIp);
-          if (!parsed) {
-            throw badRequest('Invalid IP address', 'invalid_ip');
-          }
-          ip = parsed;
-        } else {
-          // Fastify request.ip (honors X-Forwarded-For only when TRUST_PROXY is enabled).
-          ip = parseIpAddress(request.ip) ?? undefined;
-        }
+        // Fastify request.ip honors X-Forwarded-For only when TRUST_PROXY is enabled.
+        const ip = parseIpAddress(request.ip) ?? undefined;
 
         // Never call upstream without a concrete IP — bare provider URLs geolocate
         // the API egress address and would look like a successful user location.

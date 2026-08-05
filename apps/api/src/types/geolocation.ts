@@ -1,7 +1,4 @@
-export type IpGeolocationQuery = {
-  /** Optional IP to look up; defaults to the authenticated requester's client IP. */
-  ip?: string;
-};
+export type IpGeolocationQuery = Record<string, never>;
 
 export type IpGeolocationResult = {
   success: boolean;

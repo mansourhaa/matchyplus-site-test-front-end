@@ -52,20 +52,14 @@ export const ipGeolocationSchema = {
   tags: ['location'],
   summary: 'IP geolocation proxy',
   description:
-    'Returns approximate location for the requester IP (or an optional validated IP). ' +
+    'Returns approximate location for the authenticated requester IP only. ' +
     'Tries multiple HTTPS upstream providers with failover. Requires JWT. ' +
     'Used as a GPS fallback for discovery matching when browser geolocation is unavailable.',
   security: [{ http: [] }],
   querystring: {
     type: 'object',
     additionalProperties: false,
-    properties: {
-      ip: {
-        type: 'string',
-        description: 'Optional IPv4/IPv6 to geolocate (defaults to requester client IP)',
-        maxLength: 45,
-      },
-    },
+    properties: {},
   },
   response: {
     200: {
