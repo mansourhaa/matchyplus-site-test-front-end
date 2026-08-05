@@ -7,6 +7,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { NotificationsView } from './notifications-view';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock('@/lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api')>();
   return {
@@ -14,9 +18,27 @@ vi.mock('@/lib/api', async (importOriginal) => {
     api: {
       get: vi.fn(),
       post: vi.fn(),
+      put: vi.fn(),
     },
   };
 });
+
+const defaultPreferences = {
+  all_enabled: true,
+  matches: true,
+  messages: true,
+  views: true,
+  email: true,
+};
+
+function mockListAndPreferences(list: { notifications: unknown[]; unread_count: number }) {
+  vi.mocked(api.get).mockImplementation(async (url: string) => {
+    if (String(url).includes('/preferences')) {
+      return { data: { preferences: defaultPreferences } };
+    }
+    return { data: list };
+  });
+}
 
 function buildStore() {
   return configureStore({ reducer: { notifications: notificationsReducer } });
@@ -28,9 +50,7 @@ describe('NotificationsView', () => {
   });
 
   it('shows an empty state when there are no notifications', async () => {
-    vi.mocked(api.get).mockResolvedValue({
-      data: { notifications: [], unread_count: 0 },
-    });
+    mockListAndPreferences({ notifications: [], unread_count: 0 });
     const store = buildStore();
 
     render(
@@ -40,22 +60,21 @@ describe('NotificationsView', () => {
     );
 
     expect(await screen.findByText('Aucune notification pour l’instant')).toBeInTheDocument();
+    expect(await screen.findByText('Préférences')).toBeInTheDocument();
   });
 
   it('renders a profile-view notification and lets the user mark it as read', async () => {
-    vi.mocked(api.get).mockResolvedValue({
-      data: {
-        notifications: [
-          {
-            id: 'notif-1',
-            type: 'PROFILE_VIEW',
-            data: { viewerId: 'user-2', viewerName: 'Jane', viewerImage: null },
-            read: false,
-            created_at: new Date().toISOString(),
-          },
-        ],
-        unread_count: 1,
-      },
+    mockListAndPreferences({
+      notifications: [
+        {
+          id: 'notif-1',
+          type: 'PROFILE_VIEW',
+          data: { viewerId: 'user-2', viewerName: 'Jane', viewerImage: null },
+          read: false,
+          created_at: new Date().toISOString(),
+        },
+      ],
+      unread_count: 1,
     });
     vi.mocked(api.post).mockResolvedValue({ data: undefined });
     const store = buildStore();
@@ -71,9 +90,8 @@ describe('NotificationsView', () => {
     fireEvent.click(entry);
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/notifications/notif-1/read'));
-    // The mark bumps the store's revision, which can discard a concurrently in-flight
-    // fetch — a follow-up fetch recovers from that, so it must fire after every mark.
-    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
+    // Mount fires list + preferences; mark triggers a follow-up list fetch.
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(3));
   });
 
   it('keeps the already-loaded list visible when a background refetch fails', async () => {
@@ -113,19 +131,17 @@ describe('NotificationsView', () => {
   });
 
   it('marks every notification as read from the header action', async () => {
-    vi.mocked(api.get).mockResolvedValue({
-      data: {
-        notifications: [
-          {
-            id: 'notif-1',
-            type: 'PROFILE_VIEW',
-            data: { viewerId: 'user-2', viewerName: 'Jane', viewerImage: null },
-            read: false,
-            created_at: new Date().toISOString(),
-          },
-        ],
-        unread_count: 1,
-      },
+    mockListAndPreferences({
+      notifications: [
+        {
+          id: 'notif-1',
+          type: 'PROFILE_VIEW',
+          data: { viewerId: 'user-2', viewerName: 'Jane', viewerImage: null },
+          read: false,
+          created_at: new Date().toISOString(),
+        },
+      ],
+      unread_count: 1,
     });
     vi.mocked(api.post).mockResolvedValue({ data: undefined });
     const store = buildStore();
@@ -139,6 +155,6 @@ describe('NotificationsView', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Tout marquer comme lu' }));
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/notifications/read-all'));
-    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(3));
   });
 });

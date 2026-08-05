@@ -42,6 +42,9 @@ function createMockPrisma() {
       delete: vi.fn(),
       count: vi.fn(),
     },
+    notification: {
+      create: vi.fn().mockResolvedValue({ id: 'notif-msg-1' }),
+    },
     plan: {
       findUnique: vi.fn(),
     },
@@ -50,6 +53,14 @@ function createMockPrisma() {
   prisma.$transaction.mockImplementation(async (fn: (tx: typeof prisma) => unknown) => fn(prisma));
   return prisma;
 }
+
+const prefsEnabled = {
+  notify_all: true,
+  notify_matches: true,
+  notify_messages: true,
+  notify_views: true,
+  notify_email: true,
+};
 
 describe('ConversationService', () => {
   beforeEach(() => {
@@ -186,7 +197,16 @@ describe('ConversationService', () => {
       user_high_id: 'u2',
     });
     prisma.userBlock.findFirst.mockResolvedValue(null);
-    prisma.user.findUnique.mockResolvedValue({ plan: UserPlan.FREE });
+    prisma.user.findUnique.mockImplementation(async ({ select }) => {
+      if (select?.plan) return { plan: UserPlan.FREE };
+      if (select?.notify_all !== undefined || select?.notify_messages !== undefined) {
+        return prefsEnabled;
+      }
+      if (select?.name !== undefined || select?.image !== undefined) {
+        return { name: 'Alice', image: 'alice.png' };
+      }
+      return null;
+    });
     prisma.plan.findUnique.mockResolvedValue({ messages_per_day: -1 });
     prisma.message.create.mockResolvedValue({
       id: 'msg-1',
@@ -214,7 +234,18 @@ describe('ConversationService', () => {
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(notify).toHaveBeenCalledWith('u2', 'new_message', expect.any(Object));
     expect(notify).toHaveBeenCalledWith('u1', 'new_message', expect.any(Object));
-    expect(notify).toHaveBeenCalledWith('u2', 'notification_message', expect.any(Object));
+    expect(notify).toHaveBeenCalledWith(
+      'u2',
+      'notification_message',
+      expect.objectContaining({
+        event_type: 'message',
+        conversation_id: 'conv-1',
+        sender_id: 'u1',
+        sender_name: 'Alice',
+        preview: 'hello',
+        notification_id: 'notif-msg-1',
+      }),
+    );
   });
 
   it('enforces daily message quota inside the send transaction', async () => {

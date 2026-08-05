@@ -1,6 +1,7 @@
 import { PrismaClient, SwipeDirection, UserPlan } from '@saas-boilerplate/types';
 
 import { MatchSummary, PostSwipeBody, SwipeResult } from '../types/matching.js';
+import { MatchNotificationData } from '../types/notification.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import {
   badRequest,
@@ -11,6 +12,7 @@ import {
 } from '../utils/http-errors.js';
 import { orderedUserPair, otherUserId } from '../utils/match-pair.js';
 import { ConversationService } from './conversation.js';
+import { NotificationService } from './notification.js';
 import { SwipeQuotaService } from './swipe-quota.js';
 
 export type MatchNotifier = (
@@ -28,16 +30,53 @@ export class SwipeService {
   prisma: PrismaClient;
   quota: SwipeQuotaService;
   conversations: ConversationService;
+  notifications: NotificationService;
   notify: MatchNotifier;
 
-  constructor(options: AbstractServiceOptions & { notify?: MatchNotifier }) {
+  constructor(
+    options: AbstractServiceOptions & {
+      notify?: MatchNotifier;
+      notifications?: NotificationService;
+    },
+  ) {
     this.prisma = options.prisma;
     this.quota = new SwipeQuotaService({ prisma: options.prisma });
     this.notify = options.notify ?? (() => undefined);
+    this.notifications =
+      options.notifications ??
+      new NotificationService({
+        prisma: options.prisma,
+        push: this.notify,
+      });
     this.conversations = new ConversationService({
       prisma: options.prisma,
       notify: this.notify,
+      notifications: this.notifications,
     });
+  }
+
+  /**
+   * Persist a MATCH inbox row when prefs allow; if suppressed, still push ephemeral
+   * `notification_match` so the client can sync match state.
+   */
+  private async deliverMatchNotification(
+    recipientId: string,
+    data: MatchNotificationData,
+  ): Promise<void> {
+    try {
+      const result = await this.notifications.createIfEnabled({
+        userId: recipientId,
+        type: 'MATCH',
+        data,
+      });
+      if (!result.created) {
+        this.notify(recipientId, 'notification_match', data as unknown as Record<string, unknown>);
+      }
+    } catch (err) {
+      // Persist failed — still push live match-state so peers refresh matches/inbox.
+      console.warn('match_notification_persist_failed', err);
+      this.notify(recipientId, 'notification_match', data as unknown as Record<string, unknown>);
+    }
   }
 
   private async assertNotBlocked(a: string, b: string): Promise<void> {
@@ -168,25 +207,14 @@ export class SwipeService {
       let match: MatchSummary | null = null;
 
       if (direction === SwipeDirection.RIGHT) {
-        if (previousDirection !== SwipeDirection.RIGHT) {
-          const me = await this.prisma.user.findUnique({
-            where: { id: userId },
-            select: { name: true, image: true },
-          });
-          const firstName =
-            String(me?.name || '')
-              .trim()
-              .split(/\s+/)[0] || 'Someone';
-          this.notify(targetId, 'notification_match', {
-            event_type: 'match_request',
-            title: 'Match request',
-            body: `${firstName} sent you a match request.`,
-            actor_first_name: firstName,
-            sender_picture: me?.image || null,
-            from_user_id: userId,
-          });
-        }
+        const me = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { name: true, image: true },
+        });
 
+        // Detect mutual match before emitting a match_request — otherwise a swipe that
+        // completes an already-reciprocal like would leave a stale "request" inbox row
+        // alongside the real MATCH notification.
         const detected = await this.detectMatch(userId, targetId);
 
         if (detected) {
@@ -197,22 +225,32 @@ export class SwipeService {
           );
 
           if (detected.created) {
-            const payload = {
-              event_type: 'match',
+            const base = {
+              event_type: 'match' as const,
               match_id: detected.match_id,
               matched_at: detected.matched_at,
               conversation_id: conversation.id,
               body: 'New match! Open your matches to continue.',
             };
-            // Bilateral notify — both users get the same match event.
-            this.notify(userId, 'notification_match', {
-              ...payload,
-              matched_user_id: targetId,
-            });
-            this.notify(targetId, 'notification_match', {
-              ...payload,
-              matched_user_id: userId,
-            });
+            // Best-effort after match/conversation commit — never fail the swipe HTTP
+            // response because inbox/email delivery failed (clients still get match via
+            // the response body; peers get a best-effort push).
+            try {
+              await this.deliverMatchNotification(userId, {
+                ...base,
+                matched_user_id: targetId,
+                actor_name: target.name,
+                actor_image: target.image,
+              });
+              await this.deliverMatchNotification(targetId, {
+                ...base,
+                matched_user_id: userId,
+                actor_name: me?.name ?? undefined,
+                actor_image: me?.image ?? null,
+              });
+            } catch (err) {
+              console.warn('match_notification_failed', err);
+            }
           }
 
           match = {
@@ -221,6 +259,27 @@ export class SwipeService {
             matched_user_id: detected.matched_user_id,
             conversation_id: conversation.id,
           };
+        } else if (previousDirection !== SwipeDirection.RIGHT) {
+          const firstName =
+            String(me?.name || '')
+              .trim()
+              .split(/\s+/)[0] || 'Someone';
+          try {
+            await this.notifications.createIfEnabled({
+              userId: targetId,
+              type: 'MATCH_REQUEST',
+              data: {
+                event_type: 'match_request',
+                title: 'Match request',
+                body: `${firstName} sent you a match request.`,
+                actor_first_name: firstName,
+                sender_picture: me?.image || null,
+                from_user_id: userId,
+              },
+            });
+          } catch (err) {
+            console.warn('match_request_notification_failed', err);
+          }
         }
       }
 

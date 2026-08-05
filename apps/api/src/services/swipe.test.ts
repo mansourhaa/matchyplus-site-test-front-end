@@ -34,6 +34,9 @@ function createMockPrisma() {
       create: vi.fn(),
       update: vi.fn(),
     },
+    notification: {
+      create: vi.fn().mockResolvedValue({ id: 'notif-1' }),
+    },
     plan: {
       findUnique: vi.fn(),
     },
@@ -42,6 +45,14 @@ function createMockPrisma() {
   prisma.$transaction.mockImplementation(async (fn: (tx: typeof prisma) => unknown) => fn(prisma));
   return prisma;
 }
+
+const prefsEnabled = {
+  notify_all: true,
+  notify_matches: true,
+  notify_messages: true,
+  notify_views: true,
+  notify_email: true,
+};
 
 describe('SwipeService', () => {
   it('creates a match and notifies both users on a reciprocal right swipe', async () => {
@@ -54,6 +65,10 @@ describe('SwipeService', () => {
         return { plan: UserPlan.FREE };
       }
 
+      if (select?.notify_all !== undefined || select?.notify_matches !== undefined) {
+        return prefsEnabled;
+      }
+
       if (where.id === 'u2') {
         return { id: 'u2', name: 'Bob Builder', image: 'bob.png' };
       }
@@ -64,6 +79,8 @@ describe('SwipeService', () => {
 
       return null;
     });
+    let notifSeq = 0;
+    prisma.notification.create.mockImplementation(async () => ({ id: `notif-${++notifSeq}` }));
     prisma.plan.findUnique.mockResolvedValue({ swipes_per_day: 20 });
     prisma.userBlock.findFirst.mockResolvedValue(null);
     prisma.swipe.findUnique.mockResolvedValue(null);
@@ -126,19 +143,9 @@ describe('SwipeService', () => {
       data: { matches: { increment: 1 } },
     });
 
-    expect(notify).toHaveBeenCalledTimes(3);
+    expect(notify).toHaveBeenCalledTimes(2);
     expect(notify).toHaveBeenNthCalledWith(
       1,
-      'u2',
-      'notification_match',
-      expect.objectContaining({
-        event_type: 'match_request',
-        actor_first_name: 'Alice',
-        from_user_id: 'u1',
-      }),
-    );
-    expect(notify).toHaveBeenNthCalledWith(
-      2,
       'u1',
       'notification_match',
       expect.objectContaining({
@@ -146,10 +153,11 @@ describe('SwipeService', () => {
         match_id: 'match-1',
         matched_user_id: 'u2',
         conversation_id: 'conv-1',
+        notification_id: expect.any(String),
       }),
     );
     expect(notify).toHaveBeenNthCalledWith(
-      3,
+      2,
       'u2',
       'notification_match',
       expect.objectContaining({
@@ -157,6 +165,60 @@ describe('SwipeService', () => {
         match_id: 'match-1',
         matched_user_id: 'u1',
         conversation_id: 'conv-1',
+        notification_id: expect.any(String),
+      }),
+    );
+  });
+
+  it('emits a match_request only when the right swipe is not yet mutual', async () => {
+    const prisma = createMockPrisma();
+    const notify = vi.fn();
+
+    prisma.user.findUnique.mockImplementation(async ({ where, select }) => {
+      if (select?.plan) {
+        return { plan: UserPlan.FREE };
+      }
+      if (select?.notify_all !== undefined || select?.notify_matches !== undefined) {
+        return prefsEnabled;
+      }
+      if (where.id === 'u1') {
+        return { id: 'u1', name: 'Alice Doe', image: 'alice.png' };
+      }
+      if (where.id === 'u2') {
+        return { id: 'u2', name: 'Bob Builder', image: 'bob.png' };
+      }
+      return null;
+    });
+    prisma.plan.findUnique.mockResolvedValue({ swipes_per_day: 20 });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.swipe.findUnique.mockResolvedValue(null);
+    prisma.swipe.upsert.mockResolvedValue({
+      id: 'swipe-1',
+      swiper_id: 'u1',
+      target_id: 'u2',
+      direction: SwipeDirection.RIGHT,
+    });
+    prisma.swipeLog.create.mockResolvedValue({ id: 'log-1' });
+    prisma.swipe.findFirst.mockResolvedValue(null);
+    prisma.swipeLog.count.mockResolvedValue(1);
+    prisma.notification.create.mockResolvedValue({ id: 'notif-req' });
+
+    const service = new SwipeService({ prisma: prisma as never, notify });
+    const result = await service.postSwipe('u1', {
+      target_user_id: 'u2',
+      direction: 'right',
+    });
+
+    expect(result.match).toBeNull();
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(notify).toHaveBeenCalledWith(
+      'u2',
+      'notification_match',
+      expect.objectContaining({
+        event_type: 'match_request',
+        actor_first_name: 'Alice',
+        from_user_id: 'u1',
+        notification_id: 'notif-req',
       }),
     );
   });

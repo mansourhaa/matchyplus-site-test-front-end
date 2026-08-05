@@ -142,6 +142,14 @@ model User {
   gps_latitude    Float?
   gps_longitude   Float?
 
+  /// In-app notification preferences. Master (`notify_all`) must be on AND the per-category
+  /// toggle for the event. `notify_email` is independent (checked by the email layer).
+  notify_all      Boolean @default(true)
+  notify_matches  Boolean @default(true)
+  notify_messages Boolean @default(true)
+  notify_views    Boolean @default(true)
+  notify_email    Boolean @default(true)
+
   create_at  DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
 
@@ -414,6 +422,9 @@ model Rating {
 /// string) so the set of event types the app can send stays explicit and query-able.
 enum NotificationType {
   PROFILE_VIEW
+  MATCH
+  MATCH_REQUEST
+  MESSAGE
 }
 
 /// In-app notification feed. A row is created the moment the triggering event happens,

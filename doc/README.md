@@ -64,6 +64,8 @@ flowchart LR
 | [UI System](./features/ui-system.md) | shadcn/ui, Tailwind v4, theming, and styling |
 | [API Architecture](./features/api-architecture.md) | Fastify plugins, routes, and validation |
 | [Matching & Discovery](./features/matching.md) | Swipe feed, mutual match, quota (scripted v5) |
+| [Messaging & Conversations](./features/messaging.md) | Match-gated DMs, voice, realtime chat events |
+| [Notifications](./features/notifications.md) | Persist-then-push feed, preferences, email |
 | [Database Layer](./features/database-layer.md) | Prisma schema, shared types, and client usage |
 | [AI Async Jobs (Option C)](./features/ai-async-jobs.md) | Redis Streams queue, Flask worker, AiJob model |
 
