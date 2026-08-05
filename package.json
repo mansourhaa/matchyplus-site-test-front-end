@@ -59,8 +59,18 @@
   "packageManager": "pnpm@10.12.4",
   "pnpm": {
     "overrides": {
-      "postcss": "^8.5.10",
-      "@hono/node-server": "^1.19.13"
+      "postcss": "^8.5.23",
+      "@hono/node-server": "^1.19.13",
+      "@fastify/static": "10.1.2",
+      "brace-expansion@1": "1.1.18",
+      "brace-expansion@2": "2.1.4",
+      "brace-expansion@5": "5.0.9",
+      "fast-uri": "^3.1.5",
+      "find-my-way": "^9.7.0",
+      "hono": "^4.12.34",
+      "ip-address": "^10.3.1",
+      "sharp": "^0.35.0",
+      "valibot": "^1.4.2"
     },
     "patchedDependencies": {
       "next-themes@0.4.6": "patches/next-themes@0.4.6.patch"
