@@ -212,7 +212,13 @@ export function useMatchingRealtime(enabled = true) {
 
               if (message.event === 'notification_message') {
                 void dispatch(fetchNotifications());
-                if (pathnameRef.current !== '/notifications') {
+                const conversationId =
+                  typeof message.payload?.conversation_id === 'string'
+                    ? message.payload.conversation_id
+                    : null;
+                const viewingThatChat =
+                  conversationId !== null && pathnameRef.current === `/chat/${conversationId}`;
+                if (pathnameRef.current !== '/notifications' && !viewingThatChat) {
                   const id = String(nextToastId.current++);
                   const senderName = String(message.payload?.sender_name || 'Quelqu’un');
                   const preview = String(message.payload?.preview || 'Nouveau message');
@@ -232,6 +238,11 @@ export function useMatchingRealtime(enabled = true) {
                     delete dismissTimers.current[id];
                   }, PUSH_TOAST_LIFETIME_MS);
                 }
+                return;
+              }
+
+              if (message.event === 'notifications_updated') {
+                void dispatch(fetchNotifications());
                 return;
               }
 

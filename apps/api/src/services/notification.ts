@@ -426,4 +426,50 @@ export class NotificationService {
       throw err;
     }
   }
+
+  /**
+   * Delete outstanding MATCH_REQUEST inbox rows for a (recipient, from_user) pair.
+   * Used when the sender withdraws a like so the peer does not keep an orphan request.
+   */
+  async retractMatchRequest(recipientId: string, fromUserId: string): Promise<number> {
+    try {
+      const result = await this.prisma.notification.deleteMany({
+        where: {
+          user_id: recipientId,
+          type: 'MATCH_REQUEST',
+          data: { path: ['from_user_id'], equals: fromUserId },
+        },
+      });
+      if (result.count > 0) {
+        this.push(recipientId, 'notifications_updated', {
+          reason: 'match_request_retracted',
+          from_user_id: fromUserId,
+        });
+      }
+      return result.count;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * On mutual match, drop any pending MATCH_REQUEST rows between the pair (either
+   * direction) so the inbox does not show both a request and a new match.
+   */
+  async retractMatchRequestsBetween(userA: string, userB: string): Promise<number> {
+    try {
+      const result = await this.prisma.notification.deleteMany({
+        where: {
+          type: 'MATCH_REQUEST',
+          OR: [
+            { user_id: userA, data: { path: ['from_user_id'], equals: userB } },
+            { user_id: userB, data: { path: ['from_user_id'], equals: userA } },
+          ],
+        },
+      });
+      return result.count;
+    } catch (err) {
+      throw err;
+    }
+  }
 }

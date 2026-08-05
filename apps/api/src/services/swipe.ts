@@ -236,6 +236,7 @@ export class SwipeService {
             // response because inbox/email delivery failed (clients still get match via
             // the response body; peers get a best-effort push).
             try {
+              await this.notifications.retractMatchRequestsBetween(userId, targetId);
               await this.deliverMatchNotification(userId, {
                 ...base,
                 matched_user_id: targetId,
@@ -459,6 +460,13 @@ export class SwipeService {
           direction: SwipeDirection.WITHDRAWN,
         },
       });
+
+      // Best-effort: retract the peer's MATCH_REQUEST so they do not keep an orphan unread.
+      try {
+        await this.notifications.retractMatchRequest(targetId, userId);
+      } catch (err) {
+        console.warn('match_request_retract_failed', err);
+      }
 
       return { withdrawn_user_id: targetId };
     } catch (err) {

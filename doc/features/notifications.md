@@ -30,7 +30,7 @@ Prisma `NotificationType`: `PROFILE_VIEW` | `MATCH` | `MATCH_REQUEST` | `MESSAGE
 | --- | --- | --- | --- |
 | `PROFILE_VIEW` | `notification_profile_view` | `views` | `profile_view` |
 | `MATCH` | `notification_match` | `matches` | `match` |
-| `MATCH_REQUEST` | `notification_match` | `matches` | `match` |
+| `MATCH_REQUEST` | `notification_match` | `matches` | `match_request` |
 | `MESSAGE` | `notification_message` | `messages` | `message` |
 
 Match payloads include `event_type: 'match' | 'match_request'` for client compatibility. Message payloads include `conversation_id`, `sender_id`, `sender_name`, `sender_image`, `preview`.
@@ -62,14 +62,14 @@ Prefix: `/api/v1/notifications` (JWT required)
 ## Producers
 
 - **Profile view** — `POST /profiles/:id/view` → `createProfileViewIfEnabled` (cooldown dedupe).
-- **Swipe** — right swipe → `MATCH_REQUEST` via `createIfEnabled`; new mutual match → `deliverMatchNotification` (persist if enabled, else ephemeral push).
+- **Swipe** — right swipe → `MATCH_REQUEST` via `createIfEnabled`; new mutual match → retract outstanding `MATCH_REQUEST`s between the pair, then `deliverMatchNotification` (persist if enabled, else ephemeral push). Withdraw retracts the peer's `MATCH_REQUEST` and pushes `notifications_updated`.
 - **Conversation** — after send: `new_message` to both peers (ephemeral chat); `MESSAGE` inbox via `createIfEnabled` for the peer.
 
 ## Frontend
 
 - `/notifications` — preferences toggles + typed feed; click navigates (`/matches`, `/chat/:id`, profile view marks read only).
 - Discover bell badge uses `selectNotifications.unreadCount`.
-- Realtime: any `notification_match` refetches feed; `event_type === 'match'` also refreshes match/inbox; `notification_message` refetches + toast; `notification_profile_view` unchanged.
+- Realtime: any `notification_match` refetches feed; `event_type === 'match'` also refreshes match/inbox; `notification_message` refetches + toast (toast suppressed when pathname is `/chat/:conversation_id`); `notifications_updated` refetches feed only; `notification_profile_view` unchanged.
 
 ## Email / SMTP
 

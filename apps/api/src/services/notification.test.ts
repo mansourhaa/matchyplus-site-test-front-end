@@ -16,6 +16,7 @@ function createMockPrisma() {
       findMany: vi.fn(),
       count: vi.fn(),
       updateMany: vi.fn(),
+      deleteMany: vi.fn(),
     },
     $transaction: vi.fn(),
   };
@@ -450,6 +451,57 @@ describe('NotificationService', () => {
         data: { read_at: expect.any(Date) },
       });
       expect(result).toEqual({ marked: true });
+    });
+  });
+
+  describe('retractMatchRequest', () => {
+    it('deletes MATCH_REQUEST rows for the pair and pushes notifications_updated', async () => {
+      const { service, prisma, push } = createService();
+      prisma.notification.deleteMany.mockResolvedValue({ count: 1 });
+
+      const count = await service.retractMatchRequest('user-2', 'user-1');
+
+      expect(count).toBe(1);
+      expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: {
+          user_id: 'user-2',
+          type: 'MATCH_REQUEST',
+          data: { path: ['from_user_id'], equals: 'user-1' },
+        },
+      });
+      expect(push).toHaveBeenCalledWith(
+        'user-2',
+        'notifications_updated',
+        expect.objectContaining({ reason: 'match_request_retracted' }),
+      );
+    });
+
+    it('does not push when nothing was deleted', async () => {
+      const { service, prisma, push } = createService();
+      prisma.notification.deleteMany.mockResolvedValue({ count: 0 });
+
+      await service.retractMatchRequest('user-2', 'user-1');
+      expect(push).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('retractMatchRequestsBetween', () => {
+    it('deletes MATCH_REQUEST rows in either direction for the pair', async () => {
+      const { service, prisma } = createService();
+      prisma.notification.deleteMany.mockResolvedValue({ count: 2 });
+
+      const count = await service.retractMatchRequestsBetween('u1', 'u2');
+
+      expect(count).toBe(2);
+      expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: {
+          type: 'MATCH_REQUEST',
+          OR: [
+            { user_id: 'u1', data: { path: ['from_user_id'], equals: 'u2' } },
+            { user_id: 'u2', data: { path: ['from_user_id'], equals: 'u1' } },
+          ],
+        },
+      });
     });
   });
 });

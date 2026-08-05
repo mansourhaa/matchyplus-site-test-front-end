@@ -36,6 +36,7 @@ function createMockPrisma() {
     },
     notification: {
       create: vi.fn().mockResolvedValue({ id: 'notif-1' }),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     plan: {
       findUnique: vi.fn(),
@@ -143,6 +144,16 @@ describe('SwipeService', () => {
       data: { matches: { increment: 1 } },
     });
 
+    expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+      where: {
+        type: 'MATCH_REQUEST',
+        OR: [
+          { user_id: 'u1', data: { path: ['from_user_id'], equals: 'u2' } },
+          { user_id: 'u2', data: { path: ['from_user_id'], equals: 'u1' } },
+        ],
+      },
+    });
+
     expect(notify).toHaveBeenCalledTimes(2);
     expect(notify).toHaveBeenNthCalledWith(
       1,
@@ -225,12 +236,14 @@ describe('SwipeService', () => {
 
   it('withdraws a pending like by logging WITHDRAWN instead of a permanent pass', async () => {
     const prisma = createMockPrisma();
+    const notify = vi.fn();
     prisma.user.findUnique.mockResolvedValue({ id: 'u2' });
     prisma.match.findUnique.mockResolvedValue(null);
     prisma.swipe.deleteMany.mockResolvedValue({ count: 1 });
     prisma.swipeLog.create.mockResolvedValue({ id: 'log-2' });
+    prisma.notification.deleteMany.mockResolvedValue({ count: 1 });
 
-    const service = new SwipeService({ prisma: prisma as never });
+    const service = new SwipeService({ prisma: prisma as never, notify });
     const result = await service.withdrawPending('u1', 'u2');
 
     expect(result).toEqual({ withdrawn_user_id: 'u2' });
@@ -248,6 +261,18 @@ describe('SwipeService', () => {
         direction: SwipeDirection.WITHDRAWN,
       },
     });
+    expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+      where: {
+        user_id: 'u2',
+        type: 'MATCH_REQUEST',
+        data: { path: ['from_user_id'], equals: 'u1' },
+      },
+    });
+    expect(notify).toHaveBeenCalledWith(
+      'u2',
+      'notifications_updated',
+      expect.objectContaining({ reason: 'match_request_retracted', from_user_id: 'u1' }),
+    );
   });
 
   it('rejects a right swipe when the daily quota is exhausted', async () => {
