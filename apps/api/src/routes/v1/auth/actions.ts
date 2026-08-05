@@ -382,12 +382,19 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
   fastify.post<{ Body: { refreshToken?: string } }>('/logout', {}, async (request, reply) => {
     try {
-      const presented = readRefreshToken(request);
-      if (presented.token) {
-        // Best-effort: an already-expired or already-revoked token must not block the
-        // client from clearing its own (now-stale) cookies / stored tokens.
-        await tokenService.revokeRefreshToken(presented.token).catch(() => undefined);
-      }
+      // Cap may present a stale body refreshToken while the rotated cookie is still
+      // active — revoke every distinct candidate (body + cookie) best-effort.
+      const candidates = new Set<string>();
+      const cookieToken = cookieRefreshToken(request);
+      if (cookieToken) candidates.add(cookieToken);
+      const bodyToken = (request.body as { refreshToken?: string } | null)?.refreshToken?.trim();
+      if (bodyToken) candidates.add(bodyToken);
+
+      await Promise.all(
+        [...candidates].map((token) =>
+          tokenService.revokeRefreshToken(token).catch(() => undefined),
+        ),
+      );
 
       clearMemberSessionCookies(reply);
 
