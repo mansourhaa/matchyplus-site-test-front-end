@@ -7,11 +7,13 @@ function signAccessToken(userId: string) {
   return jwt.sign({ id: userId, email: 'user@example.com' }, 'test-access-token-secret');
 }
 
-const activeUserPrisma = {
-  user: {
-    findUniqueOrThrow: vi.fn().mockResolvedValue({ id: 'user-1', status: 'ACTIVE' }),
-  } as never,
-};
+function activeUserPrisma() {
+  return {
+    user: {
+      findUniqueOrThrow: vi.fn().mockResolvedValue({ id: 'user-1', status: 'ACTIVE' }),
+    } as never,
+  };
+}
 
 describe('GET /api/v1/location/ip-geolocation', () => {
   const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
@@ -20,9 +22,6 @@ describe('GET /api/v1/location/ip-geolocation', () => {
     await Promise.all(apps.map((app) => app.close()));
     apps.length = 0;
     vi.restoreAllMocks();
-    activeUserPrisma.user.findUniqueOrThrow = vi
-      .fn()
-      .mockResolvedValue({ id: 'user-1', status: 'ACTIVE' }) as never;
   });
 
   it('requires authentication', async () => {
@@ -52,7 +51,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
       ),
     );
 
-    const app = await buildTestApp({ prisma: activeUserPrisma });
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
@@ -78,7 +77,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
   it('returns fallback when all providers fail', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network error'));
 
-    const app = await buildTestApp({ prisma: activeUserPrisma });
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
@@ -110,7 +109,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
       ),
     );
 
-    const app = await buildTestApp({ prisma: activeUserPrisma });
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
@@ -141,7 +140,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
       ),
     );
 
-    const app = await buildTestApp({ prisma: activeUserPrisma });
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
@@ -172,7 +171,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
       ),
     );
 
-    const app = await buildTestApp({ prisma: activeUserPrisma });
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
@@ -189,7 +188,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
   });
 
   it('rejects invalid ip query values', async () => {
-    const app = await buildTestApp({ prisma: activeUserPrisma });
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
@@ -237,7 +236,7 @@ describe('GET /api/v1/location/reverse-geocode', () => {
   });
 
   it('returns 400 when lat or lon are not valid numbers', async () => {
-    const app = await buildTestApp({ prisma: activeUserPrisma });
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
@@ -250,7 +249,7 @@ describe('GET /api/v1/location/reverse-geocode', () => {
   });
 
   it('returns 400 when coordinates are out of range', async () => {
-    const app = await buildTestApp({ prisma: activeUserPrisma });
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
@@ -273,7 +272,7 @@ describe('GET /api/v1/location/reverse-geocode', () => {
       ),
     );
 
-    const app = await buildTestApp({ prisma: activeUserPrisma });
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
@@ -305,7 +304,7 @@ describe('GET /api/v1/location/reverse-geocode', () => {
       ),
     );
 
-    const app = await buildTestApp({ prisma: activeUserPrisma });
+    const app = await buildTestApp({ prisma: activeUserPrisma() });
     apps.push(app);
 
     const response = await app.inject({
