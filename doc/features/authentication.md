@@ -113,12 +113,14 @@ flowchart LR
     Redux --> UI[Dashboard UI]
 ```
 
-Neither token is ever readable from frontend code — both leave the API only as
+Neither token is ever readable from **browser** frontend code — both leave the API only as
 HttpOnly cookies (`apps/api/src/utils/member-session.ts`), attached automatically by
 the browser on same-site requests. `apps/app/src/lib/api.ts`'s axios instance uses
-`withCredentials: true` and never attaches an `Authorization` header itself.
+`withCredentials: true` and, on the web, never attaches an `Authorization` header itself.
 
-Since no token is JS-visible, "authenticated" can only be known by asking the API.
+**Capacitor exception:** see [Mobile (Capacitor)](#mobile-capacitor).
+
+Since no token is JS-visible on the web, "authenticated" can only be known by asking the API.
 `AuthState.status` (`unknown | authenticated | unauthenticated`) starts as `'unknown'`
 on every page load; `useBootstrapSession` (`apps/app/src/features/auth/hooks`) always
 calls `GET /api/v1/auth/authcheck` once at mount to resolve it — a `status` value
@@ -126,6 +128,30 @@ carried over by redux-persist from a previous session is never trusted on its ow
 since the cookie it implies may have since expired. Only the **user profile** (not a
 token) is cached in `sessionStorage`, for fast optimistic rendering while that check
 resolves. See `apps/app/src/lib/auth.ts`.
+
+## Mobile (Capacitor)
+
+**Shell**: `apps/mobile` — Capacitor wraps the live Next.js member app via
+`CAPACITOR_SERVER_URL` (remote WebView). See `apps/mobile/README.md`.
+
+Cross-origin WebViews cannot reliably use the browser cookie session alone, so native
+clients opt into Bearer auth:
+
+1. Every API request from Cap sends `X-Matchy-Client: mobile` (see `apps/app/src/lib/native.ts`).
+2. Session-issuing routes (`login-phone`, `register-phone`, `oauth/exchange`, `refresh`)
+   still set HttpOnly cookies **and**, when that header is present, also return
+   `accessToken` + `refreshToken` in the JSON body.
+3. Cap stores those JWTs in `localStorage` (`apps/app/src/lib/mobile-tokens.ts`) and
+   attaches `Authorization: Bearer …` on axios calls. `POST /auth/refresh` accepts
+   `{ refreshToken }` in the body when the cookie is missing.
+4. `verifyToken` already accepts Bearer (see [API authorization](#api-authorization)).
+5. Realtime WebSocket uses `?access_token=` on Cap (API already promotes the query param).
+6. A non-HttpOnly `access_token` cookie is mirrored onto the **Next.js app origin** so
+   `proxy.ts` can still gate routes when `MEMBER_COOKIE_DOMAIN` does not cover the
+   WebView host (local emulator).
+
+Browser clients omit `X-Matchy-Client` and never receive tokens in the body — the
+cookie-only contract above is unchanged for them.
 
 ## Route protection (Next.js)
 
@@ -185,16 +211,19 @@ never selected, let alone returned.
 
 Every successful login/registration/OAuth-exchange issues an **access token**
 (short-lived JWT, `ACCESS_TOKEN_TTL`) and a **refresh token** (long-lived,
-`REFRESH_TOKEN_TTL_DAYS`), both as HttpOnly cookies — never in the response body.
+`REFRESH_TOKEN_TTL_DAYS`), both as HttpOnly cookies. For browser clients they are
+**never** in the response body. Capacitor clients that send `X-Matchy-Client: mobile`
+also receive the pair in the JSON body (see [Mobile (Capacitor)](#mobile-capacitor)).
 Refresh tokens are stored server-side as a `RefreshToken` row keyed by a **sha256
 hash** of the token — the raw token itself is never persisted. The refresh cookie is
 scoped to `Path=/api/v1/auth` — the browser never attaches it to any other request,
 shrinking where a stolen refresh token could otherwise be replayed from.
 
-`POST /api/v1/auth/refresh` takes no body — the refresh token comes from its own
-cookie — and **rotates** it: the presented token is looked up by its hash, checked
-for revocation/expiry, then revoked and replaced in the same call, with both new
-cookies set on the response. The old refresh token cannot be used again after this.
+`POST /api/v1/auth/refresh` takes the refresh token from its HttpOnly cookie, or —
+for Capacitor — from an optional `{ refreshToken }` body, and **rotates** it: the
+presented token is looked up by its hash, checked for revocation/expiry, then revoked
+and replaced in the same call, with both new cookies set on the response (and body
+tokens again for mobile). The old refresh token cannot be used again after this.
 
 `POST /api/v1/auth/logout` reads the refresh cookie, best-effort revokes it, and
 clears both cookies regardless of whether revocation succeeded. Changing your password
@@ -323,8 +352,9 @@ the remaining gap (e.g. a plain HTML form POST) with no separate CSRF-token mach
 - Never store raw passwords — only bcrypt hashes
 - JWT secret must be long and random in production
 - `NEXT_PUBLIC_*` vars must not contain secrets
-- Both session tokens are HttpOnly cookies — never in a JSON body, never readable from
-  frontend JS
+- Both session tokens are HttpOnly cookies for **browser** clients — never in a JSON
+  body, never readable from web JS. Capacitor is the documented exception
+  (`X-Matchy-Client: mobile` → body tokens + Bearer); see [Mobile (Capacitor)](#mobile-capacitor)
 - Proxy cookie check is UX-only; always validate tokens server-side
 - Origin/Referer validation is defense-in-depth for CSRF, not a substitute for
   `SameSite=Lax`

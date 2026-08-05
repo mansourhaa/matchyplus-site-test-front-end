@@ -53,6 +53,7 @@ import {
   memberAccessCookieOptions,
   memberRefreshCookieOptions,
 } from '../../../utils/member-session.js';
+import { isMobileClientRequest } from '../../../utils/mobile-client.js';
 
 const ERROR_STATUS: Record<
   string,
@@ -131,9 +132,9 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     return request.t(code, { defaultValue: code });
   }
 
-  // Every member-session-issuing route goes through here: neither token is ever put in a
-  // JSON response body, only in HttpOnly cookies the browser attaches automatically —
-  // matching the admin panel's existing cookie-only pattern.
+  // Browser: tokens leave only as HttpOnly cookies. Capacitor (`X-Matchy-Client: mobile`)
+  // also gets accessToken/refreshToken in the JSON body for Bearer auth — see
+  // doc/features/authentication.md § Mobile (Capacitor).
   function setMemberSessionCookies(
     reply: import('fastify').FastifyReply,
     tokens: { accessToken: string; refreshToken: string },
@@ -145,6 +146,43 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   function clearMemberSessionCookies(reply: import('fastify').FastifyReply) {
     reply.clearCookie(MEMBER_ACCESS_COOKIE, clearMemberAccessCookieOptions());
     reply.clearCookie(MEMBER_REFRESH_COOKIE, clearMemberRefreshCookieOptions());
+  }
+
+  function memberSessionResponse(
+    request: FastifyRequest,
+    tokens: { accessToken: string; refreshToken: string },
+    user: unknown,
+  ) {
+    if (!isMobileClientRequest(request)) {
+      return { user };
+    }
+    return {
+      user,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  function memberRefreshResponse(
+    request: FastifyRequest,
+    tokens: { accessToken: string; refreshToken: string },
+  ) {
+    if (!isMobileClientRequest(request)) {
+      return { ok: true as const };
+    }
+    return {
+      ok: true as const,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  function readRefreshToken(request: FastifyRequest): string | undefined {
+    const fromCookie = request.cookies?.[MEMBER_REFRESH_COOKIE];
+    if (fromCookie) return fromCookie;
+    const body = request.body as { refreshToken?: string } | null;
+    const fromBody = body?.refreshToken?.trim();
+    return fromBody || undefined;
   }
 
   /**
@@ -256,7 +294,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await phoneAuthService.loginWithPhone(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send({ user: data.user });
+        return reply.code(200).send(memberSessionResponse(request, data, data.user));
       } catch (err) {
         throw mapError(err as Error, request);
       }
@@ -273,14 +311,14 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await phoneAuthService.registerWithPhone(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(201).send({ user: data.user });
+        return reply.code(201).send(memberSessionResponse(request, data, data.user));
       } catch (err) {
         throw mapError(err as Error, request);
       }
     },
   );
 
-  fastify.post(
+  fastify.post<{ Body: { refreshToken?: string } }>(
     '/refresh',
     {
       schema: refreshSchema,
@@ -288,26 +326,26 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
     async (request, reply) => {
       try {
-        const refreshToken = request.cookies?.[MEMBER_REFRESH_COOKIE];
+        const refreshToken = readRefreshToken(request);
         if (!refreshToken) {
           throw new Error('invalid_refresh_token');
         }
 
         const data = await tokenService.refreshAccessToken(refreshToken);
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send({ ok: true });
+        return reply.code(200).send(memberRefreshResponse(request, data));
       } catch (err) {
         throw mapError(err as Error, request);
       }
     },
   );
 
-  fastify.post('/logout', {}, async (request, reply) => {
+  fastify.post<{ Body: { refreshToken?: string } }>('/logout', {}, async (request, reply) => {
     try {
-      const refreshToken = request.cookies?.[MEMBER_REFRESH_COOKIE];
+      const refreshToken = readRefreshToken(request);
       if (refreshToken) {
         // Best-effort: an already-expired or already-revoked token must not block the
-        // client from clearing its own (now-stale) cookies.
+        // client from clearing its own (now-stale) cookies / stored tokens.
         await tokenService.revokeRefreshToken(refreshToken).catch(() => undefined);
       }
 
@@ -504,7 +542,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await oauthAuthService.consumeExchangeCode(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send({ user: data.user });
+        return reply.code(200).send(memberSessionResponse(request, data, data.user));
       } catch (err) {
         throw mapError(err as Error, request);
       }

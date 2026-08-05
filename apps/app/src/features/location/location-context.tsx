@@ -2,6 +2,8 @@
 
 import { api } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 const LOCATION_GRANTED_KEY = 'matchy_location_permission_granted';
@@ -55,6 +57,37 @@ function storeCoords(next: { latitude: number; longitude: number }) {
   window.localStorage.setItem(LOCATION_COORDS_KEY, JSON.stringify(next));
 }
 
+async function getCurrentCoords(): Promise<{ latitude: number; longitude: number }> {
+  if (Capacitor.isNativePlatform()) {
+    const position = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 15_000,
+      maximumAge: 60_000,
+    });
+    return {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+    };
+  }
+
+  if (!navigator.geolocation) {
+    throw Object.assign(new Error('unsupported'), { code: 0 });
+  }
+
+  const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15_000,
+      maximumAge: 60_000,
+    });
+  });
+
+  return {
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+  };
+}
+
 export function LocationProvider({ children }: { children: ReactNode }) {
   const stored = typeof window !== 'undefined' ? readStoredCoords() : null;
   const [latitude, setLatitude] = useState<number | null>(stored?.latitude ?? null);
@@ -97,7 +130,18 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   }, [syncCoords]);
 
   const requestBrowserLocation = useCallback(async () => {
-    if (typeof window === 'undefined' || !navigator.geolocation) {
+    if (typeof window === 'undefined') {
+      setAccessMessage('Geolocation is not available. Trying network fallback.');
+      setPermissionDenied(true);
+      setActivating(true);
+      try {
+        return await requestIpFallback();
+      } finally {
+        setActivating(false);
+      }
+    }
+
+    if (!Capacitor.isNativePlatform() && !navigator.geolocation) {
       setAccessMessage('Geolocation is not supported in this browser. Trying network fallback.');
       setPermissionDenied(true);
       setActivating(true);
@@ -112,18 +156,17 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setAccessMessage(null);
 
     try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 15_000,
-          maximumAge: 60_000,
-        });
-      });
+      if (Capacitor.isNativePlatform()) {
+        const status = await Geolocation.requestPermissions();
+        const granted = status.location === 'granted' || status.coarseLocation === 'granted';
+        if (!granted) {
+          setPermissionDenied(true);
+          setAccessMessage('Precise location was denied. Trying approximate network fallback.');
+          return await requestIpFallback();
+        }
+      }
 
-      const next = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      };
+      const next = await getCurrentCoords();
       syncCoords(next);
       setAccessMessage(null);
       return true;
@@ -134,13 +177,13 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setPermissionDenied(true);
         setAccessMessage('Precise location was denied. Trying approximate network fallback.');
         return await requestIpFallback();
-      } else if (code === 3) {
+      }
+      if (code === 3) {
         setAccessMessage('Precise location timed out. Trying approximate network fallback.');
         return await requestIpFallback();
-      } else {
-        setAccessMessage('Could not get your precise position. Trying network fallback.');
-        return await requestIpFallback();
       }
+      setAccessMessage('Could not get your precise position. Trying network fallback.');
+      return await requestIpFallback();
     } finally {
       setActivating(false);
     }
@@ -152,7 +195,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       longitude,
       locationSynced,
       permissionDenied,
-      locationRequired: permissionDenied || !locationSynced,
+      locationRequired: !locationSynced,
       activating,
       accessMessage,
       requestBrowserLocation,
@@ -171,8 +214,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>;
 }
 
-export function useLocationGate() {
+export function useLocationContext() {
   const ctx = useContext(LocationContext);
-  if (!ctx) throw new Error('useLocationGate must be used within LocationProvider');
+  if (!ctx) {
+    throw new Error('useLocationContext must be used within LocationProvider');
+  }
   return ctx;
 }

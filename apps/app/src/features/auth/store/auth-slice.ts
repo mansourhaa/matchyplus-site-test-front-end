@@ -1,5 +1,7 @@
 import { api, getApiErrorCode } from '@/lib/api';
 import { clearAuthSession, getCachedAuthUser, persistAuthUser } from '@/lib/auth';
+import { mobileTokenStorage } from '@/lib/mobile-tokens';
+import { isNativeMobileClient } from '@/lib/native';
 import type { RootState } from '@/lib/store';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
@@ -189,9 +191,12 @@ export const exchangeOAuthCode = createAsyncThunk(
 );
 
 export const logout = createAsyncThunk('auth/logout', async () => {
-  // No body: the refresh token to revoke travels as its own HttpOnly cookie. Best-effort —
+  // Cap may send refreshToken in the body; web relies on the HttpOnly cookie. Best-effort —
   // logout always succeeds locally even if the backend call fails.
-  await api.post('/auth/logout').catch(() => undefined);
+  const refreshToken = isNativeMobileClient() ? mobileTokenStorage.getRefresh() : null;
+  await api
+    .post('/auth/logout', refreshToken ? { refreshToken } : undefined)
+    .catch(() => undefined);
 });
 
 function applySession(state: AuthState, user: AuthUser) {

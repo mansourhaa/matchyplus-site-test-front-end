@@ -59,6 +59,85 @@ describe('member session cookies', () => {
     expect(refreshCookie).toContain('Path=/api/v1/auth');
   });
 
+  it('returns body tokens for Capacitor clients while still setting HttpOnly cookies', async () => {
+    const hashedPassword = await hashPassword('password123');
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            phone: '+21612345678',
+            password: hashedPassword,
+            phone_verified: true,
+            status: 'ACTIVE',
+          }),
+        } as never,
+        refreshToken: { create: vi.fn().mockResolvedValue({}) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login-phone',
+      headers: { 'x-matchy-client': 'mobile' },
+      payload: { phone: '+21612345678', password: 'password123' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().accessToken).toEqual(expect.any(String));
+    expect(response.json().refreshToken).toEqual(expect.any(String));
+    expect(findCookie(response.headers['set-cookie'], 'access_token')).toContain('HttpOnly');
+  });
+
+  it('accepts refreshToken from the body for Capacitor clients', async () => {
+    const { createHash } = await import('node:crypto');
+    const jwt = await import('jsonwebtoken');
+    const refreshToken = jwt.default.sign(
+      { sub: 'user-1', jti: 'jti-1', type: 'refresh' },
+      'test-refresh-token-secret',
+      { expiresIn: '1h' },
+    );
+    const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
+
+    const app = await buildTestApp({
+      prisma: {
+        refreshToken: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'jti-1',
+            user_id: 'user-1',
+            token_hash: tokenHash,
+            expires_at: new Date(Date.now() + 60_000),
+            revoked_at: null,
+          }),
+          update: vi.fn().mockResolvedValue({}),
+          create: vi.fn().mockResolvedValue({}),
+        } as never,
+        user: {
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: null,
+            phone: '+21612345678',
+            status: 'ACTIVE',
+          }),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      headers: { 'x-matchy-client': 'mobile' },
+      payload: { refreshToken },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().ok).toBe(true);
+    expect(response.json().accessToken).toEqual(expect.any(String));
+    expect(response.json().refreshToken).toEqual(expect.any(String));
+  });
+
   it('reads the refresh token from the cookie, not the body, and rotates both cookies', async () => {
     const app = await buildTestApp({
       prisma: {

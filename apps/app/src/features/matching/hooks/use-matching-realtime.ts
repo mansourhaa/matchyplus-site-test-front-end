@@ -18,7 +18,10 @@ import {
 } from '@/features/messaging/store/messaging-slice';
 import type { ChatMessage, MessagingRealtimePayload } from '@/features/messaging/types';
 import { fetchNotifications } from '@/features/notifications/store/notifications-slice';
+import { api } from '@/lib/api';
 import { getCachedAuthUser } from '@/lib/auth';
+import { mobileTokenStorage } from '@/lib/mobile-tokens';
+import { isNativeMobileClient } from '@/lib/native';
 import type { RootState } from '@/lib/store';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -38,6 +41,12 @@ function buildRealtimeUrl(): string | null {
 
     const url = new URL(`${apiBase.replace(/\/$/, '')}/realtime`);
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    // Cap WebView cookies often don't attach to cross-origin WS — pass Bearer via query
+    // (API already promotes ?access_token= before verifyToken).
+    if (isNativeMobileClient()) {
+      const access = mobileTokenStorage.getAccess();
+      if (access) url.searchParams.set('access_token', access);
+    }
     return url.toString();
   } catch {
     return null;
@@ -47,9 +56,7 @@ function buildRealtimeUrl(): string | null {
 /**
  * Shared match + messaging + profile-view-notification realtime subscription.
  * One socket avoids duplicate connections; HTTP write responses remain authoritative.
- * The access token lives in an HttpOnly cookie (see lib/auth.ts), so it isn't read here —
- * the browser attaches it to the WebSocket handshake automatically, the same way it does
- * for any other same-site request, and the server falls back to that cookie in verifyToken.
+ * Web: HttpOnly cookie on the handshake. Capacitor: `?access_token=` (see lib/mobile-tokens.ts).
  */
 export function useMatchingRealtime(enabled = true) {
   const dispatch = useAppDispatch();

@@ -10,6 +10,7 @@ A production-ready Turborepo monorepo with a Next.js frontend, Fastify API, Flas
 flowchart TB
     subgraph Client
         Browser[Browser]
+        Cap[Capacitor apps/mobile]
     end
 
     subgraph Apps
@@ -29,6 +30,7 @@ flowchart TB
     Redis[(Redis)]
 
     Browser -->|HTTPS| App
+    Cap -->|remote WebView| App
     App -->|REST| API
     App --> UI
     API --> DB
@@ -80,6 +82,7 @@ flowchart TB
 | Package | Purpose | README |
 | --- | --- | --- |
 | `@saas-boilerplate/app` | Next.js frontend | [apps/app/README.md](./apps/app/README.md) |
+| `@saas-boilerplate/mobile` | Capacitor Android shell (remote WebView) | [apps/mobile/README.md](./apps/mobile/README.md) |
 | `@saas-boilerplate/api` | Fastify REST API | [apps/api/README.md](./apps/api/README.md) |
 | `@saas-boilerplate/ai` | Flask AI worker | [apps/ai/README.md](./apps/ai/README.md) |
 | `@saas-boilerplate/ai-contracts` | Shared AI job contracts | [packages/ai-contracts/README.md](./packages/ai-contracts/README.md) |
@@ -124,6 +127,9 @@ pnpm lint             # Lint all workspaces
 pnpm db:generate      # Regenerate Prisma client
 pnpm db:push          # Push schema to database
 pnpm db:studio        # Open Prisma Studio
+pnpm mobile:dev       # Cap sync (emulator → :3000) + open Android Studio
+pnpm mobile:sync      # cap sync android
+pnpm mobile:open      # Open Android Studio
 pnpm format           # Prettier format
 pnpm commit           # Conventional commit (commitizen)
 ```
