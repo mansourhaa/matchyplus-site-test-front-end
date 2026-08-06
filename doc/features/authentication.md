@@ -154,7 +154,10 @@ clients opt into Bearer auth. Body JWTs are **not** gated on a spoofable header 
    `accessToken` / `refreshToken` in JSON so Bearer storage stays fresh. Browsers lack
    the mobile secret, so spoofing `X-Matchy-Client` alone never yields body JWTs.
 5. `verifyToken` already accepts Bearer (see [API authorization](#api-authorization)).
-6. Realtime WebSocket uses `?access_token=` on Cap (API already promotes the query param).
+6. Realtime WebSocket: Cap sends `{ event: "auth", payload: { access_token } }` as the
+   first frame after upgrade (JWT stays out of the URL / access logs). Web still uses the
+   HttpOnly cookie on the handshake. Legacy `?access_token=` is still accepted server-side
+   but Cap must not use it.
 7. A non-HttpOnly `access_token` cookie is mirrored onto the **Next.js app origin** so
    `proxy.ts` can still gate routes when `MEMBER_COOKIE_DOMAIN` does not cover the
    WebView host (local emulator).

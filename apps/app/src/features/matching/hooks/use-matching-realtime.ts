@@ -18,7 +18,6 @@ import {
 } from '@/features/messaging/store/messaging-slice';
 import type { ChatMessage, MessagingRealtimePayload } from '@/features/messaging/types';
 import { fetchNotifications } from '@/features/notifications/store/notifications-slice';
-import { api } from '@/lib/api';
 import { getCachedAuthUser } from '@/lib/auth';
 import { mobileTokenStorage } from '@/lib/mobile-tokens';
 import { isNativeMobileClient } from '@/lib/native';
@@ -41,22 +40,35 @@ function buildRealtimeUrl(): string | null {
 
     const url = new URL(`${apiBase.replace(/\/$/, '')}/realtime`);
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Cap WebView cookies often don't attach to cross-origin WS — pass Bearer via query
-    // (API already promotes ?access_token= before verifyToken).
-    if (isNativeMobileClient()) {
-      const access = mobileTokenStorage.getAccess();
-      if (access) url.searchParams.set('access_token', access);
-    }
+    // Cap authenticates after open via first-frame `auth` (never put the JWT in the URL —
+    // query strings commonly land in access / reverse-proxy logs).
     return url.toString();
   } catch {
     return null;
   }
 }
 
+function startRealtimePing(
+  socket: WebSocket,
+  getTimer: () => ReturnType<typeof setInterval> | null,
+  setTimer: (timer: ReturnType<typeof setInterval> | null) => void,
+) {
+  const prev = getTimer();
+  if (prev) clearInterval(prev);
+  setTimer(
+    setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ event: 'ping', payload: {} }));
+      }
+    }, REALTIME_PING_INTERVAL_MS),
+  );
+}
+
 /**
  * Shared match + messaging + profile-view-notification realtime subscription.
  * One socket avoids duplicate connections; HTTP write responses remain authoritative.
- * Web: HttpOnly cookie on the handshake. Capacitor: `?access_token=` (see lib/mobile-tokens.ts).
+ * Web: HttpOnly cookie on the handshake. Capacitor: first-frame
+ * `{ event: "auth", payload: { access_token } }` (see lib/mobile-tokens.ts).
  */
 export function useMatchingRealtime(enabled = true) {
   const dispatch = useAppDispatch();
@@ -96,27 +108,40 @@ export function useMatchingRealtime(enabled = true) {
       const connect = () => {
         if (closedByEffect) return;
 
-        // Rebuild on every connect so Cap picks up a rotated access_token from storage.
+        // Rebuild on every connect so Cap picks up a rotated access_token from storage
+        // before the first-frame auth message.
         const url = buildRealtimeUrl();
         if (!url) return;
+
+        const native = isNativeMobileClient();
+        const access = native ? mobileTokenStorage.getAccess() : null;
+        if (native && !access) return;
 
         try {
           const socket = new WebSocket(url);
           socketRef.current = socket;
+          const getPing = () => pingTimer;
+          const setPing = (timer: ReturnType<typeof setInterval> | null) => {
+            pingTimer = timer;
+          };
 
           socket.onopen = () => {
-            if (pingTimer) clearInterval(pingTimer);
-            pingTimer = setInterval(() => {
-              if (socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ event: 'ping', payload: {} }));
-              }
-            }, REALTIME_PING_INTERVAL_MS);
+            if (native && access) {
+              socket.send(JSON.stringify({ event: 'auth', payload: { access_token: access } }));
+              return;
+            }
+            startRealtimePing(socket, getPing, setPing);
           };
 
           socket.onmessage = (event) => {
             try {
               const message = JSON.parse(String(event.data)) as RealtimeMessage &
                 MessagingRealtimePayload;
+
+              if (message.event === 'auth_ok') {
+                startRealtimePing(socket, getPing, setPing);
+                return;
+              }
 
               if (message.event === 'pong') return;
 
