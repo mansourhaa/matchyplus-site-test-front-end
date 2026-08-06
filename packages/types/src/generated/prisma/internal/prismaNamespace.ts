@@ -407,6 +407,8 @@ export const ModelName = {
   Rating: 'Rating',
   Notification: 'Notification',
   AiJob: 'AiJob',
+  WaitlistEntry: 'WaitlistEntry',
+  WaitlistPending: 'WaitlistPending',
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -443,7 +445,9 @@ export type TypeMap<
       | 'userBlock'
       | 'rating'
       | 'notification'
-      | 'aiJob';
+      | 'aiJob'
+      | 'waitlistEntry'
+      | 'waitlistPending';
     txIsolationLevel: TransactionIsolationLevel;
   };
   model: {
@@ -1711,6 +1715,156 @@ export type TypeMap<
         };
       };
     };
+    WaitlistEntry: {
+      payload: Prisma.$WaitlistEntryPayload<ExtArgs>;
+      fields: Prisma.WaitlistEntryFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.WaitlistEntryFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.WaitlistEntryFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload>;
+        };
+        findFirst: {
+          args: Prisma.WaitlistEntryFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.WaitlistEntryFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload>;
+        };
+        findMany: {
+          args: Prisma.WaitlistEntryFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload>[];
+        };
+        create: {
+          args: Prisma.WaitlistEntryCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload>;
+        };
+        createMany: {
+          args: Prisma.WaitlistEntryCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.WaitlistEntryCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload>[];
+        };
+        delete: {
+          args: Prisma.WaitlistEntryDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload>;
+        };
+        update: {
+          args: Prisma.WaitlistEntryUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload>;
+        };
+        deleteMany: {
+          args: Prisma.WaitlistEntryDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.WaitlistEntryUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.WaitlistEntryUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload>[];
+        };
+        upsert: {
+          args: Prisma.WaitlistEntryUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistEntryPayload>;
+        };
+        aggregate: {
+          args: Prisma.WaitlistEntryAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWaitlistEntry>;
+        };
+        groupBy: {
+          args: Prisma.WaitlistEntryGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.WaitlistEntryGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.WaitlistEntryCountArgs<ExtArgs>;
+          result:
+            runtime.Types.Utils.Optional<Prisma.WaitlistEntryCountAggregateOutputType> | number;
+        };
+      };
+    };
+    WaitlistPending: {
+      payload: Prisma.$WaitlistPendingPayload<ExtArgs>;
+      fields: Prisma.WaitlistPendingFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.WaitlistPendingFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.WaitlistPendingFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload>;
+        };
+        findFirst: {
+          args: Prisma.WaitlistPendingFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.WaitlistPendingFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload>;
+        };
+        findMany: {
+          args: Prisma.WaitlistPendingFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload>[];
+        };
+        create: {
+          args: Prisma.WaitlistPendingCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload>;
+        };
+        createMany: {
+          args: Prisma.WaitlistPendingCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.WaitlistPendingCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload>[];
+        };
+        delete: {
+          args: Prisma.WaitlistPendingDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload>;
+        };
+        update: {
+          args: Prisma.WaitlistPendingUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload>;
+        };
+        deleteMany: {
+          args: Prisma.WaitlistPendingDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.WaitlistPendingUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.WaitlistPendingUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload>[];
+        };
+        upsert: {
+          args: Prisma.WaitlistPendingUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WaitlistPendingPayload>;
+        };
+        aggregate: {
+          args: Prisma.WaitlistPendingAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWaitlistPending>;
+        };
+        groupBy: {
+          args: Prisma.WaitlistPendingGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.WaitlistPendingGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.WaitlistPendingCountArgs<ExtArgs>;
+          result:
+            runtime.Types.Utils.Optional<Prisma.WaitlistPendingCountAggregateOutputType> | number;
+        };
+      };
+    };
   };
 } & {
   other: {
@@ -2017,6 +2171,31 @@ export const AiJobScalarFieldEnum = {
 } as const;
 
 export type AiJobScalarFieldEnum = (typeof AiJobScalarFieldEnum)[keyof typeof AiJobScalarFieldEnum];
+
+export const WaitlistEntryScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  name: 'name',
+  occupation: 'occupation',
+  created_at: 'created_at',
+} as const;
+
+export type WaitlistEntryScalarFieldEnum =
+  (typeof WaitlistEntryScalarFieldEnum)[keyof typeof WaitlistEntryScalarFieldEnum];
+
+export const WaitlistPendingScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  name: 'name',
+  occupation: 'occupation',
+  code_hash: 'code_hash',
+  attempts: 'attempts',
+  expires_at: 'expires_at',
+  created_at: 'created_at',
+} as const;
+
+export type WaitlistPendingScalarFieldEnum =
+  (typeof WaitlistPendingScalarFieldEnum)[keyof typeof WaitlistPendingScalarFieldEnum];
 
 export const SortOrder = {
   asc: 'asc',
@@ -2458,6 +2637,8 @@ export type GlobalOmitConfig = {
   rating?: Prisma.RatingOmit;
   notification?: Prisma.NotificationOmit;
   aiJob?: Prisma.AiJobOmit;
+  waitlistEntry?: Prisma.WaitlistEntryOmit;
+  waitlistPending?: Prisma.WaitlistPendingOmit;
 };
 
 /* Types for Logging */

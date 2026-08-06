@@ -64,6 +64,8 @@ export const ModelName = {
   Rating: 'Rating',
   Notification: 'Notification',
   AiJob: 'AiJob',
+  WaitlistEntry: 'WaitlistEntry',
+  WaitlistPending: 'WaitlistPending',
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -349,6 +351,31 @@ export const AiJobScalarFieldEnum = {
 } as const;
 
 export type AiJobScalarFieldEnum = (typeof AiJobScalarFieldEnum)[keyof typeof AiJobScalarFieldEnum];
+
+export const WaitlistEntryScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  name: 'name',
+  occupation: 'occupation',
+  created_at: 'created_at',
+} as const;
+
+export type WaitlistEntryScalarFieldEnum =
+  (typeof WaitlistEntryScalarFieldEnum)[keyof typeof WaitlistEntryScalarFieldEnum];
+
+export const WaitlistPendingScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  name: 'name',
+  occupation: 'occupation',
+  code_hash: 'code_hash',
+  attempts: 'attempts',
+  expires_at: 'expires_at',
+  created_at: 'created_at',
+} as const;
+
+export type WaitlistPendingScalarFieldEnum =
+  (typeof WaitlistPendingScalarFieldEnum)[keyof typeof WaitlistPendingScalarFieldEnum];
 
 export const SortOrder = {
   asc: 'asc',

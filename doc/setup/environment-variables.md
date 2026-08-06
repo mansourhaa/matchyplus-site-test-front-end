@@ -51,7 +51,7 @@ cp .env.production.example .env.production
 
 ```mermaid
 flowchart LR
-    A[".env"] --> B[".env.development"] --> C[process.env]
+    ED[".env.development"] --> C[process.env]
 ```
 
 ---
