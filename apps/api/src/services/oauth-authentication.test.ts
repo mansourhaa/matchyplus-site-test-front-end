@@ -197,6 +197,9 @@ describe('OAuthAuthenticationService', () => {
         name: 'Jane Doe',
         auth_provider: 'google',
         email_verified: true,
+        phone_verified: false,
+        google_id: 'google-sub-1',
+        linkedin_id: null,
         onboarding_completed_at: null,
       });
 
@@ -237,6 +240,9 @@ describe('OAuthAuthenticationService', () => {
         name: 'Jane Doe',
         auth_provider: 'google',
         email_verified: true,
+        phone_verified: false,
+        google_linked: true,
+        linkedin_linked: false,
         onboarding_completed: false,
       });
 

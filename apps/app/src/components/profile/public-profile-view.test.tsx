@@ -39,6 +39,7 @@ function buildStore(viewerId: string | null) {
               name: 'Viewer',
               auth_provider: 'phone',
               email_verified: false,
+              verified: false,
               onboarding_completed: true,
             }
           : null,

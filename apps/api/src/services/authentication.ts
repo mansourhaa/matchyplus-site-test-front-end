@@ -91,13 +91,21 @@ export class AuthenticationService {
           name: true,
           auth_provider: true,
           email_verified: true,
+          phone_verified: true,
+          google_id: true,
+          linkedin_id: true,
           role: true,
           onboarding_completed_at: true,
         },
       });
 
-      const { onboarding_completed_at, ...rest } = user;
-      return { ...rest, onboarding_completed: Boolean(onboarding_completed_at) };
+      const { onboarding_completed_at, google_id, linkedin_id, ...rest } = user;
+      return {
+        ...rest,
+        google_linked: Boolean(google_id),
+        linkedin_linked: Boolean(linkedin_id),
+        onboarding_completed: Boolean(onboarding_completed_at),
+      };
     } catch {
       throw new Error('user_not_found');
     }

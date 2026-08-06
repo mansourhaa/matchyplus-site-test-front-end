@@ -5,6 +5,9 @@ type SessionUserSource = {
   name: string;
   auth_provider: string;
   email_verified: boolean;
+  phone_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
   onboarding_completed_at: Date | null;
 };
 
@@ -15,6 +18,9 @@ export type MemberSessionUser = {
   name: string;
   auth_provider: string;
   email_verified: boolean;
+  phone_verified: boolean;
+  google_linked: boolean;
+  linkedin_linked: boolean;
   onboarding_completed: boolean;
 };
 
@@ -32,6 +38,9 @@ export function toMemberSessionUser(user: SessionUserSource): MemberSessionUser 
     name: user.name,
     auth_provider: user.auth_provider,
     email_verified: user.email_verified,
+    phone_verified: Boolean(user.phone_verified),
+    google_linked: Boolean(user.google_id),
+    linkedin_linked: Boolean(user.linkedin_id),
     onboarding_completed: Boolean(user.onboarding_completed_at),
   };
 }

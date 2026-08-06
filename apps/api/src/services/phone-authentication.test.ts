@@ -124,6 +124,9 @@ describe('PhoneAuthenticationService', () => {
         name: 'Jane Doe',
         auth_provider: 'phone',
         email_verified: false,
+        phone_verified: true,
+        google_linked: false,
+        linkedin_linked: false,
         onboarding_completed: false,
       });
       issueTokenPairSpy.mockRestore();
@@ -235,6 +238,9 @@ describe('PhoneAuthenticationService', () => {
         name: '+33612345678',
         auth_provider: 'phone',
         email_verified: false,
+        phone_verified: true,
+        google_linked: false,
+        linkedin_linked: false,
         onboarding_completed: false,
       });
 

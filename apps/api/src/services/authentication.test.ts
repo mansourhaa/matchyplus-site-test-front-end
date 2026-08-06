@@ -184,6 +184,9 @@ describe('AuthenticationService', () => {
         name: 'Jane Doe',
         auth_provider: 'email',
         email_verified: true,
+        phone_verified: true,
+        google_id: null,
+        linkedin_id: null,
         role: 'USER',
         onboarding_completed_at: new Date('2026-01-01'),
       });
@@ -201,6 +204,9 @@ describe('AuthenticationService', () => {
           name: true,
           auth_provider: true,
           email_verified: true,
+          phone_verified: true,
+          google_id: true,
+          linkedin_id: true,
           role: true,
           onboarding_completed_at: true,
         },
@@ -213,6 +219,9 @@ describe('AuthenticationService', () => {
         name: 'Jane Doe',
         auth_provider: 'email',
         email_verified: true,
+        phone_verified: true,
+        google_linked: false,
+        linkedin_linked: false,
         role: 'USER',
         onboarding_completed: true,
       });
@@ -221,6 +230,8 @@ describe('AuthenticationService', () => {
       expect(result).not.toHaveProperty('status');
       expect(result).not.toHaveProperty('refresh_tokens');
       expect(result).not.toHaveProperty('onboarding_completed_at');
+      expect(result).not.toHaveProperty('google_id');
+      expect(result).not.toHaveProperty('linkedin_id');
     });
 
     it('reports onboarding_completed: false when onboarding has not been finished', async () => {
@@ -232,6 +243,9 @@ describe('AuthenticationService', () => {
         name: 'Jane Doe',
         auth_provider: 'email',
         email_verified: false,
+        phone_verified: false,
+        google_id: null,
+        linkedin_id: null,
         role: 'USER',
         onboarding_completed_at: null,
       });

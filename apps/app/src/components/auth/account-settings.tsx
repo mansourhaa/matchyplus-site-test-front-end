@@ -117,7 +117,7 @@ function SubmitButton({
   );
 }
 
-function ChangePasswordSection() {
+export function ChangePasswordSection() {
   const dispatch = useAppDispatch();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -234,7 +234,7 @@ function PasswordField({
   );
 }
 
-function PhoneLinkSection() {
+export function PhoneLinkSection() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectAuth);
   const [countryIso, setCountryIso] = useState(DEFAULT_PHONE_COUNTRY.iso);

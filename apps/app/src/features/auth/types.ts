@@ -5,7 +5,13 @@ export interface AuthUser {
   name: string | null;
   auth_provider: string;
   email_verified: boolean;
+  phone_verified?: boolean;
+  google_linked?: boolean;
+  linkedin_linked?: boolean;
+  /** Face-match identity badge — not yet wired; kept for settings parity. */
+  verified?: boolean;
   onboarding_completed: boolean;
+  role?: string;
 }
 
 // Both session tokens live in HttpOnly cookies the browser attaches automatically —

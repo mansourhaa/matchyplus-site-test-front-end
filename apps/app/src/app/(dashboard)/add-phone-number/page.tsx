@@ -1,19 +1,25 @@
 'use client';
 
-import { StubScreen } from '@/components/matchy/stub-screen';
+import { PhoneLinkSection } from '@/components/auth/account-settings';
+import { matchyBrand } from '@/components/matchy/brand';
+import { useI18n } from '@/features/i18n/i18n-provider';
+import Link from 'next/link';
 
 export default function AddPhonePage() {
+  const { locale } = useI18n();
+
   return (
-    <StubScreen
-      title="Phone number"
-      description="Add a phone number to strengthen account recovery."
-    >
-      <input
-        disabled
-        type="tel"
-        placeholder="+216 …"
-        className="mt-4 w-full rounded-xl border border-[#E0E0E0] bg-[#F5F7FA] px-3 py-2.5 text-sm opacity-70"
-      />
-    </StubScreen>
+    <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }}>
+      <div className="mx-auto max-w-2xl space-y-3 px-4 py-6 md:px-8">
+        <Link
+          href="/account-profile"
+          className="text-sm font-bold"
+          style={{ color: matchyBrand.muted }}
+        >
+          ← {locale === 'ar' ? 'رجوع' : locale === 'en' ? 'Back' : 'Retour'}
+        </Link>
+        <PhoneLinkSection />
+      </div>
+    </div>
   );
 }

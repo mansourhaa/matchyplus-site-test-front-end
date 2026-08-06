@@ -28,6 +28,7 @@ const authUser: AuthUser = {
   name: 'Jane Doe',
   auth_provider: 'phone',
   email_verified: true,
+  verified: false,
   onboarding_completed: true,
 };
 
