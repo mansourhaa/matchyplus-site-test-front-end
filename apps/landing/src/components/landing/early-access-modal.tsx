@@ -480,7 +480,7 @@ export function EarlyAccessModal({ lang, open, onClose }: Props) {
                 autoComplete="one-time-code"
               />
 
-              {devCode && (
+              {devCode && process.env.NODE_ENV === 'development' && (
                 <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
                   Dev code: <strong>{devCode}</strong>
                 </p>

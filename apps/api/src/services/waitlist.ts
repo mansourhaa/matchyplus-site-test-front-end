@@ -85,8 +85,8 @@ export class WaitlistService {
       }
     }
 
-    const isProd = config.nodeEnv === 'production';
-    if (!smsOk && isProd && !smsDisabled) {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    if (!smsOk && !smsDisabled && !isDevelopment) {
       throw Object.assign(new Error("Impossible d'envoyer le SMS. Réessayez."), {
         statusCode: 502,
         code: 'sms_delivery_failed',
@@ -98,7 +98,7 @@ export class WaitlistService {
       message: 'Code envoyé par SMS.',
     };
 
-    if (!isProd || smsDisabled || !smsOk) {
+    if (isDevelopment && (smsDisabled || !smsOk)) {
       payload.devCode = code;
     }
 
