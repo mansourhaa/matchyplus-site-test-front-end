@@ -18,7 +18,7 @@ const publicRoutes = ['/login'];
 // /otp-test is intentionally NOT here either — it's a dev-only harness (see
 // app/otp-test/page.tsx, which 404s outside development), not part of the shipped
 // product flow, so it gets the same auth rules as any other route.
-const neutralRoutes = ['/oauth-callback', '/onboarding', '/register'];
+const neutralRoutes = ['/oauth-callback', '/onboarding', '/register', '/public'];
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE)?.value;

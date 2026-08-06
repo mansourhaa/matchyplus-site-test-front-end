@@ -11,6 +11,7 @@ import {
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { ArrowLeft, ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
@@ -441,8 +442,13 @@ export function LoginForm() {
         style={{ fontSize: '11px', color: '#BBBBBB', lineHeight: 1.6 }}
       >
         En continuant, vous acceptez nos{' '}
-        <span className="text-[#2F76BB]">Conditions d&apos;utilisation</span> et notre{' '}
-        <span className="text-[#2F76BB]">Politique de confidentialité</span>
+        <Link href="/public/terms-of-service" className="text-[#2F76BB] hover:underline">
+          Conditions d&apos;utilisation
+        </Link>{' '}
+        et notre{' '}
+        <Link href="/public/privacy-policy" className="text-[#2F76BB] hover:underline">
+          Politique de confidentialité
+        </Link>
       </p>
     </div>
   );
