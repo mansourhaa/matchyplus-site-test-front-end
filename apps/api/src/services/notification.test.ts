@@ -486,8 +486,8 @@ describe('NotificationService', () => {
   });
 
   describe('retractMatchRequestsBetween', () => {
-    it('deletes MATCH_REQUEST rows in either direction for the pair', async () => {
-      const { service, prisma } = createService();
+    it('deletes MATCH_REQUEST rows in either direction and pushes notifications_updated to both peers', async () => {
+      const { service, prisma, push } = createService();
       prisma.notification.deleteMany.mockResolvedValue({ count: 2 });
 
       const count = await service.retractMatchRequestsBetween('u1', 'u2');
@@ -502,6 +502,20 @@ describe('NotificationService', () => {
           ],
         },
       });
+      expect(push).toHaveBeenCalledWith('u1', 'notifications_updated', {
+        reason: 'match_request_retracted',
+      });
+      expect(push).toHaveBeenCalledWith('u2', 'notifications_updated', {
+        reason: 'match_request_retracted',
+      });
+    });
+
+    it('does not push when nothing was deleted', async () => {
+      const { service, prisma, push } = createService();
+      prisma.notification.deleteMany.mockResolvedValue({ count: 0 });
+
+      await service.retractMatchRequestsBetween('u1', 'u2');
+      expect(push).not.toHaveBeenCalled();
     });
   });
 });

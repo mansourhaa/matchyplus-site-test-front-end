@@ -35,7 +35,7 @@ describe('buildNotificationEmailPayload', () => {
     const payload = buildNotificationEmailPayload({ kind: 'message', actorName: 'Sami' });
     expect(payload.subject).toContain('Nouveau message');
     expect(payload.body).toContain('Sami');
-    expect(payload.actionUrl).toBe('https://app.matchy.test/messages');
+    expect(payload.actionUrl).toBe('https://app.matchy.test/matches');
   });
 
   it('builds the match payload', () => {

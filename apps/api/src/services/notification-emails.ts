@@ -49,7 +49,8 @@ export function buildNotificationEmailPayload({
         title: 'Nouveau message',
         body: `${actorName || "Quelqu'un"} vous a envoyé un message sur Matchy+.`,
         actionLabel: 'Ouvrir la messagerie',
-        actionUrl: `${baseUrl}/messages`,
+        // App inbox lives under /matches (there is no /messages page).
+        actionUrl: `${baseUrl}/matches`,
       };
     case 'match':
       return {

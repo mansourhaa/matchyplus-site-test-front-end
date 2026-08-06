@@ -102,6 +102,7 @@ describe('SwipeService', () => {
       user_low_id: 'u1',
       user_high_id: 'u2',
     });
+    prisma.notification.deleteMany.mockResolvedValue({ count: 1 });
 
     const service = new SwipeService({ prisma: prisma as never, notify });
     const result = await service.postSwipe('u1', {
@@ -154,9 +155,14 @@ describe('SwipeService', () => {
       },
     });
 
-    expect(notify).toHaveBeenCalledTimes(2);
-    expect(notify).toHaveBeenNthCalledWith(
-      1,
+    expect(notify).toHaveBeenCalledTimes(4);
+    expect(notify).toHaveBeenCalledWith('u1', 'notifications_updated', {
+      reason: 'match_request_retracted',
+    });
+    expect(notify).toHaveBeenCalledWith('u2', 'notifications_updated', {
+      reason: 'match_request_retracted',
+    });
+    expect(notify).toHaveBeenCalledWith(
       'u1',
       'notification_match',
       expect.objectContaining({
@@ -167,8 +173,7 @@ describe('SwipeService', () => {
         notification_id: expect.any(String),
       }),
     );
-    expect(notify).toHaveBeenNthCalledWith(
-      2,
+    expect(notify).toHaveBeenCalledWith(
       'u2',
       'notification_match',
       expect.objectContaining({
@@ -261,6 +266,45 @@ describe('SwipeService', () => {
         direction: SwipeDirection.WITHDRAWN,
       },
     });
+    expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+      where: {
+        user_id: 'u2',
+        type: 'MATCH_REQUEST',
+        data: { path: ['from_user_id'], equals: 'u1' },
+      },
+    });
+    expect(notify).toHaveBeenCalledWith(
+      'u2',
+      'notifications_updated',
+      expect.objectContaining({ reason: 'match_request_retracted', from_user_id: 'u1' }),
+    );
+  });
+
+  it('retracts the peer MATCH_REQUEST when a prior RIGHT is flipped to LEFT', async () => {
+    const prisma = createMockPrisma();
+    const notify = vi.fn();
+
+    prisma.user.findUnique.mockImplementation(async ({ where, select }) => {
+      if (select?.plan) return { plan: UserPlan.FREE };
+      if (where.id === 'u2') return { id: 'u2', name: 'Bob', image: null };
+      return null;
+    });
+    prisma.plan.findUnique.mockResolvedValue({ swipes_per_day: 20 });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.swipe.findUnique.mockResolvedValue({ direction: SwipeDirection.RIGHT });
+    prisma.swipe.upsert.mockResolvedValue({ id: 'swipe-1', direction: SwipeDirection.LEFT });
+    prisma.swipeLog.create.mockResolvedValue({ id: 'log-1' });
+    prisma.swipeLog.count.mockResolvedValue(1);
+    prisma.notification.deleteMany.mockResolvedValue({ count: 1 });
+
+    const service = new SwipeService({ prisma: prisma as never, notify });
+    const result = await service.postSwipe('u1', {
+      target_user_id: 'u2',
+      direction: 'left',
+    });
+
+    expect(result.direction).toBe(SwipeDirection.LEFT);
+    expect(result.match).toBeNull();
     expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
       where: {
         user_id: 'u2',

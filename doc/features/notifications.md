@@ -62,7 +62,7 @@ Prefix: `/api/v1/notifications` (JWT required)
 ## Producers
 
 - **Profile view** — `POST /profiles/:id/view` → `createProfileViewIfEnabled` (cooldown dedupe).
-- **Swipe** — right swipe → `MATCH_REQUEST` via `createIfEnabled`; new mutual match → retract outstanding `MATCH_REQUEST`s between the pair, then `deliverMatchNotification` (persist if enabled, else ephemeral push). Withdraw retracts the peer's `MATCH_REQUEST` and pushes `notifications_updated`.
+- **Swipe** — right swipe → `MATCH_REQUEST` via `createIfEnabled`; new mutual match → retract outstanding `MATCH_REQUEST`s between the pair (pushes `notifications_updated`), then `deliverMatchNotification` (persist if enabled, else ephemeral push). Withdraw or RIGHT→LEFT flip retracts the peer's `MATCH_REQUEST` and pushes `notifications_updated`.
 - **Conversation** — after send: `new_message` to both peers (ephemeral chat); `MESSAGE` inbox via `createIfEnabled` for the peer.
 
 ## Frontend
@@ -73,4 +73,4 @@ Prefix: `/api/v1/notifications` (JWT required)
 
 ## Email / SMTP
 
-Optional. See [environment variables](../setup/environment-variables.md) (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, …). Action links use `APP_URL` / `FRONTEND_URL` / `PUBLIC_APP_URL` → `/messages`, `/matches`, `/notifications`.
+Optional. See [environment variables](../setup/environment-variables.md) (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, …). Action links use `APP_URL` / `FRONTEND_URL` / `PUBLIC_APP_URL` → `/matches`, `/notifications`, `/discover`.

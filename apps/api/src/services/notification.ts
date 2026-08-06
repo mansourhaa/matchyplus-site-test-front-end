@@ -455,6 +455,9 @@ export class NotificationService {
   /**
    * On mutual match, drop any pending MATCH_REQUEST rows between the pair (either
    * direction) so the inbox does not show both a request and a new match.
+   * Pushes `notifications_updated` to both peers when anything was deleted so a
+   * connected client clears the orphan request even if the subsequent MATCH push
+   * is skipped or delayed.
    */
   async retractMatchRequestsBetween(userA: string, userB: string): Promise<number> {
     try {
@@ -467,6 +470,11 @@ export class NotificationService {
           ],
         },
       });
+      if (result.count > 0) {
+        const payload = { reason: 'match_request_retracted' as const };
+        this.push(userA, 'notifications_updated', payload);
+        this.push(userB, 'notifications_updated', payload);
+      }
       return result.count;
     } catch (err) {
       throw err;

@@ -282,6 +282,15 @@ export class SwipeService {
             console.warn('match_request_notification_failed', err);
           }
         }
+      } else if (direction === SwipeDirection.LEFT && previousDirection === SwipeDirection.RIGHT) {
+        // API may flip RIGHT → LEFT (discover hides liked cards, but withdraw is
+        // not the only write path). Retract the peer's MATCH_REQUEST the same way
+        // withdrawPending does so they do not keep an orphan unread.
+        try {
+          await this.notifications.retractMatchRequest(targetId, userId);
+        } catch (err) {
+          console.warn('match_request_retract_failed', err);
+        }
       }
 
       // Always re-read quota from SwipeLog — never trust an in-memory counter.
