@@ -54,7 +54,6 @@ import {
   type LucideIcon,
   Package,
   Settings,
-  Shield,
   Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -208,20 +207,23 @@ export function AdminPanel() {
         }}
       >
         <div
-          className="flex shrink-0 items-center gap-3 px-4 py-5"
+          className="flex shrink-0 flex-col gap-1 px-4 py-5"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}
         >
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.2)' }}
-          >
-            <Shield size={18} color="white" />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={sidebarOpen ? '/logo-matchy-white.svg' : '/icon.svg'}
+            alt="Matchy+"
+            height={sidebarOpen ? 24 : 28}
+            style={{
+              height: sidebarOpen ? 24 : 28,
+              width: sidebarOpen ? 'auto' : 28,
+              objectFit: 'contain',
+              alignSelf: sidebarOpen ? 'flex-start' : 'center',
+            }}
+          />
           {sidebarOpen && (
-            <div>
-              <p style={{ fontSize: '16px', fontWeight: 800, color: 'white' }}>Matchy+</p>
-              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Admin Panel</p>
-            </div>
+            <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Admin Panel</p>
           )}
         </div>
 
