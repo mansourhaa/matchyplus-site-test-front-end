@@ -1,19 +1,34 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Baloo_2, Cairo } from 'next/font/google';
 
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const baloo = Baloo_2({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-baloo',
+});
+
+const cairo = Cairo({
+  subsets: ['arabic', 'latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-cairo',
+});
 
 export const metadata: Metadata = {
-  title: 'SaaS Boilerplate',
-  description: 'Full-stack SaaS boilerplate with Next.js, Fastify, and Prisma',
+  title: 'Matchy+',
+  description:
+    "Tunisia's leading geolocation-based platform for finding reliable nannies, gardeners, drivers, and more.",
+  icons: {
+    icon: '/logo-matchy.svg',
+    apple: '/logo-matchy.svg',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="fr" suppressHydrationWarning>
+      <body className={`${baloo.variable} ${cairo.variable} ${baloo.className}`}>{children}</body>
     </html>
   );
 }
