@@ -5,6 +5,8 @@ import { MatchyLogo } from '@/components/auth/matchy-logo';
 import { ArrowLeft, Check } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { LangPickerLight } from './lang-picker-light';
+
 /** Small pill-segment progress indicator rendered inline above each step's title —
  * separate from (and in addition to) AuthLayout's own left-panel step bar, matching
  * the old app's Inscription1..5 (StepProgressBar + "Étape X sur Y" / "XX%" row). */
@@ -127,6 +129,8 @@ type OnboardingStepLayoutProps = {
   totalSteps: number;
   stepLabel: string;
   onBack?: () => void;
+  /** Optional label override for the mobile/desktop header back control (default Retour). */
+  backLabel?: string;
   skipLabel?: string;
   onSkip?: () => void;
   /** Community-rules / bienvenue screen — no step progress chrome. */
@@ -135,16 +139,16 @@ type OnboardingStepLayoutProps = {
 };
 
 /**
- * Shared desktop/mobile shell for every onboarding step. Matches the old app's
- * Inscription1..5 header pattern: desktop shows the logo + an optional skip link, with
- * "Retour" living in each step's own CTA row instead; mobile shows "Retour" (or a
- * step-specific alternative, e.g. identity's "Connexion" link) plus the same skip link.
+ * Shared desktop/mobile shell for every onboarding step. Matches Matchy Inscription1..5:
+ * desktop header = Matchy logo + LangPickerLight; mobile header = Retour + LangPickerLight.
+ * Bottom CTA "Retour" still lives in each step's StepCtaRow when provided.
  */
 export function OnboardingStepLayout({
   step,
   totalSteps,
   stepLabel,
   onBack,
+  backLabel = 'Retour',
   skipLabel,
   onSkip,
   hideProgress = false,
@@ -158,29 +162,45 @@ export function OnboardingStepLayout({
       stepLabel={stepLabel}
       hideVideoFeature
     >
-      {/* Desktop */}
+      {/* Desktop — Matchy: logo left, language right */}
       <div className="hidden h-full flex-col bg-[#FAFBFC] md:flex">
         <div
           className="flex items-center justify-between bg-white px-10 py-5"
           style={{ borderBottom: '1px solid #F0F0F0' }}
         >
-          <MatchyLogo size="sm" />
-          {onSkip && skipLabel && (
-            <button
-              type="button"
-              onClick={onSkip}
-              style={{ fontSize: '13px', fontWeight: 700, color: '#2F76BB' }}
-            >
-              {skipLabel}
-            </button>
-          )}
+          <div className="flex items-center gap-4">
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="flex items-center gap-1"
+                style={{ fontSize: '14px', color: '#888' }}
+              >
+                <ArrowLeft size={18} />
+                <span>{backLabel}</span>
+              </button>
+            )}
+            <MatchyLogo size="sm" />
+          </div>
+          <div className="flex items-center gap-3">
+            {onSkip && skipLabel && (
+              <button
+                type="button"
+                onClick={onSkip}
+                style={{ fontSize: '13px', fontWeight: 700, color: '#2F76BB' }}
+              >
+                {skipLabel}
+              </button>
+            )}
+            <LangPickerLight />
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           <div className="px-10 py-10">{children}</div>
         </div>
       </div>
 
-      {/* Mobile */}
+      {/* Mobile — Matchy: Retour left, language right */}
       <div className="overflow-y-auto bg-white md:hidden" style={{ minHeight: '100dvh' }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           {onBack ? (
@@ -191,20 +211,23 @@ export function OnboardingStepLayout({
               style={{ fontSize: '14px', color: '#888' }}
             >
               <ArrowLeft size={18} />
-              <span>Retour</span>
+              <span>{backLabel}</span>
             </button>
           ) : (
-            <span />
+            <MatchyLogo size="sm" />
           )}
-          {onSkip && skipLabel && (
-            <button
-              type="button"
-              onClick={onSkip}
-              style={{ fontSize: '13px', fontWeight: 700, color: '#2F76BB' }}
-            >
-              {skipLabel}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {onSkip && skipLabel && (
+              <button
+                type="button"
+                onClick={onSkip}
+                style={{ fontSize: '13px', fontWeight: 700, color: '#2F76BB' }}
+              >
+                {skipLabel}
+              </button>
+            )}
+            <LangPickerLight />
+          </div>
         </div>
         <div className="px-6 py-6">{children}</div>
       </div>

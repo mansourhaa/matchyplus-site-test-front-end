@@ -186,17 +186,95 @@ export function LocationStep({
   const [contactModes, setContactModes] = useState<string[]>(profile?.contact_modes ?? []);
   const [languages, setLanguages] = useState<string[]>(profile?.languages ?? []);
   const [error, setError] = useState<string | null>(null);
+  const [gpsStatus, setGpsStatus] = useState<'idle' | 'detecting' | 'success' | 'error'>('idle');
+  const [showCityFallback, setShowCityFallback] = useState(Boolean(profile?.city));
+  const autoGpsStarted = useRef(false);
 
   const hydratedRef = useRef(Boolean(profile));
   useEffect(() => {
     if (hydratedRef.current || !profile) return;
     hydratedRef.current = true;
     setCity(profile.city ?? '');
+    if (profile.city) setShowCityFallback(true);
     setAvailabilityDays(profile.availability_days ?? []);
     setAvailabilityHours(profile.availability_hours ?? []);
     setContactModes(profile.contact_modes ?? []);
     setLanguages(profile.languages ?? []);
   }, [profile]);
+
+  const reverseGeocode = async (lat: number, lon: number): Promise<string | null> => {
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=fr`;
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        address?: {
+          city?: string;
+          town?: string;
+          village?: string;
+          municipality?: string;
+          state?: string;
+        };
+      };
+      const address = data.address;
+      return (
+        address?.city ||
+        address?.town ||
+        address?.village ||
+        address?.municipality ||
+        address?.state ||
+        null
+      );
+    } catch {
+      return null;
+    }
+  };
+
+  const detectGps = (opts?: { silent?: boolean }) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGpsStatus('error');
+      setShowCityFallback(true);
+      if (!opts?.silent) setError('Impossible de détecter. Entrez manuellement.');
+      return;
+    }
+    setGpsStatus('detecting');
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const resolved = await reverseGeocode(latitude, longitude);
+        if (resolved) {
+          setCity(resolved);
+          setShowCityFallback(false);
+        } else {
+          setShowCityFallback(true);
+        }
+        setGpsStatus('success');
+        setError(null);
+      },
+      () => {
+        setGpsStatus('error');
+        setShowCityFallback(true);
+        if (!opts?.silent) {
+          setError('Impossible de détecter. Entrez manuellement.');
+        }
+      },
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60_000 },
+    );
+  };
+
+  useEffect(() => {
+    if (autoGpsStarted.current) return;
+    if (profile?.city) {
+      autoGpsStarted.current = true;
+      setGpsStatus('success');
+      return;
+    }
+    autoGpsStarted.current = true;
+    detectGps({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const offerService = profile?.offer_service ?? false;
 
@@ -245,7 +323,7 @@ export function LocationStep({
           Localisation &amp; Préférences
         </h1>
         <p style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}>
-          Configurez votre zone de matching et vos disponibilités.
+          Dernière étape ! Configurez votre zone de matching et vos disponibilités.
         </p>
 
         <div className="space-y-5 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
@@ -254,21 +332,67 @@ export function LocationStep({
             <StepCard
               title="Ma localisation"
               description="Indispensable pour le matching géolocalisé"
+              icon={<MapPin size={16} color="white" />}
             >
-              <div
-                className="flex items-center gap-2 rounded-xl px-3 py-2.5"
-                style={{ border: '2px solid #E0E0E0', background: '#FAFAFA' }}
+              <button
+                type="button"
+                onClick={() => detectGps()}
+                disabled={gpsStatus === 'detecting'}
+                className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 transition-all"
+                style={{
+                  background:
+                    gpsStatus === 'success'
+                      ? '#E8F7F3'
+                      : gpsStatus === 'error'
+                        ? '#FDECEC'
+                        : 'linear-gradient(90deg, #E8F7F3, #EEF5FF)',
+                  border: `2px solid ${
+                    gpsStatus === 'success'
+                      ? '#61BCA6'
+                      : gpsStatus === 'error'
+                        ? '#E74C3C'
+                        : '#C5D8F0'
+                  }`,
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color:
+                    gpsStatus === 'success'
+                      ? '#2A9177'
+                      : gpsStatus === 'error'
+                        ? '#E74C3C'
+                        : '#2F76BB',
+                }}
               >
-                <MapPin size={15} color={city ? '#2F76BB' : '#CCC'} />
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(event) => setCity(event.target.value)}
-                  placeholder="Votre ville (ex : Tunis, Sousse...)"
-                  className="flex-1 bg-transparent text-[#353535] outline-none"
-                  style={{ fontSize: '14px' }}
-                />
-              </div>
+                <MapPin size={16} />
+                {gpsStatus === 'detecting'
+                  ? 'Détection en cours...'
+                  : gpsStatus === 'success'
+                    ? 'Position détectée ✓'
+                    : gpsStatus === 'error'
+                      ? 'Impossible de détecter. Entrez manuellement.'
+                      : 'Détecter ma position GPS'}
+              </button>
+
+              {(showCityFallback || gpsStatus === 'error' || gpsStatus === 'idle') && (
+                <div
+                  className="flex items-center gap-2 rounded-xl px-3 py-2.5"
+                  style={{ border: '2px solid #E0E0E0', background: '#FAFAFA' }}
+                >
+                  <MapPin size={15} color={city ? '#2F76BB' : '#CCC'} />
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(event) => setCity(event.target.value)}
+                    placeholder="Votre ville (ex : Tunis, Sousse...)"
+                    className="flex-1 bg-transparent text-[#353535] outline-none"
+                    style={{ fontSize: '14px' }}
+                  />
+                </div>
+              )}
+
+              {gpsStatus === 'success' && city && !showCityFallback && (
+                <p style={{ fontSize: '13px', color: '#2A9177', fontWeight: 600 }}>{city}</p>
+              )}
             </StepCard>
 
             {offerService && (
@@ -440,7 +564,7 @@ export function LocationStep({
         <StepCtaRow
           onBack={onBack}
           onContinue={submit}
-          continueLabel={loading ? 'Enregistrement…' : 'Enregistrer et continuer'}
+          continueLabel={loading ? 'Synchronisation...' : 'Lancer Matchy+'}
           continueIcon={<Rocket size={18} />}
           disabled={loading}
           loading={loading}
@@ -453,7 +577,7 @@ export function LocationStep({
           className="mt-3 block w-full text-center"
           style={{ fontSize: '14px', color: '#BBB' }}
         >
-          Passer
+          Passer et lancer
         </button>
       </div>
     </OnboardingStepLayout>

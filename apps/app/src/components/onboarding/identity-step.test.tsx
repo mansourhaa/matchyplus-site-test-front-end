@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/features/i18n/i18n-provider';
 import { api } from '@/lib/api';
 import { renderWithAuthStore } from '@/test/render-with-auth-store';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
@@ -5,6 +6,12 @@ import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { IdentityStep } from './identity-step';
+
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: pushMock, replace: vi.fn(), refresh: vi.fn() }),
+}));
 
 vi.mock('@/lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api')>();
@@ -292,16 +299,18 @@ describe('IdentityStep', () => {
     expect(firstPlaceholder('Votre prénom')).toHaveValue('');
 
     rerender(
-      <Provider store={store}>
-        <IdentityStep
-          profile={resumedProfile}
-          stepNumber={1}
-          totalSteps={3}
-          loading={false}
-          isAuthenticated={true}
-          onNext={vi.fn()}
-        />
-      </Provider>,
+      <I18nProvider>
+        <Provider store={store}>
+          <IdentityStep
+            profile={resumedProfile}
+            stepNumber={1}
+            totalSteps={3}
+            loading={false}
+            isAuthenticated={true}
+            onNext={vi.fn()}
+          />
+        </Provider>
+      </I18nProvider>,
     );
 
     expect(firstPlaceholder('Votre prénom')).toHaveValue('Existing');

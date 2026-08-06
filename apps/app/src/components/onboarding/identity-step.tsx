@@ -3,19 +3,99 @@
 import { PhoneInput } from '@/components/auth/phone-input';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
+import { EXPERIENCE_OPTIONS } from '@/features/onboarding/constants';
 import { identityStepSchema } from '@/features/onboarding/schemas';
 import { patchOnboardingProfile } from '@/features/onboarding/store/onboarding-slice';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
 import { humanizeMediaError } from '@/features/profile/media-errors';
 import { deleteProfileVideo, uploadProfileVideo } from '@/features/profile/store/profile-slice';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
-import { Check, Eye, EyeOff, Loader2, Lock, ShieldCheck, User, Video, X } from 'lucide-react';
+import {
+  Briefcase,
+  Camera,
+  Check,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  ShieldCheck,
+  Video,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { FieldMicButton } from './field-mic-button';
 import { OnboardingStepLayout, StepCtaRow, StepProgress } from './onboarding-step-layout';
 import { VideoRecorderModal, buildVideoRecorderTr } from './video-recorder-modal';
+
+function ProfileSilhouette() {
+  return (
+    <svg width="60" height="60" viewBox="0 0 52 52" fill="none" aria-hidden>
+      <circle cx="26" cy="18" r="10" fill="#2F76BB" />
+      <path d="M6 50 Q6 34 26 34 Q46 34 46 50" fill="#2F76BB" />
+    </svg>
+  );
+}
+
+function YearsDropdown({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+        Années d&apos;expérience
+      </label>
+      <div className="relative mt-1">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between rounded-xl px-4 py-3"
+          style={{
+            border: `2px solid ${value ? '#2F76BB' : '#E0E0E0'}`,
+            background: value ? '#F5F9FF' : '#FAFAFA',
+          }}
+          onClick={() => setOpen(!open)}
+        >
+          <span style={{ fontSize: '14px', color: value ? '#353535' : '#BBB' }}>
+            {value || "Choisir Années d'expérience"}
+          </span>
+          <ChevronDown
+            size={16}
+            color="#888"
+            style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+          />
+        </button>
+        {open && (
+          <div
+            className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl bg-white py-1"
+            style={{ border: '1.5px solid #E0E0E0', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
+          >
+            {EXPERIENCE_OPTIONS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                className="block w-full px-4 py-2.5 text-left"
+                style={{
+                  fontSize: '14px',
+                  color: value === option ? '#2F76BB' : '#353535',
+                  fontWeight: value === option ? 700 : 400,
+                  background: value === option ? '#F5F9FF' : 'transparent',
+                }}
+                onClick={() => {
+                  onChange(option);
+                  setOpen(false);
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 type IdentityStepProps = {
   profile: OnboardingProfile | null;
@@ -41,6 +121,7 @@ type IdentityStepProps = {
     bio?: string;
     image?: string;
     profileType: ProfileType;
+    experience?: string;
   }) => Promise<boolean>;
 };
 
@@ -72,18 +153,21 @@ export function IdentityStep({
   onRegistered,
   onNext,
 }: IdentityStepProps) {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const existingName = splitName(profile?.name ?? '');
   const [firstName, setFirstName] = useState(existingName.firstName);
   const [lastName, setLastName] = useState(existingName.lastName);
   const [job, setJob] = useState(profile?.job ?? '');
   const [bio, setBio] = useState(profile?.bio ?? '');
+  const [experience, setExperience] = useState(profile?.experience ?? '');
   const [image, setImage] = useState(profile?.image ?? '');
   const [profileType, setProfileType] = useState<ProfileType>(
     profile?.profile_type ?? 'INDIVIDUAL',
   );
   const [error, setError] = useState<string | null>(null);
   const [requiredTouched, setRequiredTouched] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Credentials — only rendered/validated when !isAuthenticated. Single password field,
   // no confirmation.
@@ -135,6 +219,7 @@ export function IdentityStep({
     setLastName(resumedLastName);
     setJob(profile.job ?? '');
     setBio(profile.bio ?? '');
+    setExperience(profile.experience ?? '');
     setImage(profile.image ?? '');
     setProfileType(profile.profile_type ?? 'INDIVIDUAL');
     setVideoLabel(profile.video ? 'Vidéo de présentation' : null);
@@ -240,6 +325,7 @@ export function IdentityStep({
     bio: bio || undefined,
     image: image || undefined,
     profileType,
+    experience: profileType === 'INDIVIDUAL' && experience ? experience : undefined,
   });
 
   // Only ever checks phone/password, never the identity fields above — handleNext
@@ -335,7 +421,13 @@ export function IdentityStep({
   };
 
   const stepContent = (
-    <OnboardingStepLayout step={stepNumber} totalSteps={totalSteps} stepLabel="Votre identité">
+    <OnboardingStepLayout
+      step={stepNumber}
+      totalSteps={totalSteps}
+      stepLabel="Votre identité"
+      onBack={() => router.push('/login')}
+      backLabel="Retour"
+    >
       <div className="mx-auto w-full max-w-2xl">
         <StepProgress step={stepNumber} total={totalSteps} />
 
@@ -348,32 +440,39 @@ export function IdentityStep({
 
         <div className="space-y-6 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
           {/* Left: photo + profile type */}
-          <div className="flex flex-col items-center">
+          <div className="mb-6 flex flex-col items-center md:mb-0">
             <div className="relative mb-3">
               <div
                 className="flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-4 transition-transform hover:scale-105"
-                style={{ borderColor: missingPhoto ? '#E74C3C' : '#2F76BB', background: '#D5E6F5' }}
+                style={{
+                  borderColor: missingPhoto ? '#E74C3C' : '#2F76BB',
+                  background: '#D5E6F5',
+                }}
+                onClick={() => fileInputRef.current?.click()}
               >
                 {image ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={image} alt="" className="h-full w-full object-cover" />
+                  <img src={image} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
-                  <User size={40} color="#2F76BB" />
+                  <ProfileSilhouette />
                 )}
               </div>
-              <label
-                className="absolute -right-2 -bottom-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 bg-white shadow-md"
+              <button
+                type="button"
+                className="absolute -right-2 -bottom-2 flex h-9 w-9 items-center justify-center rounded-full border-2 bg-white shadow-md"
                 style={{ borderColor: '#61BCA6' }}
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Ajouter une photo"
               >
-                <Check size={16} color="#61BCA6" style={{ display: image ? 'block' : 'none' }} />
-                {!image && <User size={14} color="#61BCA6" />}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                />
-              </label>
+                <Camera size={16} color="#61BCA6" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
             </div>
             <p style={{ fontSize: '12px', color: '#AAA' }}>Photo de profil</p>
             {missingPhoto && (
@@ -629,18 +728,25 @@ export function IdentityStep({
                 )}
               </label>
               <div className="mt-1 flex items-center gap-2">
-                <input
-                  type="text"
-                  value={job}
-                  onChange={(event) => setJob(event.target.value)}
-                  placeholder="Ingénieur, designer, chauffeur..."
-                  className="w-full rounded-xl px-4 py-3 text-[#353535] transition-all outline-none"
-                  style={{
-                    fontSize: '14px',
-                    border: `2px solid ${job ? '#2F76BB' : '#E0E0E0'}`,
-                    background: job ? '#F5F9FF' : '#FAFAFA',
-                  }}
-                />
+                <div className="relative flex-1">
+                  <div className="pointer-events-none absolute top-1/2 left-3 z-10 -translate-y-1/2">
+                    <Briefcase size={15} color={job ? '#2F76BB' : '#CCC'} />
+                  </div>
+                  <input
+                    type="text"
+                    value={job}
+                    onChange={(event) => setJob(event.target.value)}
+                    placeholder="Ingénieur, designer, chauffeur..."
+                    className="w-full rounded-xl py-3 text-[#353535] transition-all outline-none"
+                    style={{
+                      fontSize: '14px',
+                      border: `2px solid ${job ? '#2F76BB' : '#E0E0E0'}`,
+                      background: job ? '#F5F9FF' : '#FAFAFA',
+                      paddingLeft: '36px',
+                      paddingRight: '16px',
+                    }}
+                  />
+                </div>
                 <FieldMicButton
                   onResult={(text) => setJob(text)}
                   disabled={loading || otpSending}
@@ -648,29 +754,38 @@ export function IdentityStep({
               </div>
             </div>
 
+            {profileType === 'INDIVIDUAL' && (
+              <div className="mt-4">
+                <YearsDropdown value={experience} onChange={setExperience} />
+              </div>
+            )}
+
             <div>
               <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
                 À propos de vous
               </label>
-              <div className="mt-1 flex items-start gap-2">
+              <div className="relative mt-1">
                 <textarea
                   value={bio}
                   onChange={(event) => setBio(event.target.value.slice(0, 250))}
                   placeholder="Parlez de vous en quelques mots..."
-                  rows={3}
-                  className="w-full resize-none rounded-xl px-4 py-3 text-[#353535] transition-all outline-none"
+                  className="w-full resize-none rounded-xl px-4 py-3 pr-12 text-[#353535] transition-all outline-none"
                   style={{
                     fontSize: '14px',
                     border: `2px solid ${bio ? '#2F76BB' : '#E0E0E0'}`,
                     background: bio ? '#F5F9FF' : '#FAFAFA',
+                    minHeight: '100px',
                   }}
                 />
-                <FieldMicButton
-                  onResult={(text) =>
-                    setBio((prev) => `${prev ? `${prev} ` : ''}${text}`.slice(0, 250))
-                  }
-                  disabled={loading || otpSending}
-                />
+                <div className="absolute top-2 right-2">
+                  <FieldMicButton
+                    small
+                    onResult={(text) => {
+                      if (text.length <= 250) setBio(text.slice(0, 250));
+                    }}
+                    disabled={loading || otpSending}
+                  />
+                </div>
               </div>
             </div>
           </div>

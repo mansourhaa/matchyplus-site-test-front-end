@@ -24,12 +24,9 @@ import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { EducationStep } from './education-step';
-import { ExperienceStep } from './experience-step';
 import { IdentityStep } from './identity-step';
 import { InterestsStep } from './interests-step';
 import { LocationStep } from './location-step';
-import { WelcomeStep } from './welcome-step';
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -69,7 +66,7 @@ export function OnboardingWizard() {
     return `/onboarding?${query.toString()}`;
   };
 
-  // If profile type shrinks the order (PROVIDER) and user is on a removed step, bounce forward.
+  // Bounce invalid ?step= (e.g. old experience/education/welcome bookmarks) to identity.
   useEffect(() => {
     if (!hasValidatedSession || justRegistered) return;
     if (requestedStep && !isValidOnboardingStep(requestedStep, profileType)) {
@@ -94,7 +91,6 @@ export function OnboardingWizard() {
     if (!saved) return false;
 
     setJustRegistered(false);
-    // After identity, prefer the profileType from the patch so INDIVIDUAL gets exp/edu.
     const nextType =
       patch.profileType ?? (profileType as ProfileType | null) ?? ('INDIVIDUAL' as ProfileType);
     const next = getNextStep(step, nextType);
@@ -102,7 +98,10 @@ export function OnboardingWizard() {
     return true;
   };
 
-  const finishOnboarding = async () => {
+  const finishOnboarding = async (patch: OnboardingProfilePatch) => {
+    const saved = await saveStep(patch);
+    if (!saved) return false;
+
     setJustRegistered(false);
     const result = await dispatch(completeOnboarding());
     if (!completeOnboarding.fulfilled.match(result)) return false;
@@ -114,18 +113,15 @@ export function OnboardingWizard() {
   };
 
   const stepNumber = getStepNumber(step, profileType);
-  const totalSteps = order.filter((s) => s !== 'welcome').length;
-  // Welcome has no progress bar; other steps count without welcome.
-  const progressTotal = Math.max(1, totalSteps);
-  const progressNumber = step === 'welcome' ? progressTotal : getStepNumber(step, profileType);
+  const totalSteps = order.length;
 
   switch (step) {
     case 'identity':
       return (
         <IdentityStep
           profile={hasValidatedSession ? profile : null}
-          stepNumber={progressNumber}
-          totalSteps={progressTotal}
+          stepNumber={stepNumber}
+          totalSteps={totalSteps}
           loading={loading}
           isAuthenticated={hasValidatedSession}
           onRegistered={() => setJustRegistered(true)}
@@ -136,30 +132,8 @@ export function OnboardingWizard() {
       return (
         <InterestsStep
           profile={profile}
-          stepNumber={progressNumber}
-          totalSteps={progressTotal}
-          loading={loading}
-          onNext={goToNextStep}
-          onBack={goBack}
-        />
-      );
-    case 'experience':
-      return (
-        <ExperienceStep
-          profile={profile}
-          stepNumber={progressNumber}
-          totalSteps={progressTotal}
-          loading={loading}
-          onNext={goToNextStep}
-          onBack={goBack}
-        />
-      );
-    case 'education':
-      return (
-        <EducationStep
-          profile={profile}
-          stepNumber={progressNumber}
-          totalSteps={progressTotal}
+          stepNumber={stepNumber}
+          totalSteps={totalSteps}
           loading={loading}
           onNext={goToNextStep}
           onBack={goBack}
@@ -169,15 +143,13 @@ export function OnboardingWizard() {
       return (
         <LocationStep
           profile={profile}
-          stepNumber={progressNumber}
-          totalSteps={progressTotal}
+          stepNumber={stepNumber}
+          totalSteps={totalSteps}
           loading={loading}
-          onFinish={goToNextStep}
+          onFinish={finishOnboarding}
           onBack={goBack}
         />
       );
-    case 'welcome':
-      return <WelcomeStep loading={loading} onAccept={finishOnboarding} />;
     default:
       return null;
   }

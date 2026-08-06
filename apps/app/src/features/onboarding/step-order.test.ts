@@ -3,43 +3,33 @@ import { describe, expect, it } from 'vitest';
 import { getNextStep, getStepOrder, isValidOnboardingStep } from './step-order';
 
 describe('getStepOrder', () => {
-  it('includes experience and education for INDIVIDUAL', () => {
-    expect(getStepOrder('INDIVIDUAL')).toEqual([
-      'identity',
-      'interests',
-      'experience',
-      'education',
-      'location',
-      'welcome',
-    ]);
+  it('uses the same 3-step path for INDIVIDUAL and PROVIDER', () => {
+    expect(getStepOrder('INDIVIDUAL')).toEqual(['identity', 'interests', 'location']);
+    expect(getStepOrder('PROVIDER')).toEqual(['identity', 'interests', 'location']);
   });
 
-  it('skips experience and education for PROVIDER', () => {
-    expect(getStepOrder('PROVIDER')).toEqual(['identity', 'interests', 'location', 'welcome']);
-  });
-
-  it('defaults to the INDIVIDUAL path when profile type is unknown', () => {
-    expect(getStepOrder(null)).toEqual(getStepOrder('INDIVIDUAL'));
+  it('defaults to the 3-step path when profile type is unknown', () => {
+    expect(getStepOrder(null)).toEqual(['identity', 'interests', 'location']);
   });
 });
 
 describe('getNextStep', () => {
-  it('routes PROVIDER from interests straight to location', () => {
+  it('routes interests to location for both profile types', () => {
     expect(getNextStep('interests', 'PROVIDER')).toBe('location');
+    expect(getNextStep('interests', 'INDIVIDUAL')).toBe('location');
   });
 
-  it('routes INDIVIDUAL from interests to experience', () => {
-    expect(getNextStep('interests', 'INDIVIDUAL')).toBe('experience');
-  });
-
-  it('routes location to welcome', () => {
-    expect(getNextStep('location', 'INDIVIDUAL')).toBe('welcome');
+  it('ends after location (no welcome)', () => {
+    expect(getNextStep('location', 'INDIVIDUAL')).toBeNull();
+    expect(getNextStep('location', 'PROVIDER')).toBeNull();
   });
 });
 
 describe('isValidOnboardingStep', () => {
-  it('rejects experience for PROVIDER', () => {
-    expect(isValidOnboardingStep('experience', 'PROVIDER')).toBe(false);
-    expect(isValidOnboardingStep('experience', 'INDIVIDUAL')).toBe(true);
+  it('rejects removed experience/education/welcome steps', () => {
+    expect(isValidOnboardingStep('experience', 'INDIVIDUAL')).toBe(false);
+    expect(isValidOnboardingStep('education', 'INDIVIDUAL')).toBe(false);
+    expect(isValidOnboardingStep('welcome', 'INDIVIDUAL')).toBe(false);
+    expect(isValidOnboardingStep('location', 'INDIVIDUAL')).toBe(true);
   });
 });

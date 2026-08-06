@@ -1,5 +1,6 @@
 import authReducer from '@/features/auth/store/auth-slice';
 import type { AuthState } from '@/features/auth/types';
+import { I18nProvider } from '@/features/i18n/i18n-provider';
 import onboardingReducer from '@/features/onboarding/store/onboarding-slice';
 import type { OnboardingProfile } from '@/features/onboarding/types';
 import { api } from '@/lib/api';
@@ -125,9 +126,11 @@ function renderWizard(
 ) {
   const store = buildStore(authState, onboardingState);
   render(
-    <Provider store={store}>
-      <OnboardingWizard />
-    </Provider>,
+    <I18nProvider>
+      <Provider store={store}>
+        <OnboardingWizard />
+      </Provider>
+    </I18nProvider>,
   );
   return store;
 }

@@ -1,19 +1,10 @@
 import type { OnboardingStep, ProfileType } from './types';
 
-/** PROVIDER (Employeur): short path. INDIVIDUAL (Employé): + experience + education. */
-const PROVIDER_ORDER: OnboardingStep[] = ['identity', 'interests', 'location', 'welcome'];
+/** Matchy MVP: identity → goals → preferences (location), for both profile types. */
+const STEP_ORDER: OnboardingStep[] = ['identity', 'interests', 'location'];
 
-const INDIVIDUAL_ORDER: OnboardingStep[] = [
-  'identity',
-  'interests',
-  'experience',
-  'education',
-  'location',
-  'welcome',
-];
-
-export function getStepOrder(profileType?: ProfileType | null): OnboardingStep[] {
-  return profileType === 'PROVIDER' ? PROVIDER_ORDER : INDIVIDUAL_ORDER;
+export function getStepOrder(_profileType?: ProfileType | null): OnboardingStep[] {
+  return STEP_ORDER;
 }
 
 export function getStepNumber(step: OnboardingStep, profileType?: ProfileType | null): number {

@@ -28,17 +28,26 @@ type FieldMicButtonProps = {
   onResult: (text: string) => void;
   lang?: string;
   disabled?: boolean;
+  /** Matchy Inscription1: smaller mic for textarea corner. */
+  small?: boolean;
 };
 
-/** Web Speech API mic for onboarding identity fields (Matchy Inscription1 parity). */
-export function FieldMicButton({ onResult, lang = 'fr-FR', disabled }: FieldMicButtonProps) {
+/** Web Speech API mic — Matchy Inscription1 MicButton visual parity. */
+export function FieldMicButton({
+  onResult,
+  lang = 'fr-FR',
+  disabled,
+  small = false,
+}: FieldMicButtonProps) {
   const [listening, setListening] = useState(false);
-  const [unsupported, setUnsupported] = useState(false);
+  const [supported, setSupported] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
+    setSupported(Boolean(getSpeechRecognition()));
     return () => {
       mountedRef.current = false;
       const recognition = recognitionRef.current;
@@ -59,7 +68,7 @@ export function FieldMicButton({ onResult, lang = 'fr-FR', disabled }: FieldMicB
     if (disabled) return;
     const Ctor = getSpeechRecognition();
     if (!Ctor) {
-      setUnsupported(true);
+      setSupported(false);
       return;
     }
 
@@ -84,10 +93,16 @@ export function FieldMicButton({ onResult, lang = 'fr-FR', disabled }: FieldMicB
     recognition.onresult = (event) => {
       if (!mountedRef.current) return;
       const transcript = event.results[0]?.[0]?.transcript?.trim();
-      if (transcript) onResult(transcript);
+      if (transcript) {
+        setError(null);
+        onResult(transcript);
+      }
     };
-    recognition.onerror = () => {
-      if (mountedRef.current) setListening(false);
+    recognition.onerror = (event) => {
+      if (!mountedRef.current) return;
+      const code = event.error ?? 'error';
+      if (code !== 'aborted' && code !== 'no-speech') setError(code);
+      setListening(false);
     };
     recognition.onend = () => {
       if (mountedRef.current) setListening(false);
@@ -97,34 +112,59 @@ export function FieldMicButton({ onResult, lang = 'fr-FR', disabled }: FieldMicB
     try {
       recognition.start();
       setListening(true);
-      setUnsupported(false);
+      setError(null);
     } catch {
-      setUnsupported(true);
+      setSupported(false);
       setListening(false);
       recognitionRef.current = null;
     }
   };
 
+  if (!supported) return null;
+
+  const size = small ? 34 : 40;
+  const iconSize = small ? 14 : 16;
+
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      disabled={disabled}
-      title={
-        unsupported
-          ? 'Reconnaissance vocale non supportée sur ce navigateur'
-          : listening
-            ? 'Arrêter'
-            : 'Dicter'
-      }
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors disabled:opacity-40"
-      style={{
-        background: listening ? '#FEE2E2' : unsupported ? '#F5F5F5' : '#E8F7F3',
-        border: `1.5px solid ${listening ? '#E74C3C' : unsupported ? '#DDD' : '#61BCA6'}`,
-      }}
-      aria-label={listening ? 'Arrêter la dictée' : 'Dicter'}
-    >
-      {listening ? <MicOff size={16} color="#E74C3C" /> : <Mic size={16} color="#2A8F76" />}
-    </button>
+    <div className="relative flex flex-col items-center">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggle();
+        }}
+        disabled={disabled}
+        aria-pressed={listening}
+        title={listening ? 'Arrêter' : error ? `Erreur micro : ${error}` : 'Dicter'}
+        className="flex shrink-0 items-center justify-center rounded-xl transition-all disabled:opacity-40"
+        style={{
+          width: size,
+          height: size,
+          background:
+            error && !listening
+              ? 'linear-gradient(135deg, #F39C12, #E67E22)'
+              : listening
+                ? 'linear-gradient(135deg, #E74C3C, #C0392B)'
+                : 'linear-gradient(135deg, #61BCA6, #2F76BB)',
+          boxShadow: listening ? '0 0 0 4px rgba(231,76,60,0.2)' : 'none',
+        }}
+        aria-label={listening ? 'Arrêter la dictée' : 'Dicter'}
+      >
+        {listening ? (
+          <MicOff size={iconSize} color="white" />
+        ) : (
+          <Mic size={iconSize} color="white" />
+        )}
+      </button>
+      {error && !listening && (
+        <span
+          className="absolute top-full z-10 mt-1 max-w-40 text-center whitespace-nowrap"
+          style={{ fontSize: '10px', color: '#E67E22', fontWeight: 600 }}
+        >
+          Erreur micro
+        </span>
+      )}
+    </div>
   );
 }

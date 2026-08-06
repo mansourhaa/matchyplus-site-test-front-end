@@ -8,7 +8,7 @@ import {
 } from '@/features/onboarding/constants';
 import { interestsStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile } from '@/features/onboarding/types';
-import { Check, X } from 'lucide-react';
+import { Check, ChevronDown, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { OnboardingStepLayout, StepCard, StepCtaRow, StepProgress } from './onboarding-step-layout';
@@ -42,6 +42,7 @@ export function InterestsStep({
   const [offerService, setOfferService] = useState(profile?.offer_service ?? false);
   const [serviceType, setServiceType] = useState(profile?.service_type ?? '');
   const [price, setPrice] = useState(profile?.price ?? '');
+  const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Same late-arriving-profile hydration fix as identity-step: fetchOnboardingProfile
@@ -115,8 +116,19 @@ export function InterestsStep({
         <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E', marginBottom: '6px' }}>
           Vos objectifs
         </h1>
-        <p style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}>
-          Dites-nous ce que vous cherchez sur Matchy+.
+        <p
+          className="flex flex-wrap items-center gap-1.5"
+          style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}
+        >
+          <span>Dites-nous ce que vous cherchez sur</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-matchy.svg"
+            alt="Matchy+"
+            height={16}
+            style={{ height: 16, width: 'auto', display: 'inline-block' }}
+          />
+          <span>.</span>
         </p>
 
         <div className="space-y-8 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
@@ -195,9 +207,12 @@ export function InterestsStep({
             </StepCard>
 
             {isIndividual && (
-              <StepCard>
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
+              <div
+                className="rounded-2xl p-5"
+                style={{ background: '#F9FAFC', border: '1px solid #F0F0F0' }}
+              >
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
                     <p style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A2E' }}>
                       Offrir un service ?
                     </p>
@@ -207,6 +222,9 @@ export function InterestsStep({
                   </div>
                   <button
                     type="button"
+                    role="switch"
+                    aria-checked={offerService}
+                    dir="ltr"
                     onClick={() => setOfferService(!offerService)}
                     className="relative shrink-0"
                     style={{ width: '48px', height: '28px' }}
@@ -216,7 +234,7 @@ export function InterestsStep({
                       style={{ background: offerService ? '#2F76BB' : '#E0E0E0' }}
                     />
                     <div
-                      className="absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-transform"
+                      className="absolute top-1 left-0 h-6 w-6 rounded-full bg-white shadow transition-transform"
                       style={{ transform: offerService ? 'translateX(22px)' : 'translateX(2px)' }}
                     />
                   </button>
@@ -226,23 +244,51 @@ export function InterestsStep({
                   <div className="mt-3 space-y-3">
                     <div>
                       <label style={{ fontSize: '12px', color: '#888' }}>Type de service</label>
-                      <select
-                        value={serviceType}
-                        onChange={(event) => setServiceType(event.target.value)}
-                        className="mt-1 w-full rounded-xl px-3 py-2.5 text-[#353535] outline-none"
-                        style={{
-                          border: '1.5px solid #E0E0E0',
-                          background: 'white',
-                          fontSize: '13px',
-                        }}
-                      >
-                        <option value="">Choisir un type de service</option>
-                        {SERVICE_TYPES.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative mt-1">
+                        <button
+                          type="button"
+                          onClick={() => setShowServiceDropdown(!showServiceDropdown)}
+                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5"
+                          style={{
+                            border: '1.5px solid #E0E0E0',
+                            background: 'white',
+                            fontSize: '13px',
+                            color: serviceType ? '#353535' : '#BBB',
+                          }}
+                        >
+                          <span>{serviceType || 'Choisir un type de service'}</span>
+                          <ChevronDown size={16} color="#888" />
+                        </button>
+                        {showServiceDropdown && (
+                          <div
+                            className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl bg-white py-1"
+                            style={{
+                              border: '1.5px solid #E0E0E0',
+                              boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                            }}
+                          >
+                            {SERVICE_TYPES.map((type) => (
+                              <button
+                                key={type}
+                                type="button"
+                                className="block w-full px-3 py-2 text-left"
+                                style={{
+                                  fontSize: '13px',
+                                  color: serviceType === type ? '#2F76BB' : '#353535',
+                                  fontWeight: serviceType === type ? 700 : 400,
+                                  background: serviceType === type ? '#F5F9FF' : 'transparent',
+                                }}
+                                onClick={() => {
+                                  setServiceType(type);
+                                  setShowServiceDropdown(false);
+                                }}
+                              >
+                                {type}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label style={{ fontSize: '12px', color: '#888' }}>
@@ -270,7 +316,7 @@ export function InterestsStep({
                     </div>
                   </div>
                 )}
-              </StepCard>
+              </div>
             )}
           </div>
 

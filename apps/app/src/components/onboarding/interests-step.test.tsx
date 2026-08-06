@@ -1,8 +1,14 @@
+import { I18nProvider } from '@/features/i18n/i18n-provider';
 import type { OnboardingProfile } from '@/features/onboarding/types';
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { InterestsStep } from './interests-step';
+
+function renderStep(ui: ReactElement) {
+  return render(<I18nProvider>{ui}</I18nProvider>);
+}
 
 // OnboardingStepLayout renders children twice (a desktop and a mobile copy — CSS media
 // queries don't apply in jsdom), so every query needs the "first match" treatment, same
@@ -11,8 +17,9 @@ function firstButton(name: string | RegExp) {
   return screen.getAllByRole('button', { name })[0];
 }
 
-function firstCombobox() {
-  return screen.getAllByRole('combobox')[0];
+function selectServiceType(type: string) {
+  fireEvent.click(firstButton(/Choisir un type de service|Chauffeur \/ Transport/));
+  fireEvent.click(firstButton(type));
 }
 
 function firstPlaceholder(text: string) {
@@ -44,7 +51,7 @@ const baseProfile: OnboardingProfile = {
 describe('InterestsStep', () => {
   it('blocks submission and shows an error when there are no interests', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
-    render(
+    renderStep(
       <InterestsStep
         profile={baseProfile}
         stepNumber={2}
@@ -63,7 +70,7 @@ describe('InterestsStep', () => {
 
   it('blocks submission and shows an error when no goals are selected', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
-    render(
+    renderStep(
       <InterestsStep
         profile={baseProfile}
         stepNumber={2}
@@ -81,7 +88,7 @@ describe('InterestsStep', () => {
   });
 
   it('hides the "offer a service" card for a PROVIDER (Employeur) profile', () => {
-    render(
+    renderStep(
       <InterestsStep
         profile={{ ...baseProfile, profile_type: 'PROVIDER' }}
         stepNumber={2}
@@ -97,7 +104,7 @@ describe('InterestsStep', () => {
 
   it('requires a service type when offering a service', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
-    render(
+    renderStep(
       <InterestsStep
         profile={{ ...baseProfile, offer_service: true }}
         stepNumber={2}
@@ -122,7 +129,7 @@ describe('InterestsStep', () => {
 
   it('requires a price greater than 0 when offering a service', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
-    render(
+    renderStep(
       <InterestsStep
         profile={{ ...baseProfile, offer_service: true }}
         stepNumber={2}
@@ -135,7 +142,7 @@ describe('InterestsStep', () => {
 
     fireEvent.click(firstButton('+ Bricolage'));
     fireEvent.click(firstButton('Trouver un job'));
-    fireEvent.change(firstCombobox(), { target: { value: 'Chauffeur / Transport' } });
+    selectServiceType('Chauffeur / Transport');
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).not.toHaveBeenCalled();
@@ -146,7 +153,7 @@ describe('InterestsStep', () => {
 
   it('submits interests and goals for an INDIVIDUAL profile not offering a service', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
-    render(
+    renderStep(
       <InterestsStep
         profile={baseProfile}
         stepNumber={2}
@@ -172,7 +179,7 @@ describe('InterestsStep', () => {
 
   it('submits full service details once every required field is filled', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
-    render(
+    renderStep(
       <InterestsStep
         profile={{ ...baseProfile, offer_service: true }}
         stepNumber={2}
@@ -185,7 +192,7 @@ describe('InterestsStep', () => {
 
     fireEvent.click(firstButton('+ Bricolage'));
     fireEvent.click(firstButton('Trouver un job'));
-    fireEvent.change(firstCombobox(), { target: { value: 'Chauffeur / Transport' } });
+    selectServiceType('Chauffeur / Transport');
     fireEvent.change(firstPlaceholder('Montant'), { target: { value: '50' } });
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
@@ -203,7 +210,7 @@ describe('InterestsStep', () => {
     // is async — then re-renders with the real profile once it resolves. Without hydration,
     // the resumed interest chip below would never appear, since useState only reads its
     // initial value on the very first render.
-    const { rerender } = render(
+    const { rerender } = renderStep(
       <InterestsStep
         profile={null}
         stepNumber={2}
@@ -217,14 +224,20 @@ describe('InterestsStep', () => {
     expect(screen.queryAllByText('Bricolage')).toHaveLength(0);
 
     rerender(
-      <InterestsStep
-        profile={{ ...baseProfile, interests: ['Bricolage'], selected_goals: ['Trouver un job'] }}
-        stepNumber={2}
-        totalSteps={3}
-        loading={false}
-        onNext={vi.fn()}
-        onBack={vi.fn()}
-      />,
+      <I18nProvider>
+        <InterestsStep
+          profile={{
+            ...baseProfile,
+            interests: ['Bricolage'],
+            selected_goals: ['Trouver un job'],
+          }}
+          stepNumber={2}
+          totalSteps={3}
+          loading={false}
+          onNext={vi.fn()}
+          onBack={vi.fn()}
+        />
+      </I18nProvider>,
     );
 
     expect(screen.getAllByText('Bricolage').length).toBeGreaterThan(0);

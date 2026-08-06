@@ -3,7 +3,6 @@
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { logout } from '@/features/auth/store/auth-slice';
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@saas-boilerplate/ui/components/avatar';
 import {
@@ -25,13 +24,11 @@ import {
 export function NavUser() {
   const { isMobile } = useSidebar();
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    router.push('/login');
-    router.refresh();
+  const handleLogout = async () => {
+    await dispatch(logout());
+    window.location.assign('/login');
   };
 
   return (
