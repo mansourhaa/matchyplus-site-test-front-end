@@ -1,12 +1,17 @@
 import { FastifyPluginAsync } from 'fastify';
 
 import {
+  getNotificationPreferencesSchema,
   listNotificationsSchema,
   markAllNotificationsReadSchema,
   markNotificationReadSchema,
+  updateNotificationPreferencesSchema,
 } from '../../../schemas/v1/index.js';
 import { NotificationService } from '../../../services/notification.js';
-import { MarkNotificationReadParams } from '../../../types/notification.js';
+import {
+  MarkNotificationReadParams,
+  UpdateNotificationPreferencesBody,
+} from '../../../types/notification.js';
 
 const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const { prisma } = fastify;
@@ -26,6 +31,36 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
       throw err;
     }
   });
+
+  // Registered before `/:id/read` so "preferences" is not captured as an id.
+  fastify.get(
+    '/preferences',
+    { schema: getNotificationPreferencesSchema },
+    async (request, reply) => {
+      try {
+        const preferences = await notifications.getPreferences(request.loggedUser.id);
+        return reply.code(200).send({ preferences });
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
+
+  fastify.put<{ Body: UpdateNotificationPreferencesBody }>(
+    '/preferences',
+    { schema: updateNotificationPreferencesSchema },
+    async (request, reply) => {
+      try {
+        const preferences = await notifications.updatePreferences(
+          request.loggedUser.id,
+          request.body,
+        );
+        return reply.code(200).send({ preferences });
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
 
   fastify.post<{ Params: MarkNotificationReadParams }>(
     '/:id/read',

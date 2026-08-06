@@ -29,11 +29,26 @@ const notificationRow = {
   type: 'object',
   properties: {
     id: { type: 'string' },
-    type: { type: 'string', enum: ['PROFILE_VIEW'] },
+    type: {
+      type: 'string',
+      enum: ['PROFILE_VIEW', 'MATCH', 'MATCH_REQUEST', 'MESSAGE'],
+    },
     data: { type: 'object', additionalProperties: true },
     read: { type: 'boolean' },
     created_at: { type: 'string', format: 'date-time' },
   },
+};
+
+const notificationPreferences = {
+  type: 'object',
+  properties: {
+    all_enabled: { type: 'boolean' },
+    matches: { type: 'boolean' },
+    messages: { type: 'boolean' },
+    views: { type: 'boolean' },
+    email: { type: 'boolean' },
+  },
+  additionalProperties: false,
 };
 
 export const listNotificationsSchema = {
@@ -49,6 +64,53 @@ export const listNotificationsSchema = {
         notifications: { type: 'array', items: notificationRow },
         unread_count: { type: 'integer' },
       },
+    },
+    ...errorResponses,
+  },
+};
+
+export const getNotificationPreferencesSchema = {
+  tags: ['notifications'],
+  summary: "Get the current user's notification preferences",
+  security: [{ http: [] }],
+  headers: authenticatedHeadersSchema,
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        preferences: notificationPreferences,
+      },
+      additionalProperties: false,
+    },
+    ...errorResponses,
+  },
+};
+
+export const updateNotificationPreferencesSchema = {
+  tags: ['notifications'],
+  summary: "Update the current user's notification preferences (partial)",
+  security: [{ http: [] }],
+  headers: authenticatedHeadersSchema,
+  body: {
+    type: 'object',
+    properties: {
+      all_enabled: { type: 'boolean' },
+      matches: { type: 'boolean' },
+      messages: { type: 'boolean' },
+      views: { type: 'boolean' },
+      email: { type: 'boolean' },
+    },
+    additionalProperties: false,
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        preferences: notificationPreferences,
+      },
+      additionalProperties: false,
     },
     ...errorResponses,
   },

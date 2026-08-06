@@ -158,6 +158,22 @@ Optional OTP lifecycle tuning — all have sensible defaults if left unset:
 | `REALTIME_STREAM_KEY` | No | Redis Streams key for WebSocket fan-out | `realtime:events` |
 | `INSTANCE_ID` | **Required when `REDIS_URL` is set**; unique per replica and **stable across restarts** | Consumer group suffix (`realtime:inst:{id}`). Prefer StatefulSet pod name (K8s Downward API, e.g. `saas-api-0`). Reusing across pods breaks fan-out; changing on restart can replay self-origin events. Random UUID is only allowed without Redis. | — (throws if Redis on and unset) |
 
+### Notification email (optional SMTP)
+
+When unset, in-app notifications still work; email delivery is skipped. See [Notifications](../features/notifications.md).
+
+| Variable | Required | Description | Default |
+| --- | --- | --- | --- |
+| `SMTP_HOST` | No | SMTP server hostname | — (disabled) |
+| `SMTP_PORT` | No | SMTP port | `587` |
+| `SMTP_USER` | No | SMTP auth user | — |
+| `SMTP_PASS` | No | SMTP auth password | — |
+| `SMTP_FROM` | No | From address (`Name <addr>` ok) | falls back to user |
+| `SMTP_SECURE` | No | Force TLS (`true`/`false`); else port 465 → secure | — |
+| `SMTP_FROM_NAME` | No | Display name when building From | `APP_NAME` / Matchy+ |
+| `SMTP_LOGO_PATH` | No | Optional logo file for HTML emails | — |
+| `APP_URL` / `FRONTEND_URL` / `PUBLIC_APP_URL` | No | Base URL for email action links (first set wins) | `http://localhost:3000` |
+
 Local Redis/AI: `pnpm infra:up` (`compose.dev.yaml`).  
 Staging/prod: Kubernetes Services `saas-redis` + `saas-ai` (see [AI Async Jobs](../features/ai-async-jobs.md)).
 

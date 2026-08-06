@@ -1975,6 +1975,11 @@ export const UserScalarFieldEnum = {
   activity_sector: 'activity_sector',
   gps_latitude: 'gps_latitude',
   gps_longitude: 'gps_longitude',
+  notify_all: 'notify_all',
+  notify_matches: 'notify_matches',
+  notify_messages: 'notify_messages',
+  notify_views: 'notify_views',
+  notify_email: 'notify_email',
   create_at: 'create_at',
   updated_at: 'updated_at',
 } as const;

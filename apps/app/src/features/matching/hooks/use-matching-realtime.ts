@@ -112,12 +112,12 @@ export function useMatchingRealtime(enabled = true) {
 
               if (message.event === 'pong') return;
 
-              if (
-                message.event === 'notification_match' &&
-                message.payload?.event_type === 'match'
-              ) {
-                void dispatch(fetchMatchState());
-                void dispatch(fetchInbox());
+              if (message.event === 'notification_match') {
+                void dispatch(fetchNotifications());
+                if (message.payload?.event_type === 'match') {
+                  void dispatch(fetchMatchState());
+                  void dispatch(fetchInbox());
+                }
                 return;
               }
               if (message.event === 'match_removed') {
@@ -207,6 +207,42 @@ export function useMatchingRealtime(enabled = true) {
                   }),
                 );
                 void dispatch(fetchInbox());
+                return;
+              }
+
+              if (message.event === 'notification_message') {
+                void dispatch(fetchNotifications());
+                const conversationId =
+                  typeof message.payload?.conversation_id === 'string'
+                    ? message.payload.conversation_id
+                    : null;
+                const viewingThatChat =
+                  conversationId !== null && pathnameRef.current === `/chat/${conversationId}`;
+                if (pathnameRef.current !== '/notifications' && !viewingThatChat) {
+                  const id = String(nextToastId.current++);
+                  const senderName = String(message.payload?.sender_name || 'Quelqu’un');
+                  const preview = String(message.payload?.preview || 'Nouveau message');
+                  setPushToasts((prev) =>
+                    [
+                      {
+                        id,
+                        title: 'Nouveau message',
+                        body: `${senderName} : ${preview}`,
+                        viewerImage: (message.payload?.sender_image as string | null) ?? null,
+                      },
+                      ...prev,
+                    ].slice(0, MAX_VISIBLE_PUSH_TOASTS),
+                  );
+                  dismissTimers.current[id] = setTimeout(() => {
+                    setPushToasts((prev) => prev.filter((item) => item.id !== id));
+                    delete dismissTimers.current[id];
+                  }, PUSH_TOAST_LIFETIME_MS);
+                }
+                return;
+              }
+
+              if (message.event === 'notifications_updated') {
+                void dispatch(fetchNotifications());
                 return;
               }
 

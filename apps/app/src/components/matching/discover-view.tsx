@@ -24,6 +24,10 @@ import {
   selectTopFeedProfile,
   swipeProfile,
 } from '@/features/matching/store/matching-slice';
+import {
+  fetchNotifications,
+  selectNotifications,
+} from '@/features/notifications/store/notifications-slice';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, Bell, Check, Eye, Lock, MapPin, RefreshCw, Star, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -84,6 +88,7 @@ export function DiscoverView() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const matching = useAppSelector(selectMatching);
+  const { unreadCount } = useAppSelector(selectNotifications);
   const top = useAppSelector(selectTopFeedProfile);
   const {
     latitude,
@@ -98,6 +103,10 @@ export function DiscoverView() {
   const [detailProfileId, setDetailProfileId] = useState<string | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [forceQuotaModal, setForceQuotaModal] = useState(false);
+
+  useEffect(() => {
+    void dispatch(fetchNotifications());
+  }, [dispatch]);
 
   useEffect(() => {
     if (!locationSynced || latitude == null || longitude == null) return;
@@ -173,6 +182,14 @@ export function DiscoverView() {
           <LanguageSwitcher />
           <button type="button" className="relative" onClick={() => router.push('/notifications')}>
             <Bell size={21} color="#5C5C5C" />
+            {unreadCount > 0 && (
+              <span
+                className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
+                style={{ background: matchyBrand.blue }}
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
