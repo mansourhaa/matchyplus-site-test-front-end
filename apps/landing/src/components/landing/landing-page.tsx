@@ -25,7 +25,7 @@ const LANGUAGE_FLAGS: Record<Language, string> = {
 
 const translations = {
   en: {
-    getStarted: 'Get Started',
+    getStarted: 'Log in',
     heroTitle: 'Connect with Trusted Professionals Near You',
     heroSubtitle:
       "Tunisia's leading geolocation-based platform for finding reliable nannies, gardeners, drivers, and more",
@@ -136,7 +136,7 @@ const translations = {
     joinOurCommunity: 'Rejoignez notre communauté',
   },
   ar: {
-    getStarted: 'ابدأ الآن',
+    getStarted: 'تسجيل الدخول',
     heroTitle: 'تواصل مع محترفين موثوقين بالقرب منك',
     heroSubtitle:
       'المنصة الرائدة في تونس  القائمة على تحديد الموقع الجغرافي للعثور على مربيات وبستانيين وسائقين موثوقين والمزيد',
