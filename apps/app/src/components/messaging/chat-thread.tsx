@@ -23,10 +23,7 @@ function VoiceBubble({ mediaUrl }: { mediaUrl: string | null }) {
   const { url, loading } = useAuthenticatedMediaUrl(mediaUrl);
   if (loading) return <Loader2 size={16} className="animate-spin opacity-70" />;
   if (!url) return null;
-  return (
-    // eslint-disable-next-line jsx-a11y/media-has-caption
-    <audio controls src={url} className="max-w-[220px]" />
-  );
+  return <audio controls src={url} className="max-w-[220px]" />;
 }
 
 type ChatThreadProps = {
@@ -54,7 +51,9 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
   const conversationIdRef = useRef(conversationId);
   const myUserId = auth.user?.id;
 
-  conversationIdRef.current = conversationId;
+  useEffect(() => {
+    conversationIdRef.current = conversationId;
+  }, [conversationId]);
 
   /**
    * Abort in-flight mic acquire or active recording.
