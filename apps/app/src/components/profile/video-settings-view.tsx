@@ -71,7 +71,12 @@ export function VideoSettingsView() {
       showToast();
       return;
     }
-    setLocalPreview(null);
+    setLocalPreview((previous) => {
+      if (previous?.startsWith('blob:') && typeof URL.revokeObjectURL === 'function') {
+        URL.revokeObjectURL(previous);
+      }
+      return null;
+    });
   };
 
   const handleRemove = async () => {

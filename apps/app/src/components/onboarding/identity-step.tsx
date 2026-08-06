@@ -7,7 +7,7 @@ import { identityStepSchema } from '@/features/onboarding/schemas';
 import { patchOnboardingProfile } from '@/features/onboarding/store/onboarding-slice';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
 import { humanizeMediaError } from '@/features/profile/media-errors';
-import { uploadProfileVideo } from '@/features/profile/store/profile-slice';
+import { deleteProfileVideo, uploadProfileVideo } from '@/features/profile/store/profile-slice';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { Check, Eye, EyeOff, Loader2, Lock, ShieldCheck, User, Video, X } from 'lucide-react';
 import Link from 'next/link';
@@ -101,6 +101,8 @@ export function IdentityStep({
   const [videoLabel, setVideoLabel] = useState<string | null>(
     profile?.video ? 'Vidéo de présentation' : null,
   );
+  const [videoUploaded, setVideoUploaded] = useState(Boolean(profile?.video));
+  const [videoPendingLocal, setVideoPendingLocal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -136,6 +138,8 @@ export function IdentityStep({
     setImage(profile.image ?? '');
     setProfileType(profile.profile_type ?? 'INDIVIDUAL');
     setVideoLabel(profile.video ? 'Vidéo de présentation' : null);
+    setVideoUploaded(Boolean(profile.video));
+    setVideoPendingLocal(false);
   }, [profile]);
 
   const { user } = useAppSelector(selectAuth);
@@ -170,27 +174,64 @@ export function IdentityStep({
     if (uploadProfileVideo.fulfilled.match(result)) {
       dispatch(patchOnboardingProfile({ video: result.payload.video ?? null }));
       setVideoLabel(filename);
+      setVideoUploaded(true);
+      setVideoPendingLocal(false);
       pendingVideoRef.current = null;
       return true;
     }
+    setVideoLabel(null);
+    setVideoUploaded(false);
+    setVideoPendingLocal(false);
+    pendingVideoRef.current = null;
     setVideoError(humanizeMediaError(result.error?.message) || 'Échec de l’upload vidéo.');
     return false;
   };
 
-  const handleVideoReady = async (blob: Blob, _blobUrl: string, filename: string) => {
+  const handleVideoReady = async (blob: Blob, blobUrl: string, filename: string) => {
     setShowVideoModal(false);
-    setVideoLabel(filename);
-    if (!isAuthenticated) {
-      pendingVideoRef.current = { blob, filename };
-      return;
+    setVideoError(null);
+    try {
+      if (!isAuthenticated) {
+        pendingVideoRef.current = { blob, filename };
+        setVideoLabel(filename);
+        setVideoPendingLocal(true);
+        setVideoUploaded(false);
+        return;
+      }
+      await uploadVideoBlob(blob, filename);
+    } finally {
+      if (blobUrl.startsWith('blob:')) URL.revokeObjectURL(blobUrl);
     }
-    await uploadVideoBlob(blob, filename);
   };
 
   const flushPendingVideo = async () => {
     const pending = pendingVideoRef.current;
-    if (!pending) return;
-    await uploadVideoBlob(pending.blob, pending.filename);
+    if (!pending) return true;
+    return uploadVideoBlob(pending.blob, pending.filename);
+  };
+
+  const clearLocalVideo = () => {
+    setVideoLabel(null);
+    setVideoError(null);
+    setVideoPendingLocal(false);
+    setVideoUploaded(false);
+    pendingVideoRef.current = null;
+  };
+
+  const handleRemoveVideo = async () => {
+    if (isUploadingVideo) return;
+    if (isAuthenticated && (videoUploaded || profile?.video)) {
+      setIsUploadingVideo(true);
+      setVideoError(null);
+      const result = await dispatch(deleteProfileVideo());
+      setIsUploadingVideo(false);
+      if (!deleteProfileVideo.fulfilled.match(result)) {
+        setVideoError(humanizeMediaError(result.error?.message) || 'Échec de la suppression.');
+        return;
+      }
+      dispatch(patchOnboardingProfile({ video: null }));
+    }
+    clearLocalVideo();
   };
 
   const identityPatch = () => ({
@@ -285,6 +326,7 @@ export function IdentityStep({
 
     setShowOtpModal(false);
     setOtpVerifying(false);
+    // Optional video: a failed flush already clears the success label + sets videoError.
     await flushPendingVideo();
     const saved = await onNext(identityPatch());
     if (!saved) {
@@ -437,16 +479,18 @@ export function IdentityStep({
                       >
                         {videoLabel}
                       </p>
-                      <p style={{ fontSize: '10px', color: '#2A9177' }}>Vidéo ajoutée ✓</p>
+                      <p style={{ fontSize: '10px', color: '#2A9177' }}>
+                        {videoUploaded
+                          ? 'Vidéo ajoutée ✓'
+                          : videoPendingLocal
+                            ? 'Prête — envoi après vérification'
+                            : 'Vidéo sélectionnée'}
+                      </p>
                     </div>
                     <button
                       type="button"
                       disabled={isUploadingVideo}
-                      onClick={() => {
-                        setVideoLabel(null);
-                        setVideoError(null);
-                        pendingVideoRef.current = null;
-                      }}
+                      onClick={() => void handleRemoveVideo()}
                       className="shrink-0"
                       aria-label="Supprimer la vidéo"
                     >
@@ -643,8 +687,8 @@ export function IdentityStep({
           continueLabel={
             isAuthenticated ? 'Enregistrer et continuer' : 'Continuer et vérifier par SMS'
           }
-          disabled={loading || otpSending}
-          loading={loading || otpSending}
+          disabled={loading || otpSending || isUploadingVideo}
+          loading={loading || otpSending || isUploadingVideo}
         />
 
         <Link

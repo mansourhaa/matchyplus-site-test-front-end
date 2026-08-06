@@ -12,6 +12,7 @@ type SpeechRecognitionLike = {
   onend: (() => void) | null;
   start: () => void;
   stop: () => void;
+  abort?: () => void;
 };
 
 function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
@@ -34,10 +35,23 @@ export function FieldMicButton({ onResult, lang = 'fr-FR', disabled }: FieldMicB
   const [listening, setListening] = useState(false);
   const [unsupported, setUnsupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
-      recognitionRef.current?.stop();
+      mountedRef.current = false;
+      const recognition = recognitionRef.current;
+      if (!recognition) return;
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      try {
+        recognition.abort?.() ?? recognition.stop();
+      } catch {
+        /* already stopped */
+      }
+      recognitionRef.current = null;
     };
   }, []);
 
@@ -50,7 +64,15 @@ export function FieldMicButton({ onResult, lang = 'fr-FR', disabled }: FieldMicB
     }
 
     if (listening && recognitionRef.current) {
-      recognitionRef.current.stop();
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onend = null;
+      try {
+        recognitionRef.current.abort?.() ?? recognitionRef.current.stop();
+      } catch {
+        /* ignore */
+      }
+      recognitionRef.current = null;
       setListening(false);
       return;
     }
@@ -60,11 +82,17 @@ export function FieldMicButton({ onResult, lang = 'fr-FR', disabled }: FieldMicB
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.onresult = (event) => {
+      if (!mountedRef.current) return;
       const transcript = event.results[0]?.[0]?.transcript?.trim();
       if (transcript) onResult(transcript);
     };
-    recognition.onerror = () => setListening(false);
-    recognition.onend = () => setListening(false);
+    recognition.onerror = () => {
+      if (mountedRef.current) setListening(false);
+    };
+    recognition.onend = () => {
+      if (mountedRef.current) setListening(false);
+      recognitionRef.current = null;
+    };
     recognitionRef.current = recognition;
     try {
       recognition.start();
@@ -73,6 +101,7 @@ export function FieldMicButton({ onResult, lang = 'fr-FR', disabled }: FieldMicB
     } catch {
       setUnsupported(true);
       setListening(false);
+      recognitionRef.current = null;
     }
   };
 

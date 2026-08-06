@@ -73,7 +73,8 @@ export function OnboardingWizard() {
   useEffect(() => {
     if (!hasValidatedSession || justRegistered) return;
     if (requestedStep && !isValidOnboardingStep(requestedStep, profileType)) {
-      router.replace(buildStepUrl('location'));
+      const fallback = getStepOrder(profileType)[0] ?? 'identity';
+      router.replace(buildStepUrl(fallback));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasValidatedSession, profileType, requestedStep]);

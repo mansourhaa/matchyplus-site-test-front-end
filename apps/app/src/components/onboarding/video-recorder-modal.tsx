@@ -5,7 +5,7 @@ import {
   type VoiceLangCode,
   voiceLangToDetectedLang,
 } from '@/features/onboarding/video-tips';
-import { checkAndRequestCameraPermission } from '@/lib/permissions';
+import { checkAndRequestAvPermission } from '@/lib/permissions';
 import { Capacitor } from '@capacitor/core';
 import {
   AlertCircle,
@@ -98,10 +98,10 @@ export function buildVideoRecorderTr(
       uploadBrowse: 'Vérification en cours…',
       videoTooLong: '⚠️ La vidéo dépasse 20 secondes. Veuillez sélectionner une vidéo plus courte.',
       videoTip: tip,
-      permBlockedTitle: 'Activer la caméra',
+      permBlockedTitle: 'Activer caméra et micro',
       permBlockedDesc:
-        "Autorisez l'accès à la caméra pour enregistrer votre vidéo de présentation.",
-      permBlockedRetry: 'Autoriser la caméra',
+        "Autorisez l'accès à la caméra et au microphone pour enregistrer votre vidéo de présentation.",
+      permBlockedRetry: 'Autoriser',
       permBlockedClose: 'Annuler',
     },
     en: {
@@ -122,9 +122,9 @@ export function buildVideoRecorderTr(
       uploadBrowse: 'Checking file…',
       videoTooLong: '⚠️ Video exceeds 20 seconds. Please select a shorter video.',
       videoTip: tip,
-      permBlockedTitle: 'Enable camera',
-      permBlockedDesc: 'Allow camera access to record your presentation video.',
-      permBlockedRetry: 'Allow camera',
+      permBlockedTitle: 'Enable camera and microphone',
+      permBlockedDesc: 'Allow camera and microphone access to record your presentation video.',
+      permBlockedRetry: 'Allow',
       permBlockedClose: 'Cancel',
     },
     ar: {
@@ -145,9 +145,9 @@ export function buildVideoRecorderTr(
       uploadBrowse: 'جارٍ التحقق من الملف…',
       videoTooLong: '⚠️ الفيديو يتجاوز 20 ثانية. يرجى اختيار فيديو أقصر.',
       videoTip: tip,
-      permBlockedTitle: 'تفعيل الكاميرا',
-      permBlockedDesc: 'اسمح بالوصول إلى الكاميرا لتسجيل فيديو التعريف الخاص بك.',
-      permBlockedRetry: 'السماح للكاميرا',
+      permBlockedTitle: 'تفعيل الكاميرا والميكروفون',
+      permBlockedDesc: 'اسمح بالوصول إلى الكاميرا والميكروفون لتسجيل فيديو التعريف.',
+      permBlockedRetry: 'السماح',
       permBlockedClose: 'إلغاء',
     },
   };
@@ -182,11 +182,60 @@ export function VideoRecorderModal({
   const currentBlobRef = useRef<Blob | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const handedOffUrlRef = useRef(false);
+  const recordedUrlRef = useRef<string | null>(null);
+  const currentBlobUrlRef = useRef<string | null>(null);
+
+  const stopRecorder = useCallback(() => {
+    const recorder = recorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      try {
+        recorder.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+    recorderRef.current = null;
+    chunksRef.current = [];
+  }, []);
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
   }, []);
+
+  const revokeTrackedUrls = useCallback(() => {
+    if (handedOffUrlRef.current) return;
+    if (recordedUrlRef.current) {
+      URL.revokeObjectURL(recordedUrlRef.current);
+      recordedUrlRef.current = null;
+    }
+    if (currentBlobUrlRef.current && currentBlobUrlRef.current !== recordedUrlRef.current) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = null;
+    }
+  }, []);
+
+  const setTrackedRecordedUrl = (url: string | null) => {
+    recordedUrlRef.current = url;
+    setRecordedUrl(url);
+  };
+
+  const setTrackedBlobUrl = (url: string | null) => {
+    currentBlobUrlRef.current = url;
+    setCurrentBlobUrl(url);
+  };
+
+  const teardown = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    stopRecorder();
+    stopStream();
+    revokeTrackedUrls();
+    currentBlobRef.current = null;
+  }, [revokeTrackedUrls, stopRecorder, stopStream]);
 
   const startCamera = useCallback(
     async (facing: 'user' | 'environment') => {
@@ -203,8 +252,6 @@ export function VideoRecorderModal({
         }
       } catch (error) {
         const name = (error as DOMException | undefined)?.name;
-        // Refus à l'invite OU permission bloquée → popup d'aide custom.
-        // (On n'affiche jamais de message générique : ici on a bien TENTÉ l'accès.)
         if (
           name === 'NotAllowedError' ||
           name === 'SecurityError' ||
@@ -221,10 +268,17 @@ export function VideoRecorderModal({
 
   useEffect(() => {
     return () => {
-      stopStream();
-      if (timerRef.current) clearInterval(timerRef.current);
+      teardown();
     };
-  }, [stopStream]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount only
+  }, []);
+
+  // Re-bind the live preview after the <video> mounts (phase → preview race).
+  useEffect(() => {
+    if ((phase === 'preview' || phase === 'recording') && liveRef.current && streamRef.current) {
+      liveRef.current.srcObject = streamRef.current;
+    }
+  }, [phase]);
 
   useEffect(() => {
     if (phase === 'review' && reviewRef.current && recordedUrl) {
@@ -232,15 +286,25 @@ export function VideoRecorderModal({
     }
   }, [phase, recordedUrl]);
 
+  const handleClose = () => {
+    teardown();
+    onClose();
+  };
+
   const handleChooseCamera = async () => {
     setPhase('preview');
     setCamError(null);
     setPermissionBlocked(false);
 
     if (Capacitor.isNativePlatform()) {
-      const granted = await checkAndRequestCameraPermission();
-      if (!granted) {
+      const result = await checkAndRequestAvPermission();
+      if (!result.ok) {
         setPermissionBlocked(true);
+        if (result.reason === 'microphone') {
+          setCamError(
+            'Microphone refusé. Autorisez le micro pour enregistrer votre vidéo de présentation.',
+          );
+        }
         return;
       }
       void startCamera('user');
@@ -254,11 +318,13 @@ export function VideoRecorderModal({
   // Réessayer après que l'utilisateur a (dé)bloqué la permission dans ses réglages.
   const retryCameraPermission = () => {
     setPermissionBlocked(false);
-    handleChooseCamera();
+    setCamError(null);
+    void handleChooseCamera();
   };
 
   const dismissPermissionHelp = () => {
     setPermissionBlocked(false);
+    setCamError(null);
     setPhase('choose');
     stopStream();
   };
@@ -285,9 +351,9 @@ export function VideoRecorderModal({
         e.target.value = '';
       } else {
         currentBlobRef.current = file;
-        setCurrentBlobUrl(url);
+        setTrackedBlobUrl(url);
         setCurrentFilename(file.name);
-        setRecordedUrl(url);
+        setTrackedRecordedUrl(url);
         setTimeout(() => setPhase('review'), 600);
       }
     };
@@ -299,39 +365,53 @@ export function VideoRecorderModal({
   };
 
   const flipCamera = () => {
+    if (phase === 'recording') return;
     const next = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(next);
-    startCamera(next);
+    void startCamera(next);
   };
 
   const startRecording = () => {
     if (!streamRef.current) return;
     chunksRef.current = [];
 
-    const mimeType =
-      ['video/webm;codecs=vp9,opus', 'video/webm;codecs=h264', 'video/webm', 'video/mp4'].find(
-        (t) => {
-          try {
-            return MediaRecorder.isTypeSupported(t);
-          } catch {
-            return false;
-          }
-        },
-      ) ?? 'video/webm';
+    const mimeType = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=h264',
+      'video/webm',
+      'video/mp4',
+    ].find((t) => {
+      try {
+        return MediaRecorder.isTypeSupported(t);
+      } catch {
+        return false;
+      }
+    });
 
-    const recorder = new MediaRecorder(streamRef.current, { mimeType });
+    let recorder: MediaRecorder;
+    try {
+      recorder = mimeType
+        ? new MediaRecorder(streamRef.current, { mimeType })
+        : new MediaRecorder(streamRef.current);
+    } catch {
+      setCamError(tr.camError);
+      return;
+    }
+
+    const usedType = recorder.mimeType || mimeType || 'video/webm';
+
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data);
     };
     recorder.onstop = () => {
-      const blobType = mimeType.split(';')[0].trim() || 'video/webm';
+      const blobType = usedType.split(';')[0].trim() || 'video/webm';
       const blob = new Blob(chunksRef.current, { type: blobType });
       const url = URL.createObjectURL(blob);
       const ext = blobType.includes('mp4') ? 'mp4' : 'webm';
       const fname = `matchy_video_${Date.now()}.${ext}`;
       currentBlobRef.current = blob;
-      setRecordedUrl(url);
-      setCurrentBlobUrl(url);
+      setTrackedRecordedUrl(url);
+      setTrackedBlobUrl(url);
       setCurrentFilename(fname);
       setPhase('review');
       stopStream();
@@ -339,7 +419,13 @@ export function VideoRecorderModal({
     };
 
     recorderRef.current = recorder;
-    recorder.start(200);
+    try {
+      recorder.start(200);
+    } catch {
+      setCamError(tr.camError);
+      recorderRef.current = null;
+      return;
+    }
     setPhase('recording');
     setCountdown(MAX_DURATION);
 
@@ -360,26 +446,39 @@ export function VideoRecorderModal({
   };
 
   const retake = () => {
-    if (recordedUrl) {
-      URL.revokeObjectURL(recordedUrl);
-      setRecordedUrl(null);
+    if (recordedUrlRef.current) {
+      URL.revokeObjectURL(recordedUrlRef.current);
     }
-    setCurrentBlobUrl(null);
+    if (currentBlobUrlRef.current && currentBlobUrlRef.current !== recordedUrlRef.current) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+    }
+    recordedUrlRef.current = null;
+    currentBlobUrlRef.current = null;
+    setTrackedRecordedUrl(null);
+    setTrackedBlobUrl(null);
+    currentBlobRef.current = null;
     setPhase('preview');
     setCountdown(MAX_DURATION);
-    startCamera(facingMode);
+    void startCamera(facingMode);
   };
 
   const handleConfirm = () => {
     if (currentBlobRef.current && currentBlobUrl && currentFilename) {
+      handedOffUrlRef.current = true;
       onVideoReady(currentBlobRef.current, currentBlobUrl, currentFilename);
     }
   };
 
   const handleRetakeAll = () => {
-    if (recordedUrl) URL.revokeObjectURL(recordedUrl);
-    setRecordedUrl(null);
-    setCurrentBlobUrl(null);
+    if (recordedUrlRef.current) URL.revokeObjectURL(recordedUrlRef.current);
+    if (currentBlobUrlRef.current && currentBlobUrlRef.current !== recordedUrlRef.current) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+    }
+    recordedUrlRef.current = null;
+    currentBlobUrlRef.current = null;
+    setTrackedRecordedUrl(null);
+    setTrackedBlobUrl(null);
+    currentBlobRef.current = null;
     setUploadError(null);
     setPhase('choose');
     stopStream();
@@ -407,7 +506,8 @@ export function VideoRecorderModal({
       {/* ── Header ── */}
       <div className="absolute top-0 right-0 left-0 z-20 flex items-center justify-between px-4 pt-4">
         <button
-          onClick={onClose}
+          type="button"
+          onClick={handleClose}
           className="flex h-11 w-11 items-center justify-center rounded-full"
           style={{
             background: 'rgba(0,0,0,0.6)',
@@ -437,8 +537,9 @@ export function VideoRecorderModal({
           </span>
         </div>
 
-        {(phase === 'preview' || phase === 'recording') && (
+        {phase === 'preview' ? (
           <button
+            type="button"
             onClick={flipCamera}
             className="flex h-11 w-11 items-center justify-center rounded-full"
             style={{
@@ -446,11 +547,13 @@ export function VideoRecorderModal({
               backdropFilter: 'blur(8px)',
               border: '1px solid rgba(255,255,255,0.15)',
             }}
+            aria-label="Retourner la caméra"
           >
             <FlipHorizontal size={18} color="white" />
           </button>
+        ) : (
+          <div className="w-11" />
         )}
-        {phase !== 'preview' && phase !== 'recording' && <div className="w-11" />}
       </div>
 
       {/* ── CHOOSE PHASE ── */}
