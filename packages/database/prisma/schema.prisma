@@ -472,3 +472,26 @@ model AiJob {
   @@index([userId, createdAt])
   @@index([type, status])
 }
+
+/// Early-access waitlist entry (landing page SMS verification flow).
+model WaitlistEntry {
+  id         String   @id @default(cuid())
+  phone      String   @unique
+  name       String
+  occupation String
+  created_at DateTime @default(now())
+
+  @@index([created_at(sort: Desc)])
+}
+
+/// Pending OTP verification before a waitlist row is committed.
+model WaitlistPending {
+  id         String   @id @default(cuid())
+  phone      String   @unique
+  name       String
+  occupation String
+  code_hash  String   @db.Text()
+  attempts   Int      @default(0)
+  expires_at DateTime
+  created_at DateTime @default(now())
+}

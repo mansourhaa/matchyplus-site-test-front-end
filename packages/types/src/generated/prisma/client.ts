@@ -148,3 +148,13 @@ export type Notification = Prisma.NotificationModel;
  * this table is the source of truth for status polling and audits.
  */
 export type AiJob = Prisma.AiJobModel;
+/**
+ * Model WaitlistEntry
+ * Early-access waitlist entry (landing page SMS verification flow).
+ */
+export type WaitlistEntry = Prisma.WaitlistEntryModel;
+/**
+ * Model WaitlistPending
+ * Pending OTP verification before a waitlist row is committed.
+ */
+export type WaitlistPending = Prisma.WaitlistPendingModel;

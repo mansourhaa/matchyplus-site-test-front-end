@@ -24,4 +24,6 @@ export type * from './models/UserBlock.js';
 export type * from './models/Rating.js';
 export type * from './models/Notification.js';
 export type * from './models/AiJob.js';
+export type * from './models/WaitlistEntry.js';
+export type * from './models/WaitlistPending.js';
 export type * from './commonInputTypes.js';

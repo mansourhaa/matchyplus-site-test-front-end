@@ -59,6 +59,7 @@ export const ipGeolocationSchema = {
   querystring: {
     type: 'object',
     additionalProperties: false,
+    maxProperties: 0,
     properties: {},
   },
   response: {
