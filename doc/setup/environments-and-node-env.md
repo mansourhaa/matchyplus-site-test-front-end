@@ -83,14 +83,13 @@ pnpm dev
 
 **What loads:**
 
-| Workspace | Script | Env files loaded |
+| Workspace | Script | Env file loaded |
 | --- | --- | --- |
-| Root (Turbo) | `dotenv -e .env -e .env.development -- turbo run dev` | `.env` (optional) → `.env.development` |
-| App | `dotenv -e ../../.env -e ../../.env.development -- next dev` | same |
+| Root (Turbo) | `dotenv -e .env.development -- turbo run dev` | `.env.development` |
+| App / Admin / Landing | `dotenv -e ../../.env.development -- next dev` | `.env.development` |
 | API | `dotenv -e ../../.env.development -- tsx watch …` | `.env.development` |
 | Database | `dotenv -e ../../.env.development -- prisma …` | `.env.development` |
-
-Later values override earlier ones when multiple files are passed.
+| Infra | `dotenv -e .env.development -- docker compose …` | `.env.development` |
 
 ### Staging
 
@@ -117,7 +116,7 @@ Ensure `.env.staging` exists with `NODE_ENV=staging` and staging-specific URLs/s
 ```bash
 # Build frontend with production public vars
 pnpm build --filter=@saas-boilerplate/app
-# loads: .env + .env.production
+# loads: .env.production
 
 # Start API
 pnpm --filter @saas-boilerplate/api start
@@ -192,19 +191,9 @@ Your `.env.development` / `.env.production` files still matter for **`NEXT_PUBLI
 | `.env.development.local` | Dev secrets that override `.env.development` |
 | `.env.production.local` | Prod secrets on deploy machines |
 
-Pattern in `.gitignore`: `.env*` with `!.env.example` only.
+Pattern in `.gitignore`: `.env*` with `!.env.example`, `!.env.staging.example`, and `!.env.production.example` only.
 
-### Optional shared base file
-
-Create a root `.env` for values shared across **all** environments (non-secret defaults):
-
-```env
-# .env (optional, not committed if it has secrets)
-SERVER_PORT=8000
-ACCESS_TOKEN_TTL=1d
-```
-
-Root dev script loads `.env` **before** `.env.development`, so environment-specific files can override shared values.
+Optional machine-specific overrides (gitignored): `.env.local`, `.env.development.local`, `.env.staging.local`, `.env.production.local`.
 
 ---
 
@@ -213,25 +202,27 @@ Root dev script loads `.env` **before** `.env.development`, so environment-speci
 ### Root `package.json`
 
 ```json
-"dev": "dotenv -e .env -e .env.development -- turbo run dev"
-"stage": "dotenv -e .env -e .env.staging -- turbo run stage"
+"dev": "dotenv -e .env.development -- turbo run dev"
+"stage": "dotenv -e .env.staging -- turbo run stage"
+"start": "dotenv -e .env.production -- turbo run start"
+"infra:up": "dotenv -e .env.development -- docker compose -f compose.dev.yaml up -d --build redis ai"
 "test": "turbo run test"
 ```
 
 ### App `apps/app/package.json`
 
 ```json
-"dev":   "dotenv -e ../../.env -e ../../.env.development -- next dev"
-"stage": "dotenv -e ../../.env -e ../../.env.staging -- next dev"
+"dev":   "dotenv -e ../../.env.development -- next dev"
+"stage": "dotenv -e ../../.env.staging -- next dev"
 "test":  "vitest run"
-"build": "dotenv -e ../../.env -e ../../.env.production -- next build"
+"build": "dotenv -e ../../.env.production -- next build"
 ```
 
 ### API `apps/api/package.json`
 
 ```json
 "dev":   "dotenv -e ../../.env.development -- tsx watch src/index.ts"
-"stage": "dotenv -e ../../.env -e ../../.env.staging -- tsx watch src/index.ts"
+"stage": "dotenv -e ../../.env.staging -- tsx watch src/index.ts"
 "test":  "vitest run"
 "start": "dotenv -e ../../.env.production -- node dist/index.js"
 ```
