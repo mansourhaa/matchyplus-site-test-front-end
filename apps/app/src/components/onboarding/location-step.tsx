@@ -245,7 +245,7 @@ export function LocationStep({
           Localisation &amp; Préférences
         </h1>
         <p style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}>
-          Dernière étape ! Configurez votre zone de matching et vos disponibilités.
+          Configurez votre zone de matching et vos disponibilités.
         </p>
 
         <div className="space-y-5 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
@@ -440,7 +440,7 @@ export function LocationStep({
         <StepCtaRow
           onBack={onBack}
           onContinue={submit}
-          continueLabel={loading ? 'Synchronisation...' : 'Lancer Matchy+'}
+          continueLabel={loading ? 'Enregistrement…' : 'Enregistrer et continuer'}
           continueIcon={<Rocket size={18} />}
           disabled={loading}
           loading={loading}
@@ -453,7 +453,7 @@ export function LocationStep({
           className="mt-3 block w-full text-center"
           style={{ fontSize: '14px', color: '#BBB' }}
         >
-          Passer et lancer
+          Passer
         </button>
       </div>
     </OnboardingStepLayout>

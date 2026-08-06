@@ -1,6 +1,10 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import {
+  VideoRecorderModal,
+  buildVideoRecorderTr,
+} from '@/components/onboarding/video-recorder-modal';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import {
   fetchOnboardingProfile,
@@ -14,10 +18,8 @@ import {
   uploadProfileVideo,
 } from '@/features/profile/store/profile-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
-import { AlertCircle, Film, Play, Trash2, Upload, Video, Zap } from 'lucide-react';
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
-
-const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+import { AlertCircle, Film, Play, Trash2, Video, Zap } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 export function VideoSettingsView() {
   const dispatch = useAppDispatch();
@@ -28,8 +30,8 @@ export function VideoSettingsView() {
   const [saved, setSaved] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [playbackError, setPlaybackError] = useState(false);
+  const [showRecorder, setShowRecorder] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const serverVideo = profile?.video ?? null;
   const authenticated = useAuthenticatedMediaUrl(serverVideo, { stream: true });
 
@@ -51,26 +53,17 @@ export function VideoSettingsView() {
     window.setTimeout(() => setSaved(false), 3000);
   };
 
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    if (file.size > MAX_VIDEO_BYTES) {
-      setClientError('Vidéo trop volumineuse (50 Mo maximum).');
-      return;
-    }
-
+  const handleVideoReady = async (blob: Blob, blobUrl: string, filename: string) => {
+    setShowRecorder(false);
     setClientError(null);
     setPlaybackError(false);
     setPlaying(false);
-    if (typeof URL.createObjectURL === 'function') {
-      const preview = URL.createObjectURL(file);
-      setLocalPreview((previous) => {
-        if (previous && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(previous);
-        return preview;
-      });
-    }
+    setLocalPreview((previous) => {
+      if (previous && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(previous);
+      return blobUrl;
+    });
 
+    const file = new File([blob], filename, { type: blob.type || 'video/webm' });
     const result = await dispatch(uploadProfileVideo(file));
     if (uploadProfileVideo.fulfilled.match(result)) {
       dispatch(patchOnboardingProfile({ video: result.payload.video ?? null }));
@@ -176,11 +169,11 @@ export function VideoSettingsView() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => fileRef.current?.click()}
+                onClick={() => setShowRecorder(true)}
                 disabled={mediaUploading}
                 className="flex items-center justify-center gap-2 rounded-xl bg-[#E8F0FA] py-2.5 text-[13px] font-bold text-[#2F76BB] disabled:opacity-60"
               >
-                <Upload size={14} />
+                <Video size={14} />
                 {mediaUploading ? 'Envoi en cours…' : 'Remplacer la vidéo'}
               </button>
               <button
@@ -197,7 +190,7 @@ export function VideoSettingsView() {
         ) : (
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
+            onClick={() => setShowRecorder(true)}
             disabled={mediaUploading}
             className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-[#D0E4F7] py-8 text-[#888] hover:bg-[#F5F7FA] disabled:opacity-60"
           >
@@ -205,23 +198,16 @@ export function VideoSettingsView() {
               <Video size={24} color={matchyBrand.blue} />
             </span>
             <span className="text-center">
-              <span className="block text-sm font-bold text-[#2F76BB]">Ajouter une vidéo</span>
+              <span className="block text-sm font-bold text-[#2F76BB]">
+                Enregistrer ou importer
+              </span>
               <span className="mt-0.5 block text-xs text-[#AAA]">
-                {mediaUploading ? 'Envoi en cours…' : 'Votre vidéo de présentation de 20 secondes'}
+                {mediaUploading ? 'Envoi en cours…' : 'Caméra ou import · 20s max'}
               </span>
             </span>
           </button>
         )}
 
-        <input
-          ref={fileRef}
-          type="file"
-          accept="video/mp4,video/quicktime,video/webm,video/x-matroska,video/x-msvideo,video/ogg,video/3gpp,video/3gpp2"
-          className="hidden"
-          onChange={handleFileChange}
-          disabled={mediaUploading}
-          aria-label="Choisir une vidéo de présentation"
-        />
         {(clientError || mediaError || authenticated.error || playbackError) && (
           <p className="mt-2 text-xs text-[#E74C3C]" role="alert">
             {clientError ||
@@ -251,6 +237,14 @@ export function VideoSettingsView() {
           <Zap size={18} />
           <span className="text-[13px] font-bold">✓ Vidéo enregistrée avec succès !</span>
         </div>
+      )}
+
+      {showRecorder && (
+        <VideoRecorderModal
+          onVideoReady={handleVideoReady}
+          onClose={() => setShowRecorder(false)}
+          tr={buildVideoRecorderTr('fr', 'fr-FR')}
+        />
       )}
     </div>
   );

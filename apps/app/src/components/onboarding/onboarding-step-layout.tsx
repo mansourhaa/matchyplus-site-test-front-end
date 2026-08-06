@@ -129,6 +129,8 @@ type OnboardingStepLayoutProps = {
   onBack?: () => void;
   skipLabel?: string;
   onSkip?: () => void;
+  /** Community-rules / bienvenue screen — no step progress chrome. */
+  hideProgress?: boolean;
   children: ReactNode;
 };
 
@@ -145,13 +147,14 @@ export function OnboardingStepLayout({
   onBack,
   skipLabel,
   onSkip,
+  hideProgress = false,
   children,
 }: OnboardingStepLayoutProps) {
   return (
     <AuthLayout
-      activeFeature={step - 1}
-      step={step}
-      totalSteps={totalSteps}
+      activeFeature={Math.max(0, step - 1)}
+      step={hideProgress ? undefined : step}
+      totalSteps={hideProgress ? undefined : totalSteps}
       stepLabel={stepLabel}
       hideVideoFeature
     >

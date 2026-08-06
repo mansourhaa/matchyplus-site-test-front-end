@@ -72,4 +72,5 @@ export type OnboardingProfilePatch = Partial<{
   educations: ProfileEducation[];
 }>;
 
-export type OnboardingStep = 'identity' | 'interests' | 'location';
+export type OnboardingStep =
+  'identity' | 'interests' | 'experience' | 'education' | 'location' | 'welcome';

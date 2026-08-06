@@ -62,13 +62,12 @@ describe('VideoSettingsView', () => {
     );
 
     await waitFor(() => expect(api.get).toHaveBeenCalled());
-    expect(screen.getByText('Ajouter une vidéo')).toBeInTheDocument();
+    expect(screen.getByText('Enregistrer ou importer')).toBeInTheDocument();
     expect(screen.queryByLabelText('Supprimer la vidéo')).not.toBeInTheDocument();
   });
 
-  it('uploads a video and refreshes the profile', async () => {
+  it('opens the recorder modal instead of a raw file input', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: baseProfile });
-    vi.mocked(api.post).mockResolvedValue({ data: { video: '/uploads/videos/new.mp4' } });
     const store = buildStore();
 
     render(
@@ -78,15 +77,9 @@ describe('VideoSettingsView', () => {
     );
 
     await waitFor(() => expect(api.get).toHaveBeenCalledTimes(1));
-
-    const file = new File(['abc'], 'video.mp4', { type: 'video/mp4' });
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    await waitFor(() =>
-      expect(api.post).toHaveBeenCalledWith('/users/me/profile/video', expect.any(FormData)),
-    );
-    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByText('Enregistrer ou importer'));
+    expect(screen.getByText('Enregistrer maintenant')).toBeInTheDocument();
+    expect(screen.getByText('Importer une vidéo')).toBeInTheDocument();
   });
 
   it('shows a player and remove button once a video exists', async () => {

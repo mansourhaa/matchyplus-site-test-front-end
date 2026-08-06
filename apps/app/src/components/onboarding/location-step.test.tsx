@@ -81,7 +81,7 @@ describe('LocationStep', () => {
     );
 
     expect(screen.queryByText('Mes disponibilités')).not.toBeInTheDocument();
-    fireEvent.click(firstButton('Lancer Matchy+'));
+    fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onFinish).toHaveBeenCalledWith(
       expect.objectContaining({ availabilityDays: [], availabilityHours: [] }),
@@ -101,7 +101,7 @@ describe('LocationStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton('Lancer Matchy+'));
+    fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onFinish).not.toHaveBeenCalled();
     expect(await screen.findAllByText('Sélectionnez au moins un jour.')).not.toHaveLength(0);
@@ -121,7 +121,7 @@ describe('LocationStep', () => {
     );
 
     fireEvent.click(firstButton('Lun'));
-    fireEvent.click(firstButton('Lancer Matchy+'));
+    fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ availabilityDays: ['Lun'] }));
   });
