@@ -48,8 +48,9 @@ Prefix: `/api/v1`
 
 Via `/realtime` WebSocket (`fastify.notifyUser`):
 
-- Match (existing): `notification_match`, `match_removed`
-- Messaging: `new_message`, `notification_message`, `messages_read`, `user_typing`, `user_stop_typing`, `message_like_changed`, `conversation_status_changed`, `conversation_block_status_changed`
+- Match (existing): `notification_match` (payload may be inbox-backed with `notification_id`, or ephemeral when prefs suppress), `match_removed`
+- Notifications inbox: `notification_profile_view`, `notification_message` (see [notifications.md](./notifications.md))
+- Messaging: `new_message` (ephemeral chat channel — dual with inbox `MESSAGE` rows), `messages_read`, `user_typing`, `user_stop_typing`, `message_like_changed`, `conversation_status_changed`, `conversation_block_status_changed`
 
 Clients may send `{ event: "typing"|"stop_typing", payload: { conversation_id } }` on the same socket.
 Clients may also send `{ event: "ping" }` for keepalive; the server replies `{ event: "pong" }`.

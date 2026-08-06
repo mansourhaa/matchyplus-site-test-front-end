@@ -94,26 +94,24 @@ export function AdminLoginForm() {
           background: 'linear-gradient(160deg, #1a5fa0 0%, #2F76BB 50%, #61BCA6 100%)',
         }}
       >
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-11 w-11 items-center justify-center rounded-2xl"
-            style={{ background: 'rgba(255,255,255,0.2)' }}
+        <div className="flex flex-col gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-matchy-white.svg"
+            alt="Matchy+"
+            height={28}
+            style={{ height: 28, width: 'auto' }}
+          />
+          <p
+            style={{
+              fontSize: '11px',
+              color: 'rgba(255,255,255,0.65)',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+            }}
           >
-            <Shield size={22} color="white" />
-          </div>
-          <div>
-            <p style={{ fontSize: '20px', fontWeight: 900, color: 'white' }}>Matchy+</p>
-            <p
-              style={{
-                fontSize: '11px',
-                color: 'rgba(255,255,255,0.65)',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Admin Panel
-            </p>
-          </div>
+            Admin Panel
+          </p>
         </div>
 
         <div>
@@ -181,16 +179,14 @@ export function AdminLoginForm() {
           className="w-full max-w-md"
         >
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-xl"
-              style={{ background: '#2F76BB' }}
-            >
-              <Shield size={20} color="white" />
-            </div>
-            <div>
-              <span style={{ fontSize: '18px', fontWeight: 800, color: 'white' }}>Matchy+ </span>
-              <span style={{ fontSize: '12px', color: '#61BCA6', fontWeight: 700 }}>Admin</span>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-matchy-white.svg"
+              alt="Matchy+"
+              height={24}
+              style={{ height: 24, width: 'auto' }}
+            />
+            <span style={{ fontSize: '12px', color: '#61BCA6', fontWeight: 700 }}>Admin</span>
           </div>
 
           <motion.div

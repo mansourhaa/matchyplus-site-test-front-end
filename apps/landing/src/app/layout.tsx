@@ -19,10 +19,6 @@ export const metadata: Metadata = {
   title: 'Matchy+',
   description:
     "Tunisia's leading geolocation-based platform for finding reliable nannies, gardeners, drivers, and more.",
-  icons: {
-    icon: '/logo-matchy.svg',
-    apple: '/logo-matchy.svg',
-  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -53,6 +53,7 @@ import {
   memberAccessCookieOptions,
   memberRefreshCookieOptions,
 } from '../../../utils/member-session.js';
+import { isAuthorizedMobileClient } from '../../../utils/mobile-client.js';
 
 const ERROR_STATUS: Record<
   string,
@@ -131,9 +132,9 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     return request.t(code, { defaultValue: code });
   }
 
-  // Every member-session-issuing route goes through here: neither token is ever put in a
-  // JSON response body, only in HttpOnly cookies the browser attaches automatically —
-  // matching the admin panel's existing cookie-only pattern.
+  // Browser: tokens leave only as HttpOnly cookies.
+  // Capacitor: authorized mobile clients (label + MOBILE_CLIENT_SECRET) also get
+  // accessToken/refreshToken in the JSON body — see doc/features/authentication.md.
   function setMemberSessionCookies(
     reply: import('fastify').FastifyReply,
     tokens: { accessToken: string; refreshToken: string },
@@ -145,6 +146,66 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   function clearMemberSessionCookies(reply: import('fastify').FastifyReply) {
     reply.clearCookie(MEMBER_ACCESS_COOKIE, clearMemberAccessCookieOptions());
     reply.clearCookie(MEMBER_REFRESH_COOKIE, clearMemberRefreshCookieOptions());
+  }
+
+  function memberSessionResponse(
+    request: FastifyRequest,
+    tokens: { accessToken: string; refreshToken: string },
+    user: unknown,
+  ) {
+    if (!isAuthorizedMobileClient(request)) {
+      return { user };
+    }
+    return {
+      user,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  /**
+   * Authorized Cap (label + MOBILE_CLIENT_SECRET) gets rotated JWTs in the body so
+   * Bearer storage can update. Browsers lack the secret, so spoofing X-Matchy-Client
+   * alone never yields body JWTs.
+   */
+  function memberRefreshResponse(
+    request: FastifyRequest,
+    tokens: { accessToken: string; refreshToken: string },
+  ) {
+    if (!isAuthorizedMobileClient(request)) {
+      return { ok: true as const };
+    }
+    return {
+      ok: true as const,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  type RefreshTokenSource =
+    | { token: string; source: 'cookie' | 'body' }
+    | { token?: undefined; source: 'none' };
+
+  function readRefreshToken(request: FastifyRequest): RefreshTokenSource {
+    const body = request.body as { refreshToken?: string } | null;
+    const fromBody = body?.refreshToken?.trim();
+
+    // Prefer body for authorized Cap so Bearer storage stays the primary Cap path.
+    // Stale body + valid cookie is handled by falling back in the refresh route.
+    if (isAuthorizedMobileClient(request) && fromBody) {
+      return { token: fromBody, source: 'body' };
+    }
+
+    const fromCookie = request.cookies?.[MEMBER_REFRESH_COOKIE];
+    if (fromCookie) {
+      return { token: fromCookie, source: 'cookie' };
+    }
+
+    return { source: 'none' };
+  }
+
+  function cookieRefreshToken(request: FastifyRequest): string | undefined {
+    return request.cookies?.[MEMBER_REFRESH_COOKIE] || undefined;
   }
 
   /**
@@ -256,7 +317,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await phoneAuthService.loginWithPhone(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send({ user: data.user });
+        return reply.code(200).send(memberSessionResponse(request, data, data.user));
       } catch (err) {
         throw mapError(err as Error, request);
       }
@@ -273,14 +334,14 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await phoneAuthService.registerWithPhone(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(201).send({ user: data.user });
+        return reply.code(201).send(memberSessionResponse(request, data, data.user));
       } catch (err) {
         throw mapError(err as Error, request);
       }
     },
   );
 
-  fastify.post(
+  fastify.post<{ Body: { refreshToken?: string } }>(
     '/refresh',
     {
       schema: refreshSchema,
@@ -288,28 +349,52 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
     async (request, reply) => {
       try {
-        const refreshToken = request.cookies?.[MEMBER_REFRESH_COOKIE];
-        if (!refreshToken) {
+        const presented = readRefreshToken(request);
+        if (!presented.token) {
           throw new Error('invalid_refresh_token');
         }
 
-        const data = await tokenService.refreshAccessToken(refreshToken);
+        let data: { accessToken: string; refreshToken: string };
+        try {
+          data = await tokenService.refreshAccessToken(presented.token);
+        } catch (err) {
+          // Cap may send a stale localStorage refresh alongside a still-valid cookie.
+          const cookieToken = cookieRefreshToken(request);
+          if (
+            presented.source === 'body' &&
+            cookieToken &&
+            cookieToken !== presented.token &&
+            (err as Error).message === 'invalid_refresh_token'
+          ) {
+            data = await tokenService.refreshAccessToken(cookieToken);
+          } else {
+            throw err;
+          }
+        }
+
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send({ ok: true });
+        return reply.code(200).send(memberRefreshResponse(request, data));
       } catch (err) {
         throw mapError(err as Error, request);
       }
     },
   );
 
-  fastify.post('/logout', {}, async (request, reply) => {
+  fastify.post<{ Body: { refreshToken?: string } }>('/logout', {}, async (request, reply) => {
     try {
-      const refreshToken = request.cookies?.[MEMBER_REFRESH_COOKIE];
-      if (refreshToken) {
-        // Best-effort: an already-expired or already-revoked token must not block the
-        // client from clearing its own (now-stale) cookies.
-        await tokenService.revokeRefreshToken(refreshToken).catch(() => undefined);
-      }
+      // Cap may present a stale body refreshToken while the rotated cookie is still
+      // active — revoke every distinct candidate (body + cookie) best-effort.
+      const candidates = new Set<string>();
+      const cookieToken = cookieRefreshToken(request);
+      if (cookieToken) candidates.add(cookieToken);
+      const bodyToken = (request.body as { refreshToken?: string } | null)?.refreshToken?.trim();
+      if (bodyToken) candidates.add(bodyToken);
+
+      await Promise.all(
+        [...candidates].map((token) =>
+          tokenService.revokeRefreshToken(token).catch(() => undefined),
+        ),
+      );
 
       clearMemberSessionCookies(reply);
 
@@ -504,7 +589,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await oauthAuthService.consumeExchangeCode(request.body);
         setMemberSessionCookies(reply, data);
-        return reply.code(200).send({ user: data.user });
+        return reply.code(200).send(memberSessionResponse(request, data, data.user));
       } catch (err) {
         throw mapError(err as Error, request);
       }

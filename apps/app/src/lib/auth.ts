@@ -1,11 +1,14 @@
-// Name of the HttpOnly session cookie the API sets on login/register/refresh — read only
-// by Next.js middleware (see proxy.ts) for route guarding. Never JS-writable or
-// JS-readable: neither token is visible to this app's own code (see lib/api.ts, which
-// relies on the browser attaching it automatically instead).
+// Name of the session cookie the API sets on login/register/refresh — read by Next.js
+// middleware (see proxy.ts) for route guarding. On the web it is HttpOnly (JS cannot
+// read it). On Capacitor, lib/mobile-tokens.ts mirrors a Path=/ cookie onto the app
+// origin so proxy.ts still works when the API cookie Domain does not cover the WebView.
+import { mobileTokenStorage } from './mobile-tokens';
+import { clearMobileClientKeyCache } from './native';
+
 export const AUTH_COOKIE = 'access_token';
 export const AUTH_USER_KEY = 'user';
 
-/** Cached profile only — never a token, which no longer exists in JS-visible storage. */
+/** Cached profile only — never a token on web. Cap stores JWTs separately in localStorage. */
 export function persistAuthUser(user: unknown) {
   if (typeof window === 'undefined') return;
   sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
@@ -14,6 +17,8 @@ export function persistAuthUser(user: unknown) {
 export function clearAuthSession() {
   if (typeof window === 'undefined') return;
   sessionStorage.removeItem(AUTH_USER_KEY);
+  mobileTokenStorage.clear();
+  clearMobileClientKeyCache();
 }
 
 export function getCachedAuthUser<T = unknown>(): T | null {

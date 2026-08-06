@@ -8,28 +8,29 @@ type MatchyLogoProps = {
   onClick?: () => void;
 };
 
-export function MatchyLogo({ href = '/home', size = 'sm', onClick }: MatchyLogoProps) {
-  const mainSize = size === 'md' ? 28 : 22;
-  const plusSize = size === 'md' ? 20 : 16;
+const HEIGHTS = {
+  sm: 22,
+  md: 28,
+} as const;
 
-  const content = (
-    <span className="inline-flex items-baseline gap-0.5">
-      <span style={{ fontSize: mainSize, fontWeight: 800, color: '#2F76BB' }}>Matchy</span>
-      <span style={{ fontSize: plusSize, fontWeight: 800, color: '#61BCA6' }}>+</span>
-    </span>
+export function MatchyLogo({ href = '/home', size = 'sm', onClick }: MatchyLogoProps) {
+  const height = HEIGHTS[size];
+  const image = (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/logo-matchy.svg" alt="Matchy+" height={height} style={{ height, width: 'auto' }} />
   );
 
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className="inline-flex">
-        {content}
+        {image}
       </button>
     );
   }
 
   return (
     <Link href={href} className="inline-flex">
-      {content}
+      {image}
     </Link>
   );
 }

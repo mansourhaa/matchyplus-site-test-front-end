@@ -113,12 +113,14 @@ flowchart LR
     Redux --> UI[Dashboard UI]
 ```
 
-Neither token is ever readable from frontend code — both leave the API only as
+Neither token is ever readable from **browser** frontend code — both leave the API only as
 HttpOnly cookies (`apps/api/src/utils/member-session.ts`), attached automatically by
 the browser on same-site requests. `apps/app/src/lib/api.ts`'s axios instance uses
-`withCredentials: true` and never attaches an `Authorization` header itself.
+`withCredentials: true` and, on the web, never attaches an `Authorization` header itself.
 
-Since no token is JS-visible, "authenticated" can only be known by asking the API.
+**Capacitor exception:** see [Mobile (Capacitor)](#mobile-capacitor).
+
+Since no token is JS-visible on the web, "authenticated" can only be known by asking the API.
 `AuthState.status` (`unknown | authenticated | unauthenticated`) starts as `'unknown'`
 on every page load; `useBootstrapSession` (`apps/app/src/features/auth/hooks`) always
 calls `GET /api/v1/auth/authcheck` once at mount to resolve it — a `status` value
@@ -126,6 +128,42 @@ carried over by redux-persist from a previous session is never trusted on its ow
 since the cookie it implies may have since expired. Only the **user profile** (not a
 token) is cached in `sessionStorage`, for fast optimistic rendering while that check
 resolves. See `apps/app/src/lib/auth.ts`.
+
+## Mobile (Capacitor)
+
+**Shell**: `apps/mobile` — Capacitor wraps the live Next.js member app via
+`CAPACITOR_SERVER_URL` (remote WebView). See `apps/mobile/README.md`.
+
+Cross-origin WebViews cannot reliably use the browser cookie session alone, so native
+clients opt into Bearer auth. Body JWTs are **not** gated on a spoofable header alone:
+
+1. Cap attaches `X-Matchy-Client: mobile` **and** `X-Matchy-Mobile-Key` matching
+   `MOBILE_CLIENT_SECRET`. The key comes from the native `MobileClient` plugin
+   (`BuildConfig`), not from `NEXT_PUBLIC_*` or the web bundle — a normal browser
+   cannot forge it.
+2. Session-issuing routes still set HttpOnly cookies for everyone. They return
+   `accessToken` + `refreshToken` in JSON **only** when the request is an
+   authorized mobile client (label + secret). If `MOBILE_CLIENT_SECRET` is unset,
+   body issuance is disabled (fail closed).
+3. Cap stores those JWTs in `localStorage` (`apps/app/src/lib/mobile-tokens.ts`) and
+   attaches `Authorization: Bearer …` on axios calls.
+4. `POST /auth/refresh` accepts `{ refreshToken }` in the body **only** for authorized
+   mobile clients (body is preferred when both body and cookie are present). If the body
+   token is stale/revoked but the HttpOnly cookie is still valid, refresh falls back to
+   the cookie. Any successful refresh for an authorized Cap client returns rotated
+   `accessToken` / `refreshToken` in JSON so Bearer storage stays fresh. Browsers lack
+   the mobile secret, so spoofing `X-Matchy-Client` alone never yields body JWTs.
+5. `verifyToken` already accepts Bearer (see [API authorization](#api-authorization)).
+6. Realtime WebSocket: Cap sends `{ event: "auth", payload: { access_token } }` as the
+   first frame after upgrade (JWT stays out of the URL / access logs). Web still uses the
+   HttpOnly cookie on the handshake. Legacy `?access_token=` is still accepted server-side
+   but Cap must not use it.
+7. A non-HttpOnly `access_token` cookie is mirrored onto the **Next.js app origin** so
+   `proxy.ts` can still gate routes when `MEMBER_COOKIE_DOMAIN` does not cover the
+   WebView host (local emulator).
+
+Browser clients never send the mobile key and never receive tokens in the body — the
+cookie-only contract above is unchanged for them.
 
 ## Route protection (Next.js)
 
@@ -185,16 +223,19 @@ never selected, let alone returned.
 
 Every successful login/registration/OAuth-exchange issues an **access token**
 (short-lived JWT, `ACCESS_TOKEN_TTL`) and a **refresh token** (long-lived,
-`REFRESH_TOKEN_TTL_DAYS`), both as HttpOnly cookies — never in the response body.
+`REFRESH_TOKEN_TTL_DAYS`), both as HttpOnly cookies. For browser clients they are
+**never** in the response body. Capacitor clients that send `X-Matchy-Client: mobile`
+also receive the pair in the JSON body (see [Mobile (Capacitor)](#mobile-capacitor)).
 Refresh tokens are stored server-side as a `RefreshToken` row keyed by a **sha256
 hash** of the token — the raw token itself is never persisted. The refresh cookie is
 scoped to `Path=/api/v1/auth` — the browser never attaches it to any other request,
 shrinking where a stolen refresh token could otherwise be replayed from.
 
-`POST /api/v1/auth/refresh` takes no body — the refresh token comes from its own
-cookie — and **rotates** it: the presented token is looked up by its hash, checked
-for revocation/expiry, then revoked and replaced in the same call, with both new
-cookies set on the response. The old refresh token cannot be used again after this.
+`POST /api/v1/auth/refresh` takes the refresh token from its HttpOnly cookie, or —
+for Capacitor — from an optional `{ refreshToken }` body, and **rotates** it: the
+presented token is looked up by its hash, checked for revocation/expiry, then revoked
+and replaced in the same call, with both new cookies set on the response (and body
+tokens again for mobile). The old refresh token cannot be used again after this.
 
 `POST /api/v1/auth/logout` reads the refresh cookie, best-effort revokes it, and
 clears both cookies regardless of whether revocation succeeded. Changing your password
@@ -316,6 +357,7 @@ the remaining gap (e.g. a plain HTML form POST) with no separate CSRF-token mach
 | `API_BASE_URL` / `FRONTEND_URL`                                                                 | API — OAuth callback URL and SPA redirect target                                                                                                                  |
 | `OAUTH_EXCHANGE_CODE_TTL_SECONDS`                                                                | API — OAuth exchange code lifetime (default 60s)                                                                                                                  |
 | `CORS_ORIGINS`                                                                                   | API — allowed browser origins, shared by the CORS plugin and the Origin/Referer CSRF guard (see [CSRF](#csrf-originreferer-validation))                          |
+| `MOBILE_CLIENT_SECRET`                                                                           | API + Cap Android build — shared secret for authorized Capacitor body JWTs (see [Mobile (Capacitor)](#mobile-capacitor)); never `NEXT_PUBLIC_*`                 |
 | `ADMIN_COOKIE_DOMAIN` / `MEMBER_COOKIE_DOMAIN`                                                   | API — cookie `Domain` attribute, only needed when the API and the panel/app sit on different subdomains                                                          |
 
 ## Security notes
@@ -323,8 +365,9 @@ the remaining gap (e.g. a plain HTML form POST) with no separate CSRF-token mach
 - Never store raw passwords — only bcrypt hashes
 - JWT secret must be long and random in production
 - `NEXT_PUBLIC_*` vars must not contain secrets
-- Both session tokens are HttpOnly cookies — never in a JSON body, never readable from
-  frontend JS
+- Both session tokens are HttpOnly cookies for **browser** clients — never in a JSON
+  body, never readable from web JS. Capacitor is the documented exception
+  (`X-Matchy-Client: mobile` → body tokens + Bearer); see [Mobile (Capacitor)](#mobile-capacitor)
 - Proxy cookie check is UX-only; always validate tokens server-side
 - Origin/Referer validation is defense-in-depth for CSRF, not a substitute for
   `SameSite=Lax`

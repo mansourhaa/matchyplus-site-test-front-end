@@ -192,7 +192,20 @@ describe('POST /api/v1/profiles/:id/view', () => {
               : { id: where.id, status: 'ACTIVE', role: 'USER' },
           ),
         ),
-        findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+        findUnique: vi
+          .fn()
+          .mockImplementation(({ select }: { select?: Record<string, unknown> }) => {
+            if (select?.notify_all !== undefined || select?.notify_views !== undefined) {
+              return Promise.resolve({
+                notify_all: true,
+                notify_matches: true,
+                notify_messages: true,
+                notify_views: true,
+                notify_email: true,
+              });
+            }
+            return Promise.resolve({ status: 'ACTIVE' });
+          }),
       },
       userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
       notification: {
@@ -240,7 +253,20 @@ describe('POST /api/v1/profiles/:id/view', () => {
                 : { id: where.id, status: 'ACTIVE', role: 'USER' },
             ),
           ),
-        findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+        findUnique: vi
+          .fn()
+          .mockImplementation(({ select }: { select?: Record<string, unknown> }) => {
+            if (select?.notify_all !== undefined || select?.notify_views !== undefined) {
+              return Promise.resolve({
+                notify_all: true,
+                notify_matches: true,
+                notify_messages: true,
+                notify_views: true,
+                notify_email: true,
+              });
+            }
+            return Promise.resolve({ status: 'ACTIVE' });
+          }),
       },
       userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
       notification: {
@@ -324,7 +350,20 @@ describe('GET /api/v1/profiles/media/photos/:filename', () => {
         user: {
           findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
           findFirst: vi.fn().mockResolvedValue({ id: 'user-1' }),
-          findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+          findUnique: vi
+            .fn()
+            .mockImplementation(({ select }: { select?: Record<string, unknown> }) => {
+              if (select?.notify_all !== undefined || select?.notify_views !== undefined) {
+                return Promise.resolve({
+                  notify_all: true,
+                  notify_matches: true,
+                  notify_messages: true,
+                  notify_views: true,
+                  notify_email: true,
+                });
+              }
+              return Promise.resolve({ status: 'ACTIVE' });
+            }),
         } as never,
       },
     });
@@ -351,7 +390,20 @@ describe('GET /api/v1/profiles/media/photos/:filename', () => {
         user: {
           findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
           findFirst: vi.fn().mockResolvedValue({ id: 'user-1' }),
-          findUnique: vi.fn().mockResolvedValue({ status: 'ACTIVE' }),
+          findUnique: vi
+            .fn()
+            .mockImplementation(({ select }: { select?: Record<string, unknown> }) => {
+              if (select?.notify_all !== undefined || select?.notify_views !== undefined) {
+                return Promise.resolve({
+                  notify_all: true,
+                  notify_matches: true,
+                  notify_messages: true,
+                  notify_views: true,
+                  notify_email: true,
+                });
+              }
+              return Promise.resolve({ status: 'ACTIVE' });
+            }),
         } as never,
       },
     });

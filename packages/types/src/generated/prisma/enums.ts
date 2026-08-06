@@ -74,6 +74,9 @@ export type MessageType = (typeof MessageType)[keyof typeof MessageType];
 
 export const NotificationType = {
   PROFILE_VIEW: 'PROFILE_VIEW',
+  MATCH: 'MATCH',
+  MATCH_REQUEST: 'MATCH_REQUEST',
+  MESSAGE: 'MESSAGE',
 } as const;
 
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType];

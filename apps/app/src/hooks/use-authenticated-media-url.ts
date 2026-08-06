@@ -2,6 +2,7 @@
 
 import { api } from '@/lib/api';
 import { resolveMediaUrl } from '@/lib/media-url';
+import { isNativeMobileClient } from '@/lib/native';
 import { useEffect, useState } from 'react';
 
 type AuthenticatedMediaState = {
@@ -17,9 +18,10 @@ type AuthenticatedMediaResult = {
 };
 
 /**
- * Photos are fetched through the cookie-aware API client (which can also refresh the
- * HttpOnly session), then exposed as a short-lived object URL. Videos may opt into a
- * direct cookie-authenticated URL so the browser can issue native Range requests.
+ * Photos are fetched through the API client (cookies on web, Bearer on Capacitor),
+ * then exposed as a short-lived object URL. Videos may opt into a direct cookie-
+ * authenticated URL in the browser so Range requests work — Cap always uses the
+ * blob path because cross-origin cookies are unreliable in the WebView.
  */
 export function useAuthenticatedMediaUrl(
   storedValue: string | null | undefined,
@@ -35,7 +37,9 @@ export function useAuthenticatedMediaUrl(
     storedValue?.match(/^\/uploads\/(photos|videos)\/[0-9a-f-]{36}\.[a-z0-9]+$/i) ||
     storedValue?.match(/^\/uploads\/audio\/[a-z0-9]+_[0-9a-f-]{36}\.[a-z0-9]+$/i),
   );
-  const streamDirectly = Boolean(options.stream && storedValue?.startsWith('/uploads/videos/'));
+  const streamDirectly = Boolean(
+    options.stream && storedValue?.startsWith('/uploads/videos/') && !isNativeMobileClient(),
+  );
 
   useEffect(() => {
     let cancelled = false;

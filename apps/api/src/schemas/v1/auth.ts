@@ -140,12 +140,16 @@ const errorResponses = {
   },
 };
 
-// Neither token is ever returned in a JSON body — both go out as HttpOnly cookies the
-// browser attaches automatically (see utils/member-session.ts).
+// Browser clients: tokens leave only as HttpOnly cookies (utils/member-session.ts).
+// Capacitor clients (`X-Matchy-Client: mobile`): the same cookies are still set, and
+// accessToken / refreshToken are also included in the JSON body so the native shell can
+// use Bearer auth (see doc/features/authentication.md § Mobile).
 const userOnlyResponseSchema = {
   type: 'object',
   properties: {
     user: userSummarySchema,
+    accessToken: { type: 'string' },
+    refreshToken: { type: 'string' },
   },
 };
 
@@ -237,16 +241,26 @@ export const registerPhoneSchema = {
   },
 };
 
-// The refresh token is read from an HttpOnly cookie, never the body (see
-// utils/member-session.ts) — this route takes no input of its own.
+// Browser: refresh token comes from the HttpOnly cookie only.
+// Capacitor: may send `{ refreshToken }` in the body when cookies are unavailable.
 export const refreshSchema = {
   tags: ['auth'],
+  body: {
+    type: 'object',
+    properties: {
+      refreshToken: { type: 'string', minLength: 16 },
+    },
+  },
   response: {
     200: {
-      description: 'Successful response. Both tokens are rotated as HttpOnly cookies.',
+      description:
+        'Successful response. Both tokens are rotated as HttpOnly cookies; ' +
+        'mobile clients also receive the new pair in the body.',
       type: 'object',
       properties: {
         ok: { type: 'boolean' },
+        accessToken: { type: 'string' },
+        refreshToken: { type: 'string' },
       },
     },
     ...errorResponses,

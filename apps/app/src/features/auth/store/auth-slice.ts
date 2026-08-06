@@ -1,5 +1,7 @@
 import { api, getApiErrorCode } from '@/lib/api';
 import { clearAuthSession, getCachedAuthUser, persistAuthUser } from '@/lib/auth';
+import { mobileTokenStorage } from '@/lib/mobile-tokens';
+import { isNativeMobileClient } from '@/lib/native';
 import type { RootState } from '@/lib/store';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
@@ -22,6 +24,8 @@ import type {
 
 type SessionResponse = {
   user: AuthUser;
+  accessToken?: string;
+  refreshToken?: string;
 };
 
 type VerifyOtpResponse = {
@@ -41,6 +45,20 @@ const initialState: AuthState = {
 
 function currentGeneration(getState: () => unknown): number {
   return (getState() as { auth: AuthState }).auth.sessionGeneration;
+}
+
+/**
+ * Cap must receive both body JWTs. Missing either means the mobile-key handshake failed
+ * while the API still set HttpOnly cookies — clear local Bearer state and logout so a
+ * reload cannot establish a cookie-only Cap session (Bearer/WS broken).
+ */
+async function requireNativeBodyTokens(data: SessionResponse) {
+  if (!isNativeMobileClient()) return;
+  if (!data.accessToken || !data.refreshToken) {
+    mobileTokenStorage.clear();
+    await api.post('/auth/logout').catch(() => undefined);
+    throw new Error('mobile_session_unavailable');
+  }
 }
 
 export const sendOtp = createAsyncThunk('auth/sendOtp', async ({ phone }: SendOtpInput) => {
@@ -63,8 +81,12 @@ export const loginPhone = createAsyncThunk(
   async ({ phone, password }: LoginPhoneInput) => {
     try {
       const response = await api.post<SessionResponse>('/auth/login-phone', { phone, password });
+      await requireNativeBodyTokens(response.data);
       return response.data;
     } catch (error) {
+      if (error instanceof Error && error.message === 'mobile_session_unavailable') {
+        throw error;
+      }
       // Re-thrown as the error's own message so LoginForm can branch on the exact API
       // code (invalid_credentials / oauth_only_account / phone_not_verified) via
       // loginPhone.rejected's action.error.message, instead of axios's generic
@@ -83,6 +105,7 @@ export const registerPhone = createAsyncThunk(
       name,
       signupToken,
     });
+    await requireNativeBodyTokens(response.data);
     return response.data;
   },
 );
@@ -184,14 +207,18 @@ export const exchangeOAuthCode = createAsyncThunk(
   'auth/exchangeOAuthCode',
   async ({ code }: ExchangeOAuthCodeInput) => {
     const response = await api.post<SessionResponse>('/auth/oauth/exchange', { code });
+    await requireNativeBodyTokens(response.data);
     return response.data;
   },
 );
 
 export const logout = createAsyncThunk('auth/logout', async () => {
-  // No body: the refresh token to revoke travels as its own HttpOnly cookie. Best-effort —
+  // Cap may send refreshToken in the body; web relies on the HttpOnly cookie. Best-effort —
   // logout always succeeds locally even if the backend call fails.
-  await api.post('/auth/logout').catch(() => undefined);
+  const refreshToken = isNativeMobileClient() ? mobileTokenStorage.getRefresh() : null;
+  await api
+    .post('/auth/logout', refreshToken ? { refreshToken } : undefined)
+    .catch(() => undefined);
 });
 
 function applySession(state: AuthState, user: AuthUser) {

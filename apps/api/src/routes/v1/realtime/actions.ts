@@ -10,12 +10,18 @@ import {
 import { realtimeSchema } from '../../../schemas/v1/matching.js';
 import { ConversationService } from '../../../services/conversation.js';
 import { RealtimeQuery } from '../../../types/matching.js';
+import { ADMIN_SESSION_COOKIE } from '../../../utils/admin-session.js';
+import { MEMBER_ACCESS_COOKIE } from '../../../utils/member-session.js';
+
+/** Cap must send `{ event: "auth" }` soon after upgrade when the handshake had no JWT. */
+const REALTIME_DEFERRED_AUTH_TIMEOUT_MS = 5_000;
 
 type InboundRealtime = {
   event?: string;
   payload?: {
     conversation_id?: string;
     is_typing?: boolean;
+    access_token?: string;
   };
 };
 
@@ -32,9 +38,10 @@ function typingClaimRedisKey(claimId: string): string {
  * Client may send typing pings / keepalive as JSON `{ event, payload }`.
  * Server pushes JSON `{ event, payload }`.
  *
- * Browsers cannot set Authorization on the WebSocket constructor, so the
- * client may pass `?access_token=` which we promote to a Bearer header before
- * `verifyToken` runs. Header-based clients keep working unchanged.
+ * Auth channels (prefer earlier):
+ * 1. Cookie / Authorization header on the upgrade (web + native HTTP clients)
+ * 2. Legacy `?access_token=` query (promoted to Bearer) — avoid for Cap; URLs land in logs
+ * 3. Deferred first-frame `{ event: "auth", payload: { access_token } }` (Capacitor)
  */
 const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const conversations = new ConversationService({
@@ -153,14 +160,27 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   }
 
   async function bindQueryToken(request: FastifyRequest<{ Querystring: RealtimeQuery }>) {
-    try {
-      const queryToken = request.query?.access_token;
-      if (queryToken && !request.headers.authorization) {
-        request.headers.authorization = `Bearer ${queryToken}`;
-      }
-    } catch (err) {
-      throw err;
+    const queryToken = request.query?.access_token;
+    if (queryToken && !request.headers.authorization) {
+      request.headers.authorization = `Bearer ${queryToken}`;
     }
+  }
+
+  function hasUpgradeAuthHint(request: FastifyRequest<{ Querystring: RealtimeQuery }>): boolean {
+    if (request.headers.authorization) return true;
+    if (request.query?.access_token) return true;
+    const cookies = request.cookies ?? {};
+    return Boolean(cookies[MEMBER_ACCESS_COOKIE] || cookies[ADMIN_SESSION_COOKIE]);
+  }
+
+  /**
+   * Verify when the upgrade already carries credentials. Cap often has neither
+   * cookie nor query on the API host — leave `loggedUser` unset and wait for
+   * the first-frame `auth` event so the JWT never appears in access-log URLs.
+   */
+  async function verifyTokenOrDefer(request: FastifyRequest<{ Querystring: RealtimeQuery }>) {
+    if (!hasUpgradeAuthHint(request)) return;
+    await fastify.verifyToken(request);
   }
 
   fastify.get<{ Querystring: RealtimeQuery }>(
@@ -168,21 +188,35 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
     {
       websocket: true,
       schema: realtimeSchema,
-      preHandler: [bindQueryToken, fastify.verifyToken],
+      preHandler: [bindQueryToken, verifyTokenOrDefer],
     },
     (socket, request) => {
-      const userId = request.loggedUser.id;
       /** conversationId → claim id for this socket (unique per typing session). */
       const claimByConversation = new Map<string, string>();
       /** Conversations where this socket stamped the shared typing throttle. */
       const stampedConversations = new Set<string>();
       /** Set on close so queued typing ops bail before claiming / fanning out. */
       let socketClosed = false;
+      let userId: string | null = request.loggedUser?.id ?? null;
+      let deferredAuthTimer: ReturnType<typeof setTimeout> | null = null;
 
-      try {
-        fastify.userRealtime.subscribe(userId, socket);
-      } catch (err) {
-        throw err;
+      const activate = (id: string) => {
+        userId = id;
+        if (deferredAuthTimer) {
+          clearTimeout(deferredAuthTimer);
+          deferredAuthTimer = null;
+        }
+        fastify.userRealtime.subscribe(id, socket);
+      };
+
+      if (userId) {
+        activate(userId);
+      } else {
+        deferredAuthTimer = setTimeout(() => {
+          if (!userId && socket.readyState === socket.OPEN) {
+            socket.close();
+          }
+        }, REALTIME_DEFERRED_AUTH_TIMEOUT_MS);
       }
 
       socket.on('message', (raw) => {
@@ -196,6 +230,30 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
             }
 
             const parsed = JSON.parse(rawStr) as InboundRealtime;
+
+            if (!userId) {
+              const token = parsed.payload?.access_token?.trim();
+              if (parsed.event !== 'auth' || !token) {
+                socket.close();
+                return;
+              }
+              try {
+                request.headers.authorization = `Bearer ${token}`;
+                await fastify.verifyToken(request);
+                const id = request.loggedUser?.id;
+                if (!id) {
+                  socket.close();
+                  return;
+                }
+                activate(id);
+                if (socket.readyState === socket.OPEN) {
+                  socket.send(JSON.stringify({ event: 'auth_ok', payload: {} }));
+                }
+              } catch {
+                socket.close();
+              }
+              return;
+            }
 
             if (parsed.event === 'ping') {
               if (socket.readyState === socket.OPEN) {
@@ -244,7 +302,7 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
                 typingThrottle.set(key, now);
                 stampedConversations.add(conversationId);
                 void enqueueTypingOp(key, async () => {
-                  if (socketClosed) return;
+                  if (socketClosed || !userId) return;
                   let claimId = claimByConversation.get(conversationId);
                   if (!claimId) {
                     claimId = randomUUID();
@@ -274,6 +332,7 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
                 typingThrottle.delete(key);
                 stampedConversations.delete(conversationId);
                 void enqueueTypingOp(key, async () => {
+                  if (!userId) return;
                   const claimId = claimByConversation.get(conversationId);
                   if (!claimId) return;
                   claimByConversation.delete(conversationId);
@@ -295,26 +354,33 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
 
       socket.on('close', () => {
         socketClosed = true;
-        fastify.userRealtime.unsubscribe(userId, socket);
-        for (const conversationId of stampedConversations) {
-          typingThrottle.delete(`${userId}:${conversationId}`);
+        if (deferredAuthTimer) {
+          clearTimeout(deferredAuthTimer);
+          deferredAuthTimer = null;
         }
-        stampedConversations.clear();
-        for (const [conversationId, claimId] of [...claimByConversation.entries()]) {
-          const key = `${userId}:${conversationId}`;
-          void enqueueTypingOp(key, async () => {
-            const current = claimByConversation.get(conversationId) ?? claimId;
-            if (claimByConversation.has(conversationId)) {
-              claimByConversation.delete(conversationId);
-            }
-            if (await releaseTyping(key, current)) {
-              try {
-                await conversations.setTyping(userId, conversationId, false);
-              } catch {
-                // Best-effort stop on disconnect.
+        if (userId) {
+          fastify.userRealtime.unsubscribe(userId, socket);
+          for (const conversationId of stampedConversations) {
+            typingThrottle.delete(`${userId}:${conversationId}`);
+          }
+          stampedConversations.clear();
+          for (const [conversationId, claimId] of [...claimByConversation.entries()]) {
+            const key = `${userId}:${conversationId}`;
+            const activeUserId = userId;
+            void enqueueTypingOp(key, async () => {
+              const current = claimByConversation.get(conversationId) ?? claimId;
+              if (claimByConversation.has(conversationId)) {
+                claimByConversation.delete(conversationId);
               }
-            }
-          });
+              if (await releaseTyping(key, current)) {
+                try {
+                  await conversations.setTyping(activeUserId, conversationId, false);
+                } catch {
+                  // Best-effort stop on disconnect.
+                }
+              }
+            });
+          }
         }
       });
     },

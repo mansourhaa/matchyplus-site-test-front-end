@@ -77,7 +77,7 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
         );
         let notified = false;
         if (info) {
-          const result = await notifications.createIfNoRecentDuplicate(
+          const result = await notifications.createProfileViewIfEnabled(
             { userId: request.params.id, type: 'PROFILE_VIEW', data: info },
             PROFILE_VIEW_NOTIFICATION_COOLDOWN_MS,
           );

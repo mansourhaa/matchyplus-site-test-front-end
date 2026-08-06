@@ -25,6 +25,7 @@ import { AUDIO_DIR } from '../utils/media-storage.js';
 import { validateUploadedFile } from '../utils/media-validation.js';
 import { utcDayBounds } from '../utils/utc-day.js';
 import { MessageQuotaService } from './message-quota.js';
+import { NotificationService } from './notification.js';
 
 export type ConversationNotifier = (
   userId: string,
@@ -55,12 +56,24 @@ const peerSelect = {
 export class ConversationService {
   prisma: PrismaClient;
   quota: MessageQuotaService;
+  notifications: NotificationService;
   notify: ConversationNotifier;
 
-  constructor(options: AbstractServiceOptions & { notify?: ConversationNotifier }) {
+  constructor(
+    options: AbstractServiceOptions & {
+      notify?: ConversationNotifier;
+      notifications?: NotificationService;
+    },
+  ) {
     this.prisma = options.prisma;
     this.quota = new MessageQuotaService({ prisma: options.prisma });
     this.notify = options.notify ?? (() => undefined);
+    this.notifications =
+      options.notifications ??
+      new NotificationService({
+        prisma: options.prisma,
+        push: this.notify,
+      });
   }
 
   private async assertParticipant(conversationId: string, userId: string) {
@@ -556,12 +569,30 @@ export class ConversationService {
 
       this.notify(peerId, 'new_message', payload);
       this.notify(userId, 'new_message', payload);
-      this.notify(peerId, 'notification_message', {
-        event_type: 'message',
-        conversation_id: conversationId,
-        sender_id: userId,
-        preview: messageType === MessageType.VOICE ? 'Voice message' : content.slice(0, 120),
-      });
+
+      // Inbox + optional email are best-effort after the message commit — a preference
+      // lookup or notification write must never fail the send that already succeeded
+      // (and already pushed `new_message` to both peers).
+      try {
+        const sender = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { name: true, image: true },
+        });
+        await this.notifications.createIfEnabled({
+          userId: peerId,
+          type: 'MESSAGE',
+          data: {
+            event_type: 'message',
+            conversation_id: conversationId,
+            sender_id: userId,
+            sender_name: sender?.name || 'Someone',
+            sender_image: sender?.image ?? null,
+            preview: messageType === MessageType.VOICE ? 'Voice message' : content.slice(0, 120),
+          },
+        });
+      } catch (err) {
+        console.warn('message_notification_failed', err);
+      }
 
       const quota = await this.quota.buildQuotaSnapshot(userId);
       return { message: payload, quota };

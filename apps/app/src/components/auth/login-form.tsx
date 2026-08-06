@@ -69,6 +69,9 @@ function loginPhoneErrorMessage(code: string | undefined): string {
   if (code === 'oauth_only_account') {
     return 'Ce compte se connecte avec Google ou LinkedIn, pas avec un mot de passe.';
   }
+  if (code === 'mobile_session_unavailable') {
+    return "Session mobile indisponible. Vérifiez la configuration de l'application.";
+  }
   return 'Connexion échouée. Vérifiez votre numéro et votre mot de passe';
 }
 

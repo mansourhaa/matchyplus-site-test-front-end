@@ -8,7 +8,11 @@ import {
 import { api, getApiErrorCode } from '@/lib/api';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
-import type { NotificationItem } from '../types';
+import type {
+  NotificationItem,
+  NotificationPreferences,
+  UpdateNotificationPreferencesBody,
+} from '../types';
 
 type NotificationsState = {
   items: NotificationItem[];
@@ -21,6 +25,9 @@ type NotificationsState = {
   // snapshot can't be trusted — the fulfilled handler discards it instead of risking a
   // stale unread row, or a stale unread_count, undoing what the mark already applied.
   revision: number;
+  preferences: NotificationPreferences | null;
+  preferencesLoading: boolean;
+  preferencesError: string | null;
 };
 
 const initialState: NotificationsState = {
@@ -29,6 +36,9 @@ const initialState: NotificationsState = {
   loading: false,
   error: null,
   revision: 0,
+  preferences: null,
+  preferencesLoading: false,
+  preferencesError: null,
 };
 
 type ListResponse = {
@@ -88,12 +98,46 @@ export const markAllNotificationsRead = createAsyncThunk<
   }
 });
 
+export const fetchNotificationPreferences = createAsyncThunk<
+  NotificationPreferences,
+  void,
+  { rejectValue: string }
+>('notifications/fetchPreferences', async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.get<{ preferences: NotificationPreferences }>(
+      '/notifications/preferences',
+    );
+    return response.data.preferences;
+  } catch (error) {
+    return rejectWithValue(getApiErrorCode(error) ?? 'notification_preferences_fetch_failed');
+  }
+});
+
+export const updateNotificationPreferences = createAsyncThunk<
+  NotificationPreferences,
+  UpdateNotificationPreferencesBody,
+  { rejectValue: string }
+>('notifications/updatePreferences', async (body, { rejectWithValue }) => {
+  try {
+    const response = await api.put<{ preferences: NotificationPreferences }>(
+      '/notifications/preferences',
+      body,
+    );
+    return response.data.preferences;
+  } catch (error) {
+    return rejectWithValue(getApiErrorCode(error) ?? 'notification_preferences_update_failed');
+  }
+});
+
 function resetForNewSession(state: NotificationsState) {
   state.items = [];
   state.unreadCount = 0;
   state.loading = false;
   state.error = null;
   state.revision += 1;
+  state.preferences = null;
+  state.preferencesLoading = false;
+  state.preferencesError = null;
 }
 
 const notificationsSlice = createSlice({
@@ -158,6 +202,25 @@ const notificationsSlice = createSlice({
           state.revision += 1;
         },
       )
+      .addCase(fetchNotificationPreferences.pending, (state) => {
+        state.preferencesLoading = true;
+        state.preferencesError = null;
+      })
+      .addCase(fetchNotificationPreferences.fulfilled, (state, action) => {
+        state.preferencesLoading = false;
+        state.preferences = action.payload;
+      })
+      .addCase(fetchNotificationPreferences.rejected, (state, action) => {
+        state.preferencesLoading = false;
+        state.preferencesError = action.payload ?? 'notification_preferences_fetch_failed';
+      })
+      .addCase(updateNotificationPreferences.fulfilled, (state, action) => {
+        state.preferences = action.payload;
+        state.preferencesError = null;
+      })
+      .addCase(updateNotificationPreferences.rejected, (state, action) => {
+        state.preferencesError = action.payload ?? 'notification_preferences_update_failed';
+      })
       // Every path that ends the session — explicit logout, a forced logout after a
       // password change or account deletion, and the silent auth-reset a failed token
       // refresh triggers — must drop this account's notifications immediately. Otherwise

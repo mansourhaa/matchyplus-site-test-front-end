@@ -2,6 +2,8 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 import { clearAuthSession } from './auth';
 import { notifyAuthFailure } from './auth-events';
+import { captureMobileTokensFromBody, mobileTokenStorage } from './mobile-tokens';
+import { getMobileAuthHeaders, isNativeMobileClient } from './native';
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -23,16 +25,50 @@ export function getApiErrorCode(error: unknown): string | undefined {
 let refreshPromise: Promise<void> | null = null;
 
 async function refreshSession(): Promise<void> {
-  // No body: the refresh token travels as its own HttpOnly cookie (see
-  // utils/member-session.ts on the API) — this call just asks the API to rotate both
-  // cookies, which it does via Set-Cookie on the response.
-  await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, undefined, {
-    withCredentials: true,
-  });
+  const native = isNativeMobileClient();
+  const refreshToken = native ? mobileTokenStorage.getRefresh() : null;
+  const mobileHeaders = native ? await getMobileAuthHeaders() : {};
+
+  // Web: no body — refresh travels as HttpOnly cookie (utils/member-session.ts).
+  // Cap: body refreshToken + mobile client label/secret so the API returns rotated JWTs.
+  const response = await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+    native && refreshToken ? { refreshToken } : undefined,
+    {
+      withCredentials: true,
+      headers: {
+        ...mobileHeaders,
+        ...(native && refreshToken
+          ? { Authorization: `Bearer ${mobileTokenStorage.getAccess()}` }
+          : {}),
+      },
+    },
+  );
+
+  if (native) {
+    captureMobileTokensFromBody(response.data);
+  }
 }
 
+api.interceptors.request.use(async (config) => {
+  if (!isNativeMobileClient()) return config;
+
+  const mobileHeaders = await getMobileAuthHeaders();
+  for (const [key, value] of Object.entries(mobileHeaders)) {
+    config.headers.set(key, value);
+  }
+  const access = mobileTokenStorage.getAccess();
+  if (access) {
+    config.headers.set('Authorization', `Bearer ${access}`);
+  }
+  return config;
+});
+
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    captureMobileTokensFromBody(response.data);
+    return response;
+  },
   async (error: AxiosError) => {
     const config = error.config as RetryableRequestConfig | undefined;
     const isUnauthorized = error.response?.status === 401;
@@ -49,6 +85,13 @@ api.interceptors.response.use(
         refreshPromise = null;
       });
       await refreshPromise;
+
+      if (isNativeMobileClient()) {
+        const access = mobileTokenStorage.getAccess();
+        if (access) {
+          config.headers.set('Authorization', `Bearer ${access}`);
+        }
+      }
 
       return api(config);
     } catch {
