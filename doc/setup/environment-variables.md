@@ -172,7 +172,7 @@ When unset, in-app notifications still work; email delivery is skipped. See [Not
 | `SMTP_SECURE` | No | Force TLS (`true`/`false`); else port 465 → secure | — |
 | `SMTP_FROM_NAME` | No | Display name when building From | `APP_NAME` / Matchy+ |
 | `SMTP_LOGO_PATH` | No | Optional logo file for HTML emails | — |
-| `APP_URL` / `FRONTEND_URL` / `PUBLIC_APP_URL` | No | Base URL for email action links | `http://localhost:5173` |
+| `APP_URL` / `FRONTEND_URL` / `PUBLIC_APP_URL` | No | Base URL for email action links (first set wins) | `http://localhost:3000` |
 
 Local Redis/AI: `pnpm infra:up` (`compose.dev.yaml`).  
 Staging/prod: Kubernetes Services `saas-redis` + `saas-ai` (see [AI Async Jobs](../features/ai-async-jobs.md)).

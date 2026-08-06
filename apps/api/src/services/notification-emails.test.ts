@@ -65,6 +65,23 @@ describe('buildNotificationEmailPayload', () => {
     expect(payload.title).toBe('Nouveau profil');
     expect(payload.body).toContain('Un utilisateur');
   });
+
+  it('falls back to the Next.js app origin when APP_URL / FRONTEND_URL / PUBLIC_APP_URL are unset', () => {
+    delete process.env.APP_URL;
+    delete process.env.FRONTEND_URL;
+    delete process.env.PUBLIC_APP_URL;
+    const payload = buildNotificationEmailPayload({ kind: 'match', actorName: 'Nour' });
+    expect(payload.actionUrl).toBe('http://localhost:3000/matches');
+    expect(payload.actionUrl).not.toContain(':5173');
+  });
+
+  it('prefers FRONTEND_URL when APP_URL is unset', () => {
+    delete process.env.APP_URL;
+    process.env.FRONTEND_URL = 'https://frontend.matchy.test';
+    delete process.env.PUBLIC_APP_URL;
+    const payload = buildNotificationEmailPayload({ kind: 'message', actorName: 'Sami' });
+    expect(payload.actionUrl).toBe('https://frontend.matchy.test/matches');
+  });
 });
 
 describe('NotificationEmailsService.isNotificationEmailEnabledForUser', () => {

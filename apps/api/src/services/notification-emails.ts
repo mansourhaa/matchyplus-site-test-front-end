@@ -23,7 +23,10 @@ type NotificationEmailsServiceDeps = {
   emailService?: EmailService;
 };
 
-/** Same env precedence as the reference for building action links. */
+/**
+ * Base URL for email CTAs. Precedence: `APP_URL` → `FRONTEND_URL` → `PUBLIC_APP_URL`.
+ * Falls back to the Next.js app port in this monorepo (not the legacy Vite `:5173`).
+ */
 function frontendBaseUrl(): string {
   const candidates = [process.env.APP_URL, process.env.FRONTEND_URL, process.env.PUBLIC_APP_URL];
   for (const candidate of candidates) {
@@ -32,7 +35,7 @@ function frontendBaseUrl(): string {
       .replace(/\/+$/, '');
     if (value) return value;
   }
-  return 'http://localhost:5173';
+  return 'http://localhost:3000';
 }
 
 export function buildNotificationEmailPayload({
