@@ -1,4 +1,9 @@
-// CI only, no deploy - dev is a build/scan/test gate, not an environment.
+// CI only - runs on every branch, deploys nothing.
+//
+// This pipeline builds, scans, signs and pushes images, then stops. Promoting
+// any of those images to an environment is a separate, manually triggered job
+// driven by Jenkinsfile.cd, so a push can never deploy by itself and a deploy
+// never rebuilds. The image tag is the contract between the two.
 
 pipeline {
   agent any
@@ -26,6 +31,23 @@ pipeline {
     REGISTRY_REPO = "${env.REGISTRY_REPO}"
     SONAR_PROJECT = "${env.SONAR_PROJECT}"
     SONAR_URL = "${env.SONAR_URL}"
+
+    // every app that ships as a container. The scan/push/sign stages iterate
+    // this list instead of repeating themselves per image, so adding a sixth
+    // app means editing this line and the build stage - not four stages.
+    IMAGE_COMPONENTS = 'api app admin landing ai'
+
+    // Baked into the app/admin bundles at BUILD time. Next.js inlines
+    // NEXT_PUBLIC_* into the client bundle during the build, so this cannot be
+    // injected later as a runtime env var on the Deployment - the browser
+    // would call the Dockerfile's localhost default instead. It therefore has
+    // to live in CI even though it names a deploy-time environment.
+    // https, matching the staging ingress. This is baked into the client
+    // bundle, so it cannot be corrected at deploy time - an http value here
+    // makes the browser issue http requests from an https page, which it
+    // blocks as mixed content. Changing the staging scheme therefore requires
+    // rebuilding app and admin, not just editing the ConfigMap.
+    STAGING_API_URL = "https://api.staging.matchy.local/api/v1"
   }
 
   stages {
@@ -313,11 +335,18 @@ pipeline {
       }
     }
 
+    // app and admin get NEXT_PUBLIC_API_URL baked in here on purpose: Next.js
+    // inlines NEXT_PUBLIC_* into the client bundle at build time, so a runtime
+    // env var on the Deployment would be ignored and the browser would call
+    // the Dockerfile's localhost:8000 default instead of the staging API.
+    // landing reads no NEXT_PUBLIC_* vars, and ai is a python service.
     stage('Build images') {
       steps {
         sh """
           docker build --pull -t ${REGISTRY_REPO}:api-${IMAGE_TAG} -f apps/api/Dockerfile .
-          docker build --pull -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${STAGING_API_URL} -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${STAGING_API_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
+          docker build --pull -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
           docker build --pull -t ${REGISTRY_REPO}:ai-${IMAGE_TAG} -f apps/ai/Dockerfile apps/ai
         """
       }
@@ -336,9 +365,12 @@ pipeline {
           sh """
             mkdir -p reports/trivy
             TRIVY_FAILED=0
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:api-${IMAGE_TAG} > reports/trivy/trivy-api-report.json || TRIVY_FAILED=1
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:app-${IMAGE_TAG} > reports/trivy/trivy-app-report.json || TRIVY_FAILED=1
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity CRITICAL --ignore-unfixed --format json ${REGISTRY_REPO}:ai-${IMAGE_TAG} > reports/trivy/trivy-ai-report.json || TRIVY_FAILED=1
+            for COMPONENT in ${IMAGE_COMPONENTS}; do
+              docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image \
+                --exit-code 1 --severity CRITICAL --ignore-unfixed --format json \
+                ${REGISTRY_REPO}:\${COMPONENT}-${IMAGE_TAG} \
+                > reports/trivy/trivy-\${COMPONENT}-report.json || TRIVY_FAILED=1
+            done
             if [ "\$TRIVY_FAILED" -ne 0 ]; then
               echo "CRITICAL vulnerabilities found - see reports/trivy/*.json" >&2
               exit 1
@@ -366,9 +398,9 @@ pipeline {
             else
               echo "\$REG_PASS" | docker login -u "\$REG_USER" --password-stdin
             fi
-            docker push ${REGISTRY_REPO}:api-${IMAGE_TAG}
-            docker push ${REGISTRY_REPO}:app-${IMAGE_TAG}
-            docker push ${REGISTRY_REPO}:ai-${IMAGE_TAG}
+            for COMPONENT in ${IMAGE_COMPONENTS}; do
+              docker push ${REGISTRY_REPO}:\${COMPONENT}-${IMAGE_TAG}
+            done
           """
         }
       }
@@ -398,9 +430,9 @@ pipeline {
               chmod +x /tmp/cosign
             fi
             COSIGN_BIN=$(command -v cosign || echo /tmp/cosign)
-            "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes $REGISTRY_REPO:api-$IMAGE_TAG
-            "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes $REGISTRY_REPO:app-$IMAGE_TAG
-            "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes $REGISTRY_REPO:ai-$IMAGE_TAG
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes "$REGISTRY_REPO:$COMPONENT-$IMAGE_TAG"
+            done
           '''
         }
       }
@@ -423,7 +455,11 @@ pipeline {
 
   post {
     always {
-      sh "docker rmi ${REGISTRY_REPO}:api-${IMAGE_TAG} ${REGISTRY_REPO}:app-${IMAGE_TAG} ${REGISTRY_REPO}:ai-${IMAGE_TAG} || true"
+      sh """
+        for COMPONENT in ${IMAGE_COMPONENTS}; do
+          docker rmi ${REGISTRY_REPO}:\${COMPONENT}-${IMAGE_TAG} || true
+        done
+      """
     }
   }
 }

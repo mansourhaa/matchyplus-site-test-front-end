@@ -14,7 +14,7 @@ import os
 import shutil
 import subprocess
 
-COMPONENTS = ("api", "app", "ai")
+COMPONENTS = ("api", "app", "admin", "landing", "ai")
 
 
 def env(name, default="(unknown)"):
