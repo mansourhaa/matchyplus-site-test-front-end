@@ -32,7 +32,10 @@
     "db:generate": "turbo run db:generate",
     "infra:up": "dotenv -e .env.development -- docker compose -f compose.dev.yaml up -d --build redis ai",
     "infra:down": "dotenv -e .env.development -- docker compose -f compose.dev.yaml down",
-    "infra:logs": "dotenv -e .env.development -- docker compose -f compose.dev.yaml logs -f redis ai"
+    "infra:logs": "dotenv -e .env.development -- docker compose -f compose.dev.yaml logs -f redis ai",
+    "mobile:sync": "pnpm --filter @saas-boilerplate/mobile sync:android",
+    "mobile:open": "pnpm --filter @saas-boilerplate/mobile open:android",
+    "mobile:dev": "pnpm --filter @saas-boilerplate/mobile dev:remote"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",

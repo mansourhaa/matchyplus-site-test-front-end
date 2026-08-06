@@ -8,9 +8,9 @@ import { createServerApp } from './server.js';
 declare module 'fastify' {
   interface FastifyInstance {
     prisma: PrismaClient;
-    verifyToken: () => Promise<void>;
+    verifyToken: (request?: FastifyRequest) => Promise<void>;
     smsClient: SmsClient;
-    verifyAdmin: () => Promise<void>;
+    verifyAdmin: (request?: FastifyRequest) => Promise<void>;
   }
   interface FastifyRequest {
     loggedUser: User;

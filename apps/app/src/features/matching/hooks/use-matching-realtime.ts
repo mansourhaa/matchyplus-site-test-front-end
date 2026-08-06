@@ -19,6 +19,8 @@ import {
 import type { ChatMessage, MessagingRealtimePayload } from '@/features/messaging/types';
 import { fetchNotifications } from '@/features/notifications/store/notifications-slice';
 import { getCachedAuthUser } from '@/lib/auth';
+import { mobileTokenStorage } from '@/lib/mobile-tokens';
+import { isNativeMobileClient } from '@/lib/native';
 import type { RootState } from '@/lib/store';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -38,18 +40,35 @@ function buildRealtimeUrl(): string | null {
 
     const url = new URL(`${apiBase.replace(/\/$/, '')}/realtime`);
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    // Cap authenticates after open via first-frame `auth` (never put the JWT in the URL —
+    // query strings commonly land in access / reverse-proxy logs).
     return url.toString();
   } catch {
     return null;
   }
 }
 
+function startRealtimePing(
+  socket: WebSocket,
+  getTimer: () => ReturnType<typeof setInterval> | null,
+  setTimer: (timer: ReturnType<typeof setInterval> | null) => void,
+) {
+  const prev = getTimer();
+  if (prev) clearInterval(prev);
+  setTimer(
+    setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ event: 'ping', payload: {} }));
+      }
+    }, REALTIME_PING_INTERVAL_MS),
+  );
+}
+
 /**
  * Shared match + messaging + profile-view-notification realtime subscription.
  * One socket avoids duplicate connections; HTTP write responses remain authoritative.
- * The access token lives in an HttpOnly cookie (see lib/auth.ts), so it isn't read here —
- * the browser attaches it to the WebSocket handshake automatically, the same way it does
- * for any other same-site request, and the server falls back to that cookie in verifyToken.
+ * Web: HttpOnly cookie on the handshake. Capacitor: first-frame
+ * `{ event: "auth", payload: { access_token } }` (see lib/mobile-tokens.ts).
  */
 export function useMatchingRealtime(enabled = true) {
   const dispatch = useAppDispatch();
@@ -79,9 +98,6 @@ export function useMatchingRealtime(enabled = true) {
     if (!enabled || typeof window === 'undefined') return;
 
     try {
-      const url = buildRealtimeUrl();
-      if (!url) return;
-
       let closedByEffect = false;
       let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
       let pingTimer: ReturnType<typeof setInterval> | null = null;
@@ -92,23 +108,40 @@ export function useMatchingRealtime(enabled = true) {
       const connect = () => {
         if (closedByEffect) return;
 
+        // Rebuild on every connect so Cap picks up a rotated access_token from storage
+        // before the first-frame auth message.
+        const url = buildRealtimeUrl();
+        if (!url) return;
+
+        const native = isNativeMobileClient();
+        const access = native ? mobileTokenStorage.getAccess() : null;
+        if (native && !access) return;
+
         try {
           const socket = new WebSocket(url);
           socketRef.current = socket;
+          const getPing = () => pingTimer;
+          const setPing = (timer: ReturnType<typeof setInterval> | null) => {
+            pingTimer = timer;
+          };
 
           socket.onopen = () => {
-            if (pingTimer) clearInterval(pingTimer);
-            pingTimer = setInterval(() => {
-              if (socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ event: 'ping', payload: {} }));
-              }
-            }, REALTIME_PING_INTERVAL_MS);
+            if (native && access) {
+              socket.send(JSON.stringify({ event: 'auth', payload: { access_token: access } }));
+              return;
+            }
+            startRealtimePing(socket, getPing, setPing);
           };
 
           socket.onmessage = (event) => {
             try {
               const message = JSON.parse(String(event.data)) as RealtimeMessage &
                 MessagingRealtimePayload;
+
+              if (message.event === 'auth_ok') {
+                startRealtimePing(socket, getPing, setPing);
+                return;
+              }
 
               if (message.event === 'pong') return;
 

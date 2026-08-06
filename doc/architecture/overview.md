@@ -7,6 +7,7 @@ High-level system design of the Full Stack SaaS Boilerplate.
 ```mermaid
 flowchart TB
     Browser[Client Browser]
+    Cap[Capacitor shell — apps/mobile]
 
     subgraph App["@saas-boilerplate/app — Next.js 16"]
         Proxy[proxy.ts]
@@ -33,7 +34,8 @@ flowchart TB
     Redis[(Redis)]
 
     Browser -->|HTTPS| App
-    App -->|REST axios| API
+    Cap -->|remote WebView CAPACITOR_SERVER_URL| App
+    App -->|REST axios cookies or Bearer| API
     Proxy --> Redux
     App --> UIComp
     API --> Plugins
@@ -48,6 +50,8 @@ flowchart TB
     API -->|optional cache| Redis
 ```
 
+Native mobile is a Capacitor shell (`apps/mobile`) around the same Next.js member app —
+not a separate SPA. Auth details: [Authentication — Mobile](../features/authentication.md#mobile-capacitor).
 ## Shared packages
 
 ```mermaid

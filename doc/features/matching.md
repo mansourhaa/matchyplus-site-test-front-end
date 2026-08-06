@@ -85,9 +85,15 @@ Identities are **User ids** (cuid), not legacy integer profile ids.
 
 ### Realtime client
 
-- Browser connects to `/api/v1/realtime?access_token=<token>` because WebSocket cannot set `Authorization`
-- Server promotes the query token to Bearer before `verifyToken`
-- App bridge: `features/matching/hooks/use-matching-realtime.ts` refreshes notifications on any `notification_match`, and match/inbox state when `event_type === 'match'`; also handles `match_removed`
+- Web: browser attaches the HttpOnly `access_token` cookie on the `/realtime` upgrade
+- Capacitor: after open, client sends `{ event: "auth", payload: { access_token } }` so the
+  JWT is not placed in the WebSocket URL (query strings commonly land in access / proxy logs).
+  Server replies `auth_ok` then accepts pings / typing like web.
+- Legacy `?access_token=` on the upgrade URL is still promoted to Bearer if present — Cap
+  must not use it
+- App bridge: `features/matching/hooks/use-matching-realtime.ts` refreshes notifications on any
+  `notification_match`, and match/inbox state when `event_type === 'match'`; also handles
+  `match_removed`
 - Client sends periodic `{ event: "ping" }` keepalive; server replies `pong`
 - Multi-instance: `notifyUser` fans out over Redis Streams (`realtime:events`) when `REDIS_URL` is set — see [messaging.md](./messaging.md)
 

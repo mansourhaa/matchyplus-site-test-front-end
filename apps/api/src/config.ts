@@ -82,6 +82,13 @@ export const config = {
   refreshTokenTtlDays: requiredIntVar('REFRESH_TOKEN_TTL_DAYS'),
 
   /**
+   * Capacitor mobile client shared secret. Optional at boot — when unset, body JWT
+   * issuance and body refresh are disabled (cookie-only auth remains). Cap builds
+   * inject the same value via the native MobileClient plugin (not NEXT_PUBLIC_*).
+   */
+  mobileClientSecret: process.env.MOBILE_CLIENT_SECRET?.trim() || '',
+
+  /**
    * OAuth (Google / LinkedIn) — optional. Each provider is only enabled when both its
    * client id and secret are set; a missing pair disables just that provider instead
    * of preventing the server from starting.
