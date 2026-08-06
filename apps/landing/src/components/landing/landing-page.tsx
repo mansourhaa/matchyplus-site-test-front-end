@@ -1,6 +1,5 @@
 'use client';
 
-import { EarlyAccessModal } from '@/components/landing/early-access-modal';
 import { ImageWithFallback } from '@/components/landing/image-with-fallback';
 import { ChevronDown, ChevronRight, Clock, MapPin, Shield, Sparkles, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -9,6 +8,12 @@ import { Button } from '@saas-boilerplate/ui/components/button';
 import { Card, CardContent } from '@saas-boilerplate/ui/components/card';
 
 const LOGO_SRC = '/logo-matchy.svg';
+
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+
+const goToApp = (path: string) => {
+  window.location.href = `${APP_URL}${path.startsWith('/') ? path : `/${path}`}`;
+};
 
 type Language = 'en' | 'fr' | 'ar';
 
@@ -20,13 +25,12 @@ const LANGUAGE_FLAGS: Record<Language, string> = {
 
 const translations = {
   en: {
-    getStarted: 'Join early list',
+    getStarted: 'Log in',
     heroTitle: 'Connect with Trusted Professionals Near You',
     heroSubtitle:
       "Tunisia's leading geolocation-based platform for finding reliable nannies, gardeners, drivers, and more",
-    findProfessional: 'Join the early access list',
-    joinAsProfessional: 'Get notified at launch',
-    earlyBadge: 'Coming soon — early access',
+    findProfessional: 'Find a Professional',
+    joinAsProfessional: 'Join as a Professional',
     whyChoose: 'Why Choose Matchy+?',
     locationMatching: 'Location-Based Matching',
     locationDesc: 'Find professionals near you with our advanced geolocation technology',
@@ -57,10 +61,10 @@ const translations = {
     cooksDesc: 'Skilled chefs for home cooking',
     caregivers: 'Caregivers',
     caregiversDesc: 'Compassionate elderly and special needs care',
-    readyToStart: 'Be first when we launch',
+    readyToStart: 'Ready to Get Started?',
     readyDesc:
-      "Join the Matchy+ early access list. Verify your phone by SMS — we'll notify you as soon as the app is live.",
-    joinToday: 'Join the early access list',
+      'Join thousands of people across Tunisia who trust Matchy+ for their professional service needs',
+    joinToday: 'Join Matchy+ Today',
     footerDesc: 'Connecting communities across Tunisia and Africa with trusted professionals',
     quickLinks: 'Quick Links',
     aboutUs: 'About Us',
@@ -71,16 +75,15 @@ const translations = {
     safety: 'Safety Guidelines',
     allRights: 'All rights reserved',
     trustedByThousands: 'Trusted by Thousands',
-    joinOurCommunity: 'Early access',
+    joinOurCommunity: 'Join Our Community',
   },
   fr: {
-    getStarted: "Liste d'accès",
+    getStarted: 'Connexion',
     heroTitle: 'Connectez-vous avec des Professionnels de Confiance Près de Chez Vous',
     heroSubtitle:
       'La plateforme leader en Tunisie basée sur la géolocalisation pour trouver des nounous, jardiniers, chauffeurs fiables et plus',
-    findProfessional: "Rejoindre la liste d'accès anticipé",
-    joinAsProfessional: 'Être notifié au lancement',
-    earlyBadge: 'Bientôt disponible — accès anticipé',
+    findProfessional: 'Trouver un Professionnel',
+    joinAsProfessional: 'Rejoindre en tant que Professionnel',
     whyChoose: 'Pourquoi Choisir Matchy+?',
     locationMatching: 'Correspondance Basée sur la Localisation',
     locationDesc:
@@ -115,10 +118,10 @@ const translations = {
     cooksDesc: 'Chefs qualifiés pour cuisine à domicile',
     caregivers: 'Aidants',
     caregiversDesc: 'Soins compatissants pour personnes âgées et besoins spéciaux',
-    readyToStart: 'Soyez les premiers au lancement',
+    readyToStart: 'Prêt à Commencer?',
     readyDesc:
-      "Inscrivez-vous sur la liste d'accès anticipé Matchy+. Validez votre téléphone par SMS — on vous prévient dès le lancement.",
-    joinToday: "Rejoindre la liste d'accès anticipé",
+      'Rejoignez des milliers de personnes en Tunisie qui font confiance à Matchy+ pour leurs besoins en services professionnels',
+    joinToday: "Rejoignez Matchy+ Aujourd'hui",
     footerDesc:
       'Connecter les communautés en Tunisie et en Afrique avec des professionnels de confiance',
     quickLinks: 'Liens Rapides',
@@ -130,16 +133,15 @@ const translations = {
     safety: 'Directives de Sécurité',
     allRights: 'Tous droits réservés',
     trustedByThousands: 'Adopté par des milliers de personnes',
-    joinOurCommunity: 'Accès anticipé',
+    joinOurCommunity: 'Rejoignez notre communauté',
   },
   ar: {
-    getStarted: 'قائمة الوصول المبكر',
+    getStarted: 'تسجيل الدخول',
     heroTitle: 'تواصل مع محترفين موثوقين بالقرب منك',
     heroSubtitle:
       'المنصة الرائدة في تونس  القائمة على تحديد الموقع الجغرافي للعثور على مربيات وبستانيين وسائقين موثوقين والمزيد',
-    findProfessional: 'انضم إلى قائمة الوصول المبكر',
-    joinAsProfessional: 'أبلغني عند الإطلاق',
-    earlyBadge: 'قريبًا — وصول مبكر',
+    findProfessional: 'ابحث عن محترف',
+    joinAsProfessional: 'انضم كمحترف',
     whyChoose: 'لماذا تختار Matchy+؟',
     locationMatching: 'المطابقة على أساس الموقع',
     locationDesc: 'اعثر على محترفين بالقرب منك باستخدام تقنية تحديد الموقع الجغرافي المتقدمة',
@@ -169,10 +171,10 @@ const translations = {
     cooksDesc: 'طهاة ماهرون للطبخ المنزلي',
     caregivers: 'مقدمو رعاية',
     caregiversDesc: 'رعاية رحيمة لكبار السن وذوي الاحتياجات الخاصة',
-    readyToStart: 'كن أول من يعرف عند الإطلاق',
+    readyToStart: 'مستعد للبدء؟',
     readyDesc:
-      'انضم إلى قائمة الوصول المبكر لـ Matchy+. أكّد هاتفك عبر SMS — سنخبرك فور إطلاق التطبيق.',
-    joinToday: 'انضم إلى قائمة الوصول المبكر',
+      'انضم إلى آلاف الأشخاص في تونس  الذين يثقون في Matchy+ لتلبية احتياجاتهم من الخدمات المهنية',
+    joinToday: 'انضم إلى Matchy+ اليوم',
     footerDesc: 'ربط المجتمعات في تونس وأفريقيا بمحترفين موثوقين',
     quickLinks: 'روابط سريعة',
     aboutUs: 'من نحن',
@@ -183,17 +185,16 @@ const translations = {
     safety: 'إرشادات السلامة',
     allRights: 'كل الحقوق محفوظة',
     trustedByThousands: 'موثوق من قبل الآلاف',
-    joinOurCommunity: 'وصول مبكر',
+    joinOurCommunity: 'انضم إلى مجتمعنا',
   },
 };
 
 export default function LandingPage() {
   const [language, setLanguage] = useState<Language>('fr');
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
-  const [waitlistOpen, setWaitlistOpen] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
   const t = translations[language];
-  const openWaitlist = () => setWaitlistOpen(true);
+  const goOnboarding = () => goToApp('/onboarding');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -258,7 +259,7 @@ export default function LandingPage() {
               )}
             </div>
             <Button
-              onClick={openWaitlist}
+              onClick={() => goToApp('/login')}
               className="bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] hover:opacity-90"
             >
               {t.getStarted}
@@ -277,7 +278,7 @@ export default function LandingPage() {
             <div className="space-y-8 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] px-4 py-2 text-sm font-medium text-white">
                 <Sparkles className="h-4 w-4" />
-                <span>{t.earlyBadge}</span>
+                <span>{t.trustedByThousands}</span>
               </div>
               <h1 className="text-5xl leading-tight font-bold text-gray-900 md:text-6xl lg:text-7xl">
                 {t.heroTitle}
@@ -286,11 +287,19 @@ export default function LandingPage() {
               <div className="flex flex-col justify-center gap-4 pt-4 sm:flex-row lg:justify-start">
                 <Button
                   size="lg"
-                  onClick={openWaitlist}
+                  onClick={goOnboarding}
                   className="bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] px-8 text-lg hover:opacity-90"
                 >
                   {t.findProfessional}
                   <ChevronRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={goOnboarding}
+                  className="border-2 border-[#2F76BB] px-8 text-lg text-[#2F76BB] hover:bg-[#2F76BB] hover:text-white"
+                >
+                  {t.joinAsProfessional}
                 </Button>
               </div>
 
@@ -531,7 +540,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA — button opens waitlist modal */}
+      {/* CTA Section */}
       <section className="relative overflow-hidden py-16">
         <div className="absolute inset-0 bg-gradient-to-br from-[#61BCA6] via-[#2F76BB] to-[#1e5a8f]"></div>
         <div className="absolute inset-0 opacity-10">
@@ -551,7 +560,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               variant="secondary"
-              onClick={openWaitlist}
+              onClick={goOnboarding}
               className="bg-white px-10 py-6 text-lg font-bold text-[#2F76BB] shadow-xl hover:bg-gray-100"
             >
               {t.joinToday}
@@ -560,12 +569,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      <EarlyAccessModal
-        lang={language}
-        open={waitlistOpen}
-        onClose={() => setWaitlistOpen(false)}
-      />
 
       {/* Footer */}
       <footer className="bg-gray-900 py-0 text-white">
