@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e ../../.env -e ../../.env.development -- next dev -p 3001",
-    "stage": "dotenv -e ../../.env -e ../../.env.staging -- next dev -p 3001",
+    "dev": "dotenv -e ../../.env.development -- next dev -p 3001",
+    "stage": "dotenv -e ../../.env.staging -- next dev -p 3001",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "dotenv -e ../../.env -e ../../.env.production -- next build",
-    "start": "dotenv -e ../../.env -e ../../.env.production -- next start -p 3001",
+    "build": "dotenv -e ../../.env.production -- next build",
+    "start": "dotenv -e ../../.env.production -- next start -p 3001",
     "lint": "eslint ."
   },
   "dependencies": {

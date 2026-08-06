@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "dotenv -e ../../.env.development -- tsx watch src/index.ts",
-    "stage": "dotenv -e ../../.env -e ../../.env.staging -- tsx watch src/index.ts",
+    "stage": "dotenv -e ../../.env.staging -- tsx watch src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "start": "dotenv -e ../../.env.production -- node dist/index.js",

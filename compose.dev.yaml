@@ -21,13 +21,13 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-saas_db}
+      POSTGRES_DB: ${POSTGRES_DB:-Matchy_db}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - saas_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-saas_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-Matchy_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -73,7 +73,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       # Prefer host Postgres from the AI container. If you use `--profile db`, override:
       # AI_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/saas_db?schema=public
-      DATABASE_URL: ${AI_DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5432/saas_db?schema=public}
+      DATABASE_URL: ${AI_DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5432/Matchy_db?schema=public}
       AI_STREAM_KEY: ${AI_STREAM_KEY:-ai:jobs}
       AI_CONSUMER_GROUP: ${AI_CONSUMER_GROUP:-ai-workers}
       AI_WORKER_CONCURRENCY: ${AI_WORKER_CONCURRENCY:-1}
