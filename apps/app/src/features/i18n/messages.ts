@@ -61,6 +61,10 @@ export const messages: Record<Locale, MessageTree> = {
       placeholder: 'Search by name or role…',
       empty: 'No profiles match your search.',
       filtersSoon: 'Filters coming soon',
+      lockedProfile: 'Profile hidden',
+      freeVisibleHint: 'Free plan shows 3 profiles; the rest are blurred.',
+      subscriptionSoonDesc:
+        'Premium subscriptions are coming soon. Your Free plan stays active with daily limits.',
     },
     chat: {
       title: 'Conversation',
@@ -92,6 +96,8 @@ export const messages: Record<Locale, MessageTree> = {
       matchesTitle: 'Matches',
       connect: 'Connect',
       pass: 'Pass',
+      skip: 'Skip',
+      waiting: 'Pending…',
       seeDetails: 'See details',
       itsAMatch: "It's a match!",
       matchedDesc: 'You can start the conversation now.',
@@ -185,6 +191,10 @@ export const messages: Record<Locale, MessageTree> = {
       placeholder: 'Rechercher par nom ou rôle…',
       empty: 'Aucun profil ne correspond.',
       filtersSoon: 'Filtres bientôt disponibles',
+      lockedProfile: 'Profil masqué',
+      freeVisibleHint: 'Le forfait gratuit affiche 3 profils ; le reste est flouté.',
+      subscriptionSoonDesc:
+        'Les abonnements Premium arrivent bientôt. Votre forfait Gratuit reste actif avec ses limites journalières.',
     },
     chat: {
       title: 'Conversation',
@@ -216,6 +226,8 @@ export const messages: Record<Locale, MessageTree> = {
       matchesTitle: 'Matchs',
       connect: 'Connecter',
       pass: 'Passer',
+      skip: 'Passer',
+      waiting: 'En attente…',
       seeDetails: 'Voir le détail',
       itsAMatch: 'C’est un match !',
       matchedDesc: 'Vous pouvez démarrer la conversation.',
@@ -309,6 +321,10 @@ export const messages: Record<Locale, MessageTree> = {
       placeholder: 'ابحث بالاسم أو الدور…',
       empty: 'لا توجد نتائج.',
       filtersSoon: 'الفلاتر قريبًا',
+      lockedProfile: 'ملف مخفي',
+      freeVisibleHint: 'الخطة المجانية تعرض 3 ملفات؛ الباقي ضبابي.',
+      subscriptionSoonDesc:
+        'اشتراكات Premium قادمة قريبًا. تبقى خطتك المجانية نشطة مع الحدود اليومية.',
     },
     chat: {
       title: 'محادثة',
@@ -340,6 +356,8 @@ export const messages: Record<Locale, MessageTree> = {
       matchesTitle: 'التطابقات',
       connect: 'تواصل',
       pass: 'تخطي',
+      skip: 'تخطي',
+      waiting: 'قيد الانتظار…',
       seeDetails: 'التفاصيل',
       itsAMatch: 'إنه تطابق!',
       matchedDesc: 'يمكنك بدء المحادثة الآن.',

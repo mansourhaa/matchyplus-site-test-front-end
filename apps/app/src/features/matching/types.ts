@@ -37,6 +37,8 @@ export type FeedProfile = MatchingProfile & {
   confidence: string;
   compatibility: ScoreBreakdown[];
   liked_me: boolean;
+  /** Server-set for search freemium; locked rows have redacted PII. */
+  is_locked?: boolean;
 };
 
 export type MatchRow = {
@@ -71,6 +73,7 @@ export type DiscoveryFeedQuery = {
   latitude?: number;
   longitude?: number;
   limit?: number;
+  context?: 'swipe' | 'search';
 };
 
 export type SwipeFeedResponse = {

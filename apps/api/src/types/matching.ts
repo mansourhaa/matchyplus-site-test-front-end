@@ -37,6 +37,8 @@ export type FeedProfile = {
   confidence: MatchConfidence;
   compatibility: ScoreBreakdown[];
   liked_me: boolean;
+  /** Search freemium: true when PII was redacted server-side for FREE plans. */
+  is_locked?: boolean;
 };
 
 export type MatchSummary = {
@@ -57,6 +59,8 @@ export type DiscoveryFeedQuery = {
   latitude?: number;
   longitude?: number;
   limit?: number;
+  /** `search` applies FREE profiles_per_category lock + PII redaction. */
+  context?: 'swipe' | 'search';
 };
 
 export type TargetUserParams = {

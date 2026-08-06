@@ -82,6 +82,7 @@ const feedProfile = {
     confidence: { type: 'string', enum: matchConfidenceEnum },
     compatibility: { type: 'array', items: scoreBreakdown },
     liked_me: { type: 'boolean' },
+    is_locked: { type: 'boolean' },
   },
 };
 
@@ -158,6 +159,7 @@ export const swipeFeedQuerySchema = {
       latitude: { type: 'number' },
       longitude: { type: 'number' },
       limit: { type: 'integer', minimum: 1, maximum: 50 },
+      context: { type: 'string', enum: ['swipe', 'search'] },
     },
   },
   response: {

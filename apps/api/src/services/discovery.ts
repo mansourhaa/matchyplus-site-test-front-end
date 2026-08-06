@@ -148,15 +148,73 @@ export class DiscoveryService {
       const profiles = scored.slice(0, limit);
       const quota = await this.quota.buildQuotaSnapshot(userId);
 
+      const lockedProfiles =
+        query.context === 'search'
+          ? await this.applySearchVisibilityLock(userId, profiles)
+          : profiles.map((profile) => ({ ...profile, is_locked: false }));
+
       return {
-        profiles,
-        count: profiles.length,
-        feed_breakdown: { ...breakdown, feed_total: profiles.length },
+        profiles: lockedProfiles,
+        count: lockedProfiles.length,
+        feed_breakdown: { ...breakdown, feed_total: lockedProfiles.length },
         quota,
         scoring_version: 'v5-scripted' as const,
       };
     } catch (err) {
       throw err;
     }
+  }
+
+  /**
+   * Freemium search: first N profiles stay fully visible; the rest keep only
+   * non-identifying fields so blur cannot be bypassed via DevTools / API replay.
+   * Locked rows use opaque ids that cannot be swiped or opened as profiles.
+   */
+  private async applySearchVisibilityLock(
+    userId: string,
+    profiles: FeedProfile[],
+  ): Promise<FeedProfile[]> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true },
+    });
+    const planRow = await this.prisma.plan.findUnique({
+      where: { id: user?.plan ?? 'FREE' },
+      select: { profiles_per_category: true },
+    });
+
+    const visibleLimit = planRow?.profiles_per_category ?? 3;
+    if (visibleLimit < 0) {
+      return profiles.map((profile) => ({ ...profile, is_locked: false }));
+    }
+
+    return profiles.map((profile, index) => {
+      if (index < visibleLimit) {
+        return { ...profile, is_locked: false };
+      }
+
+      return {
+        id: `locked-${index}`,
+        name: '███████',
+        image: null,
+        bio: null,
+        job: null,
+        category: profile.category,
+        city: null,
+        interests: [],
+        goals: [],
+        activity_sector: null,
+        service_type: profile.service_type || profile.job || profile.category,
+        rating: profile.rating,
+        distance_km: profile.distance_km,
+        match_score: 0,
+        match_group: profile.match_group,
+        match_type_label: '',
+        confidence: 'low',
+        compatibility: [],
+        liked_me: false,
+        is_locked: true,
+      };
+    });
   }
 }
