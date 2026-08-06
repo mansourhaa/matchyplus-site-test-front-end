@@ -16,6 +16,7 @@ import {
   uploadVoiceNote,
 } from '@/features/messaging/store/messaging-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
+import { shouldAbortMicAcquire } from '@/lib/mic-conversation-binding';
 import { Heart, Loader2, Mic, Send } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -23,10 +24,7 @@ function VoiceBubble({ mediaUrl }: { mediaUrl: string | null }) {
   const { url, loading } = useAuthenticatedMediaUrl(mediaUrl);
   if (loading) return <Loader2 size={16} className="animate-spin opacity-70" />;
   if (!url) return null;
-  return (
-    // eslint-disable-next-line jsx-a11y/media-has-caption
-    <audio controls src={url} className="max-w-[220px]" />
-  );
+  return <audio controls src={url} className="max-w-[220px]" />;
 }
 
 type ChatThreadProps = {
@@ -54,7 +52,16 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
   const conversationIdRef = useRef(conversationId);
   const myUserId = auth.user?.id;
 
-  conversationIdRef.current = conversationId;
+  // Mirrored prop for async mic guard — must update before effects flush on thread switch.
+  // https://react.dev/reference/react/useRef#avoiding-recreating-the-ref-contents
+  /* eslint-disable react-hooks/refs -- synchronous mirror + epoch bump for getUserMedia guard */
+  if (conversationIdRef.current !== conversationId) {
+    conversationIdRef.current = conversationId;
+    if (acquireInFlightRef.current) {
+      acquireEpochRef.current += 1;
+    }
+  }
+  /* eslint-enable react-hooks/refs */
 
   /**
    * Abort in-flight mic acquire or active recording.
@@ -144,10 +151,14 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
     acquireInFlightRef.current = true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const leftOrSwitched =
-        acquireEpoch !== acquireEpochRef.current ||
-        generation !== recordingGenerationRef.current ||
-        conversationIdRef.current !== intendedConversationId;
+      const leftOrSwitched = shouldAbortMicAcquire(
+        acquireEpoch,
+        acquireEpochRef.current,
+        generation,
+        recordingGenerationRef.current,
+        intendedConversationId,
+        conversationIdRef.current,
+      );
       if (leftOrSwitched) {
         stream.getTracks().forEach((track) => track.stop());
         return;
