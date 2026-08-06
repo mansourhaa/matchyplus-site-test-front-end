@@ -1,5 +1,7 @@
 import { api } from '@/lib/api';
 import { AUTH_USER_KEY } from '@/lib/auth';
+import { mobileTokenStorage } from '@/lib/mobile-tokens';
+import * as native from '@/lib/native';
 import { configureStore } from '@reduxjs/toolkit';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -45,6 +47,7 @@ describe('auth-slice', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('registerPhone', () => {
@@ -86,6 +89,45 @@ describe('auth-slice', () => {
       expect(store.getState().auth.status).toBe('authenticated');
       expect(store.getState().auth.sessionChecked).toBe(true);
     });
+
+    it('rejects Cap logins missing body JWTs, clears tokens, and logs out cookies', async () => {
+      vi.spyOn(native, 'isNativeMobileClient').mockReturnValue(true);
+      const clearSpy = vi.spyOn(mobileTokenStorage, 'clear');
+      vi.mocked(api.post).mockImplementation(async (url: string) => {
+        if (url === '/auth/login-phone') return { data: { user } };
+        if (url === '/auth/logout') return { data: { code: 'logout_successful' } };
+        throw new Error(`Unexpected URL ${url}`);
+      });
+
+      const store = buildStore();
+      const result = await store.dispatch(
+        loginPhone({ phone: '+21612345678', password: 'secret123' }),
+      );
+
+      expect(result.meta.requestStatus).toBe('rejected');
+      expect(result).toMatchObject({ error: { message: 'mobile_session_unavailable' } });
+      expect(clearSpy).toHaveBeenCalled();
+      expect(api.post).toHaveBeenCalledWith('/auth/logout');
+      expect(store.getState().auth.status).not.toBe('authenticated');
+    });
+
+    it('rejects Cap logins that return accessToken without refreshToken', async () => {
+      vi.spyOn(native, 'isNativeMobileClient').mockReturnValue(true);
+      vi.mocked(api.post).mockImplementation(async (url: string) => {
+        if (url === '/auth/login-phone') {
+          return { data: { user, accessToken: 'access-only' } };
+        }
+        if (url === '/auth/logout') return { data: { code: 'logout_successful' } };
+        throw new Error(`Unexpected URL ${url}`);
+      });
+
+      const result = await buildStore().dispatch(
+        loginPhone({ phone: '+21612345678', password: 'secret123' }),
+      );
+
+      expect(result.meta.requestStatus).toBe('rejected');
+      expect(result).toMatchObject({ error: { message: 'mobile_session_unavailable' } });
+    });
   });
 
   describe('exchangeOAuthCode', () => {
@@ -97,6 +139,21 @@ describe('auth-slice', () => {
 
       expect(store.getState().auth.status).toBe('authenticated');
       expect(store.getState().auth.sessionChecked).toBe(true);
+    });
+
+    it('rejects Cap OAuth exchanges missing body JWTs and logs out', async () => {
+      vi.spyOn(native, 'isNativeMobileClient').mockReturnValue(true);
+      vi.mocked(api.post).mockImplementation(async (url: string) => {
+        if (url === '/auth/oauth/exchange') return { data: { user } };
+        if (url === '/auth/logout') return { data: { code: 'logout_successful' } };
+        throw new Error(`Unexpected URL ${url}`);
+      });
+
+      const result = await buildStore().dispatch(exchangeOAuthCode({ code: 'oauth-code' }));
+
+      expect(result.meta.requestStatus).toBe('rejected');
+      expect(result).toMatchObject({ error: { message: 'mobile_session_unavailable' } });
+      expect(api.post).toHaveBeenCalledWith('/auth/logout');
     });
   });
 

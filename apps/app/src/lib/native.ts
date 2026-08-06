@@ -35,7 +35,7 @@ let cachedMobileKey: string | undefined;
  */
 export async function getMobileClientKey(): Promise<string | null> {
   if (!isNativeMobileClient()) return null;
-  if (cachedMobileKey !== undefined) return cachedMobileKey;
+  if (cachedMobileKey !== undefined) return cachedMobileKey || null;
   try {
     const { key } = await MobileClient.getClientKey();
     const trimmed = key?.trim() ?? '';
