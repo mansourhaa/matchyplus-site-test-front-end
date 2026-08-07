@@ -7,6 +7,7 @@ High-level system design of the Full Stack SaaS Boilerplate.
 ```mermaid
 flowchart TB
     Browser[Client Browser]
+    Cap[Capacitor shell — apps/mobile]
 
     subgraph App["@saas-boilerplate/app — Next.js 16"]
         Proxy[proxy.ts]
@@ -33,7 +34,8 @@ flowchart TB
     Redis[(Redis)]
 
     Browser -->|HTTPS| App
-    App -->|REST axios| API
+    Cap -->|remote WebView CAPACITOR_SERVER_URL| App
+    App -->|REST axios cookies or Bearer| API
     Proxy --> Redux
     App --> UIComp
     API --> Plugins
@@ -48,6 +50,8 @@ flowchart TB
     API -->|optional cache| Redis
 ```
 
+Native mobile is a Capacitor shell (`apps/mobile`) around the same Next.js member app —
+not a separate SPA. Auth details: [Authentication — Mobile](../features/authentication.md#mobile-capacitor).
 ## Shared packages
 
 ```mermaid
@@ -125,10 +129,8 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-    Dev[Developer] -->|git push| GH[GitHub]
-    GH -->|trigger| GHA[GitHub Actions CI]
-    GHA -->|lint test build| GHA
-    GHA -->|push images| GHCR[GHCR Container Registry]
+    Dev[Developer] -->|git push / PR| GH[GitHub]
+    Dev -->|docker build & push| GHCR[GHCR Container Registry]
 
     GH -->|GitOps sync| Argo[ArgoCD]
     Argo -->|apply manifests| K8s[Kubernetes]
@@ -155,9 +157,9 @@ flowchart TB
 
 | Image | Role |
 | --- | --- |
-| `ghcr.io/khalil-bchir/saas-boilerplate-api` | Fastify product API |
-| `ghcr.io/khalil-bchir/saas-boilerplate-app` | Next.js frontend |
-| `ghcr.io/khalil-bchir/saas-boilerplate-ai` | Flask AI worker |
+| `ghcr.io/matchy-plus/saas-boilerplate-api` | Fastify product API |
+| `ghcr.io/matchy-plus/saas-boilerplate-app` | Next.js frontend |
+| `ghcr.io/matchy-plus/saas-boilerplate-ai` | Flask AI worker |
 | `redis:7.4-alpine` | In-cluster Redis (not built by CI) |
 
 AI and Redis are ClusterIP-only (not on Ingress). See [Deployment](../setup/deployment.md), [AI Async Jobs](../features/ai-async-jobs.md), and [deploy/README.md](../../deploy/README.md).
@@ -168,6 +170,7 @@ AI and Redis are ClusterIP-only (not on Ingress). See [Deployment](../setup/depl
 | --- | --- |
 | New pages | `apps/app/src/app/` |
 | New API endpoints | `apps/api/src/routes/v1/` |
+| Matching / discovery | `apps/api` services + [Matching](../features/matching.md); AI rerank later via `MATCH` jobs |
 | New DB models | `packages/database/prisma/schema.prisma` |
 | New UI components | `pnpm dlx shadcn add` from `apps/app` |
 | New shared types | Auto-generated from Prisma schema |

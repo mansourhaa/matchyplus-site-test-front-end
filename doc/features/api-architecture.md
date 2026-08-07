@@ -75,6 +75,7 @@ flowchart LR
         Users[v1/users/actions.ts]
         AI[v1/ai/actions.ts]
         Admin[v1/admin/actions.ts]
+        Location[v1/location/actions.ts]
         Health[v1/actions.ts]
         V2[v2/actions.ts]
     end
@@ -84,6 +85,7 @@ flowchart LR
         U2["/api/v1/users/*"]
         U6["/api/v1/ai/*"]
         U3["/api/v1/admin/*"]
+        U7["/api/v1/location/*"]
         U4["/api/v1/health"]
         U5["/api/v2/*"]
     end
@@ -92,6 +94,7 @@ flowchart LR
     Users --> U2
     AI --> U6
     Admin --> U3
+    Location --> U7
     Health --> U4
     V2 --> U5
 ```
@@ -103,6 +106,7 @@ Files named `autohooks.ts` in route directories apply hooks to all routes in tha
 - `v1/users/autohooks.ts` — user route guards
 - `v1/ai/autohooks.ts` — JWT required for AI job routes
 - `v1/admin/autohooks.ts` — admin-only access
+- `v1/location/autohooks.ts` — JWT required for IP geolocation / reverse-geocode proxies
 
 Async AI job design is documented in [AI Async Jobs (Option C)](./ai-async-jobs.md).
 
@@ -140,15 +144,52 @@ Schemas defined in `src/schemas/v1/` using `fluent-json-schema` or plain JSON Sc
 
 ## Services layer
 
-Business logic lives in `src/services/`:
+Business logic lives in `src/services/` as **classes with constructor DI** (typically `prisma`).
 
 | Service | Responsibility |
 | --- | --- |
 | `authentication.ts` | Register, login, auth check |
 | `authorization.ts` | JWT verify, token decode |
 | `users.ts` | User CRUD |
+| `discovery.ts` | Swipe feed ranking (scripted v5) |
+| `swipe.ts` | Swipe, match, pending, withdraw, unmatch |
+| `swipe-quota.ts` | Plan limits + UTC-day RIGHT counts |
+| `ai-jobs.ts` | Enqueue + poll AI jobs |
+| `ai-cache.ts` | Redis result cache |
 
-Services receive `prisma` via constructor injection.
+### Strict layout rules
+
+- **`services/`** — only service **classes** and their methods. Inject dependencies via the constructor (`AbstractServiceOptions` / `prisma`, etc.).
+- **`utils/`** — pure helpers and free functions (no service classes).
+- **`constants.ts`** — shared constants / env-backed defaults.
+- Do **not** export standalone business functions from `services/` files.
+
+### Schema validation (required)
+
+- Every route must have a Fastify `schema` with `tags`, success `response`, and error responses (`4xx` / `500`).
+- Authenticated routes declare `security: [{ http: [] }]`.
+- Request bodies use `additionalProperties: false`.
+- Swagger uses `hideUntagged: true` — untagged routes will not appear in `/docs`.
+
+### Route request typing (required)
+
+- Every route with a body, querystring, or path params must use Fastify generics backed by a **named type** from `types/<feature>.ts`.
+- Do **not** inline `{ latitude?: number; … }` or `{ userId: string }` in the route signature.
+- HTTP method does not matter — apply the same rule to GET query, POST body, DELETE params, etc.
+
+```ts
+fastify.get<{ Querystring: DiscoveryFeedQuery }>('/swipe-feed', { schema }, handler);
+fastify.post<{ Body: PostSwipeBody }>('/swipe', { schema }, handler);
+fastify.delete<{ Params: TargetUserParams }>('/pending/:userId', { schema }, handler);
+```
+
+### Error handling (required)
+
+- Every route handler and every service method must wrap its body in `try/catch`.
+- Catch blocks must rethrow (or map to a domain/http error). Do not swallow failures.
+- Prefer `utils/http-errors.ts` helpers that set `statusCode` so the global error handler can respond correctly.
+
+Services receive `prisma` via constructor injection. Matching details: [Matching & Discovery](./matching.md).
 
 ## Authentication on routes
 

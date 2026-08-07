@@ -18,13 +18,116 @@ export { Prisma }
 export * as $Enums from './enums.js'
 export * from './enums.js';
 /**
+ * Model Plan
+ * Plan configuration edited from the admin "Gestion Forfaits" section.
+ * The id mirrors UserPlan so a user's plan resolves to exactly one row.
+ */
+export type Plan = Prisma.PlanModel
+/**
  * Model User
  * 
  */
 export type User = Prisma.UserModel
+/**
+ * Model RefreshToken
+ * 
+ */
+export type RefreshToken = Prisma.RefreshTokenModel
+/**
+ * Model OtpChallenge
+ * Purpose-scoped phone OTP challenge — never a login mechanism itself, only proof of
+ * phone ownership for signup verification, phone linking, or password reset (see
+ * doc/reviews/authentication-contract.md). `user_id` is null for SIGNUP_VERIFICATION,
+ * since the phone may not have an account yet at that point.
+ * 
+ * A signup-verification challenge, once successfully verified, also carries a one-time
+ * "grant" (`grant_hash`/`grant_expires_at`/`grant_consumed_at`) that register-phone must
+ * present to actually create the account — this is what lets OTP verification prove
+ * ownership without itself creating a user or a session.
+ */
+export type OtpChallenge = Prisma.OtpChallengeModel
+/**
+ * Model OAuthExchangeCode
+ * One-time code that bridges an OAuth provider redirect to the SPA.
+ * Only a hash of the code is stored, never raw access or refresh tokens.
+ */
+export type OAuthExchangeCode = Prisma.OAuthExchangeCodeModel
+/**
+ * Model Report
+ * A profile report where one user flags another.
+ * Deleting either user removes the related reports.
+ */
+export type Report = Prisma.ReportModel
+/**
+ * Model Swipe
+ * Current swipe between two users (one row per pair). Upserted on each action.
+ */
+export type Swipe = Prisma.SwipeModel
+/**
+ * Model SwipeLog
+ * Append-only audit trail. Daily RIGHT count drives quota (UTC day).
+ */
+export type SwipeLog = Prisma.SwipeLogModel
+/**
+ * Model Match
+ * Mutual RIGHT swipe. Presence of the row = active match (no status column).
+ * user_low_id / user_high_id are lexicographically ordered for a stable unique pair.
+ */
+export type Match = Prisma.MatchModel
+/**
+ * Model Conversation
+ * 1:1 thread owned by the messaging feature. Created on mutual match; match_id is
+ * nulled on unmatch so history survives (composer stays read-only until rematch).
+ */
+export type Conversation = Prisma.ConversationModel
+/**
+ * Model Message
+ * 
+ */
+export type Message = Prisma.MessageModel
+/**
+ * Model MessageLike
+ * Persisted double-tap like on a message (legacy Matchy had client-only likes).
+ */
+export type MessageLike = Prisma.MessageLikeModel
+/**
+ * Model UserLocation
+ * Dynamic GPS for discovery radius (preferred over static User.gps_*).
+ */
+export type UserLocation = Prisma.UserLocationModel
+/**
+ * Model UserBlock
+ * Bidirectional block check excludes both users from each other's feed and swipes.
+ */
+export type UserBlock = Prisma.UserBlockModel
+/**
+ * Model Rating
+ * One rating per (rater, ratee) pair, only allowed between matched users — insert-only,
+ * no edits once submitted. Aggregated into User.rating/reviews on every write rather
+ * than read live, so profile reads stay a single-row lookup.
+ */
+export type Rating = Prisma.RatingModel
+/**
+ * Model Notification
+ * In-app notification feed. A row is created the moment the triggering event happens,
+ * independent of whether the recipient is online — a connected client also gets a live
+ * realtime push for immediate feedback, but the row is what makes the notification show
+ * up next time the recipient opens the app, even if they were offline when it happened.
+ */
+export type Notification = Prisma.NotificationModel
 /**
  * Model AiJob
  * Durable AI job record. Redis Streams is the queue transport;
  * this table is the source of truth for status polling and audits.
  */
 export type AiJob = Prisma.AiJobModel
+/**
+ * Model WaitlistEntry
+ * Early-access waitlist entry (landing page SMS verification flow).
+ */
+export type WaitlistEntry = Prisma.WaitlistEntryModel
+/**
+ * Model WaitlistPending
+ * Pending OTP verification before a waitlist row is committed.
+ */
+export type WaitlistPending = Prisma.WaitlistPendingModel

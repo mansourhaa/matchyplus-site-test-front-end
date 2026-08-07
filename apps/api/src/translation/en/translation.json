@@ -1,4 +1,24 @@
 {
-	"hello": "Welcome",
-	"invalid_token": "Invalid Token"
+  "hello": "Welcome",
+  "invalid_token": "Invalid Token",
+  "otp_sent": "Verification code sent.",
+  "reset_code_sent": "Reset code sent by SMS.",
+  "password_reset": "Password has been reset successfully.",
+  "password_changed": "Password changed successfully.",
+  "invalid_phone": "Invalid phone number.",
+  "invalid_otp": "Invalid or expired verification code.",
+  "invalid_credentials": "Invalid phone number or password.",
+  "invalid_refresh_token": "Invalid or expired refresh token.",
+  "oauth_only_account": "This account signs in with Google or LinkedIn, not a password.",
+  "phone_not_verified": "This phone number has not been verified yet.",
+  "phone_already_registered": "This phone number is already registered.",
+  "phone_not_found": "No account found for this phone number.",
+  "password_not_set": "No password is set for this account.",
+  "invalid_current_password": "Current password is incorrect.",
+  "internal_error": "An unexpected error occurred",
+  "user_already_exists": "An account with this email already exists.",
+  "user_not_found": "User not found.",
+  "admin_access_required": "Administrator access required",
+  "onboarding_incomplete": "Please complete your profile before finishing onboarding.",
+  "foreign_photo_path": "This photo does not belong to your account."
 }

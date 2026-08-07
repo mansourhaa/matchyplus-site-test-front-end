@@ -1,8 +1,8 @@
-import { Activity, FolderKanban, type LucideIcon, Settings2 } from 'lucide-react';
+import { Home, type LucideIcon, MessageCircle, Search, User } from 'lucide-react';
 
 export const siteConfig = {
-  name: 'SaaS Boilerplate',
-  description: 'Full-stack SaaS boilerplate with Next.js, Fastify, and Prisma',
+  name: 'Matchy+',
+  description: 'Professional matching for freelancers and businesses',
   url: 'http://localhost:3000',
 };
 
@@ -18,29 +18,12 @@ export type NavItem = {
   }[];
 };
 
+/** Primary Matchy nav (sidebar / bottom). */
 export const dashboardNav: NavItem[] = [
-  {
-    title: 'Dashboard',
-    url: '/',
-    icon: Activity,
-    isActive: true,
-    items: [
-      { title: 'Overview', url: '/' },
-      { title: 'Analytics', url: '#', disabled: true },
-    ],
-  },
-  {
-    title: 'Projects',
-    url: '/projects',
-    icon: FolderKanban,
-    items: [{ title: 'All Projects', url: '/projects' }],
-  },
-  {
-    title: 'Settings',
-    url: '/settings',
-    icon: Settings2,
-    items: [{ title: 'General', url: '/settings' }],
-  },
+  { title: 'Home', url: '/home', icon: Home },
+  { title: 'Search', url: '/home?tab=search', icon: Search },
+  { title: 'Matches', url: '/matches', icon: MessageCircle },
+  { title: 'Profile', url: '/settings', icon: User },
 ];
 
 export const authRoutes = ['/login', '/register'] as const;

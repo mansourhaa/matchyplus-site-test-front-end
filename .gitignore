@@ -2,6 +2,7 @@
 
 # Dependencies
 node_modules
+.pnpm-store
 .pnp
 .pnp.js
 
@@ -13,9 +14,17 @@ node_modules
 
 # Testing
 coverage
+coverage.xml
+.coverage
 
 # Turbo
 .turbo
+
+# Cursor
+.cursorrules
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 
 # Vercel
 .vercel
@@ -52,7 +61,10 @@ __pycache__/
 .ruff_cache/
 .venv/
 apps/ai/.venv/
+doc/reviews/
 
 # .ssh_keys
 # local-meta
 
+# Local profile media uploads
+apps/api/uploads/

@@ -15,9 +15,10 @@ env:
   PNPM_VERSION: '10.12.4'
   NODE_VERSION: '22'
   REGISTRY: ghcr.io
-  API_IMAGE: ghcr.io/khalil-bchir/saas-boilerplate-api
-  APP_IMAGE: ghcr.io/khalil-bchir/saas-boilerplate-app
-  AI_IMAGE: ghcr.io/khalil-bchir/saas-boilerplate-ai
+  # Org packages under matchy-plus (not the personal Khalil-Bchir namespace)
+  API_IMAGE: ghcr.io/matchy-plus/saas-boilerplate-api
+  APP_IMAGE: ghcr.io/matchy-plus/saas-boilerplate-app
+  AI_IMAGE: ghcr.io/matchy-plus/saas-boilerplate-ai
 
 jobs:
   ci:

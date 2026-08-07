@@ -2,20 +2,18 @@
 
 Kubernetes manifests and ArgoCD applications for GitOps deployment.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
-This project uses **GitHub Actions** for CI and **Kubernetes + ArgoCD** for GitOps deployment.
+This project uses **manual GHCR image publishes** and **Kubernetes + ArgoCD** for GitOps deployment. There is **no GitHub Actions** CI.
 
 ## End-to-end deploy flow
 
 ```mermaid
 flowchart TD
-    Push[git push] --> GHA[GitHub Actions]
-    GHA --> Lint[lint]
-    Lint --> Test[test]
-    Test --> Build[build]
-    Build --> Images[build & push API App AI images]
-    Images --> Argo[ArgoCD detects manifest/image]
+    Local[pnpm lint / test / build] --> Images[docker build & push API App AI]
+    Images --> GHCR[GHCR]
+    Push[git merge to staging/main] --> Argo[ArgoCD]
+    GHCR --> Argo
     Argo --> K8s[Kubernetes rollout]
     K8s --> Job[migration Job]
     Job --> Pods[api + app + ai + redis pods]
@@ -29,23 +27,15 @@ flowchart TD
     Ingress --> Live[Live traffic]
 ```
 
-## CI pipeline
+## Image publish (manual)
 
-Workflow: `.github/workflows/ci.yml`
+Before or after promoting to `staging` / `main`, build and push:
 
-On every push / PR to `main` or `staging`:
+1. `ghcr.io/matchy-plus/saas-boilerplate-api`
+2. `ghcr.io/matchy-plus/saas-boilerplate-app`
+3. `ghcr.io/matchy-plus/saas-boilerplate-ai`
 
-1. `pnpm lint`
-2. `pnpm test`
-3. `pnpm build`
-
-On push to `main` or `staging` (after CI passes):
-
-4. Build & push `ghcr.io/khalil-bchir/saas-boilerplate-api`
-5. Build & push `ghcr.io/khalil-bchir/saas-boilerplate-app`
-6. Build & push `ghcr.io/khalil-bchir/saas-boilerplate-ai`
-
-ArgoCD then deploys the updated images to Kubernetes.
+Tag with `staging` or `production` (and optionally the git SHA). ArgoCD then deploys from those tags.
 
 ## Layout
 
@@ -88,9 +78,9 @@ deploy/
 
 | Image | Tag (staging) | Tag (production) |
 | --- | --- | --- |
-| `ghcr.io/khalil-bchir/saas-boilerplate-api` | `staging` | `production` |
-| `ghcr.io/khalil-bchir/saas-boilerplate-app` | `staging` | `production` |
-| `ghcr.io/khalil-bchir/saas-boilerplate-ai` | `staging` | `production` |
+| `ghcr.io/matchy-plus/saas-boilerplate-api` | `staging` | `production` |
+| `ghcr.io/matchy-plus/saas-boilerplate-app` | `staging` | `production` |
+| `ghcr.io/matchy-plus/saas-boilerplate-ai` | `staging` | `production` |
 
 Redis runs from the public `redis:7.4-alpine` image (not built by CI).
 
@@ -102,13 +92,13 @@ Redis runs from the public `redis:7.4-alpine` image (not built by CI).
 pnpm test
 pnpm build
 
-docker login ghcr.io -u Khalil-Bchir
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-api:staging -f apps/api/Dockerfile .
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-app:staging -f apps/app/Dockerfile .
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-ai:staging -f apps/ai/Dockerfile apps/ai
-docker push ghcr.io/khalil-bchir/saas-boilerplate-api:staging
-docker push ghcr.io/khalil-bchir/saas-boilerplate-app:staging
-docker push ghcr.io/khalil-bchir/saas-boilerplate-ai:staging
+docker login ghcr.io -u USERNAME
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-api:staging -f apps/api/Dockerfile .
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-app:staging -f apps/app/Dockerfile .
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-ai:staging -f apps/ai/Dockerfile apps/ai
+docker push ghcr.io/matchy-plus/saas-boilerplate-api:staging
+docker push ghcr.io/matchy-plus/saas-boilerplate-app:staging
+docker push ghcr.io/matchy-plus/saas-boilerplate-ai:staging
 ```
 
 ### 2. Create secrets
@@ -118,6 +108,14 @@ cp .env.staging.example .env.staging
 chmod +x deploy/scripts/bootstrap-secrets.sh
 ./deploy/scripts/bootstrap-secrets.sh saas-staging .env.staging
 ```
+
+Smoke check after bootstrapping secrets:
+
+```bash
+kubectl -n saas-staging get secret saas-api-env -o jsonpath='{.data.TRUST_PROXY}' | base64 -d && echo
+```
+
+Expected output: `true`
 
 For production:
 

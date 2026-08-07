@@ -6,8 +6,11 @@ import fp from 'fastify-plugin';
 
 import { PrismaClient } from '@saas-boilerplate/types';
 
+import { SmsClient } from '../lib/sms.js';
+
 export type TestAppOverrides = {
   prisma?: Partial<PrismaClient>;
+  smsClient?: Partial<SmsClient>;
 };
 
 export async function buildTestApp(
@@ -17,6 +20,7 @@ export async function buildTestApp(
   const app = fastify({
     logger: false,
     pluginTimeout: 20000,
+    trustProxy: true,
     ajv: {
       customOptions: {
         allowUnionTypes: true,
@@ -35,6 +39,12 @@ export async function buildTestApp(
             instance.decorate('prisma', overrides.prisma as PrismaClient);
           },
           { name: 'prisma' },
+        ),
+        sms: fp(
+          async (instance) => {
+            instance.decorate('smsClient', overrides.smsClient as SmsClient);
+          },
+          { name: 'sms' },
         ),
       },
     },

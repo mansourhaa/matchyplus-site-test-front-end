@@ -2,7 +2,7 @@
 
 A production-ready Turborepo monorepo with a Next.js frontend, Fastify API, Flask AI worker (Option C async jobs), Redis, and shared packages.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 ## High-level architecture
 
@@ -10,6 +10,7 @@ A production-ready Turborepo monorepo with a Next.js frontend, Fastify API, Flas
 flowchart TB
     subgraph Client
         Browser[Browser]
+        Cap[Capacitor apps/mobile]
     end
 
     subgraph Apps
@@ -29,6 +30,7 @@ flowchart TB
     Redis[(Redis)]
 
     Browser -->|HTTPS| App
+    Cap -->|remote WebView| App
     App -->|REST| API
     App --> UI
     API --> DB
@@ -52,7 +54,7 @@ flowchart TB
 | Queue / cache | Redis 7 |
 | UI | shadcn/ui + Tailwind CSS v4 |
 | Monorepo | Turborepo 2 + pnpm 10 |
-| Deploy | GitHub Actions + Kubernetes + ArgoCD |
+| Deploy | Manual GHCR images + Kubernetes + ArgoCD |
 | Tests | Vitest |
 
 ## Documentation
@@ -63,8 +65,9 @@ flowchart TB
 
 | Start here | Description |
 | --- | --- |
-| [Contributing / social contract](./CONTRIBUTING.md) | Branching, PRs, and no-self-merge rules |
+| [Contributing](./CONTRIBUTING.md) | Branching, PRs, English reviews, self-merge (admins only) |
 | [PR & merge flow](./doc/setup/pr-and-merge-flow.md) | How feature → dev → staging → main works |
+| [Branch protection](./doc/setup/branch-protection.md) | Secure `main` / `staging` / `dev` on the org |
 | [Getting Started (A–Z)](./doc/setup/getting-started.md) | Clone, install, configure, and run |
 | [Environments & NODE_ENV](./doc/setup/environments-and-node-env.md) | Env files, NODE_ENV, staging/production |
 | [Environment Variables](./doc/setup/environment-variables.md) | All env vars explained |
@@ -79,6 +82,7 @@ flowchart TB
 | Package | Purpose | README |
 | --- | --- | --- |
 | `@saas-boilerplate/app` | Next.js frontend | [apps/app/README.md](./apps/app/README.md) |
+| `@saas-boilerplate/mobile` | Capacitor Android shell (remote WebView) | [apps/mobile/README.md](./apps/mobile/README.md) |
 | `@saas-boilerplate/api` | Fastify REST API | [apps/api/README.md](./apps/api/README.md) |
 | `@saas-boilerplate/ai` | Flask AI worker | [apps/ai/README.md](./apps/ai/README.md) |
 | `@saas-boilerplate/ai-contracts` | Shared AI job contracts | [packages/ai-contracts/README.md](./packages/ai-contracts/README.md) |
@@ -92,7 +96,7 @@ flowchart TB
 ## Quick start
 
 ```bash
-git clone https://github.com/Khalil-Bchir/full-stack-saas-boilerplate.git
+git clone https://github.com/matchy-plus/matchy-plus.git
 cd full-stack-saas-boilerplate
 pnpm install
 cp .env.example .env.development
@@ -123,6 +127,9 @@ pnpm lint             # Lint all workspaces
 pnpm db:generate      # Regenerate Prisma client
 pnpm db:push          # Push schema to database
 pnpm db:studio        # Open Prisma Studio
+pnpm mobile:dev       # Cap sync (emulator → :3000) + open Android Studio
+pnpm mobile:sync      # cap sync android
+pnpm mobile:open      # Open Android Studio
 pnpm format           # Prettier format
 pnpm commit           # Conventional commit (commitizen)
 ```

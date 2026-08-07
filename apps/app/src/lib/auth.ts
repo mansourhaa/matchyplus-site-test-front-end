@@ -1,26 +1,28 @@
+// Name of the session cookie the API sets on login/register/refresh — read by Next.js
+// middleware (see proxy.ts) for route guarding. On the web it is HttpOnly (JS cannot
+// read it). On Capacitor, lib/mobile-tokens.ts mirrors a Path=/ cookie onto the app
+// origin so proxy.ts still works when the API cookie Domain does not cover the WebView.
+import { mobileTokenStorage } from './mobile-tokens';
+import { clearMobileClientKeyCache } from './native';
+
 export const AUTH_COOKIE = 'access_token';
 export const AUTH_USER_KEY = 'user';
 
-export function setAuthCookie(token: string, maxAgeSeconds = 60 * 60 * 24) {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${AUTH_COOKIE}=${token}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax`;
-}
-
-export function clearAuthCookie() {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${AUTH_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
-}
-
-export function persistAuthSession(token: string, user: unknown) {
+/** Cached profile only — never a token on web. Cap stores JWTs separately in localStorage. */
+export function persistAuthUser(user: unknown) {
   if (typeof window === 'undefined') return;
-  sessionStorage.setItem('access_token', token);
   sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-  setAuthCookie(token);
 }
 
 export function clearAuthSession() {
   if (typeof window === 'undefined') return;
-  sessionStorage.removeItem('access_token');
   sessionStorage.removeItem(AUTH_USER_KEY);
-  clearAuthCookie();
+  mobileTokenStorage.clear();
+  clearMobileClientKeyCache();
+}
+
+export function getCachedAuthUser<T = unknown>(): T | null {
+  if (typeof window === 'undefined') return null;
+  const raw = sessionStorage.getItem(AUTH_USER_KEY);
+  return raw ? (JSON.parse(raw) as T) : null;
 }

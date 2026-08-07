@@ -1,0 +1,137 @@
+---
+description: Fastify API conventions — layout, schemas, try/catch, auth
+globs: apps/api/**/*
+alwaysApply: false
+---
+
+# API (`apps/api`)
+
+Docs: `doc/features/api-architecture.md`, `doc/features/authentication.md`.
+
+## Layout
+
+```text
+routes/v1/<feature>/actions.ts   # HTTP handlers
+routes/v1/<feature>/autohooks.ts # verifyToken / verifyAdmin
+services/<feature>.ts            # service CLASSES + methods (DI via constructor)
+schemas/v1/<feature>.ts          # AJV / OpenAPI JSON Schema
+types/<feature>.ts               # TS types for payloads
+utils/                           # pure helpers / free functions only
+constants.ts                     # shared constants
+```
+
+## Strict layout rules
+
+- **`services/`** — only service **classes** and their methods. Inject dependencies via the constructor (`AbstractServiceOptions` / `prisma`, etc.).
+- **`utils/`** — pure helpers and free functions (no service classes).
+- **`constants.ts`** — shared constants / env-backed defaults.
+- Do **not** export standalone business functions from `services/` files.
+
+## Schema validation (required)
+
+Every HTTP route **must** declare a Fastify `schema`. Because Swagger uses `hideUntagged: true`, untagged routes will not appear in `/docs`.
+
+Each route schema **must** include:
+
+- `tags: ['…']` — required for Swagger visibility
+- `summary` (and `description` when non-obvious)
+- `security: [{ http: [] }]` on authenticated routes
+- request validation: `body` / `querystring` / `params` as needed
+- `additionalProperties: false` on request **bodies** and strict param objects
+- `response` with success shape **and** error shapes (`4xx`, `500`) matching project schema style
+
+Do **not** ship routes without schemas. Do **not** omit tags.
+
+## Route request typing (required)
+
+Every route that accepts a **body**, **querystring**, or **path params** must declare Fastify generics using a **named type object** from `types/<feature>.ts`.
+
+Do **not** inline anonymous object types in the route signature.
+
+```ts
+// types/matching.ts
+export type DiscoveryFeedQuery = {
+  latitude?: number;
+  longitude?: number;
+  limit?: number;
+};
+
+export type PostSwipeBody = {
+  target_user_id: string;
+  direction: 'left' | 'right';
+};
+
+export type TargetUserParams = {
+  userId: string;
+};
+
+// routes — correct
+fastify.get<{ Querystring: DiscoveryFeedQuery }>('/swipe-feed', { schema }, handler);
+fastify.post<{ Body: PostSwipeBody }>('/swipe', { schema }, handler);
+fastify.delete<{ Params: TargetUserParams }>('/pending/:userId', { schema }, handler);
+
+// routes — forbidden
+fastify.get<{ Querystring: { latitude?: number; longitude?: number } }>('/swipe-feed', …);
+fastify.delete<{ Params: { userId: string } }>('/pending/:userId', …);
+```
+
+Rules:
+
+- HTTP method does not matter — GET query, POST body, DELETE/PATCH params all need named types.
+- Put those types in `types/<feature>.ts`, not next to the route and not inline.
+- If a route has no body/query/params, generics are optional.
+- The Fastify generic keys must match the request part: `Body`, `Querystring`, `Params`.
+
+## Error handling / try-catch (required)
+
+Production rule: **every route handler and every service method must be wrapped in `try/catch`**.
+
+### Routes
+
+```ts
+async (request, reply) => {
+  try {
+    const data = await service.method(…);
+    return reply.code(200).send(data);
+  } catch (err) {
+    throw err; // let the global error handler format the response
+  }
+}
+```
+
+- Keep handlers thin: validate via schema, call the service, return.
+- Do **not** swallow errors. Re-throw so `plugins/error-handler.ts` can log and respond.
+- Prefer domain errors with `statusCode` (`utils/http-errors.ts`) over bare `Error`.
+
+### Service methods
+
+```ts
+async method(…): Promise<…> {
+  try {
+    // business logic
+    return result;
+  } catch (err) {
+    throw err;
+  }
+}
+```
+
+- Public **and** private async service methods that perform I/O or domain work must use try/catch.
+- Catch only to rethrow, map to a domain/http error, or add context — never return a silent success after failure.
+
+### Utils
+
+- Pure sync helpers (math, formatting, mapping) do not need try/catch.
+- Utils that perform I/O or can fail for domain reasons must try/catch and throw a clear error.
+
+## Other conventions
+
+- Protected routes: `autohooks` → `verifyToken`; admin routes also `verifyAdmin`.
+- Never return password hashes; use explicit Prisma `select`.
+- Enforce role hierarchy for admin mutations (do not let SUPPORT ban/edit SUPER_ADMIN).
+- Reject non-`ACTIVE` users on login / admin auth when status exists.
+- Do not leak other users’ PII on user-facing endpoints (e.g. report create → minimal ack).
+
+## Tests
+
+- Colocate `*.test.ts` next to services; run via `pnpm test` / Vitest.

@@ -9,8 +9,9 @@ resources:
   - redis/service.yaml
   - ai/deployment.yaml
   - ai/service.yaml
-  - api/deployment.yaml
+  - api/statefulset.yaml
   - api/service.yaml
+  - api/service-headless.yaml
   - api/migration-job.yaml
   - app/deployment.yaml
   - app/service.yaml

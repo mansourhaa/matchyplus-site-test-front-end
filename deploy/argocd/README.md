@@ -1,6 +1,6 @@
 # ArgoCD GitOps
 
-ArgoCD watches [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate) and syncs Kubernetes manifests from `deploy/k8s/overlays/`.
+ArgoCD watches [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus) and syncs Kubernetes manifests from `deploy/k8s/overlays/`.
 
 ## GitOps flow
 
@@ -40,7 +40,7 @@ kubectl apply -f deploy/argocd/app-of-apps.yaml
 
 Repository URL in all manifests:
 
-`https://github.com/Khalil-Bchir/full-stack-saas-boilerplate.git`
+`https://github.com/matchy-plus/matchy-plus.git`
 
 ## Sync policy
 
@@ -53,6 +53,14 @@ Create secrets before the first sync:
 ```bash
 ./deploy/scripts/bootstrap-secrets.sh saas-staging .env.staging
 ./deploy/scripts/bootstrap-secrets.sh saas-production .env.production
+```
+
+Verify the API secret includes `TRUST_PROXY=true` before syncing so Fastify trusts
+forwarded client IPs behind Ingress:
+
+```bash
+kubectl -n saas-staging get secret saas-api-env -o jsonpath='{.data.TRUST_PROXY}' | base64 -d && echo
+kubectl -n saas-production get secret saas-api-env -o jsonpath='{.data.TRUST_PROXY}' | base64 -d && echo
 ```
 
 ArgoCD syncs manifests only — it does not create application secrets.

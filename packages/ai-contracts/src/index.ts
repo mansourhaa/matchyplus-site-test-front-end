@@ -10,22 +10,11 @@ export const AI_STREAM_KEY_DEFAULT = 'ai:jobs';
 export const AI_CONSUMER_GROUP_DEFAULT = 'ai-workers';
 export const AI_CACHE_PREFIX = 'ai:cache:';
 
-export const AI_JOB_TYPES = [
-  'ANALYZE_VIDEO',
-  'VERIFY_IDENTITY',
-  'EMBED',
-  'MATCH',
-] as const;
+export const AI_JOB_TYPES = ['ANALYZE_VIDEO', 'VERIFY_IDENTITY', 'EMBED', 'MATCH'] as const;
 
 export type AiJobType = (typeof AI_JOB_TYPES)[number];
 
-export const AI_JOB_STATUSES = [
-  'QUEUED',
-  'RUNNING',
-  'SUCCEEDED',
-  'FAILED',
-  'CANCELLED',
-] as const;
+export const AI_JOB_STATUSES = ['QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED'] as const;
 
 export type AiJobStatus = (typeof AI_JOB_STATUSES)[number];
 
