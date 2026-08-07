@@ -48,6 +48,22 @@ pipeline {
     // blocks as mixed content. Changing the staging scheme therefore requires
     // rebuilding app and admin, not just editing the ConfigMap.
     STAGING_API_URL = "https://api.staging.matchy.local/api/v1"
+    PROD_API_URL = "https://api.matchyplus.com/api/v1"
+
+    // Which of the two gets compiled into app and admin, decided by branch.
+    //
+    // This has to be a build-time decision and it has to be per-branch. Until
+    // now every build used the staging URL unconditionally, so a build on main
+    // produced production frontends hardcoded to api.staging.matchy.local - a
+    // hostname that does not resolve on the public internet. They would have
+    // deployed, reported healthy, and failed in every browser.
+    //
+    // The consequence to keep in mind: app and admin images are NOT portable
+    // between environments, so a staging-tested app image cannot be promoted to
+    // prod - only api, ai and landing can. Making the frontend read its API URL
+    // at runtime would restore build-once-deploy-many for all five; until then
+    // prod frontends must be built from main.
+    FRONTEND_API_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://api.matchyplus.com/api/v1' : 'https://api.staging.matchy.local/api/v1'}"
   }
 
   stages {
@@ -344,8 +360,8 @@ pipeline {
       steps {
         sh """
           docker build --pull -t ${REGISTRY_REPO}:api-${IMAGE_TAG} -f apps/api/Dockerfile .
-          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${STAGING_API_URL} -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
-          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${STAGING_API_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
           docker build --pull -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
           docker build --pull -t ${REGISTRY_REPO}:ai-${IMAGE_TAG} -f apps/ai/Dockerfile apps/ai
         """
