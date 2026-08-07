@@ -184,7 +184,8 @@ pipeline {
             set -euo pipefail
 
             rm -rf /tmp/gitops-prod
-            git clone --depth 1 -b "${GITOPS_BRANCH}" \n              "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-prod
+            git clone --depth 1 -b "${GITOPS_BRANCH}" \
+              "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-prod
             cd /tmp/gitops-prod
 
             cd "${GITOPS_PROD_PATH}"
