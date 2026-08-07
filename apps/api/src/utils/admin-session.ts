@@ -11,8 +11,7 @@ export const ADMIN_SESSION_COOKIE = 'admin_access_token';
 
 /** Seconds, matching the access token's own lifetime so the two never disagree. */
 function sessionMaxAge(): number {
-  const ttl = Number(config.accessTokenTtl);
-  return Number.isFinite(ttl) && ttl > 0 ? ttl : 60 * 60 * 8;
+  return config.accessTokenTtlSeconds;
 }
 
 /**

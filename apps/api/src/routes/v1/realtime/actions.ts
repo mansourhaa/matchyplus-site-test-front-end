@@ -7,6 +7,7 @@ import {
   REALTIME_TYPING_MIN_INTERVAL_MS,
   shouldThrottleTypingEvent,
 } from '../../../constants/realtime.js';
+import { expectedAccessAudience } from '../../../plugins/authorization.js';
 import { realtimeSchema } from '../../../schemas/v1/matching.js';
 import { ConversationService } from '../../../services/conversation.js';
 import { RealtimeQuery } from '../../../types/matching.js';
@@ -40,8 +41,9 @@ function typingClaimRedisKey(claimId: string): string {
  *
  * Auth channels (prefer earlier):
  * 1. Cookie / Authorization header on the upgrade (web + native HTTP clients)
- * 2. Legacy `?access_token=` query (promoted to Bearer) — avoid for Cap; URLs land in logs
- * 3. Deferred first-frame `{ event: "auth", payload: { access_token } }` (Capacitor)
+ * 2. Deferred first-frame `{ event: "auth", payload: { access_token } }` (Capacitor)
+ *
+ * Query-string `?access_token=` is intentionally unsupported (tokens must not land in logs).
  */
 const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const conversations = new ConversationService({
@@ -159,23 +161,19 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
     return false;
   }
 
-  async function bindQueryToken(request: FastifyRequest<{ Querystring: RealtimeQuery }>) {
-    const queryToken = request.query?.access_token;
-    if (queryToken && !request.headers.authorization) {
-      request.headers.authorization = `Bearer ${queryToken}`;
-    }
-  }
-
   function hasUpgradeAuthHint(request: FastifyRequest<{ Querystring: RealtimeQuery }>): boolean {
     if (request.headers.authorization) return true;
-    if (request.query?.access_token) return true;
     const cookies = request.cookies ?? {};
-    return Boolean(cookies[MEMBER_ACCESS_COOKIE] || cookies[ADMIN_SESSION_COOKIE]);
+    // Route-aware: realtime is a member surface — only the member cookie counts.
+    if (expectedAccessAudience(request) === 'admin') {
+      return Boolean(cookies[ADMIN_SESSION_COOKIE]);
+    }
+    return Boolean(cookies[MEMBER_ACCESS_COOKIE]);
   }
 
   /**
    * Verify when the upgrade already carries credentials. Cap often has neither
-   * cookie nor query on the API host — leave `loggedUser` unset and wait for
+   * cookie nor Authorization on the API host — leave `loggedUser` unset and wait for
    * the first-frame `auth` event so the JWT never appears in access-log URLs.
    */
   async function verifyTokenOrDefer(request: FastifyRequest<{ Querystring: RealtimeQuery }>) {
@@ -188,7 +186,7 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
     {
       websocket: true,
       schema: realtimeSchema,
-      preHandler: [bindQueryToken, verifyTokenOrDefer],
+      preHandler: [verifyTokenOrDefer],
     },
     (socket, request) => {
       /** conversationId → claim id for this socket (unique per typing session). */

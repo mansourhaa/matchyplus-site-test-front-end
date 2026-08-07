@@ -157,6 +157,9 @@ export class SwipeService {
       const targetId = body.target_user_id;
       if (!targetId) throw badRequest('target_user_id is required');
       if (targetId === userId) throw badRequest('cannot swipe your own profile');
+      if (targetId.startsWith('locked-')) {
+        throw badRequest('profile is locked on free plan', 'search_profile_locked');
+      }
 
       const target = await this.prisma.user.findUnique({
         where: { id: targetId },

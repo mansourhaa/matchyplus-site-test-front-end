@@ -82,7 +82,7 @@ describe('SwipeService', () => {
     });
     let notifSeq = 0;
     prisma.notification.create.mockImplementation(async () => ({ id: `notif-${++notifSeq}` }));
-    prisma.plan.findUnique.mockResolvedValue({ swipes_per_day: 20 });
+    prisma.plan.findUnique.mockResolvedValue({ swipes_per_day: 10 });
     prisma.userBlock.findFirst.mockResolvedValue(null);
     prisma.swipe.findUnique.mockResolvedValue(null);
     prisma.swipe.upsert.mockResolvedValue({ id: 'swipe-1' });
@@ -122,8 +122,8 @@ describe('SwipeService', () => {
       quota: {
         unlimited: false,
         used: 1,
-        limit: 20,
-        remaining: 19,
+        limit: 10,
+        remaining: 9,
       },
     });
 
@@ -205,7 +205,7 @@ describe('SwipeService', () => {
       }
       return null;
     });
-    prisma.plan.findUnique.mockResolvedValue({ swipes_per_day: 20 });
+    prisma.plan.findUnique.mockResolvedValue({ swipes_per_day: 10 });
     prisma.userBlock.findFirst.mockResolvedValue(null);
     prisma.swipe.findUnique.mockResolvedValue(null);
     prisma.swipe.upsert.mockResolvedValue({
@@ -289,7 +289,7 @@ describe('SwipeService', () => {
       if (where.id === 'u2') return { id: 'u2', name: 'Bob', image: null };
       return null;
     });
-    prisma.plan.findUnique.mockResolvedValue({ swipes_per_day: 20 });
+    prisma.plan.findUnique.mockResolvedValue({ swipes_per_day: 10 });
     prisma.userBlock.findFirst.mockResolvedValue(null);
     prisma.swipe.findUnique.mockResolvedValue({ direction: SwipeDirection.RIGHT });
     prisma.swipe.upsert.mockResolvedValue({ id: 'swipe-1', direction: SwipeDirection.LEFT });

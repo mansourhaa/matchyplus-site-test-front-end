@@ -37,14 +37,16 @@ describe('api response interceptor', () => {
     vi.clearAllMocks();
   });
 
-  it('rotates both cookies via a bodyless refresh call, then retries the original request', async () => {
+  it('rotates both cookies via an empty-object refresh call, then retries the original request', async () => {
     // The raw axios.post(...) refresh call bypasses `api`'s interceptors by design (see
     // api.ts) — it goes through the global default axios instance instead. Neither token
     // is in the request or the response: both cookies are rotated by the API's own
-    // Set-Cookie header, invisible to this code.
+    // Set-Cookie header, invisible to this code. Body is `{}` (not undefined) so Fastify
+    // accepts application/json without FST_ERR_CTP_EMPTY_JSON_BODY.
     axios.defaults.adapter = async (config) => {
       expect(config.url).toContain('/auth/refresh');
-      expect(config.data).toBeUndefined();
+      const body = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+      expect(body).toEqual({});
       expect(config.withCredentials).toBe(true);
       return { data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config };
     };
@@ -100,5 +102,29 @@ describe('api response interceptor', () => {
     // lib/auth-events.ts), or the UI would keep rendering as authenticated.
     expect(clearAuthSession).toHaveBeenCalled();
     expect(notifyAuthFailure).toHaveBeenCalled();
+  });
+
+  it('does not attempt refresh when authcheck fails with no access token at all', async () => {
+    let refreshCalls = 0;
+    axios.defaults.adapter = async () => {
+      refreshCalls += 1;
+      return {
+        data: { ok: true },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as never,
+      };
+    };
+
+    api.defaults.adapter = async (config) => {
+      const error = fakeAxiosError(config as never);
+      error.response!.data = { status: 401, message: 'entity-not-found' };
+      throw error;
+    };
+
+    await expect(api.get('/auth/authcheck')).rejects.toBeTruthy();
+    expect(refreshCalls).toBe(0);
+    expect(clearAuthSession).not.toHaveBeenCalled();
   });
 });

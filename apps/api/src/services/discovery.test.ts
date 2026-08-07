@@ -1,0 +1,211 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import { DiscoveryService, parseServiceTypes } from './discovery.js';
+
+function baseUser(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'me',
+    name: 'Me',
+    image: null,
+    bio: null,
+    job: 'Dev',
+    category: null,
+    city: 'Tunis',
+    interests: ['Mobile'],
+    goals: [],
+    looking_for: [],
+    activity_sector: null,
+    service_type: null,
+    profile_type: 'INDIVIDUAL',
+    gps_latitude: 36.8,
+    gps_longitude: 10.18,
+    rating: 4,
+    status: 'ACTIVE',
+    location: {
+      latitude: 36.8,
+      longitude: 10.18,
+      location_enabled: true,
+      city: 'Tunis',
+      country: 'TN',
+    },
+    ...overrides,
+  };
+}
+
+function candidate(
+  id: string,
+  overrides: Record<string, unknown> = {},
+): ReturnType<typeof baseUser> {
+  return baseUser({
+    id,
+    name: `User ${id}`,
+    ...overrides,
+  });
+}
+
+function createMockPrisma(candidates: ReturnType<typeof baseUser>[]) {
+  return {
+    user: {
+      findUnique: vi
+        .fn()
+        .mockImplementation(({ where, select }: { where: { id: string }; select?: unknown }) => {
+          if (where.id === 'me') {
+            if (select && typeof select === 'object' && 'plan' in (select as object)) {
+              return Promise.resolve({ plan: 'FREE' });
+            }
+            return Promise.resolve(baseUser());
+          }
+          return Promise.resolve(null);
+        }),
+      findMany: vi.fn().mockResolvedValue(candidates),
+    },
+    plan: {
+      findUnique: vi.fn().mockResolvedValue({ profiles_per_category: 3 }),
+    },
+    userBlock: { findMany: vi.fn().mockResolvedValue([]) },
+    match: { findMany: vi.fn().mockResolvedValue([]) },
+    swipeLog: {
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    swipe: { findMany: vi.fn().mockResolvedValue([]) },
+  };
+}
+
+describe('parseServiceTypes', () => {
+  it('splits and normalizes a comma-separated list', () => {
+    expect(parseServiceTypes(' Aide ménagère , Restauration / Service ')).toEqual([
+      'aide ménagère',
+      'restauration / service',
+    ]);
+  });
+
+  it('returns empty for blank input', () => {
+    expect(parseServiceTypes(undefined)).toEqual([]);
+    expect(parseServiceTypes('  ')).toEqual([]);
+  });
+});
+
+describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
+  it('filters by q against name and service type', async () => {
+    const prisma = createMockPrisma([
+      candidate('a', { name: 'Fatma', service_type: 'Aide ménagère' }),
+      candidate('b', { name: 'Sami', service_type: 'Informatique / Tech' }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      q: 'sami',
+      context: 'swipe',
+    });
+
+    expect(result.profiles.map((p) => p.id)).toEqual(['b']);
+    expect(result.has_more).toBe(false);
+  });
+
+  it('filters by serviceTypes and maxDistanceKm', async () => {
+    const prisma = createMockPrisma([
+      candidate('near', {
+        service_type: 'Restauration / Service',
+        location: {
+          latitude: 36.805,
+          longitude: 10.185,
+          location_enabled: true,
+          city: 'Tunis',
+          country: 'TN',
+        },
+      }),
+      candidate('far', {
+        service_type: 'Restauration / Service',
+        // ~100km south
+        location: {
+          latitude: 35.8,
+          longitude: 10.18,
+          location_enabled: true,
+          city: 'Sousse',
+          country: 'TN',
+        },
+      }),
+      candidate('other', {
+        service_type: 'Jardinage / Bricolage',
+        location: {
+          latitude: 36.805,
+          longitude: 10.185,
+          location_enabled: true,
+          city: 'Tunis',
+          country: 'TN',
+        },
+      }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      maxDistanceKm: 20,
+      serviceTypes: 'Restauration / Service',
+      context: 'swipe',
+    });
+
+    expect(result.profiles.map((p) => p.id)).toEqual(['near']);
+  });
+
+  it('paginates with offset and reports has_more', async () => {
+    const prisma = createMockPrisma([
+      candidate('1', { rating: 5, name: 'A' }),
+      candidate('2', { rating: 4, name: 'B' }),
+      candidate('3', { rating: 3, name: 'C' }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const page1 = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      sort: 'rating',
+      limit: 2,
+      offset: 0,
+      context: 'swipe',
+    });
+    expect(page1.profiles.map((p) => p.id)).toEqual(['1', '2']);
+    expect(page1.has_more).toBe(true);
+    expect(page1.offset).toBe(0);
+    expect(page1.limit).toBe(2);
+
+    const page2 = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      sort: 'rating',
+      limit: 2,
+      offset: 2,
+      context: 'swipe',
+    });
+    expect(page2.profiles.map((p) => p.id)).toEqual(['3']);
+    expect(page2.has_more).toBe(false);
+  });
+
+  it('locks search profiles using absolute index across pages', async () => {
+    const prisma = createMockPrisma([
+      candidate('1'),
+      candidate('2'),
+      candidate('3'),
+      candidate('4'),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const page2 = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      sort: 'rating',
+      limit: 2,
+      offset: 2,
+      context: 'search',
+    });
+
+    // visibleLimit=3 → absolute indices 2 unlocked, 3 locked
+    expect(page2.profiles[0]?.is_locked).toBe(false);
+    expect(page2.profiles[1]?.is_locked).toBe(true);
+    expect(page2.profiles[1]?.id).toBe('locked-3');
+  });
+});

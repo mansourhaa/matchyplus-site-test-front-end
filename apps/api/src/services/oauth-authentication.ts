@@ -17,8 +17,8 @@ export class OAuthAuthenticationService {
   }
 
   // Finds the user for this provider identity, links the provider to an existing
-  // verified-email account, or creates a new user — but never issues tokens here.
-  // Tokens are only ever minted at exchange-code consumption time (see below).
+  // account only when the provider asserts emailVerified, or creates a new user —
+  // but never issues tokens here. Tokens are only minted at exchange-code consumption.
   async findOrCreateOAuthUser(provider: OAuthProviderName, profile: OAuthProfilePayload) {
     const providerIdWhere =
       provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id };
@@ -33,10 +33,9 @@ export class OAuthAuthenticationService {
     if (email) {
       const existingByEmail = await this.prisma.user.findUnique({ where: { email } });
       if (existingByEmail) {
-        // Email is OAuth-only in this app (see doc/features/authentication.md) — every
-        // provider that returns this address has already verified it on its own side, so an
-        // unverified flag on our side (e.g. a stale value from before this account linked a
-        // provider) is never a reason to refuse the merge.
+        if (!profile.emailVerified) {
+          throw new Error('oauth_email_unverified');
+        }
         return this.prisma.user.update({
           where: { id: existingByEmail.id },
           data: {
@@ -53,6 +52,49 @@ export class OAuthAuthenticationService {
         email_verified: profile.emailVerified,
         name: profile.name ?? profile.email ?? `${provider}-${profile.id}`,
         auth_provider: provider,
+        ...(provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id }),
+      },
+    });
+  }
+
+  /**
+   * Attach a provider to an already-authenticated user (logged-in link flow).
+   */
+  async linkOAuthProvider(
+    userId: string,
+    provider: OAuthProviderName,
+    profile: OAuthProfilePayload,
+  ) {
+    if (!profile.emailVerified) {
+      throw new Error('oauth_email_unverified');
+    }
+
+    const providerIdWhere =
+      provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id };
+
+    const existingByProvider = await this.prisma.user.findUnique({ where: providerIdWhere });
+    if (existingByProvider && existingByProvider.id !== userId) {
+      throw new Error('oauth_link_conflict');
+    }
+    if (existingByProvider?.id === userId) {
+      return existingByProvider;
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new Error('user_not_found');
+    }
+
+    const profileEmail = profile.email ? profile.email.toLowerCase() : null;
+    if (user.email && profileEmail && user.email.toLowerCase() !== profileEmail) {
+      throw new Error('oauth_link_email_mismatch');
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        email_verified: true,
+        ...(profileEmail && !user.email ? { email: profileEmail } : {}),
         ...(provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id }),
       },
     });

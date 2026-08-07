@@ -1,60 +1,66 @@
+import { Preferences } from '@capacitor/preferences';
+
 import { AUTH_COOKIE } from './auth';
 import { isNativeMobileClient } from './native';
 
 const MOBILE_ACCESS_KEY = 'matchy_mobile_access';
 const MOBILE_REFRESH_KEY = 'matchy_mobile_refresh';
 
+type MemoryTokens = {
+  access: string | null;
+  refresh: string | null;
+};
+
+const memory: MemoryTokens = { access: null, refresh: null };
+let hydrated = false;
+
 /**
- * Native (Capacitor) session tokens. Browser web keeps using HttpOnly cookies only —
- * see doc/features/authentication.md § Mobile (Capacitor).
+ * Native (Capacitor) session tokens live in Capacitor Preferences (not localStorage).
+ * Browser web keeps using HttpOnly cookies only — see doc/features/authentication.md.
  *
+ * Sync getters read an in-memory cache hydrated at bootstrap so Axios interceptors stay sync.
  * A non-HttpOnly `access_token` cookie is also mirrored onto the Next.js origin so
- * `proxy.ts` can still gate routes when the API cookie Domain does not cover the
- * WebView host (local emulator / capacitor://).
+ * `proxy.ts` can still gate routes when the API cookie Domain does not cover the WebView host.
  */
 export const mobileTokenStorage = {
   getAccess(): string | null {
-    if (!isNativeMobileClient() || typeof localStorage === 'undefined') return null;
-    try {
-      return localStorage.getItem(MOBILE_ACCESS_KEY);
-    } catch {
-      return null;
-    }
+    if (!isNativeMobileClient()) return null;
+    return memory.access;
   },
 
   getRefresh(): string | null {
-    if (!isNativeMobileClient() || typeof localStorage === 'undefined') return null;
-    try {
-      return localStorage.getItem(MOBILE_REFRESH_KEY);
-    } catch {
-      return null;
-    }
+    if (!isNativeMobileClient()) return null;
+    return memory.refresh;
   },
 
   set(tokens: { accessToken?: string | null; refreshToken?: string | null }) {
-    if (!isNativeMobileClient() || typeof localStorage === 'undefined') return;
-    try {
-      if (tokens.accessToken) {
-        localStorage.setItem(MOBILE_ACCESS_KEY, tokens.accessToken);
-        mirrorAccessCookieForProxy(tokens.accessToken);
-      }
-      if (tokens.refreshToken) {
-        localStorage.setItem(MOBILE_REFRESH_KEY, tokens.refreshToken);
-      }
-    } catch {
-      // ignore quota / private mode
+    if (!isNativeMobileClient()) return;
+    if (tokens.accessToken) {
+      memory.access = tokens.accessToken;
+      mirrorAccessCookieForProxy(tokens.accessToken);
+      void Preferences.set({ key: MOBILE_ACCESS_KEY, value: tokens.accessToken }).catch(() => {});
+    }
+    if (tokens.refreshToken) {
+      memory.refresh = tokens.refreshToken;
+      void Preferences.set({ key: MOBILE_REFRESH_KEY, value: tokens.refreshToken }).catch(() => {});
     }
   },
 
   clear() {
-    if (typeof localStorage === 'undefined') return;
+    memory.access = null;
+    memory.refresh = null;
+    clearMirroredAccessCookie();
+    if (!isNativeMobileClient()) return;
+    void Preferences.remove({ key: MOBILE_ACCESS_KEY }).catch(() => {});
+    void Preferences.remove({ key: MOBILE_REFRESH_KEY }).catch(() => {});
     try {
-      localStorage.removeItem(MOBILE_ACCESS_KEY);
-      localStorage.removeItem(MOBILE_REFRESH_KEY);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(MOBILE_ACCESS_KEY);
+        localStorage.removeItem(MOBILE_REFRESH_KEY);
+      }
     } catch {
       // ignore
     }
-    clearMirroredAccessCookie();
   },
 };
 
@@ -84,12 +90,10 @@ function mirrorAccessCookieForProxy(accessToken: string) {
   if (typeof document === 'undefined') return;
   const maxAge = accessTokenCookieMaxAge(accessToken);
   if (maxAge == null) {
-    // Expired / unreadable — drop any stale mirrored cookie so proxy.ts fails closed.
     clearMirroredAccessCookie();
     return;
   }
-  // Intentionally not HttpOnly — Cap already holds the JWT in localStorage for Bearer.
-  // This only exists so Next.js proxy.ts can see a cookie on the app origin.
+  // Intentionally not HttpOnly — Cap holds the JWT in Preferences for Bearer.
   document.cookie = `${AUTH_COOKIE}=${encodeURIComponent(accessToken)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
 }
 
@@ -98,10 +102,66 @@ function clearMirroredAccessCookie() {
   document.cookie = `${AUTH_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
+async function migrateFromLocalStorage(): Promise<{
+  access: string | null;
+  refresh: string | null;
+}> {
+  if (typeof localStorage === 'undefined') {
+    return { access: null, refresh: null };
+  }
+  let access: string | null = null;
+  let refresh: string | null = null;
+  try {
+    access = localStorage.getItem(MOBILE_ACCESS_KEY);
+    refresh = localStorage.getItem(MOBILE_REFRESH_KEY);
+    if (access) localStorage.removeItem(MOBILE_ACCESS_KEY);
+    if (refresh) localStorage.removeItem(MOBILE_REFRESH_KEY);
+  } catch {
+    // ignore
+  }
+  return { access, refresh };
+}
+
 /**
- * Re-apply the mirrored app-origin cookie from localStorage on Cap cold start.
- * WebView session cookies may be gone while Bearer JWTs in localStorage survive.
+ * Load Preferences (and one-time localStorage migration) into the sync memory cache.
+ * Call once before authcheck / Axios traffic on Cap.
  */
+export async function hydrateMobileTokenStorage(): Promise<void> {
+  if (!isNativeMobileClient() || hydrated) return;
+  hydrated = true;
+
+  try {
+    const [accessPref, refreshPref] = await Promise.all([
+      Preferences.get({ key: MOBILE_ACCESS_KEY }),
+      Preferences.get({ key: MOBILE_REFRESH_KEY }),
+    ]);
+
+    let access = accessPref.value;
+    let refresh = refreshPref.value;
+
+    if (!access && !refresh) {
+      const migrated = await migrateFromLocalStorage();
+      access = migrated.access;
+      refresh = migrated.refresh;
+      if (access) {
+        await Preferences.set({ key: MOBILE_ACCESS_KEY, value: access }).catch(() => {});
+      }
+      if (refresh) {
+        await Preferences.set({ key: MOBILE_REFRESH_KEY, value: refresh }).catch(() => {});
+      }
+    }
+
+    memory.access = access;
+    memory.refresh = refresh;
+  } catch {
+    // Preferences unavailable in some test environments — fall back to migration only.
+    const migrated = await migrateFromLocalStorage();
+    memory.access = migrated.access;
+    memory.refresh = migrated.refresh;
+  }
+}
+
+/** Re-apply the mirrored app-origin cookie from the hydrated Cap token cache. */
 export function syncMirroredAccessCookieFromStorage() {
   if (!isNativeMobileClient()) return;
   const access = mobileTokenStorage.getAccess();
@@ -122,4 +182,11 @@ export function captureMobileTokensFromBody(data: unknown) {
       refreshToken: body.refreshToken,
     });
   }
+}
+
+/** Test helper — reset hydrate latch between tests. */
+export function resetMobileTokenHydrationForTests() {
+  hydrated = false;
+  memory.access = null;
+  memory.refresh = null;
 }

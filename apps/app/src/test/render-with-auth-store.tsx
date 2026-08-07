@@ -1,5 +1,6 @@
 import authReducer from '@/features/auth/store/auth-slice';
 import type { AuthState } from '@/features/auth/types';
+import { I18nProvider } from '@/features/i18n/i18n-provider';
 import { configureStore } from '@reduxjs/toolkit';
 import { render } from '@testing-library/react';
 import type { ReactElement } from 'react';
@@ -27,5 +28,12 @@ export function createAuthTestStore(authState: Partial<AuthState> = {}) {
 
 export function renderWithAuthStore(ui: ReactElement, authState: Partial<AuthState> = {}) {
   const store = createAuthTestStore(authState);
-  return { store, ...render(<Provider store={store}>{ui}</Provider>) };
+  return {
+    store,
+    ...render(
+      <I18nProvider>
+        <Provider store={store}>{ui}</Provider>
+      </I18nProvider>,
+    ),
+  };
 }

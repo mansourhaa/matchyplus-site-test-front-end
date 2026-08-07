@@ -1,4 +1,3 @@
-import jwt from 'jsonwebtoken';
 import { randomUUID } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -8,10 +7,7 @@ import { Prisma } from '@saas-boilerplate/types';
 
 import { PHOTOS_DIR, VIDEOS_DIR } from '../utils/media-storage.js';
 import { buildTestApp } from './build-test-app.js';
-
-function signAccessToken(userId: string) {
-  return jwt.sign({ id: userId, email: 'user@example.com' }, 'test-access-token-secret');
-}
+import { signTestAccessToken } from './sign-test-access-token.js';
 
 // verifyToken (apps/api/src/plugins/authorization.ts) reloads the caller's own row via
 // findUniqueOrThrow on every request to re-check ACTIVE status — every test needs this
@@ -21,7 +17,7 @@ function findUniqueOrThrowForAnyCaller() {
   return vi
     .fn()
     .mockImplementation(({ where }: { where: { id: string } }) =>
-      Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER' }),
+      Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER', token_version: 0 }),
     );
 }
 
@@ -81,7 +77,7 @@ describe('GET /api/v1/profiles/:id', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/profiles/user-2',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode, response.body).toBe(200);
@@ -109,7 +105,7 @@ describe('GET /api/v1/profiles/:id', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/profiles/user-2',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(403);
@@ -131,7 +127,7 @@ describe('GET /api/v1/profiles/:id', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/profiles/user-2',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(404);
@@ -168,7 +164,7 @@ describe('POST /api/v1/profiles/:id/view', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/profiles/user-1/view',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -185,11 +181,12 @@ describe('POST /api/v1/profiles/:id/view', () => {
               ? {
                   id: 'user-1',
                   status: 'ACTIVE',
+                  token_version: 0,
                   role: 'USER',
                   name: 'Jane Doe',
                   image: '/uploads/photos/jane.jpg',
                 }
-              : { id: where.id, status: 'ACTIVE', role: 'USER' },
+              : { id: where.id, status: 'ACTIVE', role: 'USER', token_version: 0 },
           ),
         ),
         findUnique: vi
@@ -226,7 +223,7 @@ describe('POST /api/v1/profiles/:id/view', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/profiles/user-2/view',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode, response.body).toBe(200);
@@ -250,7 +247,7 @@ describe('POST /api/v1/profiles/:id/view', () => {
             Promise.resolve(
               where.id === 'user-1'
                 ? { id: 'user-1', status: 'ACTIVE', role: 'USER', name: 'Jane Doe', image: null }
-                : { id: where.id, status: 'ACTIVE', role: 'USER' },
+                : { id: where.id, status: 'ACTIVE', role: 'USER', token_version: 0 },
             ),
           ),
         findUnique: vi
@@ -287,7 +284,7 @@ describe('POST /api/v1/profiles/:id/view', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/profiles/user-2/view',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode, response.body).toBe(200);
@@ -308,7 +305,7 @@ describe('POST /api/v1/profiles/:id/view', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/profiles/user-2/view',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(403);
@@ -333,7 +330,7 @@ describe('GET /api/v1/profiles/media/photos/:filename', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/profiles/media/photos/..%2F..%2Fpackage.json',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(400);
@@ -373,7 +370,7 @@ describe('GET /api/v1/profiles/media/photos/:filename', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/api/v1/profiles/media/photos/${filename}`,
-        headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+        headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       });
 
       expect(response.statusCode, response.body).toBe(200);
@@ -412,7 +409,7 @@ describe('GET /api/v1/profiles/media/photos/:filename', () => {
     const response = await app.inject({
       method: 'GET',
       url: `/api/v1/profiles/media/photos/${filename}`,
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode, response.body).toBe(404);
@@ -434,7 +431,7 @@ describe('GET /api/v1/profiles/media/photos/:filename', () => {
     const response = await app.inject({
       method: 'GET',
       url: `/api/v1/profiles/media/photos/${filename}`,
-      headers: { authorization: `Bearer ${signAccessToken('viewer-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('viewer-1')}` },
     });
 
     expect(response.statusCode).toBe(403);
@@ -470,7 +467,7 @@ describe('GET /api/v1/profiles/media/videos/:filename', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/api/v1/profiles/media/videos/${filename}`,
-        headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+        headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -496,7 +493,7 @@ describe('GET /api/v1/profiles/media/videos/:filename', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/profiles/media/videos/some-video.mp4',
-      headers: { authorization: `Bearer ${signAccessToken('viewer-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('viewer-1')}` },
     });
 
     expect(response.statusCode).toBe(403);
@@ -525,7 +522,7 @@ describe('GET /api/v1/profiles/media/videos/:filename', () => {
         method: 'GET',
         url: `/api/v1/profiles/media/videos/${filename}`,
         headers: {
-          cookie: `access_token=${signAccessToken('viewer-1')}`,
+          cookie: `access_token=${signTestAccessToken('viewer-1')}`,
           range: 'bytes=2-5',
         },
       });
@@ -553,7 +550,7 @@ describe('GET /api/v1/profiles/media/videos/:filename', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/profiles/media/videos/unknown.mp4',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(404);
@@ -590,7 +587,7 @@ describe('POST /api/v1/profiles/:id/rating', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/profiles/user-2/rating',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: { rating: 6 },
     });
 
@@ -613,7 +610,7 @@ describe('POST /api/v1/profiles/:id/rating', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/profiles/user-2/rating',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: { rating: 5 },
     });
 
@@ -639,7 +636,7 @@ describe('POST /api/v1/profiles/:id/rating', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/profiles/user-2/rating',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: { rating: 5 },
     });
 
@@ -669,7 +666,7 @@ describe('POST /api/v1/profiles/:id/rating', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/profiles/user-2/rating',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: { rating: 5 },
     });
 
@@ -701,7 +698,7 @@ describe('POST /api/v1/profiles/:id/rating', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/profiles/user-2/rating',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: { rating: 4 },
     });
 

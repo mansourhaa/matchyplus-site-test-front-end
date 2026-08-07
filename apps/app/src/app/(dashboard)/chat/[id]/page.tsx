@@ -1,8 +1,8 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
-import { ChatThread } from '@/components/messaging/chat-thread';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { ChatThread } from '@/features/messaging/components/chat-thread';
 import { useParams } from 'next/navigation';
 
 export default function ChatPage() {

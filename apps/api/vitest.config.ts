@@ -30,7 +30,7 @@ export default defineConfig({
       SERVER_HOST: 'localhost',
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test?schema=public',
       ACCESS_TOKEN_SECRET: 'test-access-token-secret',
-      ACCESS_TOKEN_TTL: '3600',
+      ACCESS_TOKEN_TTL: '1h',
       VERIFICATION_CODE_SECRET: 'test-verification-code-secret',
       COOKIE_SECRET: 'test-cookie-secret',
       TWILIO_ACCOUNT_SID: 'test-twilio-account-sid',

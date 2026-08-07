@@ -3,8 +3,7 @@ import _ from 'lodash';
 
 import { config } from '../../../config.js';
 import { RATE_LIMIT_STRICT } from '../../../constants.js';
-import { fetchGoogleProfile } from '../../../lib/google-oauth.js';
-import { fetchLinkedInProfile } from '../../../lib/linkedin-oauth.js';
+import { handleProviderOAuthCallback } from '../../../lib/oauth-callback-handler.js';
 import {
   adminLoginSchema,
   adminLogoutSchema,
@@ -17,6 +16,7 @@ import {
   oauthExchangeSchema,
   refreshSchema,
   registerPhoneSchema,
+  requestAccountDeleteOtpSchema,
   requestPasswordResetSchema,
   requestPhoneLinkSchema,
   sendOtpSchema,
@@ -54,6 +54,11 @@ import {
   memberRefreshCookieOptions,
 } from '../../../utils/member-session.js';
 import { isAuthorizedMobileClient } from '../../../utils/mobile-client.js';
+import {
+  OAUTH_LINK_COOKIE,
+  createOAuthLinkIntentValue,
+  oauthLinkCookieOptions,
+} from '../../../utils/oauth-link-intent.js';
 
 const ERROR_STATUS: Record<
   string,
@@ -83,7 +88,12 @@ const ERROR_STATUS: Record<
   invalid_exchange_code: 'unauthorized',
   oauth_profile_fetch_failed: 'badGateway',
   oauth_provider_not_configured: 'serviceUnavailable',
+  oauth_email_unverified: 'forbidden',
+  oauth_link_conflict: 'conflict',
+  oauth_link_email_mismatch: 'badRequest',
   account_deletion_not_confirmed: 'badRequest',
+  account_deletion_otp_required: 'badRequest',
+  account_deletion_use_password: 'badRequest',
   sms_service_not_configured: 'serviceUnavailable',
   sms_delivery_failed: 'badGateway',
 };
@@ -141,11 +151,19 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   ) {
     reply.setCookie(MEMBER_ACCESS_COOKIE, tokens.accessToken, memberAccessCookieOptions());
     reply.setCookie(MEMBER_REFRESH_COOKIE, tokens.refreshToken, memberRefreshCookieOptions());
+    // Never leave an admin JWT sticky when a member session is established (AUTH-01).
+    reply.clearCookie(ADMIN_SESSION_COOKIE, clearAdminSessionCookieOptions());
   }
 
   function clearMemberSessionCookies(reply: import('fastify').FastifyReply) {
     reply.clearCookie(MEMBER_ACCESS_COOKIE, clearMemberAccessCookieOptions());
     reply.clearCookie(MEMBER_REFRESH_COOKIE, clearMemberRefreshCookieOptions());
+  }
+
+  function setAdminSessionCookie(reply: import('fastify').FastifyReply, accessToken: string) {
+    reply.setCookie(ADMIN_SESSION_COOKIE, accessToken, adminSessionCookieOptions());
+    // Admin login must not leave a member session usable on shared cookie domain.
+    clearMemberSessionCookies(reply);
   }
 
   function memberSessionResponse(
@@ -183,8 +201,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   }
 
   type RefreshTokenSource =
-    | { token: string; source: 'cookie' | 'body' }
-    | { token?: undefined; source: 'none' };
+    { token: string; source: 'cookie' | 'body' } | { token?: undefined; source: 'none' };
 
   function readRefreshToken(request: FastifyRequest): RefreshTokenSource {
     const body = request.body as { refreshToken?: string } | null;
@@ -233,7 +250,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
         // The panel never receives the token in the body: it goes out as an HttpOnly cookie
         // the browser replays on its own, so no script running in the panel can read it.
-        reply.setCookie(ADMIN_SESSION_COOKIE, data.accessToken, adminSessionCookieOptions());
+        setAdminSessionCookie(reply, data.accessToken);
 
         return reply.code(200).send({
           user: _.omit(data.user, ['password']),
@@ -351,7 +368,13 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const presented = readRefreshToken(request);
         if (!presented.token) {
-          throw new Error('invalid_refresh_token');
+          // Logged-out browsers hit this after authcheck 401 — return 401 without
+          // throwing so the global error handler does not log a full stack as ERROR.
+          return reply.code(401).send({
+            status: 401,
+            code: 'invalid_refresh_token',
+            message: translate(request, 'invalid_refresh_token'),
+          });
         }
 
         let data: { accessToken: string; refreshToken: string };
@@ -537,46 +560,66 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   );
 
+  fastify.post(
+    '/account/delete-otp',
+    {
+      schema: requestAccountDeleteOtpSchema,
+      preHandler: [fastify.verifyToken],
+      config: { rateLimit: RATE_LIMIT_STRICT },
+    },
+    async (request, reply) => {
+      try {
+        const data = await phoneAuthService.requestAccountDeleteOtp(request.loggedUser.id);
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
   // The redirect back from Google/LinkedIn is a top-level browser navigation, not an
   // XHR the SPA can read a JSON error from — so both outcomes redirect to the SPA's
   // own callback route (implemented separately from this API) with either `code` or
   // `error` in the query string, instead of returning an HTTP error response here.
-  async function handleOAuthCallback(
+  // Provider redirect_uri is GOOGLE_REDIRECT_URI / LINKEDIN_REDIRECT_URI (plugins/oauth.ts).
+  async function startOAuthLink(
     request: FastifyRequest,
     reply: import('fastify').FastifyReply,
     provider: 'google' | 'linkedin',
   ) {
     const oauth2 = provider === 'google' ? fastify.oauth2Google : fastify.oauth2LinkedIn;
-
-    try {
-      if (!oauth2) {
-        throw new Error('oauth_provider_not_configured');
-      }
-
-      const { token } = await oauth2.getAccessTokenFromAuthorizationCodeFlow(request);
-      const profile =
-        provider === 'google'
-          ? await fetchGoogleProfile(token.access_token)
-          : await fetchLinkedInProfile(token.access_token);
-
-      const user = await oauthAuthService.findOrCreateOAuthUser(provider, profile);
-      const code = await oauthAuthService.createExchangeCode(user.id);
-
-      return reply.redirect(`${config.frontendUrl}/oauth-callback?code=${code}`);
-    } catch (err) {
-      const message = (err as Error).message || 'oauth_profile_fetch_failed';
-      return reply.redirect(
-        `${config.frontendUrl}/oauth-callback?error=${encodeURIComponent(message)}`,
-      );
+    if (!oauth2) {
+      throw mapError(new Error('oauth_provider_not_configured'), request);
     }
+
+    reply.setCookie(
+      OAUTH_LINK_COOKIE,
+      createOAuthLinkIntentValue({ userId: request.loggedUser.id, provider }),
+      oauthLinkCookieOptions(),
+    );
+
+    const uri = await oauth2.generateAuthorizationUri(request, reply);
+    return reply.redirect(uri);
   }
 
+  fastify.get(
+    '/oauth/google/link',
+    { preHandler: [fastify.verifyToken], config: { rateLimit: RATE_LIMIT_STRICT } },
+    async (request, reply) => startOAuthLink(request, reply, 'google'),
+  );
+
+  fastify.get(
+    '/oauth/linkedin/link',
+    { preHandler: [fastify.verifyToken], config: { rateLimit: RATE_LIMIT_STRICT } },
+    async (request, reply) => startOAuthLink(request, reply, 'linkedin'),
+  );
+
   fastify.get('/oauth/google/callback', async (request, reply) => {
-    return handleOAuthCallback(request, reply, 'google');
+    return handleProviderOAuthCallback(fastify, request, reply, 'google', oauthAuthService);
   });
 
   fastify.get('/oauth/linkedin/callback', async (request, reply) => {
-    return handleOAuthCallback(request, reply, 'linkedin');
+    return handleProviderOAuthCallback(fastify, request, reply, 'linkedin', oauthAuthService);
   });
 
   fastify.post<{ Body: OAuthExchangePayload }>(

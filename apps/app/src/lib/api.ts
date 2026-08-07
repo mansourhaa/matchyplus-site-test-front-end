@@ -29,11 +29,12 @@ async function refreshSession(): Promise<void> {
   const refreshToken = native ? mobileTokenStorage.getRefresh() : null;
   const mobileHeaders = native ? await getMobileAuthHeaders() : {};
 
-  // Web: no body — refresh travels as HttpOnly cookie (utils/member-session.ts).
-  // Cap: body refreshToken + mobile client label/secret so the API returns rotated JWTs.
+  // Web: cookie-only refresh — still send `{}` so Fastify does not reject an empty
+  // application/json body (FST_ERR_CTP_EMPTY_JSON_BODY → 400). Cap: body refreshToken
+  // + mobile client label/secret so the API returns rotated JWTs.
   const response = await axios.post(
     `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-    native && refreshToken ? { refreshToken } : undefined,
+    native && refreshToken ? { refreshToken } : {},
     {
       withCredentials: true,
       headers: {
@@ -76,6 +77,21 @@ api.interceptors.response.use(
 
     if (!config || !isUnauthorized || isRefreshCall || config._retried) {
       return Promise.reject(error);
+    }
+
+    // Bootstrap authcheck with no access cookie at all — refresh cannot help on web
+    // (and Cap with empty Preferences). Skip the follow-up /auth/refresh so the API
+    // log is not spammed with invalid_refresh_token while the user is simply logged out
+    // (e.g. on /login before Google OAuth).
+    const authMessage = String(
+      (error.response?.data as { message?: string } | undefined)?.message ?? '',
+    );
+    const isAuthCheck = config.url?.includes('/auth/authcheck');
+    const missingAccessToken = authMessage.includes('entity-not-found');
+    if (isAuthCheck && missingAccessToken) {
+      if (!isNativeMobileClient() || !mobileTokenStorage.getRefresh()) {
+        return Promise.reject(error);
+      }
     }
 
     config._retried = true;
