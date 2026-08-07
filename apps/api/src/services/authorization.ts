@@ -1,22 +1,35 @@
 import jwt from 'jsonwebtoken';
 
-import { Prisma, PrismaClient, UserStatus } from '@saas-boilerplate/types';
+import { PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
 import { AbstractServiceOptions } from '../types/services.js';
 
+export type AccessTokenAudience = 'member' | 'admin';
+
+type AccessTokenPayload = {
+  id: string;
+  email: string | null;
+  phone?: string | null;
+  tv?: number;
+  aud?: string | string[];
+};
+
 export class AuthorizationService {
   prisma: PrismaClient;
+
   constructor(options: AbstractServiceOptions) {
     this.prisma = options.prisma;
   }
 
-  async verifyAccessToken(token: string) {
-    let payload = null;
+  async verifyAccessToken(
+    token: string,
+    options: { audience: AccessTokenAudience } = { audience: 'member' },
+  ) {
+    let payload: AccessTokenPayload;
     try {
-      payload = jwt.verify(token, process.env['ACCESS_TOKEN_SECRET'] as string) as {
-        id: string;
-        email: string;
-      };
+      payload = jwt.verify(token, process.env['ACCESS_TOKEN_SECRET'] as string, {
+        audience: options.audience,
+      }) as AccessTokenPayload;
     } catch (err) {
       throw err;
     }
@@ -30,6 +43,12 @@ export class AuthorizationService {
       // is still ACTIVE — banning or deactivating an account cuts its live sessions too.
       if (user.status !== UserStatus.ACTIVE) {
         throw new Error('account is not active');
+      }
+
+      const tokenVersion = typeof payload.tv === 'number' ? payload.tv : 0;
+      const userVersion = user.token_version ?? 0;
+      if (tokenVersion !== userVersion) {
+        throw new Error('token_version_mismatch');
       }
 
       return user;

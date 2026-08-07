@@ -5,7 +5,15 @@ export interface AuthUser {
   name: string | null;
   auth_provider: string;
   email_verified: boolean;
+  phone_verified?: boolean;
+  google_linked?: boolean;
+  linkedin_linked?: boolean;
+  /** Face-match identity badge — not yet wired; kept for settings parity. */
+  verified?: boolean;
+  /** True when the account has a password (required for delete without OTP step-up). */
+  has_password?: boolean;
   onboarding_completed: boolean;
+  role?: string;
 }
 
 // Both session tokens live in HttpOnly cookies the browser attaches automatically —
@@ -85,6 +93,7 @@ export interface ConfirmPhoneLinkInput {
 export interface DeleteAccountInput {
   confirm: boolean;
   currentPassword?: string;
+  otpCode?: string;
   reason?: string;
 }
 

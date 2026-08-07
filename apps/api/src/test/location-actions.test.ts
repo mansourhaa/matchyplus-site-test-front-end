@@ -1,16 +1,14 @@
-import jwt from 'jsonwebtoken';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTestApp } from './build-test-app.js';
-
-function signAccessToken(userId: string) {
-  return jwt.sign({ id: userId, email: 'user@example.com' }, 'test-access-token-secret');
-}
+import { signTestAccessToken } from './sign-test-access-token.js';
 
 function activeUserPrisma() {
   return {
     user: {
-      findUniqueOrThrow: vi.fn().mockResolvedValue({ id: 'user-1', status: 'ACTIVE' }),
+      findUniqueOrThrow: vi
+        .fn()
+        .mockResolvedValue({ id: 'user-1', status: 'ACTIVE', token_version: 0 }),
     } as never,
   };
 }
@@ -57,7 +55,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/location/ip-geolocation',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -83,7 +81,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/location/ip-geolocation',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -116,7 +114,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
       method: 'GET',
       url: '/api/v1/location/ip-geolocation',
       headers: {
-        authorization: `Bearer ${signAccessToken('user-1')}`,
+        authorization: `Bearer ${signTestAccessToken('user-1')}`,
         'x-forwarded-for': '203.0.113.42',
       },
     });
@@ -132,7 +130,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/location/ip-geolocation?ip=8.8.8.8',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(400);
@@ -149,7 +147,7 @@ describe('GET /api/v1/location/ip-geolocation', () => {
       method: 'GET',
       url: '/api/v1/location/ip-geolocation',
       remoteAddress: 'not-a-valid-ip',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -201,7 +199,7 @@ describe('GET /api/v1/location/reverse-geocode', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/location/reverse-geocode?lat=abc&lon=10.1815',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(400);
@@ -214,7 +212,7 @@ describe('GET /api/v1/location/reverse-geocode', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/location/reverse-geocode?lat=91&lon=10',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(400);
@@ -237,7 +235,7 @@ describe('GET /api/v1/location/reverse-geocode', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/location/reverse-geocode?lat=36.8065&lon=10.1815',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -269,7 +267,7 @@ describe('GET /api/v1/location/reverse-geocode', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/location/reverse-geocode?lat=0&lon=0',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);

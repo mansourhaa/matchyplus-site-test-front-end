@@ -1,4 +1,4 @@
-import { PrismaClient } from '@saas-boilerplate/types';
+import { OtpPurpose, PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import {
@@ -9,15 +9,18 @@ import {
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import { isAdminRole } from '../utils/roles.js';
+import { OtpChallengeService } from './otp-challenge.js';
 import { TokenService } from './token.js';
 
 export class AuthenticationService {
   prisma: PrismaClient;
   tokenService: TokenService;
+  otpChallengeService: OtpChallengeService;
 
   constructor(options: AbstractServiceOptions) {
     this.prisma = options.prisma;
     this.tokenService = new TokenService({ prisma: options.prisma });
+    this.otpChallengeService = new OtpChallengeService({ prisma: options.prisma });
   }
   async login(payload: LoginPayload) {
     let user;
@@ -35,6 +38,7 @@ export class AuthenticationService {
           password: true,
           role: true,
           status: true,
+          token_version: true,
         },
       });
     } catch {
@@ -53,7 +57,7 @@ export class AuthenticationService {
 
     // Do not reveal whether the account is banned, inactive, or nonexistent — issueTokenPair's
     // ACTIVE-status gate throws the same invalid_credentials error as a bad password.
-    const tokens = await this.tokenService.issueTokenPair(user);
+    const tokens = await this.tokenService.issueTokenPair(user, { audience: 'member' });
 
     const { password: _password, ...safeUser } = user;
 
@@ -67,15 +71,56 @@ export class AuthenticationService {
   /**
    * Authenticates against the admin panel. Non-admin accounts are rejected with
    * the same error as invalid credentials so roles cannot be enumerated.
+   * Issues an admin-audience access JWT only (no refresh cookie for admin).
    */
   async adminLogin(payload: LoginPayload) {
-    const data = await this.login(payload);
+    let user;
 
-    if (!isAdminRole(data.user.role)) {
+    try {
+      user = await this.prisma.user.findUniqueOrThrow({
+        where: {
+          email: payload.email.toLowerCase(),
+        },
+        select: {
+          id: true,
+          email: true,
+          phone: true,
+          name: true,
+          password: true,
+          role: true,
+          status: true,
+          token_version: true,
+        },
+      });
+    } catch {
       throw new Error('invalid_credentials');
     }
 
-    return data;
+    if (!user.password) {
+      throw new Error('invalid_credentials');
+    }
+
+    const isPasswordValid = await verifyPassword(payload.password, user.password);
+
+    if (!isPasswordValid) {
+      throw new Error('invalid_credentials');
+    }
+
+    if (!isAdminRole(user.role)) {
+      throw new Error('invalid_credentials');
+    }
+
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new Error('invalid_credentials');
+    }
+
+    const accessToken = this.tokenService.signAccessToken(user, { audience: 'admin' });
+    const { password: _password, ...safeUser } = user;
+
+    return {
+      accessToken,
+      user: safeUser,
+    };
   }
 
   async authCheck(payload: AuthCheckPayload) {
@@ -91,13 +136,23 @@ export class AuthenticationService {
           name: true,
           auth_provider: true,
           email_verified: true,
+          phone_verified: true,
+          google_id: true,
+          linkedin_id: true,
           role: true,
           onboarding_completed_at: true,
+          password: true,
         },
       });
 
-      const { onboarding_completed_at, ...rest } = user;
-      return { ...rest, onboarding_completed: Boolean(onboarding_completed_at) };
+      const { onboarding_completed_at, google_id, linkedin_id, password, ...rest } = user;
+      return {
+        ...rest,
+        has_password: Boolean(password),
+        google_linked: Boolean(google_id),
+        linkedin_linked: Boolean(linkedin_id),
+        onboarding_completed: Boolean(onboarding_completed_at),
+      };
     } catch {
       throw new Error('user_not_found');
     }
@@ -131,7 +186,7 @@ export class AuthenticationService {
       },
     });
 
-    await this.tokenService.revokeAllRefreshTokens(user.id);
+    await this.tokenService.revokeAllSessions(user.id);
 
     return {
       message: 'password_changed',
@@ -164,6 +219,20 @@ export class AuthenticationService {
       if (!isValid) {
         throw new Error('invalid_current_password');
       }
+    } else {
+      // Passwordless (OAuth / phone-without-password): require a fresh ACCOUNT_DELETE OTP.
+      if (!user.phone) {
+        throw new Error('account_deletion_otp_required');
+      }
+      if (!payload.otpCode) {
+        throw new Error('account_deletion_otp_required');
+      }
+      await this.otpChallengeService.verifyChallenge(
+        user.phone,
+        OtpPurpose.ACCOUNT_DELETE,
+        payload.otpCode,
+        user.id,
+      );
     }
 
     await this.prisma.user.delete({

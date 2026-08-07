@@ -30,6 +30,7 @@ const user: AuthUser = {
   name: 'Jane Doe',
   auth_provider: 'phone',
   email_verified: false,
+  verified: false,
   onboarding_completed: false,
 };
 

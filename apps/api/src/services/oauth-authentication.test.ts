@@ -107,10 +107,29 @@ describe('OAuthAuthenticationService', () => {
       expect(result.linkedin_id).toBe('linkedin-sub-1');
     });
 
-    it('links the provider to an existing account even when its email was unverified', async () => {
-      // Every OAuth provider has already verified the email on its own side, so a stale
-      // unverified flag here is never a reason to refuse the merge (see
-      // doc/features/authentication.md).
+    it('refuses email merge when the provider email is unverified', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValueOnce(null); // by google_id
+      prisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-1',
+        email: 'unverified@example.com',
+        email_verified: false,
+      });
+
+      await expect(
+        service.findOrCreateOAuthUser('google', {
+          id: 'google-sub-1',
+          email: 'unverified@example.com',
+          emailVerified: false,
+          name: 'Jane Doe',
+        }),
+      ).rejects.toThrow('oauth_email_unverified');
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('links when provider email is verified even if our email_verified flag was stale', async () => {
       const { service, prisma } = createService();
       prisma.user.findUnique.mockResolvedValueOnce(null); // by google_id
       prisma.user.findUnique.mockResolvedValueOnce({
@@ -197,6 +216,9 @@ describe('OAuthAuthenticationService', () => {
         name: 'Jane Doe',
         auth_provider: 'google',
         email_verified: true,
+        phone_verified: false,
+        google_id: 'google-sub-1',
+        linkedin_id: null,
         onboarding_completed_at: null,
       });
 
@@ -237,6 +259,10 @@ describe('OAuthAuthenticationService', () => {
         name: 'Jane Doe',
         auth_provider: 'google',
         email_verified: true,
+        phone_verified: false,
+        google_linked: true,
+        linkedin_linked: false,
+        has_password: false,
         onboarding_completed: false,
       });
 

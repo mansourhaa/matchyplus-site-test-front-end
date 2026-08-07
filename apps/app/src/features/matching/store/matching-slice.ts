@@ -1,3 +1,10 @@
+import {
+  changePassword,
+  deleteAccount,
+  fetchCurrentUser,
+  logout,
+  resetAuthState,
+} from '@/features/auth/store/auth-slice';
 import { api, apiErrorKey } from '@/lib/api';
 import type { RootState } from '@/lib/store';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
@@ -32,6 +39,10 @@ const initialState: MatchingState = {
   celebrationProfile: null,
   showQuotaModal: false,
 };
+
+function resetForNewSession(state: MatchingState) {
+  Object.assign(state, initialState);
+}
 
 export const fetchSwipeFeed = createAsyncThunk(
   'matching/fetchSwipeFeed',
@@ -217,7 +228,12 @@ const matchingSlice = createSlice({
       })
       .addCase(unmatchUser.rejected, (state, action) => {
         state.swipeError = String(action.payload || action.error.message);
-      });
+      })
+      .addCase(logout.fulfilled, resetForNewSession)
+      .addCase(resetAuthState, resetForNewSession)
+      .addCase(changePassword.fulfilled, resetForNewSession)
+      .addCase(deleteAccount.fulfilled, resetForNewSession)
+      .addCase(fetchCurrentUser.rejected, resetForNewSession);
   },
 });
 

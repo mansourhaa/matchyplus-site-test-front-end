@@ -135,12 +135,13 @@ export const confirmPasswordReset = createAsyncThunk(
   },
 );
 
-// useBootstrapSession fires this on every page load, unconditionally, before it's known
-// whether the visitor even has a valid cookie yet — on /onboarding that request can still
-// be in flight when a fresh visitor finishes phone signup. Captures the generation at
-// dispatch time and carries it through both outcomes (rejectWithValue, since
-// action.error.message can't carry extra data) so a late response can be recognized as
-// stale and discarded instead of clobbering whatever session exists by the time it settles.
+// useBootstrapSession fires this once per document load on routes that need a session
+// probe (skipped on /login, /oauth-callback, /register unless Cap has Preferences
+// tokens). On /onboarding the request can still be in flight when a fresh visitor
+// finishes phone signup. Captures the generation at dispatch time and carries it
+// through both outcomes (rejectWithValue, since action.error.message can't carry
+// extra data) so a late response can be recognized as stale and discarded instead of
+// clobbering whatever session exists by the time it settles.
 export const fetchCurrentUser = createAsyncThunk<
   SessionResponse & { generationAtStart: number },
   void,
@@ -192,10 +193,18 @@ export const confirmPhoneLink = createAsyncThunk(
 
 export const deleteAccount = createAsyncThunk(
   'auth/deleteAccount',
-  async ({ confirm, currentPassword, reason }: DeleteAccountInput) => {
+  async ({ confirm, currentPassword, otpCode, reason }: DeleteAccountInput) => {
     const response = await api.delete<{ message: string }>('/auth/account', {
-      data: { confirm, currentPassword, reason },
+      data: { confirm, currentPassword, otpCode, reason },
     });
+    return response.data;
+  },
+);
+
+export const requestAccountDeleteOtp = createAsyncThunk(
+  'auth/requestAccountDeleteOtp',
+  async () => {
+    const response = await api.post<{ message: string; phone: string }>('/auth/account/delete-otp');
     return response.data;
   },
 );
@@ -251,6 +260,18 @@ const authSlice = createSlice({
     // redux-persist copy), so the UI would otherwise keep rendering as authenticated.
     resetAuthState: (state) => {
       clearSession(state);
+      state.error = null;
+    },
+    /**
+     * Public-route bootstrap: no `/auth/authcheck` call. Clears any stale
+     * redux-persist "authenticated" snapshot and marks the session checked so
+     * login/oauth UI is not blocked waiting on an API probe that cannot succeed
+     * usefully here (proxy already bounced usable cookies away from /login).
+     */
+    acknowledgeAnonymousBootstrap: (state) => {
+      clearSession(state);
+      state.sessionChecked = true;
+      state.loading = false;
       state.error = null;
     },
   },
@@ -357,7 +378,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { resetAuthState } = authSlice.actions;
+export const { resetAuthState, acknowledgeAnonymousBootstrap } = authSlice.actions;
 
 export const selectAuthState = (state: RootState) => state.auth;
 

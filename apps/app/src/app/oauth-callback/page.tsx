@@ -1,4 +1,4 @@
-import { OAuthCallback } from '@/components/auth/oauth-callback';
+import { OAuthCallback } from '@/features/auth/components/oauth-callback';
 import { Suspense } from 'react';
 
 export default function OAuthCallbackPage() {

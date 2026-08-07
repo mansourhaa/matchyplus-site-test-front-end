@@ -124,12 +124,14 @@ Optional OTP lifecycle tuning — all have sensible defaults if left unset:
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `API_BASE_URL` | No | This API's own absolute base URL, used to build the OAuth callback URL registered with each provider |
+| `API_BASE_URL` | No | This API's own absolute base URL (used to derive default OAuth callback URLs) |
 | `FRONTEND_URL` | No | SPA base URL; the OAuth callback redirects here with `?code=...` or `?error=...` |
 | `GOOGLE_CLIENT_ID` | No | Google OAuth client id |
 | `GOOGLE_CLIENT_SECRET` | No | Google OAuth client secret |
+| `GOOGLE_REDIRECT_URI` | No | Must match an Authorized redirect URI on the Google client and the v1 handler. Default: `${API_BASE_URL}/api/v1/auth/oauth/google/callback` |
 | `LINKEDIN_CLIENT_ID` | No | LinkedIn OAuth client id |
 | `LINKEDIN_CLIENT_SECRET` | No | LinkedIn OAuth client secret |
+| `LINKEDIN_REDIRECT_URI` | No | Same rules as Google; default `${API_BASE_URL}/api/v1/auth/oauth/linkedin/callback` |
 | `OAUTH_EXCHANGE_CODE_TTL_SECONDS` | No | How long a one-time exchange code stays valid (default `60`) |
 
 > Google and LinkedIn are independent and both optional: each is only registered when its own client id **and** secret are both set. A missing pair disables just that provider's `/api/v1/auth/oauth/<provider>` route — it does not stop the API from starting, and the other provider is unaffected.
