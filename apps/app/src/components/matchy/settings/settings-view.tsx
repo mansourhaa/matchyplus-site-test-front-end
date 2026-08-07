@@ -5,6 +5,12 @@ import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-di
 import { logout, selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
+import {
+  fetchOnboardingProfile,
+  selectOnboarding,
+} from '@/features/onboarding/store/onboarding-slice';
+import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
+import { landingPath } from '@/lib/landing';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell,
@@ -23,7 +29,7 @@ import {
   Video,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const LANG_FLAGS: Record<Locale, string> = { fr: '🇫🇷', en: '🇬🇧', ar: '🇹🇳' };
 const LANG_NAMES: Record<Locale, string> = { fr: 'Français', en: 'English', ar: 'العربية' };
@@ -32,6 +38,8 @@ type SettingsItem = {
   label: string;
   icon: typeof User;
   path?: string | null;
+  /** Absolute URL (e.g. landing legal docs) — leaves the app. */
+  externalUrl?: string;
   color: string;
   bg: string;
   onClick?: () => void;
@@ -44,8 +52,14 @@ export function SettingsView() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const auth = useAppSelector(selectAuth);
+  const { profile } = useAppSelector(selectOnboarding);
+  const photo = useAuthenticatedMediaUrl(profile?.image);
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  useEffect(() => {
+    void dispatch(fetchOnboardingProfile());
+  }, [dispatch]);
 
   const displayName = auth.user?.name || auth.user?.email || 'Matchy';
   const email = auth.user?.email || '';
@@ -58,21 +72,21 @@ export function SettingsView() {
         {
           label: t('settings.account'),
           icon: User,
-          path: '/account-profile',
+          path: '/settings/account',
           color: matchyBrand.blue,
           bg: matchyBrand.softBlue,
         },
         {
           label: t('settings.verifyAccount'),
           icon: ShieldCheck,
-          path: '/verify-account',
+          path: '/settings/verify-account',
           color: matchyBrand.teal,
           bg: matchyBrand.softTeal,
         },
         {
           label: t('settings.privacy'),
           icon: Lock,
-          path: '/privacy',
+          path: '/settings/privacy',
           color: matchyBrand.teal,
           bg: matchyBrand.softTeal,
         },
@@ -101,7 +115,7 @@ export function SettingsView() {
         {
           label: t('settings.video'),
           icon: Video,
-          path: '/video-settings',
+          path: '/settings/video',
           color: '#9B59B6',
           bg: '#F3E8FA',
         },
@@ -113,21 +127,21 @@ export function SettingsView() {
         {
           label: t('settings.history'),
           icon: Clock,
-          path: '/history',
+          path: '/settings/history',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
         },
         {
           label: t('settings.favorites'),
           icon: Star,
-          path: '/favorites',
+          path: '/settings/favorites',
           color: matchyBrand.blue,
           bg: matchyBrand.softBlue,
         },
         {
           label: t('settings.qrCode'),
           icon: QrCode,
-          path: '/qr-code',
+          path: '/settings/qr-code',
           color: matchyBrand.teal,
           bg: matchyBrand.softTeal,
         },
@@ -139,7 +153,7 @@ export function SettingsView() {
         {
           label: t('settings.subscription'),
           icon: Crown,
-          path: '/plans',
+          path: '/settings/plans',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
           badge: t('nav.planFree'),
@@ -152,14 +166,14 @@ export function SettingsView() {
         {
           label: t('settings.privacyPolicy'),
           icon: FileText,
-          path: '/privacy-policy',
+          externalUrl: landingPath('/privacy-policy', locale),
           color: matchyBrand.muted,
           bg: '#F5F5F5',
         },
         {
           label: t('settings.terms'),
           icon: FileText,
-          path: '/terms-of-service',
+          externalUrl: landingPath('/terms-of-service', locale),
           color: matchyBrand.muted,
           bg: '#F5F5F5',
         },
@@ -192,7 +206,12 @@ export function SettingsView() {
                 background: matchyBrand.gradient135,
               }}
             >
-              {initial}
+              {photo.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photo.url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                initial
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-base font-extrabold" style={{ color: matchyBrand.text }}>
@@ -262,6 +281,10 @@ export function SettingsView() {
                     onClick={() => {
                       if (item.onClick) {
                         item.onClick();
+                        return;
+                      }
+                      if (item.externalUrl) {
+                        window.location.assign(item.externalUrl);
                         return;
                       }
                       if (item.path) router.push(item.path);

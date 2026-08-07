@@ -1,3 +1,10 @@
+import {
+  changePassword,
+  deleteAccount,
+  fetchCurrentUser,
+  logout,
+  resetAuthState,
+} from '@/features/auth/store/auth-slice';
 import { api, apiErrorKey } from '@/lib/api';
 import type { RootState } from '@/lib/store';
 import { type PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
@@ -33,6 +40,10 @@ const initialState: MessagingState = {
   quota: null,
   peerTyping: false,
 };
+
+function resetForNewSession(state: MessagingState) {
+  Object.assign(state, initialState);
+}
 
 export const fetchInbox = createAsyncThunk(
   'messaging/fetchInbox',
@@ -472,7 +483,12 @@ const messagingSlice = createSlice({
           message.liked_by_me = action.payload.liked;
           message.like_count = action.payload.like_count;
         }
-      });
+      })
+      .addCase(logout.fulfilled, resetForNewSession)
+      .addCase(resetAuthState, resetForNewSession)
+      .addCase(changePassword.fulfilled, resetForNewSession)
+      .addCase(deleteAccount.fulfilled, resetForNewSession)
+      .addCase(fetchCurrentUser.rejected, resetForNewSession);
   },
 });
 

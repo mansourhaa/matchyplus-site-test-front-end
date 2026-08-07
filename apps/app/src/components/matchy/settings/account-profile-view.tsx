@@ -6,7 +6,6 @@ import { fetchCurrentUser, selectAuth } from '@/features/auth/store/auth-slice';
 import type { AuthUser } from '@/features/auth/types';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { PHONE_COUNTRIES } from '@/lib/phone-countries';
-import { toast } from '@/lib/toast';
 import { Check, ChevronRight, Lock, Mail, Phone, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -168,8 +167,10 @@ export function AccountProfileView() {
   const [banner, setBanner] = useState<string | null>(null);
 
   useEffect(() => {
+    // Only re-probe after an OAuth link round-trip; bootstrap already loaded the user.
+    if (!searchParams.get('linked')) return;
     void dispatch(fetchCurrentUser());
-  }, [dispatch]);
+  }, [dispatch, searchParams]);
 
   useEffect(() => {
     const linked = searchParams.get('linked');
@@ -241,8 +242,10 @@ export function AccountProfileView() {
           : null;
 
   const onLinkSocial = (which: 'google' | 'linkedin') => {
-    // Link-while-logged-in OAuth is not wired yet (login OAuth would switch sessions).
-    toast.message(t('settings.comingSoon'));
+    // Full-page navigation to authenticated link-intent start (sets oauth_link_intent cookie).
+    // Do not use login OAuth — that would mint a new session via exchange.
+    const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
+    window.location.href = `${base}/auth/oauth/${which}/link`;
   };
 
   return (
@@ -350,7 +353,7 @@ export function AccountProfileView() {
                 color="#61BCA6"
                 bg="#E8F7F3"
                 icon={Phone}
-                href="/add-phone-number"
+                href="/settings/add-phone-number"
               />
             )}
 
@@ -366,7 +369,7 @@ export function AccountProfileView() {
                 color="#2F76BB"
                 bg="#E8F0FA"
                 icon={Lock}
-                href="/password"
+                href="/settings/password"
               />
             )}
 

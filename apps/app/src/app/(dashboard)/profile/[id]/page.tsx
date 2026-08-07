@@ -1,6 +1,6 @@
 'use client';
 
-import { PublicProfileView } from '@/components/profile/public-profile-view';
+import { PublicProfileView } from '@/features/profile/components/public-profile-view';
 import { useParams } from 'next/navigation';
 
 export default function PublicProfilePage() {

@@ -55,12 +55,24 @@ export type SwipeResult = {
   quota: SwipeQuota;
 };
 
+export type DiscoveryFeedSort = 'match' | 'distance' | 'rating';
+
 export type DiscoveryFeedQuery = {
   latitude?: number;
   longitude?: number;
   limit?: number;
+  offset?: number;
   /** `search` applies FREE profiles_per_category lock + PII redaction. */
   context?: 'swipe' | 'search';
+  /** Case-insensitive match on name / job / service_type / category / city / interests. */
+  q?: string;
+  /** Override discovery radius for this request (km). Default: env DISCOVERY_RADIUS_M. */
+  maxDistanceKm?: number;
+  /** Comma-separated service type / job labels. */
+  serviceTypes?: string;
+  profileType?: 'INDIVIDUAL' | 'PROVIDER';
+  minRating?: number;
+  sort?: DiscoveryFeedSort;
 };
 
 export type TargetUserParams = {

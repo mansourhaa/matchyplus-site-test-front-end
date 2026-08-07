@@ -1,12 +1,8 @@
-import jwt from 'jsonwebtoken';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { hashPassword } from '../lib/password.js';
 import { buildTestApp } from './build-test-app.js';
-
-function signAccessToken(userId: string) {
-  return jwt.sign({ id: userId, email: 'user@example.com' }, 'test-access-token-secret');
-}
+import { signTestAccessToken } from './sign-test-access-token.js';
 
 describe('POST /api/v1/auth — error/message translation', () => {
   const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
@@ -115,7 +111,7 @@ describe('DELETE /api/v1/auth/account', () => {
     expect(response.statusCode).toBe(401);
   });
 
-  it('deletes a passwordless account once confirmed, without ever returning password data', async () => {
+  it('deletes a passwordless account with OTP step-up, without ever returning password data', async () => {
     const deleteMock = vi.fn().mockResolvedValue({ id: 'user-1' });
     const app = await buildTestApp({
       prisma: {
@@ -123,14 +119,80 @@ describe('DELETE /api/v1/auth/account', () => {
           findUniqueOrThrow: vi.fn().mockResolvedValue({
             id: 'user-1',
             email: 'user@example.com',
+            phone: '+21612345678',
             password: null,
             status: 'ACTIVE',
+            token_version: 0,
           }),
           findUnique: vi.fn().mockResolvedValue({
             id: 'user-1',
             email: 'user@example.com',
+            phone: '+21612345678',
             password: null,
             status: 'ACTIVE',
+            token_version: 0,
+          }),
+          delete: deleteMock,
+        } as never,
+        otpChallenge: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: 'otp-1',
+            phone: '+21612345678',
+            purpose: 'ACCOUNT_DELETE',
+            code_hash: 'irrelevant',
+            expires_at: new Date(Date.now() + 60_000),
+            attempts: 0,
+            consumed_at: null,
+            user_id: 'user-1',
+          }),
+          update: vi.fn().mockResolvedValue({}),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        } as never,
+      },
+    });
+    apps.push(app);
+
+    // Bypass real hash verify by stubbing OtpChallengeService via a matching hash —
+    // easier: spy verifyChallenge on the prototype.
+    const { OtpChallengeService } = await import('../services/otp-challenge.js');
+    const spy = vi
+      .spyOn(OtpChallengeService.prototype, 'verifyChallenge')
+      .mockResolvedValue({ id: 'otp-1' } as never);
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: '/api/v1/auth/account',
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
+      payload: { confirm: true, otpCode: '123456' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ message: expect.any(String) });
+    expect(response.body).not.toMatch(/"password"\s*:/);
+    expect(deleteMock).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+    spy.mockRestore();
+  });
+
+  it('rejects passwordless deletion without OTP', async () => {
+    const deleteMock = vi.fn();
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'user@example.com',
+            phone: '+21612345678',
+            password: null,
+            status: 'ACTIVE',
+            token_version: 0,
+          }),
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'user@example.com',
+            phone: '+21612345678',
+            password: null,
+            status: 'ACTIVE',
+            token_version: 0,
           }),
           delete: deleteMock,
         } as never,
@@ -141,14 +203,13 @@ describe('DELETE /api/v1/auth/account', () => {
     const response = await app.inject({
       method: 'DELETE',
       url: '/api/v1/auth/account',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: { confirm: true },
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ message: expect.any(String) });
-    expect(response.body).not.toContain('password');
-    expect(deleteMock).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().code).toBe('account_deletion_otp_required');
+    expect(deleteMock).not.toHaveBeenCalled();
   });
 
   it('rejects deletion when confirmation is missing', async () => {
@@ -161,12 +222,14 @@ describe('DELETE /api/v1/auth/account', () => {
             email: 'user@example.com',
             password: null,
             status: 'ACTIVE',
+            token_version: 0,
           }),
           findUnique: vi.fn().mockResolvedValue({
             id: 'user-1',
             email: 'user@example.com',
             password: null,
             status: 'ACTIVE',
+            token_version: 0,
           }),
           delete: deleteMock,
         } as never,
@@ -177,7 +240,7 @@ describe('DELETE /api/v1/auth/account', () => {
     const response = await app.inject({
       method: 'DELETE',
       url: '/api/v1/auth/account',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: {},
     });
 
@@ -241,10 +304,11 @@ describe('member-session routes — onboarding_completed on the wire', () => {
         phone_verified: true,
         google_linked: false,
         linkedin_linked: false,
+        has_password: true,
         onboarding_completed: false,
       },
     });
-    expect(response.body).not.toContain('password');
+    expect(response.body).not.toMatch(/"password"\s*:/);
   });
 
   it('POST /register-phone returns onboarding_completed: false for a brand-new account', async () => {
@@ -296,10 +360,11 @@ describe('member-session routes — onboarding_completed on the wire', () => {
         phone_verified: true,
         google_linked: false,
         linkedin_linked: false,
+        has_password: false,
         onboarding_completed: false,
       },
     });
-    expect(response.body).not.toContain('password');
+    expect(response.body).not.toMatch(/"password"\s*:/);
   });
 
   it('POST /oauth/exchange returns onboarding_completed: true once onboarding is done', async () => {
@@ -354,6 +419,7 @@ describe('member-session routes — onboarding_completed on the wire', () => {
         phone_verified: false,
         google_linked: true,
         linkedin_linked: false,
+        has_password: false,
         onboarding_completed: true,
       },
     });
@@ -396,7 +462,9 @@ describe('GET /api/v1/auth/authcheck', () => {
             linkedin_id: null,
             role: 'USER',
             status: 'ACTIVE',
+            token_version: 0,
             onboarding_completed_at: null,
+            password: null,
           }),
         } as never,
       },
@@ -406,7 +474,7 @@ describe('GET /api/v1/auth/authcheck', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/auth/authcheck',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -421,10 +489,11 @@ describe('GET /api/v1/auth/authcheck', () => {
         phone_verified: true,
         google_linked: false,
         linkedin_linked: false,
+        has_password: false,
         role: 'USER',
         onboarding_completed: false,
       },
     });
-    expect(response.body).not.toContain('password');
+    expect(response.body).not.toMatch(/"password"\s*:/);
   });
 });

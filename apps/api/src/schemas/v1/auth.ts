@@ -82,6 +82,7 @@ export const authCheckSchema = {
             phone_verified: { type: 'boolean' },
             google_linked: { type: 'boolean' },
             linkedin_linked: { type: 'boolean' },
+            has_password: { type: 'boolean' },
             role: { type: 'string' },
             onboarding_completed: { type: 'boolean' },
           },
@@ -122,6 +123,7 @@ const userSummarySchema = {
     phone_verified: { type: 'boolean' },
     google_linked: { type: 'boolean' },
     linkedin_linked: { type: 'boolean' },
+    has_password: { type: 'boolean' },
     onboarding_completed: { type: 'boolean' },
   },
 };
@@ -409,6 +411,7 @@ export const deleteAccountSchema = {
     properties: {
       confirm: { type: 'boolean' },
       currentPassword: { type: 'string' },
+      otpCode: { type: 'string', minLength: 4, maxLength: 12 },
       reason: { type: 'string', maxLength: 500 },
     },
     required: ['confirm'],
@@ -419,6 +422,22 @@ export const deleteAccountSchema = {
       type: 'object',
       properties: {
         message: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const requestAccountDeleteOtpSchema = {
+  tags: ['auth'],
+  headers: authenticatedHeadersSchema,
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        phone: { type: 'string' },
       },
     },
     ...errorResponses,

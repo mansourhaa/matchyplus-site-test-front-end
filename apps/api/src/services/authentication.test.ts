@@ -189,6 +189,7 @@ describe('AuthenticationService', () => {
         linkedin_id: null,
         role: 'USER',
         onboarding_completed_at: new Date('2026-01-01'),
+        password: null,
       });
 
       const service = new AuthenticationService({ prisma: prisma as never });
@@ -209,6 +210,7 @@ describe('AuthenticationService', () => {
           linkedin_id: true,
           role: true,
           onboarding_completed_at: true,
+          password: true,
         },
       });
 
@@ -222,6 +224,7 @@ describe('AuthenticationService', () => {
         phone_verified: true,
         google_linked: false,
         linkedin_linked: false,
+        has_password: false,
         role: 'USER',
         onboarding_completed: true,
       });
@@ -248,6 +251,7 @@ describe('AuthenticationService', () => {
         linkedin_id: null,
         role: 'USER',
         onboarding_completed_at: null,
+        password: null,
       });
 
       const service = new AuthenticationService({ prisma: prisma as never });
@@ -336,23 +340,50 @@ describe('AuthenticationService', () => {
       expect(prisma.user.delete).not.toHaveBeenCalled();
     });
 
-    it('deletes a passwordless OAuth/OTP account once confirm is true', async () => {
+    it('deletes a passwordless OAuth/OTP account with OTP step-up', async () => {
       const prisma = createMockPrisma();
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
+        phone: '+21612345678',
         password: null,
       });
       prisma.user.delete.mockResolvedValue({ id: 'user-1' });
 
       const service = new AuthenticationService({ prisma: prisma as never });
+      const { OtpChallengeService } = await import('./otp-challenge.js');
+      const spy = vi
+        .spyOn(OtpChallengeService.prototype, 'verifyChallenge')
+        .mockResolvedValue({ id: 'otp-1' } as never);
 
       const result = await service.deleteAccount({
         userId: 'user-1',
         confirm: true,
+        otpCode: '123456',
       });
 
       expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
       expect(result).toEqual({ message: 'account_deleted' });
+      spy.mockRestore();
+    });
+
+    it('rejects passwordless deletion without OTP', async () => {
+      const prisma = createMockPrisma();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        phone: '+21612345678',
+        password: null,
+      });
+
+      const service = new AuthenticationService({ prisma: prisma as never });
+
+      await expect(
+        service.deleteAccount({
+          userId: 'user-1',
+          confirm: true,
+        }),
+      ).rejects.toThrow('account_deletion_otp_required');
+
+      expect(prisma.user.delete).not.toHaveBeenCalled();
     });
 
     it('rejects deletion when confirmation is false or missing, regardless of password', async () => {

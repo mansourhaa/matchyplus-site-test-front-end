@@ -1,11 +1,7 @@
-import jwt from 'jsonwebtoken';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTestApp } from './build-test-app.js';
-
-function signAccessToken(userId: string) {
-  return jwt.sign({ id: userId, email: 'user@example.com' }, 'test-access-token-secret');
-}
+import { signTestAccessToken } from './sign-test-access-token.js';
 
 // verifyToken (apps/api/src/plugins/authorization.ts) reloads the caller's own row via
 // findUniqueOrThrow on every request to re-check ACTIVE status — every test needs this
@@ -15,7 +11,7 @@ function findUniqueOrThrowForAnyCaller() {
   return vi
     .fn()
     .mockImplementation(({ where }: { where: { id: string } }) =>
-      Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER' }),
+      Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER', token_version: 0 }),
     );
 }
 
@@ -60,7 +56,7 @@ describe('GET /api/v1/notifications', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/notifications',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode, response.body).toBe(200);
@@ -99,7 +95,7 @@ describe('POST /api/v1/notifications/:id/read', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/notifications/notif-1/read',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode, response.body).toBe(200);
@@ -122,7 +118,7 @@ describe('POST /api/v1/notifications/:id/read', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/notifications/notif-1/read',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(404);
@@ -151,7 +147,7 @@ describe('POST /api/v1/notifications/read-all', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/notifications/read-all',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode, response.body).toBe(200);

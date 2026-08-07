@@ -81,7 +81,7 @@ describe('MatchyDashboardShell — onboarding guard', () => {
     expect(replaceMock).toHaveBeenCalledWith('/onboarding');
   });
 
-  it('does not redirect while the bootstrap authcheck has not settled yet', () => {
+  it('does not redirect or paint dashboard while the bootstrap authcheck has not settled yet', () => {
     renderWithAuthStore(
       <MatchyDashboardShell>{<div>Dashboard content</div>}</MatchyDashboardShell>,
       {
@@ -91,6 +91,7 @@ describe('MatchyDashboardShell — onboarding guard', () => {
       },
     );
 
+    expect(screen.queryByText('Dashboard content')).not.toBeInTheDocument();
     expect(replaceMock).not.toHaveBeenCalled();
     expect(assignMock).not.toHaveBeenCalled();
   });

@@ -69,15 +69,28 @@ export type SwipeResult = {
   quota: SwipeQuota;
 };
 
+export type DiscoveryFeedSort = 'match' | 'distance' | 'rating';
+
 export type DiscoveryFeedQuery = {
   latitude?: number;
   longitude?: number;
   limit?: number;
+  offset?: number;
   context?: 'swipe' | 'search';
+  q?: string;
+  maxDistanceKm?: number;
+  serviceTypes?: string;
+  profileType?: 'INDIVIDUAL' | 'PROVIDER';
+  minRating?: number;
+  sort?: DiscoveryFeedSort;
 };
 
 export type SwipeFeedResponse = {
   profiles: FeedProfile[];
+  count?: number;
+  offset?: number;
+  limit?: number;
+  has_more?: boolean;
   quota: SwipeQuota;
 };
 

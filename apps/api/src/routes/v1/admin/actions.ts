@@ -27,6 +27,10 @@ import {
   AdminUpdateUserStatusPayload,
 } from '../../../types/admin.js';
 import { AdminListReportsQuery, AdminUpdateReportPayload } from '../../../types/report.js';
+import {
+  ADMIN_SESSION_COOKIE,
+  clearAdminSessionCookieOptions,
+} from '../../../utils/admin-session.js';
 
 type UserParams = { id: string };
 type PlanParams = { id: UserPlan };
@@ -131,6 +135,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     { schema: adminChangePasswordSchema },
     async (request, reply) => {
       const data = await adminService.changePassword(request.loggedUser.id, request.body);
+      reply.clearCookie(ADMIN_SESSION_COOKIE, clearAdminSessionCookieOptions());
       return reply.code(200).send(data);
     },
   );

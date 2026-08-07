@@ -97,6 +97,9 @@ const adminAuthSlice = createSlice({
       .addCase(changeAdminPassword.fulfilled, (state) => {
         state.passwordChangeLoading = false;
         state.passwordChangeError = null;
+        state.admin = null;
+        state.loginAt = null;
+        clearAdminSession();
       })
       .addCase(changeAdminPassword.rejected, (state, action) => {
         state.passwordChangeLoading = false;

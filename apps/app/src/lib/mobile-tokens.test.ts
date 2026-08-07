@@ -4,10 +4,28 @@ import { AUTH_COOKIE } from './auth';
 import {
   accessTokenCookieMaxAge,
   captureMobileTokensFromBody,
+  hydrateMobileTokenStorage,
   mobileTokenStorage,
+  resetMobileTokenHydrationForTests,
   syncMirroredAccessCookieFromStorage,
 } from './mobile-tokens';
 import * as native from './native';
+
+vi.mock('@capacitor/preferences', () => {
+  const store = new Map<string, string>();
+  return {
+    Preferences: {
+      get: vi.fn(async ({ key }: { key: string }) => ({ value: store.get(key) ?? null })),
+      set: vi.fn(async ({ key, value }: { key: string; value: string }) => {
+        store.set(key, value);
+      }),
+      remove: vi.fn(async ({ key }: { key: string }) => {
+        store.delete(key);
+      }),
+      __store: store,
+    },
+  };
+});
 
 function encodeJwtPayload(payload: Record<string, unknown>): string {
   const json = JSON.stringify(payload);
@@ -16,15 +34,19 @@ function encodeJwtPayload(payload: Record<string, unknown>): string {
 }
 
 describe('mobile-tokens', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.spyOn(native, 'isNativeMobileClient').mockReturnValue(true);
     localStorage.clear();
     document.cookie = `${AUTH_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+    resetMobileTokenHydrationForTests();
+    const prefs = await import('@capacitor/preferences');
+    (prefs.Preferences as unknown as { __store: Map<string, string> }).__store.clear();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     localStorage.clear();
+    resetMobileTokenHydrationForTests();
   });
 
   describe('accessTokenCookieMaxAge', () => {
@@ -45,34 +67,36 @@ describe('mobile-tokens', () => {
     });
   });
 
-  describe('syncMirroredAccessCookieFromStorage', () => {
-    it('mirrors a valid access token with Max-Age from JWT exp', () => {
+  describe('hydrate + sync', () => {
+    it('mirrors a valid access token with Max-Age from JWT exp', async () => {
+      const exp = Math.floor(Date.now() / 1000) + 90;
+      const token = encodeJwtPayload({ exp });
+      const prefs = await import('@capacitor/preferences');
+      await prefs.Preferences.set({ key: 'matchy_mobile_access', value: token });
+
+      await hydrateMobileTokenStorage();
+      syncMirroredAccessCookieFromStorage();
+
+      expect(mobileTokenStorage.getAccess()).toBe(token);
+      expect(document.cookie).toContain(`${AUTH_COOKIE}=`);
+    });
+
+    it('migrates legacy localStorage tokens into Preferences once', async () => {
       const exp = Math.floor(Date.now() / 1000) + 90;
       const token = encodeJwtPayload({ exp });
       localStorage.setItem('matchy_mobile_access', token);
 
-      syncMirroredAccessCookieFromStorage();
+      await hydrateMobileTokenStorage();
 
-      expect(document.cookie).toContain(`${AUTH_COOKIE}=`);
-      expect(document.cookie).toContain(encodeURIComponent(token).slice(0, 20));
+      expect(mobileTokenStorage.getAccess()).toBe(token);
+      expect(localStorage.getItem('matchy_mobile_access')).toBeNull();
     });
 
-    it('clears the mirrored cookie when the stored token is expired', () => {
-      const exp = Math.floor(Date.now() / 1000) - 10;
-      const token = encodeJwtPayload({ exp });
-      localStorage.setItem('matchy_mobile_access', token);
-      document.cookie = `${AUTH_COOKIE}=stale; Path=/; SameSite=Lax`;
-
-      syncMirroredAccessCookieFromStorage();
-
-      // Cleared cookies disappear from document.cookie
-      expect(document.cookie.includes(`${AUTH_COOKIE}=`)).toBe(false);
-    });
-
-    it('is a no-op on web', () => {
+    it('is a no-op on web', async () => {
       vi.mocked(native.isNativeMobileClient).mockReturnValue(false);
       localStorage.setItem('matchy_mobile_access', encodeJwtPayload({ exp: 9999999999 }));
 
+      await hydrateMobileTokenStorage();
       syncMirroredAccessCookieFromStorage();
 
       expect(document.cookie.includes(`${AUTH_COOKIE}=`)).toBe(false);

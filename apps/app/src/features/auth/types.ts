@@ -10,6 +10,8 @@ export interface AuthUser {
   linkedin_linked?: boolean;
   /** Face-match identity badge — not yet wired; kept for settings parity. */
   verified?: boolean;
+  /** True when the account has a password (required for delete without OTP step-up). */
+  has_password?: boolean;
   onboarding_completed: boolean;
   role?: string;
 }
@@ -91,6 +93,7 @@ export interface ConfirmPhoneLinkInput {
 export interface DeleteAccountInput {
   confirm: boolean;
   currentPassword?: string;
+  otpCode?: string;
   reason?: string;
 }
 

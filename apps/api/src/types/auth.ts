@@ -117,6 +117,8 @@ export type DeleteAccountPayload = {
   userId: string;
   confirm: boolean;
   currentPassword?: string;
+  /** Required for passwordless accounts (ACCOUNT_DELETE OTP). */
+  otpCode?: string;
   reason?: string;
 };
 export type DeleteAccountResult = {

@@ -127,6 +127,7 @@ describe('PhoneAuthenticationService', () => {
         phone_verified: true,
         google_linked: false,
         linkedin_linked: false,
+        has_password: true,
         onboarding_completed: false,
       });
       issueTokenPairSpy.mockRestore();
@@ -241,6 +242,7 @@ describe('PhoneAuthenticationService', () => {
         phone_verified: true,
         google_linked: false,
         linkedin_linked: false,
+        has_password: false,
         onboarding_completed: false,
       });
 
@@ -380,7 +382,7 @@ describe('PhoneAuthenticationService', () => {
       prisma.user.findUnique.mockResolvedValue({ id: 'user-1', phone: '+33612345678' });
 
       const revokeSpy = vi
-        .spyOn(TokenService.prototype, 'revokeAllRefreshTokens')
+        .spyOn(TokenService.prototype, 'revokeAllSessions')
         .mockResolvedValue(undefined);
 
       const result = await service.confirmPasswordReset({

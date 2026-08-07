@@ -19,6 +19,7 @@ async function adminRow() {
     password: await bcrypt.hash(ADMIN_PASSWORD, 10),
     role: 'SUPER_ADMIN',
     status: 'ACTIVE',
+    token_version: 0,
   };
 }
 

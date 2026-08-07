@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "OtpPurpose" ADD VALUE 'ACCOUNT_DELETE';
+
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "token_version" INTEGER NOT NULL DEFAULT 0;

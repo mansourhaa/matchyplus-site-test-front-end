@@ -28,6 +28,9 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, sessionChecked } = useAppSelector(selectAuth);
   const needsLogin = sessionChecked && !isAuthenticated;
   const needsOnboarding = Boolean(user && !user.onboarding_completed);
+  // Fail closed: never paint (dashboard) chrome/children until authcheck settles,
+  // and never after it settles unauthenticated or incomplete.
+  const blockDashboard = !sessionChecked || needsLogin || needsOnboarding;
 
   useEffect(() => {
     if (needsLogin) {
@@ -39,31 +42,24 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     }
   }, [needsLogin, needsOnboarding, router]);
 
-  if (needsLogin || needsOnboarding) {
+  if (blockDashboard) {
     return null;
   }
 
   const titleMap: Record<string, string> = {
     '/settings': t('nav.settings'),
+    '/settings/account': t('settings.account'),
+    '/settings/password': 'Password',
+    '/settings/add-phone-number': 'Phone',
+    '/settings/video': t('settings.video'),
+    '/settings/qr-code': t('settings.qrCode'),
+    '/settings/verify-account': t('settings.verifyAccount'),
+    '/settings/privacy': t('settings.privacy'),
+    '/settings/history': t('settings.history'),
+    '/settings/favorites': t('settings.favorites'),
+    '/settings/plans': t('settings.subscription'),
     '/edit-profile': t('settings.editProfile'),
-    '/account-profile': t('settings.account'),
-    '/password': 'Password',
-    '/email': 'Email',
-    '/privacy': t('settings.privacy'),
     '/notifications': t('settings.notifications'),
-    '/history': t('settings.history'),
-    '/qr-code': t('settings.qrCode'),
-    '/video-settings': t('settings.video'),
-    '/add-phone-number': 'Phone',
-    '/verify-account': t('settings.verifyAccount'),
-    '/favorites': t('settings.favorites'),
-    '/wallet': 'Wallet',
-    '/plans': t('settings.subscription'),
-    '/plan-free': 'Free',
-    '/plan-premium': 'Premium',
-    '/plan-premium-plus': 'Premium+',
-    '/privacy-policy': t('settings.privacyPolicy'),
-    '/terms-of-service': t('settings.terms'),
   };
 
   if (isPrimary) {
@@ -76,9 +72,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
       ? 'Profil'
       : titleMap[pathname];
   const backPath =
-    pathname === '/edit-profile' || pathname === '/video-settings' || pathname === '/qr-code'
-      ? '/settings'
-      : '/home';
+    pathname === '/edit-profile' || pathname.startsWith('/settings/') ? '/settings' : '/home';
 
   return (
     <MatchyAppShell

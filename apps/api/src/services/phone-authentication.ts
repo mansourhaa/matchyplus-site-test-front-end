@@ -176,6 +176,28 @@ export class PhoneAuthenticationService {
     };
   }
 
+  async requestAccountDeleteOtp(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new Error('user_not_found');
+    }
+    if (user.password) {
+      throw new Error('account_deletion_use_password');
+    }
+    if (!user.phone) {
+      throw new Error('account_deletion_otp_required');
+    }
+
+    const code = await this.otpChallengeService.createChallenge(
+      user.phone,
+      OtpPurpose.ACCOUNT_DELETE,
+      user.id,
+    );
+    await this.smsClient.sendSms(user.phone, otpMessage(code));
+
+    return { message: 'account_delete_otp_sent', phone: user.phone };
+  }
+
   async confirmPasswordReset(payload: ConfirmPasswordResetPayload) {
     const phone = normalizePhoneForAuth(payload.phone);
     if (!phone) {
@@ -199,7 +221,7 @@ export class PhoneAuthenticationService {
 
     // A reset is a credential change just like changePassword — every existing session
     // must die so a token stolen before the reset can't outlive it.
-    await this.tokenService.revokeAllRefreshTokens(user.id);
+    await this.tokenService.revokeAllSessions(user.id);
 
     return { message: 'password_reset' };
   }

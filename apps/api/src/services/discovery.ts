@@ -3,7 +3,12 @@ import { PrismaClient, Role, SwipeDirection, UserStatus } from '@saas-boilerplat
 import { DISCOVERY_PAGE_SIZE, DISCOVERY_RADIUS_M } from '../constants.js';
 import { DiscoveryFeedQuery, FeedProfile } from '../types/matching.js';
 import { AbstractServiceOptions } from '../types/services.js';
-import { feedUserSelect, resolveCoords, toScoringProfile } from '../utils/discovery-feed.js';
+import {
+  FeedUser,
+  feedUserSelect,
+  resolveCoords,
+  toScoringProfile,
+} from '../utils/discovery-feed.js';
 import { notFound } from '../utils/http-errors.js';
 import { computeMatchScore, haversineKm } from '../utils/matching-score.js';
 import { SwipeQuotaService } from './swipe-quota.js';
@@ -29,8 +34,23 @@ export class DiscoveryService {
       });
       if (!me) throw notFound('profile not found');
 
-      const myCoords = resolveCoords(query.latitude, query.longitude, me);
-      const limit = Math.min(Math.max(1, query.limit ?? DISCOVERY_PAGE_SIZE), 50);
+      const myCoords = resolveCoords(
+        asFiniteNumber(query.latitude),
+        asFiniteNumber(query.longitude),
+        me,
+      );
+      const limit = Math.min(Math.max(1, asFiniteNumber(query.limit) ?? DISCOVERY_PAGE_SIZE), 50);
+      const offset = Math.max(0, asFiniteNumber(query.offset) ?? 0);
+      const maxDistanceKm = asFiniteNumber(query.maxDistanceKm);
+      const radiusM =
+        maxDistanceKm != null
+          ? Math.min(200, Math.max(1, maxDistanceKm)) * 1000
+          : DISCOVERY_RADIUS_M;
+      const serviceTypes = parseServiceTypes(query.serviceTypes);
+      const needle = query.q?.trim().toLowerCase() ?? '';
+      const minRatingRaw = asFiniteNumber(query.minRating);
+      const minRating = minRatingRaw != null ? Math.min(5, Math.max(0, minRatingRaw)) : null;
+      const sort = query.sort ?? 'match';
 
       const [blocked, matched, excludingLogs, incomingLikes] = await Promise.all([
         this.prisma.userBlock.findMany({
@@ -79,13 +99,13 @@ export class DiscoveryService {
           id: { notIn: [...excluded] },
           status: UserStatus.ACTIVE,
           role: Role.USER,
+          ...(query.profileType ? { profile_type: query.profileType } : {}),
         },
         select: feedUserSelect,
         take: 400,
         orderBy: { create_at: 'desc' },
       });
 
-      const radiusM = DISCOVERY_RADIUS_M;
       const scored: FeedProfile[] = [];
       const breakdown = {
         g1_complementary: 0,
@@ -95,6 +115,10 @@ export class DiscoveryService {
       };
 
       for (const candidate of candidates) {
+        if (minRating != null && candidate.rating < minRating) continue;
+        if (serviceTypes.length > 0 && !matchesServiceTypes(candidate, serviceTypes)) continue;
+        if (needle && !matchesQuery(candidate, needle)) continue;
+
         const candCoords = resolveCoords(undefined, undefined, candidate);
         let distKm: number | null = null;
         if (myCoords && candCoords) {
@@ -105,6 +129,9 @@ export class DiscoveryService {
             candCoords.longitude,
           );
           if (distKm * 1000 > radiusM) continue;
+        } else if (maxDistanceKm != null) {
+          // Explicit distance filter with no coords → cannot satisfy the radius.
+          continue;
         }
 
         const score = computeMatchScore(toScoringProfile(me), toScoringProfile(candidate), distKm, {
@@ -139,24 +166,24 @@ export class DiscoveryService {
         });
       }
 
-      scored.sort((a, b) => {
-        if (b.match_score !== a.match_score) return b.match_score - a.match_score;
-        if (a.match_group !== b.match_group) return a.match_group - b.match_group;
-        return 0;
-      });
+      scored.sort((a, b) => compareFeedProfiles(a, b, sort));
 
-      const profiles = scored.slice(0, limit);
+      const page = scored.slice(offset, offset + limit);
+      const hasMore = offset + limit < scored.length;
       const quota = await this.quota.buildQuotaSnapshot(userId);
 
       const lockedProfiles =
         query.context === 'search'
-          ? await this.applySearchVisibilityLock(userId, profiles)
-          : profiles.map((profile) => ({ ...profile, is_locked: false }));
+          ? await this.applySearchVisibilityLock(userId, page, offset)
+          : page.map((profile) => ({ ...profile, is_locked: false }));
 
       return {
         profiles: lockedProfiles,
         count: lockedProfiles.length,
-        feed_breakdown: { ...breakdown, feed_total: lockedProfiles.length },
+        offset,
+        limit,
+        has_more: hasMore,
+        feed_breakdown: { ...breakdown, feed_total: scored.length },
         quota,
         scoring_version: 'v5-scripted' as const,
       };
@@ -173,6 +200,7 @@ export class DiscoveryService {
   private async applySearchVisibilityLock(
     userId: string,
     profiles: FeedProfile[],
+    pageOffset = 0,
   ): Promise<FeedProfile[]> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -189,12 +217,13 @@ export class DiscoveryService {
     }
 
     return profiles.map((profile, index) => {
-      if (index < visibleLimit) {
+      const absoluteIndex = pageOffset + index;
+      if (absoluteIndex < visibleLimit) {
         return { ...profile, is_locked: false };
       }
 
       return {
-        id: `locked-${index}`,
+        id: `locked-${absoluteIndex}`,
         name: '███████',
         image: null,
         bio: null,
@@ -217,4 +246,64 @@ export class DiscoveryService {
       };
     });
   }
+}
+
+export function parseServiceTypes(raw?: string): string[] {
+  if (!raw?.trim()) return [];
+  return raw
+    .split(',')
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function asFiniteNumber(value: unknown): number | undefined {
+  if (value == null || value === '') return undefined;
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function matchesServiceTypes(candidate: FeedUser, serviceTypes: string[]): boolean {
+  const labels = [candidate.service_type, candidate.job, candidate.category]
+    .filter(Boolean)
+    .map((value) => value!.toLowerCase());
+  return serviceTypes.some((wanted) => labels.some((label) => label.includes(wanted)));
+}
+
+function matchesQuery(candidate: FeedUser, needle: string): boolean {
+  const hay = [
+    candidate.name,
+    candidate.job,
+    candidate.service_type,
+    candidate.category,
+    candidate.city,
+    candidate.location?.city,
+    ...(candidate.interests || []),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return hay.includes(needle);
+}
+
+function compareFeedProfiles(
+  a: FeedProfile,
+  b: FeedProfile,
+  sort: NonNullable<DiscoveryFeedQuery['sort']>,
+): number {
+  if (sort === 'distance') {
+    const da = a.distance_km;
+    const db = b.distance_km;
+    if (da == null && db == null) return b.match_score - a.match_score;
+    if (da == null) return 1;
+    if (db == null) return -1;
+    if (da !== db) return da - db;
+    return b.match_score - a.match_score;
+  }
+  if (sort === 'rating') {
+    if (b.rating !== a.rating) return b.rating - a.rating;
+    return b.match_score - a.match_score;
+  }
+  if (b.match_score !== a.match_score) return b.match_score - a.match_score;
+  if (a.match_group !== b.match_group) return a.match_group - b.match_group;
+  return 0;
 }

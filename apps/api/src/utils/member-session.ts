@@ -27,11 +27,10 @@ function baseOptions(): CookieSerializeOptions {
 }
 
 export function memberAccessCookieOptions(): CookieSerializeOptions {
-  const ttl = Number(config.accessTokenTtl);
   return {
     ...baseOptions(),
     path: '/',
-    maxAge: Number.isFinite(ttl) && ttl > 0 ? ttl : 60 * 60 * 24,
+    maxAge: config.accessTokenTtlSeconds,
   };
 }
 

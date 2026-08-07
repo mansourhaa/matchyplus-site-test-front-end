@@ -32,6 +32,7 @@ describe('member session cookies', () => {
             password: hashedPassword,
             phone_verified: true,
             status: 'ACTIVE',
+            token_version: 0,
           }),
         } as never,
         refreshToken: { create: vi.fn().mockResolvedValue({}) } as never,
@@ -70,6 +71,7 @@ describe('member session cookies', () => {
             password: hashedPassword,
             phone_verified: true,
             status: 'ACTIVE',
+            token_version: 0,
           }),
         } as never,
         refreshToken: { create: vi.fn().mockResolvedValue({}) } as never,
@@ -124,6 +126,7 @@ describe('member session cookies', () => {
             revoked_at: null,
           }),
           update: vi.fn().mockResolvedValue({}),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
           create: vi.fn().mockResolvedValue({}),
         } as never,
         user: {
@@ -132,6 +135,7 @@ describe('member session cookies', () => {
             email: null,
             phone: '+21612345678',
             status: 'ACTIVE',
+            token_version: 0,
           }),
         } as never,
       },
@@ -187,6 +191,7 @@ describe('member session cookies', () => {
             revoked_at: null,
           }),
           update: vi.fn().mockResolvedValue({}),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
           create: vi.fn().mockResolvedValue({}),
         } as never,
         user: {
@@ -195,6 +200,7 @@ describe('member session cookies', () => {
             email: null,
             phone: '+21612345678',
             status: 'ACTIVE',
+            token_version: 0,
           }),
         } as never,
       },
@@ -239,6 +245,7 @@ describe('member session cookies', () => {
             revoked_at: null,
           }),
           update: vi.fn().mockResolvedValue({}),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
           create: vi.fn().mockResolvedValue({}),
         } as never,
         user: {
@@ -247,6 +254,7 @@ describe('member session cookies', () => {
             email: null,
             phone: '+21612345678',
             status: 'ACTIVE',
+            token_version: 0,
           }),
         } as never,
       },
@@ -310,6 +318,7 @@ describe('member session cookies', () => {
             return null;
           }),
           update: vi.fn().mockResolvedValue({}),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
           create: vi.fn().mockResolvedValue({}),
         } as never,
         user: {
@@ -318,6 +327,7 @@ describe('member session cookies', () => {
             email: null,
             phone: '+21612345678',
             status: 'ACTIVE',
+            token_version: 0,
           }),
         } as never,
       },
@@ -353,6 +363,7 @@ describe('member session cookies', () => {
             revoked_at: null,
           }),
           update: vi.fn().mockResolvedValue({}),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
           create: vi.fn().mockResolvedValue({}),
         } as never,
         user: {
@@ -361,6 +372,7 @@ describe('member session cookies', () => {
             email: null,
             phone: '+21612345678',
             status: 'ACTIVE',
+            token_version: 0,
           }),
         } as never,
       },
@@ -406,6 +418,7 @@ describe('member session cookies', () => {
             email_verified: false,
             role: 'USER',
             status: 'ACTIVE',
+            token_version: 0,
           }),
         } as never,
       },
@@ -413,10 +426,8 @@ describe('member session cookies', () => {
     apps.push(app);
 
     const jwt = await import('jsonwebtoken');
-    const token = jwt.default.sign(
-      { id: 'user-1', email: null, phone: '+21612345678' },
-      'test-access-token-secret',
-    );
+    const { signTestAccessToken } = await import('./sign-test-access-token.js');
+    const token = signTestAccessToken('user-1', { phone: '+21612345678' });
 
     const response = await app.inject({
       method: 'GET',
@@ -436,6 +447,7 @@ describe('member session cookies', () => {
       phone: '+21612345678',
       password: hashedPassword,
       status: 'ACTIVE',
+      token_version: 0,
     };
     const app = await buildTestApp({
       prisma: {
@@ -450,10 +462,8 @@ describe('member session cookies', () => {
     apps.push(app);
 
     const jwt = await import('jsonwebtoken');
-    const token = jwt.default.sign(
-      { id: 'user-1', email: null, phone: '+21612345678' },
-      'test-access-token-secret',
-    );
+    const { signTestAccessToken } = await import('./sign-test-access-token.js');
+    const token = signTestAccessToken('user-1', { phone: '+21612345678' });
 
     const response = await app.inject({
       method: 'POST',
@@ -474,8 +484,9 @@ describe('member session cookies', () => {
       id: 'user-1',
       email: null,
       phone: '+21612345678',
-      password: null,
+      password: 'hashed',
       status: 'ACTIVE',
+      token_version: 0,
     };
     const app = await buildTestApp({
       prisma: {
@@ -488,17 +499,18 @@ describe('member session cookies', () => {
     });
     apps.push(app);
 
-    const jwt = await import('jsonwebtoken');
-    const token = jwt.default.sign(
-      { id: 'user-1', email: null, phone: '+21612345678' },
-      'test-access-token-secret',
-    );
+    const { signTestAccessToken } = await import('./sign-test-access-token.js');
+    const { hashPassword } = await import('../lib/password.js');
+    const hashed = await hashPassword('password123');
+    user.password = hashed;
+
+    const token = signTestAccessToken('user-1', { phone: '+21612345678' });
 
     const response = await app.inject({
       method: 'DELETE',
       url: '/api/v1/auth/account',
       cookies: { access_token: token },
-      payload: { confirm: true },
+      payload: { confirm: true, currentPassword: 'password123' },
     });
 
     expect(response.statusCode).toBe(200);

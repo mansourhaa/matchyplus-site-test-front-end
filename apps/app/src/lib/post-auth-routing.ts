@@ -1,4 +1,4 @@
-const DEFAULT_POST_AUTH_ROUTE = '/';
+const DEFAULT_POST_AUTH_ROUTE = '/home';
 const ONBOARDING_ROUTE = '/onboarding';
 
 // Routes that must never be treated as a valid post-auth destination — bouncing back
