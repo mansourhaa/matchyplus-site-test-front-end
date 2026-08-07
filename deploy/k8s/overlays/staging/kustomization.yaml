@@ -9,7 +9,7 @@ resources:
 patches:
   - path: ingress-patch.yaml
   - target:
-      kind: Deployment
+      kind: StatefulSet
       name: saas-api
     patch: |-
       - op: replace
@@ -39,11 +39,11 @@ patches:
 
 images:
   - name: saas-boilerplate-api
-    newName: ghcr.io/khalil-bchir/saas-boilerplate-api
+    newName: ghcr.io/matchy-plus/saas-boilerplate-api
     newTag: staging
   - name: saas-boilerplate-app
-    newName: ghcr.io/khalil-bchir/saas-boilerplate-app
+    newName: ghcr.io/matchy-plus/saas-boilerplate-app
     newTag: staging
   - name: saas-boilerplate-ai
-    newName: ghcr.io/khalil-bchir/saas-boilerplate-ai
+    newName: ghcr.io/matchy-plus/saas-boilerplate-ai
     newTag: staging

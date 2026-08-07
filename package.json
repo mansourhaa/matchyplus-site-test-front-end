@@ -4,22 +4,22 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Khalil-Bchir/full-stack-saas-boilerplate.git"
+    "url": "https://github.com/matchy-plus/matchy-plus.git"
   },
-  "homepage": "https://github.com/Khalil-Bchir/full-stack-saas-boilerplate#readme",
+  "homepage": "https://github.com/matchy-plus/matchy-plus#readme",
   "bugs": {
-    "url": "https://github.com/Khalil-Bchir/full-stack-saas-boilerplate/issues"
+    "url": "https://github.com/matchy-plus/matchy-plus/issues"
   },
   "author": "Khalil Bchir (https://github.com/Khalil-Bchir)",
   "scripts": {
     "build": "turbo run build",
     "build:api": "turbo run build --filter=@saas-boilerplate/api...",
-    "dev": "pnpm infra:up && dotenv -e .env -e .env.development -- turbo run dev",
-    "dev:web": "dotenv -e .env -e .env.development -- turbo run dev",
+    "dev": "pnpm infra:up && dotenv -e .env.development -- turbo run dev",
+    "dev:web": "dotenv -e .env.development -- turbo run dev",
     "dev:ai": "pnpm --filter @saas-boilerplate/ai dev:local",
-    "stage": "dotenv -e .env -e .env.staging -- turbo run stage",
+    "stage": "dotenv -e .env.staging -- turbo run stage",
     "test": "turbo run test",
-    "start": "dotenv -e .env -e .env.production -- turbo run start",
+    "start": "dotenv -e .env.production -- turbo run start",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{js,jsx,cjs,mjs,ts,tsx,cts,mts,mdx,vue}\"",
     "clean": "rm -rf node_modules .turbo && turbo run clean",
@@ -30,9 +30,13 @@
     "db:reset": "turbo run db:reset",
     "db:studio": "turbo run db:studio",
     "db:generate": "turbo run db:generate",
-    "infra:up": "docker compose -f compose.dev.yaml up -d --build redis ai",
-    "infra:down": "docker compose -f compose.dev.yaml down",
-    "infra:logs": "docker compose -f compose.dev.yaml logs -f redis ai"
+    "infra:up": "dotenv -e .env.development -- docker compose -f compose.dev.yaml up -d --build redis ai",
+    "infra:db": "dotenv -e .env.development -- docker compose -f compose.dev.yaml --profile db up -d postgres",
+    "infra:down": "dotenv -e .env.development -- docker compose -f compose.dev.yaml down",
+    "infra:logs": "dotenv -e .env.development -- docker compose -f compose.dev.yaml logs -f redis ai",
+    "mobile:sync": "pnpm --filter @saas-boilerplate/mobile sync:android",
+    "mobile:open": "pnpm --filter @saas-boilerplate/mobile open:android",
+    "mobile:dev": "pnpm --filter @saas-boilerplate/mobile dev:remote"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
@@ -60,7 +64,7 @@
   "pnpm": {
     "overrides": {
       "postcss": "^8.5.23",
-      "@hono/node-server": "^1.19.13",
+      "@prisma/dev": "^0.24.17",
       "@fastify/static": "10.1.2",
       "brace-expansion@1": "1.1.18",
       "brace-expansion@2": "2.1.4",

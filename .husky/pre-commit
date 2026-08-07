@@ -1,4 +1,6 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
-exec 1> /dev/tty
+if [ -t 1 ] && [ -e /dev/tty ]; then
+  exec 1> /dev/tty
+fi
 env FORCE_COLOR=1 npx lint-staged

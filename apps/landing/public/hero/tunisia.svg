@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="640" viewBox="0 0 800 640" role="img" aria-label="Tunisie">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1B4F72"/>
+      <stop offset="100%" stop-color="#2F76BB"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="640" fill="url(#g)"/>
+  <path d="M120 420 Q400 280 680 420 L680 560 L120 560 Z" fill="rgba(255,255,255,0.15)"/>
+  <circle cx="520" cy="180" r="70" fill="#E74C3C"/>
+  <circle cx="540" cy="180" r="55" fill="#1B4F72"/>
+  <polygon points="500,180 545,165 555,180 545,195" fill="white"/>
+  <text x="400" y="580" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-size="36" font-weight="700">Tunisie</text>
+</svg>

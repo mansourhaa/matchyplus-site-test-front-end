@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-import { Prisma, PrismaClient } from '@saas-boilerplate/types';
+import { Prisma, PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
 import { AbstractServiceOptions } from '../types/services.js';
 
@@ -22,9 +22,17 @@ export class AuthorizationService {
     }
 
     try {
-      return await this.prisma.user.findUniqueOrThrow({
+      const user = await this.prisma.user.findUniqueOrThrow({
         where: { id: payload.id },
       });
+
+      // The row is reloaded on every request, so a token stays usable only while the account
+      // is still ACTIVE — banning or deactivating an account cuts its live sessions too.
+      if (user.status !== UserStatus.ACTIVE) {
+        throw new Error('account is not active');
+      }
+
+      return user;
     } catch (err: any) {
       throw err;
     }

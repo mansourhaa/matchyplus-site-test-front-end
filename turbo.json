@@ -9,7 +9,9 @@
     "REDIS_URL",
     "AI_STREAM_KEY",
     "AI_CONSUMER_GROUP",
-    "AI_CACHE_TTL_SECONDS"
+    "AI_CACHE_TTL_SECONDS",
+    "REALTIME_STREAM_KEY",
+    "INSTANCE_ID"
   ],
   "tasks": {
     "build": {
@@ -18,8 +20,7 @@
         "$TURBO_DEFAULT$",
         ".env.production.local",
         ".env.local",
-        ".env.production",
-        ".env"
+        ".env.production"
       ],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "../types/src/generated/**"]
     },
@@ -45,8 +46,7 @@
         "$TURBO_DEFAULT$",
         ".env.development.local",
         ".env.local",
-        ".env.development",
-        ".env"
+        ".env.development"
       ]
     },
     "start": {
@@ -57,8 +57,7 @@
         "$TURBO_DEFAULT$",
         ".env.production.local",
         ".env.local",
-        ".env.production",
-        ".env"
+        ".env.production"
       ]
     },
     "stage": {
@@ -69,13 +68,13 @@
         "$TURBO_DEFAULT$",
         ".env.staging.local",
         ".env.local",
-        ".env.staging",
-        ".env"
+        ".env.staging"
       ]
     },
     "test": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", "**/*.test.ts", "**/*.test.tsx", "vitest.config.*"]
+      "inputs": ["$TURBO_DEFAULT$", "**/*.test.ts", "**/*.test.tsx", "vitest.config.*"],
+      "outputs": ["coverage/**"]
     },
     "db:generate": {
       "cache": false,

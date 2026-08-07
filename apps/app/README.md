@@ -2,7 +2,7 @@
 
 Next.js 16 frontend for the SaaS boilerplate.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 ## App structure
 
@@ -85,9 +85,9 @@ Loaded via `dotenv-cli` from monorepo root env files. See [Environments & NODE_E
 
 | Script | Env file loaded |
 | --- | --- |
-| `pnpm dev` | `.env` + `.env.development` |
-| `pnpm stage` | `.env` + `.env.staging` |
-| `pnpm build` | `.env` + `.env.production` |
+| `pnpm dev` | `.env.development` |
+| `pnpm stage` | `.env.staging` |
+| `pnpm build` | `.env.production` |
 
 Client-accessible variables must use the `NEXT_PUBLIC_` prefix:
 

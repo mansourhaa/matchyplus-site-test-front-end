@@ -2,25 +2,20 @@
 
 Guide for building and deploying the boilerplate to staging and production.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
-Deployment uses **GitHub Actions** (CI) + **Kubernetes + ArgoCD** (GitOps CD). Manifests live in [`deploy/`](../../deploy/README.md).
+Deployment uses **manual Docker builds to GHCR** + **Kubernetes + ArgoCD** (GitOps CD). This repo does **not** use GitHub Actions. Manifests live in [`deploy/`](../../deploy/README.md).
 
-## CI/CD pipeline
+## Deploy pipeline
 
 ```mermaid
 flowchart LR
-    subgraph CI["GitHub Actions — every push/PR"]
+    subgraph Local["Local / release owner"]
         Lint[pnpm lint]
         Test[pnpm test]
         Build[pnpm build]
-        Lint --> Test --> Build
-    end
-
-    subgraph CD["On push to main/staging"]
-        Docker[Build API App AI images]
-        Push[Push to GHCR]
-        Docker --> Push
+        Docker[docker build & push]
+        Lint --> Test --> Build --> Docker
     end
 
     subgraph GitOps["ArgoCD"]
@@ -30,9 +25,9 @@ flowchart LR
         Sync --> Migrate --> Rollout
     end
 
-    Git[GitHub push] --> CI
-    CI -->|passes| CD
-    CD --> GitOps
+    Docker --> GHCR[GHCR]
+    Git[GitHub PR merge] --> GitOps
+    GHCR --> GitOps
     Users[Users] --> Ingress[Ingress]
     Ingress --> AppPod[saas-app]
     Ingress --> ApiPod[saas-api]
@@ -42,19 +37,18 @@ flowchart LR
     AiPod --> PG
 ```
 
-Workflow: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)
-
-| Job | Trigger | Steps |
+| Step | When | What |
 | --- | --- | --- |
-| **Lint, Test & Build** | Every push / PR to `main` or `staging` | `pnpm lint` → `pnpm test` → `pnpm build` |
-| **Publish Docker Images** | Push to `main` or `staging` (after CI passes) | Build & push API + App + AI images to GHCR |
+| Local verify | Before every PR | `pnpm lint` → `pnpm test` → `pnpm build` |
+| Publish images | When promoting to staging/production | Build & push API + App + AI to `ghcr.io/matchy-plus/` |
+| GitOps | After merge to `staging` / `main` | ArgoCD syncs manifests and rolls out |
 
-### Image tags pushed by CI
+### Image tags
 
-| Branch | Tag | SHA tag |
+| Environment | Tag | SHA tag (optional) |
 | --- | --- | --- |
-| `staging` | `staging` | `<commit-sha>` |
-| `main` | `production` | `<commit-sha>` |
+| Staging | `staging` | `<commit-sha>` |
+| Production | `production` | `<commit-sha>` |
 
 ArgoCD deploys the `staging` / `production` tags from GHCR. Deployments use `imagePullPolicy: Always` so new image pushes are picked up on rollout.
 
@@ -82,33 +76,33 @@ Images are published to GitHub Container Registry:
 
 | Image | Dockerfile |
 | --- | --- |
-| `ghcr.io/khalil-bchir/saas-boilerplate-api` | `apps/api/Dockerfile` |
-| `ghcr.io/khalil-bchir/saas-boilerplate-app` | `apps/app/Dockerfile` |
-| `ghcr.io/khalil-bchir/saas-boilerplate-ai` | `apps/ai/Dockerfile` |
+| `ghcr.io/matchy-plus/saas-boilerplate-api` | `apps/api/Dockerfile` |
+| `ghcr.io/matchy-plus/saas-boilerplate-app` | `apps/app/Dockerfile` |
+| `ghcr.io/matchy-plus/saas-boilerplate-ai` | `apps/ai/Dockerfile` |
 
 Redis uses the public `redis:7.4-alpine` image via `deploy/k8s/base/redis/`.
 
 ### Build and push (staging)
 
 ```bash
-docker login ghcr.io -u Khalil-Bchir
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-api:staging -f apps/api/Dockerfile .
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-app:staging -f apps/app/Dockerfile .
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-ai:staging -f apps/ai/Dockerfile apps/ai
-docker push ghcr.io/khalil-bchir/saas-boilerplate-api:staging
-docker push ghcr.io/khalil-bchir/saas-boilerplate-app:staging
-docker push ghcr.io/khalil-bchir/saas-boilerplate-ai:staging
+docker login ghcr.io -u USERNAME
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-api:staging -f apps/api/Dockerfile .
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-app:staging -f apps/app/Dockerfile .
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-ai:staging -f apps/ai/Dockerfile apps/ai
+docker push ghcr.io/matchy-plus/saas-boilerplate-api:staging
+docker push ghcr.io/matchy-plus/saas-boilerplate-app:staging
+docker push ghcr.io/matchy-plus/saas-boilerplate-ai:staging
 ```
 
 ### Build and push (production)
 
 ```bash
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-api:production -f apps/api/Dockerfile .
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-app:production -f apps/app/Dockerfile .
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-ai:production -f apps/ai/Dockerfile apps/ai
-docker push ghcr.io/khalil-bchir/saas-boilerplate-api:production
-docker push ghcr.io/khalil-bchir/saas-boilerplate-app:production
-docker push ghcr.io/khalil-bchir/saas-boilerplate-ai:production
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-api:production -f apps/api/Dockerfile .
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-app:production -f apps/app/Dockerfile .
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-ai:production -f apps/ai/Dockerfile apps/ai
+docker push ghcr.io/matchy-plus/saas-boilerplate-api:production
+docker push ghcr.io/matchy-plus/saas-boilerplate-app:production
+docker push ghcr.io/matchy-plus/saas-boilerplate-ai:production
 ```
 
 ---
@@ -177,7 +171,7 @@ kubectl -n saas-production wait --for=condition=complete job/saas-api-migrate --
 
 Repository URL configured in manifests:
 
-`https://github.com/Khalil-Bchir/full-stack-saas-boilerplate.git`
+`https://github.com/matchy-plus/matchy-plus.git`
 
 ### Install ArgoCD
 
@@ -236,7 +230,7 @@ Kubernetes Job: `deploy/k8s/base/api/migration-job.yaml`
 
 - [ ] `pnpm test` passes
 - [ ] `pnpm build` succeeds
-- [ ] Images pushed to `ghcr.io/khalil-bchir/`
+- [ ] Images pushed to `ghcr.io/matchy-plus/`
 - [ ] Secrets created in `saas-staging` / `saas-production`
 - [ ] `ACCESS_TOKEN_SECRET` and `COOKIE_SECRET` are unique per environment
 - [ ] `DATABASE_URL` points to the correct database

@@ -8,6 +8,23 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/Plan.js'
 export type * from './models/User.js'
+export type * from './models/RefreshToken.js'
+export type * from './models/OtpChallenge.js'
+export type * from './models/OAuthExchangeCode.js'
+export type * from './models/Report.js'
+export type * from './models/Swipe.js'
+export type * from './models/SwipeLog.js'
+export type * from './models/Match.js'
+export type * from './models/Conversation.js'
+export type * from './models/Message.js'
+export type * from './models/MessageLike.js'
+export type * from './models/UserLocation.js'
+export type * from './models/UserBlock.js'
+export type * from './models/Rating.js'
+export type * from './models/Notification.js'
 export type * from './models/AiJob.js'
+export type * from './models/WaitlistEntry.js'
+export type * from './models/WaitlistPending.js'
 export type * from './commonInputTypes.js'

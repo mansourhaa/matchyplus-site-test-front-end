@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y bash openssl && rm -rf /var/lib/apt/lis
 WORKDIR /server
 
 RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 RUN pnpm install turbo --global
 
 COPY . .
@@ -21,6 +23,8 @@ WORKDIR /server
 
 RUN apt-get update && apt-get install -y openssl bash && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@10.12.4 --activate
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 RUN pnpm install turbo --global
 
 COPY .gitignore .gitignore

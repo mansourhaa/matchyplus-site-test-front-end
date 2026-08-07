@@ -5,6 +5,9 @@ import jwt from 'jsonwebtoken';
 import { User } from '@saas-boilerplate/types';
 
 import { AuthorizationService } from '../services/authorization.js';
+import { ADMIN_SESSION_COOKIE } from '../utils/admin-session.js';
+import { MEMBER_ACCESS_COOKIE } from '../utils/member-session.js';
+import { isAdminRole } from '../utils/roles.js';
 
 /**
  * Authorization plugin that handle every step in authorization process.
@@ -19,7 +22,14 @@ async function authorization(fastify: FastifyInstance) {
     const headerValue = request.headers['authorization'] || '';
 
     const matches = headerValue.match(/bearer\s+(\S+)/i);
-    const token = matches ? matches[1] : null;
+    // Both the admin panel and the member app hold their token in an HttpOnly cookie, so
+    // neither can set the header — the browser replays the cookie instead. Other clients
+    // (e.g. mobile) keep using the bearer header.
+    const token = matches
+      ? matches[1]
+      : (request.cookies?.[ADMIN_SESSION_COOKIE] ??
+        request.cookies?.[MEMBER_ACCESS_COOKIE] ??
+        null);
     if (!token) {
       throw httpErrors.unauthorized(
         // @ts-ignore
@@ -32,11 +42,29 @@ async function authorization(fastify: FastifyInstance) {
     try {
       request.loggedUser = await authorizationService.verifyAccessToken(token as string);
     } catch (err) {
-      throw err;
+      // Expired, malformed, or pointing at a user that no longer exists — all of these are
+      // "not authenticated", not a server error, so surface 401 rather than 500.
+      throw httpErrors.unauthorized(
+        // @ts-ignore
+        request.t('invalid_token') as string,
+      );
+    }
+  }
+
+  /**
+   * Must run after `verifyToken`, which is what populates `request.loggedUser`.
+   */
+  async function verifyAdmin(request: FastifyRequest) {
+    if (!request.loggedUser || !isAdminRole(request.loggedUser.role)) {
+      throw httpErrors.forbidden(
+        // @ts-ignore
+        request.t('admin_access_required') as string,
+      );
     }
   }
 
   fastify.decorate<any>('verifyToken', verifyToken);
+  fastify.decorate<any>('verifyAdmin', verifyAdmin);
   fastify.decorateRequest<User | null>('loggedUser', null);
 }
 

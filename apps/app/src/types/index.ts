@@ -1,1 +1,1 @@
-export type { AuthUser, AuthState, LoginInput, RegisterInput } from '@/features/auth/types';
+export type { AuthUser, AuthState } from '@/features/auth/types';

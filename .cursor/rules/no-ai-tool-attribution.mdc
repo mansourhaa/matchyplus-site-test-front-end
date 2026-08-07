@@ -1,0 +1,32 @@
+---
+description: Never attribute or mention AI coding tools in any project output
+alwaysApply: true
+---
+
+# No AI tool attribution
+
+Never mention, credit, or reference AI coding assistants or AI tools in any project artifact.
+
+## Forbidden in all outputs
+
+Do not mention tools such as Cursor, Copilot, ChatGPT, Claude, Codex, or similar AI assistants in:
+
+- git commit messages
+- git trailers (`Co-authored-by`, `Signed-off-by` for AI agents, etc.)
+- pull request titles, descriptions, comments, or reviews
+- code comments
+- documentation
+- issue comments
+- changelogs
+- generated text meant for humans on the team or in the repo
+
+## Required behavior
+
+- Write commits, PRs, reviews, docs, and comments as if authored only by the human contributor
+- Do not add AI co-author trailers
+- Do not say work was generated, assisted, or reviewed by an AI tool
+- If a template or hook would insert AI attribution, remove it before finishing
+
+## Exception
+
+This rule file may name those tools only to forbid them. No other file should.

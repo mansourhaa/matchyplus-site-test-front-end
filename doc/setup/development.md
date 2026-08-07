@@ -2,7 +2,7 @@
 
 Day-to-day commands and conventions for working in the monorepo.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 > For env file selection and `NODE_ENV` behavior, see [Environments & NODE_ENV](./environments-and-node-env.md).
 
@@ -16,10 +16,10 @@ flowchart TD
     Code --> Test[pnpm test]
     Test --> Lint[pnpm lint]
     Lint --> Commit[pnpm commit]
-    Commit --> Push[git push]
-    Push --> CI[GitHub Actions CI]
-    CI -->|staging branch| StageDeploy[ArgoCD staging]
-    CI -->|main branch| ProdDeploy[ArgoCD production]
+    Commit --> Push[git push / open PR]
+    Push --> Review[Teammate review]
+    Review -->|staging promotion| StageDeploy[ArgoCD staging]
+    Review -->|main promotion| ProdDeploy[ArgoCD production]
 ```
 
 ## Command map
@@ -191,7 +191,7 @@ pnpm db:studio
 
 ## IDE setup
 
-Recommended VS Code / Cursor extensions:
+Recommended editor extensions:
 
 - ESLint
 - Prettier

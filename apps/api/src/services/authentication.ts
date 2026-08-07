@@ -1,114 +1,179 @@
-import bcrypt from 'bcryptjs';
-import jwt, { Secret, SignOptions } from 'jsonwebtoken';
-
 import { PrismaClient } from '@saas-boilerplate/types';
 
-import { config } from '../config.js';
+import { hashPassword, verifyPassword } from '../lib/password.js';
 import {
   AuthCheckPayload,
-  AuthCheckResult,
-  ForgotPayload,
-  ForgotResult,
+  ChangePasswordPayload,
+  DeleteAccountPayload,
   LoginPayload,
-  LoginResult,
-  RegisterPayload,
-  RegisterResult,
-  ResetPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { isAdminRole } from '../utils/roles.js';
+import { TokenService } from './token.js';
 
 export class AuthenticationService {
   prisma: PrismaClient;
+  tokenService: TokenService;
+
   constructor(options: AbstractServiceOptions) {
     this.prisma = options.prisma;
+    this.tokenService = new TokenService({ prisma: options.prisma });
   }
-
   async login(payload: LoginPayload) {
-    const { accessTokenSecret, accessTokenTtl } = config;
+    let user;
 
-    const secret = accessTokenSecret as Secret;
-    const expiresIn = Number(accessTokenTtl);
-    const signOptions: SignOptions = { expiresIn };
-
-    let user = null;
     try {
       user = await this.prisma.user.findUniqueOrThrow({
-        where: { email: payload.email.toLowerCase() },
+        where: {
+          email: payload.email.toLowerCase(),
+        },
         select: {
-          email: true,
-          name: true,
           id: true,
+          email: true,
+          phone: true,
+          name: true,
           password: true,
+          role: true,
+          status: true,
         },
       });
-    } catch (err) {
-      throw new Error('invalid credentials');
+    } catch {
+      throw new Error('invalid_credentials');
     }
-    const isPasswordValid = await this.validatePassword(payload.password, user.password as string);
+
+    if (!user.password) {
+      throw new Error('invalid_credentials');
+    }
+
+    const isPasswordValid = await verifyPassword(payload.password, user.password);
 
     if (!isPasswordValid) {
-      throw new Error('invalid credentials');
+      throw new Error('invalid_credentials');
     }
-    const tokenPayload = {
-      id: user.id,
-      email: user.email,
-      name: user.email,
-    };
-    const accessToken = jwt.sign(tokenPayload, secret, signOptions);
+
+    // Do not reveal whether the account is banned, inactive, or nonexistent — issueTokenPair's
+    // ACTIVE-status gate throws the same invalid_credentials error as a bad password.
+    const tokens = await this.tokenService.issueTokenPair(user);
+
+    const { password: _password, ...safeUser } = user;
+
     return {
-      accessToken,
-      user,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: safeUser,
     };
   }
 
-  async register(payload: RegisterPayload) {
-    let user = null;
-    user = await this.prisma.user.findUnique({
-      where: { email: payload.email.toLowerCase() },
-      select: {
-        email: true,
-        id: true,
-        password: true,
-      },
-    });
-    if (user) {
-      throw new Error('user already exist');
+  /**
+   * Authenticates against the admin panel. Non-admin accounts are rejected with
+   * the same error as invalid credentials so roles cannot be enumerated.
+   */
+  async adminLogin(payload: LoginPayload) {
+    const data = await this.login(payload);
+
+    if (!isAdminRole(data.user.role)) {
+      throw new Error('invalid_credentials');
     }
 
-    const hashedPassword = await this.hashPassword(payload.password);
-    user = await this.prisma.user.create({
-      data: {
-        email: payload.email,
-        password: hashedPassword,
-        name: payload.email,
-      },
-    });
-    return user;
+    return data;
   }
 
   async authCheck(payload: AuthCheckPayload) {
-    let user = null;
-
-    console.log(payload);
     try {
-      user = await this.prisma.user.findUniqueOrThrow({
-        where: { id: payload.id },
+      const user = await this.prisma.user.findUniqueOrThrow({
+        where: {
+          id: payload.id,
+        },
         select: {
-          email: true,
           id: true,
+          email: true,
+          phone: true,
+          name: true,
+          auth_provider: true,
+          email_verified: true,
+          role: true,
+          onboarding_completed_at: true,
         },
       });
-    } catch (err) {
-      throw new Error('Not Found');
+
+      const { onboarding_completed_at, ...rest } = user;
+      return { ...rest, onboarding_completed: Boolean(onboarding_completed_at) };
+    } catch {
+      throw new Error('user_not_found');
     }
-    return user;
   }
-  private async hashPassword(password: string): Promise<string> {
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    return hashedPassword;
+
+  async changePassword(payload: ChangePasswordPayload) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: payload.userId,
+      },
+    });
+
+    if (!user || !user.password) {
+      throw new Error('password_not_set');
+    }
+
+    const isValid = await verifyPassword(payload.currentPassword, user.password);
+
+    if (!isValid) {
+      throw new Error('invalid_current_password');
+    }
+
+    const hashedPassword = await hashPassword(payload.newPassword);
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        password: hashedPassword,
+      },
+    });
+
+    await this.tokenService.revokeAllRefreshTokens(user.id);
+
+    return {
+      message: 'password_changed',
+      forceLogout: true,
+    };
   }
-  private async validatePassword(password: string, hash: string): Promise<boolean> {
-    return await bcrypt.compare(password, hash);
+
+  async deleteAccount(payload: DeleteAccountPayload) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: payload.userId,
+      },
+    });
+
+    if (!user) {
+      throw new Error('user_not_found');
+    }
+
+    if (!payload.confirm) {
+      throw new Error('account_deletion_not_confirmed');
+    }
+
+    if (user.password) {
+      if (!payload.currentPassword) {
+        throw new Error('invalid_current_password');
+      }
+
+      const isValid = await verifyPassword(payload.currentPassword, user.password);
+
+      if (!isValid) {
+        throw new Error('invalid_current_password');
+      }
+    }
+
+    await this.prisma.user.delete({
+      where: {
+        id: user.id,
+      },
+    });
+
+    return {
+      message: 'account_deleted',
+    };
   }
 }

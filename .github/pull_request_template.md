@@ -4,7 +4,7 @@
 
 ## Ticket / task
 
-<!-- Link the Jira / Linear / GitHub issue (required when one exists). -->
+<!-- Link the Linear / Jira / GitHub issue (required when one exists). -->
 
 - Ticket:
 
@@ -12,7 +12,7 @@
 
 Confirm this PR targets the correct branch:
 
-- [ ] `feature/*` or `fix/*` → **`dev`**
+- [ ] `feature/*` / `fix/*` / `chore/*` / … → **`dev`**
 - [ ] `dev` → **`staging`** (promotion for QA)
 - [ ] `staging` → **`main`** (production promotion)
 
@@ -20,10 +20,16 @@ Confirm this PR targets the correct branch:
 
 - [ ] I have tested this locally (`pnpm lint`, `pnpm test`, and relevant manual checks)
 - [ ] This PR only contains changes related to the ticket / summary
-- [ ] I have requested at least one reviewer
+- [ ] I have requested at least one reviewer (CODEOWNERS may auto-request)
 
-## Social contract — do not self-merge
+## Self-merge policy
 
-**Do not merge your own pull request.**
+**Do not merge your own pull request** unless you are a **repository / org admin**.
 
-A teammate must review and merge. Authors may rebase, push fixes, and respond to review comments, but merging is reserved for a reviewer (or an agreed release owner for `dev` → `staging` / `staging` → `main` promotions).
+Non-admins: a teammate (or CODEOWNER) must review and merge. Authors may rebase, push fixes, and respond to review comments.
+
+Admins may merge their own PRs when needed (prefer a second pair of eyes for `staging` → `main` promotions).
+
+## Review language
+
+**PR reviews and review comments must be in English.**

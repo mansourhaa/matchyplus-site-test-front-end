@@ -4,7 +4,7 @@ Complete guide for the **async AI integration** in this monorepo:
 
 **Fastify product API → Redis Streams queue → Flask worker → PostgreSQL job status**
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 Related package docs:
 
@@ -471,7 +471,7 @@ python -m app.entrypoint
 
 Local Compose is **not** used in staging/production. Deployment follows the existing stack:
 
-**GitHub Actions → GHCR images → ArgoCD → Kubernetes**
+**Manual image build/push → GHCR → ArgoCD → Kubernetes** (no GitHub Actions).
 
 ### Manifests
 
@@ -483,7 +483,7 @@ Local Compose is **not** used in staging/production. Deployment follows the exis
 
 Overlays set image tags:
 
-- staging → `ghcr.io/khalil-bchir/saas-boilerplate-ai:staging`
+- staging → `ghcr.io/matchy-plus/saas-boilerplate-ai:staging`
 - production → `...:production`
 
 ### Secrets
@@ -517,11 +517,11 @@ Creates:
 ### Image build
 
 ```bash
-docker build -t ghcr.io/khalil-bchir/saas-boilerplate-ai:staging \
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-ai:staging \
   -f apps/ai/Dockerfile apps/ai
 ```
 
-CI template (`.github/workflows/ci.yml.disabled`) already includes the AI image publish step.
+Build and push the AI image manually when promoting (see [Deployment](../setup/deployment.md)).
 
 ---
 

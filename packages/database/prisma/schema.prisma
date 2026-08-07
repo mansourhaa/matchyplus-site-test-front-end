@@ -7,16 +7,441 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id         String   @id @default(cuid())
-  name       String
-  email      String   @unique
-  password   String   @db.Text()
+enum Role {
+  USER
+  SUPPORT
+  MODERATOR
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+enum UserPlan {
+  FREE
+  PREMIUM
+  PREMIUM_PLUS
+}
+
+/// Treatment state of a profile report, from filed to handled by an admin.
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+/// Set on the identity step of onboarding. INDIVIDUAL (old app: "Employé") looks for
+/// work/services; PROVIDER (old app: "Employeur") offers them — this determines whether
+/// the experience/education onboarding steps are shown at all.
+enum ProfileType {
+  INDIVIDUAL
+  PROVIDER
+}
+
+/// What an OTP challenge is verifying ownership for. Never used as a login method itself —
+/// see doc/reviews/authentication-contract.md.
+enum OtpPurpose {
+  SIGNUP_VERIFICATION
+  PHONE_LINK
+  PASSWORD_RESET
+}
+
+/// Plan configuration edited from the admin "Gestion Forfaits" section.
+/// The id mirrors UserPlan so a user's plan resolves to exactly one row.
+model Plan {
+  id          UserPlan @id
+  name        String
+  price       Float    @default(0)
+  color       String   @default("#888888")
+  is_active   Boolean  @default(true)
+  badge       String   @default("")
+  trial_days  Int      @default(0)
+  description String   @default("")
+  features    String[] @default([])
+
+  // Limits: -1 means unlimited.
+  swipes_per_day           Int @default(-1)
+  profiles_per_category    Int @default(-1)
+  messages_per_day         Int @default(-1)
+  actions_per_day          Int @default(-1)
+  boosts_per_month         Int @default(0)
+  super_connects_per_month Int @default(0)
+
+  sort_order Int      @default(0)
   create_at  DateTime @default(now())
   updated_at DateTime @default(now()) @updatedAt
-  aiJobs     AiJob[]
+}
+
+model User {
+  id            String  @id @default(cuid())
+  name          String
+  email         String? @unique
+  phone         String? @unique
+  password      String? @db.Text()
+  auth_provider String  @default("phone")
+
+  role   Role       @default(USER)
+  status UserStatus @default(ACTIVE)
+  plan   UserPlan   @default(FREE)
+
+  // Profile fields surfaced by the admin panel.
+  job            String?
+  category       String?
+  city           String?
+  bio            String?   @db.Text()
+  image          String?   @db.Text()
+  /// Served path (e.g. `/uploads/videos/<uuid>.mp4`), never inline data — video is only
+  /// ever set via the real upload pipeline in ProfileService, unlike `image` which may
+  /// still hold a base64 data URL from onboarding until that's migrated to real uploads too.
+  video          String?   @db.Text()
+  interests      String[]  @default([])
+  languages      String[]  @default([])
+  contact_modes  String[]  @default([])
+  experience     String?
+  schedule       String?
+  price          String?
+  rating         Float     @default(0)
+  reviews        Int       @default(0)
+  matches        Int       @default(0)
+  missions       Int       @default(0)
+  total_earnings Int       @default(0)
+  last_login     DateTime?
+
+  // Onboarding wizard fields (identity/interests/experience/education/location steps).
+  // `job`, `bio`, `image`, `interests`, `languages`, `contact_modes`, `price`,
+  // `experience`, and `city` above are shared with the admin panel and reused here.
+  profile_type            ProfileType?
+  offer_service           Boolean      @default(false)
+  service_type            String?
+  sector                  String?
+  selected_goals          String[]     @default([])
+  experiences             Json?
+  education_level         String?
+  educations              Json?
+  availability_days       String[]     @default([])
+  availability_hours      String[]     @default([])
+  onboarding_completed_at DateTime?
+
+  // Authentication fields.
+  email_verified Boolean @default(false)
+  google_id      String? @unique
+  linkedin_id    String? @unique
+  phone_verified Boolean @default(false)
+
+  /// Matching / discovery fields (scripted Discovery v5 in apps/api). service_type and
+  /// profile_type are shared with the onboarding wizard above, not redeclared here —
+  /// profile_type's ProfileType enum values are plain strings at the TS level, so the
+  /// matching code's `string | null` typing already reads them compatibly.
+  goals           String[] @default([])
+  looking_for     String?  @db.Text()
+  activity_sector String?
+  gps_latitude    Float?
+  gps_longitude   Float?
+
+  /// In-app notification preferences. Master (`notify_all`) must be on AND the per-category
+  /// toggle for the event. `notify_email` is independent (checked by the email layer).
+  notify_all      Boolean @default(true)
+  notify_matches  Boolean @default(true)
+  notify_messages Boolean @default(true)
+  notify_views    Boolean @default(true)
+  notify_email    Boolean @default(true)
+
+  create_at  DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  aiJobs               AiJob[]
+  refresh_tokens       RefreshToken[]
+  oauth_exchange_codes OAuthExchangeCode[]
+  otp_challenges       OtpChallenge[]
+  notifications        Notification[]
+
+  reports_made     Report[] @relation("ReportsMade")
+  reports_received Report[] @relation("ReportsReceived")
+
+  swipes_made       Swipe[]       @relation("SwipesMade")
+  swipes_received   Swipe[]       @relation("SwipesReceived")
+  swipe_logs        SwipeLog[]    @relation("SwipeLogsByUser")
+  swipe_log_targets SwipeLog[]    @relation("SwipeLogsOnTarget")
+  matches_as_low    Match[]       @relation("MatchesAsLow")
+  matches_as_high   Match[]       @relation("MatchesAsHigh")
+  location          UserLocation?
+  blocks_made       UserBlock[]   @relation("BlocksMade")
+  blocks_received   UserBlock[]   @relation("BlocksReceived")
+  ratings_given     Rating[]      @relation("RatingsGiven")
+  ratings_received  Rating[]      @relation("RatingsReceived")
+
+  conversations_as_low  Conversation[] @relation("ConversationsAsLow")
+  conversations_as_high Conversation[] @relation("ConversationsAsHigh")
+  messages_sent         Message[]      @relation("MessagesSent")
+  message_likes         MessageLike[]
 
   @@index([email])
+  @@index([phone])
+  @@index([status])
+  @@index([plan])
+}
+
+model RefreshToken {
+  id         String    @id
+  token_hash String    @unique @db.Text()
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  expires_at DateTime
+  revoked_at DateTime?
+  create_at  DateTime  @default(now())
+
+  @@index([user_id])
+}
+
+/// Purpose-scoped phone OTP challenge — never a login mechanism itself, only proof of
+/// phone ownership for signup verification, phone linking, or password reset (see
+/// doc/reviews/authentication-contract.md). `user_id` is null for SIGNUP_VERIFICATION,
+/// since the phone may not have an account yet at that point.
+///
+/// A signup-verification challenge, once successfully verified, also carries a one-time
+/// "grant" (`grant_hash`/`grant_expires_at`/`grant_consumed_at`) that register-phone must
+/// present to actually create the account — this is what lets OTP verification prove
+/// ownership without itself creating a user or a session.
+model OtpChallenge {
+  id          String     @id @default(cuid())
+  phone       String
+  purpose     OtpPurpose
+  code_hash   String     @db.Text()
+  attempts    Int        @default(0)
+  expires_at  DateTime
+  consumed_at DateTime?
+
+  user_id String?
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  grant_hash        String?   @db.Text()
+  grant_expires_at  DateTime?
+  grant_consumed_at DateTime?
+
+  create_at DateTime @default(now())
+
+  @@index([phone, purpose])
+  @@index([user_id])
+}
+
+/// One-time code that bridges an OAuth provider redirect to the SPA.
+/// Only a hash of the code is stored, never raw access or refresh tokens.
+model OAuthExchangeCode {
+  id          String    @id @default(cuid())
+  code_hash   String    @unique @db.Text()
+  user_id     String
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  expires_at  DateTime
+  consumed_at DateTime?
+  create_at   DateTime  @default(now())
+
+  @@index([user_id])
+}
+
+/// A profile report where one user flags another.
+/// Deleting either user removes the related reports.
+model Report {
+  id      String       @id @default(cuid())
+  reason  String
+  details String?      @db.Text()
+  status  ReportStatus @default(PENDING)
+
+  reporter_id String
+  reporter    User   @relation("ReportsMade", fields: [reporter_id], references: [id], onDelete: Cascade)
+  reported_id String
+  reported    User   @relation("ReportsReceived", fields: [reported_id], references: [id], onDelete: Cascade)
+
+  create_at  DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@index([reported_id])
+  @@index([reporter_id])
+  @@index([status])
+}
+
+/// Live swipe state + append-only logs. WITHDRAWN is not a pass — feed exclusion
+/// only applies to LEFT and RIGHT (see DiscoveryService).
+enum SwipeDirection {
+  LEFT
+  RIGHT
+  WITHDRAWN
+}
+
+/// Current swipe between two users (one row per pair). Upserted on each action.
+model Swipe {
+  id         String         @id @default(cuid())
+  swiper_id  String
+  swiper     User           @relation("SwipesMade", fields: [swiper_id], references: [id], onDelete: Cascade)
+  target_id  String
+  target     User           @relation("SwipesReceived", fields: [target_id], references: [id], onDelete: Cascade)
+  direction  SwipeDirection
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+
+  @@unique([swiper_id, target_id])
+  @@index([swiper_id, direction])
+  @@index([target_id, direction])
+}
+
+/// Append-only audit trail. Daily RIGHT count drives quota (UTC day).
+model SwipeLog {
+  id        String         @id @default(cuid())
+  user_id   String
+  user      User           @relation("SwipeLogsByUser", fields: [user_id], references: [id], onDelete: Cascade)
+  target_id String
+  target    User           @relation("SwipeLogsOnTarget", fields: [target_id], references: [id], onDelete: Cascade)
+  direction SwipeDirection
+  swiped_at DateTime       @default(now())
+
+  @@index([user_id, swiped_at, direction])
+  @@index([user_id, target_id])
+}
+
+/// Mutual RIGHT swipe. Presence of the row = active match (no status column).
+/// user_low_id / user_high_id are lexicographically ordered for a stable unique pair.
+model Match {
+  id           String   @id @default(cuid())
+  user_low_id  String
+  user_low     User     @relation("MatchesAsLow", fields: [user_low_id], references: [id], onDelete: Cascade)
+  user_high_id String
+  user_high    User     @relation("MatchesAsHigh", fields: [user_high_id], references: [id], onDelete: Cascade)
+  matched_at   DateTime @default(now())
+
+  conversation Conversation?
+
+  @@unique([user_low_id, user_high_id])
+  @@index([user_low_id])
+  @@index([user_high_id])
+}
+
+enum MessageType {
+  TEXT
+  VOICE
+}
+
+/// 1:1 thread owned by the messaging feature. Created on mutual match; match_id is
+/// nulled on unmatch so history survives (composer stays read-only until rematch).
+model Conversation {
+  id           String   @id @default(cuid())
+  match_id     String?  @unique
+  match        Match?   @relation(fields: [match_id], references: [id], onDelete: SetNull)
+  user_low_id  String
+  user_low     User     @relation("ConversationsAsLow", fields: [user_low_id], references: [id], onDelete: Cascade)
+  user_high_id String
+  user_high    User     @relation("ConversationsAsHigh", fields: [user_high_id], references: [id], onDelete: Cascade)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  messages Message[]
+
+  @@unique([user_low_id, user_high_id])
+  @@index([user_low_id])
+  @@index([user_high_id])
+}
+
+model Message {
+  id              String       @id @default(cuid())
+  conversation_id String
+  conversation    Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  sender_id       String
+  sender          User         @relation("MessagesSent", fields: [sender_id], references: [id], onDelete: Cascade)
+  content         String       @default("") @db.Text
+  message_type    MessageType  @default(TEXT)
+  media_url       String?      @unique
+  is_read         Boolean      @default(false)
+  created_at      DateTime     @default(now())
+
+  likes MessageLike[]
+
+  @@index([conversation_id, created_at])
+  @@index([conversation_id, is_read])
+  @@index([sender_id, created_at])
+}
+
+/// Persisted double-tap like on a message (legacy Matchy had client-only likes).
+model MessageLike {
+  id         String   @id @default(cuid())
+  message_id String
+  message    Message  @relation(fields: [message_id], references: [id], onDelete: Cascade)
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+
+  @@unique([message_id, user_id])
+  @@index([user_id])
+}
+
+/// Dynamic GPS for discovery radius (preferred over static User.gps_*).
+model UserLocation {
+  id               String   @id @default(cuid())
+  user_id          String   @unique
+  user             User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  latitude         Float
+  longitude        Float
+  location_enabled Boolean  @default(true)
+  city             String?
+  country          String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+}
+
+/// Bidirectional block check excludes both users from each other's feed and swipes.
+model UserBlock {
+  id         String   @id @default(cuid())
+  blocker_id String
+  blocker    User     @relation("BlocksMade", fields: [blocker_id], references: [id], onDelete: Cascade)
+  blocked_id String
+  blocked    User     @relation("BlocksReceived", fields: [blocked_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+
+  @@unique([blocker_id, blocked_id])
+  @@index([blocked_id])
+}
+
+/// One rating per (rater, ratee) pair, only allowed between matched users — insert-only,
+/// no edits once submitted. Aggregated into User.rating/reviews on every write rather
+/// than read live, so profile reads stay a single-row lookup.
+model Rating {
+  id         String   @id @default(cuid())
+  rater_id   String
+  rater      User     @relation("RatingsGiven", fields: [rater_id], references: [id], onDelete: Cascade)
+  ratee_id   String
+  ratee      User     @relation("RatingsReceived", fields: [ratee_id], references: [id], onDelete: Cascade)
+  value      Int
+  created_at DateTime @default(now())
+
+  @@unique([rater_id, ratee_id])
+  @@index([ratee_id])
+}
+
+/// What kind of event a Notification row represents. Kept as an enum (rather than a free
+/// string) so the set of event types the app can send stays explicit and query-able.
+enum NotificationType {
+  PROFILE_VIEW
+  MATCH
+  MATCH_REQUEST
+  MESSAGE
+}
+
+/// In-app notification feed. A row is created the moment the triggering event happens,
+/// independent of whether the recipient is online — a connected client also gets a live
+/// realtime push for immediate feedback, but the row is what makes the notification show
+/// up next time the recipient opens the app, even if they were offline when it happened.
+model Notification {
+  id         String           @id @default(cuid())
+  user_id    String
+  user       User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  type       NotificationType
+  data       Json
+  read_at    DateTime?
+  created_at DateTime         @default(now())
+
+  @@index([user_id, created_at])
+  @@index([user_id, read_at])
 }
 
 enum AiJobType {
@@ -57,4 +482,27 @@ model AiJob {
   @@index([status, createdAt])
   @@index([userId, createdAt])
   @@index([type, status])
+}
+
+/// Early-access waitlist entry (landing page SMS verification flow).
+model WaitlistEntry {
+  id         String   @id @default(cuid())
+  phone      String   @unique
+  name       String
+  occupation String
+  created_at DateTime @default(now())
+
+  @@index([created_at(sort: Desc)])
+}
+
+/// Pending OTP verification before a waitlist row is committed.
+model WaitlistPending {
+  id         String   @id @default(cuid())
+  phone      String   @unique
+  name       String
+  occupation String
+  code_hash  String   @db.Text()
+  attempts   Int      @default(0)
+  expires_at DateTime
+  created_at DateTime @default(now())
 }

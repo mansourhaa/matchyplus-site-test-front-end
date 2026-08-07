@@ -51,8 +51,25 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  Plan: 'Plan',
   User: 'User',
-  AiJob: 'AiJob'
+  RefreshToken: 'RefreshToken',
+  OtpChallenge: 'OtpChallenge',
+  OAuthExchangeCode: 'OAuthExchangeCode',
+  Report: 'Report',
+  Swipe: 'Swipe',
+  SwipeLog: 'SwipeLog',
+  Match: 'Match',
+  Conversation: 'Conversation',
+  Message: 'Message',
+  MessageLike: 'MessageLike',
+  UserLocation: 'UserLocation',
+  UserBlock: 'UserBlock',
+  Rating: 'Rating',
+  Notification: 'Notification',
+  AiJob: 'AiJob',
+  WaitlistEntry: 'WaitlistEntry',
+  WaitlistPending: 'WaitlistPending'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -71,16 +88,261 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const PlanScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  price: 'price',
+  color: 'color',
+  is_active: 'is_active',
+  badge: 'badge',
+  trial_days: 'trial_days',
+  description: 'description',
+  features: 'features',
+  swipes_per_day: 'swipes_per_day',
+  profiles_per_category: 'profiles_per_category',
+  messages_per_day: 'messages_per_day',
+  actions_per_day: 'actions_per_day',
+  boosts_per_month: 'boosts_per_month',
+  super_connects_per_month: 'super_connects_per_month',
+  sort_order: 'sort_order',
+  create_at: 'create_at',
+  updated_at: 'updated_at'
+} as const
+
+export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
+  phone: 'phone',
   password: 'password',
+  auth_provider: 'auth_provider',
+  role: 'role',
+  status: 'status',
+  plan: 'plan',
+  job: 'job',
+  category: 'category',
+  city: 'city',
+  bio: 'bio',
+  image: 'image',
+  video: 'video',
+  interests: 'interests',
+  languages: 'languages',
+  contact_modes: 'contact_modes',
+  experience: 'experience',
+  schedule: 'schedule',
+  price: 'price',
+  rating: 'rating',
+  reviews: 'reviews',
+  matches: 'matches',
+  missions: 'missions',
+  total_earnings: 'total_earnings',
+  last_login: 'last_login',
+  profile_type: 'profile_type',
+  offer_service: 'offer_service',
+  service_type: 'service_type',
+  sector: 'sector',
+  selected_goals: 'selected_goals',
+  experiences: 'experiences',
+  education_level: 'education_level',
+  educations: 'educations',
+  availability_days: 'availability_days',
+  availability_hours: 'availability_hours',
+  onboarding_completed_at: 'onboarding_completed_at',
+  email_verified: 'email_verified',
+  google_id: 'google_id',
+  linkedin_id: 'linkedin_id',
+  phone_verified: 'phone_verified',
+  goals: 'goals',
+  looking_for: 'looking_for',
+  activity_sector: 'activity_sector',
+  gps_latitude: 'gps_latitude',
+  gps_longitude: 'gps_longitude',
+  notify_all: 'notify_all',
+  notify_matches: 'notify_matches',
+  notify_messages: 'notify_messages',
+  notify_views: 'notify_views',
+  notify_email: 'notify_email',
   create_at: 'create_at',
   updated_at: 'updated_at'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const RefreshTokenScalarFieldEnum = {
+  id: 'id',
+  token_hash: 'token_hash',
+  user_id: 'user_id',
+  expires_at: 'expires_at',
+  revoked_at: 'revoked_at',
+  create_at: 'create_at'
+} as const
+
+export type RefreshTokenScalarFieldEnum = (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum]
+
+
+export const OtpChallengeScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  purpose: 'purpose',
+  code_hash: 'code_hash',
+  attempts: 'attempts',
+  expires_at: 'expires_at',
+  consumed_at: 'consumed_at',
+  user_id: 'user_id',
+  grant_hash: 'grant_hash',
+  grant_expires_at: 'grant_expires_at',
+  grant_consumed_at: 'grant_consumed_at',
+  create_at: 'create_at'
+} as const
+
+export type OtpChallengeScalarFieldEnum = (typeof OtpChallengeScalarFieldEnum)[keyof typeof OtpChallengeScalarFieldEnum]
+
+
+export const OAuthExchangeCodeScalarFieldEnum = {
+  id: 'id',
+  code_hash: 'code_hash',
+  user_id: 'user_id',
+  expires_at: 'expires_at',
+  consumed_at: 'consumed_at',
+  create_at: 'create_at'
+} as const
+
+export type OAuthExchangeCodeScalarFieldEnum = (typeof OAuthExchangeCodeScalarFieldEnum)[keyof typeof OAuthExchangeCodeScalarFieldEnum]
+
+
+export const ReportScalarFieldEnum = {
+  id: 'id',
+  reason: 'reason',
+  details: 'details',
+  status: 'status',
+  reporter_id: 'reporter_id',
+  reported_id: 'reported_id',
+  create_at: 'create_at',
+  updated_at: 'updated_at'
+} as const
+
+export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
+
+
+export const SwipeScalarFieldEnum = {
+  id: 'id',
+  swiper_id: 'swiper_id',
+  target_id: 'target_id',
+  direction: 'direction',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type SwipeScalarFieldEnum = (typeof SwipeScalarFieldEnum)[keyof typeof SwipeScalarFieldEnum]
+
+
+export const SwipeLogScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  target_id: 'target_id',
+  direction: 'direction',
+  swiped_at: 'swiped_at'
+} as const
+
+export type SwipeLogScalarFieldEnum = (typeof SwipeLogScalarFieldEnum)[keyof typeof SwipeLogScalarFieldEnum]
+
+
+export const MatchScalarFieldEnum = {
+  id: 'id',
+  user_low_id: 'user_low_id',
+  user_high_id: 'user_high_id',
+  matched_at: 'matched_at'
+} as const
+
+export type MatchScalarFieldEnum = (typeof MatchScalarFieldEnum)[keyof typeof MatchScalarFieldEnum]
+
+
+export const ConversationScalarFieldEnum = {
+  id: 'id',
+  match_id: 'match_id',
+  user_low_id: 'user_low_id',
+  user_high_id: 'user_high_id',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type ConversationScalarFieldEnum = (typeof ConversationScalarFieldEnum)[keyof typeof ConversationScalarFieldEnum]
+
+
+export const MessageScalarFieldEnum = {
+  id: 'id',
+  conversation_id: 'conversation_id',
+  sender_id: 'sender_id',
+  content: 'content',
+  message_type: 'message_type',
+  media_url: 'media_url',
+  is_read: 'is_read',
+  created_at: 'created_at'
+} as const
+
+export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
+
+
+export const MessageLikeScalarFieldEnum = {
+  id: 'id',
+  message_id: 'message_id',
+  user_id: 'user_id',
+  created_at: 'created_at'
+} as const
+
+export type MessageLikeScalarFieldEnum = (typeof MessageLikeScalarFieldEnum)[keyof typeof MessageLikeScalarFieldEnum]
+
+
+export const UserLocationScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  location_enabled: 'location_enabled',
+  city: 'city',
+  country: 'country',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type UserLocationScalarFieldEnum = (typeof UserLocationScalarFieldEnum)[keyof typeof UserLocationScalarFieldEnum]
+
+
+export const UserBlockScalarFieldEnum = {
+  id: 'id',
+  blocker_id: 'blocker_id',
+  blocked_id: 'blocked_id',
+  created_at: 'created_at'
+} as const
+
+export type UserBlockScalarFieldEnum = (typeof UserBlockScalarFieldEnum)[keyof typeof UserBlockScalarFieldEnum]
+
+
+export const RatingScalarFieldEnum = {
+  id: 'id',
+  rater_id: 'rater_id',
+  ratee_id: 'ratee_id',
+  value: 'value',
+  created_at: 'created_at'
+} as const
+
+export type RatingScalarFieldEnum = (typeof RatingScalarFieldEnum)[keyof typeof RatingScalarFieldEnum]
+
+
+export const NotificationScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  type: 'type',
+  data: 'data',
+  read_at: 'read_at',
+  created_at: 'created_at'
+} as const
+
+export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
 
 
 export const AiJobScalarFieldEnum = {
@@ -104,6 +366,31 @@ export const AiJobScalarFieldEnum = {
 export type AiJobScalarFieldEnum = (typeof AiJobScalarFieldEnum)[keyof typeof AiJobScalarFieldEnum]
 
 
+export const WaitlistEntryScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  name: 'name',
+  occupation: 'occupation',
+  created_at: 'created_at'
+} as const
+
+export type WaitlistEntryScalarFieldEnum = (typeof WaitlistEntryScalarFieldEnum)[keyof typeof WaitlistEntryScalarFieldEnum]
+
+
+export const WaitlistPendingScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  name: 'name',
+  occupation: 'occupation',
+  code_hash: 'code_hash',
+  attempts: 'attempts',
+  expires_at: 'expires_at',
+  created_at: 'created_at'
+} as const
+
+export type WaitlistPendingScalarFieldEnum = (typeof WaitlistPendingScalarFieldEnum)[keyof typeof WaitlistPendingScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -112,19 +399,19 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-export const JsonNullValueInput = {
-  JsonNull: JsonNull
-} as const
-
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
-
-
 export const NullableJsonNullValueInput = {
   DbNull: DbNull,
   JsonNull: JsonNull
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

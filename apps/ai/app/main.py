@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hmac
 import logging
 
 from flask import Flask, jsonify, request
@@ -60,7 +61,11 @@ def create_app(settings: Settings | None = None) -> Flask:
     @app.get("/internal/jobs/<job_id>")
     def internal_job(job_id: str):
         token = request.headers.get("x-ai-internal-token", "")
-        if settings.internal_token and token != settings.internal_token:
+        # Fail closed: an unset token used to disable the check entirely and make this
+        # endpoint public. compare_digest keeps the comparison constant-time.
+        if not settings.internal_token or not hmac.compare_digest(
+            token, settings.internal_token
+        ):
             return jsonify({"error": "unauthorized"}), 401
 
         job = get_job(settings.database_url, job_id)

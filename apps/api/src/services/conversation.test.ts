@@ -1,0 +1,427 @@
+import { existsSync } from 'node:fs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { MessageType, Prisma, UserPlan } from '@saas-boilerplate/types';
+
+import { ConversationService } from './conversation.js';
+
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs')>();
+  return {
+    ...actual,
+    existsSync: vi.fn(() => true),
+  };
+});
+
+function createMockPrisma() {
+  const prisma = {
+    user: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+    },
+    userBlock: {
+      findFirst: vi.fn(),
+    },
+    conversation: {
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    message: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      count: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    messageLike: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
+    notification: {
+      create: vi.fn().mockResolvedValue({ id: 'notif-msg-1' }),
+    },
+    plan: {
+      findUnique: vi.fn(),
+    },
+    $transaction: vi.fn(),
+  };
+  prisma.$transaction.mockImplementation(async (fn: (tx: typeof prisma) => unknown) => fn(prisma));
+  return prisma;
+}
+
+const prefsEnabled = {
+  notify_all: true,
+  notify_matches: true,
+  notify_messages: true,
+  notify_views: true,
+  notify_email: true,
+};
+
+describe('ConversationService', () => {
+  beforeEach(() => {
+    vi.mocked(existsSync).mockReturnValue(true);
+  });
+
+  it('ensureForMatch creates a conversation for a new pair', async () => {
+    const prisma = createMockPrisma();
+    const created = {
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    };
+    prisma.conversation.findUnique.mockResolvedValue(null);
+    prisma.conversation.create.mockResolvedValue(created);
+
+    const service = new ConversationService({ prisma: prisma as never });
+    const result = await service.ensureForMatch('match-1', 'u2', 'u1');
+
+    expect(result).toEqual({ id: 'conv-1' });
+    expect(prisma.conversation.create).toHaveBeenCalledWith({
+      data: {
+        match_id: 'match-1',
+        user_low_id: 'u1',
+        user_high_id: 'u2',
+      },
+    });
+  });
+
+  it('ensureForMatch reattaches match_id on rematch', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: null,
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.conversation.update.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-2',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+
+    const service = new ConversationService({ prisma: prisma as never });
+    const result = await service.ensureForMatch('match-2', 'u1', 'u2');
+
+    expect(result).toEqual({ id: 'conv-1' });
+    expect(prisma.conversation.update).toHaveBeenCalledWith({
+      where: { id: 'conv-1' },
+      data: { match_id: 'match-2' },
+    });
+  });
+
+  it('detachOnUnmatch nulls match_id without notifying', async () => {
+    const prisma = createMockPrisma();
+    const notify = vi.fn();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.conversation.update.mockResolvedValue({ id: 'conv-1', match_id: null });
+
+    const service = new ConversationService({ prisma: prisma as never, notify });
+    const result = await service.detachOnUnmatch('u1', 'u2');
+
+    expect(result).toEqual({ conversation_id: 'conv-1' });
+    expect(prisma.conversation.update).toHaveBeenCalledWith({
+      where: { id: 'conv-1' },
+      data: { match_id: null },
+    });
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it('notifyUnmatchedStatus fans out read-only status after detach', async () => {
+    const prisma = createMockPrisma();
+    const notify = vi.fn();
+    prisma.conversation.findUnique.mockResolvedValue({ id: 'conv-1' });
+
+    const service = new ConversationService({ prisma: prisma as never, notify });
+    await service.notifyUnmatchedStatus('u1', 'u2');
+
+    expect(notify).toHaveBeenCalledTimes(2);
+    expect(notify).toHaveBeenCalledWith(
+      'u1',
+      'conversation_status_changed',
+      expect.objectContaining({ conversation_id: 'conv-1', can_send: false }),
+    );
+  });
+
+  it('returns the same 404 for missing and non-participant conversations', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(service.getConversation('u3', 'conv-1')).rejects.toMatchObject({
+      statusCode: 404,
+    });
+  });
+
+  it('rejects send without an active match', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: null,
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', { content: 'hi', message_type: 'text' }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it('sends a text message and notifies both peers', async () => {
+    const prisma = createMockPrisma();
+    const notify = vi.fn();
+    const createdAt = new Date('2026-08-03T10:00:00.000Z');
+
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.user.findUnique.mockImplementation(async ({ select }) => {
+      if (select?.plan) return { plan: UserPlan.FREE };
+      if (select?.notify_all !== undefined || select?.notify_messages !== undefined) {
+        return prefsEnabled;
+      }
+      if (select?.name !== undefined || select?.image !== undefined) {
+        return { name: 'Alice', image: 'alice.png' };
+      }
+      return null;
+    });
+    prisma.plan.findUnique.mockResolvedValue({ messages_per_day: -1 });
+    prisma.message.create.mockResolvedValue({
+      id: 'msg-1',
+      conversation_id: 'conv-1',
+      sender_id: 'u1',
+      content: 'hello',
+      message_type: MessageType.TEXT,
+      media_url: null,
+      is_read: false,
+      created_at: createdAt,
+    });
+    prisma.conversation.update.mockResolvedValue({});
+
+    const service = new ConversationService({ prisma: prisma as never, notify });
+    const result = await service.sendMessage('u1', 'conv-1', {
+      content: 'hello',
+      message_type: 'text',
+    });
+
+    expect(result.message).toMatchObject({
+      id: 'msg-1',
+      content: 'hello',
+      message_type: MessageType.TEXT,
+    });
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith('u2', 'new_message', expect.any(Object));
+    expect(notify).toHaveBeenCalledWith('u1', 'new_message', expect.any(Object));
+    expect(notify).toHaveBeenCalledWith(
+      'u2',
+      'notification_message',
+      expect.objectContaining({
+        event_type: 'message',
+        conversation_id: 'conv-1',
+        sender_id: 'u1',
+        sender_name: 'Alice',
+        preview: 'hello',
+        notification_id: 'notif-msg-1',
+      }),
+    );
+  });
+
+  it('enforces daily message quota inside the send transaction', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue({ plan: UserPlan.FREE });
+    prisma.plan.findUnique.mockResolvedValue({ messages_per_day: 2 });
+    prisma.message.count.mockResolvedValue(2);
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', { content: 'hi', message_type: 'text' }),
+    ).rejects.toMatchObject({ statusCode: 429, code: 'message_quota_exceeded' });
+    expect(prisma.message.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects send when match is cleared inside the transaction', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique
+      .mockResolvedValueOnce({
+        id: 'conv-1',
+        match_id: 'match-1',
+        user_low_id: 'u1',
+        user_high_id: 'u2',
+      })
+      .mockResolvedValueOnce({
+        id: 'conv-1',
+        match_id: null,
+        user_low_id: 'u1',
+        user_high_id: 'u2',
+      });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue({ plan: UserPlan.FREE });
+    prisma.plan.findUnique.mockResolvedValue({ messages_per_day: -1 });
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', { content: 'hi', message_type: 'text' }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.message.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects send when a block lands inside the transaction', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    // Pre-tx: no blocks. In-tx: peer blocked sender.
+    prisma.userBlock.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'block-1' });
+    prisma.user.findUnique.mockResolvedValue({ plan: UserPlan.FREE });
+    prisma.plan.findUnique.mockResolvedValue({ messages_per_day: -1 });
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', { content: 'hi', message_type: 'text' }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+    expect(prisma.message.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects voice media_url that is not owned by the sender', async () => {
+    const prisma = createMockPrisma();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', {
+        message_type: 'voice',
+        media_url: '/uploads/audio/u2_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.webm',
+      }),
+    ).rejects.toMatchObject({ statusCode: 400, code: 'invalid_media_url' });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects reused voice media_url inside the send transaction', async () => {
+    const prisma = createMockPrisma();
+    const mediaUrl = '/uploads/audio/u1_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.webm';
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue({ plan: UserPlan.FREE });
+    prisma.plan.findUnique.mockResolvedValue({ messages_per_day: -1 });
+    prisma.message.findFirst.mockResolvedValue({ id: 'existing-msg' });
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', {
+        message_type: 'voice',
+        media_url: mediaUrl,
+      }),
+    ).rejects.toMatchObject({ statusCode: 400, code: 'audio_already_used' });
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.message.findFirst).toHaveBeenCalledWith({
+      where: { media_url: mediaUrl },
+      select: { id: true },
+    });
+    expect(prisma.message.create).not.toHaveBeenCalled();
+  });
+
+  it('maps unique media_url conflicts to audio_already_used', async () => {
+    const prisma = createMockPrisma();
+    const mediaUrl = '/uploads/audio/u1_bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.webm';
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.userBlock.findFirst.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue({ plan: UserPlan.FREE });
+    prisma.plan.findUnique.mockResolvedValue({ messages_per_day: -1 });
+    prisma.message.findFirst.mockResolvedValue(null);
+    const conflict = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: 'test',
+    });
+    prisma.message.create.mockRejectedValue(conflict);
+
+    const service = new ConversationService({ prisma: prisma as never });
+    await expect(
+      service.sendMessage('u1', 'conv-1', {
+        message_type: 'voice',
+        media_url: mediaUrl,
+      }),
+    ).rejects.toMatchObject({ statusCode: 400, code: 'audio_already_used' });
+  });
+
+  it('toggles message likes', async () => {
+    const prisma = createMockPrisma();
+    const notify = vi.fn();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conv-1',
+      match_id: 'match-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.conversation.findUniqueOrThrow.mockResolvedValue({
+      id: 'conv-1',
+      user_low_id: 'u1',
+      user_high_id: 'u2',
+    });
+    prisma.message.findFirst.mockResolvedValue({
+      id: 'msg-1',
+      conversation_id: 'conv-1',
+    });
+    prisma.messageLike.findUnique.mockResolvedValue(null);
+    prisma.messageLike.create.mockResolvedValue({ id: 'like-1' });
+    prisma.messageLike.count.mockResolvedValue(1);
+
+    const service = new ConversationService({ prisma: prisma as never, notify });
+    const result = await service.toggleLike('u1', 'conv-1', 'msg-1');
+
+    expect(result).toMatchObject({ liked: true, like_count: 1, message_id: 'msg-1' });
+    expect(notify).toHaveBeenCalledWith('u2', 'message_like_changed', expect.any(Object));
+  });
+});

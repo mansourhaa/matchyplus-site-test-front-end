@@ -30,7 +30,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           redis,
         });
       } catch (err: any) {
-        console.error(err);
+        request.log.error({ err }, 'Health check failed');
 
         throw err;
       }

@@ -4,6 +4,10 @@ import { FastifyServerOptions, fastify } from 'fastify';
 
 export async function createServerApp(opts: FastifyServerOptions = {}) {
   const isDevelopment = process.env.NODE_ENV !== 'production';
+  // Only honor X-Forwarded-For when explicitly enabled (staging/prod behind Ingress).
+  // Default false so direct clients cannot spoof request.ip for rate limits / IP geo.
+  const trustProxyEnv = process.env.TRUST_PROXY?.trim().toLowerCase();
+  const trustProxyFromEnv = trustProxyEnv === 'true' || trustProxyEnv === '1';
 
   const app = fastify({
     logger: opts.logger ?? (isDevelopment ? false : true),
@@ -16,6 +20,8 @@ export async function createServerApp(opts: FastifyServerOptions = {}) {
       plugins: [ajvFormat as never, ajvFilePlugin as never],
     },
     ...opts,
+    // After `...opts` so the env/default wins unless the caller sets opts.trustProxy.
+    trustProxy: opts.trustProxy ?? trustProxyFromEnv,
   });
 
   await app.register(import('./app.js'));

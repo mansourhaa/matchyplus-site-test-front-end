@@ -1,11 +1,8 @@
-import { CreateAiJobRequest } from '@saas-boilerplate/ai-contracts';
 import { FastifyPluginAsync } from 'fastify';
 
-import {
-  createAiJobSchema,
-  getAiJobSchema,
-  listAiJobsSchema,
-} from '../../../schemas/v1/ai.js';
+import { CreateAiJobRequest } from '@saas-boilerplate/ai-contracts';
+
+import { createAiJobSchema, getAiJobSchema, listAiJobsSchema } from '../../../schemas/v1/ai.js';
 import { AiJobsService } from '../../../services/ai-jobs.js';
 
 function serializeJob(job: {

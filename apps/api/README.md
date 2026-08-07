@@ -2,7 +2,7 @@
 
 Fastify 5 REST API for the SaaS boilerplate.
 
-**Repository:** [github.com/Khalil-Bchir/full-stack-saas-boilerplate](https://github.com/Khalil-Bchir/full-stack-saas-boilerplate)
+**Repository:** [github.com/matchy-plus/matchy-plus](https://github.com/matchy-plus/matchy-plus)
 
 ## Request flow
 
@@ -67,12 +67,21 @@ src/
     authentication.ts   Login, register, auth check
     authorization.ts    Token verification
     users.ts            User operations
+    discovery.ts        Swipe feed (scripted ranking)
+    swipe.ts            Swipe, match, withdraw, unmatch
+    swipe-quota.ts      Plan daily RIGHT limits (UTC)
     ai-jobs.ts          Enqueue + poll AI jobs
     ai-cache.ts         Redis result cache
   schemas/v1/           Request/response JSON schemas
   types/                TypeScript interfaces
+  utils/                Pure helpers (no DI): admin-session, matching-score, match-pair, utc-day
   translation/          i18next locale files (en, ar)
 ```
+
+Matching feature guide: [doc/features/matching.md](../../doc/features/matching.md).
+
+`services/` holds injected/OOP business logic (constructor DI via `prisma`); stateless helpers with
+no injection — such as cookie name + `Set-Cookie` option builders — live in `utils/`.
 
 ## Scripts
 
