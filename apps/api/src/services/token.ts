@@ -9,6 +9,8 @@ import { AbstractServiceOptions } from '../types/services.js';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
+export type AccessTokenAudience = 'member' | 'admin';
+
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
 }
@@ -19,6 +21,8 @@ type RefreshTokenPayload = {
   type: 'refresh';
 };
 
+export type AccessTokenUser = Pick<User, 'id' | 'email' | 'phone' | 'token_version'>;
+
 export class TokenService {
   prisma: PrismaClient;
 
@@ -26,12 +30,27 @@ export class TokenService {
     this.prisma = options.prisma;
   }
 
-  signAccessToken(user: Pick<User, 'id' | 'email' | 'phone'>): string {
+  signAccessToken(
+    user: AccessTokenUser,
+    options: { audience: AccessTokenAudience } = { audience: 'member' },
+  ): string {
     const { accessTokenSecret, accessTokenTtl } = config;
     const secret = accessTokenSecret as Secret;
-    const signOptions: SignOptions = { expiresIn: accessTokenTtl as SignOptions['expiresIn'] };
+    const signOptions: SignOptions = {
+      expiresIn: accessTokenTtl as SignOptions['expiresIn'],
+      audience: options.audience,
+    };
 
-    return jwt.sign({ id: user.id, email: user.email, phone: user.phone }, secret, signOptions);
+    return jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        tv: user.token_version ?? 0,
+      },
+      secret,
+      signOptions,
+    );
   }
 
   async issueRefreshToken(userId: string): Promise<string> {
@@ -62,16 +81,28 @@ export class TokenService {
    * loses access uniformly instead of relying on each caller to remember its own check.
    * Same generic error as bad credentials, to avoid revealing account status.
    */
-  async issueTokenPair(user: Pick<User, 'id' | 'email' | 'phone' | 'status'>) {
+  async issueTokenPair(
+    user: Pick<User, 'id' | 'email' | 'phone' | 'status' | 'token_version'>,
+    options: { audience: AccessTokenAudience } = { audience: 'member' },
+  ) {
     if (user.status !== UserStatus.ACTIVE) {
       throw new Error('invalid_credentials');
     }
 
     const [accessToken, refreshToken] = [
-      this.signAccessToken(user),
+      this.signAccessToken(user, options),
       await this.issueRefreshToken(user.id),
     ];
     return { accessToken, refreshToken };
+  }
+
+  /** Bump token_version and revoke all refresh rows — invalidates outstanding access JWTs. */
+  async revokeAllSessions(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { token_version: { increment: 1 } },
+    });
+    await this.revokeAllRefreshTokens(userId);
   }
 
   async revokeRefreshToken(rawToken: string): Promise<void> {
@@ -147,12 +178,26 @@ export class TokenService {
       throw new Error('invalid_refresh_token');
     }
 
-    await this.prisma.refreshToken.update({
-      where: { id: payload.jti },
+    // Atomic consume — a second presentation of the same refresh (reuse) sees count 0.
+    const consumed = await this.prisma.refreshToken.updateMany({
+      where: {
+        id: payload.jti,
+        revoked_at: null,
+        token_hash: sha256(rawToken),
+        expires_at: { gt: new Date() },
+      },
       data: { revoked_at: new Date() },
     });
 
+    if (consumed.count === 0) {
+      await this.revokeAllRefreshTokens(user.id);
+      throw new Error('invalid_refresh_token');
+    }
+
     const refreshToken = await this.issueRefreshToken(user.id);
-    return { accessToken: this.signAccessToken(user), refreshToken };
+    return {
+      accessToken: this.signAccessToken(user, { audience: 'member' }),
+      refreshToken,
+    };
   }
 }

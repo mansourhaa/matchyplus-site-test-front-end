@@ -1,6 +1,7 @@
 'use client';
 
 import { ImageWithFallback } from '@/components/landing/image-with-fallback';
+import { LandingFooter } from '@/components/landing/landing-footer';
 import { ChevronDown, ChevronRight, Clock, MapPin, Shield, Sparkles, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -66,7 +67,7 @@ const translations = {
       'Join thousands of people across Tunisia who trust Matchy+ for their professional service needs',
     joinToday: 'Join Matchy+ Today',
     footerDesc: 'Connecting communities across Tunisia and Africa with trusted professionals',
-    quickLinks: 'Quick Links',
+    quickLinks: 'Explore',
     aboutUs: 'About Us',
     contact: 'Contact',
     legal: 'Legal',
@@ -124,7 +125,7 @@ const translations = {
     joinToday: "Rejoignez Matchy+ Aujourd'hui",
     footerDesc:
       'Connecter les communautés en Tunisie et en Afrique avec des professionnels de confiance',
-    quickLinks: 'Liens Rapides',
+    quickLinks: 'Explorer',
     aboutUs: 'À Propos',
     contact: 'Contact',
     legal: 'Légal',
@@ -176,7 +177,7 @@ const translations = {
       'انضم إلى آلاف الأشخاص في تونس  الذين يثقون في Matchy+ لتلبية احتياجاتهم من الخدمات المهنية',
     joinToday: 'انضم إلى Matchy+ اليوم',
     footerDesc: 'ربط المجتمعات في تونس وأفريقيا بمحترفين موثوقين',
-    quickLinks: 'روابط سريعة',
+    quickLinks: 'استكشف',
     aboutUs: 'من نحن',
     contact: 'اتصل',
     legal: 'قانوني',
@@ -425,7 +426,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="relative overflow-hidden py-20">
+      <section id="how-it-works" className="relative scroll-mt-24 overflow-hidden py-20">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-50"></div>
         <div className="absolute top-0 left-0 h-96 w-96 rounded-full bg-[#61BCA6]/5 blur-3xl"></div>
         <div className="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-[#2F76BB]/5 blur-3xl"></div>
@@ -467,7 +468,7 @@ export default function LandingPage() {
       </section>
 
       {/* Services Section */}
-      <section className="mx-auto max-w-7xl px-4 py-20">
+      <section id="services" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20">
         <div className="mb-16 text-center">
           <h2 className="mb-4 text-4xl font-bold md:text-5xl">{t.ourServices}</h2>
           <div className="mx-auto h-1 w-24 rounded-full bg-gradient-to-r from-[#61BCA6] to-[#2F76BB]"></div>
@@ -570,39 +571,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 py-0 text-white">
-        <div className="mx-auto max-w-xl px-2">
-          {/* <div className="grid md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <img src={logoSvg} alt="Matchy+" className="h-10 mb-4 brightness-0 invert" />
-              <p className="text-gray-400">
-                {t.footerDesc}
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">{t.quickLinks}</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">{t.aboutUs}</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">{t.howItWorks}</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">{t.ourServices}</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">{t.contact}</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">{t.legal}</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">{t.privacy}</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">{t.terms}</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">{t.safety}</a></li>
-              </ul>
-            </div>
-          </div> */}
-          <div className="border-t border-gray-800 pt-6 text-center text-gray-400">
-            <p style={{ transform: 'translateY(-13px)' }}>&copy; 2026 Matchy+. {t.allRights}.</p>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter t={t} onJoin={goOnboarding} />
     </div>
   );
 }

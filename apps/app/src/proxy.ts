@@ -1,36 +1,60 @@
 import { AUTH_COOKIE } from '@/lib/auth';
+import { getLandingBaseUrl } from '@/lib/landing';
+import {
+  hasUsableAccessTokenCookie,
+  isNeutralRoute,
+  isPublicAuthRoute,
+  requiresAuthentication,
+} from '@/lib/route-auth';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Redirect away from these when already authenticated (pre-existing behavior for login).
-const publicRoutes = ['/login'];
+function redirectToLanding(path: string, request: NextRequest) {
+  const landing = getLandingBaseUrl();
+  const lang = request.nextUrl.searchParams.get('lang');
+  const target = new URL(path, `${landing}/`);
+  if (lang) target.searchParams.set('lang', lang);
+  return NextResponse.redirect(target);
+}
 
-// Always allowed regardless of auth state. /oauth-callback is reached via external
-// redirect (OAuth provider callback), so bouncing based on a stale cookie would break
-// the flow. /onboarding needs to be reachable both by a brand-new, unauthenticated
-// visitor (its identity step now also collects phone + password + OTP — there is no
-// separate pre-wizard credentials screen) and by an authenticated-but-incomplete user
-// (the dashboard-guard redirect target) — neither `publicRoutes` (redirects away *if*
-// logged in) nor the protected default below (redirects away *if not* logged in) fits
-// both cases. /register is a dead route (its page just redirects to /onboarding, for old
-// bookmarks/links) — it must be neutral too, or an unauthenticated visitor would be
-// bounced to /login by this middleware before that page-level redirect ever runs.
-// /otp-test is intentionally NOT here either — it's a dev-only harness (see
-// app/otp-test/page.tsx, which 404s outside development), not part of the shipped
-// product flow, so it gets the same auth rules as any other route.
-const neutralRoutes = ['/oauth-callback', '/onboarding', '/register'];
-
+/**
+ * Edge gate for the member app. (dashboard) and every other non-public/non-neutral
+ * path require a usable access_token cookie. Signature verification stays with the
+ * API; this rejects missing/empty/malformed/expired cookies fail-closed. The
+ * (dashboard) server layout + MatchyDashboardShell provide the same deny on RSC
+ * and after client session check (middleware can be bypassed in some Next setups).
+ */
 export function proxy(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE)?.value;
+  const usableSession = hasUsableAccessTokenCookie(token);
   const { pathname } = request.nextUrl;
 
-  if (neutralRoutes.some((route) => pathname.startsWith(route))) {
+  // Legal docs live on the marketing site — keep old app URLs working.
+  if (
+    pathname === '/public/privacy-policy' ||
+    pathname === '/privacy-policy' ||
+    pathname === '/settings/privacy-policy'
+  ) {
+    return redirectToLanding('/privacy-policy', request);
+  }
+  if (
+    pathname === '/public/terms-of-service' ||
+    pathname === '/terms-of-service' ||
+    pathname === '/settings/terms-of-service'
+  ) {
+    return redirectToLanding('/terms-of-service', request);
+  }
+
+  // /oauth-callback, /onboarding, /register — see NEUTRAL_ROUTES in route-auth.ts.
+  if (isNeutralRoute(pathname)) {
     return NextResponse.next();
   }
 
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+  const isPublicRoute = isPublicAuthRoute(pathname);
 
-  if (!token && !isPublicRoute) {
+  // Deny-by-default: no usable session → /login for every protected path
+  // (includes all of app/(dashboard)/**).
+  if (!usableSession && requiresAuthentication(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -40,13 +64,26 @@ export function proxy(request: NextRequest) {
   // decoding+DB-querying here or embedding a completeness claim that would go stale until
   // the next refresh. MatchyDashboardShell (which wraps /home) already client-side-bounces
   // an incomplete profile to /onboarding, so this is a one-hop redirect, not a bypass.
-  if (token && isPublicRoute) {
+  if (usableSession && isPublicRoute) {
     return NextResponse.redirect(new URL('/home', request.url));
   }
 
   // Prefer /home as the canonical discover entry; avoid RSC redirect() timing bugs.
   if (pathname === '/discover' || pathname === '/projects') {
     return NextResponse.redirect(new URL('/home', request.url));
+  }
+
+  // Legacy flat settings paths → nested /settings/* (bookmarks / old deep links).
+  const settingsLegacyRedirects: Record<string, string> = {
+    '/account-profile': '/settings/account',
+    '/password': '/settings/password',
+    '/add-phone-number': '/settings/add-phone-number',
+    '/video-settings': '/settings/video',
+    '/qr-code': '/settings/qr-code',
+  };
+  const nestedSettings = settingsLegacyRedirects[pathname];
+  if (nestedSettings) {
+    return NextResponse.redirect(new URL(nestedSettings, request.url));
   }
 
   return NextResponse.next();

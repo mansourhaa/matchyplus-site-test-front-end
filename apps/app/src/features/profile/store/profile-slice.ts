@@ -1,3 +1,10 @@
+import {
+  changePassword,
+  deleteAccount,
+  fetchCurrentUser,
+  logout,
+  resetAuthState,
+} from '@/features/auth/store/auth-slice';
 import { api, getApiErrorCode } from '@/lib/api';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
@@ -18,6 +25,10 @@ const initialState: ProfileState = {
   mediaUploading: false,
   mediaError: null,
 };
+
+function resetForNewSession(state: ProfileState) {
+  Object.assign(state, initialState);
+}
 
 // Same catch-and-rethrow-a-stable-code pattern as onboardingSlice/authSlice — otherwise
 // action.error.message on rejection is axios's generic "Request failed with status code
@@ -183,7 +194,12 @@ const profileSlice = createSlice({
           // until another submit attempt bounces off the API with already_rated.
           state.viewedProfile.viewer_has_rated = true;
         }
-      });
+      })
+      .addCase(logout.fulfilled, resetForNewSession)
+      .addCase(resetAuthState, resetForNewSession)
+      .addCase(changePassword.fulfilled, resetForNewSession)
+      .addCase(deleteAccount.fulfilled, resetForNewSession)
+      .addCase(fetchCurrentUser.rejected, resetForNewSession);
   },
 });
 

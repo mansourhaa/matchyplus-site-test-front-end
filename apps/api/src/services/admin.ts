@@ -15,6 +15,7 @@ import {
 import { AbstractServiceOptions } from '../types/services.js';
 import { badRequest, forbidden, insufficientPrivileges, notFound } from '../utils/http-errors.js';
 import { assertMinimumRole, outranks, rolesBelow } from '../utils/roles.js';
+import { TokenService } from './token.js';
 
 /** "2026-01" plus n months, still as "YYYY-MM". */
 function addMonth(month: string, n: number): string {
@@ -113,8 +114,11 @@ const editableFields = [
 
 export class AdminService {
   prisma: PrismaClient;
+  tokenService: TokenService;
+
   constructor(options: AbstractServiceOptions) {
     this.prisma = options.prisma;
+    this.tokenService = new TokenService({ prisma: options.prisma });
   }
 
   async listUsers(actor: AdminActor, query: AdminListUsersQuery) {
@@ -416,7 +420,8 @@ export class AdminService {
 
     const hashed = await bcrypt.hash(payload.newPassword, await bcrypt.genSalt(10));
     await this.prisma.user.update({ where: { id: adminId }, data: { password: hashed } });
+    await this.tokenService.revokeAllSessions(adminId);
 
-    return { updated: true };
+    return { updated: true, forceLogout: true };
   }
 }

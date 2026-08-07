@@ -15,8 +15,17 @@ export const ADMIN_SESSION_COOKIE = 'admin_session';
 /** The admin's own profile — name, email, role. Not a credential; used to render the panel. */
 export const ADMIN_AUTH_USER_KEY = 'admin_user';
 
-/** The admin panel mirrors the source project's 8 hour session window. */
-export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
+/** Mirrors API ACCESS_TOKEN_TTL (default 1h). Marker is not a credential — API JWT is. */
+export const ADMIN_SESSION_MAX_AGE_SECONDS = (() => {
+  const raw = process.env.NEXT_PUBLIC_ACCESS_TOKEN_TTL ?? process.env.ACCESS_TOKEN_TTL ?? '1h';
+  if (/^\d+$/.test(raw.trim())) return Number(raw.trim());
+  const match = /^(\d+(?:\.\d+)?)(s|m|h|d)$/i.exec(raw.trim());
+  if (!match) return 60 * 60;
+  const amount = Number(match[1]);
+  const unit = match[2]!.toLowerCase();
+  const multipliers: Record<string, number> = { s: 1, m: 60, h: 3600, d: 86400 };
+  return Math.floor(amount * (multipliers[unit] ?? 3600));
+})();
 
 /** `Secure` as soon as this is not a developer machine, so staging is covered as well. */
 const SECURE_COOKIE_FLAG = process.env.NODE_ENV === 'development' ? '' : '; Secure';

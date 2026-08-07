@@ -17,6 +17,9 @@ function createMockPrisma() {
       findMany: vi.fn(),
       update: vi.fn(),
     },
+    refreshToken: {
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
   };
 }
 

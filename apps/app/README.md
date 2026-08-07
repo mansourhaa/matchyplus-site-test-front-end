@@ -99,15 +99,17 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 
 | Group | Path | Access |
 | --- | --- | --- |
-| Auth | `/login`, `/register` | Public |
-| Dashboard | `/`, `/projects`, `/settings` | Protected (cookie) |
+| Auth | `/login`, `/register` | Public (`/register` → `/onboarding`) |
+| Dashboard | `/home` (canonical), `/matches`, `/settings/*`, … | Protected (cookie) |
+| Root | `/onboarding`, `/oauth-callback` | Auth-neutral |
+| Legal | Hosted on landing (`NEXT_PUBLIC_LANDING_URL`) | `/privacy-policy`, `/terms-of-service` |
 
 ## Conventions
 
-- Keep `app/` pages thin — compose components, delegate logic to `features/`
-- Business logic in `features/[name]/`
-- Shared UI from `@saas-boilerplate/ui`
-- Prisma types from `@saas-boilerplate/types` (types only, no DB client)
+- Keep `app/` pages thin — compose feature views, delegate logic to `features/`
+- Domain UI + store/hooks live under `features/[name]/` (views in `components/`)
+- Shell chrome stays in `components/matchy/` and `components/shared/`
+- Shared design system from `@saas-boilerplate/ui`
 
 ## Adding shadcn components
 

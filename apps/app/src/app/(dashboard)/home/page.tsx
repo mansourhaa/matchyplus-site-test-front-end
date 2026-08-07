@@ -1,7 +1,7 @@
 'use client';
 
-import { DiscoverView } from '@/components/matching/discover-view';
-import { SearchView } from '@/components/matching/search-view';
+import { DiscoverView } from '@/features/matching/components/discover-view';
+import { SearchView } from '@/features/matching/components/search-view';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 

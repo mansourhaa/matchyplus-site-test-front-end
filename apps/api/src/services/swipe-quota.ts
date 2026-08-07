@@ -31,7 +31,7 @@ export class SwipeQuotaService {
         select: { swipes_per_day: true },
       });
 
-      const swipesPerDay = planRow?.swipes_per_day ?? 20;
+      const swipesPerDay = planRow?.swipes_per_day ?? 10;
       if (swipesPerDay < 0) {
         return { plan, limit: null, unlimited: true };
       }

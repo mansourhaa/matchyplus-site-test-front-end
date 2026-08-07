@@ -8,6 +8,7 @@ function createMockPrisma() {
   return {
     user: {
       findUniqueOrThrow: vi.fn(),
+      update: vi.fn(),
     },
     refreshToken: {
       create: vi.fn(),
@@ -23,6 +24,7 @@ const activeUser = {
   email: 'user@example.com',
   phone: '+21612345678',
   status: 'ACTIVE' as const,
+  token_version: 0,
 };
 
 describe('TokenService', () => {
@@ -34,6 +36,7 @@ describe('TokenService', () => {
       id: 'user-1',
       email: 'user@example.com',
       phone: '+21612345678',
+      token_version: 0,
     });
 
     const payload = jwt.decode(token) as JwtPayload;
@@ -41,6 +44,8 @@ describe('TokenService', () => {
     expect(payload.id).toBe('user-1');
     expect(payload.email).toBe('user@example.com');
     expect(payload.phone).toBe('+21612345678');
+    expect(payload.tv).toBe(0);
+    expect(payload.aud).toBe('member');
   });
 
   it('issues and refreshes a valid refresh token', async () => {
@@ -78,7 +83,9 @@ describe('TokenService', () => {
       email: 'user@example.com',
       phone: '+21612345678',
       status: 'ACTIVE',
+      token_version: 0,
     });
+    prisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
 
     const result = await service.refreshAccessToken(refreshToken);
 
@@ -96,6 +103,7 @@ describe('TokenService', () => {
     expect(refreshedPayload.id).toBe('user-1');
     expect(refreshedPayload.email).toBe('user@example.com');
     expect(refreshedPayload.phone).toBe('+21612345678');
+    expect(refreshedPayload.aud).toBe('member');
   });
 
   it('rejects an invalid JWT during refresh', async () => {
@@ -334,7 +342,7 @@ describe('TokenService', () => {
         'invalid_refresh_token',
       );
       // Only ever revoke the stored token once its owner is confirmed still active.
-      expect(prisma.refreshToken.update).not.toHaveBeenCalled();
+      expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
     },
   );
 
@@ -363,14 +371,50 @@ describe('TokenService', () => {
       email: 'user@example.com',
       phone: '+21612345678',
       status: 'ACTIVE',
+      token_version: 0,
     });
+    prisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
 
     const result = await service.refreshAccessToken(refreshToken);
 
-    expect(prisma.refreshToken.update).toHaveBeenCalledWith({
-      where: { id: decoded.jti },
+    expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: decoded.jti,
+        revoked_at: null,
+        token_hash: storedTokenHash,
+        expires_at: { gt: expect.any(Date) },
+      },
       data: { revoked_at: expect.any(Date) },
     });
     expect(result.refreshToken).toBeTypeOf('string');
+  });
+
+  it('treats refresh reuse as theft and revokes all sessions', async () => {
+    const prisma = createMockPrisma();
+    const service = new TokenService({ prisma: prisma as never });
+
+    const refreshToken = await service.issueRefreshToken('user-1');
+    const decoded = jwt.decode(refreshToken) as JwtPayload & { jti: string };
+    const storedTokenHash = await import('node:crypto').then((crypto) =>
+      crypto.createHash('sha256').update(refreshToken).digest('hex'),
+    );
+
+    prisma.refreshToken.findUnique.mockResolvedValue({
+      id: decoded.jti,
+      user_id: 'user-1',
+      token_hash: storedTokenHash,
+      expires_at: new Date(Date.now() + 60_000),
+      revoked_at: null,
+    });
+    prisma.user.findUniqueOrThrow.mockResolvedValue({ ...activeUser });
+    prisma.refreshToken.updateMany
+      .mockResolvedValueOnce({ count: 0 }) // consume fails — already used
+      .mockResolvedValueOnce({ count: 2 }); // revoke-all
+
+    await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow('invalid_refresh_token');
+    expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
+      where: { user_id: 'user-1', revoked_at: null },
+      data: { revoked_at: expect.any(Date) },
+    });
   });
 });

@@ -1,5 +1,7 @@
 import * as dotenv from 'dotenv';
 
+import { parseDurationSeconds } from './utils/duration.js';
+
 dotenv.config();
 
 /**
@@ -29,6 +31,19 @@ function requiredIntVar(name: string): number {
   return parsed;
 }
 
+/**
+ * Duration env vars (`1h`, `3600`, …) — fail closed at boot so cookie maxAge never
+ * disagrees with JWT expiresIn (see AUTH-04).
+ */
+function requiredDurationSeconds(name: string): number {
+  const raw = requiredVar(name);
+  try {
+    return parseDurationSeconds(raw);
+  } catch {
+    throw new Error(`Invalid duration environment variable: ${name} = "${raw}"`);
+  }
+}
+
 export const config = {
   /**
    * Application settings
@@ -46,7 +61,10 @@ export const config = {
    * Authentication
    */
   accessTokenSecret: requiredVar('ACCESS_TOKEN_SECRET'),
+  /** Original TTL string for jsonwebtoken `expiresIn` (`1h`, `3600`, …). */
   accessTokenTtl: requiredVar('ACCESS_TOKEN_TTL'),
+  /** Parsed ACCESS_TOKEN_TTL in whole seconds — cookie maxAge and admin marker. */
+  accessTokenTtlSeconds: requiredDurationSeconds('ACCESS_TOKEN_TTL'),
   verificationCodeSecret: requiredVar('VERIFICATION_CODE_SECRET'),
   /**
    * Option C — async AI queue / cache
@@ -92,6 +110,9 @@ export const config = {
    * OAuth (Google / LinkedIn) — optional. Each provider is only enabled when both its
    * client id and secret are set; a missing pair disables just that provider instead
    * of preventing the server from starting.
+   *
+   * `GOOGLE_REDIRECT_URI` / `LINKEDIN_REDIRECT_URI` must match the provider console
+   * and the v1 handlers (`/api/v1/auth/oauth/<provider>/callback`).
    */
   googleClientId: process.env.GOOGLE_CLIENT_ID,
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -99,5 +120,11 @@ export const config = {
   linkedinClientSecret: process.env.LINKEDIN_CLIENT_SECRET,
   apiBaseUrl: process.env.API_BASE_URL ?? 'http://localhost:8000',
   frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+  googleRedirectUri:
+    process.env.GOOGLE_REDIRECT_URI ??
+    `${process.env.API_BASE_URL ?? 'http://localhost:8000'}/api/v1/auth/oauth/google/callback`,
+  linkedinRedirectUri:
+    process.env.LINKEDIN_REDIRECT_URI ??
+    `${process.env.API_BASE_URL ?? 'http://localhost:8000'}/api/v1/auth/oauth/linkedin/callback`,
   oauthExchangeCodeTtlSeconds: parseInt(process.env.OAUTH_EXCHANGE_CODE_TTL_SECONDS ?? '60', 10),
 };

@@ -72,7 +72,7 @@ const PROFILES: MatchingProfileSeed[] = [
     profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    plan: UserPlan.PREMIUM,
+    plan: UserPlan.FREE,
     lat: 36.81,
     lon: 10.18,
     likesTester: true,
@@ -111,7 +111,7 @@ const PROFILES: MatchingProfileSeed[] = [
     profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    plan: UserPlan.PREMIUM,
+    plan: UserPlan.FREE,
     lat: 36.45,
     lon: 10.74,
   },
@@ -203,7 +203,7 @@ const PROFILES: MatchingProfileSeed[] = [
     profile_type: ProfileType.PROVIDER,
     image:
       'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    plan: UserPlan.PREMIUM_PLUS,
+    plan: UserPlan.FREE,
     lat: 36.82,
     lon: 10.185,
   },
@@ -365,7 +365,7 @@ export async function seedMatching(prisma: PrismaClient) {
     profile_type: MATCHING_TESTER.profile_type,
     image:
       'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    plan: UserPlan.PREMIUM,
+    plan: UserPlan.FREE,
     lat: MATCHING_TESTER.lat,
     lon: MATCHING_TESTER.lon,
   });

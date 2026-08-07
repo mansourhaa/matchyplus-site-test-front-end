@@ -1,12 +1,13 @@
 import { Prisma, PrismaClient, UserPlan } from '@saas-boilerplate/types';
 
 /**
- * Ported from Matchy-FullStack's DEFAULT_PLANS (PlansContext).
+ * Ported from Matchy-FullStack's DEFAULT_PLANS (PlansContext / FunctionalDoc freemium).
  *
- * Plans are configuration, not sample data: every environment needs these three rows or
- * `/admin/plans` comes up empty and plan edition has nothing to update. The same values are
- * inserted by the `seed_default_plans` migration, which is what actually runs in staging and
- * production (the deploy pipeline runs `prisma migrate deploy` only, never a seed).
+ * Interim product mode: every user is on FREE with freemium daily limits. Paid rows stay in
+ * the catalog with `is_active: false` until the full business model / payments ship.
+ *
+ * The same FREE limits are applied by the `freemium_force_free_tier` migration for envs
+ * that only run `prisma migrate deploy` (staging/production).
  */
 export const DEFAULT_PLANS: Prisma.PlanCreateInput[] = [
   {
@@ -17,9 +18,13 @@ export const DEFAULT_PLANS: Prisma.PlanCreateInput[] = [
     is_active: true,
     badge: '',
     trial_days: 0,
-    description: 'Accès limité aux fonctionnalités de base',
-    features: ['3 profils visibles par catégorie', 'Swipe limité (20/jour)', 'Chat basique'],
-    swipes_per_day: 20,
+    description: 'Accès gratuit avec limites journalières',
+    features: [
+      '3 profils visibles en recherche personnalisée',
+      'Swipe limité (10/24h)',
+      'Chat basique',
+    ],
+    swipes_per_day: 10,
     profiles_per_category: 3,
     messages_per_day: 5,
     actions_per_day: 10,
@@ -32,7 +37,7 @@ export const DEFAULT_PLANS: Prisma.PlanCreateInput[] = [
     name: 'Premium',
     price: 9.9,
     color: '#2F76BB',
-    is_active: true,
+    is_active: false,
     badge: 'Populaire',
     trial_days: 7,
     description: 'Accès complet aux profils et connexions',
@@ -57,7 +62,7 @@ export const DEFAULT_PLANS: Prisma.PlanCreateInput[] = [
     name: 'Premium+',
     price: 19.9,
     color: '#F5A623',
-    is_active: true,
+    is_active: false,
     badge: 'Meilleure valeur',
     trial_days: 14,
     description: 'Accès total + avantages exclusifs',
@@ -80,11 +85,38 @@ export const DEFAULT_PLANS: Prisma.PlanCreateInput[] = [
 ];
 
 /**
- * Idempotent: creates a missing plan and leaves an existing one untouched, so re-running a
- * seed never overwrites prices an admin has since edited from the panel.
+ * Upserts plan catalog: creates missing rows and refreshes freemium interim fields
+ * (FREE limits + paid is_active) without clobbering admin-edited prices on paid tiers.
  */
 export async function seedPlans(prisma: PrismaClient) {
   for (const plan of DEFAULT_PLANS) {
-    await prisma.plan.upsert({ where: { id: plan.id }, create: plan, update: {} });
+    if (plan.id === UserPlan.FREE) {
+      await prisma.plan.upsert({
+        where: { id: plan.id },
+        create: plan,
+        update: {
+          name: plan.name,
+          description: plan.description,
+          features: plan.features,
+          swipes_per_day: plan.swipes_per_day,
+          profiles_per_category: plan.profiles_per_category,
+          messages_per_day: plan.messages_per_day,
+          actions_per_day: plan.actions_per_day,
+          boosts_per_month: plan.boosts_per_month,
+          super_connects_per_month: plan.super_connects_per_month,
+          is_active: true,
+          price: 0,
+        },
+      });
+      continue;
+    }
+
+    await prisma.plan.upsert({
+      where: { id: plan.id },
+      create: plan,
+      update: {
+        is_active: false,
+      },
+    });
   }
 }

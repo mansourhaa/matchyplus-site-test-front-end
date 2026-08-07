@@ -48,6 +48,7 @@ enum OtpPurpose {
   SIGNUP_VERIFICATION
   PHONE_LINK
   PASSWORD_RESET
+  ACCOUNT_DELETE
 }
 
 /// Plan configuration edited from the admin "Gestion Forfaits" section.
@@ -131,6 +132,8 @@ model User {
   google_id      String? @unique
   linkedin_id    String? @unique
   phone_verified Boolean @default(false)
+  /// Bumped on password change / reset so outstanding access JWTs fail verification.
+  token_version  Int     @default(0)
 
   /// Matching / discovery fields (scripted Discovery v5 in apps/api). service_type and
   /// profile_type are shared with the onboarding wizard above, not redeclared here —

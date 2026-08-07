@@ -145,8 +145,9 @@ clients opt into Bearer auth. Body JWTs are **not** gated on a spoofable header 
    `accessToken` + `refreshToken` in JSON **only** when the request is an
    authorized mobile client (label + secret). If `MOBILE_CLIENT_SECRET` is unset,
    body issuance is disabled (fail closed).
-3. Cap stores those JWTs in `localStorage` (`apps/app/src/lib/mobile-tokens.ts`) and
-   attaches `Authorization: Bearer …` on axios calls.
+3. Cap stores those JWTs in **Capacitor Preferences** (`apps/app/src/lib/mobile-tokens.ts`),
+   hydrated into an in-memory cache at bootstrap for sync Axios use, and attaches
+   `Authorization: Bearer …` on axios calls. Legacy `localStorage` keys are migrated once.
 4. `POST /auth/refresh` accepts `{ refreshToken }` in the body **only** for authorized
    mobile clients (body is preferred when both body and cookie are present). If the body
    token is stale/revoked but the HttpOnly cookie is still valid, refresh falls back to
@@ -156,11 +157,10 @@ clients opt into Bearer auth. Body JWTs are **not** gated on a spoofable header 
 5. `verifyToken` already accepts Bearer (see [API authorization](#api-authorization)).
 6. Realtime WebSocket: Cap sends `{ event: "auth", payload: { access_token } }` as the
    first frame after upgrade (JWT stays out of the URL / access logs). Web still uses the
-   HttpOnly cookie on the handshake. Legacy `?access_token=` is still accepted server-side
-   but Cap must not use it.
-7. A non-HttpOnly `access_token` cookie is mirrored onto the **Next.js app origin** so
-   `proxy.ts` can still gate routes when `MEMBER_COOKIE_DOMAIN` does not cover the
-   WebView host (local emulator).
+   HttpOnly cookie on the handshake. Query-string `?access_token=` is **not** accepted.
+7. A non-HttpOnly `access_token` cookie is mirrored onto the **Next.js app origin** (Max-Age
+   from JWT `exp`) so `proxy.ts` can still gate routes when `MEMBER_COOKIE_DOMAIN` does not
+   cover the WebView host (local emulator).
 
 Browser clients never send the mobile key and never receive tokens in the body — the
 cookie-only contract above is unchanged for them.
@@ -188,12 +188,17 @@ cookie-only contract above is unchanged for them.
 Protected routes use `preHandler: [fastify.verifyToken]`, which accepts the access
 token from either source:
 
-1. `Authorization: Bearer <token>` header (non-browser clients).
-2. The admin panel's or member app's own HttpOnly cookie (`admin_access_token` /
-   `access_token`), for browser clients that can't read either token to set a header.
+1. `Authorization: Bearer <token>` header (Capacitor and non-browser clients) — always wins.
+2. **Route-aware cookie only** — never `admin ?? member`:
+   - `/api/v1/admin/*` → `admin_access_token` only
+   - everything else → `access_token` (member) only
 
-Either way: verify the JWT with `ACCESS_TOKEN_SECRET`, reload the user row, reject
-(401) if it's no longer `ACTIVE`, and attach it to `request.loggedUser`.
+JWTs carry `aud: 'member' | 'admin'` and `tv` (user `token_version`). Verification
+rejects the wrong audience for the route, a mismatched `tv`, or a non-`ACTIVE` user.
+Member login clears the admin cookie; admin login clears member cookies.
+
+`ACCESS_TOKEN_TTL` may be a duration string (`1h`) or integer seconds; cookie `maxAge`
+uses the same parsed seconds as JWT `expiresIn` (`config.accessTokenTtlSeconds`).
 
 **API**: `GET /api/v1/auth/authcheck` (auth required)
 
@@ -233,14 +238,16 @@ shrinking where a stolen refresh token could otherwise be replayed from.
 
 `POST /api/v1/auth/refresh` takes the refresh token from its HttpOnly cookie, or —
 for Capacitor — from an optional `{ refreshToken }` body, and **rotates** it: the
-presented token is looked up by its hash, checked for revocation/expiry, then revoked
-and replaced in the same call, with both new cookies set on the response (and body
-tokens again for mobile). The old refresh token cannot be used again after this.
+presented token is looked up by its hash, checked for revocation/expiry, then
+**atomically** consumed (`updateMany` where `revoked_at: null`). If consume count is 0
+(reuse / theft), every refresh row for that user is revoked and the request fails.
+Both new cookies are set on the response (and body tokens again for mobile).
 
 `POST /api/v1/auth/logout` reads the refresh cookie, best-effort revokes it, and
 clears both cookies regardless of whether revocation succeeded. Changing your password
-revokes **every** refresh token on the account (`revokeAllRefreshTokens`), forcing
-re-login on all devices — the same happens on a password reset via OTP.
+(member or admin) or confirming a password reset bumps `User.token_version` and revokes
+**every** refresh token (`revokeAllSessions`), so outstanding access JWTs also fail
+verification immediately.
 
 ## Phone linking
 
@@ -284,20 +291,29 @@ First-party OAuth via [`@fastify/oauth2`](https://github.com/fastify/fastify-oau
 
 **Plugin**: `apps/api/src/plugins/oauth.ts` registers a separate `@fastify/oauth2` instance per provider (`oauth2Google`, `oauth2LinkedIn`), each providing its own `/api/v1/auth/oauth/<provider>` start-redirect route with built-in state/CSRF cookie handling. **Each provider is independent and optional**: it's only registered when both its client id and secret are set (`GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `LINKEDIN_CLIENT_ID`/`LINKEDIN_CLIENT_SECRET`) — a missing pair disables just that provider's route, the API still starts normally, and the other provider is unaffected.
 
-**Callbacks**: `GET /api/v1/auth/oauth/google/callback` and `GET /api/v1/auth/oauth/linkedin/callback`, implemented in `routes/v1/auth/actions.ts` (kept alongside the other auth routes; only the two `@fastify/oauth2` plugin instances live in `plugins/oauth.ts`). Profile-fetching is delegated to dedicated helpers — `lib/google-oauth.ts` / `lib/linkedin-oauth.ts` — each calling the provider's OIDC `userinfo` endpoint with the access token `@fastify/oauth2` already validated.
+**Callbacks**: `GET /api/v1/auth/oauth/google/callback` and `GET /api/v1/auth/oauth/linkedin/callback`, implemented in `routes/v1/auth/actions.ts` (kept alongside the other auth routes; only the two `@fastify/oauth2` plugin instances live in `plugins/oauth.ts`). Profile-fetching is delegated to dedicated helpers — `lib/google-oauth.ts` / `lib/linkedin-oauth.ts` — each calling the provider's OIDC `userinfo` endpoint with the access token `@fastify/oauth2` already validated. `GOOGLE_REDIRECT_URI` / `LINKEDIN_REDIRECT_URI` must match those paths (and the provider console) exactly.
 
 On a successful callback:
 
-1. `services/oauth-authentication.ts`'s `findOrCreateOAuthUser` looks up the user by provider id (`google_id`/`linkedin_id`); if none exists, it links the provider to an existing account with a matching email — **regardless of that account's `email_verified` flag**, since every OAuth provider has already verified the email on its own side, and merges it (setting `email_verified: true`) — or otherwise creates a new user.
-2. A short-lived, single-use **exchange code** is minted (`createExchangeCode`) and the browser is redirected to `${FRONTEND_URL}/oauth-callback?code=...`.
-3. On failure (profile fetch failure or a disabled provider), the browser is redirected to `${FRONTEND_URL}/oauth-callback?error=...` instead — a top-level browser redirect can't carry a JSON error body, so there's no HTTP error response to read here.
+1. If an `oauth_link_intent` cookie is present (set by authenticated
+   `GET /api/v1/auth/oauth/<provider>/link`), the provider is attached to the logged-in
+   user (`linkOAuthProvider`) and the browser redirects to
+   `${FRONTEND_URL}/account-profile?linked=<provider>`. Provider email must be verified;
+   email must match the account (or the account has no email); conflicts redirect with
+   `?error=`.
+2. Otherwise `findOrCreateOAuthUser` looks up by provider id; if none exists and email
+   matches an existing account, it merges **only when** `profile.emailVerified === true`
+   (otherwise `oauth_email_unverified`); else it creates a new user.
+3. A short-lived, single-use **exchange code** is minted and the browser is redirected to
+   `${FRONTEND_URL}/oauth-callback?code=...` (or `?error=...` on failure).
 
 **Exchange codes** (`OAuthExchangeCode` table): only a **sha256 hash** of the code is stored, never a token — alongside `user_id`, `expires_at`, and `consumed_at` (null until used). The SPA calls `POST /api/v1/auth/oauth/exchange` with `{ code }`; `consumeExchangeCode` rejects a code that's missing, expired, or already consumed (`invalid_exchange_code`), otherwise marks it consumed and — **only at this point** — calls the existing `TokenService.issueTokenPair()` to mint a real access/refresh token pair, set as cookies. No tokens exist anywhere until a valid code is actually exchanged.
 
 **Frontend**: `apps/app/src/components/auth/oauth-callback.tsx` reads `?code=`/`?error=`,
 calls the exchange endpoint, and routes into the app on success — the same
 `resolvePostAuthDestination` next-param handling used by the phone-password flow (see
-[Client-side session storage](#client-side-session-storage)).
+[Client-side session storage](#client-side-session-storage)). Account-profile “Link”
+buttons use `/auth/oauth/<provider>/link` (full-page), not the login OAuth start.
 
 ## Logout
 
@@ -313,17 +329,25 @@ itself.
 ```json
 {
   "confirm": true,
-  "currentPassword": "only required if the account has a password",
+  "currentPassword": "required when the account has a password",
+  "otpCode": "required when the account has no password (ACCOUNT_DELETE OTP)",
   "reason": "optional, logged server-side only"
 }
 ```
 
-- `confirm: true` is **always required**, regardless of how the account authenticates — a missing or `false` value is rejected (`account_deletion_not_confirmed`, 400) before anything else is checked.
-- If the account **has a password** (phone/password accounts), `currentPassword` is also required and verified against the stored hash — both a missing and an incorrect password are rejected as `invalid_current_password` (400).
-- If the account **has no password** (OAuth-only accounts), no password check applies — `confirm: true` alone is sufficient.
-- `reason` is optional and never required; when present it's logged server-side (`request.log.info`) for support/analytics purposes only — it isn't stored on the user record or used in the deletion decision.
-- Rate-limited with the strict tier (`RATE_LIMIT_STRICT`: 3 requests per hour) — deliberately tighter than the other auth tiers, since this is destructive and hard to undo.
-- **This is currently a hard delete**: `prisma.user.delete()` removes the row outright. `RefreshToken`, `OAuthExchangeCode`, and `OtpChallenge` rows for that user are removed automatically via Prisma's `onDelete: Cascade`. This endpoint does not use the `status` enum (`ACTIVE`/`INACTIVE`/`BANNED`) at all — that field exists for admin moderation, not self-service deletion — so there is no soft-delete path here: deleting is permanent and immediate.
+Passwordless accounts must call `POST /api/v1/auth/account/delete-otp` first (SMS to the
+linked phone). Session alone is never enough to delete.
+
+- `confirm: true` is **always required** (`account_deletion_not_confirmed`, 400).
+- If the account **has a password**, `currentPassword` is required and verified.
+- If the account **has no password**, a fresh `ACCOUNT_DELETE` OTP (`otpCode`) is required.
+- `reason` is optional and logged server-side only.
+- Rate-limited with `RATE_LIMIT_STRICT` (3/hour).
+- **Hard delete** via `prisma.user.delete()` with cascade on refresh/OAuth/OTP rows.
+
+> `/verify-account` (face KYC) and paid-plan screens may still be product stubs — they are
+> not auth-session bugs. The admin panel’s readable `admin_session=1` marker is edge UX
+> only; the API always authorizes against the HttpOnly `admin_access_token` JWT.
 - The response body is `{ message }` only; no user object (and therefore no password field) is ever returned.
 
 ## CSRF: Origin/Referer validation

@@ -1,20 +1,16 @@
-import jwt from 'jsonwebtoken';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PHOTOS_DIR, VIDEOS_DIR } from '../utils/media-storage.js';
 import { buildTestApp } from './build-test-app.js';
-
-function signAccessToken(userId: string) {
-  return jwt.sign({ id: userId, email: 'user@example.com' }, 'test-access-token-secret');
-}
+import { signTestAccessToken } from './sign-test-access-token.js';
 
 function findUniqueOrThrowForAnyCaller() {
   return vi
     .fn()
     .mockImplementation(({ where }: { where: { id: string } }) =>
-      Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER' }),
+      Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER', token_version: 0 }),
     );
 }
 
@@ -64,7 +60,12 @@ describe('POST/DELETE /api/v1/users/me/profile/photo', () => {
           findUniqueOrThrow: vi.fn().mockImplementation(({ where }) => {
             if (where.id === 'user-1')
               return Promise.resolve({ id: 'user-1', status: 'ACTIVE', image: null });
-            return Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER' });
+            return Promise.resolve({
+              id: where.id,
+              status: 'ACTIVE',
+              role: 'USER',
+              token_version: 0,
+            });
           }),
           update: updateMock,
         } as never,
@@ -75,7 +76,7 @@ describe('POST/DELETE /api/v1/users/me/profile/photo', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/users/me/profile/photo',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: photoFormData(),
     });
 
@@ -110,7 +111,7 @@ describe('POST/DELETE /api/v1/users/me/profile/photo', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/users/me/profile/photo',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: form,
     });
 
@@ -127,7 +128,7 @@ describe('POST/DELETE /api/v1/users/me/profile/photo', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/users/me/profile/photo',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: new FormData(),
     });
 
@@ -148,7 +149,12 @@ describe('POST/DELETE /api/v1/users/me/profile/photo', () => {
                 image: 'data:image/png;base64,abc',
               });
             }
-            return Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER' });
+            return Promise.resolve({
+              id: where.id,
+              status: 'ACTIVE',
+              role: 'USER',
+              token_version: 0,
+            });
           }),
           update: updateMock,
         } as never,
@@ -159,7 +165,7 @@ describe('POST/DELETE /api/v1/users/me/profile/photo', () => {
     const response = await app.inject({
       method: 'DELETE',
       url: '/api/v1/users/me/profile/photo',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -184,7 +190,12 @@ describe('POST/DELETE /api/v1/users/me/profile/video', () => {
           findUniqueOrThrow: vi.fn().mockImplementation(({ where }) => {
             if (where.id === 'user-1')
               return Promise.resolve({ id: 'user-1', status: 'ACTIVE', video: null });
-            return Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER' });
+            return Promise.resolve({
+              id: where.id,
+              status: 'ACTIVE',
+              role: 'USER',
+              token_version: 0,
+            });
           }),
           update: updateMock,
         } as never,
@@ -195,7 +206,7 @@ describe('POST/DELETE /api/v1/users/me/profile/video', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/users/me/profile/video',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: videoFormData(),
     });
 
@@ -221,7 +232,7 @@ describe('POST/DELETE /api/v1/users/me/profile/video', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/users/me/profile/video',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: new FormData(),
     });
 
@@ -238,7 +249,12 @@ describe('POST/DELETE /api/v1/users/me/profile/video', () => {
             if (where.id === 'user-1') {
               return Promise.resolve({ id: 'user-1', status: 'ACTIVE', video: null });
             }
-            return Promise.resolve({ id: where.id, status: 'ACTIVE', role: 'USER' });
+            return Promise.resolve({
+              id: where.id,
+              status: 'ACTIVE',
+              role: 'USER',
+              token_version: 0,
+            });
           }),
           update: updateMock,
         } as never,
@@ -249,7 +265,7 @@ describe('POST/DELETE /api/v1/users/me/profile/video', () => {
     const response = await app.inject({
       method: 'DELETE',
       url: '/api/v1/users/me/profile/video',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);

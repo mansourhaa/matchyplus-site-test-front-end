@@ -1,17 +1,40 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
-import jwt from 'jsonwebtoken';
 
 import { User } from '@saas-boilerplate/types';
 
-import { AuthorizationService } from '../services/authorization.js';
+import { AccessTokenAudience, AuthorizationService } from '../services/authorization.js';
 import { ADMIN_SESSION_COOKIE } from '../utils/admin-session.js';
 import { MEMBER_ACCESS_COOKIE } from '../utils/member-session.js';
 import { isAdminRole } from '../utils/roles.js';
 
 /**
+ * Admin API lives under `/api/v1/admin`. Never select the other audience's cookie.
+ */
+export function expectedAccessAudience(request: FastifyRequest): AccessTokenAudience {
+  const path = (request.url ?? '').split('?')[0] ?? '';
+  if (path === '/api/v1/admin' || path.startsWith('/api/v1/admin/')) {
+    return 'admin';
+  }
+  return 'member';
+}
+
+function selectAccessToken(request: FastifyRequest): string | null {
+  const headerValue = request.headers['authorization'] || '';
+  const matches = headerValue.match(/bearer\s+(\S+)/i);
+  if (matches?.[1]) {
+    return matches[1];
+  }
+
+  const audience = expectedAccessAudience(request);
+  if (audience === 'admin') {
+    return request.cookies?.[ADMIN_SESSION_COOKIE] ?? null;
+  }
+  return request.cookies?.[MEMBER_ACCESS_COOKIE] ?? null;
+}
+
+/**
  * Authorization plugin that handle every step in authorization process.
- *
  */
 async function authorization(fastify: FastifyInstance) {
   const { httpErrors, prisma } = fastify;
@@ -19,17 +42,7 @@ async function authorization(fastify: FastifyInstance) {
     prisma,
   });
   async function verifyToken(request: FastifyRequest) {
-    const headerValue = request.headers['authorization'] || '';
-
-    const matches = headerValue.match(/bearer\s+(\S+)/i);
-    // Both the admin panel and the member app hold their token in an HttpOnly cookie, so
-    // neither can set the header — the browser replays the cookie instead. Other clients
-    // (e.g. mobile) keep using the bearer header.
-    const token = matches
-      ? matches[1]
-      : (request.cookies?.[ADMIN_SESSION_COOKIE] ??
-        request.cookies?.[MEMBER_ACCESS_COOKIE] ??
-        null);
+    const token = selectAccessToken(request);
     if (!token) {
       throw httpErrors.unauthorized(
         // @ts-ignore
@@ -40,10 +53,12 @@ async function authorization(fastify: FastifyInstance) {
       );
     }
     try {
-      request.loggedUser = await authorizationService.verifyAccessToken(token as string);
+      request.loggedUser = await authorizationService.verifyAccessToken(token, {
+        audience: expectedAccessAudience(request),
+      });
     } catch (err) {
-      // Expired, malformed, or pointing at a user that no longer exists — all of these are
-      // "not authenticated", not a server error, so surface 401 rather than 500.
+      // Expired, malformed, wrong audience, stale token_version, or missing user —
+      // all of these are "not authenticated", not a server error.
       throw httpErrors.unauthorized(
         // @ts-ignore
         request.t('invalid_token') as string,

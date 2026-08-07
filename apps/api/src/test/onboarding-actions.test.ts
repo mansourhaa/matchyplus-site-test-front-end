@@ -1,13 +1,9 @@
-import jwt from 'jsonwebtoken';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTestApp } from './build-test-app.js';
+import { signTestAccessToken } from './sign-test-access-token.js';
 
-function signAccessToken(userId: string) {
-  return jwt.sign({ id: userId, email: 'user@example.com' }, 'test-access-token-secret');
-}
-
-const activeUser = { id: 'user-1', status: 'ACTIVE' };
+const activeUser = { id: 'user-1', status: 'ACTIVE', token_version: 0 };
 
 describe('GET /api/v1/users/me/profile', () => {
   const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
@@ -45,7 +41,7 @@ describe('GET /api/v1/users/me/profile', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/users/me/profile',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -84,7 +80,7 @@ describe('PATCH /api/v1/users/me/profile', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/api/v1/users/me/profile',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
       payload: { job: 'Électricien', bio: 'Bio text' },
     });
 
@@ -132,7 +128,7 @@ describe('POST /api/v1/users/me/profile/complete', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/users/me/profile/complete',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(400);
@@ -170,7 +166,7 @@ describe('POST /api/v1/users/me/profile/complete', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/users/me/profile/complete',
-      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
     });
 
     expect(response.statusCode).toBe(200);

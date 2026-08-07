@@ -82,6 +82,7 @@ const feedProfile = {
     confidence: { type: 'string', enum: matchConfidenceEnum },
     compatibility: { type: 'array', items: scoreBreakdown },
     liked_me: { type: 'boolean' },
+    is_locked: { type: 'boolean' },
   },
 };
 
@@ -149,7 +150,8 @@ const swipeResult = {
 export const swipeFeedQuerySchema = {
   tags: ['discovery'],
   summary: 'Ranked swipe feed',
-  description: 'Returns eligible profiles ranked by scripted Discovery v5 scoring. Requires JWT.',
+  description:
+    'Returns eligible profiles ranked by scripted Discovery v5 scoring, with optional search filters and offset pagination. Requires JWT.',
   security: [{ http: [] }],
   querystring: {
     type: 'object',
@@ -158,6 +160,14 @@ export const swipeFeedQuerySchema = {
       latitude: { type: 'number' },
       longitude: { type: 'number' },
       limit: { type: 'integer', minimum: 1, maximum: 50 },
+      offset: { type: 'integer', minimum: 0 },
+      context: { type: 'string', enum: ['swipe', 'search'] },
+      q: { type: 'string', maxLength: 120 },
+      maxDistanceKm: { type: 'number', minimum: 1, maximum: 200 },
+      serviceTypes: { type: 'string', maxLength: 500 },
+      profileType: { type: 'string', enum: ['INDIVIDUAL', 'PROVIDER'] },
+      minRating: { type: 'number', minimum: 0, maximum: 5 },
+      sort: { type: 'string', enum: ['match', 'distance', 'rating'] },
     },
   },
   response: {
@@ -167,6 +177,9 @@ export const swipeFeedQuerySchema = {
       properties: {
         profiles: { type: 'array', items: feedProfile },
         count: { type: 'integer' },
+        offset: { type: 'integer' },
+        limit: { type: 'integer' },
+        has_more: { type: 'boolean' },
         feed_breakdown: {
           type: 'object',
           properties: {
