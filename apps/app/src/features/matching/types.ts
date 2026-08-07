@@ -118,6 +118,8 @@ export type RealtimeMessage = {
     matched_user_id?: string;
     viewerName?: string;
     viewerImage?: string | null;
+    sender_name?: string;
+    sender_image?: string | null;
   };
 };
 

@@ -194,12 +194,16 @@ export function LocationStep({
   useEffect(() => {
     if (hydratedRef.current || !profile) return;
     hydratedRef.current = true;
-    setCity(profile.city ?? '');
-    if (profile.city) setShowCityFallback(true);
-    setAvailabilityDays(profile.availability_days ?? []);
-    setAvailabilityHours(profile.availability_hours ?? []);
-    setContactModes(profile.contact_modes ?? []);
-    setLanguages(profile.languages ?? []);
+
+    // Defer state updates to avoid synchronous cascading renders
+    setTimeout(() => {
+      setCity(profile.city ?? '');
+      if (profile.city) setShowCityFallback(true);
+      setAvailabilityDays(profile.availability_days ?? []);
+      setAvailabilityHours(profile.availability_hours ?? []);
+      setContactModes(profile.contact_modes ?? []);
+      setLanguages(profile.languages ?? []);
+    }, 0);
   }, [profile]);
 
   const reverseGeocode = async (lat: number, lon: number): Promise<string | null> => {
@@ -268,11 +272,19 @@ export function LocationStep({
     if (autoGpsStarted.current) return;
     if (profile?.city) {
       autoGpsStarted.current = true;
-      setGpsStatus('success');
+
+      // Defer state update
+      setTimeout(() => {
+        setGpsStatus('success');
+      }, 0);
+
       return;
     }
     autoGpsStarted.current = true;
-    detectGps({ silent: true });
+    // Defer the function call that contains state updates
+    setTimeout(() => {
+      detectGps({ silent: true });
+    }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

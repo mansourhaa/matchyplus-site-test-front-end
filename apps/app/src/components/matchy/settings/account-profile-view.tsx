@@ -9,7 +9,7 @@ import { PHONE_COUNTRIES } from '@/lib/phone-countries';
 import { Check, ChevronRight, Lock, Mail, Phone, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo } from 'react';
 
 function GoogleIcon() {
   return (
@@ -164,7 +164,6 @@ export function AccountProfileView() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectAuth);
   const searchParams = useSearchParams();
-  const [banner, setBanner] = useState<string | null>(null);
 
   useEffect(() => {
     // Only re-probe after an OAuth link round-trip; bootstrap already loaded the user.
@@ -172,26 +171,23 @@ export function AccountProfileView() {
     void dispatch(fetchCurrentUser());
   }, [dispatch, searchParams]);
 
-  useEffect(() => {
+  const banner = useMemo(() => {
     const linked = searchParams.get('linked');
-    if (!linked) return;
+    if (!linked) return null;
     if (linked === 'google') {
-      setBanner(
-        locale === 'en'
-          ? 'Google account linked successfully.'
-          : locale === 'ar'
-            ? 'تم ربط حساب Google بنجاح.'
-            : 'Compte Google lié avec succès.',
-      );
+      return locale === 'en'
+        ? 'Google account linked successfully.'
+        : locale === 'ar'
+          ? 'تم ربط حساب Google بنجاح.'
+          : 'Compte Google lié avec succès.';
     } else if (linked === 'linkedin') {
-      setBanner(
-        locale === 'en'
-          ? 'LinkedIn account linked successfully.'
-          : locale === 'ar'
-            ? 'تم ربط حساب LinkedIn بنجاح.'
-            : 'Compte LinkedIn lié avec succès.',
-      );
+      return locale === 'en'
+        ? 'LinkedIn account linked successfully.'
+        : locale === 'ar'
+          ? 'تم ربط حساب LinkedIn بنجاح.'
+          : 'Compte LinkedIn lié avec succès.';
     }
+    return null;
   }, [locale, searchParams]);
 
   const provider = normalizeProvider(user?.auth_provider);
@@ -242,8 +238,6 @@ export function AccountProfileView() {
           : null;
 
   const onLinkSocial = (which: 'google' | 'linkedin') => {
-    // Full-page navigation to authenticated link-intent start (sets oauth_link_intent cookie).
-    // Do not use login OAuth — that would mint a new session via exchange.
     const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
     window.location.href = `${base}/auth/oauth/${which}/link`;
   };

@@ -81,7 +81,9 @@ describe('LocationStep', () => {
       </I18nProvider>,
     );
 
-    expect(firstPlaceholder('Votre ville (ex : Tunis, Sousse...)')).toHaveValue('Tunis');
+    await waitFor(() => {
+      expect(firstPlaceholder('Votre ville (ex : Tunis, Sousse...)')).toHaveValue('Tunis');
+    });
   });
 
   it('does not show availability chips or require them when not offering a service', async () => {

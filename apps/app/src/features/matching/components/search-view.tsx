@@ -304,7 +304,14 @@ export function SearchView() {
   // Initial + filter/query-driven reloads (not append).
   useEffect(() => {
     if (!locationSynced || latitude == null || longitude == null) return;
-    void loadSearchFeed('replace');
+
+    // Defer the execution to avoid the synchronous setState warning
+    const timer = setTimeout(() => {
+      void loadSearchFeed('replace');
+    }, 0);
+
+    return () => clearTimeout(timer);
+
     // Intentionally omit loadSearchFeed — rebuild when filters / debounced query / location change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationSynced, latitude, longitude, filters, debouncedQuery]);

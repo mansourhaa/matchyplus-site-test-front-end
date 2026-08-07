@@ -47,7 +47,10 @@ export function FieldMicButton({
 
   useEffect(() => {
     mountedRef.current = true;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSupported(Boolean(getSpeechRecognition()));
+
     return () => {
       mountedRef.current = false;
       const recognition = recognitionRef.current;
