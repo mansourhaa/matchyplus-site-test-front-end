@@ -30,8 +30,18 @@ COPY turbo.json turbo.json
 
 RUN pnpm install
 
-# landing is a static marketing site - it reads no NEXT_PUBLIC_* vars, so
-# there's nothing to bake in at build time here (unlike app/admin).
+# Where the "Connexion" and "Inscription" buttons send visitors. Next.js inlines
+# NEXT_PUBLIC_* into the client bundle at BUILD time, so this cannot be set on
+# the Deployment or in a ConfigMap afterwards - the string is already compiled
+# into the JavaScript.
+#
+# This file used to claim landing read no NEXT_PUBLIC_* vars. That was true while
+# landing was a placeholder page; the Vite-to-Next migration replaced it with a
+# real marketing site that reads NEXT_PUBLIC_APP_URL, and the stale comment meant
+# nobody passed it. Production shipped with the localhost fallback compiled in,
+# so every visitor who clicked Connexion was sent to their own machine.
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm turbo build --filter=@saas-boilerplate/landing
 

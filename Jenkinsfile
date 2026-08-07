@@ -64,6 +64,23 @@ pipeline {
     // at runtime would restore build-once-deploy-many for all five; until then
     // prod frontends must be built from main.
     FRONTEND_API_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://api.matchyplus.com/api/v1' : 'https://api.staging.matchy.local/api/v1'}"
+
+    // The other two cross-site URLs, inlined at build time for the same reason.
+    //
+    // FRONTEND_APP_URL  - landing's Connexion/Inscription buttons.
+    // FRONTEND_LANDING_URL - where apps/app/src/proxy.ts sends /privacy-policy
+    //                        and /terms-of-service.
+    //
+    // Both shipped to production with their localhost fallbacks compiled in,
+    // because nothing passed them: landing's Dockerfile carried a comment saying
+    // it read no NEXT_PUBLIC_* vars, which stopped being true when the marketing
+    // site was migrated from Vite to Next. The result was a Connexion button
+    // that sent visitors to their own machine and two dead legal links.
+    //
+    // Nothing at deploy time can correct these - Next.js compiles them into the
+    // bundle - so a wrong value here means rebuilding, not editing a ConfigMap.
+    FRONTEND_APP_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://app.matchyplus.com' : 'https://app.staging.matchy.local'}"
+    FRONTEND_LANDING_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://matchyplus.com' : 'https://staging.matchy.local'}"
   }
 
   stages {
@@ -360,9 +377,9 @@ pipeline {
       steps {
         sh """
           docker build --pull -t ${REGISTRY_REPO}:api-${IMAGE_TAG} -f apps/api/Dockerfile .
-          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} --build-arg NEXT_PUBLIC_LANDING_URL=${FRONTEND_LANDING_URL} -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
           docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
-          docker build --pull -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_APP_URL=${FRONTEND_APP_URL} -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
           docker build --pull -t ${REGISTRY_REPO}:ai-${IMAGE_TAG} -f apps/ai/Dockerfile apps/ai
         """
       }
