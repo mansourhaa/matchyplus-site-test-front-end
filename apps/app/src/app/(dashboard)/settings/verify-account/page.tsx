@@ -1,14 +1,25 @@
 'use client';
 
-import { StubScreen } from '@/components/matchy/stub-screen';
+import { matchyBrand } from '@/components/matchy/brand';
+import { IdentityVerificationSection } from '@/features/auth/components/account-settings';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import Link from 'next/link';
 
 export default function VerifyAccountPage() {
-  const { t } = useI18n();
+  const { locale } = useI18n();
+
   return (
-    <StubScreen
-      title={t('settings.verifyAccount')}
-      description="Complete identity verification to unlock the verified badge on your profile."
-    />
+    <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }}>
+      <div className="mx-auto max-w-2xl space-y-3 px-4 py-6 md:px-8">
+        <Link
+          href="/settings/account"
+          className="text-sm font-bold"
+          style={{ color: matchyBrand.muted }}
+        >
+          ← {locale === 'ar' ? 'رجوع' : locale === 'en' ? 'Back' : 'Retour'}
+        </Link>
+        <IdentityVerificationSection />
+      </div>
+    </div>
   );
 }

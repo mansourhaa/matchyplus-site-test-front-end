@@ -363,7 +363,7 @@ const MAX_POLL_ATTEMPTS = 30;
 const POLL_INTERVAL_MS = 2000;
 const TERMINAL_STATUSES = new Set(['SUCCEEDED', 'FAILED', 'CANCELLED']);
 
-function IdentityVerificationSection() {
+export function IdentityVerificationSection() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectAuth);
   const { job, identityVerified, submitting, error } = useAppSelector(selectIdentityVerification);
