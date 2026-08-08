@@ -1,9 +1,39 @@
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
 from app.config import load_settings
+
+logger = logging.getLogger(__name__)
+
+# Shared by warm_face_model() and process_verify_identity(): DeepFace caches a built
+# model per name, so warming one name and verifying with another would silently pay the
+# whole load cost again on the first real job.
+FACE_MODEL_NAME = "VGG-Face"
+FACE_DETECTOR_BACKEND = "opencv"
+
+
+def warm_face_model() -> bool:
+    """Builds the face model before any job runs. Returns True when a model was built.
+
+    DeepFace downloads its weights (~553MB for VGG-Face) on first use and builds the
+    TensorFlow graph lazily *inside* the first call. Left alone, that entire cost lands
+    on the first user's job — measured at ~153s locally, far longer than any sane client
+    poll budget, so the job succeeded long after the UI had given up. Paying it at worker
+    boot instead keeps first-job latency in line with every later job.
+    """
+    settings = load_settings()
+    if not settings.enable_face_model:
+        return False
+
+    from deepface import DeepFace  # lazy import — skip loading TensorFlow on the stub path
+
+    logger.info("Warming face model %s — first boot downloads weights", FACE_MODEL_NAME)
+    DeepFace.build_model(FACE_MODEL_NAME)
+    logger.info("Face model %s ready", FACE_MODEL_NAME)
+    return True
 
 
 def process_verify_identity(payload: dict[str, Any]) -> dict[str, Any]:
@@ -34,8 +64,8 @@ def process_verify_identity(payload: dict[str, Any]) -> dict[str, Any]:
         result = DeepFace.verify(
             profile_path,
             selfie_path,
-            model_name="VGG-Face",
-            detector_backend="opencv",
+            model_name=FACE_MODEL_NAME,
+            detector_backend=FACE_DETECTOR_BACKEND,
             distance_metric="cosine",
             enforce_detection=False,
         )
@@ -53,5 +83,10 @@ def process_verify_identity(payload: dict[str, Any]) -> dict[str, Any]:
         # Selfie is single-use — delete it whichever path ran (the stub never touches
         # it, so this also cleans up the still-common default-flag-off case). The
         # profile photo is the user's permanent photo and is never deleted here.
-        if os.path.exists(selfie_path):
+        #
+        # isfile, not exists: an absent or empty selfiePath makes os.path.join collapse
+        # to the uploads directory itself, and os.remove() on a directory raises
+        # IsADirectoryError *from this finally block* — masking whatever the try block
+        # was returning or raising, and failing the job for all its retries.
+        if os.path.isfile(selfie_path):
             os.remove(selfie_path)

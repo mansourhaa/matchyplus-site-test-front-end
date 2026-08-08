@@ -25,6 +25,7 @@ function createMockAiJobs() {
   return {
     createJob: vi.fn(),
     getJobForUser: vi.fn(),
+    findLatestJobForUser: vi.fn(),
   };
 }
 
@@ -203,6 +204,48 @@ describe('IdentityVerificationService', () => {
       prisma.user.findUniqueOrThrow.mockResolvedValue({ verified: false });
 
       const result = await service.getStatus('user-1', 'job-1');
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(result).toEqual({ job, identityVerified: false });
+    });
+  });
+
+  describe('getLatestStatus', () => {
+    it('reports the stored flag with a null job when the user never submitted a selfie', async () => {
+      const { service, prisma, aiJobs } = createService();
+      aiJobs.findLatestJobForUser.mockResolvedValue(null);
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ verified: false });
+
+      const result = await service.getLatestStatus('user-1');
+
+      expect(aiJobs.findLatestJobForUser).toHaveBeenCalledWith('user-1', 'VERIFY_IDENTITY');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(result).toEqual({ job: null, identityVerified: false });
+    });
+
+    it('recovers a succeeded job the client stopped polling and syncs User.verified', async () => {
+      const { service, prisma, aiJobs } = createService();
+      const job = { id: 'job-1', status: 'SUCCEEDED', result: { verified: true } };
+      aiJobs.findLatestJobForUser.mockResolvedValue(job);
+      prisma.user.update.mockResolvedValue({ verified: true });
+
+      const result = await service.getLatestStatus('user-1');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { verified: true },
+        select: { verified: true },
+      });
+      expect(result).toEqual({ job, identityVerified: true });
+    });
+
+    it('returns a still-running job so the UI can resume polling after a reload', async () => {
+      const { service, prisma, aiJobs } = createService();
+      const job = { id: 'job-1', status: 'RUNNING', result: null };
+      aiJobs.findLatestJobForUser.mockResolvedValue(job);
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ verified: false });
+
+      const result = await service.getLatestStatus('user-1');
 
       expect(prisma.user.update).not.toHaveBeenCalled();
       expect(result).toEqual({ job, identityVerified: false });

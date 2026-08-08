@@ -1,10 +1,10 @@
-import jwt from 'jsonwebtoken';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTestApp } from './build-test-app.js';
+import { signTestAccessToken } from './sign-test-access-token.js';
 
 function signAccessToken(userId: string) {
-  return jwt.sign({ id: userId, email: 'user@example.com' }, 'test-access-token-secret');
+  return signTestAccessToken(userId, { email: 'user@example.com' });
 }
 
 function findUniqueOrThrowForAnyCaller(overrides: Record<string, unknown> = {}) {
@@ -129,6 +129,90 @@ describe('POST /api/v1/users/me/identity-verification', () => {
 
     expect(response.statusCode).toBe(503);
     expect(response.json()).toMatchObject({ code: 'AI_QUEUE_UNAVAILABLE' });
+  });
+});
+
+describe('GET /api/v1/users/me/identity-verification', () => {
+  const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
+
+  afterEach(async () => {
+    await Promise.all(apps.map((app) => app.close()));
+    apps.length = 0;
+  });
+
+  it('requires authentication', async () => {
+    const app = await buildTestApp({});
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/users/me/identity-verification',
+    });
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('returns a null job for a caller who never submitted a selfie', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        user: { findUniqueOrThrow: findUniqueOrThrowForAnyCaller({ verified: false }) } as never,
+        aiJob: { findFirst: vi.fn().mockResolvedValue(null) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/users/me/identity-verification',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ job: null, identityVerified: false });
+  });
+
+  // The regression this route exists for: the client's poll loop gave up before the
+  // worker finished, so no one ever read the SUCCEEDED result and User.verified stayed
+  // false. Looking the job up by user — not by an id the client no longer has —
+  // recovers it and writes the flag.
+  it('recovers a succeeded job the client stopped polling and marks the user verified', async () => {
+    const update = vi.fn().mockResolvedValue({ verified: true });
+    const finishedJob = {
+      id: 'job-1',
+      type: 'VERIFY_IDENTITY',
+      status: 'SUCCEEDED',
+      result: { verified: true, confidence: 67 },
+      error: null,
+      createdAt: new Date('2026-08-08T19:49:58.684Z'),
+      updatedAt: new Date('2026-08-08T19:52:31.461Z'),
+    };
+    const app = await buildTestApp({
+      prisma: {
+        user: {
+          findUniqueOrThrow: findUniqueOrThrowForAnyCaller({ verified: false }),
+          update,
+        } as never,
+        aiJob: { findFirst: vi.fn().mockResolvedValue(finishedJob) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/users/me/identity-verification',
+      headers: { authorization: `Bearer ${signAccessToken('user-1')}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      job: { id: 'job-1', status: 'SUCCEEDED' },
+      identityVerified: true,
+    });
+    expect(update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { verified: true },
+      select: { verified: true },
+    });
   });
 });
 

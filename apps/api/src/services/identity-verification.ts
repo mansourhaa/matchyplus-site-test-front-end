@@ -90,23 +90,50 @@ export class IdentityVerificationService {
       const job = await this.deps.aiJobs.getJobForUser(jobId, userId);
       if (!job) return null;
 
-      const result = job.result as Record<string, unknown> | null;
-      if (job.status === 'SUCCEEDED' && result && typeof result.verified === 'boolean') {
-        const updated = await this.deps.prisma.user.update({
-          where: { id: userId },
-          data: { verified: result.verified },
-          select: { verified: true },
-        });
-        return { job, identityVerified: updated.verified };
-      }
-
-      const user = await this.deps.prisma.user.findUniqueOrThrow({
-        where: { id: userId },
-        select: { verified: true },
-      });
-      return { job, identityVerified: user.verified };
+      return { job, identityVerified: await this.syncVerifiedFromJob(userId, job) };
     } catch (err) {
       throw err;
     }
+  }
+
+  async getLatestStatus(userId: string): Promise<{ job: AiJob | null; identityVerified: boolean }> {
+    try {
+      const job = await this.deps.aiJobs.findLatestJobForUser(userId, 'VERIFY_IDENTITY');
+      if (!job) {
+        const user = await this.deps.prisma.user.findUniqueOrThrow({
+          where: { id: userId },
+          select: { verified: true },
+        });
+        return { job: null, identityVerified: user.verified };
+      }
+
+      return { job, identityVerified: await this.syncVerifiedFromJob(userId, job) };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Writes User.verified from a SUCCEEDED job's result and returns the effective flag.
+   * A non-terminal or result-less job leaves the stored flag untouched — a re-run must
+   * never silently clear a verification the user already earned.
+   */
+  private async syncVerifiedFromJob(userId: string, job: AiJob): Promise<boolean> {
+    const result = job.result as Record<string, unknown> | null;
+
+    if (job.status === 'SUCCEEDED' && result && typeof result.verified === 'boolean') {
+      const updated = await this.deps.prisma.user.update({
+        where: { id: userId },
+        data: { verified: result.verified },
+        select: { verified: true },
+      });
+      return updated.verified;
+    }
+
+    const user = await this.deps.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { verified: true },
+    });
+    return user.verified;
   }
 }

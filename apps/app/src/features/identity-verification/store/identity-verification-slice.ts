@@ -1,13 +1,19 @@
 import { api, getApiErrorCode } from '@/lib/api';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
-import type { IdentityVerificationJob, IdentityVerificationStatusResponse } from '../types';
+import type {
+  IdentityVerificationJob,
+  IdentityVerificationStatusResponse,
+  LatestIdentityVerificationResponse,
+} from '../types';
 
 type IdentityVerificationState = {
   job: IdentityVerificationJob | null;
   identityVerified: boolean;
   submitting: boolean;
   polling: boolean;
+  /** False until the latest-job lookup settles, so the UI never offers the camera for a verification that is already running. */
+  restored: boolean;
   error: string | null;
 };
 
@@ -16,6 +22,7 @@ const initialState: IdentityVerificationState = {
   identityVerified: false,
   submitting: false,
   polling: false,
+  restored: false,
   error: null,
 };
 
@@ -50,14 +57,52 @@ export const fetchIdentityVerificationStatus = createAsyncThunk(
   },
 );
 
+/**
+ * Recovers the user's most recent attempt from the API. Redux state is per-document, so
+ * without this a reload — or a poll loop that gave up before the worker finished — loses
+ * the job id and with it any way to ever read that job's result.
+ */
+export const fetchLatestIdentityVerification = createAsyncThunk(
+  'identityVerification/fetchLatest',
+  async () => {
+    try {
+      const response = await api.get<LatestIdentityVerificationResponse>(
+        '/users/me/identity-verification',
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getApiErrorCode(error) ?? 'identity_verification_status_failed');
+    }
+  },
+);
+
 const identityVerificationSlice = createSlice({
   name: 'identityVerification',
   initialState,
   reducers: {
-    resetIdentityVerification: () => initialState,
+    // Keeps `restored`: the latest-job lookup already ran for this document, and a retry
+    // must drop straight to the camera rather than re-showing the restore spinner.
+    resetIdentityVerification: (state) => ({
+      ...initialState,
+      restored: state.restored,
+      identityVerified: state.identityVerified,
+    }),
   },
   extraReducers: (builder) => {
     builder
+      .addCase(
+        fetchLatestIdentityVerification.fulfilled,
+        (state, action: PayloadAction<LatestIdentityVerificationResponse>) => {
+          state.restored = true;
+          state.job = action.payload.job;
+          state.identityVerified = action.payload.identityVerified;
+        },
+      )
+      // A failed lookup must still unblock the UI — the user can always take a new
+      // selfie, which is strictly better than staring at a spinner.
+      .addCase(fetchLatestIdentityVerification.rejected, (state) => {
+        state.restored = true;
+      })
       .addCase(submitIdentitySelfie.pending, (state) => {
         state.submitting = true;
         state.error = null;

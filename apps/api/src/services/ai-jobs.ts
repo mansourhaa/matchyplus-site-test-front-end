@@ -107,6 +107,13 @@ export class AiJobsService {
     });
   }
 
+  async findLatestJobForUser(userId: string, type: AiJobType): Promise<AiJob | null> {
+    return this.deps.prisma.aiJob.findFirst({
+      where: { userId, type },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async listJobsForUser(userId: string, take = 20): Promise<AiJob[]> {
     return this.deps.prisma.aiJob.findMany({
       where: { userId },

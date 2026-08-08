@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import identityVerificationReducer, {
   fetchIdentityVerificationStatus,
+  fetchLatestIdentityVerification,
   resetIdentityVerification,
   submitIdentitySelfie,
 } from './identity-verification-slice';
@@ -110,6 +111,54 @@ describe('identity-verification-slice', () => {
     });
   });
 
+  describe('fetchLatestIdentityVerification', () => {
+    // The regression this thunk exists for: the poll loop gave up before the worker
+    // finished, so nothing ever read the SUCCEEDED result. Redux state does not survive
+    // the reload, so the job id is gone and only a lookup by user can recover it.
+    it('recovers a job that finished after the poll loop gave up', async () => {
+      const succeededJob = {
+        ...queuedJob,
+        status: 'SUCCEEDED' as const,
+        result: { verified: true },
+      };
+      vi.mocked(api.get).mockResolvedValue({
+        data: { job: succeededJob, identityVerified: true },
+      });
+      const store = buildStore();
+
+      await store.dispatch(fetchLatestIdentityVerification());
+
+      expect(api.get).toHaveBeenCalledWith('/users/me/identity-verification');
+      const state = store.getState().identityVerification;
+      expect(state.job).toEqual(succeededJob);
+      expect(state.identityVerified).toBe(true);
+      expect(state.restored).toBe(true);
+    });
+
+    it('restores with a null job when the user has never submitted a selfie', async () => {
+      vi.mocked(api.get).mockResolvedValue({ data: { job: null, identityVerified: false } });
+      const store = buildStore();
+
+      await store.dispatch(fetchLatestIdentityVerification());
+
+      const state = store.getState().identityVerification;
+      expect(state.job).toBeNull();
+      expect(state.restored).toBe(true);
+    });
+
+    it('still marks the state restored when the lookup fails, so the camera is not blocked', async () => {
+      vi.mocked(api.get).mockRejectedValue({
+        isAxiosError: true,
+        response: { data: { code: 'internal_error' } },
+      });
+      const store = buildStore();
+
+      await store.dispatch(fetchLatestIdentityVerification());
+
+      expect(store.getState().identityVerification.restored).toBe(true);
+    });
+  });
+
   describe('resetIdentityVerification', () => {
     it('clears the job back to the initial state (used to let the user retry after a failure)', async () => {
       vi.mocked(api.post).mockResolvedValue({ data: { job: queuedJob } });
@@ -121,6 +170,16 @@ describe('identity-verification-slice', () => {
 
       expect(store.getState().identityVerification.job).toBeNull();
       expect(store.getState().identityVerification.identityVerified).toBe(false);
+    });
+
+    it('keeps `restored` so a retry shows the camera instead of the restore spinner', async () => {
+      vi.mocked(api.get).mockResolvedValue({ data: { job: null, identityVerified: false } });
+      const store = buildStore();
+      await store.dispatch(fetchLatestIdentityVerification());
+
+      store.dispatch(resetIdentityVerification());
+
+      expect(store.getState().identityVerification.restored).toBe(true);
     });
   });
 });

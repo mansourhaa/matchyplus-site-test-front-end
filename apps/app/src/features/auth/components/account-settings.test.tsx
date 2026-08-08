@@ -3,7 +3,7 @@ import type { AuthState, AuthUser } from '@/features/auth/types';
 import identityVerificationReducer from '@/features/identity-verification/store/identity-verification-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -65,11 +65,40 @@ describe('AccountSettings — identity verification', () => {
     expect(screen.queryByRole('button', { name: /Ouvrir la caméra/ })).not.toBeInTheDocument();
   });
 
-  it('shows the camera capture card when identity is not yet verified', () => {
+  // The camera waits for the latest-job lookup: offering a fresh capture while a
+  // verification is still running server-side would queue a redundant second job.
+  it('shows the camera capture card once the latest-attempt lookup reports nothing pending', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: { job: null, identityVerified: false } });
+
     renderAccountSettings(baseUser);
 
     expect(screen.getByText('Vérifier mon identité')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Ouvrir la caméra/ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Ouvrir la caméra/ })).toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledWith('/users/me/identity-verification');
     expect(screen.queryByText('Identité vérifiée ✓')).not.toBeInTheDocument();
+  });
+
+  it('resumes a verification still running server-side instead of offering the camera again', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        job: {
+          id: 'job-1',
+          type: 'VERIFY_IDENTITY',
+          status: 'RUNNING',
+          result: null,
+          error: null,
+          createdAt: '2026-08-08T19:49:58.000Z',
+          updatedAt: '2026-08-08T19:49:58.000Z',
+        },
+        identityVerified: false,
+      },
+    });
+
+    renderAccountSettings(baseUser);
+
+    expect(await screen.findByText('Vérification en cours...')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /Ouvrir la caméra/ })).not.toBeInTheDocument(),
+    );
   });
 });

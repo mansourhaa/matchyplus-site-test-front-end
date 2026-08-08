@@ -10,6 +10,7 @@ import {
   deleteProfilePhotoSchema,
   deleteProfileVideoSchema,
   getIdentityVerificationStatusSchema,
+  getLatestIdentityVerificationSchema,
   getLoggedUserDataSchema,
   getOnboardingProfileSchema,
   submitIdentitySelfieSchema,
@@ -247,6 +248,25 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
             message: (err as Error).message,
           });
         }
+        throw err;
+      }
+    },
+  );
+
+  fastify.get(
+    '/me/identity-verification',
+    {
+      schema: getLatestIdentityVerificationSchema,
+    },
+    async (request, reply) => {
+      try {
+        const result = await identityVerificationService.getLatestStatus(request.loggedUser.id);
+
+        return reply.code(200).send({
+          job: result.job ? serializeJob(result.job) : null,
+          identityVerified: result.identityVerified,
+        });
+      } catch (err) {
         throw err;
       }
     },

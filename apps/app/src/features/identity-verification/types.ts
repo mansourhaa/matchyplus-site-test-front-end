@@ -15,3 +15,9 @@ export type IdentityVerificationStatusResponse = {
   job: IdentityVerificationJob;
   identityVerified: boolean;
 };
+
+/** `job` is null when the user has never submitted a selfie. */
+export type LatestIdentityVerificationResponse = {
+  job: IdentityVerificationJob | null;
+  identityVerified: boolean;
+};

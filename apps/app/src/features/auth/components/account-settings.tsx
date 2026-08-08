@@ -12,6 +12,7 @@ import {
 import { IdentityVerificationCamera } from '@/features/identity-verification/components/identity-verification-camera';
 import {
   fetchIdentityVerificationStatus,
+  fetchLatestIdentityVerification,
   resetIdentityVerification,
   selectIdentityVerification,
   submitIdentitySelfie,
@@ -359,19 +360,30 @@ export function PhoneLinkSection() {
   );
 }
 
-const MAX_POLL_ATTEMPTS = 30;
+// A cold worker has to load the face model before it can answer, so the budget covers
+// that first slow job rather than the steady-state one. Giving up is only a UI decision:
+// the job keeps running server-side and its result is picked up by the latest-job lookup
+// on the next visit, so this cap can never lose a verification.
+const MAX_POLL_ATTEMPTS = 60;
 const POLL_INTERVAL_MS = 2000;
 const TERMINAL_STATUSES = new Set(['SUCCEEDED', 'FAILED', 'CANCELLED']);
 
 export function IdentityVerificationSection() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectAuth);
-  const { job, identityVerified, submitting, error } = useAppSelector(selectIdentityVerification);
+  const { job, identityVerified, submitting, restored, error } = useAppSelector(
+    selectIdentityVerification,
+  );
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
   const pollAttemptsRef = useRef(0);
 
   const alreadyVerified = identityVerified || Boolean(user?.verified);
   const isPending = Boolean(job) && !TERMINAL_STATUSES.has(job!.status);
+
+  useEffect(() => {
+    if (restored) return;
+    void dispatch(fetchLatestIdentityVerification());
+  }, [restored, dispatch]);
 
   // Poll until the job reaches a terminal status — same pattern as the AI lab doc's own
   // polling guidance, capped so a stuck worker can't spin forever.
@@ -379,7 +391,9 @@ export function IdentityVerificationSection() {
     if (!job || TERMINAL_STATUSES.has(job.status)) return;
 
     if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
-      setTimeoutError('La vérification prend plus de temps que prévu. Réessayez plus tard.');
+      setTimeoutError(
+        'La vérification prend plus de temps que prévu. Revenez sur cette page dans quelques minutes pour voir le résultat.',
+      );
       return;
     }
 
@@ -425,13 +439,13 @@ export function IdentityVerificationSection() {
       title="Vérifier mon identité"
       description="Prenez un selfie pour le comparer à votre photo de profil."
     >
-      {!isPending && !failed && (
+      {restored && !isPending && !failed && (
         <IdentityVerificationCamera onCapture={handleCapture} disabled={submitting} />
       )}
 
-      {isPending && (
+      {(!restored || isPending) && (
         <p style={{ fontSize: '13px', color: '#687284', fontWeight: 600 }}>
-          Vérification en cours...
+          {restored ? 'Vérification en cours...' : 'Chargement...'}
         </p>
       )}
 
