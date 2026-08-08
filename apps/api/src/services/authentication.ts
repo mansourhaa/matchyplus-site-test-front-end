@@ -139,6 +139,7 @@ export class AuthenticationService {
           phone_verified: true,
           google_id: true,
           linkedin_id: true,
+          verified: true,
           role: true,
           onboarding_completed_at: true,
           password: true,

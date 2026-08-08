@@ -71,6 +71,7 @@ const registeredUser = {
   name: '+21612345678',
   auth_provider: 'phone',
   email_verified: false,
+  verified: false,
   onboarding_completed: false,
 };
 

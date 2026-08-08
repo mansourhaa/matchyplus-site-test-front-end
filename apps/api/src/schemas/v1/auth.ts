@@ -83,6 +83,7 @@ export const authCheckSchema = {
             google_linked: { type: 'boolean' },
             linkedin_linked: { type: 'boolean' },
             has_password: { type: 'boolean' },
+            verified: { type: 'boolean' },
             role: { type: 'string' },
             onboarding_completed: { type: 'boolean' },
           },
@@ -124,6 +125,7 @@ const userSummarySchema = {
     google_linked: { type: 'boolean' },
     linkedin_linked: { type: 'boolean' },
     has_password: { type: 'boolean' },
+    verified: { type: 'boolean' },
     onboarding_completed: { type: 'boolean' },
   },
 };

@@ -1,3 +1,4 @@
+import identityVerificationReducer from '@/features/identity-verification/store/identity-verification-slice';
 import matchingReducer from '@/features/matching/store/matching-slice';
 import messagingReducer from '@/features/messaging/store/messaging-slice';
 import notificationsReducer from '@/features/notifications/store/notifications-slice';
@@ -26,6 +27,7 @@ const rootReducer = combineReducers({
   messaging: messagingReducer,
   profile: profileReducer,
   notifications: notificationsReducer,
+  identityVerification: identityVerificationReducer,
 });
 
 export default rootReducer;

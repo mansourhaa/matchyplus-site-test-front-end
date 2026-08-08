@@ -59,7 +59,13 @@ class AiWorker:
             return
 
         logger.info("Processing job id=%s type=%s msg=%s", job_id, job_type, message_id)
-        row = mark_running(self.settings.database_url, job_id)
+        try:
+            row = mark_running(self.settings.database_url, job_id)
+        except Exception as exc:  
+            logger.exception("Failed to mark job %s running — will retry: %s", job_id, exc)
+            time.sleep(0.5)
+            return
+
         if not row:
             logger.warning("Job %s missing or not claimable — acking", job_id)
             self.queue.ack(message_id)

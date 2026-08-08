@@ -8,7 +8,12 @@ import { identityStepSchema } from '@/features/onboarding/schemas';
 import { patchOnboardingProfile } from '@/features/onboarding/store/onboarding-slice';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
 import { humanizeMediaError } from '@/features/profile/media-errors';
-import { deleteProfileVideo, uploadProfileVideo } from '@/features/profile/store/profile-slice';
+import {
+  deleteProfileVideo,
+  uploadProfilePhoto,
+  uploadProfileVideo,
+} from '@/features/profile/store/profile-slice';
+import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import {
   Briefcase,
@@ -119,7 +124,6 @@ type IdentityStepProps = {
     name: string;
     job?: string;
     bio?: string;
-    image?: string;
     profileType: ProfileType;
     experience?: string;
   }) => Promise<boolean>;
@@ -162,6 +166,9 @@ export function IdentityStep({
   const [bio, setBio] = useState(profile?.bio ?? '');
   const [experience, setExperience] = useState(profile?.experience ?? '');
   const [image, setImage] = useState(profile?.image ?? '');
+  // Raw file behind `image`'s preview — uploaded via uploadPendingPhoto on save, never
+  // sent in the identity PATCH itself.
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [profileType, setProfileType] = useState<ProfileType>(
     profile?.profile_type ?? 'INDIVIDUAL',
   );
@@ -246,6 +253,7 @@ export function IdentityStep({
   const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    setPhotoFile(file);
     setImage(await readFileAsDataUrl(file));
   };
 
@@ -323,10 +331,25 @@ export function IdentityStep({
     name,
     job: job || undefined,
     bio: bio || undefined,
-    image: image || undefined,
     profileType,
     experience: profileType === 'INDIVIDUAL' && experience ? experience : undefined,
   });
+
+  // Requires an authenticated session — for a fresh phone signup, only call this after
+  // registerPhone has actually succeeded. Returns false (and sets `error`) on failure so
+  // callers can bail out before saving the rest of the identity fields.
+  const uploadPendingPhoto = async () => {
+    if (!photoFile) return true;
+    const result = await dispatch(uploadProfilePhoto(photoFile));
+    if (!uploadProfilePhoto.fulfilled.match(result)) {
+      setError("Échec de l'envoi de la photo. Réessayez.");
+      return false;
+    }
+    setPhotoFile(null);
+    return true;
+  };
+
+  const photoPreview = useAuthenticatedMediaUrl(image || null);
 
   // Only ever checks phone/password, never the identity fields above — handleNext
   // validates those once before the first call, but the modal's "Renvoyer le code"
@@ -378,6 +401,7 @@ export function IdentityStep({
     }
 
     setError(null);
+    if (!(await uploadPendingPhoto())) return;
     const saved = await onNext(identityPatch());
     if (!saved) {
       setError('Échec de la sauvegarde. Réessayez.');
@@ -412,6 +436,9 @@ export function IdentityStep({
 
     setShowOtpModal(false);
     setOtpVerifying(false);
+    // Only reachable now that registerPhone has actually succeeded — an authenticated
+    // session (cookie) is required before uploadProfilePhoto's endpoint will accept it.
+    if (!(await uploadPendingPhoto())) return;
     // Optional video: a failed flush already clears the success label + sets videoError.
     await flushPendingVideo();
     const saved = await onNext(identityPatch());
@@ -450,9 +477,13 @@ export function IdentityStep({
                 }}
                 onClick={() => fileInputRef.current?.click()}
               >
-                {image ? (
+                {photoPreview.url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={image} alt="Profile" className="h-full w-full object-cover" />
+                  <img
+                    src={photoPreview.url}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <ProfileSilhouette />
                 )}

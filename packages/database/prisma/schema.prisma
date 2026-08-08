@@ -132,6 +132,7 @@ model User {
   google_id      String? @unique
   linkedin_id    String? @unique
   phone_verified Boolean @default(false)
+  verified       Boolean @default(false)
   /// Bumped on password change / reset so outstanding access JWTs fail verification.
   token_version  Int     @default(0)
 
