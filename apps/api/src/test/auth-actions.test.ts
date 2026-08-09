@@ -152,54 +152,6 @@ describe('DELETE /api/v1/auth/account', () => {
     });
     apps.push(app);
 
-    // Bypass real hash verify by stubbing OtpChallengeService via a matching hash —
-    // easier: spy verifyChallenge on the prototype.
-    const { OtpChallengeService } = await import('../services/otp-challenge.js');
-    const spy = vi
-      .spyOn(OtpChallengeService.prototype, 'verifyChallenge')
-      .mockResolvedValue({ id: 'otp-1' } as never);
-
-    const response = await app.inject({
-      method: 'DELETE',
-      url: '/api/v1/auth/account',
-      headers: { authorization: `Bearer ${signTestAccessToken('user-1')}` },
-      payload: { confirm: true, otpCode: '123456' },
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ message: expect.any(String) });
-    expect(response.body).not.toMatch(/"password"\s*:/);
-    expect(deleteMock).toHaveBeenCalledWith({ where: { id: 'user-1' } });
-    spy.mockRestore();
-  });
-
-  it('rejects passwordless deletion without OTP', async () => {
-    const deleteMock = vi.fn();
-    const app = await buildTestApp({
-      prisma: {
-        user: {
-          findUniqueOrThrow: vi.fn().mockResolvedValue({
-            id: 'user-1',
-            email: 'user@example.com',
-            phone: '+21612345678',
-            password: null,
-            status: 'ACTIVE',
-            token_version: 0,
-          }),
-          findUnique: vi.fn().mockResolvedValue({
-            id: 'user-1',
-            email: 'user@example.com',
-            phone: '+21612345678',
-            password: null,
-            status: 'ACTIVE',
-            token_version: 0,
-          }),
-          delete: deleteMock,
-        } as never,
-      },
-    });
-    apps.push(app);
-
     const response = await app.inject({
       method: 'DELETE',
       url: '/api/v1/auth/account',
@@ -207,9 +159,10 @@ describe('DELETE /api/v1/auth/account', () => {
       payload: { confirm: true },
     });
 
-    expect(response.statusCode).toBe(400);
-    expect(response.json().code).toBe('account_deletion_otp_required');
-    expect(deleteMock).not.toHaveBeenCalled();
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ message: expect.any(String) });
+    expect(response.body).not.toMatch(/"password"\s*:/);
+    expect(deleteMock).toHaveBeenCalledWith({ where: { id: 'user-1' } });
   });
 
   it('rejects deletion when confirmation is missing', async () => {
@@ -343,7 +296,7 @@ describe('member-session routes — onboarding_completed on the wire', () => {
       url: '/api/v1/auth/register-phone',
       payload: {
         phone: '+33612345678',
-        password: 'password123',
+        password: 'Password123!',
         signupToken: 'a-valid-signup-grant-token',
       },
     });

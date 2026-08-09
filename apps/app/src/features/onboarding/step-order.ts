@@ -1,7 +1,7 @@
 import type { OnboardingStep, ProfileType } from './types';
 
-/** Matchy MVP: identity → goals. Location is collected later on /home. */
-const STEP_ORDER: OnboardingStep[] = ['identity', 'interests'];
+/** Matchy MVP: identity → interests → location prefs. GPS is requested on Finish (user gesture) then used on /home. */
+const STEP_ORDER: OnboardingStep[] = ['identity', 'interests', 'location'];
 
 export function getStepOrder(_profileType?: ProfileType | null): OnboardingStep[] {
   return STEP_ORDER;

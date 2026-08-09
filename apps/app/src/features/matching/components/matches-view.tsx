@@ -2,6 +2,7 @@
 
 import { AuthenticatedProfileAvatar } from '@/components/matchy/authenticated-profile-image';
 import { matchyBrand } from '@/components/matchy/brand';
+import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import {
@@ -40,15 +41,18 @@ export function MatchesView() {
           <h1 className="text-2xl font-extrabold" style={{ color: matchyBrand.textDark }}>
             {t('matching.matchesTitle')}
           </h1>
-          <button
-            type="button"
-            onClick={refresh}
-            className="rounded-full p-2"
-            style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
-            aria-label={t('common.retry')}
-          >
-            <RefreshCw size={16} />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={refresh}
+              className="rounded-full p-2"
+              style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
+              aria-label={t('common.retry')}
+            >
+              <RefreshCw size={16} />
+            </button>
+            <MatchyHeaderActions />
+          </div>
         </div>
 
         <section>

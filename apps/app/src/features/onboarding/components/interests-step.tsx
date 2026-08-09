@@ -1,5 +1,6 @@
 'use client';
 
+import { useI18n } from '@/features/i18n/i18n-provider';
 import {
   GOAL_CATEGORIES,
   INTERESTS_SUGGESTIONS,
@@ -36,10 +37,17 @@ export function InterestsStep({
   onNext,
   onBack,
 }: InterestsStepProps) {
+  const { t } = useI18n();
+  const isIndividual = (profile?.profile_type ?? 'INDIVIDUAL') === 'INDIVIDUAL';
+  const isNewStep = !profile?.interests?.length && !profile?.selected_goals?.length;
+
   const [interests, setInterests] = useState<string[]>(profile?.interests ?? []);
   const [interestInput, setInterestInput] = useState('');
+  const [lastRemovedInterest, setLastRemovedInterest] = useState<string | null>(null);
   const [selectedGoals, setSelectedGoals] = useState<string[]>(profile?.selected_goals ?? []);
-  const [offerService, setOfferService] = useState(profile?.offer_service ?? false);
+  const [offerService, setOfferService] = useState(
+    isNewStep ? isIndividual : (profile?.offer_service ?? false),
+  );
   const [serviceType, setServiceType] = useState(profile?.service_type ?? '');
   const [price, setPrice] = useState(profile?.price ?? '');
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
@@ -53,24 +61,37 @@ export function InterestsStep({
     hydratedRef.current = true;
     setInterests(profile.interests ?? []);
     setSelectedGoals(profile.selected_goals ?? []);
-    setOfferService(profile.offer_service ?? false);
+    setOfferService(isNewStep ? isIndividual : (profile.offer_service ?? false));
     setServiceType(profile.service_type ?? '');
     setPrice(profile.price ?? '');
-  }, [profile]);
+  }, [profile, isNewStep, isIndividual]);
 
   // "Offrir un service" only applies to INDIVIDUAL (Employé) profiles — matching the
   // old app's Inscription2, which hides this card entirely for Employeur.
-  const isIndividual = (profile?.profile_type ?? 'INDIVIDUAL') === 'INDIVIDUAL';
 
   const addInterest = (value: string) => {
     const trimmed = value.trim();
-    if (!trimmed || interests.length >= MAX_INTERESTS || interests.includes(trimmed)) return;
-    setInterests([...interests, trimmed]);
+    if (!trimmed) return;
+    setInterests((current) => {
+      if (
+        current.length >= MAX_INTERESTS ||
+        current.some((entry) => entry.toLowerCase() === trimmed.toLowerCase())
+      ) {
+        return current;
+      }
+      return [...current, trimmed];
+    });
+    setLastRemovedInterest((prev) =>
+      prev && prev.toLowerCase() === trimmed.toLowerCase() ? null : prev,
+    );
     setInterestInput('');
   };
 
   const removeInterest = (value: string) => {
-    setInterests(interests.filter((interest) => interest !== value));
+    setLastRemovedInterest(value);
+    setInterests((current) =>
+      current.filter((interest) => interest.toLowerCase() !== value.toLowerCase()),
+    );
   };
 
   const toggleGoal = (goal: string) => {
@@ -89,7 +110,7 @@ export function InterestsStep({
       price: price || undefined,
     });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Complétez les champs obligatoires.');
+      setError(parsed.error.issues[0]?.message ?? t('onboarding.interests.error'));
       return;
     }
 
@@ -102,25 +123,44 @@ export function InterestsStep({
       price: effectiveOfferService ? price : undefined,
     });
     if (!saved) {
-      setError('Échec de la sauvegarde. Réessayez.');
+      setError(t('onboarding.interests.errorSubmit'));
     }
   };
 
-  const suggestions = INTERESTS_SUGGESTIONS.filter((s) => !interests.includes(s)).slice(0, 4);
+  // Show a short suggestion row, but put a just-removed catalog tag first so deleting
+  // an interest immediately returns it to the visible suggestions (instead of staying
+  // buried past .slice(0, 4)).
+  const unusedSuggestions = INTERESTS_SUGGESTIONS.filter(
+    (suggestion) => !interests.some((entry) => entry.toLowerCase() === suggestion.toLowerCase()),
+  );
+  const suggestions = [
+    ...unusedSuggestions.filter(
+      (suggestion) =>
+        !!lastRemovedInterest && suggestion.toLowerCase() === lastRemovedInterest.toLowerCase(),
+    ),
+    ...unusedSuggestions.filter(
+      (suggestion) =>
+        !lastRemovedInterest || suggestion.toLowerCase() !== lastRemovedInterest.toLowerCase(),
+    ),
+  ].slice(0, 4);
 
   return (
-    <OnboardingStepLayout step={stepNumber} totalSteps={totalSteps} stepLabel="Vos objectifs">
+    <OnboardingStepLayout
+      step={stepNumber}
+      totalSteps={totalSteps}
+      stepLabel={t('onboarding.interests.title')}
+    >
       <div className="mx-auto w-full max-w-2xl">
         <StepProgress step={stepNumber} total={totalSteps} />
 
         <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E', marginBottom: '6px' }}>
-          Vos objectifs
+          {t('onboarding.interests.title')}
         </h1>
         <p
           className="flex flex-wrap items-center gap-1.5"
           style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}
         >
-          <span>Dites-nous ce que vous cherchez sur</span>
+          <span>{t('onboarding.interests.desc')}</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-matchy.svg"
@@ -135,8 +175,8 @@ export function InterestsStep({
           {/* Left: interests + offer service */}
           <div className="space-y-6">
             <StepCard
-              title="Centres d'intérêts ou services"
-              description={`Max ${MAX_INTERESTS} — vos compétences et domaines d'activité.`}
+              title={t('onboarding.interests.interestsTitle')}
+              description={t('onboarding.interests.interestsDesc', { slots: MAX_INTERESTS })}
             >
               <div className="mb-3 flex gap-2">
                 <input
@@ -149,7 +189,7 @@ export function InterestsStep({
                       addInterest(interestInput);
                     }
                   }}
-                  placeholder="Ajouter un intérêt..."
+                  placeholder={t('onboarding.interests.addInterest')}
                   disabled={interests.length >= MAX_INTERESTS}
                   className="flex-1 rounded-xl px-3 py-2 text-[#353535] outline-none"
                   style={{ border: '1.5px solid #E0E0E0', background: 'white', fontSize: '13px' }}
@@ -166,7 +206,7 @@ export function InterestsStep({
                     fontWeight: 700,
                   }}
                 >
-                  Ajouter
+                  {t('onboarding.interests.addBtn')}
                 </button>
               </div>
 
@@ -202,7 +242,9 @@ export function InterestsStep({
                 ))}
               </div>
               <p style={{ fontSize: '11px', color: '#61BCA6', marginTop: '8px' }}>
-                {MAX_INTERESTS - interests.length} emplacement(s) disponible(s)
+                {t('onboarding.interests.slotsAvailable', {
+                  slots: MAX_INTERESTS - interests.length,
+                })}
               </p>
             </StepCard>
 
@@ -214,10 +256,10 @@ export function InterestsStep({
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A2E' }}>
-                      Offrir un service ?
+                      {t('onboarding.interests.offerServiceTitle')}
                     </p>
                     <p style={{ fontSize: '12px', color: '#888' }}>
-                      Élargissez votre activité autour de vous.
+                      {t('onboarding.interests.offerServiceDesc')}
                     </p>
                   </div>
                   <button
@@ -243,7 +285,9 @@ export function InterestsStep({
                 {offerService && (
                   <div className="mt-3 space-y-3">
                     <div>
-                      <label style={{ fontSize: '12px', color: '#888' }}>Type de service</label>
+                      <label style={{ fontSize: '12px', color: '#888' }}>
+                        {t('onboarding.interests.serviceTypeLabel')}
+                      </label>
                       <div className="relative mt-1">
                         <button
                           type="button"
@@ -256,7 +300,9 @@ export function InterestsStep({
                             color: serviceType ? '#353535' : '#BBB',
                           }}
                         >
-                          <span>{serviceType || 'Choisir un type de service'}</span>
+                          <span>
+                            {serviceType || t('onboarding.interests.serviceTypePlaceholder')}
+                          </span>
                           <ChevronDown size={16} color="#888" />
                         </button>
                         {showServiceDropdown && (
@@ -292,7 +338,7 @@ export function InterestsStep({
                     </div>
                     <div>
                       <label style={{ fontSize: '12px', color: '#888' }}>
-                        Prix approximatif (DT)
+                        {t('onboarding.interests.priceLabel')}
                       </label>
                       <div
                         className="mt-1 flex items-center gap-2 rounded-xl px-3 py-2.5"
@@ -305,7 +351,7 @@ export function InterestsStep({
                           onChange={(event) =>
                             setPrice(event.target.value.replace(/[^0-9.,]/g, ''))
                           }
-                          placeholder="Montant"
+                          placeholder={t('onboarding.interests.pricePlaceholder')}
                           className="flex-1 bg-transparent text-[#353535] outline-none"
                           style={{ fontSize: '13px' }}
                         />
@@ -322,8 +368,8 @@ export function InterestsStep({
 
           {/* Right: goals */}
           <StepCard
-            title="Que cherchez-vous ?"
-            description="Dites-nous ce dont vous avez besoin près de chez vous"
+            title={t('onboarding.interests.goalsTitle')}
+            description={t('onboarding.interests.goalsDesc')}
           >
             <div className="space-y-5">
               {GOAL_CATEGORIES.map((category) => (
@@ -372,7 +418,13 @@ export function InterestsStep({
         <StepCtaRow
           onBack={onBack}
           onContinue={handleNext}
-          continueLabel={loading ? 'Synchronisation...' : 'Lancer Matchy+'}
+          continueLabel={
+            loading
+              ? t('onboarding.interests.syncing')
+              : stepNumber === totalSteps
+                ? t('onboarding.interests.ctaFinish')
+                : t('onboarding.interests.ctaContinue')
+          }
           disabled={loading}
           loading={loading}
         />

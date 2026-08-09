@@ -2,6 +2,8 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
+import { useI18n } from '@/features/i18n/i18n-provider';
+import type { Locale } from '@/features/i18n/messages';
 import {
   fetchNotificationPreferences,
   fetchNotifications,
@@ -17,7 +19,7 @@ import type {
 } from '@/features/notifications/types';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { arSA, enUS, fr } from 'date-fns/locale';
 import { Bell, Eye, Heart, Loader2, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -26,27 +28,58 @@ const PROFILE_VIEW_TINT = '#9B59B6';
 const MATCH_TINT = '#E24E59';
 const MESSAGE_TINT = '#2F76BB';
 
-function pushCopy(item: NotificationItem): { title: string; body: string } {
+const DATE_LOCALES: Record<Locale, typeof fr> = {
+  en: enUS,
+  fr: fr,
+  ar: arSA,
+};
+
+function getPushCopy(item: NotificationItem, locale: Locale): { title: string; body: string } {
   switch (item.type) {
     case 'PROFILE_VIEW':
       return {
-        title: 'Vue de profil',
-        body: `Quelqu'un nommé "${item.data.viewerName}" a consulté votre profil.`,
+        title:
+          locale === 'en'
+            ? 'Profile view'
+            : locale === 'ar'
+              ? 'زيارة للملف الشخصي'
+              : 'Vue de profil',
+        body:
+          locale === 'en'
+            ? `Someone named "${item.data.viewerName}" viewed your profile.`
+            : locale === 'ar'
+              ? `قام شخص باسم "${item.data.viewerName}" بزيارة ملفك الشخصي.`
+              : `Quelqu'un nommé "${item.data.viewerName}" a consulté votre profil.`,
       };
     case 'MATCH':
       return {
-        title: 'Nouveau match',
-        body: item.data.body || 'Nouveau match ! Ouvrez vos matches pour continuer.',
+        title: locale === 'en' ? 'New Match!' : locale === 'ar' ? 'مطابقة جديدة!' : 'Nouveau match',
+        body:
+          item.data.body ||
+          (locale === 'en'
+            ? 'It’s a match! Open your matches to start chatting.'
+            : locale === 'ar'
+              ? 'إنها مطابقة! افتح التوافقات لبدء المحادثة.'
+              : 'Nouveau match ! Ouvrez vos matches pour continuer.'),
       };
     case 'MATCH_REQUEST':
       return {
-        title: item.data.title || 'Demande de match',
-        body: item.data.body || `${item.data.actor_first_name} vous a envoyé une demande de match.`,
+        title:
+          item.data.title ||
+          (locale === 'en' ? 'Match request' : locale === 'ar' ? 'طلب مطابقة' : 'Demande de match'),
+        body:
+          item.data.body ||
+          (locale === 'en'
+            ? `${item.data.actor_first_name} sent you a match request.`
+            : locale === 'ar'
+              ? `أرسل لك ${item.data.actor_first_name} طلب مطابقة.`
+              : `${item.data.actor_first_name} vous a envoyé une demande de match.`),
       };
     case 'MESSAGE':
       return {
-        title: 'Nouveau message',
-        body: `${item.data.sender_name} : ${item.data.preview}`,
+        title:
+          locale === 'en' ? 'New Message' : locale === 'ar' ? 'رسالة جديدة' : 'Nouveau message',
+        body: `${item.data.sender_name}: ${item.data.preview}`,
       };
   }
 }
@@ -83,8 +116,10 @@ function iconBg(item: NotificationItem): string {
 function NotificationRow({ item }: { item: NotificationItem }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { locale } = useI18n();
   const avatar = useAuthenticatedMediaUrl(avatarSrc(item));
-  const { title, body } = pushCopy(item);
+  const { title, body } = getPushCopy(item, locale);
+  const isRtl = locale === 'ar';
 
   const handleClick = async () => {
     if (!item.read) {
@@ -107,8 +142,9 @@ function NotificationRow({ item }: { item: NotificationItem }) {
     <button
       type="button"
       onClick={() => void handleClick()}
-      className="flex w-full items-start gap-3 rounded-2xl bg-white p-3 text-left shadow-sm"
+      className={`flex w-full items-start gap-3 rounded-2xl bg-white p-3 shadow-sm ${isRtl ? 'text-right' : 'text-left'}`}
       style={{ border: `1px solid ${item.read ? matchyBrand.border : matchyBrand.blue}` }}
+      dir={isRtl ? 'rtl' : 'ltr'}
     >
       {avatar.url ? (
         <div
@@ -140,7 +176,10 @@ function NotificationRow({ item }: { item: NotificationItem }) {
         </p>
         <p className="mt-0.5 text-xs text-[#777]">{body}</p>
         <p className="mt-1 text-xs text-[#999]">
-          {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: fr })}
+          {formatDistanceToNow(new Date(item.created_at), {
+            addSuffix: true,
+            locale: DATE_LOCALES[locale] || fr,
+          })}
         </p>
       </div>
       {!item.read && (
@@ -153,16 +192,46 @@ function NotificationRow({ item }: { item: NotificationItem }) {
   );
 }
 
-const PREF_ROWS: { key: keyof NotificationPreferences; label: string }[] = [
-  { key: 'all_enabled', label: 'Toutes les notifications' },
-  { key: 'matches', label: 'Matches et demandes' },
-  { key: 'messages', label: 'Messages' },
-  { key: 'views', label: 'Vues de profil' },
-  { key: 'email', label: 'Emails' },
+const PREF_LABELS: Record<keyof NotificationPreferences, { en: string; fr: string; ar: string }> = {
+  all_enabled: {
+    en: 'All notifications',
+    fr: 'Toutes les notifications',
+    ar: 'جميع الإشعارات',
+  },
+  matches: {
+    en: 'Matches & requests',
+    fr: 'Matches et demandes',
+    ar: 'المطابقات والطلبات',
+  },
+  messages: {
+    en: 'Messages',
+    fr: 'Messages',
+    ar: 'الرسائل',
+  },
+  views: {
+    en: 'Profile views',
+    fr: 'Vues de profil',
+    ar: 'زيارات الملف الشخصي',
+  },
+  email: {
+    en: 'Emails',
+    fr: 'Emails',
+    ar: 'البريد الإلكتروني',
+  },
+};
+
+const PREF_KEYS: (keyof NotificationPreferences)[] = [
+  'all_enabled',
+  'matches',
+  'messages',
+  'views',
+  'email',
 ];
 
 function PreferencesSection() {
   const dispatch = useAppDispatch();
+  const { locale } = useI18n();
+  const isRtl = locale === 'ar';
   const { preferences, preferencesLoading, preferencesError } = useAppSelector(selectNotifications);
 
   const toggle = (key: keyof NotificationPreferences, value: boolean) => {
@@ -172,37 +241,51 @@ function PreferencesSection() {
 
   return (
     <div
-      className="space-y-3 rounded-2xl bg-white p-4"
+      className="space-y-3 rounded-2xl bg-white p-4 shadow-xs"
       style={{ border: `1px solid ${matchyBrand.border}` }}
+      dir={isRtl ? 'rtl' : 'ltr'}
     >
       <p className="text-sm font-bold" style={{ color: matchyBrand.textDark }}>
-        Préférences
+        {locale === 'en' ? 'Preferences' : locale === 'ar' ? 'التفضيلات' : 'Préférences'}
       </p>
       {preferencesLoading && !preferences ? (
-        <p className="text-xs text-[#777]">Chargement des préférences…</p>
+        <p className="text-xs text-[#777]">
+          {locale === 'en'
+            ? 'Loading preferences...'
+            : locale === 'ar'
+              ? 'جارٍ تحميل التفضيلات...'
+              : 'Chargement des préférences…'}
+        </p>
       ) : preferencesError && !preferences ? (
-        <p className="text-xs text-[#E24E59]">Impossible de charger les préférences.</p>
+        <p className="text-xs text-[#E24E59]">
+          {locale === 'en'
+            ? 'Unable to load preferences.'
+            : locale === 'ar'
+              ? 'تعذر تحميل التفضيلات.'
+              : 'Impossible de charger les préférences.'}
+        </p>
       ) : preferences ? (
-        <ul className="space-y-2">
-          {PREF_ROWS.map((row) => (
-            <li key={row.key} className="flex items-center justify-between gap-3">
+        <ul className="space-y-3">
+          {PREF_KEYS.map((key) => (
+            <li key={key} className="flex items-center justify-between gap-3">
               <span className="text-sm" style={{ color: matchyBrand.textDark }}>
-                {row.label}
+                {PREF_LABELS[key][locale] || PREF_LABELS[key].fr}
               </span>
               <button
                 type="button"
                 role="switch"
-                aria-checked={preferences[row.key]}
-                onClick={() => toggle(row.key, !preferences[row.key])}
+                aria-checked={preferences[key]}
+                onClick={() => toggle(key, !preferences[key])}
                 className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
                 style={{
-                  background: preferences[row.key] ? matchyBrand.blue : '#D0D5DD',
+                  background: preferences[key] ? matchyBrand.blue : '#D0D5DD',
                 }}
+                dir="ltr"
               >
                 <span
                   className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform"
                   style={{
-                    transform: preferences[row.key] ? 'translateX(20px)' : 'translateX(0)',
+                    transform: preferences[key] ? 'translateX(20px)' : 'translateX(0)',
                   }}
                 />
               </button>
@@ -216,6 +299,8 @@ function PreferencesSection() {
 
 export function NotificationsView() {
   const dispatch = useAppDispatch();
+  const { locale } = useI18n();
+  const isRtl = locale === 'ar';
   const { items, unreadCount, loading, error } = useAppSelector(selectNotifications);
 
   useEffect(() => {
@@ -231,11 +316,15 @@ export function NotificationsView() {
   };
 
   return (
-    <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }}>
+    <div
+      className="h-full overflow-y-auto"
+      style={{ background: matchyBrand.bg }}
+      dir={isRtl ? 'rtl' : 'ltr'}
+    >
       <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-4 md:px-8">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold" style={{ color: matchyBrand.textDark }}>
-            Notifications
+            {locale === 'en' ? 'Notifications' : locale === 'ar' ? 'الإشعارات' : 'Notifications'}
           </h1>
           {unreadCount > 0 && (
             <button
@@ -244,7 +333,11 @@ export function NotificationsView() {
               className="text-xs font-bold"
               style={{ color: matchyBrand.blue }}
             >
-              Tout marquer comme lu
+              {locale === 'en'
+                ? 'Mark all as read'
+                : locale === 'ar'
+                  ? 'تحديد الكل كمقروء'
+                  : 'Tout marquer comme lu'}
             </button>
           )}
         </div>
@@ -254,15 +347,21 @@ export function NotificationsView() {
         {loading && items.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-16 text-[#777]">
             <Loader2 className="h-8 w-8 animate-spin text-[#61BCA6]" />
-            <p>Chargement…</p>
+            <p>
+              {locale === 'en' ? 'Loading...' : locale === 'ar' ? 'جارٍ التحميل...' : 'Chargement…'}
+            </p>
           </div>
         ) : error && items.length === 0 ? (
           <p className="rounded-2xl bg-white px-4 py-8 text-center text-sm text-[#E24E59]">
-            Impossible de charger vos notifications.
+            {locale === 'en'
+              ? 'Unable to load your notifications.'
+              : locale === 'ar'
+                ? 'تعذر تحميل الإشعارات الخاصة بك.'
+                : 'Impossible de charger vos notifications.'}
           </p>
         ) : items.length === 0 ? (
           <div
-            className="rounded-3xl bg-white px-5 py-12 text-center"
+            className="rounded-3xl bg-white px-5 py-12 text-center shadow-xs"
             style={{ border: `1px solid ${matchyBrand.border}` }}
           >
             <div
@@ -272,17 +371,29 @@ export function NotificationsView() {
               <Bell size={28} color={matchyBrand.blue} />
             </div>
             <p className="font-bold" style={{ color: matchyBrand.textDark }}>
-              Aucune notification pour l’instant
+              {locale === 'en'
+                ? 'No notifications yet'
+                : locale === 'ar'
+                  ? 'لا توجد إشعارات حالياً'
+                  : 'Aucune notification pour l’instant'}
             </p>
             <p className="mt-2 text-sm text-[#777]">
-              Vous serez prévenu ici dès qu’il se passe quelque chose.
+              {locale === 'en'
+                ? 'You will be notified here as soon as something happens.'
+                : locale === 'ar'
+                  ? 'ستتلقى إشعاراً هنا بمجرد حدوث أي نشاط.'
+                  : 'Vous serez prévenu ici dès qu’il se passe quelque chose.'}
             </p>
           </div>
         ) : (
           <div className="space-y-2">
             {error && (
               <p className="rounded-xl bg-[#FFF0F0] px-4 py-2 text-center text-xs text-[#E24E59]">
-                Impossible d’actualiser vos notifications. Affichage de la dernière liste connue.
+                {locale === 'en'
+                  ? 'Unable to refresh notifications. Displaying cached list.'
+                  : locale === 'ar'
+                    ? 'تعذر تحديث الإشعارات. يتم عرض القائمة المحفوظة.'
+                    : 'Impossible d’actualiser vos notifications. Affichage de la dernière liste connue.'}
               </p>
             )}
             {items.map((item) => (

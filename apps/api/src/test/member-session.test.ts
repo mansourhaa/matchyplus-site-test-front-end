@@ -469,7 +469,7 @@ describe('member session cookies', () => {
       method: 'POST',
       url: '/api/v1/auth/change-password',
       cookies: { access_token: token },
-      payload: { currentPassword: 'password123', newPassword: 'newpassword456' },
+      payload: { currentPassword: 'password123', newPassword: 'Password123!' },
     });
 
     expect(response.statusCode).toBe(200);

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// Profession is only required for "Employé" (INDIVIDUAL) profiles — optional
-// ("facultatif") for "Employeur" (PROVIDER), matching the old app's Inscription1.
+// Profession is only required for "Offering" (INDIVIDUAL) profiles — optional
+// for "Looking for" (PROVIDER), matching the old app's Inscription1.
 export const identityStepSchema = z
   .object({
     name: z.string().trim().min(1),

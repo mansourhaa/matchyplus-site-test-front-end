@@ -111,6 +111,22 @@ function toListItem(row: {
   };
 }
 
+/**
+ * Email-only profile-view cooldown markers set `data.silent: true`.
+ *
+ * Do NOT express "not silent" as Prisma `NOT: { data: { path: ['silent'], equals: true } }` —
+ * that compiles to `NOT (data->>'silent' = 'true')`, and in SQL a missing key yields NULL, so
+ * `NOT NULL` drops every normal inbox row. Filter in JS (or use `IS DISTINCT FROM`) instead.
+ */
+export function isSilentNotificationData(data: unknown): boolean {
+  return (
+    !!data &&
+    typeof data === 'object' &&
+    !Array.isArray(data) &&
+    (data as Record<string, unknown>).silent === true
+  );
+}
+
 function defaultDedupeKey(payload: CreateNotificationPayload): NotificationDedupeKey | null {
   if (payload.type === 'PROFILE_VIEW') {
     return { path: ['viewerId'], equals: payload.data.viewerId };
@@ -259,21 +275,21 @@ export class NotificationService {
       const created = await this.prisma.$transaction(
         async (tx) => {
           const since = new Date(Date.now() - cooldownMs);
-          const recent = await tx.notification.findFirst({
+          // Load recent rows for this viewer and skip silent markers in JS — Prisma's
+          // `NOT path equals true` JSON filter incorrectly excludes rows where `silent`
+          // is absent (see isSilentNotificationData).
+          const recentRows = await tx.notification.findMany({
             where: {
               user_id: payload.userId,
               type: payload.type,
               created_at: { gte: since },
-              AND: [
-                // Silent email-only markers must not block a later in-app notification
-                // after the user re-enables the category.
-                { NOT: { data: { path: ['silent'], equals: true } } },
-                ...(key ? [{ data: { path: key.path, equals: key.equals } }] : []),
-              ],
+              ...(key ? { data: { path: key.path, equals: key.equals } } : {}),
             },
-            select: { id: true },
+            select: { id: true, data: true },
+            orderBy: { created_at: 'desc' },
+            take: 20,
           });
-          if (recent) {
+          if (recentRows.some((row) => !isSilentNotificationData(row.data))) {
             return null;
           }
 
@@ -371,16 +387,16 @@ export class NotificationService {
 
   async list(userId: string): Promise<NotificationListItem[]> {
     try {
+      // Over-fetch then drop silent markers in JS. See isSilentNotificationData.
       const rows = await this.prisma.notification.findMany({
-        where: {
-          user_id: userId,
-          // Silent cooldown markers (email-only profile views) stay out of the inbox.
-          NOT: { data: { path: ['silent'], equals: true } },
-        },
+        where: { user_id: userId },
         orderBy: { created_at: 'desc' },
-        take: 50,
+        take: 100,
       });
-      return rows.map(toListItem);
+      return rows
+        .filter((row) => !isSilentNotificationData(row.data))
+        .slice(0, 50)
+        .map(toListItem);
     } catch (err) {
       throw err;
     }
@@ -388,13 +404,11 @@ export class NotificationService {
 
   async unreadCount(userId: string): Promise<number> {
     try {
-      return await this.prisma.notification.count({
-        where: {
-          user_id: userId,
-          read_at: null,
-          NOT: { data: { path: ['silent'], equals: true } },
-        },
+      const rows = await this.prisma.notification.findMany({
+        where: { user_id: userId, read_at: null },
+        select: { data: true },
       });
+      return rows.filter((row) => !isSilentNotificationData(row.data)).length;
     } catch (err) {
       throw err;
     }

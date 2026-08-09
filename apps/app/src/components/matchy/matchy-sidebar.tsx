@@ -4,7 +4,7 @@ import { matchyBrand } from '@/components/matchy/brand';
 import { MatchyLogo } from '@/components/matchy/matchy-logo';
 import { useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { selectMatching } from '@/features/matching/store/matching-slice';
+import { selectInboxUnreadCount } from '@/features/messaging/store/messaging-slice';
 import { Crown, Home, MessageCircle, Search, User } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -24,8 +24,8 @@ export function MatchySidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
-  const matching = useAppSelector(selectMatching);
-  const matchBadge = matching.matches.length;
+  // Unread messages only — not total match count (that never cleared after reading).
+  const matchBadge = useAppSelector(selectInboxUnreadCount);
 
   const items: { key: NavKey; href: string; icon: typeof Home; label: string; badge: number }[] = [
     { key: 'home', href: '/home', icon: Home, label: t('nav.home'), badge: 0 },

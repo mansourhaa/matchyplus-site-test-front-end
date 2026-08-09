@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   description: siteConfig.description,
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html>
       <body className={`${baloo.variable} ${cairo.variable} ${baloo.className}`}>
         <TooltipProvider>
           <ClientProvider>{children}</ClientProvider>

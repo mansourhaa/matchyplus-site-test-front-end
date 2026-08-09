@@ -314,6 +314,31 @@ describe('EditProfileForm', () => {
     expect(screen.getByText("Aucune expérience pour l'instant")).toBeInTheDocument();
   });
 
+  it('returns a removed interest to the suggestions list inside the sheet', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    const interestsHeading = await screen.findByRole('heading', { name: 'Centres d’intérêt' });
+    fireEvent.click(
+      within(interestsHeading.closest('section') as HTMLElement).getByRole('button', {
+        name: 'Modifier',
+      }),
+    );
+
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).queryByRole('button', { name: '+ Bricolage' })).not.toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: /Bricolage/ }));
+
+    expect(within(dialog).getByRole('button', { name: '+ Bricolage' })).toBeInTheDocument();
+  });
+
   it('discards an abandoned interests-sheet edit instead of letting it ride along on a later save', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
     vi.mocked(api.patch).mockResolvedValue({ data: fetchedProfile });

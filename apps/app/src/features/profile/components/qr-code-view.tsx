@@ -3,6 +3,7 @@
 import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { selectAuth } from '@/features/auth/store/auth-slice';
+import { useI18n } from '@/features/i18n/i18n-provider';
 import {
   fetchOnboardingProfile,
   selectOnboarding,
@@ -12,13 +13,14 @@ import { Check, Copy, Download, Share2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useRef, useState } from 'react';
 
-// Plain outlined "M+" mark for the QR code's center, matching legacy's logo badge —
-// a white circle with a thin border, not a filled block.
+// Plain outlined "M+" mark for the QR code's center
 const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="16" cy="16" r="15" fill="white" stroke="#E0E0E0" stroke-width="1.5"/><text x="16" y="21" font-family="Georgia, serif" font-size="12" font-weight="700" fill="${matchyBrand.textDark}" text-anchor="middle">M +</text></svg>`;
 const LOGO_DATA_URI = `data:image/svg+xml,${encodeURIComponent(LOGO_SVG)}`;
 
 export function QrCodeView() {
   const dispatch = useAppDispatch();
+  const { locale } = useI18n();
+  const isRtl = locale === 'ar';
   const { user } = useAppSelector(selectAuth);
   const { profile: loadedProfile, loading, error } = useAppSelector(selectOnboarding);
   const [copied, setCopied] = useState(false);
@@ -28,34 +30,44 @@ export function QrCodeView() {
     dispatch(fetchOnboardingProfile());
   }, [dispatch]);
 
-  // The onboarding profile lives in Redux state that isn't cleared on logout, so a
-  // profile fetched for a previous session can still be sitting there when a different
-  // user signs in. Only trust it once it's confirmed to belong to the signed-in user —
-  // otherwise treat it the same as "not loaded yet" so a stale QR never renders.
   const ownProfile = loadedProfile && user && loadedProfile.id === user.id ? loadedProfile : null;
 
   if (!ownProfile && loading) {
-    return <div className="py-16 text-center text-sm text-[#888]">Chargement du code QR…</div>;
+    return (
+      <div className="py-16 text-center text-sm text-[#888]">
+        {locale === 'en'
+          ? 'Loading QR code...'
+          : locale === 'ar'
+            ? 'جارٍ تحميل رمز QR...'
+            : 'Chargement du code QR…'}
+      </div>
+    );
   }
+
   if (!ownProfile && error) {
     return (
       <div className="mx-4 my-10 rounded-2xl bg-white p-6 text-center shadow-sm" role="alert">
-        <p className="text-sm text-[#E24E59]">Impossible de charger votre profil.</p>
+        <p className="text-sm text-[#E24E59]">
+          {locale === 'en'
+            ? 'Unable to load profile.'
+            : locale === 'ar'
+              ? 'تعذر تحميل الملف الشخصي.'
+              : 'Impossible de charger votre profil.'}
+        </p>
         <button
           type="button"
           onClick={() => dispatch(fetchOnboardingProfile())}
           className="mt-4 rounded-xl bg-[#2F76BB] px-5 py-2.5 text-sm font-bold text-white"
         >
-          Réessayer
+          {locale === 'en' ? 'Retry' : locale === 'ar' ? 'إعادة المحاولة' : 'Réessayer'}
         </button>
       </div>
     );
   }
+
   if (!ownProfile) return null;
   const profile = ownProfile;
 
-  // The public profile page is served by this same Next.js app, not the API, so the
-  // link is built from window.location.origin rather than NEXT_PUBLIC_API_URL.
   const profileUrl = `${window.location.origin}/profile/${profile.id}`;
   const displayUrl = profileUrl.replace(/^https?:\/\//, '');
 
@@ -63,19 +75,35 @@ export function QrCodeView() {
     try {
       await navigator.clipboard.writeText(profileUrl);
       setCopied(true);
-      toast.success('Lien copié !');
+      toast.success(
+        locale === 'en' ? 'Link copied!' : locale === 'ar' ? 'تم نسخ الرابط!' : 'Lien copié !',
+      );
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Impossible de copier le lien.');
+      toast.error(
+        locale === 'en'
+          ? 'Unable to copy link.'
+          : locale === 'ar'
+            ? 'تعذر نسخ الرابط.'
+            : 'Impossible de copier le lien.',
+      );
     }
   };
 
   const shareLink = async () => {
     if (typeof navigator.share === 'function') {
       try {
-        await navigator.share({ title: 'Mon profil Matchy+', url: profileUrl });
+        await navigator.share({
+          title:
+            locale === 'en'
+              ? 'My Matchy+ profile'
+              : locale === 'ar'
+                ? 'ملفي في Matchy+'
+                : 'Mon profil Matchy+',
+          url: profileUrl,
+        });
       } catch {
-        // The user dismissed the native share sheet — not a failure to report.
+        // dismissed
       }
       return;
     }
@@ -92,10 +120,6 @@ export function QrCodeView() {
     const link = document.createElement('a');
     link.href = url;
     link.download = `matchy-qr-${firstName}.svg`;
-    // The anchor must be in the document for the download to reliably start in every
-    // browser, and revoking the object URL immediately after click() can race with an
-    // async download start (notably in Firefox) and cancel it — clean up on a delay
-    // instead, after the browser has had a chance to pick up the file.
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -103,9 +127,13 @@ export function QrCodeView() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-md">
+    <div className="mx-auto w-full max-w-md" dir={isRtl ? 'rtl' : 'ltr'}>
       <p className="mb-5 text-center text-sm text-[#888]">
-        Partagez votre profil facilement avec votre code QR personnel
+        {locale === 'en'
+          ? 'Share your profile easily with your personal QR code'
+          : locale === 'ar'
+            ? 'شارك ملفك الشخصي بسهولة عبر رمز QR الخاص بك'
+            : 'Partagez votre profil facilement avec votre code QR personnel'}
       </p>
 
       <section className="rounded-3xl bg-white p-6 shadow-sm">
@@ -139,7 +167,11 @@ export function QrCodeView() {
           {profile.job && <p className="text-xs text-[#888]">{profile.job}</p>}
           <div className="my-3 w-full border-t border-dashed border-[#E0E0E0]" />
           <p className="text-center text-[11px] text-[#AAA]">
-            Scannez ce code pour accéder à mon profil Matchy+
+            {locale === 'en'
+              ? 'Scan this code to view my Matchy+ profile'
+              : locale === 'ar'
+                ? 'امسح هذا الرمز للوصول إلى ملفي الشخصي في Matchy+'
+                : 'Scannez ce code pour accéder à mon profil Matchy+'}
           </p>
         </div>
       </section>
@@ -152,7 +184,17 @@ export function QrCodeView() {
           className="flex shrink-0 items-center gap-1 rounded-full bg-[#EEF5FF] px-3 py-1.5 text-xs font-semibold text-[#2F76BB]"
         >
           {copied ? <Check size={13} /> : <Copy size={13} />}
-          {copied ? 'Copié' : 'Copier'}
+          {copied
+            ? locale === 'en'
+              ? 'Copied'
+              : locale === 'ar'
+                ? 'تم النسخ'
+                : 'Copié'
+            : locale === 'en'
+              ? 'Copy'
+              : locale === 'ar'
+                ? 'نسخ'
+                : 'Copier'}
         </button>
       </div>
 
@@ -162,7 +204,8 @@ export function QrCodeView() {
           onClick={downloadCode}
           className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#E0E0E0] bg-white py-3 text-sm font-bold text-[#555]"
         >
-          <Download size={16} /> Télécharger
+          <Download size={16} />{' '}
+          {locale === 'en' ? 'Download' : locale === 'ar' ? 'تحميل' : 'Télécharger'}
         </button>
         <button
           type="button"
@@ -170,7 +213,7 @@ export function QrCodeView() {
           className="flex flex-1 items-center justify-center gap-2 rounded-full py-3 text-sm font-bold text-white shadow-md"
           style={{ background: matchyBrand.gradient }}
         >
-          <Share2 size={16} /> Partager
+          <Share2 size={16} /> {locale === 'en' ? 'Share' : locale === 'ar' ? 'مشاركة' : 'Partager'}
         </button>
       </div>
     </div>

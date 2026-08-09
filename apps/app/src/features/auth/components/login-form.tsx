@@ -1,6 +1,7 @@
 'use client';
 
 import { MatchyLogo } from '@/components/matchy/matchy-logo';
+import { PasswordRequirements } from '@/components/password-requirements';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import {
   confirmPasswordReset,
@@ -9,6 +10,7 @@ import {
   selectAuth,
 } from '@/features/auth/store/auth-slice';
 import { landingPath } from '@/lib/landing';
+import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { ArrowLeft, ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
@@ -176,10 +178,10 @@ export function LoginForm() {
     if (
       nationalNumber.length < country.nationalLength ||
       !resetCode.trim() ||
-      newResetPassword.length < 6
+      !isPasswordPolicySatisfied(newResetPassword)
     ) {
       setLocalError(
-        `Entrez un numéro valide (${country.nationalLength} chiffres), le code et un nouveau mot de passe (6 caractères minimum)`,
+        `Entrez un numéro valide (${country.nationalLength} chiffres), le code et un nouveau mot de passe conforme aux règles de sécurité`,
       );
       return;
     }
@@ -344,7 +346,7 @@ export function LoginForm() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Au moins 6 caractères"
+                placeholder="Votre mot de passe"
                 className="flex-1 bg-transparent text-[#353535] outline-none"
                 style={{ fontSize: '15px' }}
               />
@@ -399,8 +401,9 @@ export function LoginForm() {
                   onChange={(event) => setNewResetPassword(event.target.value)}
                   className="mt-1 w-full rounded-xl px-4 py-2.5 text-[#353535] outline-none"
                   style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
-                  placeholder="6 caractères minimum"
+                  placeholder="Nouveau mot de passe"
                 />
+                <PasswordRequirements password={newResetPassword} />
               </div>
               <button
                 type="button"

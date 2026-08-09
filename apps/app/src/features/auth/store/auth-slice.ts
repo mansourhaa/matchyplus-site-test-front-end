@@ -274,6 +274,15 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    /**
+     * Optimistic flip after POST /users/me/profile/complete so /home chrome unlocks
+     * without awaiting a full authcheck round-trip (finish CTA stays snappy).
+     */
+    markOnboardingCompleted: (state) => {
+      if (!state.user) return;
+      state.user = { ...state.user, onboarding_completed: true };
+      persistAuthUser(state.user);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -378,7 +387,8 @@ const authSlice = createSlice({
   },
 });
 
-export const { resetAuthState, acknowledgeAnonymousBootstrap } = authSlice.actions;
+export const { resetAuthState, acknowledgeAnonymousBootstrap, markOnboardingCompleted } =
+  authSlice.actions;
 
 export const selectAuthState = (state: RootState) => state.auth;
 

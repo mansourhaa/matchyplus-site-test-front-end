@@ -43,7 +43,9 @@ Wire shape (snake_case): `{ all_enabled, matches, messages, views, email }`.
 
 In-app delivery requires **master + category**. Email only checks `notify_email` (and SMTP).
 When views are muted, profile-view emails still respect the same viewer cooldown via a
-silent (non-inbox) marker row.
+silent (non-inbox) marker row. Inbox list/unread filters drop `data.silent === true` in
+application code — Prisma’s `NOT path equals true` JSON filter incorrectly excludes rows
+where `silent` is absent (SQL NULL), which emptied the feed.
 
 Mutual match always pushes ephemeral `notification_match` even when prefs suppress the inbox row, so clients can sync match state.
 
@@ -69,7 +71,7 @@ Prefix: `/api/v1/notifications` (JWT required)
 
 - `/notifications` — preferences toggles + typed feed; click navigates (`/matches`, `/chat/:id`, profile view marks read only).
 - Discover bell badge uses `selectNotifications.unreadCount`.
-- Realtime: any `notification_match` refetches feed; `event_type === 'match'` also refreshes match/inbox; `notification_message` refetches + toast (toast suppressed when pathname is `/chat/:conversation_id`); `notifications_updated` refetches feed only; `notification_profile_view` unchanged.
+- Realtime: any `notification_match` refetches feed + toast (match / match_request; suppressed on `/notifications`); `event_type === 'match'` also refreshes match/inbox; `notification_message` refetches + toast (toast suppressed when pathname is `/chat/:conversation_id` or `/notifications`); `notifications_updated` refetches feed only; `notification_profile_view` refetches + toast (suppressed on `/notifications`).
 
 ## Email / SMTP
 
