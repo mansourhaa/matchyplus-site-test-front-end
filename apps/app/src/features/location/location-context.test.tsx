@@ -24,10 +24,34 @@ describe('LocationProvider', () => {
     vi.resetAllMocks();
   });
 
-  it('falls back to IP geolocation when browser geolocation is denied', async () => {
-    const getCurrentPosition = vi.fn(
-      (_success: PositionCallback, error: PositionErrorCallback) =>
-        error({ code: 1 } as GeolocationPositionError),
+  it('enforces location required when browser geolocation is denied', async () => {
+    const getCurrentPosition = vi.fn((_success: PositionCallback, error: PositionErrorCallback) =>
+      error({ code: 1 } as GeolocationPositionError),
+    );
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <LocationProvider>{children}</LocationProvider>
+    );
+    const { result } = renderHook(() => useLocationGate(), { wrapper });
+
+    await act(async () => {
+      await result.current.requestBrowserLocation();
+    });
+
+    await waitFor(() => expect(result.current.permissionDenied).toBe(true));
+    expect(result.current.locationSynced).toBe(false);
+    expect(result.current.locationRequired).toBe(true);
+    expect(result.current.latitude).toBeNull();
+    expect(result.current.longitude).toBeNull();
+  });
+
+  it('falls back to IP geolocation when precise GPS times out', async () => {
+    const getCurrentPosition = vi.fn((_success: PositionCallback, error: PositionErrorCallback) =>
+      error({ code: 3 } as GeolocationPositionError),
     );
     Object.defineProperty(navigator, 'geolocation', {
       configurable: true,
@@ -57,9 +81,8 @@ describe('LocationProvider', () => {
   });
 
   it('keeps location required when GPS and IP fallback both fail', async () => {
-    const getCurrentPosition = vi.fn(
-      (_success: PositionCallback, error: PositionErrorCallback) =>
-        error({ code: 3 } as GeolocationPositionError),
+    const getCurrentPosition = vi.fn((_success: PositionCallback, error: PositionErrorCallback) =>
+      error({ code: 3 } as GeolocationPositionError),
     );
     Object.defineProperty(navigator, 'geolocation', {
       configurable: true,

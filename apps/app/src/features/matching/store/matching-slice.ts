@@ -136,6 +136,11 @@ const matchingSlice = createSlice({
   name: 'matching',
   initialState,
   reducers: {
+    clearFeed(state) {
+      state.feed = [];
+      state.feedLoaded = false;
+      state.feedError = null;
+    },
     clearCelebration(state) {
       state.celebrationProfile = null;
     },
@@ -237,7 +242,8 @@ const matchingSlice = createSlice({
   },
 });
 
-export const { clearCelebration, closeQuotaModal, clearSwipeError } = matchingSlice.actions;
+export const { clearFeed, clearCelebration, closeQuotaModal, clearSwipeError } =
+  matchingSlice.actions;
 
 export const selectMatchingState = (state: RootState) => state.matching;
 

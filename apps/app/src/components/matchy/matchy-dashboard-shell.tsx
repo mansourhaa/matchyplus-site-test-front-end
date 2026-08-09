@@ -49,8 +49,8 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   const titleMap: Record<string, string> = {
     '/settings': t('nav.settings'),
     '/settings/account': t('settings.account'),
-    '/settings/password': 'Password',
-    '/settings/add-phone-number': 'Phone',
+    '/settings/password': t('dashboard.password'),
+    '/settings/add-phone-number': t('dashboard.phone'),
     '/settings/video': t('settings.video'),
     '/settings/qr-code': t('settings.qrCode'),
     '/settings/verify-account': t('settings.verifyAccount'),
@@ -69,7 +69,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   const title = pathname.startsWith('/chat')
     ? t('chat.title')
     : pathname.startsWith('/profile/')
-      ? 'Profil'
+      ? t('dashboard.profile')
       : titleMap[pathname];
   const backPath =
     pathname === '/edit-profile' || pathname.startsWith('/settings/') ? '/settings' : '/home';
@@ -86,6 +86,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
 }
 
 export function MatchyDashboardShell({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   return (
     <Suspense
       fallback={
@@ -93,7 +94,7 @@ export function MatchyDashboardShell({ children }: { children: ReactNode }) {
           className="flex min-h-screen items-center justify-center"
           style={{ background: '#F5F7FA' }}
         >
-          Loading…
+          {t('common.loading')}
         </div>
       }
     >

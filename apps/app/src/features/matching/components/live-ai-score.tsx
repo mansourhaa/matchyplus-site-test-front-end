@@ -5,8 +5,178 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import type { FeedProfile, ScoreBreakdown } from '@/features/matching/types';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Brain, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import {
+  Brain,
+  BrainCircuit,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Lock,
+  MapPin,
+  Sparkles,
+  Star,
+  Zap,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+export function AIRightSidebarLocationEmpty({
+  onActivate,
+  activating,
+}: {
+  onActivate: () => void;
+  activating: boolean;
+}) {
+  const { locale } = useI18n();
+  const isRtl = locale === 'ar';
+
+  return (
+    <div className="flex flex-col gap-3 p-1">
+      <div
+        className="relative overflow-hidden rounded-2xl p-4 text-center shadow-xs"
+        style={{
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #F5F9FF 100%)',
+          border: '1px solid #E2E8F0',
+        }}
+        dir={isRtl ? 'rtl' : 'ltr'}
+      >
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#61BCA6]/20 to-[#2F76BB]/20 text-[#2F76BB]">
+          <Sparkles size={22} className="animate-pulse" />
+        </div>
+        <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }} className="mb-1">
+          {locale === 'en'
+            ? 'Live AI Matching'
+            : locale === 'ar'
+              ? 'تحليل التوافق بالذكاء الاصطناعي'
+              : 'Matchs IA en direct'}
+        </h3>
+        <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.4 }} className="mb-4">
+          {locale === 'en'
+            ? 'Enable location to unlock live AI compatibility scoring and top recommendations near you.'
+            : locale === 'ar'
+              ? 'قم بتمكين الموقع الجغرافي لتفعيل التوافق المباشر وأفضل التوصيات القريبة منك.'
+              : 'Activez la localisation pour calculer en direct votre score IA et débloquer les recommandations Top Picks.'}
+        </p>
+
+        <div className={`mb-4 space-y-2 ${isRtl ? 'text-right' : 'text-left'}`}>
+          <div className="flex items-center gap-2.5 rounded-xl border border-[#EDF2F7] bg-white p-2.5 shadow-xs">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EEF5FF] text-[#2F76BB]">
+              <BrainCircuit size={15} />
+            </div>
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#2D3748' }}>
+                {locale === 'en'
+                  ? 'AI Compatibility'
+                  : locale === 'ar'
+                    ? 'التوافق بالذكاء الاصطناعي'
+                    : 'Affinité IA'}
+              </p>
+              <p style={{ fontSize: 10, color: '#718096' }}>
+                {locale === 'en'
+                  ? 'Real-time match scoring'
+                  : locale === 'ar'
+                    ? 'حساب التوافق في الوقت الفعلي'
+                    : 'Score calculé en temps réel'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 rounded-xl border border-[#EDF2F7] bg-white p-2.5 shadow-xs">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F7F3] text-[#61BCA6]">
+              <Star size={15} />
+            </div>
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#2D3748' }}>
+                {locale === 'en'
+                  ? 'Top AI Picks'
+                  : locale === 'ar'
+                    ? 'أفضل ترشيحات الذكاء الاصطناعي'
+                    : 'Top AI Picks'}
+              </p>
+              <p style={{ fontSize: 10, color: '#718096' }}>
+                {locale === 'en'
+                  ? 'Personalized recommendations'
+                  : locale === 'ar'
+                    ? 'توصيات مخصصة لك'
+                    : 'Recommandations sur-mesure'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 rounded-xl border border-[#EDF2F7] bg-white p-2.5 shadow-xs">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#FFF5E6] text-[#F5A623]">
+              <MapPin size={15} />
+            </div>
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#2D3748' }}>
+                {locale === 'en'
+                  ? 'Proximity Filter'
+                  : locale === 'ar'
+                    ? 'ميزة القرب الجغرافي'
+                    : 'Proximité'}
+              </p>
+              <p style={{ fontSize: 10, color: '#718096' }}>
+                {locale === 'en'
+                  ? 'Profiles near your area'
+                  : locale === 'ar'
+                    ? 'ملفات شخصية قريبة منك'
+                    : 'Profils autour de chez vous'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onActivate}
+          disabled={activating}
+          className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-60"
+          style={{ background: matchyBrand.gradient, fontSize: 12 }}
+        >
+          {activating ? <Loader2 size={15} className="animate-spin" /> : <MapPin size={15} />}
+          <span>
+            {activating
+              ? locale === 'en'
+                ? 'Activating...'
+                : locale === 'ar'
+                  ? 'جارٍ التفعيل...'
+                  : 'Activation...'
+              : locale === 'en'
+                ? 'Enable location'
+                : locale === 'ar'
+                  ? 'تفعيل الموقع'
+                  : 'Activer la localisation'}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function AIRightSidebarNoProfileEmpty() {
+  const { locale } = useI18n();
+
+  return (
+    <div
+      className="flex flex-col items-center justify-center rounded-2xl p-4 text-center shadow-xs"
+      style={{
+        background: 'white',
+        border: '1px solid #E2E8F0',
+      }}
+    >
+      <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF5FF] text-[#2F76BB]">
+        <Sparkles size={20} />
+      </div>
+      <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }} className="mb-1">
+        {locale === 'en' ? 'AI Match Insights' : 'Analyse IA Matchy'}
+      </h3>
+      <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.4 }}>
+        {locale === 'en'
+          ? 'Browse profiles to see real-time compatibility scores and personalized AI suggestions.'
+          : 'Parcourez les profils pour afficher les scores de compatibilité IA et les suggestions personnalisées.'}
+      </p>
+    </div>
+  );
+}
 
 const CONFIDENCE_LABELS = {
   high: { fr: 'Très compatible', en: 'Highly compatible', ar: 'متوافق جداً', color: '#61BCA6' },
@@ -308,10 +478,53 @@ export function AIRecommendationItem({
   rank: number;
   onClick: () => void;
 }) {
+  const isLocked = Boolean(profile.is_locked || rank >= 3);
   const color = scoreTierColor(profile.match_score);
   const count = useCountUp(Math.round(profile.match_score), 600, rank * 80);
   const role = profile.service_type || profile.job || profile.category || '';
   const photo = useAuthenticatedMediaUrl(profile.image);
+
+  if (isLocked) {
+    return (
+      <motion.button
+        type="button"
+        onClick={onClick}
+        className="relative flex w-full items-center gap-2.5 overflow-hidden rounded-xl p-2.5 text-left transition-colors hover:bg-[#F5F7FA]"
+        style={{ border: '1px solid #F0F0F0', background: 'white' }}
+        initial={{ opacity: 0, x: -12 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: rank * 0.06 }}
+      >
+        <div
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+          style={{ background: '#F5F5F5' }}
+        >
+          <span style={{ fontSize: 9, fontWeight: 800, color: '#888' }}>#{rank + 1}</span>
+        </div>
+        <div
+          className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-200"
+          style={{ filter: 'blur(5px)' }}
+        >
+          <div className="h-full w-full bg-gradient-to-br from-gray-300 to-gray-400" />
+        </div>
+        <div className="min-w-0 flex-1" style={{ filter: 'blur(4px)', userSelect: 'none' }}>
+          <p className="truncate" style={{ fontSize: 12, fontWeight: 700, color: '#353535' }}>
+            ███████
+          </p>
+          <p className="truncate" style={{ fontSize: 10, color: '#888' }}>
+            {role || 'Matchy+ User'}
+          </p>
+        </div>
+        <div
+          className="flex items-center gap-1 rounded-lg px-2 py-1"
+          style={{ background: 'rgba(47,118,187,0.1)', color: '#2F76BB' }}
+        >
+          <Lock size={12} color="#2F76BB" />
+          <span style={{ fontSize: 10, fontWeight: 700 }}>VIP</span>
+        </div>
+      </motion.button>
+    );
+  }
 
   return (
     <motion.button
