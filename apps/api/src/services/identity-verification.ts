@@ -23,6 +23,9 @@ export type IdentityVerificationServiceDeps = {
   aiJobs: AiJobsService;
 };
 
+/** Mirrors CODE_NO_FACE in apps/ai/app/processors/verify_identity.py. */
+const NO_FACE_DETECTED_CODE = 'no_face_detected';
+
 export class IdentityVerificationService {
   constructor(private readonly deps: IdentityVerificationServiceDeps) {}
 
@@ -96,6 +99,10 @@ export class IdentityVerificationService {
     }
   }
 
+  /**
+   * The user's most recent attempt, in any state. Lets a client that lost the job id —
+   * poll timeout, reload, closed tab — still pick up a finished job's result.
+   */
   async getLatestStatus(userId: string): Promise<{ job: AiJob | null; identityVerified: boolean }> {
     try {
       const job = await this.deps.aiJobs.findLatestJobForUser(userId, 'VERIFY_IDENTITY');
@@ -120,6 +127,16 @@ export class IdentityVerificationService {
    */
   private async syncVerifiedFromJob(userId: string, job: AiJob): Promise<boolean> {
     const result = job.result as Record<string, unknown> | null;
+
+    // Carries verified: false but is not a verdict on identity — writing it would strip
+    // a verification the user already earned.
+    if (result?.code === NO_FACE_DETECTED_CODE) {
+      const user = await this.deps.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { verified: true },
+      });
+      return user.verified;
+    }
 
     if (job.status === 'SUCCEEDED' && result && typeof result.verified === 'boolean') {
       const updated = await this.deps.prisma.user.update({

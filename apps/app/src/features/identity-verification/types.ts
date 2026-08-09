@@ -5,7 +5,12 @@ export type IdentityVerificationJob = {
   id: string;
   type: string;
   status: IdentityVerificationJobStatus;
-  result: { verified?: boolean; [key: string]: unknown } | null;
+  /** `code` mirrors the worker's outcome codes — see verify_identity.py. */
+  result: {
+    verified?: boolean;
+    code?: 'match' | 'mismatch' | 'no_face_detected';
+    [key: string]: unknown;
+  } | null;
   error: string | null;
   createdAt: string;
   updatedAt: string;

@@ -360,10 +360,8 @@ export function PhoneLinkSection() {
   );
 }
 
-// A cold worker has to load the face model before it can answer, so the budget covers
-// that first slow job rather than the steady-state one. Giving up is only a UI decision:
-// the job keeps running server-side and its result is picked up by the latest-job lookup
-// on the next visit, so this cap can never lose a verification.
+// Sized for a cold worker's first job, not the steady-state one. Giving up is only a UI
+// decision — the job runs on and is picked up by the latest-job lookup on the next visit.
 const MAX_POLL_ATTEMPTS = 60;
 const POLL_INTERVAL_MS = 2000;
 const TERMINAL_STATUSES = new Set(['SUCCEEDED', 'FAILED', 'CANCELLED']);
@@ -385,8 +383,7 @@ export function IdentityVerificationSection() {
     void dispatch(fetchLatestIdentityVerification());
   }, [restored, dispatch]);
 
-  // Poll until the job reaches a terminal status — same pattern as the AI lab doc's own
-  // polling guidance, capped so a stuck worker can't spin forever.
+  // Poll until terminal, capped so a stuck worker can't spin forever.
   useEffect(() => {
     if (!job || TERMINAL_STATUSES.has(job.status)) return;
 
@@ -431,6 +428,8 @@ export function IdentityVerificationSection() {
   }
 
   const failed = job?.status === 'FAILED' || (job?.status === 'SUCCEEDED' && !identityVerified);
+  // A fixable capture problem, not a verdict that the user is someone else.
+  const noFaceDetected = job?.result?.code === 'no_face_detected';
 
   return (
     <SettingsCard
@@ -455,7 +454,11 @@ export function IdentityVerificationSection() {
         <>
           <InlineBanner
             kind="error"
-            message="La vérification a échoué — le selfie ne correspond pas à votre photo de profil."
+            message={
+              noFaceDetected
+                ? "Aucun visage n'a été détecté. Placez-vous face à la caméra, dans un endroit bien éclairé, sans lunettes de soleil ni masque."
+                : 'La vérification a échoué — le selfie ne correspond pas à votre photo de profil.'
+            }
           />
           <button
             type="button"

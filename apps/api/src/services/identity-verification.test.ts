@@ -197,6 +197,23 @@ describe('IdentityVerificationService', () => {
       expect(result).toEqual({ job, identityVerified: false });
     });
 
+    it('never clears an earned verification when the capture was unusable', async () => {
+      // no_face_detected carries verified: false but is not a verdict about identity.
+      const { service, prisma, aiJobs } = createService();
+      const job = {
+        id: 'job-2',
+        status: 'SUCCEEDED',
+        result: { verified: false, code: 'no_face_detected' },
+      };
+      aiJobs.getJobForUser.mockResolvedValue(job);
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ verified: true });
+
+      const result = await service.getStatus('user-1', 'job-2');
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(result).toEqual({ job, identityVerified: true });
+    });
+
     it('does not sync from a failed job either', async () => {
       const { service, prisma, aiJobs } = createService();
       const job = { id: 'job-1', status: 'FAILED', result: null, error: 'boom' };
