@@ -1,5 +1,6 @@
 'use client';
 
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { EXPERIENCE_OPTIONS, SECTOR_OPTIONS } from '@/features/onboarding/constants';
 import type { OnboardingProfile, ProfileExperience } from '@/features/onboarding/types';
 import { ExperienceSection } from '@/features/profile/components/profile-edit-sections';
@@ -92,6 +93,7 @@ export function ExperienceStep({
   onNext,
   onBack,
 }: ExperienceStepProps) {
+  const { t } = useI18n();
   const [experience, setExperience] = useState(profile?.experience ?? '');
   const [sector, setSector] = useState(profile?.sector ?? '');
   const [experiences, setExperiences] = useState<ProfileExperience[]>(profile?.experiences ?? []);
@@ -117,55 +119,57 @@ export function ExperienceStep({
             experiences,
           },
     );
-    if (!saved) setError('Échec de la sauvegarde. Réessayez.');
+    if (!saved) setError(t('onboarding.experience.errorSubmit'));
   };
 
   return (
     <OnboardingStepLayout
       step={stepNumber}
       totalSteps={totalSteps}
-      stepLabel="Parcours professionnel"
+      stepLabel={t('onboarding.experience.title')}
       onBack={onBack}
     >
       <div className="mx-auto w-full max-w-2xl">
         <StepProgress step={stepNumber} total={totalSteps} />
 
         <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E', marginBottom: '6px' }}>
-          Parcours professionnel
+          {t('onboarding.experience.title')}
         </h1>
         <p style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}>
-          Partagez votre expérience pour attirer les bons profils.
+          {t('onboarding.experience.desc')}
         </p>
 
         <div className="space-y-6 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
           <StepCard
-            title="Expérience générale"
+            title={t('onboarding.experience.generalTitle')}
             icon={<Briefcase size={16} color="white" />}
-            description="Années et secteur d'activité"
+            description={t('onboarding.experience.generalDesc')}
           >
             <div className="space-y-4">
               <Dropdown
-                label="Années d'expérience"
+                label={t('onboarding.experience.yearsLabel')}
                 value={experience}
                 options={EXPERIENCE_OPTIONS}
                 onChange={setExperience}
-                placeholder="Choisir"
+                placeholder={t('onboarding.experience.placeholder')}
               />
               <Dropdown
-                label="Secteur d'activité"
+                label={t('onboarding.experience.sectorLabel')}
                 value={sector}
                 options={SECTOR_OPTIONS}
                 onChange={setSector}
-                placeholder="Choisir"
+                placeholder={t('onboarding.experience.placeholder')}
               />
             </div>
             <div
               className="mt-4 rounded-xl px-3 py-3"
               style={{ background: '#EEF5FF', border: '1px solid #C5D8F0' }}
             >
-              <p style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}>Conseil Matchy+</p>
+              <p style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}>
+                {t('onboarding.experience.tipTitle')}
+              </p>
               <p style={{ fontSize: '11px', color: '#555', marginTop: '2px', lineHeight: 1.5 }}>
-                Les profils avec un parcours complet reçoivent 3× plus de connexions.
+                {t('onboarding.experience.tipDesc')}
               </p>
             </div>
           </StepCard>
@@ -191,7 +195,9 @@ export function ExperienceStep({
         <StepCtaRow
           onBack={onBack}
           onContinue={() => void submit(false)}
-          continueLabel={loading ? 'Enregistrement…' : 'Enregistrer et continuer'}
+          continueLabel={
+            loading ? t('onboarding.experience.syncing') : t('onboarding.experience.cta')
+          }
           disabled={loading}
           loading={loading}
         />
@@ -201,7 +207,7 @@ export function ExperienceStep({
           disabled={loading}
           className="mt-3 w-full py-2 text-center text-sm font-semibold text-[#888]"
         >
-          Passer
+          {t('onboarding.experience.skip')}
         </button>
       </div>
     </OnboardingStepLayout>

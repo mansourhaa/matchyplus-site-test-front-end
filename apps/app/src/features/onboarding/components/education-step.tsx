@@ -1,5 +1,6 @@
 'use client';
 
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { EDUCATION_OPTIONS } from '@/features/onboarding/constants';
 import type { OnboardingProfile, ProfileEducation } from '@/features/onboarding/types';
 import { EducationSection } from '@/features/profile/components/profile-edit-sections';
@@ -88,6 +89,7 @@ export function EducationStep({
   onNext,
   onBack,
 }: EducationStepProps) {
+  const { t } = useI18n();
   const [educationLevel, setEducationLevel] = useState(profile?.education_level ?? '');
   const [educations, setEducations] = useState<ProfileEducation[]>(profile?.educations ?? []);
   const [error, setError] = useState<string | null>(null);
@@ -110,38 +112,38 @@ export function EducationStep({
             educations,
           },
     );
-    if (!saved) setError('Échec de la sauvegarde. Réessayez.');
+    if (!saved) setError(t('onboarding.education.errorSubmit'));
   };
 
   return (
     <OnboardingStepLayout
       step={stepNumber}
       totalSteps={totalSteps}
-      stepLabel="Formation & Éducation"
+      stepLabel={t('onboarding.education.title')}
       onBack={onBack}
     >
       <div className="mx-auto w-full max-w-2xl">
         <StepProgress step={stepNumber} total={totalSteps} />
 
         <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E', marginBottom: '6px' }}>
-          Formation &amp; Éducation
+          {t('onboarding.education.title')}
         </h1>
         <p style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}>
-          Ajoutez votre niveau et vos formations pour compléter votre profil.
+          {t('onboarding.education.desc')}
         </p>
 
         <div className="space-y-6 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
           <StepCard
-            title="Niveau d'études"
+            title={t('onboarding.education.levelTitle')}
             icon={<GraduationCap size={16} color="white" />}
-            description="Diplôme le plus élevé"
+            description={t('onboarding.education.levelDesc')}
           >
             <Dropdown
-              label="Niveau"
+              label={t('onboarding.education.levelLabel')}
               value={educationLevel}
               options={EDUCATION_OPTIONS}
               onChange={setEducationLevel}
-              placeholder="Choisir"
+              placeholder={t('onboarding.education.levelPlaceholder')}
             />
           </StepCard>
 
@@ -166,7 +168,9 @@ export function EducationStep({
         <StepCtaRow
           onBack={onBack}
           onContinue={() => void submit(false)}
-          continueLabel={loading ? 'Enregistrement…' : 'Enregistrer et continuer'}
+          continueLabel={
+            loading ? t('onboarding.education.syncing') : t('onboarding.education.cta')
+          }
           disabled={loading}
           loading={loading}
         />
@@ -176,7 +180,7 @@ export function EducationStep({
           disabled={loading}
           className="mt-3 w-full py-2 text-center text-sm font-semibold text-[#888]"
         >
-          Passer
+          {t('onboarding.education.skip')}
         </button>
       </div>
     </OnboardingStepLayout>

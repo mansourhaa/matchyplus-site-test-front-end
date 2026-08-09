@@ -1,6 +1,7 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
+import { useI18n } from '@/features/i18n/i18n-provider';
 import {
   CONTACT_OPTIONS,
   DAYS,
@@ -20,7 +21,11 @@ import {
   selectOnboarding,
   updateOnboardingProfile,
 } from '@/features/onboarding/store/onboarding-slice';
-import type { ProfileEducation, ProfileExperience } from '@/features/onboarding/types';
+import type {
+  OnboardingProfilePatch,
+  ProfileEducation,
+  ProfileExperience,
+} from '@/features/onboarding/types';
 import {
   ChoiceEditor,
   EditSheet,
@@ -111,6 +116,8 @@ function splitName(name: string) {
 
 export function EditProfileForm() {
   const dispatch = useAppDispatch();
+  const { locale, t } = useI18n();
+  const isRtl = locale === 'ar';
   const { profile, loading, error: profileError } = useAppSelector(selectOnboarding);
   const { mediaUploading, mediaError } = useAppSelector(selectProfile);
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -295,7 +302,7 @@ export function EditProfileForm() {
       return false;
     }
 
-    const patch = {
+    const fullPatch = {
       name: draft.name.trim(),
       job: draft.job.trim(),
       bio: draft.bio.trim(),
@@ -314,6 +321,70 @@ export function EditProfileForm() {
       availabilityDays: draft.offerService ? draft.availabilityDays : [],
       availabilityHours: draft.offerService ? draft.availabilityHours : [],
     };
+
+    // Sheet saves pass a single-field override — only PATCH those keys so the click
+    // feels snappy instead of rewriting the entire profile on every Enregistrer.
+    const overrideKeys = Object.keys(overrides) as (keyof ProfileSaveOverrides)[];
+    let patch: OnboardingProfilePatch = fullPatch;
+    if (overrideKeys.length > 0) {
+      const partial: Record<string, unknown> = {};
+      for (const key of overrideKeys) {
+        switch (key) {
+          case 'name':
+            partial.name = fullPatch.name;
+            break;
+          case 'job':
+            partial.job = fullPatch.job;
+            break;
+          case 'bio':
+            partial.bio = fullPatch.bio;
+            break;
+          case 'interests':
+            partial.interests = fullPatch.interests;
+            break;
+          case 'goals':
+            partial.selectedGoals = fullPatch.selectedGoals;
+            break;
+          case 'contactModes':
+            partial.contactModes = fullPatch.contactModes;
+            break;
+          case 'offerService':
+            partial.offerService = fullPatch.offerService;
+            break;
+          case 'serviceType':
+            partial.serviceType = fullPatch.serviceType;
+            break;
+          case 'price':
+            partial.price = fullPatch.price;
+            break;
+          case 'experience':
+            partial.experience = fullPatch.experience;
+            break;
+          case 'sector':
+            partial.sector = fullPatch.sector;
+            break;
+          case 'education':
+            partial.educationLevel = fullPatch.educationLevel;
+            break;
+          case 'experiences':
+            partial.experiences = fullPatch.experiences;
+            break;
+          case 'educations':
+            partial.educations = fullPatch.educations;
+            break;
+          case 'languages':
+            partial.languages = fullPatch.languages;
+            break;
+          case 'availabilityDays':
+            partial.availabilityDays = fullPatch.availabilityDays;
+            break;
+          case 'availabilityHours':
+            partial.availabilityHours = fullPatch.availabilityHours;
+            break;
+        }
+      }
+      patch = partial as OnboardingProfilePatch;
+    }
 
     setSaving(true);
     try {
@@ -361,7 +432,7 @@ export function EditProfileForm() {
     completion >= 80 ? '#E8F7F3' : completion >= 50 ? '#E8F0FA' : '#FFF8EB';
 
   return (
-    <div className="w-full pb-4">
+    <div className="w-full pb-4" dir={isRtl ? 'rtl' : 'ltr'}>
       <header className="mb-3 bg-white pb-5 shadow-sm">
         <div className="h-20 bg-gradient-to-br from-[#1a5fa0] via-[#2F76BB] to-[#61BCA6]" />
         <div className="-mt-10 flex flex-col items-center px-4">
@@ -455,13 +526,21 @@ export function EditProfileForm() {
       </header>
 
       <ProfileCard>
-        <SectionHeading title="Biographie" onEdit={() => setSheet('bio')} />
+        <SectionHeading
+          title={locale === 'en' ? 'Bio' : locale === 'ar' ? 'السيرة الذاتية' : 'Biographie'}
+          onEdit={() => setSheet('bio')}
+        />
         <div className="relative px-2">
           <span className="block text-[28px] leading-[0.8] font-extrabold text-[#2F76BB]">
             &quot;
           </span>
           <p className="px-1 text-[13px] leading-[1.6] text-[#555]">
-            {bio || 'Appuyez pour modifier'}
+            {bio ||
+              (locale === 'en'
+                ? 'Tap to edit'
+                : locale === 'ar'
+                  ? 'انقر للتعديل'
+                  : 'Appuyez pour modifier')}
           </p>
           <span className="block text-right text-[28px] leading-[0.8] font-extrabold text-[#2F76BB]">
             &quot;
@@ -470,14 +549,14 @@ export function EditProfileForm() {
       </ProfileCard>
 
       <TagCard
-        title="Centres d’intérêt"
+        title={locale === 'en' ? 'Interests' : locale === 'ar' ? 'الاهتمامات' : 'Centres d’intérêt'}
         values={interests}
         color="#2F76BB"
         icon={iconBox(<Heart size={15} color="#F5A623" />, '#FFF8EB')}
         onEdit={() => setSheet('interests')}
       />
       <TagCard
-        title="Mes objectifs"
+        title={locale === 'en' ? 'My goals' : locale === 'ar' ? 'أهدافي' : 'Mes objectifs'}
         values={goals}
         color="#61BCA6"
         icon={iconBox(<Target size={15} color="#61BCA6" />, '#E8F7F3')}
@@ -486,7 +565,13 @@ export function EditProfileForm() {
 
       <ProfileCard>
         <SectionHeading
-          title="Préférences de contact"
+          title={
+            locale === 'en'
+              ? 'Contact preferences'
+              : locale === 'ar'
+                ? 'تفضيلات التواصل'
+                : 'Préférences de contact'
+          }
           icon={iconBox(<Phone size={15} color="#9B59B6" />, '#F3E8FA')}
           onEdit={() => setSheet('contact')}
         />
@@ -500,6 +585,20 @@ export function EditProfileForm() {
                   ? { Icon: MessageCircle, color: '#25D366', background: '#E8F9F0' }
                   : { Icon: Coffee, color: '#61BCA6', background: '#E8F7F3' };
             const ContactIcon = visual.Icon;
+            const label =
+              option.value === 'phone'
+                ? locale === 'en'
+                  ? 'Phone call'
+                  : locale === 'ar'
+                    ? 'مكالمة هاتفية'
+                    : 'Appel téléphonique'
+                : option.value === 'whatsapp'
+                  ? 'WhatsApp / Chat'
+                  : locale === 'en'
+                    ? 'In-person'
+                    : locale === 'ar'
+                      ? 'لقاء حضوري'
+                      : 'Rendez-vous présentiel';
             return (
               <div
                 key={option.value}
@@ -514,7 +613,7 @@ export function EditProfileForm() {
                   className="text-[11px] font-semibold"
                   style={{ color: active ? visual.color : '#AAA' }}
                 >
-                  {option.label}
+                  {label}
                 </span>
                 {active && (
                   <span
@@ -532,11 +631,21 @@ export function EditProfileForm() {
 
       <ProfileCard>
         <SectionHeading
-          title="Offrir un service"
+          title={
+            locale === 'en'
+              ? 'Offer a service'
+              : locale === 'ar'
+                ? 'تقديم خدمة'
+                : 'Offrir un service'
+          }
           icon={iconBox(<Briefcase size={15} color="#F5A623" />, '#FFF8EB')}
         />
         <div className="mb-3 flex items-center justify-between rounded-xl bg-[#F5F7FA] px-3 py-2 text-[13px] text-[#555]">
-          Activer l&apos;offre de service
+          {locale === 'en'
+            ? 'Enable service offering'
+            : locale === 'ar'
+              ? 'تفعيل تقديم الخدمة'
+              : 'Activer l’offre de service'}
           <button
             type="button"
             role="switch"
@@ -544,6 +653,7 @@ export function EditProfileForm() {
             onClick={() => setOfferService((value) => !value)}
             className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
             style={{ background: offerService ? '#2F76BB' : '#E0E0E0' }}
+            dir="ltr"
           >
             <span
               className="h-4 w-4 rounded-full bg-white transition-transform"
@@ -558,9 +668,16 @@ export function EditProfileForm() {
             className="flex w-full items-center justify-between rounded-xl bg-[#F5F7FA] px-3 py-2.5 text-left"
           >
             <span>
-              <span className="block text-xs text-[#888]">Type de service</span>
+              <span className="block text-xs text-[#888]">
+                {locale === 'en'
+                  ? 'Service type'
+                  : locale === 'ar'
+                    ? 'نوع الخدمة'
+                    : 'Type de service'}
+              </span>
               <span className="text-sm font-semibold text-[#353535]">
-                {serviceType || 'Choisir'} · {price || '0'} DT/heure
+                {serviceType || (locale === 'en' ? 'Choose' : locale === 'ar' ? 'اختر' : 'Choisir')}{' '}
+                · {price || '0'} DT/{locale === 'en' ? 'hr' : locale === 'ar' ? 'ساعة' : 'heure'}
               </span>
             </span>
             <ChevronDown size={16} color="#AAA" />
@@ -572,13 +689,39 @@ export function EditProfileForm() {
         <>
           <ProfileCard>
             <SectionHeading
-              title="Expérience & formation"
+              title={
+                locale === 'en'
+                  ? 'Experience & education'
+                  : locale === 'ar'
+                    ? 'الخبرة والتعليم'
+                    : 'Expérience & formation'
+              }
               icon={iconBox(<Briefcase size={15} color="#2F76BB" />, '#E8F0FA')}
             />
-            <InfoRow label="Expérience" value={experience} onClick={() => setSheet('experience')} />
-            <InfoRow label="Secteur d’activité" value={sector} onClick={() => setSheet('sector')} />
             <InfoRow
-              label="Niveau d’éducation"
+              label={locale === 'en' ? 'Experience' : locale === 'ar' ? 'الخبرة' : 'Expérience'}
+              value={experience}
+              onClick={() => setSheet('experience')}
+            />
+            <InfoRow
+              label={
+                locale === 'en'
+                  ? 'Industry sector'
+                  : locale === 'ar'
+                    ? 'قطاع النشاط'
+                    : 'Secteur d’activité'
+              }
+              value={sector}
+              onClick={() => setSheet('sector')}
+            />
+            <InfoRow
+              label={
+                locale === 'en'
+                  ? 'Education level'
+                  : locale === 'ar'
+                    ? 'المستوى التعليمي'
+                    : 'Niveau d’éducation'
+              }
               value={education}
               onClick={() => setSheet('education')}
             />
@@ -597,7 +740,13 @@ export function EditProfileForm() {
       )}
 
       <TagCard
-        title="Langues parlées"
+        title={
+          locale === 'en'
+            ? 'Languages spoken'
+            : locale === 'ar'
+              ? 'اللغات المحدثة'
+              : 'Langues parlées'
+        }
         values={languages.map((value) => {
           const option = LANGUAGE_OPTIONS.find((entry) => entry.value === value);
           return option ? `${option.flag} ${option.label}` : value;
@@ -610,7 +759,13 @@ export function EditProfileForm() {
       {offerService && (
         <ProfileCard>
           <SectionHeading
-            title="Disponibilités"
+            title={
+              locale === 'en'
+                ? 'Availability'
+                : locale === 'ar'
+                  ? 'الأوقات المتاحة'
+                  : 'Disponibilités'
+            }
             icon={iconBox(<Clock size={15} color="#F5A623" />, '#FFF8EB')}
             onEdit={() => setSheet('availability')}
           />
@@ -643,7 +798,7 @@ export function EditProfileForm() {
               onClick={() => setSheet('availability')}
               className="flex items-center gap-1 text-[13px] text-[#AAA]"
             >
-              <Plus size={14} /> Ajouter
+              <Plus size={14} /> {locale === 'en' ? 'Add' : locale === 'ar' ? 'إضافة' : 'Ajouter'}
             </button>
           )}
         </ProfileCard>
@@ -652,7 +807,13 @@ export function EditProfileForm() {
       {isIndividual && (
         <ProfileCard>
           <SectionHeading
-            title="Vidéo de présentation"
+            title={
+              locale === 'en'
+                ? 'Presentation video'
+                : locale === 'ar'
+                  ? 'فيديو العرض التقديمي'
+                  : 'Vidéo de présentation'
+            }
             icon={iconBox(<Video size={15} color="#9B59B6" />, '#F3E8FA')}
           />
           {serverVideo ? (
@@ -681,10 +842,22 @@ export function EditProfileForm() {
                   <X size={14} color="#AAA" />
                 </button>
               </div>
-              {video.loading && <p className="mt-2 text-xs text-[#888]">Chargement de la vidéo…</p>}
+              {video.loading && (
+                <p className="mt-2 text-xs text-[#888]">
+                  {locale === 'en'
+                    ? 'Loading video...'
+                    : locale === 'ar'
+                      ? 'جارٍ التحميل...'
+                      : 'Chargement de la vidéo…'}
+                </p>
+              )}
               {(video.error || videoPlaybackError) && (
                 <p className="mt-2 text-xs text-[#E24E59]" role="alert">
-                  Cette vidéo est inaccessible ou manquante.
+                  {locale === 'en'
+                    ? 'Video unavailable or missing.'
+                    : locale === 'ar'
+                      ? 'هذا الفيديو غير متاح.'
+                      : 'Cette vidéo est inaccessible ou manquante.'}
                 </p>
               )}
               {showVideoPreview && video.url && (
@@ -701,11 +874,21 @@ export function EditProfileForm() {
                 href="/settings/video"
                 className="mt-3 inline-flex text-xs font-semibold text-[#2F76BB]"
               >
-                Gérer dans les paramètres vidéo
+                {locale === 'en'
+                  ? 'Manage in video settings'
+                  : locale === 'ar'
+                    ? 'إدارة في إعدادات الفيديو'
+                    : 'Gérer dans les paramètres vidéo'}
               </Link>
             </>
           ) : (
-            <p className="text-[13px] text-[#AAA]">Aucune vidéo ajoutée</p>
+            <p className="text-[13px] text-[#AAA]">
+              {locale === 'en'
+                ? 'No video added'
+                : locale === 'ar'
+                  ? 'لم يتم إضافة فيديو'
+                  : 'Aucune vidéo ajoutée'}
+            </p>
           )}
         </ProfileCard>
       )}
@@ -722,16 +905,31 @@ export function EditProfileForm() {
           disabled={saving || mediaUploading}
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#2F76BB] to-[#61BCA6] py-4 text-[15px] font-bold text-white shadow-lg disabled:opacity-60"
         >
-          <Check size={18} /> {saving ? 'Enregistrement…' : 'Enregistrer'}
+          <Check size={18} />
+          {saving
+            ? locale === 'en'
+              ? 'Saving...'
+              : locale === 'ar'
+                ? 'جارٍ الحفظ...'
+                : 'Enregistrement…'
+            : locale === 'en'
+              ? 'Save'
+              : locale === 'ar'
+                ? 'حفظ'
+                : 'Enregistrer'}
         </button>
       </div>
 
       {saved && (
         <div
-          className="fixed right-4 bottom-6 left-4 z-50 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] px-5 py-3 text-center text-sm font-bold text-white shadow-lg md:right-8 md:left-auto md:w-80"
+          className={`fixed ${isRtl ? 'left-4' : 'right-4'} bottom-6 z-50 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] px-5 py-3 text-center text-sm font-bold text-white shadow-lg md:w-80`}
           role="status"
         >
-          ✓ Profil mis à jour
+          {locale === 'en'
+            ? '✓ Profile updated'
+            : locale === 'ar'
+              ? '✓ تم تحديث الملف الشخصي'
+              : '✓ Profil mis à jour'}
         </div>
       )}
 

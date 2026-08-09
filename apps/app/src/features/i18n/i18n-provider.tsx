@@ -94,8 +94,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
+const defaultContext: I18nContextValue = {
+  locale: 'fr',
+  setLocale: () => {},
+  t: (key: string) => key,
+  dir: 'ltr',
+};
+
 export function useI18n() {
   const ctx = useContext(I18nContext);
-  if (!ctx) throw new Error('useI18n must be used within I18nProvider');
-  return ctx;
+  return ctx ?? defaultContext;
 }

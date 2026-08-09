@@ -1,5 +1,6 @@
 'use client';
 
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { OnboardingStepLayout } from '@/features/onboarding/components/onboarding-step-layout';
 import { Check, Loader2, Shield } from 'lucide-react';
 import { useState } from 'react';
@@ -9,40 +10,41 @@ type WelcomeStepProps = {
   onAccept: () => Promise<boolean>;
 };
 
-const RULES = [
-  {
-    title: 'Sois Toi-Même',
-    desc: 'Assure-toi que tes photos, ton âge et tes informations personnelles sont fidèles à toi-même.',
-    icon: '🪪',
-    color: '#2F76BB',
-    bg: '#EEF5FF',
-  },
-  {
-    title: 'Ta Sécurité Avant Tout',
-    desc: 'Ne partage pas tes informations personnelles avec quelqu’un de suspect.',
-    icon: '🔒',
-    color: '#61BCA6',
-    bg: '#E8F7F3',
-  },
-  {
-    title: 'Sois Professionnel',
-    desc: 'Traite les autres membres avec respect, exactement comme tu aimerais être traité.',
-    icon: '🤝',
-    color: '#F5A623',
-    bg: '#FFF8EB',
-  },
-  {
-    title: 'Sois Actif',
-    desc: 'N’hésite pas à signaler les comportements irrespectueux pour maintenir une communauté saine.',
-    icon: '🚩',
-    color: '#E74C3C',
-    bg: '#FFF0EE',
-  },
-] as const;
-
 export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
+  const { t } = useI18n();
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const RULES = [
+    {
+      title: t('onboarding.welcome.rule1Title'),
+      desc: t('onboarding.welcome.rule1Desc'),
+      icon: '🪪',
+      color: '#2F76BB',
+      bg: '#EEF5FF',
+    },
+    {
+      title: t('onboarding.welcome.rule2Title'),
+      desc: t('onboarding.welcome.rule2Desc'),
+      icon: '🔒',
+      color: '#61BCA6',
+      bg: '#E8F7F3',
+    },
+    {
+      title: t('onboarding.welcome.rule3Title'),
+      desc: t('onboarding.welcome.rule3Desc'),
+      icon: '🤝',
+      color: '#F5A623',
+      bg: '#FFF8EB',
+    },
+    {
+      title: t('onboarding.welcome.rule4Title'),
+      desc: t('onboarding.welcome.rule4Desc'),
+      icon: '🚩',
+      color: '#E74C3C',
+      bg: '#FFF0EE',
+    },
+  ] as const;
 
   const handleAccept = async () => {
     if (accepting || loading) return;
@@ -50,13 +52,18 @@ export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
     setError(null);
     const ok = await onAccept();
     if (!ok) {
-      setError('Échec de la finalisation. Réessayez.');
+      setError(t('onboarding.welcome.errorSubmit'));
       setAccepting(false);
     }
   };
 
   return (
-    <OnboardingStepLayout step={0} totalSteps={0} stepLabel="Bienvenue" hideProgress>
+    <OnboardingStepLayout
+      step={0}
+      totalSteps={0}
+      stepLabel={t('onboarding.welcome.title')}
+      hideProgress
+    >
       <div className="mx-auto w-full max-w-md">
         <div
           className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl"
@@ -65,10 +72,10 @@ export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
           <Shield size={24} color="#2F76BB" />
         </div>
         <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1A1A2E' }}>
-          Bienvenue sur Matchy+ 🎉
+          {t('onboarding.welcome.title')} 🎉
         </h1>
         <p style={{ fontSize: '14px', color: '#888', marginTop: '8px', lineHeight: 1.6 }}>
-          Voici les règles de la communauté. Merci de les respecter pour une expérience au top.
+          {t('onboarding.welcome.rulesDesc')}
         </p>
 
         <div className="mt-8 mb-8 space-y-4">
@@ -111,7 +118,7 @@ export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
           ) : (
             <Check size={18} />
           )}
-          J&apos;accepte les règles
+          {t('onboarding.welcome.acceptRules')}
         </button>
 
         {error && (
@@ -121,7 +128,7 @@ export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
         )}
 
         <p className="mt-4 text-center" style={{ fontSize: '12px', color: '#BBB' }}>
-          En acceptant, vous reconnaissez avoir lu et compris ces règles.
+          {t('onboarding.welcome.acceptDisclaimer')}
         </p>
       </div>
     </OnboardingStepLayout>

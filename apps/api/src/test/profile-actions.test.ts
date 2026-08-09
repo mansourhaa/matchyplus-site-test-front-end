@@ -207,6 +207,7 @@ describe('POST /api/v1/profiles/:id/view', () => {
       userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
       notification: {
         findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
         create: notificationCreate,
       },
     };
@@ -268,6 +269,7 @@ describe('POST /api/v1/profiles/:id/view', () => {
       userBlock: { findFirst: vi.fn().mockResolvedValue(null) },
       notification: {
         findFirst: vi.fn().mockResolvedValue({ id: 'existing-notif' }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'existing-notif', data: {} }]),
         create: notificationCreate,
       },
     };

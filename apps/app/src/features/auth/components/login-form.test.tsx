@@ -68,7 +68,7 @@ describe('LoginForm — phone step', () => {
     renderWithAuthStore(<LoginForm />);
 
     expect(firstPlaceholder('XX XXX XXX')).toBeInTheDocument();
-    expect(firstPlaceholder('Au moins 6 caractères')).toBeInTheDocument();
+    expect(firstPlaceholder('Votre mot de passe')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Envoyer le code' })).not.toBeInTheDocument();
   });
 
@@ -85,7 +85,7 @@ describe('LoginForm — phone step', () => {
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), {
+    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
       target: { value: 'secret123' },
     });
     fireEvent.click(firstButton('Continuer'));
@@ -110,7 +110,7 @@ describe('LoginForm — phone step', () => {
     fireEvent.click(firstButton('Mot de passe oublié ?'));
 
     const codeInput = await findFirstPlaceholder('123456');
-    const newPasswordInput = firstPlaceholder('6 caractères minimum');
+    const newPasswordInput = firstPlaceholder('Nouveau mot de passe');
 
     expect(codeInput).toHaveClass('text-[#353535]');
     expect(newPasswordInput).toHaveClass('text-[#353535]');
@@ -126,7 +126,7 @@ describe('LoginForm — phone step', () => {
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), {
+    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
       target: { value: 'secret123' },
     });
     fireEvent.click(firstButton('Continuer'));
@@ -142,7 +142,7 @@ describe('LoginForm — phone step', () => {
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), {
+    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
       target: { value: 'secret123' },
     });
     fireEvent.click(firstButton('Continuer'));
@@ -157,7 +157,7 @@ describe('LoginForm — phone step', () => {
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), {
+    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
       target: { value: 'secret123' },
     });
     fireEvent.click(firstButton('Continuer'));
@@ -179,7 +179,7 @@ describe('LoginForm — phone step', () => {
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Au moins 6 caractères'), {
+    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
       target: { value: 'secret123' },
     });
     fireEvent.click(firstButton('Continuer'));

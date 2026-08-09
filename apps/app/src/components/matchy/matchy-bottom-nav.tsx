@@ -4,7 +4,7 @@ import { matchyBrand } from '@/components/matchy/brand';
 import { useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { selectMatching } from '@/features/matching/store/matching-slice';
+import { selectInboxUnreadCount } from '@/features/messaging/store/messaging-slice';
 import { Home, MessageCircle, Search } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -17,9 +17,9 @@ export function MatchyBottomNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
-  const matching = useAppSelector(selectMatching);
   const auth = useAppSelector(selectAuth);
-  const matchBadge = matching.matches.length;
+  // Unread messages only — not total match count (that never cleared after reading).
+  const matchBadge = useAppSelector(selectInboxUnreadCount);
   const initial = (auth.user?.name || auth.user?.email || '?').slice(0, 1).toUpperCase();
 
   const active: NavKey =

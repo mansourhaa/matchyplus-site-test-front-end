@@ -1,7 +1,10 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
 import { MatchySidebar } from '@/components/matchy/matchy-sidebar';
+/** Secondary screens: desktop sidebar + mobile/desktop page header with back. */
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -15,7 +18,6 @@ type MatchyAppShellProps = {
   hideHeader?: boolean;
 };
 
-/** Secondary screens: desktop sidebar + mobile/desktop page header with back. */
 export function MatchyAppShell({
   children,
   title,
@@ -25,16 +27,21 @@ export function MatchyAppShell({
   hideHeader = false,
 }: MatchyAppShellProps) {
   const router = useRouter();
+  const { locale } = useI18n();
+  const isRtl = locale === 'ar';
 
   const handleBack = () => {
     if (backPath) router.push(backPath);
     else router.back();
   };
 
+  const rightActions = headerRight ?? <MatchyHeaderActions />;
+
   return (
     <div
       className="flex min-h-dvh min-h-screen w-full"
       style={{ background: matchyBrand.bg, fontFamily: "var(--font-baloo), 'Baloo 2', sans-serif" }}
+      dir={isRtl ? 'rtl' : 'ltr'}
     >
       <MatchySidebar />
 
@@ -54,7 +61,11 @@ export function MatchyAppShell({
                   border: `1px solid ${matchyBrand.borderStrong}`,
                 }}
               >
-                <ChevronLeft size={20} color={matchyBrand.text} />
+                <ChevronLeft
+                  size={20}
+                  color={matchyBrand.text}
+                  className={isRtl ? 'rotate-180' : ''}
+                />
               </button>
             )}
             {title && (
@@ -65,7 +76,12 @@ export function MatchyAppShell({
                 {title}
               </span>
             )}
-            {headerRight && <div className="ml-auto">{headerRight}</div>}
+            <div
+              className="flex items-center gap-2"
+              style={{ [isRtl ? 'marginRight' : 'marginLeft']: 'auto' }}
+            >
+              {rightActions}
+            </div>
           </div>
         )}
 
@@ -81,11 +97,16 @@ export function MatchyAppShell({
                 className="flex h-8 w-8 items-center justify-center rounded-lg"
                 style={{ background: matchyBrand.bg }}
               >
-                <ChevronLeft size={18} color="#555" />
+                <ChevronLeft size={18} color="#555" className={isRtl ? 'rotate-180' : ''} />
               </button>
             )}
             <p style={{ fontSize: 18, fontWeight: 700, color: matchyBrand.textDark }}>{title}</p>
-            {headerRight && <div className="ml-auto flex items-center gap-3">{headerRight}</div>}
+            <div
+              className="flex items-center gap-3"
+              style={{ [isRtl ? 'marginRight' : 'marginLeft']: 'auto' }}
+            >
+              {rightActions}
+            </div>
           </div>
         )}
 
