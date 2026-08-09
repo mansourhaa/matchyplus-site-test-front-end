@@ -117,6 +117,8 @@ function ActionRow({
   onClick?: () => void;
   disabled?: boolean;
 }) {
+  const { locale } = useI18n();
+  const isRtl = locale === 'ar';
   const ResolvedIcon = Icon ?? ShieldCheck;
   const content = (
     <>
@@ -127,12 +129,16 @@ function ActionRow({
         {customIcon || <ResolvedIcon size={16} color={color} />}
       </div>
       <span
-        className="flex-1 text-left"
+        className={`flex-1 ${isRtl ? 'text-right' : 'text-left'}`}
         style={{ fontSize: 14, fontWeight: 600, color: '#303030' }}
       >
         {label}
       </span>
-      <ChevronRight size={16} color="#C0C0C0" />
+      <ChevronRight
+        size={16}
+        color="#C0C0C0"
+        style={{ transform: isRtl ? 'scaleX(-1)' : undefined }}
+      />
     </>
   );
 
@@ -141,6 +147,7 @@ function ActionRow({
       <Link
         href={href}
         className="flex w-full items-center gap-3 border-t border-[#F0F0F0] px-4 py-3.5 hover:bg-[#F9FAFC]"
+        dir={isRtl ? 'rtl' : 'ltr'}
       >
         {content}
       </Link>
@@ -153,6 +160,7 @@ function ActionRow({
       onClick={onClick}
       disabled={disabled}
       className="flex w-full items-center gap-3 border-t border-[#F0F0F0] px-4 py-3.5 hover:bg-[#F9FAFC] disabled:opacity-60"
+      dir={isRtl ? 'rtl' : 'ltr'}
     >
       {content}
     </button>
@@ -161,6 +169,7 @@ function ActionRow({
 
 export function AccountProfileView() {
   const { t, locale } = useI18n();
+  const isRtl = locale === 'ar';
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectAuth);
   const searchParams = useSearchParams();
@@ -243,7 +252,11 @@ export function AccountProfileView() {
   };
 
   return (
-    <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }}>
+    <div
+      className="h-full overflow-y-auto"
+      style={{ background: matchyBrand.bg }}
+      dir={isRtl ? 'rtl' : 'ltr'}
+    >
       <div className="mx-auto max-w-2xl space-y-3 px-4 py-6 md:px-8">
         <h1 className="text-xl font-extrabold" style={{ color: matchyBrand.textDark }}>
           {t('settings.account')}

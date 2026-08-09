@@ -74,6 +74,7 @@ const ERROR_STATUS: Record<
   invalid_otp: 'badRequest',
   otp_resend_too_soon: 'badRequest',
   invalid_signup_grant: 'badRequest',
+  weak_password: 'badRequest',
   invalid_credentials: 'unauthorized',
   invalid_refresh_token: 'unauthorized',
   oauth_only_account: 'forbidden',

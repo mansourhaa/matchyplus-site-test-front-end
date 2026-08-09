@@ -2,12 +2,21 @@ import authReducer from '@/features/auth/store/auth-slice';
 import type { AuthState } from '@/features/auth/types';
 import { I18nProvider } from '@/features/i18n/i18n-provider';
 import messagingReducer from '@/features/messaging/store/messaging-slice';
+import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MatchingRealtimeBridge } from './matching-realtime-bridge';
+
+vi.mock('@/lib/api', () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+  },
+  apiErrorKey: vi.fn(() => 'error'),
+}));
 
 // MatchingRealtimeBridge also mounts MessagingSendErrorToaster (from the messaging
 // feature), which reads `state.messaging` and needs an I18nProvider ancestor — so this
@@ -47,6 +56,7 @@ describe('MatchingRealtimeBridge', () => {
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_API_URL = 'http://localhost:4000';
+    vi.mocked(api.get).mockResolvedValue({ data: [] });
   });
 
   afterEach(() => {

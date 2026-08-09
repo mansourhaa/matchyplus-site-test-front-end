@@ -4,6 +4,7 @@ import messagingReducer, {
   applyLikeChanged,
   applyRealtimeMessage,
   resetMessagingState,
+  selectInboxUnreadCount,
   setActiveConversation,
   setPeerTyping,
 } from './messaging-slice';
@@ -470,5 +471,23 @@ describe('messagingSlice', () => {
     state = messagingReducer(state, resetMessagingState());
     expect(state.messages).toEqual([]);
     expect(state.peerTyping).toBe(false);
+  });
+});
+
+describe('selectInboxUnreadCount', () => {
+  it('sums unread_count across inbox rows for the Matches nav badge', () => {
+    const empty = messagingReducer(undefined, { type: 'noop' });
+    const state = {
+      messaging: {
+        ...empty,
+        inbox: [
+          { conversation_id: 'c1', unread_count: 2 },
+          { conversation_id: 'c2', unread_count: 0 },
+          { conversation_id: 'c3', unread_count: 5 },
+        ],
+      },
+    } as Parameters<typeof selectInboxUnreadCount>[0];
+
+    expect(selectInboxUnreadCount(state)).toBe(7);
   });
 });

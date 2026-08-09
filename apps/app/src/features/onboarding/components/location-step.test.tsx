@@ -1,4 +1,5 @@
 import { I18nProvider } from '@/features/i18n/i18n-provider';
+import { LocationProvider } from '@/features/location/location-context';
 import type { OnboardingProfile } from '@/features/onboarding/types';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactElement } from 'react';
@@ -7,15 +8,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocationStep } from './location-step';
 
 function renderStep(ui: ReactElement) {
-  return render(<I18nProvider>{ui}</I18nProvider>);
+  return render(
+    <I18nProvider>
+      <LocationProvider>{ui}</LocationProvider>
+    </I18nProvider>,
+  );
 }
 
 function firstButton(name: string | RegExp) {
   return screen.getAllByRole('button', { name })[0];
-}
-
-function firstPlaceholder(text: string) {
-  return screen.getAllByPlaceholderText(text)[0];
 }
 
 const baseProfile: OnboardingProfile = {
@@ -42,47 +43,38 @@ const baseProfile: OnboardingProfile = {
 
 describe('LocationStep', () => {
   beforeEach(() => {
+    window.localStorage.setItem('matchy_locale', 'fr');
     vi.stubGlobal('navigator', {
       ...navigator,
-      geolocation: undefined,
+      geolocation: {
+        getCurrentPosition: vi.fn((_success, error) => {
+          error?.({ code: 1, message: 'denied' });
+        }),
+      },
     });
   });
 
   afterEach(() => {
+    window.localStorage.removeItem('matchy_locale');
     vi.unstubAllGlobals();
   });
 
-  it('hydrates resumed progress once the profile fetch resolves after mount', async () => {
-    const { rerender } = renderStep(
+  it('submits the city from a resumed profile on Finish', async () => {
+    const onFinish = vi.fn().mockResolvedValue(true);
+    renderStep(
       <LocationStep
-        profile={null}
+        profile={{ ...baseProfile, city: 'Tunis' }}
         stepNumber={3}
         totalSteps={3}
         loading={false}
-        onFinish={vi.fn()}
+        onFinish={onFinish}
         onBack={vi.fn()}
       />,
     );
 
+    fireEvent.click(firstButton(/Lancer Matchy\+/));
     await waitFor(() => {
-      expect(firstPlaceholder('Votre ville (ex : Tunis, Sousse...)')).toHaveValue('');
-    });
-
-    rerender(
-      <I18nProvider>
-        <LocationStep
-          profile={{ ...baseProfile, city: 'Tunis' }}
-          stepNumber={3}
-          totalSteps={3}
-          loading={false}
-          onFinish={vi.fn()}
-          onBack={vi.fn()}
-        />
-      </I18nProvider>,
-    );
-
-    await waitFor(() => {
-      expect(firstPlaceholder('Votre ville (ex : Tunis, Sousse...)')).toHaveValue('Tunis');
+      expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ city: 'Tunis' }));
     });
   });
 
@@ -102,9 +94,11 @@ describe('LocationStep', () => {
     expect(screen.queryByText('Mes disponibilités')).not.toBeInTheDocument();
     fireEvent.click(firstButton(/Lancer Matchy\+/));
 
-    expect(onFinish).toHaveBeenCalledWith(
-      expect.objectContaining({ availabilityDays: [], availabilityHours: [] }),
-    );
+    await waitFor(() => {
+      expect(onFinish).toHaveBeenCalledWith(
+        expect.objectContaining({ availabilityDays: [], availabilityHours: [] }),
+      );
+    });
   });
 
   it('requires at least one availability day when offering a service', async () => {
@@ -142,34 +136,25 @@ describe('LocationStep', () => {
     fireEvent.click(firstButton('Lun'));
     fireEvent.click(firstButton(/Lancer Matchy\+/));
 
-    expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ availabilityDays: ['Lun'] }));
+    await waitFor(() => {
+      expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ availabilityDays: ['Lun'] }));
+    });
   });
 
-  it('auto-detects GPS and fills the city on success', async () => {
-    const getCurrentPosition = vi.fn((success: PositionCallback) => {
-      success({
-        coords: {
-          latitude: 36.8065,
-          longitude: 10.1815,
-          accuracy: 10,
-          altitude: null,
-          altitudeAccuracy: null,
-          heading: null,
-          speed: null,
-        },
-        timestamp: Date.now(),
-      } as GeolocationPosition);
-    });
+  it('starts geolocation from the Finish click before awaiting onFinish', async () => {
+    const getCurrentPosition = vi.fn();
     vi.stubGlobal('navigator', {
       ...navigator,
-      geolocation: { getCurrentPosition, watchPosition: vi.fn(), clearWatch: vi.fn() },
+      geolocation: { getCurrentPosition },
     });
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ address: { city: 'Tunis' } }),
-      }),
+
+    const onFinish = vi.fn().mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          // Geolocation must already have been kicked off while the click gesture is hot.
+          expect(getCurrentPosition).toHaveBeenCalled();
+          resolve(true);
+        }),
     );
 
     renderStep(
@@ -178,16 +163,12 @@ describe('LocationStep', () => {
         stepNumber={3}
         totalSteps={3}
         loading={false}
-        onFinish={vi.fn()}
+        onFinish={onFinish}
         onBack={vi.fn()}
       />,
     );
 
-    await waitFor(() => {
-      expect(screen.getAllByText('Position détectée ✓')[0]).toBeInTheDocument();
-    });
-    await waitFor(() => {
-      expect(screen.getAllByText('Tunis')[0]).toBeInTheDocument();
-    });
+    fireEvent.click(firstButton(/Lancer Matchy\+/));
+    await waitFor(() => expect(onFinish).toHaveBeenCalled());
   });
 });

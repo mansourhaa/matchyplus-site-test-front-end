@@ -1,5 +1,7 @@
 'use client';
 
+import { useI18n } from '@/features/i18n/i18n-provider';
+import { useLocationGate } from '@/features/location/location-context';
 import {
   CONTACT_OPTIONS,
   DAYS,
@@ -13,7 +15,6 @@ import {
   Clock,
   Coffee,
   Globe,
-  MapPin,
   MessageCircle,
   Moon,
   Phone,
@@ -176,6 +177,8 @@ export function LocationStep({
   onFinish,
   onBack,
 }: LocationStepProps) {
+  const { t } = useI18n();
+  const { requestBrowserLocation } = useLocationGate();
   const [city, setCity] = useState(profile?.city ?? '');
   const [availabilityDays, setAvailabilityDays] = useState<string[]>(
     profile?.availability_days ?? [],
@@ -186,9 +189,9 @@ export function LocationStep({
   const [contactModes, setContactModes] = useState<string[]>(profile?.contact_modes ?? []);
   const [languages, setLanguages] = useState<string[]>(profile?.languages ?? []);
   const [error, setError] = useState<string | null>(null);
-  const [gpsStatus, setGpsStatus] = useState<'idle' | 'detecting' | 'success' | 'error'>('idle');
-  const [showCityFallback, setShowCityFallback] = useState(Boolean(profile?.city));
-  const autoGpsStarted = useRef(false);
+  // Stays true until navigate-away so the CTA does not flicker idle between PATCH /
+  // complete / auth handoff (Redux `loading` clears after each thunk).
+  const [finishing, setFinishing] = useState(false);
 
   const hydratedRef = useRef(Boolean(profile));
   useEffect(() => {
@@ -198,95 +201,12 @@ export function LocationStep({
     // Defer state updates to avoid synchronous cascading renders
     setTimeout(() => {
       setCity(profile.city ?? '');
-      if (profile.city) setShowCityFallback(true);
       setAvailabilityDays(profile.availability_days ?? []);
       setAvailabilityHours(profile.availability_hours ?? []);
       setContactModes(profile.contact_modes ?? []);
       setLanguages(profile.languages ?? []);
     }, 0);
   }, [profile]);
-
-  const reverseGeocode = async (lat: number, lon: number): Promise<string | null> => {
-    try {
-      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=fr`;
-      const res = await fetch(url, {
-        headers: { Accept: 'application/json' },
-      });
-      if (!res.ok) return null;
-      const data = (await res.json()) as {
-        address?: {
-          city?: string;
-          town?: string;
-          village?: string;
-          municipality?: string;
-          state?: string;
-        };
-      };
-      const address = data.address;
-      return (
-        address?.city ||
-        address?.town ||
-        address?.village ||
-        address?.municipality ||
-        address?.state ||
-        null
-      );
-    } catch {
-      return null;
-    }
-  };
-
-  const detectGps = (opts?: { silent?: boolean }) => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setGpsStatus('error');
-      setShowCityFallback(true);
-      if (!opts?.silent) setError('Impossible de détecter. Entrez manuellement.');
-      return;
-    }
-    setGpsStatus('detecting');
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const resolved = await reverseGeocode(latitude, longitude);
-        if (resolved) {
-          setCity(resolved);
-          setShowCityFallback(false);
-        } else {
-          setShowCityFallback(true);
-        }
-        setGpsStatus('success');
-        setError(null);
-      },
-      () => {
-        setGpsStatus('error');
-        setShowCityFallback(true);
-        if (!opts?.silent) {
-          setError('Impossible de détecter. Entrez manuellement.');
-        }
-      },
-      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60_000 },
-    );
-  };
-
-  useEffect(() => {
-    if (autoGpsStarted.current) return;
-    if (profile?.city) {
-      autoGpsStarted.current = true;
-
-      // Defer state update
-      setTimeout(() => {
-        setGpsStatus('success');
-      }, 0);
-
-      return;
-    }
-    autoGpsStarted.current = true;
-    // Defer the function call that contains state updates
-    setTimeout(() => {
-      detectGps({ silent: true });
-    }, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const offerService = profile?.offer_service ?? false;
 
@@ -295,6 +215,8 @@ export function LocationStep({
   };
 
   const submit = async () => {
+    if (finishing || loading) return;
+
     const parsed = locationStepSchema.safeParse({
       city,
       offerService,
@@ -304,11 +226,17 @@ export function LocationStep({
       languages,
     });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Sélectionnez au moins un jour.');
+      setError(parsed.error.issues[0]?.message ?? t('onboarding.location.errorDays'));
       return;
     }
 
     setError(null);
+    setFinishing(true);
+    // Start the browser/native geolocation prompt from this click (user gesture) before
+    // any awaits — same pattern as legacy Bienvenue Accept. Fire-and-forget so finish
+    // APIs are not blocked; LocationProvider persists coords across /home.
+    void requestBrowserLocation();
+
     const finished = await onFinish({
       city: city || undefined,
       availabilityDays,
@@ -317,100 +245,39 @@ export function LocationStep({
       languages,
     });
     if (!finished) {
-      setError('Échec de la finalisation. Réessayez.');
+      setFinishing(false);
+      setError(t('onboarding.location.errorSubmit'));
     }
   };
+
+  const busy = loading || finishing;
 
   return (
     <OnboardingStepLayout
       step={stepNumber}
       totalSteps={totalSteps}
-      stepLabel="Localisation & Préférences"
+      stepLabel={t('onboarding.location.title')}
       onBack={onBack}
     >
       <div className="mx-auto w-full max-w-2xl">
         <StepProgress step={stepNumber} total={totalSteps} />
 
         <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E', marginBottom: '6px' }}>
-          Localisation &amp; Préférences
+          {t('onboarding.location.title')}
         </h1>
         <p style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}>
-          Dernière étape ! Configurez votre zone de matching et vos disponibilités.
+          {t('onboarding.location.desc')}
         </p>
 
         <div className="space-y-5 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
           {/* Left: location + availability */}
           <div className="space-y-5">
-            <StepCard
-              title="Ma localisation"
-              description="Indispensable pour le matching géolocalisé"
-              icon={<MapPin size={16} color="white" />}
-            >
-              <button
-                type="button"
-                onClick={() => detectGps()}
-                disabled={gpsStatus === 'detecting'}
-                className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 transition-all"
-                style={{
-                  background:
-                    gpsStatus === 'success'
-                      ? '#E8F7F3'
-                      : gpsStatus === 'error'
-                        ? '#FDECEC'
-                        : 'linear-gradient(90deg, #E8F7F3, #EEF5FF)',
-                  border: `2px solid ${
-                    gpsStatus === 'success'
-                      ? '#61BCA6'
-                      : gpsStatus === 'error'
-                        ? '#E74C3C'
-                        : '#C5D8F0'
-                  }`,
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  color:
-                    gpsStatus === 'success'
-                      ? '#2A9177'
-                      : gpsStatus === 'error'
-                        ? '#E74C3C'
-                        : '#2F76BB',
-                }}
-              >
-                <MapPin size={16} />
-                {gpsStatus === 'detecting'
-                  ? 'Détection en cours...'
-                  : gpsStatus === 'success'
-                    ? 'Position détectée ✓'
-                    : gpsStatus === 'error'
-                      ? 'Impossible de détecter. Entrez manuellement.'
-                      : 'Détecter ma position GPS'}
-              </button>
-
-              {(showCityFallback || gpsStatus === 'error' || gpsStatus === 'idle') && (
-                <div
-                  className="flex items-center gap-2 rounded-xl px-3 py-2.5"
-                  style={{ border: '2px solid #E0E0E0', background: '#FAFAFA' }}
-                >
-                  <MapPin size={15} color={city ? '#2F76BB' : '#CCC'} />
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(event) => setCity(event.target.value)}
-                    placeholder="Votre ville (ex : Tunis, Sousse...)"
-                    className="flex-1 bg-transparent text-[#353535] outline-none"
-                    style={{ fontSize: '14px' }}
-                  />
-                </div>
-              )}
-
-              {gpsStatus === 'success' && city && !showCityFallback && (
-                <p style={{ fontSize: '13px', color: '#2A9177', fontWeight: 600 }}>{city}</p>
-              )}
-            </StepCard>
+            {/* Ma localisation removed as requested */}
 
             {offerService && (
               <StepCard
-                title="Mes disponibilités"
-                description="Quand êtes-vous disponible pour des missions ?"
+                title={t('onboarding.location.availTitle')}
+                description={t('onboarding.location.availDesc')}
                 icon={<Clock size={16} color="white" />}
               >
                 <div className="mb-4 grid grid-cols-7 gap-1">
@@ -477,8 +344,8 @@ export function LocationStep({
           {/* Right: contact preferences + languages */}
           <div className={`space-y-5 ${!offerService ? 'md:col-span-2' : ''}`}>
             <StepCard
-              title="Préférences de contact"
-              description="Comment préférez-vous être contacté ?"
+              title={t('onboarding.location.contactTitle')}
+              description={t('onboarding.location.contactDesc')}
               icon={<Phone size={16} color="white" />}
             >
               <div className="space-y-2">
@@ -533,8 +400,8 @@ export function LocationStep({
             </StepCard>
 
             <StepCard
-              title="Langues parlées"
-              description="Sélectionnez toutes les langues que vous pratiquez"
+              title={t('onboarding.location.langTitle')}
+              description={t('onboarding.location.langDesc')}
               icon={<Globe size={16} color="white" />}
             >
               <div className="flex flex-wrap gap-2">
@@ -575,21 +442,23 @@ export function LocationStep({
 
         <StepCtaRow
           onBack={onBack}
-          onContinue={submit}
-          continueLabel={loading ? 'Synchronisation...' : 'Lancer Matchy+'}
+          onContinue={() => void submit()}
+          continueLabel={
+            busy ? t('onboarding.location.syncing') : t('onboarding.location.ctaFinish')
+          }
           continueIcon={<Rocket size={18} />}
-          disabled={loading}
-          loading={loading}
+          disabled={busy}
+          loading={busy}
         />
 
         <button
           type="button"
-          onClick={submit}
-          disabled={loading}
-          className="mt-3 block w-full text-center"
+          onClick={() => void submit()}
+          disabled={busy}
+          className="mt-3 block w-full text-center disabled:opacity-50"
           style={{ fontSize: '14px', color: '#BBB' }}
         >
-          Passer et lancer
+          {t('onboarding.location.skipAndLaunch')}
         </button>
       </div>
     </OnboardingStepLayout>

@@ -147,9 +147,50 @@ export function useMatchingRealtime(enabled = true) {
 
               if (message.event === 'notification_match') {
                 void dispatch(fetchNotifications());
-                if (message.payload?.event_type === 'match') {
+                const eventType = String(message.payload?.event_type || '');
+                if (eventType === 'match') {
                   void dispatch(fetchMatchState());
                   void dispatch(fetchInbox());
+                }
+
+                // Parity with message / profile-view: toast so the recipient notices even
+                // when they are not on /notifications (legacy Matchy showed these too).
+                if (pathnameRef.current !== '/notifications') {
+                  let toast: PushToastItem | null = null;
+                  const notifPayload = message.payload as Record<string, unknown> | undefined;
+                  if (eventType === 'match_request') {
+                    const actorName = String(notifPayload?.actor_first_name || '').trim();
+                    toast = {
+                      id: String(nextToastId.current++),
+                      title: 'Demande de match',
+                      body: actorName
+                        ? `Quelqu'un nommé "${actorName}" vous a envoyé une demande de match.`
+                        : 'Quelqu’un vous a envoyé une demande de match.',
+                      viewerImage:
+                        (notifPayload?.sender_picture as string | null | undefined) ?? null,
+                    };
+                  } else if (eventType === 'match') {
+                    const actorName = String(notifPayload?.actor_name || '').trim();
+                    toast = {
+                      id: String(nextToastId.current++),
+                      title: 'Nouveau match',
+                      body: actorName
+                        ? `Nouveau match avec ${actorName} !`
+                        : String(
+                            notifPayload?.body ||
+                              'Nouveau match ! Ouvrez vos matches pour continuer.',
+                          ),
+                      viewerImage: (notifPayload?.actor_image as string | null | undefined) ?? null,
+                    };
+                  }
+                  if (toast) {
+                    const item = toast;
+                    setPushToasts((prev) => [item, ...prev].slice(0, MAX_VISIBLE_PUSH_TOASTS));
+                    dismissTimers.current[item.id] = setTimeout(() => {
+                      setPushToasts((prev) => prev.filter((entry) => entry.id !== item.id));
+                      delete dismissTimers.current[item.id];
+                    }, PUSH_TOAST_LIFETIME_MS);
+                  }
                 }
                 return;
               }

@@ -15,6 +15,7 @@ import {
   VerifyOtpPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { assertPasswordPolicy } from '../utils/password-policy.js';
 import { toMemberSessionUser } from '../utils/session-user.js';
 import { OtpChallengeService } from './otp-challenge.js';
 import { TokenService } from './token.js';
@@ -118,6 +119,8 @@ export class PhoneAuthenticationService {
       throw new Error('invalid_phone');
     }
 
+    assertPasswordPolicy(payload.password);
+
     // Check for an existing account before burning the signup grant — it's a one-time
     // token, so failing here must leave it usable for a genuine retry instead of forcing
     // the user back through the whole OTP flow for a request that was always going to fail.
@@ -205,6 +208,8 @@ export class PhoneAuthenticationService {
     }
 
     await this.otpChallengeService.verifyChallenge(phone, OtpPurpose.PASSWORD_RESET, payload.code);
+
+    assertPasswordPolicy(payload.newPassword);
 
     const user = await this.prisma.user.findUnique({ where: { phone } });
     if (!user) {

@@ -2,7 +2,7 @@ import { I18nProvider } from '@/features/i18n/i18n-provider';
 import type { OnboardingProfile } from '@/features/onboarding/types';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InterestsStep } from './interests-step';
 
@@ -15,6 +15,12 @@ function renderStep(ui: ReactElement) {
 // as the existing identity-step/location-step test helpers.
 function firstButton(name: string | RegExp) {
   return screen.getAllByRole('button', { name })[0];
+}
+
+function continueButton() {
+  // Interests can be mid-flow ("Continuer") or last ("Lancer Matchy+") depending on
+  // the wizard's totalSteps — tests exercise both labels via this helper.
+  return firstButton(/^(Continuer|Lancer Matchy\+)$/);
 }
 
 function selectServiceType(type: string) {
@@ -49,6 +55,13 @@ const baseProfile: OnboardingProfile = {
 };
 
 describe('InterestsStep', () => {
+  beforeEach(() => {
+    window.localStorage.setItem('matchy_locale', 'fr');
+  });
+
+  afterEach(() => {
+    window.localStorage.removeItem('matchy_locale');
+  });
   it('blocks submission and shows an error when there are no interests', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderStep(
@@ -63,7 +76,7 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('Trouver un job'));
-    fireEvent.click(firstButton('Lancer Matchy+'));
+    fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
   });
@@ -82,7 +95,7 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Lancer Matchy+'));
+    fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
   });
@@ -117,7 +130,7 @@ describe('InterestsStep', () => {
 
     fireEvent.click(firstButton('+ Bricolage'));
     fireEvent.click(firstButton('Trouver un job'));
-    fireEvent.click(firstButton('Lancer Matchy+'));
+    fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
     expect(
@@ -143,7 +156,7 @@ describe('InterestsStep', () => {
     fireEvent.click(firstButton('+ Bricolage'));
     fireEvent.click(firstButton('Trouver un job'));
     selectServiceType('Chauffeur / Transport');
-    fireEvent.click(firstButton('Lancer Matchy+'));
+    fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
     expect(
@@ -166,7 +179,9 @@ describe('InterestsStep', () => {
 
     fireEvent.click(firstButton('+ Bricolage'));
     fireEvent.click(firstButton('Trouver un job'));
-    fireEvent.click(firstButton('Lancer Matchy+'));
+    // New INDIVIDUAL steps default offer-service on — turn it off for this case.
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    fireEvent.click(continueButton());
 
     expect(onNext).toHaveBeenCalledWith({
       interests: ['Bricolage'],
@@ -194,7 +209,7 @@ describe('InterestsStep', () => {
     fireEvent.click(firstButton('Trouver un job'));
     selectServiceType('Chauffeur / Transport');
     fireEvent.change(firstPlaceholder('Montant'), { target: { value: '50' } });
-    fireEvent.click(firstButton('Lancer Matchy+'));
+    fireEvent.click(continueButton());
 
     expect(onNext).toHaveBeenCalledWith({
       interests: ['Bricolage'],

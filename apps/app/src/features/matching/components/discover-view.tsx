@@ -1,9 +1,13 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { useLocationGate } from '@/features/location/location-context';
+import {
+  useAutoCaptureGrantedLocation,
+  useLocationGate,
+} from '@/features/location/location-context';
 import {
   DiscoverEmptyFeed,
   DiscoverEmptyPicks,
@@ -11,6 +15,8 @@ import {
 import {
   AIPicksHeader,
   AIRecommendationItem,
+  AIRightSidebarLocationEmpty,
+  AIRightSidebarNoProfileEmpty,
   LiveScorePanel,
   MatchScoreBadge,
 } from '@/features/matching/components/live-ai-score';
@@ -20,6 +26,7 @@ import { ProfileDetailModal } from '@/features/matching/components/profile-detai
 import { SwipeLimitModal } from '@/features/matching/components/swipe-limit-modal';
 import {
   clearCelebration,
+  clearFeed,
   clearSwipeError,
   closeQuotaModal,
   fetchMatchState,
@@ -114,8 +121,13 @@ export function DiscoverView() {
     void dispatch(fetchNotifications());
   }, [dispatch]);
 
+  useAutoCaptureGrantedLocation();
+
   useEffect(() => {
-    if (!locationSynced || latitude == null || longitude == null) return;
+    if (!locationSynced || latitude == null || longitude == null) {
+      dispatch(clearFeed());
+      return;
+    }
     void dispatch(fetchSwipeFeed({ latitude, longitude }));
   }, [dispatch, locationSynced, latitude, longitude]);
 
@@ -184,20 +196,7 @@ export function DiscoverView() {
             Matchy<span style={{ color: '#61BCA6' }}>+</span>
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher />
-          <button type="button" className="relative" onClick={() => router.push('/notifications')}>
-            <Bell size={21} color="#5C5C5C" />
-            {unreadCount > 0 && (
-              <span
-                className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
-                style={{ background: matchyBrand.blue }}
-              >
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-          </button>
-        </div>
+        <MatchyHeaderActions />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
@@ -509,58 +508,69 @@ export function DiscoverView() {
           className="hidden flex-col gap-4 overflow-y-auto px-4 py-4 lg:flex"
           style={{ width: 320, borderLeft: '1px solid #F0F0F0', background: matchyBrand.bg }}
         >
-          {top && !locationRequired && (
-            <div className="space-y-3">
-              <div className="relative overflow-hidden rounded-2xl" style={{ height: 130 }}>
-                {topPhoto.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={topPhoto.url} alt={top.name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] text-3xl font-bold text-white">
-                    {top.name.slice(0, 1)}
-                  </div>
-                )}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)',
-                  }}
-                />
-                <div className="absolute bottom-2 left-3">
-                  <p style={{ color: 'white', fontSize: 14, fontWeight: 700 }}>{top.name}</p>
-                  <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11 }}>
-                    {top.service_type || top.job || top.category}
-                  </p>
-                </div>
-                <div className="absolute right-2 bottom-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDetailProfileId(top.id);
-                      setDetailOpen(true);
-                    }}
-                    className="rounded-lg px-2 py-1"
-                    style={{
-                      background: 'rgba(255,255,255,0.15)',
-                      backdropFilter: 'blur(8px)',
-                      color: 'white',
-                      fontSize: 10,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {t('matching.seeDetails')}
-                  </button>
-                </div>
-              </div>
-              <LiveScorePanel
-                profile={top}
-                isComputing={matching.feedLoading && !matching.feedLoaded}
-              />
-            </div>
-          )}
-
-          {!locationRequired && (
+          {locationRequired || !locationSynced ? (
+            <AIRightSidebarLocationEmpty
+              onActivate={() => void requestBrowserLocation()}
+              activating={activating}
+            />
+          ) : (
             <>
+              {top ? (
+                <div className="space-y-3">
+                  <div className="relative overflow-hidden rounded-2xl" style={{ height: 130 }}>
+                    {topPhoto.url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={topPhoto.url}
+                        alt={top.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] text-3xl font-bold text-white">
+                        {top.name.slice(0, 1)}
+                      </div>
+                    )}
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)',
+                      }}
+                    />
+                    <div className="absolute bottom-2 left-3">
+                      <p style={{ color: 'white', fontSize: 14, fontWeight: 700 }}>{top.name}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11 }}>
+                        {top.service_type || top.job || top.category}
+                      </p>
+                    </div>
+                    <div className="absolute right-2 bottom-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDetailProfileId(top.id);
+                          setDetailOpen(true);
+                        }}
+                        className="rounded-lg px-2 py-1"
+                        style={{
+                          background: 'rgba(255,255,255,0.15)',
+                          backdropFilter: 'blur(8px)',
+                          color: 'white',
+                          fontSize: 10,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {t('matching.seeDetails')}
+                      </button>
+                    </div>
+                  </div>
+                  <LiveScorePanel
+                    profile={top}
+                    isComputing={matching.feedLoading && !matching.feedLoaded}
+                  />
+                </div>
+              ) : (
+                <AIRightSidebarNoProfileEmpty />
+              )}
+
               <div
                 className="flex items-center gap-2"
                 style={{ borderTop: '1px solid #F0F0F0', paddingTop: 12 }}
@@ -611,6 +621,10 @@ export function DiscoverView() {
                         profile={profile}
                         rank={i}
                         onClick={() => {
+                          if (profile.is_locked || i >= 3) {
+                            setForceQuotaModal(true);
+                            return;
+                          }
                           setDetailProfileId(profile.id);
                           setDetailOpen(true);
                         }}

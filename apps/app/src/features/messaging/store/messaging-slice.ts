@@ -507,4 +507,8 @@ export const {
 
 export const selectMessaging = (state: RootState) => state.messaging;
 
+/** Total unread chat messages across inbox rows — used by Matches nav badges. */
+export const selectInboxUnreadCount = (state: RootState): number =>
+  state.messaging.inbox.reduce((sum, row) => sum + (row.unread_count || 0), 0);
+
 export default messagingSlice.reducer;

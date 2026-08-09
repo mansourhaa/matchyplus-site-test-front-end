@@ -1,9 +1,14 @@
 'use client';
 
+import { useI18n } from '@/features/i18n/i18n-provider';
 import type { ProfileEducation, ProfileExperience } from '@/features/onboarding/types';
 import { Briefcase, Clock, GraduationCap, Pencil, Plus, Trash2, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+
+function sameTag(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
 
 export function ProfileCard({
   children,
@@ -30,6 +35,8 @@ export function SectionHeading({
   onEdit?: () => void;
   action?: ReactNode;
 }) {
+  const { locale } = useI18n();
+
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
@@ -43,7 +50,8 @@ export function SectionHeading({
             onClick={onEdit}
             className="flex items-center gap-1 rounded-lg bg-[#E8F0FA] px-2.5 py-1 text-xs font-semibold text-[#2F76BB]"
           >
-            <Pencil size={11} /> Modifier
+            <Pencil size={11} />
+            {locale === 'en' ? 'Edit' : locale === 'ar' ? 'تعديل' : 'Modifier'}
           </button>
         ))}
     </div>
@@ -61,6 +69,9 @@ export function EditSheet({
   onClose: () => void;
   error?: string | null;
 }) {
+  const { locale } = useI18n();
+  const isRtl = locale === 'ar';
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end bg-black/50 md:items-center md:justify-center"
@@ -73,10 +84,15 @@ export function EditSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        dir={isRtl ? 'rtl' : 'ltr'}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#F0F0F0] bg-white px-5 py-4">
           <h2 className="text-base font-extrabold text-[#1A1A2E]">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Fermer">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={locale === 'en' ? 'Close' : locale === 'ar' ? 'إغلاق' : 'Fermer'}
+          >
             <X size={20} color="#888" />
           </button>
         </div>
@@ -114,13 +130,26 @@ export function TagEditor({
 }) {
   const [draft, setDraft] = useState(values);
   const [input, setInput] = useState('');
+
   const add = (raw: string) => {
     const value = raw.trim();
-    if (!value || draft.some((entry) => entry.toLowerCase() === value.toLowerCase())) return;
-    if (maxItems && draft.length >= maxItems) return;
-    setDraft([...draft, value]);
+    if (!value) return;
+    setDraft((prev) => {
+      if (prev.some((entry) => sameTag(entry, value))) return prev;
+      if (maxItems && prev.length >= maxItems) return prev;
+      return [...prev, value];
+    });
     setInput('');
   };
+
+  const remove = (value: string) => {
+    setDraft((prev) => prev.filter((entry) => !sameTag(entry, value)));
+  };
+
+  const availableSuggestions = suggestions.filter(
+    (suggestion) => !draft.some((entry) => sameTag(entry, suggestion)),
+  );
+
   return (
     <EditSheet title={title} onClose={onClose} error={error}>
       <div className="mb-3 flex gap-2">
@@ -154,7 +183,7 @@ export function TagEditor({
           <button
             type="button"
             key={value}
-            onClick={() => setDraft(draft.filter((entry) => entry !== value))}
+            onClick={() => remove(value)}
             className="flex items-center gap-1 rounded-full border border-[#C5D8F0] bg-[#EEF5FF] px-3 py-1.5 text-xs font-semibold text-[#2F76BB]"
           >
             {value} <X size={12} />
@@ -163,19 +192,20 @@ export function TagEditor({
       </div>
       <p className="mb-2 text-xs font-semibold text-[#777]">Suggestions</p>
       <div className="mb-5 flex flex-wrap gap-2">
-        {suggestions
-          .filter((suggestion) => !draft.includes(suggestion))
-          .map((suggestion) => (
-            <button
-              type="button"
-              key={suggestion}
-              onClick={() => add(suggestion)}
-              disabled={Boolean(maxItems && draft.length >= maxItems)}
-              className="rounded-full border border-[#E0E0E0] bg-[#F5F7FA] px-3 py-2 text-xs font-semibold text-[#555] disabled:opacity-40"
-            >
-              + {suggestion}
-            </button>
-          ))}
+        {availableSuggestions.map((suggestion) => (
+          <button
+            type="button"
+            key={suggestion}
+            onClick={() => add(suggestion)}
+            disabled={Boolean(maxItems && draft.length >= maxItems)}
+            className="rounded-full border border-[#E0E0E0] bg-[#F5F7FA] px-3 py-2 text-xs font-semibold text-[#555] disabled:opacity-40"
+          >
+            + {suggestion}
+          </button>
+        ))}
+        {availableSuggestions.length === 0 && (
+          <p className="text-xs text-[#999]">Aucune suggestion disponible.</p>
+        )}
       </div>
       <SheetSave
         onClick={async () => {
@@ -272,13 +302,25 @@ export function ChoiceEditor({
 }
 
 function SheetSave({ onClick }: { onClick: () => void | Promise<void> }) {
+  const [saving, setSaving] = useState(false);
+
   return (
     <button
       type="button"
-      onClick={onClick}
-      className="w-full rounded-xl bg-[#2F76BB] py-3 text-sm font-bold text-white"
+      disabled={saving}
+      onClick={() => {
+        void (async () => {
+          setSaving(true);
+          try {
+            await onClick();
+          } finally {
+            setSaving(false);
+          }
+        })();
+      }}
+      className="w-full rounded-xl bg-[#2F76BB] py-3 text-sm font-bold text-white disabled:opacity-60"
     >
-      Enregistrer
+      {saving ? 'Enregistrement…' : 'Enregistrer'}
     </button>
   );
 }

@@ -1,30 +1,40 @@
+import { useI18n } from '@/features/i18n/i18n-provider';
+import { LangPickerLight } from '@/features/onboarding/components/lang-picker-light';
 import type { ReactNode } from 'react';
 
 import { MatchyLogoWhite } from './matchy-logo';
 
-const FEATURES = [
-  { emoji: '⚡', title: 'Matching instantané', desc: 'Trouvez le bon profil en swipant' },
-  {
-    emoji: '📍',
-    title: 'Géolocalisation',
-    desc: 'Missions et talents autour de vous en temps réel.',
-  },
-  {
-    emoji: '🎥',
-    title: 'Vidéo IA 20s',
-    desc: "Présentez-vous en 20s et laissez l'IA mettre en avant vos compétences.",
-  },
-  {
-    emoji: '💬',
-    title: 'Chat en temps réel',
-    desc: 'Discutez directement avec vos matches professionnels.',
-  },
-  {
-    emoji: '👑',
-    title: 'Freemium & Premium',
-    desc: '10 actions/jour gratuit ou Premium pour une expérience illimitée.',
-  },
-];
+function AuthFeatures() {
+  const { t } = useI18n();
+
+  return [
+    {
+      emoji: '⚡',
+      title: t('layout.featureInstantMatching'),
+      desc: t('layout.featureInstantMatchingDesc'),
+    },
+    {
+      emoji: '📍',
+      title: t('layout.featureGeolocation'),
+      desc: t('layout.featureGeolocationDesc'),
+    },
+    {
+      emoji: '🎥',
+      title: t('layout.featureVideoAI'),
+      desc: t('layout.featureVideoAIDesc'),
+    },
+    {
+      emoji: '💬',
+      title: t('layout.featureChat'),
+      desc: t('layout.featureChatDesc'),
+    },
+    {
+      emoji: '👑',
+      title: t('layout.featureFreemium'),
+      desc: t('layout.featureFreemiumDesc'),
+    },
+  ];
+}
 
 type AuthLayoutProps = {
   children: ReactNode;
@@ -34,6 +44,8 @@ type AuthLayoutProps = {
   stepLabel?: string;
   panelImage?: string;
   hideVideoFeature?: boolean;
+  /** When false, hide the floating corner picker (child screens that already render their own). */
+  showPanelLangPicker?: boolean;
 };
 
 /**
@@ -49,8 +61,13 @@ export function AuthLayout({
   stepLabel,
   panelImage,
   hideVideoFeature = false,
+  showPanelLangPicker = true,
 }: AuthLayoutProps) {
-  const panelFeatures = hideVideoFeature ? FEATURES.filter((_, index) => index !== 2) : FEATURES;
+  const { t } = useI18n();
+  const features = AuthFeatures();
+  const panelFeatures = hideVideoFeature
+    ? features.filter((_, index: number) => index !== 2)
+    : features;
 
   return (
     <div className="flex min-h-dvh min-h-screen" style={{ fontFamily: "'Baloo 2', sans-serif" }}>
@@ -96,10 +113,10 @@ export function AuthLayout({
             <div className="mb-6">
               <div className="mb-2 flex items-center justify-between">
                 <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>
-                  Étape {step} sur {totalSteps}
+                  {t('layout.stepOf', { step, total: totalSteps })}
                 </span>
                 <span style={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>
-                  {Math.round((step / totalSteps) * 100)}%
+                  {t('layout.stepProgress', { progress: Math.round((step / totalSteps) * 100) })}
                 </span>
               </div>
               <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }}>
@@ -118,11 +135,11 @@ export function AuthLayout({
 
           <div className="mb-8">
             <h2 style={{ fontSize: '28px', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>
-              La mise en relation
+              {t('layout.professionalMatching')}
               <br />
-              professionnelle
+              {t('layout.matching')}
               <br />
-              <span style={{ color: '#61BCA6' }}>géolocalisée</span>
+              <span style={{ color: '#61BCA6' }}>{t('layout.geoLocalized')}</span>
             </h2>
             <p
               style={{
@@ -132,7 +149,7 @@ export function AuthLayout({
                 lineHeight: 1.6,
               }}
             >
-              Trouvez des prestataires, des collaborateurs et des opportunités autour de vous.
+              {t('layout.professionalMatchingDesc')}
             </p>
           </div>
 
@@ -174,13 +191,20 @@ export function AuthLayout({
           </div>
 
           <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '24px' }}>
-            © 2026 Matchy+ · Tous droits réservés
+            {t('layout.copyright', { year: new Date().getFullYear() })}
           </p>
         </div>
       </div>
 
       {/* Right content panel */}
-      <div className="flex min-h-dvh min-h-screen flex-1 flex-col overflow-hidden">{children}</div>
+      <div className="relative flex min-h-dvh min-h-screen flex-1 flex-col overflow-hidden">
+        {showPanelLangPicker ? (
+          <div className="absolute top-4 right-4 z-10">
+            <LangPickerLight />
+          </div>
+        ) : null}
+        {children}
+      </div>
     </div>
   );
 }

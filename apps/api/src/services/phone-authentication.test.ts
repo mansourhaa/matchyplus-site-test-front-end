@@ -212,7 +212,7 @@ describe('PhoneAuthenticationService', () => {
 
       const result = await service.registerWithPhone({
         phone: '+33 6 12 34 56 78',
-        password: 'password123',
+        password: 'Password123!',
         signupToken: 'valid-grant-token',
       });
 
@@ -249,6 +249,19 @@ describe('PhoneAuthenticationService', () => {
       issueTokenPairSpy.mockRestore();
     });
 
+    it('rejects a weak password before creating a user', async () => {
+      const { service, prisma } = createService();
+
+      await expect(
+        service.registerWithPhone({
+          phone: '+33612345678',
+          password: 'password123',
+          signupToken: 'valid-grant-token',
+        }),
+      ).rejects.toThrow('weak_password');
+      expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
     it('rejects an invalid or already-consumed signup grant without creating a user', async () => {
       const { service, prisma } = createService();
       prisma.otpChallenge.updateMany.mockResolvedValue({ count: 0 });
@@ -256,7 +269,7 @@ describe('PhoneAuthenticationService', () => {
       await expect(
         service.registerWithPhone({
           phone: '+33612345678',
-          password: 'password123',
+          password: 'Password123!',
           signupToken: 'bad-token',
         }),
       ).rejects.toThrow('invalid_signup_grant');
@@ -271,7 +284,7 @@ describe('PhoneAuthenticationService', () => {
       await expect(
         service.registerWithPhone({
           phone: '+33612345678',
-          password: 'password123',
+          password: 'Password123!',
           signupToken: 'valid-grant-token',
         }),
       ).rejects.toThrow('phone_already_registered');
@@ -388,7 +401,7 @@ describe('PhoneAuthenticationService', () => {
       const result = await service.confirmPasswordReset({
         phone: '+33612345678',
         code: '123456',
-        newPassword: 'new-password-123',
+        newPassword: 'Password123!',
       });
 
       expect(prisma.user.update).toHaveBeenCalledWith({
@@ -410,7 +423,7 @@ describe('PhoneAuthenticationService', () => {
         service.confirmPasswordReset({
           phone: '+33612345678',
           code: '000000',
-          newPassword: 'new-password-123',
+          newPassword: 'Password123!',
         }),
       ).rejects.toThrow('invalid_otp');
       expect(prisma.user.update).not.toHaveBeenCalled();

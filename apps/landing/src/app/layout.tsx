@@ -1,5 +1,7 @@
+import { I18nProvider } from '@/features/i18n/i18n-provider';
 import type { Metadata } from 'next';
-import { Baloo_2, Cairo } from 'next/font/google';
+import { Cairo } from 'next/font/google';
+import { Baloo_2 } from 'next/font/google';
 
 import './globals.css';
 
@@ -17,14 +19,15 @@ const cairo = Cairo({
 
 export const metadata: Metadata = {
   title: 'Matchy+',
-  description:
-    "Tunisia's leading geolocation-based platform for finding reliable nannies, gardeners, drivers, and more.",
+  description: 'Connect with trusted professionals near you',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
-      <body className={`${baloo.variable} ${cairo.variable} ${baloo.className}`}>{children}</body>
+    <html>
+      <body className={`${baloo.variable} ${cairo.variable} ${baloo.className}`}>
+        <I18nProvider>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

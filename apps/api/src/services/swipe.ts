@@ -233,7 +233,7 @@ export class SwipeService {
               match_id: detected.match_id,
               matched_at: detected.matched_at,
               conversation_id: conversation.id,
-              body: 'New match! Open your matches to continue.',
+              body: 'Nouveau match ! Ouvrez vos matches pour continuer.',
             };
             // Best-effort after match/conversation commit — never fail the swipe HTTP
             // response because inbox/email delivery failed (clients still get match via
@@ -274,8 +274,8 @@ export class SwipeService {
               type: 'MATCH_REQUEST',
               data: {
                 event_type: 'match_request',
-                title: 'Match request',
-                body: `${firstName} sent you a match request.`,
+                title: 'Demande de match',
+                body: `${firstName} vous a envoyé une demande de match.`,
                 actor_first_name: firstName,
                 sender_picture: me?.image || null,
                 from_user_id: userId,

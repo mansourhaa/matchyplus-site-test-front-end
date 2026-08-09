@@ -8,17 +8,17 @@ const LOGO_SRC = '/logo-matchy.svg';
 export type LandingFooterCopy = {
   footerDesc: string;
   quickLinks: string;
-  howItWorks: string;
-  ourServices: string;
+  howItWorksLink: string;
+  ourServicesLink: string;
   legal: string;
   privacy: string;
   terms: string;
+  safety: string;
   allRights: string;
-  joinToday: string;
 };
 
 type LandingFooterProps = {
-  t: LandingFooterCopy;
+  translations: LandingFooterCopy;
   onJoin: () => void;
 };
 
@@ -41,7 +41,7 @@ function FooterLink({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-export function LandingFooter({ t, onJoin }: LandingFooterProps) {
+export function LandingFooter({ translations, onJoin }: LandingFooterProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -54,40 +54,40 @@ export function LandingFooter({ t, onJoin }: LandingFooterProps) {
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr] md:gap-12">
           <div className="max-w-md space-y-4">
             <img src={LOGO_SRC} alt="Matchy+" className="h-7 brightness-0 invert" />
-            <p className="text-sm leading-relaxed text-white/65">{t.footerDesc}</p>
+            <p className="text-sm leading-relaxed text-white/65">{translations.footerDesc}</p>
             <button
               type="button"
               onClick={onJoin}
               className="inline-flex items-center rounded-full bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
-              {t.joinToday}
+              {translations.quickLinks}
             </button>
           </div>
 
           <div>
             <h4 className="mb-4 text-xs font-bold tracking-[0.14em] text-white/45 uppercase">
-              {t.quickLinks}
+              {translations.quickLinks}
             </h4>
             <ul className="space-y-3">
               <li>
-                <FooterLink href="#how-it-works">{t.howItWorks}</FooterLink>
+                <FooterLink href="#how-it-works">{translations.howItWorksLink}</FooterLink>
               </li>
               <li>
-                <FooterLink href="#services">{t.ourServices}</FooterLink>
+                <FooterLink href="#services">{translations.ourServicesLink}</FooterLink>
               </li>
             </ul>
           </div>
 
           <div>
             <h4 className="mb-4 text-xs font-bold tracking-[0.14em] text-white/45 uppercase">
-              {t.legal}
+              {translations.legal}
             </h4>
             <ul className="space-y-3">
               <li>
-                <FooterLink href="/privacy-policy">{t.privacy}</FooterLink>
+                <FooterLink href="/privacy-policy">{translations.privacy}</FooterLink>
               </li>
               <li>
-                <FooterLink href="/terms-of-service">{t.terms}</FooterLink>
+                <FooterLink href="/terms-of-service">{translations.terms}</FooterLink>
               </li>
             </ul>
           </div>
@@ -95,7 +95,7 @@ export function LandingFooter({ t, onJoin }: LandingFooterProps) {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-center text-xs text-white/45 sm:flex-row sm:text-start">
           <p>
-            &copy; {year} Matchy+. {t.allRights}.
+            &copy; {year} Matchy+. {translations.allRights}.
           </p>
           <p className="bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] bg-clip-text font-semibold text-transparent">
             Matchy+
