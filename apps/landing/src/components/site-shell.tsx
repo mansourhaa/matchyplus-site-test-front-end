@@ -86,7 +86,7 @@ function Logo({ footer = false }: { footer?: boolean }) {
       className={footer ? 'brand-logo-footer' : 'brand-logo'}
       src={footer ? '/logo-matchy-white.svg' : '/logo-matchy.svg'}
       alt="Matchy+"
-      style={{ height: footer ? '35px' : '40px', width: 'auto' }}
+      style={{ height: footer ? '30px' : '28px', width: 'auto' }}
     />
   );
 }
