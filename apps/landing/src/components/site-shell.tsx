@@ -83,9 +83,10 @@ const languageOptions = [
 function Logo({ footer = false }: { footer?: boolean }) {
   return (
     <img
-      className={`brand-logo${footer ? 'brand-logo-footer' : ''}`}
-      src={footer ? '/logo-matchy-white.svg' : '/matchy-logo.png'}
+      className={footer ? 'brand-logo-footer' : 'brand-logo'}
+      src={footer ? '/logo-matchy-white.svg' : '/logo-matchy.svg'}
       alt="Matchy+"
+      style={{ height: footer ? '35px' : '40px', width: 'auto' }}
     />
   );
 }
