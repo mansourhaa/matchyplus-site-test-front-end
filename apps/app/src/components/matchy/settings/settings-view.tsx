@@ -29,9 +29,57 @@ import {
   Video,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 
-const LANG_FLAGS: Record<Locale, string> = { fr: '🇫🇷', en: '🇬🇧', ar: '🇹🇳' };
+function FlagFr() {
+  return (
+    <svg width="18" height="13" viewBox="0 0 3 2" className="inline-block rounded-sm align-middle">
+      <rect width="1" height="2" fill="#002395" />
+      <rect x="1" width="1" height="2" fill="#FFFFFF" />
+      <rect x="2" width="1" height="2" fill="#ED2939" />
+    </svg>
+  );
+}
+
+function FlagEn() {
+  return (
+    <svg
+      width="18"
+      height="13"
+      viewBox="0 0 50 30"
+      className="inline-block rounded-sm align-middle"
+    >
+      <rect width="50" height="30" fill="#012169" />
+      <path d="M0 0 L50 30 M0 30 L50 0" stroke="#FFF" strokeWidth="6" />
+      <path d="M0 0 L50 30 M0 30 L50 0" stroke="#C8102E" strokeWidth="2" />
+      <path d="M25 0 V30 M0 15 H50" stroke="#FFF" strokeWidth="10" />
+      <path d="M25 0 V30 M0 15 H50" stroke="#C8102E" strokeWidth="6" />
+    </svg>
+  );
+}
+
+function FlagAr() {
+  return (
+    <svg
+      width="18"
+      height="13"
+      viewBox="0 0 120 80"
+      className="inline-block rounded-sm align-middle"
+    >
+      <rect width="120" height="80" fill="#E71F19" />
+      <circle cx="60" cy="40" r="20" fill="#FFF" />
+      <circle cx="64" cy="40" r="16" fill="#E71F19" />
+      <circle cx="60" cy="40" r="16" fill="#FFF" />
+      <path d="M 64,32 A 8,8 0 1,0 64,48 A 8,8 0 1,0 64,32 Z" fill="#E71F19" />
+    </svg>
+  );
+}
+
+const LANG_FLAGS: Record<Locale, ReactNode> = {
+  fr: <FlagFr />,
+  en: <FlagEn />,
+  ar: <FlagAr />,
+};
 const LANG_NAMES: Record<Locale, string> = { fr: 'Français', en: 'English', ar: 'العربية' };
 
 type SettingsItem = {
@@ -44,7 +92,7 @@ type SettingsItem = {
   bg: string;
   onClick?: () => void;
   badge?: string;
-  badgeFlag?: string;
+  badgeFlag?: ReactNode;
 };
 
 export function SettingsView() {
@@ -304,10 +352,11 @@ export function SettingsView() {
                     </span>
                     {item.badge && (
                       <span
-                        className="rounded-full px-2 py-0.5 text-[11px] font-bold"
+                        className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold"
                         style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
                       >
-                        {item.badgeFlag ? `${item.badgeFlag} ${item.badge}` : item.badge}
+                        {item.badgeFlag}
+                        <span>{item.badge}</span>
                       </span>
                     )}
                     <ChevronRight
@@ -377,7 +426,7 @@ export function SettingsView() {
                         locale === l ? `2px solid ${matchyBrand.blue}` : '2px solid transparent',
                     }}
                   >
-                    <span style={{ fontSize: 18 }}>{LANG_FLAGS[l]}</span>
+                    <span className="flex shrink-0 items-center">{LANG_FLAGS[l]}</span>
                     <span className="text-sm font-semibold" style={{ color: '#303030' }}>
                       {LANG_NAMES[l]}
                     </span>
