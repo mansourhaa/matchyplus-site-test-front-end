@@ -12,51 +12,64 @@ const LANGUAGE_NAMES: Record<Locale, string> = {
   ar: 'AR',
 };
 
-function Flag({ locale }: { locale: Locale }) {
+function Flag({ locale, size = 15 }: { locale: Locale; size?: number }) {
+  const width = Math.round(size * 1.45);
+  const wrap = {
+    width,
+    height: size,
+    display: 'inline-flex' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    overflow: 'hidden' as const,
+    flexShrink: 0,
+    borderRadius: 2,
+    boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
+  };
+  const svg = { display: 'block' as const, width: '100%', height: '100%' };
+
   if (locale === 'fr') {
     return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 3 2"
-        className="h-3 w-4.5 shrink-0 rounded-sm shadow-sm"
-      >
-        <rect width="1" height="2" fill="#002395" />
-        <rect x="1" width="1" height="2" fill="#FFFFFF" />
-        <rect x="2" width="1" height="2" fill="#ED2939" />
-      </svg>
+      <div style={wrap}>
+        <svg viewBox="0 0 3 2" style={svg} aria-hidden>
+          <rect width="1" height="2" fill="#002395" />
+          <rect x="1" width="1" height="2" fill="#fff" />
+          <rect x="2" width="1" height="2" fill="#ED2939" />
+        </svg>
+      </div>
     );
   }
-  if (locale === 'ar') {
+  if (locale === 'en') {
     return (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 30 20"
-        className="h-3 w-4.5 shrink-0 rounded-sm shadow-sm"
-      >
-        <rect width="30" height="20" fill="#E20E17" />
-        <circle cx="15" cy="10" r="6" fill="#FFF" />
-        <path d="M16,10 A3.6 3.6 0 1 1 16 7 A3 3 0 1 0 16 10 Z" fill="#E20E17" />
-        <polygon points="17.5,10 16.3,9.1 16.3,10.9" fill="#E20E17" />
-      </svg>
+      <div style={wrap}>
+        <svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice" style={svg} aria-hidden>
+          <rect width="60" height="30" fill="#012169" />
+          <g fill="#fff">
+            <polygon points="0,0 60,30 60,25 5,0" />
+            <polygon points="60,0 0,30 0,25 55,0" />
+          </g>
+          <g fill="#C8102E">
+            <polygon points="0,0 60,30 60,27 3,0" />
+            <polygon points="60,0 0,30 0,27 57,0" />
+            <rect x="25" width="10" height="30" />
+            <rect y="10" width="60" height="10" />
+          </g>
+        </svg>
+      </div>
     );
   }
-  // en
+  // ar — Tunisia flag strip
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 60 30"
-      className="h-3 w-4.5 shrink-0 rounded-sm shadow-sm"
-    >
-      <clipPath id="s">
-        <path d="M0,0 L60,0 L60,30 L0,30 Z" />
-      </clipPath>
-      <g clipPath="url(#s)">
-        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#FFF" stroke-width="6" />
-        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#00247D" stroke-width="4" />
-        <path d="M0,15 L60,15 M30,0 L30,30" stroke="#FFF" stroke-width="10" />
-        <path d="M0,15 L60,15 M30,0 L30,30" stroke="#CF142B" stroke-width="6" />
-      </g>
-    </svg>
+    <div style={wrap}>
+      <svg viewBox="0 0 3 2" style={svg} aria-hidden>
+        <rect width="3" height="2" fill="#E70013" />
+        <circle cx="1.5" cy="1" r="0.55" fill="#fff" />
+        <circle cx="1.62" cy="1" r="0.42" fill="#E70013" />
+        <path
+          d="M1.58 0.68 L1.72 1 L1.58 1.32 L1.88 1.12 L1.98 1.35 L2.02 1.05 L2.25 1 L2.02 0.88 L1.98 0.62 L1.88 0.85 Z"
+          fill="#fff"
+        />
+      </svg>
+    </div>
   );
 }
 
