@@ -2,6 +2,7 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { Apple, Download, Play } from 'lucide-react';
+import Link from 'next/link';
 
 import { Parallax, Reveal } from './motion';
 import { PhoneFrame } from './phone-frame';
@@ -17,8 +18,8 @@ function StoreButton({
   bottom: string;
 }) {
   return (
-    <a
-      href="#"
+    <Link
+      href="/coming-soon"
       className="bg-brand-navy flex items-center gap-2 rounded-lg px-4 py-2.5 text-white transition-transform hover:scale-[1.03]"
     >
       <Icon className="h-6 w-6" />
@@ -26,7 +27,7 @@ function StoreButton({
         <span className="block text-[10px] opacity-80">{top}</span>
         <span className="block text-sm font-semibold">{bottom}</span>
       </span>
-    </a>
+    </Link>
   );
 }
 
