@@ -6,22 +6,64 @@ import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
-const LANGUAGE_FLAGS: Record<Locale, string> = {
-  fr: '🇫🇷',
-  en: '🇬🇧',
-  ar: '🇹🇳',
-};
-
 const LANGUAGE_NAMES: Record<Locale, string> = {
   fr: 'FR',
   en: 'EN',
   ar: 'AR',
 };
 
+function Flag({ locale }: { locale: Locale }) {
+  if (locale === 'fr') {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 3 2"
+        className="h-3 w-4.5 shrink-0 rounded-sm shadow-sm"
+      >
+        <rect width="1" height="2" fill="#002395" />
+        <rect x="1" width="1" height="2" fill="#FFFFFF" />
+        <rect x="2" width="1" height="2" fill="#ED2939" />
+      </svg>
+    );
+  }
+  if (locale === 'ar') {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 30 20"
+        className="h-3 w-4.5 shrink-0 rounded-sm shadow-sm"
+      >
+        <rect width="30" height="20" fill="#E20E17" />
+        <circle cx="15" cy="10" r="6" fill="#FFF" />
+        <path d="M16,10 A3.6 3.6 0 1 1 16 7 A3 3 0 1 0 16 10 Z" fill="#E20E17" />
+        <polygon points="17.5,10 16.3,9.1 16.3,10.9" fill="#E20E17" />
+      </svg>
+    );
+  }
+  // en
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 60 30"
+      className="h-3 w-4.5 shrink-0 rounded-sm shadow-sm"
+    >
+      <clipPath id="s">
+        <path d="M0,0 L60,0 L60,30 L0,30 Z" />
+      </clipPath>
+      <g clipPath="url(#s)">
+        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#FFF" stroke-width="6" />
+        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#00247D" stroke-width="4" />
+        <path d="M0,15 L60,15 M30,0 L30,30" stroke="#FFF" stroke-width="10" />
+        <path d="M0,15 L60,15 M30,0 L30,30" stroke="#CF142B" stroke-width="6" />
+      </g>
+    </svg>
+  );
+}
+
 const languageOptions = [
-  { value: 'fr', label: 'Français', flag: '🇫🇷' },
-  { value: 'en', label: 'English', flag: '🇬🇧' },
-  { value: 'ar', label: 'العربية', flag: '🇹🇳' },
+  { value: 'fr', label: 'Français' },
+  { value: 'en', label: 'English' },
+  { value: 'ar', label: 'العربية' },
 ] as const;
 
 function Logo({ footer = false }: { footer?: boolean }) {
@@ -72,7 +114,7 @@ export function Header() {
               onClick={() => setLangOpen(!langOpen)}
               className="flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent px-2.5 py-1.5 text-white select-none hover:bg-white/10"
             >
-              <span aria-hidden="true">{LANGUAGE_FLAGS[locale]}</span>
+              <Flag locale={locale} />
               <span className="text-[14px] font-bold">{LANGUAGE_NAMES[locale]}</span>
               <ChevronDown
                 size={14}
@@ -91,7 +133,7 @@ export function Header() {
                       className="flex w-full cursor-pointer items-center justify-between px-3.5 py-2 text-sm font-medium text-neutral-800 transition-colors hover:bg-neutral-50"
                     >
                       <span className="flex items-center gap-2">
-                        <span>{LANGUAGE_FLAGS[item]}</span>
+                        <Flag locale={item} />
                         <span>{LANGUAGE_NAMES[item]}</span>
                       </span>
                       {active && <span className="bg-brand-teal h-2 w-2 rounded-full" />}
@@ -144,10 +186,10 @@ export function Header() {
                   handleLanguageChange(option.value);
                   setOpen(false);
                 }}
-                className="flex cursor-pointer items-center gap-1 border-0 bg-transparent text-sm font-semibold text-white"
+                className="flex cursor-pointer items-center gap-1.5 border-0 bg-transparent text-sm font-semibold text-white"
                 aria-label={option.label}
               >
-                <span aria-hidden="true">{option.flag}</span> {option.value.toUpperCase()}
+                <Flag locale={option.value} /> {option.value.toUpperCase()}
               </button>
             ))}
           </div>
