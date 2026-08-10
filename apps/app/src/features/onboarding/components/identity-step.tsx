@@ -15,6 +15,7 @@ import {
   uploadProfilePhoto,
   uploadProfileVideo,
 } from '@/features/profile/store/profile-slice';
+import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import {
@@ -137,7 +138,6 @@ type IdentityStepProps = {
     name: string;
     job?: string;
     bio?: string;
-    image?: string;
     profileType: ProfileType;
     experience?: string;
   }) => Promise<boolean>;
@@ -405,6 +405,8 @@ export function IdentityStep({
     experience: profileType === 'INDIVIDUAL' && experience ? experience : undefined,
   });
 
+  const photoPreview = useAuthenticatedMediaUrl(image || null);
+
   // Only ever checks phone/password, never the identity fields above — handleNext
   // validates those once before the first call, but the modal's "Renvoyer le code"
   // button calls this directly and must not re-run that validation on every resend.
@@ -490,9 +492,11 @@ export function IdentityStep({
 
     setShowOtpModal(false);
     setOtpVerifying(false);
+    // Only reachable now that registerPhone has actually succeeded — an authenticated
+    // session (cookie) is required before uploadProfilePhoto's endpoint will accept it.
+    if (pendingPhotoRef.current && !(await ensurePhotoUploaded())) return;
     // Optional video: a failed flush already clears the success label + sets videoError.
     await flushPendingVideo();
-    if (pendingPhotoRef.current && !(await ensurePhotoUploaded())) return;
     const saved = await onNext(identityPatch());
     if (!saved) {
       setError(t('onboarding.identity.errorSave'));
@@ -529,9 +533,13 @@ export function IdentityStep({
                 }}
                 onClick={() => fileInputRef.current?.click()}
               >
-                {image ? (
+                {photoPreview.url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={image} alt="Profile" className="h-full w-full object-cover" />
+                  <img
+                    src={photoPreview.url}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <ProfileSilhouette />
                 )}

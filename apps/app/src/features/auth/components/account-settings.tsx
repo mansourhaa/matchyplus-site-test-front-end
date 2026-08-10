@@ -11,12 +11,29 @@ import {
   selectAuth,
 } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { IdentityVerificationCamera } from '@/features/identity-verification/components/identity-verification-camera';
+import {
+  fetchIdentityVerificationStatus,
+  fetchLatestIdentityVerification,
+  resetIdentityVerification,
+  selectIdentityVerification,
+  submitIdentitySelfie,
+} from '@/features/identity-verification/store/identity-verification-slice';
 import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
-import { AlertTriangle, CheckCircle2, Eye, EyeOff, Lock, Phone, Trash2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Lock,
+  Phone,
+  ShieldCheck,
+  Trash2,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { PhoneInput } from './phone-input';
 
@@ -348,6 +365,125 @@ export function PhoneLinkSection() {
   );
 }
 
+// Sized for a cold worker's first job, not the steady-state one. Giving up is only a UI
+// decision — the job runs on and is picked up by the latest-job lookup on the next visit.
+const MAX_POLL_ATTEMPTS = 60;
+const POLL_INTERVAL_MS = 2000;
+const TERMINAL_STATUSES = new Set(['SUCCEEDED', 'FAILED', 'CANCELLED']);
+
+export function IdentityVerificationSection() {
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector(selectAuth);
+  const { job, identityVerified, submitting, restored, error } = useAppSelector(
+    selectIdentityVerification,
+  );
+  const [timeoutError, setTimeoutError] = useState<string | null>(null);
+  const pollAttemptsRef = useRef(0);
+
+  const alreadyVerified = identityVerified || Boolean(user?.verified);
+  const isPending = Boolean(job) && !TERMINAL_STATUSES.has(job!.status);
+
+  useEffect(() => {
+    if (restored) return;
+    void dispatch(fetchLatestIdentityVerification());
+  }, [restored, dispatch]);
+
+  // Poll until terminal, capped so a stuck worker can't spin forever.
+  useEffect(() => {
+    if (!job || TERMINAL_STATUSES.has(job.status)) return;
+
+    if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
+      setTimeoutError(
+        'La vérification prend plus de temps que prévu. Revenez sur cette page dans quelques minutes pour voir le résultat.',
+      );
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      pollAttemptsRef.current += 1;
+      dispatch(fetchIdentityVerificationStatus(job.id));
+    }, POLL_INTERVAL_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [job, dispatch]);
+
+  const handleCapture = (selfie: Blob) => {
+    pollAttemptsRef.current = 0;
+    setTimeoutError(null);
+    void dispatch(submitIdentitySelfie(selfie));
+  };
+
+  const handleRetry = () => {
+    pollAttemptsRef.current = 0;
+    setTimeoutError(null);
+    dispatch(resetIdentityVerification());
+  };
+
+  if (alreadyVerified) {
+    return (
+      <SettingsCard
+        icon={<ShieldCheck size={18} color="#61BCA6" />}
+        iconBackground="#E8F7F3"
+        title="Identité vérifiée"
+        description="Votre selfie correspond à votre photo de profil."
+      >
+        <InlineBanner kind="success" message="Identité vérifiée ✓" />
+      </SettingsCard>
+    );
+  }
+
+  const failed = job?.status === 'FAILED' || (job?.status === 'SUCCEEDED' && !identityVerified);
+  // A fixable capture problem, not a verdict that the user is someone else.
+  const noFaceDetected = job?.result?.code === 'no_face_detected';
+
+  return (
+    <SettingsCard
+      icon={<ShieldCheck size={18} color="#2F76BB" />}
+      iconBackground="#E8F0FA"
+      title="Vérifier mon identité"
+      description="Prenez un selfie pour le comparer à votre photo de profil."
+    >
+      {restored && !isPending && !failed && (
+        <IdentityVerificationCamera onCapture={handleCapture} disabled={submitting} />
+      )}
+
+      {(!restored || isPending) && (
+        <p style={{ fontSize: '13px', color: '#687284', fontWeight: 600 }}>
+          {restored ? 'Vérification en cours...' : 'Chargement...'}
+        </p>
+      )}
+
+      {error && <InlineBanner kind="error" message={error} />}
+      {timeoutError && <InlineBanner kind="error" message={timeoutError} />}
+      {failed && (
+        <>
+          <InlineBanner
+            kind="error"
+            message={
+              noFaceDetected
+                ? "Aucun visage n'a été détecté. Placez-vous face à la caméra, dans un endroit bien éclairé, sans lunettes de soleil ni masque."
+                : 'La vérification a échoué — le selfie ne correspond pas à votre photo de profil.'
+            }
+          />
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="w-full rounded-xl py-2.5"
+            style={{
+              border: '1.5px solid #D4E1EE',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: '#253044',
+            }}
+          >
+            Réessayer
+          </button>
+        </>
+      )}
+    </SettingsCard>
+  );
+}
+
 export function DeleteAccountSection() {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -508,6 +644,7 @@ export function AccountSettings() {
       <div className="mx-auto max-w-2xl space-y-3 px-4 py-6">
         <ChangePasswordSection />
         <PhoneLinkSection />
+        <IdentityVerificationSection />
         <DeleteAccountSection />
       </div>
     </div>

@@ -82,6 +82,10 @@ export const PROFILE_VIDEO_CONTENT_TYPES: Record<string, string> = {
   '.3g2': 'video/3gpp2',
 };
 
+/** Identity-verification selfie submissions — triggers an async AI job, so rate-limited
+ * like the other upload routes. */
+export const IDENTITY_VERIFICATION_RATE_LIMIT = { max: 5, timeWindow: '1 hour' };
+
 /** Voice-note upload limits for messaging. */
 export const VOICE_AUDIO_MAX_BYTES = 10 * 1024 * 1024;
 export const VOICE_AUDIO_RATE_LIMIT = { max: 30, timeWindow: '1 hour' };

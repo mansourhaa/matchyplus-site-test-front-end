@@ -8,7 +8,7 @@ export interface AuthUser {
   phone_verified?: boolean;
   google_linked?: boolean;
   linkedin_linked?: boolean;
-  /** Face-match identity badge — not yet wired; kept for settings parity. */
+  /** Face-match identity badge, set once VERIFY_IDENTITY confirms a selfie match. */
   verified?: boolean;
   /** True when the account has a password (required for delete without OTP step-up). */
   has_password?: boolean;

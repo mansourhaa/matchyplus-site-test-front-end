@@ -8,7 +8,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends curl \
+  && apt-get install -y --no-install-recommends \
+       curl \
+       libglib2.0-0 \
+       libsm6 \
+       libxext6 \
+       libxrender1 \
+       libxcb1 \
+       libgl1 \
   && rm -rf /var/lib/apt/lists/*
 
 FROM base AS deps
@@ -26,6 +33,14 @@ COPY --from=deps /usr/local/bin /usr/local/bin
 
 COPY app ./app
 COPY gunicorn.conf.py .
+
+# aiuser has no real home directory; gunicorn's control server falls back to $HOME.
+ENV HOME=/tmp
+
+# Chown before the volume mount (see compose.dev.yaml) so Docker copies this ownership
+# onto the volume on first use — otherwise it defaults to root and aiuser can't write.
+RUN mkdir -p /data/deepface-cache && chown aiuser:ai /data/deepface-cache
+ENV DEEPFACE_HOME=/data/deepface-cache
 
 USER aiuser
 

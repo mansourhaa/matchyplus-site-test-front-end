@@ -30,6 +30,8 @@ class Settings:
     internal_token: str
     log_level: str
     enable_worker: bool
+    enable_face_model: bool
+    uploads_dir: str
 
 
 def load_settings() -> Settings:
@@ -47,4 +49,13 @@ def load_settings() -> Settings:
         internal_token=os.getenv("AI_INTERNAL_TOKEN", ""),
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         enable_worker=os.getenv("AI_ENABLE_WORKER", "true").lower() in {"1", "true", "yes"},
+        # Off by default — the real DeepFace comparison is heavy (pulls in TensorFlow)
+        # and non-deterministic, so tests/CI use the fast, deterministic stub in
+        # verify_identity.py unless this is explicitly enabled.
+        enable_face_model=os.getenv("AI_ENABLE_FACE_MODEL", "false").lower()
+        in {"1", "true", "yes"},
+        # Shared bind mount with apps/api's uploads dir (see compose.dev.yaml) — apps/api
+        # runs on the host, not in this compose file, so this is the only way the worker
+        # can read a selfie/profile photo apps/api saved.
+        uploads_dir=os.getenv("AI_UPLOADS_DIR", "/data/uploads"),
     )

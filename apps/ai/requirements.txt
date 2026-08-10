@@ -4,3 +4,14 @@ redis==5.3.1
 psycopg[binary]==3.2.10
 python-dotenv==1.2.2
 Werkzeug==3.1.7
+# Real face comparison for VERIFY_IDENTITY, gated behind AI_ENABLE_FACE_MODEL (see
+# app/config.py) — pulls in TensorFlow, a heavy dependency, so keeping this pinned and
+# separate from the always-loaded deps above.
+deepface==0.0.99
+# deepface's RetinaFace backend is imported eagerly regardless of which detector is
+# actually selected, and requires this legacy-Keras shim on top of TensorFlow 2.21's
+# Keras 3 default.
+tf-keras==2.21.0
+# Pinned below deepface's default resolution (5.0.0.93) — that version dropped the
+# bundled haarcascade file its opencv detector backend expects.
+opencv-python==4.10.0.84
