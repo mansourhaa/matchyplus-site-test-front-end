@@ -28,7 +28,7 @@ export type PhoneAuthServiceOptions = AbstractServiceOptions & {
 };
 
 function otpMessage(code: string): string {
-  return `Matchy+: your verification code is ${code}.`;
+  return `MatchyPlus: your verification code is ${code}.`;
 }
 
 const noopLogger: Logger = { warn: () => {} };
