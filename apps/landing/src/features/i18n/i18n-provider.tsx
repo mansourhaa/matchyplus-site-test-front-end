@@ -54,6 +54,8 @@ function readStoredLocale(): Locale {
   if (typeof window === 'undefined') return DEFAULT_LOCALE;
   const raw = window.localStorage.getItem(LOCALE_STORAGE_KEY);
   if (raw && SUPPORTED_LOCALES.includes(raw as Locale)) return raw as Locale;
+  const browserLang = window.navigator.language.split('-')[0];
+  if (SUPPORTED_LOCALES.includes(browserLang as Locale)) return browserLang as Locale;
   return DEFAULT_LOCALE;
 }
 
@@ -71,10 +73,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: string, vars?: Record<string, string | number>) => {
+    (key: string, vars?: Record<string, string | number>): any => {
       const template =
         getMessage(messages[locale], key) || getMessage(messages[DEFAULT_LOCALE], key) || key;
-      return formatMessage(template, vars);
+      if (typeof template === 'string') {
+        return formatMessage(template, vars);
+      }
+      return template;
     },
     [locale],
   );
