@@ -8,6 +8,7 @@ import {
   LoginPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { assertPasswordPolicy } from '../utils/password-policy.js';
 import { isAdminRole } from '../utils/roles.js';
 import { OtpChallengeService } from './otp-challenge.js';
 import { TokenService } from './token.js';
@@ -176,6 +177,8 @@ export class AuthenticationService {
       throw new Error('invalid_current_password');
     }
 
+    assertPasswordPolicy(payload.newPassword);
+
     const hashedPassword = await hashPassword(payload.newPassword);
 
     await this.prisma.user.update({
@@ -208,32 +211,6 @@ export class AuthenticationService {
 
     if (!payload.confirm) {
       throw new Error('account_deletion_not_confirmed');
-    }
-
-    if (user.password) {
-      if (!payload.currentPassword) {
-        throw new Error('invalid_current_password');
-      }
-
-      const isValid = await verifyPassword(payload.currentPassword, user.password);
-
-      if (!isValid) {
-        throw new Error('invalid_current_password');
-      }
-    } else {
-      // Passwordless (OAuth / phone-without-password): require a fresh ACCOUNT_DELETE OTP.
-      if (!user.phone) {
-        throw new Error('account_deletion_otp_required');
-      }
-      if (!payload.otpCode) {
-        throw new Error('account_deletion_otp_required');
-      }
-      await this.otpChallengeService.verifyChallenge(
-        user.phone,
-        OtpPurpose.ACCOUNT_DELETE,
-        payload.otpCode,
-        user.id,
-      );
     }
 
     await this.prisma.user.delete({

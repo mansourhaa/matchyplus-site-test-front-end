@@ -1,7 +1,11 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { fetchCurrentUser, selectAuth } from '@/features/auth/store/auth-slice';
+import {
+  fetchCurrentUser,
+  markOnboardingCompleted,
+  selectAuth,
+} from '@/features/auth/store/auth-slice';
 import {
   getNextStep,
   getPreviousStep,
@@ -22,10 +26,11 @@ import type {
 } from '@/features/onboarding/types';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { IdentityStep } from './identity-step';
 import { InterestsStep } from './interests-step';
+import { LocationStep } from './location-step';
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -35,6 +40,9 @@ export function OnboardingWizard() {
   const { profile, loading } = useAppSelector(selectOnboarding);
 
   const [justRegistered, setJustRegistered] = useState(false);
+  // Finish owns navigation — skip the "already completed" bounce while that runs so we
+  // don't race router.replace from two places after completeOnboarding.fulfilled.
+  const finishingRef = useRef(false);
 
   const hasValidatedSession = isAuthenticated && sessionChecked;
   const profileType: ProfileType | null = profile?.profile_type ?? null;
@@ -53,6 +61,7 @@ export function OnboardingWizard() {
   }, [dispatch, hasValidatedSession]);
 
   useEffect(() => {
+    if (finishingRef.current) return;
     if (hasValidatedSession && profile?.onboardingCompleted) {
       router.replace(resolvePostAuthDestination(nextParam, true));
     }
@@ -98,16 +107,25 @@ export function OnboardingWizard() {
   };
 
   const finishOnboarding = async (patch: OnboardingProfilePatch) => {
+    finishingRef.current = true;
+
     const saved = await saveStep(patch);
-    if (!saved) return false;
+    if (!saved) {
+      finishingRef.current = false;
+      return false;
+    }
 
     setJustRegistered(false);
     const result = await dispatch(completeOnboarding());
-    if (!completeOnboarding.fulfilled.match(result)) return false;
+    if (!completeOnboarding.fulfilled.match(result)) {
+      finishingRef.current = false;
+      return false;
+    }
 
-    await dispatch(fetchCurrentUser());
-    router.push(resolvePostAuthDestination(nextParam, true));
-    router.refresh();
+    // Unlock dashboard chrome immediately — authcheck can catch up in the background.
+    dispatch(markOnboardingCompleted());
+    router.replace(resolvePostAuthDestination(nextParam, true));
+    void dispatch(fetchCurrentUser());
     return true;
   };
 
@@ -134,7 +152,18 @@ export function OnboardingWizard() {
           stepNumber={stepNumber}
           totalSteps={totalSteps}
           loading={loading}
-          onNext={finishOnboarding}
+          onNext={goToNextStep}
+          onBack={goBack}
+        />
+      );
+    case 'location':
+      return (
+        <LocationStep
+          profile={profile}
+          stepNumber={stepNumber}
+          totalSteps={totalSteps}
+          loading={loading}
+          onFinish={finishOnboarding}
           onBack={goBack}
         />
       );

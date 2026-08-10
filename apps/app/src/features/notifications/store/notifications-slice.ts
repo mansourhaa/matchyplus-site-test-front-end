@@ -235,7 +235,7 @@ const notificationsSlice = createSlice({
   },
 });
 
-export const selectNotifications = (state: { notifications: NotificationsState }) =>
-  state.notifications;
+export const selectNotifications = (state: { notifications?: NotificationsState }) =>
+  state.notifications ?? initialState;
 
 export default notificationsSlice.reducer;

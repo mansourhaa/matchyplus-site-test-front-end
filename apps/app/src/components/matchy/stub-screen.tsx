@@ -21,13 +21,18 @@ export function StubScreen({
   showAction = true,
   actionLabel,
 }: StubScreenProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isRtl = locale === 'ar';
 
   return (
-    <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }}>
+    <div
+      className="h-full overflow-y-auto"
+      style={{ background: matchyBrand.bg }}
+      dir={isRtl ? 'rtl' : 'ltr'}
+    >
       <div className="mx-auto max-w-2xl space-y-4 px-4 py-6 md:px-8">
         <div
-          className="rounded-3xl bg-white p-6 shadow-sm"
+          className={`rounded-3xl bg-white p-6 shadow-sm ${isRtl ? 'text-right' : 'text-left'}`}
           style={{ border: `1px solid ${matchyBrand.border}` }}
         >
           <h2 className="text-xl font-extrabold" style={{ color: matchyBrand.textDark }}>

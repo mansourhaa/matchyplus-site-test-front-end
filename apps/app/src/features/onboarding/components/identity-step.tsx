@@ -1,8 +1,10 @@
 'use client';
 
+import { PasswordRequirements } from '@/components/password-requirements';
 import { PhoneInput } from '@/features/auth/components/phone-input';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { EXPERIENCE_OPTIONS } from '@/features/onboarding/constants';
 import { identityStepSchema } from '@/features/onboarding/schemas';
 import { patchOnboardingProfile } from '@/features/onboarding/store/onboarding-slice';
@@ -14,6 +16,7 @@ import {
   uploadProfileVideo,
 } from '@/features/profile/store/profile-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
+import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import {
   Briefcase,
@@ -36,6 +39,16 @@ import { FieldMicButton } from './field-mic-button';
 import { OnboardingStepLayout, StepCtaRow, StepProgress } from './onboarding-step-layout';
 import { VideoRecorderModal, buildVideoRecorderTr } from './video-recorder-modal';
 
+/** Keep in sync with apps/api `PROFILE_PHOTO_MAX_BYTES` / `ALLOWED_PROFILE_PHOTO_MIMES`. */
+const PROFILE_PHOTO_MAX_BYTES = 8 * 1024 * 1024;
+const PROFILE_PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
+const PROFILE_PHOTO_MIMES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+
+function isAllowedProfilePhoto(file: File): boolean {
+  if (PROFILE_PHOTO_MIMES.has(file.type)) return true;
+  return /\.(jpe?g|png|webp)$/i.test(file.name);
+}
+
 function ProfileSilhouette() {
   return (
     <svg width="60" height="60" viewBox="0 0 52 52" fill="none" aria-hidden>
@@ -46,11 +59,12 @@ function ProfileSilhouette() {
 }
 
 function YearsDropdown({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   return (
     <div>
       <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-        Années d&apos;expérience
+        {t('onboarding.identity.yearsLabel')}
       </label>
       <div className="relative mt-1">
         <button
@@ -63,7 +77,7 @@ function YearsDropdown({ value, onChange }: { value: string; onChange: (value: s
           onClick={() => setOpen(!open)}
         >
           <span style={{ fontSize: '14px', color: value ? '#353535' : '#BBB' }}>
-            {value || "Choisir Années d'expérience"}
+            {value || t('onboarding.identity.yearsPlaceholder')}
           </span>
           <ChevronDown
             size={16}
@@ -129,15 +143,6 @@ type IdentityStepProps = {
   }) => Promise<boolean>;
 };
 
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 function splitName(fullName: string) {
   const trimmed = fullName.trim();
   const spaceIndex = trimmed.indexOf(' ');
@@ -157,6 +162,7 @@ export function IdentityStep({
   onRegistered,
   onNext,
 }: IdentityStepProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const existingName = splitName(profile?.name ?? '');
@@ -166,15 +172,16 @@ export function IdentityStep({
   const [bio, setBio] = useState(profile?.bio ?? '');
   const [experience, setExperience] = useState(profile?.experience ?? '');
   const [image, setImage] = useState(profile?.image ?? '');
-  // Raw file behind `image`'s preview — uploaded via uploadPendingPhoto on save, never
-  // sent in the identity PATCH itself.
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [profileType, setProfileType] = useState<ProfileType>(
     profile?.profile_type ?? 'INDIVIDUAL',
   );
   const [error, setError] = useState<string | null>(null);
   const [requiredTouched, setRequiredTouched] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Selected before auth — uploaded via multipart after register (never as base64 JSON).
+  const pendingPhotoRef = useRef<File | null>(null);
+  const localPhotoPreviewRef = useRef<string | null>(null);
 
   // Credentials — only rendered/validated when !isAuthenticated. Single password field,
   // no confirmation.
@@ -190,7 +197,7 @@ export function IdentityStep({
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const [videoLabel, setVideoLabel] = useState<string | null>(
-    profile?.video ? 'Vidéo de présentation' : null,
+    profile?.video ? t('onboarding.identity.videoPresentationLabel') : null,
   );
   const [videoUploaded, setVideoUploaded] = useState(Boolean(profile?.video));
   const [videoPendingLocal, setVideoPendingLocal] = useState(false);
@@ -202,7 +209,7 @@ export function IdentityStep({
   const country = getPhoneCountry(countryIso);
   const phone = composeE164Phone(countryIso, nationalNumber);
   const isPhoneValid = nationalNumber.length >= country.nationalLength;
-  const passwordReady = password.length >= 6;
+  const passwordReady = isPasswordPolicySatisfied(password);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -229,11 +236,12 @@ export function IdentityStep({
     setExperience(profile.experience ?? '');
     setImage(profile.image ?? '');
     setProfileType(profile.profile_type ?? 'INDIVIDUAL');
-    setVideoLabel(profile.video ? 'Vidéo de présentation' : null);
+    setVideoLabel(profile.video ? t('onboarding.identity.videoPresentationLabel') : null);
     setVideoUploaded(Boolean(profile.video));
     setVideoPendingLocal(false);
-  }, [profile]);
+  }, [profile, t]);
 
+  const [hasPendingPhoto, setHasPendingPhoto] = useState(false);
   const { user } = useAppSelector(selectAuth);
   const name = `${firstName} ${lastName}`.trim();
   const isJobRequired = profileType === 'INDIVIDUAL';
@@ -248,13 +256,69 @@ export function IdentityStep({
     ? (user?.auth_provider ?? profile?.auth_provider ?? 'phone')
     : 'phone';
   const isPhotoRequired = authProvider === 'phone';
-  const missingPhoto = requiredTouched && isPhotoRequired && !image;
+  const hasPhoto = Boolean(image) || hasPendingPhoto;
+  const missingPhoto = requiredTouched && isPhotoRequired && !hasPhoto;
 
-  const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const clearLocalPhotoPreview = () => {
+    if (localPhotoPreviewRef.current && typeof URL.revokeObjectURL === 'function') {
+      URL.revokeObjectURL(localPhotoPreviewRef.current);
+    }
+    localPhotoPreviewRef.current = null;
+  };
+
+  useEffect(() => {
+    return () => clearLocalPhotoPreview();
+  }, []);
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    event.target.value = '';
     if (!file) return;
-    setPhotoFile(file);
-    setImage(await readFileAsDataUrl(file));
+
+    if (!isAllowedProfilePhoto(file)) {
+      setError(t('onboarding.identity.errorPhotoType'));
+      return;
+    }
+    if (file.size > PROFILE_PHOTO_MAX_BYTES) {
+      setError(t('onboarding.identity.errorPhotoTooLarge'));
+      return;
+    }
+
+    setError(null);
+    pendingPhotoRef.current = file;
+    setHasPendingPhoto(true);
+    if (typeof URL.createObjectURL === 'function') {
+      clearLocalPhotoPreview();
+      const preview = URL.createObjectURL(file);
+      localPhotoPreviewRef.current = preview;
+      setImage(preview);
+    } else {
+      setImage(file.name);
+    }
+  };
+
+  const ensurePhotoUploaded = async (): Promise<boolean> => {
+    const file = pendingPhotoRef.current;
+    if (!file) return true;
+
+    setIsUploadingPhoto(true);
+    setError(null);
+    const result = await dispatch(uploadProfilePhoto(file));
+    setIsUploadingPhoto(false);
+
+    if (!uploadProfilePhoto.fulfilled.match(result)) {
+      setError(
+        humanizeMediaError(result.error?.message) || t('onboarding.identity.errorPhotoUpload'),
+      );
+      return false;
+    }
+
+    pendingPhotoRef.current = null;
+    setHasPendingPhoto(false);
+    // Keep the local blob preview on screen — the stored `/uploads/photos/...` path
+    // needs auth headers and would briefly break the <img> before we navigate away.
+    dispatch(patchOnboardingProfile({ image: result.payload.image ?? null }));
+    return true;
   };
 
   const uploadVideoBlob = async (blob: Blob, filename: string) => {
@@ -276,7 +340,9 @@ export function IdentityStep({
     setVideoUploaded(false);
     setVideoPendingLocal(false);
     pendingVideoRef.current = null;
-    setVideoError(humanizeMediaError(result.error?.message) || 'Échec de l’upload vidéo.');
+    setVideoError(
+      humanizeMediaError(result.error?.message) || t('onboarding.identity.errorVideoUpload'),
+    );
     return false;
   };
 
@@ -319,7 +385,9 @@ export function IdentityStep({
       const result = await dispatch(deleteProfileVideo());
       setIsUploadingVideo(false);
       if (!deleteProfileVideo.fulfilled.match(result)) {
-        setVideoError(humanizeMediaError(result.error?.message) || 'Échec de la suppression.');
+        setVideoError(
+          humanizeMediaError(result.error?.message) || t('onboarding.identity.errorVideoDelete'),
+        );
         return;
       }
       dispatch(patchOnboardingProfile({ video: null }));
@@ -331,23 +399,11 @@ export function IdentityStep({
     name,
     job: job || undefined,
     bio: bio || undefined,
+    // Photo is persisted via multipart `/users/me/profile/photo`, not this JSON patch
+    // (base64 in the body triggered Fastify 413 FST_ERR_CTP_BODY_TOO_LARGE).
     profileType,
     experience: profileType === 'INDIVIDUAL' && experience ? experience : undefined,
   });
-
-  // Requires an authenticated session — for a fresh phone signup, only call this after
-  // registerPhone has actually succeeded. Returns false (and sets `error`) on failure so
-  // callers can bail out before saving the rest of the identity fields.
-  const uploadPendingPhoto = async () => {
-    if (!photoFile) return true;
-    const result = await dispatch(uploadProfilePhoto(photoFile));
-    if (!uploadProfilePhoto.fulfilled.match(result)) {
-      setError("Échec de l'envoi de la photo. Réessayez.");
-      return false;
-    }
-    setPhotoFile(null);
-    return true;
-  };
 
   const photoPreview = useAuthenticatedMediaUrl(image || null);
 
@@ -356,11 +412,11 @@ export function IdentityStep({
   // button calls this directly and must not re-run that validation on every resend.
   const requestOtp = async () => {
     if (!isPhoneValid) {
-      setError(`Le numéro de téléphone est obligatoire (${country.nationalLength} chiffres).`);
+      setError(t('onboarding.identity.errorPhoneRequired', { length: country.nationalLength }));
       return;
     }
     if (!passwordReady) {
-      setError('Le mot de passe doit contenir au moins 6 caractères.');
+      setError(t('onboarding.identity.errorPasswordRequired'));
       return;
     }
 
@@ -373,23 +429,23 @@ export function IdentityStep({
     setOtpSending(false);
 
     if (!sendOtp.fulfilled.match(sendAction)) {
-      setOtpError("Impossible d'envoyer le code. Vérifiez votre numéro.");
+      setOtpError(t('onboarding.identity.errorOtpSend'));
       return;
     }
     setResendCooldown(30);
   };
 
   const handleNext = async () => {
-    if (isPhotoRequired && !image) {
+    if (isPhotoRequired && !image && !pendingPhotoRef.current) {
       setRequiredTouched(true);
-      setError('La photo de profil est obligatoire.');
+      setError(t('onboarding.identity.errorPhotoRequired'));
       return;
     }
 
-    const parsed = identityStepSchema.safeParse({ name, job, bio, image, profileType });
+    const parsed = identityStepSchema.safeParse({ name, job, bio, profileType });
     if (!parsed.success) {
       setRequiredTouched(true);
-      setError(parsed.error.issues[0]?.message ?? 'Le prénom et le nom sont obligatoires.');
+      setError(parsed.error.issues[0]?.message ?? t('onboarding.identity.errorNameRequired'));
       return;
     }
 
@@ -401,17 +457,17 @@ export function IdentityStep({
     }
 
     setError(null);
-    if (!(await uploadPendingPhoto())) return;
+    if (pendingPhotoRef.current && !(await ensurePhotoUploaded())) return;
     const saved = await onNext(identityPatch());
     if (!saved) {
-      setError('Échec de la sauvegarde. Réessayez.');
+      setError(t('onboarding.identity.errorSave'));
     }
   };
 
   const handleVerifyOtp = async () => {
     if (otpVerifying) return;
     if (code.trim().length < 4) {
-      setOtpError('Entrez le code à 6 chiffres.');
+      setOtpError(t('onboarding.identity.errorOtpShort'));
       return;
     }
 
@@ -420,7 +476,7 @@ export function IdentityStep({
     const verifyAction = await dispatch(verifyOtp({ phone, code }));
     if (!verifyOtp.fulfilled.match(verifyAction)) {
       setOtpVerifying(false);
-      setOtpError('Code incorrect.');
+      setOtpError(t('onboarding.identity.errorOtpInvalid'));
       return;
     }
 
@@ -430,7 +486,7 @@ export function IdentityStep({
     );
     if (!registerPhone.fulfilled.match(registerAction)) {
       setOtpVerifying(false);
-      setOtpError('Impossible de créer le compte.');
+      setOtpError(t('onboarding.identity.errorCreateAccount'));
       return;
     }
 
@@ -438,12 +494,12 @@ export function IdentityStep({
     setOtpVerifying(false);
     // Only reachable now that registerPhone has actually succeeded — an authenticated
     // session (cookie) is required before uploadProfilePhoto's endpoint will accept it.
-    if (!(await uploadPendingPhoto())) return;
+    if (pendingPhotoRef.current && !(await ensurePhotoUploaded())) return;
     // Optional video: a failed flush already clears the success label + sets videoError.
     await flushPendingVideo();
     const saved = await onNext(identityPatch());
     if (!saved) {
-      setError('Échec de la sauvegarde. Réessayez.');
+      setError(t('onboarding.identity.errorSave'));
     }
   };
 
@@ -451,18 +507,18 @@ export function IdentityStep({
     <OnboardingStepLayout
       step={stepNumber}
       totalSteps={totalSteps}
-      stepLabel="Votre identité"
+      stepLabel={t('onboarding.identity.title')}
       onBack={() => router.push('/login')}
-      backLabel="Retour"
+      backLabel={t('common.back')}
     >
       <div className="mx-auto w-full max-w-2xl">
         <StepProgress step={stepNumber} total={totalSteps} />
 
         <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E', marginBottom: '6px' }}>
-          Votre identité
+          {t('onboarding.identity.title')}
         </h1>
         <p style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}>
-          Commençons par les informations de base.
+          {t('onboarding.identity.desc')}
         </p>
 
         <div className="space-y-6 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
@@ -493,22 +549,34 @@ export function IdentityStep({
                 className="absolute -right-2 -bottom-2 flex h-9 w-9 items-center justify-center rounded-full border-2 bg-white shadow-md"
                 style={{ borderColor: '#61BCA6' }}
                 onClick={() => fileInputRef.current?.click()}
-                aria-label="Ajouter une photo"
+                aria-label={t('onboarding.identity.imageUploadDesc')}
               >
                 <Camera size={16} color="#61BCA6" />
               </button>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept={PROFILE_PHOTO_ACCEPT}
                 className="hidden"
                 onChange={handlePhotoChange}
               />
             </div>
-            <p style={{ fontSize: '12px', color: '#AAA' }}>Photo de profil</p>
+            <p style={{ fontSize: '12px', color: '#AAA' }}>{t('onboarding.identity.photoLabel')}</p>
+            <p style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+              {t('onboarding.identity.photoHint')}
+            </p>
             {missingPhoto && (
               <p style={{ fontSize: '11px', color: '#E74C3C', marginTop: '4px' }}>
-                La photo est obligatoire
+                {t('onboarding.identity.photoRequired')}
+              </p>
+            )}
+            {isUploadingPhoto && (
+              <p
+                className="mt-1 flex items-center gap-1"
+                style={{ fontSize: '11px', color: '#2F76BB' }}
+              >
+                <Loader2 size={12} className="animate-spin" />
+                {t('onboarding.identity.photoUploading')}
               </p>
             )}
 
@@ -516,7 +584,7 @@ export function IdentityStep({
               <p
                 style={{ fontSize: '14px', fontWeight: 700, color: '#353535', marginBottom: '8px' }}
               >
-                Je suis
+                {t('onboarding.identity.iAm')}
               </p>
               <div className="flex gap-2">
                 {(['PROVIDER', 'INDIVIDUAL'] as const).map((type) => (
@@ -538,19 +606,21 @@ export function IdentityStep({
                         color: profileType === type ? 'white' : '#666',
                       }}
                     >
-                      {type === 'PROVIDER' ? 'Employeur' : 'Employé'}
+                      {type === 'PROVIDER'
+                        ? t('onboarding.identity.employer')
+                        : t('onboarding.identity.employee')}
                     </span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Presentation video — Employé / INDIVIDUAL only (Matchy Inscription1) */}
+            {/* Presentation video — Offering / INDIVIDUAL only (Matchy Inscription1) */}
             {profileType === 'INDIVIDUAL' && (
               <div className="mt-6 w-full">
                 <div className="mb-1 flex items-center justify-between">
                   <p style={{ fontSize: '14px', fontWeight: 700, color: '#353535' }}>
-                    Vidéo présentation
+                    {t('onboarding.identity.videoTitle')}
                   </p>
                   <span
                     className="rounded-full px-2 py-0.5"
@@ -561,11 +631,11 @@ export function IdentityStep({
                       fontWeight: 700,
                     }}
                   >
-                    20s max
+                    {t('onboarding.identity.videoMax')}
                   </span>
                 </div>
                 <p style={{ fontSize: '12px', color: '#AAA', marginBottom: '10px' }}>
-                  Enregistrez une courte vidéo de présentation ou importez depuis votre appareil
+                  {t('onboarding.identity.videoDesc')}
                 </p>
 
                 {!videoLabel ? (
@@ -583,10 +653,10 @@ export function IdentityStep({
                     </div>
                     <div className="flex-1 text-left">
                       <p style={{ fontSize: '13px', fontWeight: 700, color: '#2F76BB' }}>
-                        Enregistrer ou importer
+                        {t('onboarding.identity.videoRecordBtn')}
                       </p>
                       <p style={{ fontSize: '11px', color: '#AAA', marginTop: '1px' }}>
-                        Caméra ou import · 20s max
+                        {t('onboarding.identity.videoRecordHint')}
                       </p>
                     </div>
                     <Video size={16} color="#61BCA6" />
@@ -611,10 +681,10 @@ export function IdentityStep({
                       </p>
                       <p style={{ fontSize: '10px', color: '#2A9177' }}>
                         {videoUploaded
-                          ? 'Vidéo ajoutée ✓'
+                          ? t('onboarding.identity.videoAdded')
                           : videoPendingLocal
-                            ? 'Prête — envoi après vérification'
-                            : 'Vidéo sélectionnée'}
+                            ? t('onboarding.identity.videoReady')
+                            : t('onboarding.identity.videoSelected')}
                       </p>
                     </div>
                     <button
@@ -622,7 +692,7 @@ export function IdentityStep({
                       disabled={isUploadingVideo}
                       onClick={() => void handleRemoveVideo()}
                       className="shrink-0"
-                      aria-label="Supprimer la vidéo"
+                      aria-label={t('onboarding.identity.videoRemove')}
                     >
                       <X size={16} color="#AAA" />
                     </button>
@@ -636,7 +706,7 @@ export function IdentityStep({
                 )}
                 {isUploadingVideo && (
                   <p style={{ fontSize: '12px', color: '#2F76BB', marginTop: '6px' }}>
-                    Upload de la vidéo...
+                    {t('onboarding.identity.videoUploading')}
                   </p>
                 )}
               </div>
@@ -647,14 +717,14 @@ export function IdentityStep({
           <div className="space-y-4">
             <div>
               <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                Prénom <span style={{ color: '#61BCA6' }}>*</span>
+                {t('onboarding.identity.firstName')} <span style={{ color: '#61BCA6' }}>*</span>
               </label>
               <div className="mt-1 flex items-center gap-2">
                 <input
                   type="text"
                   value={firstName}
                   onChange={(event) => setFirstName(event.target.value)}
-                  placeholder="Votre prénom"
+                  placeholder={t('onboarding.identity.firstNamePlaceholder')}
                   className="w-full rounded-xl px-4 py-3 text-[#353535] transition-all outline-none"
                   style={{
                     fontSize: '14px',
@@ -671,14 +741,14 @@ export function IdentityStep({
 
             <div>
               <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                Nom <span style={{ color: '#61BCA6' }}>*</span>
+                {t('onboarding.identity.lastName')} <span style={{ color: '#61BCA6' }}>*</span>
               </label>
               <div className="mt-1 flex items-center gap-2">
                 <input
                   type="text"
                   value={lastName}
                   onChange={(event) => setLastName(event.target.value)}
-                  placeholder="Votre nom de famille"
+                  placeholder={t('onboarding.identity.lastNamePlaceholder')}
                   className="w-full rounded-xl px-4 py-3 text-[#353535] transition-all outline-none"
                   style={{
                     fontSize: '14px',
@@ -697,7 +767,8 @@ export function IdentityStep({
               <>
                 <div>
                   <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                    Numéro de téléphone <span style={{ color: '#61BCA6' }}>*</span>
+                    {t('onboarding.identity.phoneLabel')}{' '}
+                    <span style={{ color: '#61BCA6' }}>*</span>
                   </label>
                   <div className="mt-1">
                     <PhoneInput
@@ -712,12 +783,19 @@ export function IdentityStep({
 
                 <div>
                   <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                    Mot de passe <span style={{ color: '#61BCA6' }}>*</span>
+                    {t('onboarding.identity.passwordLabel')}{' '}
+                    <span style={{ color: '#61BCA6' }}>*</span>
                   </label>
                   <div
                     className="mt-1 flex items-center gap-3 rounded-xl px-4 py-3"
                     style={{
-                      border: `2px solid ${password.length > 0 && password.length < 6 ? '#E74C3C' : password.length >= 6 ? '#2F76BB' : '#E0E0E0'}`,
+                      border: `2px solid ${
+                        password.length > 0 && !passwordReady
+                          ? '#E74C3C'
+                          : passwordReady
+                            ? '#2F76BB'
+                            : '#E0E0E0'
+                      }`,
                       background: password ? '#F5F9FF' : '#FAFAFA',
                     }}
                   >
@@ -740,22 +818,18 @@ export function IdentityStep({
                       )}
                     </button>
                   </div>
-                  {password.length > 0 && password.length < 6 && (
-                    <p style={{ fontSize: '11px', color: '#E74C3C', marginTop: '4px' }}>
-                      Au moins 6 caractères
-                    </p>
-                  )}
+                  <PasswordRequirements password={password} />
                 </div>
               </>
             )}
 
             <div>
               <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                Métier / Profession
+                {t('onboarding.identity.jobTitle')}
                 {isJobRequired ? (
                   <span style={{ color: '#61BCA6' }}> *</span>
                 ) : (
-                  <span style={{ color: '#888' }}> (facultatif)</span>
+                  <span style={{ color: '#888' }}> {t('onboarding.identity.jobOptional')}</span>
                 )}
               </label>
               <div className="mt-1 flex items-center gap-2">
@@ -767,7 +841,7 @@ export function IdentityStep({
                     type="text"
                     value={job}
                     onChange={(event) => setJob(event.target.value)}
-                    placeholder="Ingénieur, designer, chauffeur..."
+                    placeholder={t('onboarding.identity.jobProfessionPlaceholder')}
                     className="w-full rounded-xl py-3 text-[#353535] transition-all outline-none"
                     style={{
                       fontSize: '14px',
@@ -793,13 +867,13 @@ export function IdentityStep({
 
             <div>
               <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                À propos de vous
+                {t('onboarding.identity.aboutLabel')}
               </label>
               <div className="relative mt-1">
                 <textarea
                   value={bio}
                   onChange={(event) => setBio(event.target.value.slice(0, 250))}
-                  placeholder="Parlez de vous en quelques mots..."
+                  placeholder={t('onboarding.identity.aboutPlaceholder')}
                   className="w-full resize-none rounded-xl px-4 py-3 pr-12 text-[#353535] transition-all outline-none"
                   style={{
                     fontSize: '14px',
@@ -831,7 +905,9 @@ export function IdentityStep({
         <StepCtaRow
           onContinue={handleNext}
           continueLabel={
-            isAuthenticated ? 'Enregistrer et continuer' : 'Continuer et vérifier par SMS'
+            isAuthenticated
+              ? t('onboarding.identity.saveContinue')
+              : t('onboarding.identity.continueVerify')
           }
           disabled={loading || otpSending || isUploadingVideo}
           loading={loading || otpSending || isUploadingVideo}
@@ -847,7 +923,7 @@ export function IdentityStep({
             color: '#555',
           }}
         >
-          Connexion
+          {t('onboarding.identity.login')}
         </Link>
       </div>
     </OnboardingStepLayout>

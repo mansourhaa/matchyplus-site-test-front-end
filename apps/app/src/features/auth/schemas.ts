@@ -1,6 +1,9 @@
+import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { z } from 'zod';
 
-const phonePasswordSchema = z.string().min(6);
+const phonePasswordSchema = z
+  .string()
+  .refine(isPasswordPolicySatisfied, { message: 'weak_password' });
 const phoneNumberSchema = z.string().min(6);
 
 export const sendOtpSchema = z.object({
@@ -14,7 +17,8 @@ export const verifyOtpSchema = z.object({
 
 export const loginPhoneSchema = z.object({
   phone: phoneNumberSchema,
-  password: phonePasswordSchema,
+  // Login accepts legacy passwords — do not apply the signup policy here.
+  password: z.string().min(1),
 });
 
 export const registerPhoneSchema = z.object({

@@ -236,7 +236,7 @@ export const registerPhoneSchema = {
     type: 'object',
     properties: {
       phone: { type: 'string', minLength: 6, maxLength: 20 },
-      password: { type: 'string', format: 'password', minLength: 6 },
+      password: { type: 'string', format: 'password', minLength: 8, maxLength: 128 },
       signupToken: { type: 'string', minLength: 16 },
       name: { type: 'string' },
     },
@@ -306,7 +306,7 @@ export const confirmPasswordResetSchema = {
     properties: {
       phone: { type: 'string', minLength: 6, maxLength: 20 },
       code: { type: 'string', minLength: 4, maxLength: 10 },
-      newPassword: { type: 'string', format: 'password', minLength: 6 },
+      newPassword: { type: 'string', format: 'password', minLength: 8, maxLength: 128 },
     },
     required: ['phone', 'code', 'newPassword'],
   },
@@ -334,7 +334,7 @@ export const changePasswordSchema = {
     type: 'object',
     properties: {
       currentPassword: { type: 'string', format: 'password' },
-      newPassword: { type: 'string', format: 'password', minLength: 6 },
+      newPassword: { type: 'string', format: 'password', minLength: 8, maxLength: 128 },
     },
     required: ['currentPassword', 'newPassword'],
   },

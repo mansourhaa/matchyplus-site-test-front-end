@@ -1,6 +1,7 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { MapPin, RefreshCw } from 'lucide-react';
 
 type LocationRequiredOverlayProps = {
@@ -14,6 +15,8 @@ export function LocationRequiredOverlay({
   onActivate,
   busy,
 }: LocationRequiredOverlayProps) {
+  const { locale } = useI18n();
+
   return (
     <div
       className="absolute inset-0 z-30 flex items-center justify-center px-6"
@@ -26,14 +29,27 @@ export function LocationRequiredOverlay({
         >
           <MapPin size={24} color="#2F76BB" />
         </div>
-        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#353535' }}>Localisation requise</h3>
+        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#353535' }}>
+          {locale === 'en'
+            ? 'Location required'
+            : locale === 'ar'
+              ? 'الموقع الجغرافي مطلوب'
+              : 'Localisation requise'}
+        </h3>
         <p className="mt-2" style={{ fontSize: 13, lineHeight: 1.6, color: '#666' }}>
-          Activez la localisation pour afficher les profils dans Home et Recherche. Sans
-          autorisation, aucun profil ne sera visible.
+          {locale === 'en'
+            ? 'Enable location to view profiles in Home and Search. Without permission, no profiles will be visible.'
+            : locale === 'ar'
+              ? 'قم بتمكين الموقع الجغرافي لعرض الملفات الشخصية في الرئيسية والبحث. بدون إذن، لن تكون الملفات الشخصية مرئية.'
+              : 'Activez la localisation pour afficher les profils dans Home et Recherche. Sans autorisation, aucun profil ne sera visible.'}
         </p>
         {message && (
           <p className="mt-3" style={{ fontSize: 12, lineHeight: 1.5, color: '#B45309' }}>
-            {message}
+            {locale === 'en'
+              ? 'Location permission is disabled or denied. Please enable location to continue.'
+              : locale === 'ar'
+                ? 'إذن الموقع معطل أو مرفوض. يرجى تمكين الموقع للمتابعة.'
+                : 'L’autorisation de localisation est désactivée ou refusée. Veuillez activer la localisation pour continuer.'}
           </p>
         )}
         <button
@@ -50,10 +66,24 @@ export function LocationRequiredOverlay({
           }}
         >
           {busy ? <RefreshCw size={18} className="animate-spin" /> : <MapPin size={18} />}
-          {busy ? 'Activation…' : 'Activer la localisation'}
+          {busy
+            ? locale === 'en'
+              ? 'Activating...'
+              : locale === 'ar'
+                ? 'جارٍ التفعيل...'
+                : 'Activation...'
+            : locale === 'en'
+              ? 'Enable location'
+              : locale === 'ar'
+                ? 'تفعيل الموقع'
+                : 'Activer la localisation'}
         </button>
         <p className="mt-3" style={{ fontSize: 11, color: '#888' }}>
-          Autorisez la localisation lorsque le navigateur vous le demande.
+          {locale === 'en'
+            ? 'Allow location access when prompted by your browser.'
+            : locale === 'ar'
+              ? 'اسمح بالوصول إلى الموقع عندما يطلب المتصفح ذلك.'
+              : 'Autorisez la localisation lorsque le navigateur vous le demande.'}
         </p>
       </div>
     </div>

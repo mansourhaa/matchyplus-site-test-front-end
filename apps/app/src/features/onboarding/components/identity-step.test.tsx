@@ -3,7 +3,7 @@ import { api } from '@/lib/api';
 import { renderWithAuthStore } from '@/test/render-with-auth-store';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IdentityStep } from './identity-step';
 
@@ -97,11 +97,17 @@ function fillIdentityAndCredentials() {
 }
 
 describe('IdentityStep', () => {
-  afterEach(() => {
-    vi.clearAllMocks();
+  beforeEach(() => {
+    // These tests assert French copy (product default for Tunisian QA).
+    window.localStorage.setItem('matchy_locale', 'fr');
   });
 
-  it('blocks submission and shows an error when profession is missing for an Employé profile', async () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.removeItem('matchy_locale');
+  });
+
+  it('blocks submission and shows an error when profession is missing for an Offering (INDIVIDUAL) profile', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
       <IdentityStep
@@ -193,20 +199,15 @@ describe('IdentityStep', () => {
     });
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
-    // handleNext now checks for a pending photo upload before calling onNext — an async
-    // gate even when, as here, there's nothing to upload — so the call lands a microtask
-    // later rather than synchronously within the click handler.
-    await waitFor(() =>
-      expect(onNext).toHaveBeenCalledWith({
-        name: 'Jane Doe',
-        job: 'Électricien',
-        bio: undefined,
-        profileType: 'INDIVIDUAL',
-      }),
-    );
+    expect(onNext).toHaveBeenCalledWith({
+      name: 'Jane Doe',
+      job: 'Électricien',
+      bio: undefined,
+      profileType: 'INDIVIDUAL',
+    });
   });
 
-  it('does not require profession for an Employeur (PROVIDER) profile', async () => {
+  it('does not require profession for a Looking for (PROVIDER) profile', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
       <IdentityStep
@@ -222,17 +223,15 @@ describe('IdentityStep', () => {
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
     fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.click(firstButton('Employeur'));
+    fireEvent.click(firstButton('Je cherche'));
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
-    await waitFor(() =>
-      expect(onNext).toHaveBeenCalledWith({
-        name: 'Jane Doe',
-        job: undefined,
-        bio: undefined,
-        profileType: 'PROVIDER',
-      }),
-    );
+    expect(onNext).toHaveBeenCalledWith({
+      name: 'Jane Doe',
+      job: undefined,
+      bio: undefined,
+      profileType: 'PROVIDER',
+    });
   });
 
   it('submits prénom, nom, job, and the selected profile type', async () => {
@@ -256,14 +255,12 @@ describe('IdentityStep', () => {
     });
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
-    await waitFor(() =>
-      expect(onNext).toHaveBeenCalledWith({
-        name: 'Jane Doe',
-        job: 'Électricien',
-        bio: undefined,
-        profileType: 'INDIVIDUAL',
-      }),
-    );
+    expect(onNext).toHaveBeenCalledWith({
+      name: 'Jane Doe',
+      job: 'Électricien',
+      bio: undefined,
+      profileType: 'INDIVIDUAL',
+    });
   });
 
   it('uploads a newly picked photo through the real upload endpoint before saving the rest of the identity fields', async () => {
@@ -331,7 +328,7 @@ describe('IdentityStep', () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
-    expect(await screen.findAllByText("Échec de l'envoi de la photo. Réessayez.")).not.toHaveLength(
+    expect(await screen.findAllByText('Échec de l’envoi de la photo. Réessayez.')).not.toHaveLength(
       0,
     );
     expect(onNext).not.toHaveBeenCalled();
@@ -437,8 +434,13 @@ describe('IdentityStep', () => {
 });
 
 describe('IdentityStep — credentials for a not-yet-authenticated visitor', () => {
+  beforeEach(() => {
+    window.localStorage.setItem('matchy_locale', 'fr');
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
+    window.localStorage.removeItem('matchy_locale');
   });
 
   it('does not show phone/password fields for an already-authenticated user', () => {
@@ -477,7 +479,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
 
     fillIdentityAndCredentials();
     fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'secret123' },
+      target: { value: 'Password123!' },
     });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
@@ -486,7 +488,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     expect(onNext).not.toHaveBeenCalled();
   });
 
-  it('does not send an OTP when the password is too short', () => {
+  it('does not send an OTP when the password fails the security policy', () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
       <IdentityStep
@@ -508,7 +510,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
 
     expect(api.post).not.toHaveBeenCalled();
     expect(
-      screen.getAllByText('Le mot de passe doit contenir au moins 6 caractères.')[0],
+      screen.getAllByText('Le mot de passe doit respecter les règles de sécurité.')[0],
     ).toBeInTheDocument();
     expect(onNext).not.toHaveBeenCalled();
   });
@@ -546,7 +548,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
 
     fillIdentityAndCredentials();
     fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'secret123' },
+      target: { value: 'Password123!' },
     });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
@@ -568,7 +570,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     await waitFor(() =>
       expect(api.post).toHaveBeenCalledWith('/auth/register-phone', {
         phone: '+21612345678',
-        password: 'secret123',
+        password: 'Password123!',
         signupToken: 'valid-grant-token',
       }),
     );
@@ -628,7 +630,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     // the pre-selection empty state and block submission before the OTP modal opens.
     await waitFor(() => expect(document.querySelector('img')).toBeInTheDocument());
     fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'secret123' },
+      target: { value: 'Password123!' },
     });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
@@ -687,7 +689,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
 
     fillIdentityAndCredentials();
     fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'secret123' },
+      target: { value: 'Password123!' },
     });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
@@ -732,7 +734,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
 
     fillIdentityAndCredentials();
     fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'secret123' },
+      target: { value: 'Password123!' },
     });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
@@ -782,7 +784,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
 
     fillIdentityAndCredentials();
     fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'secret123' },
+      target: { value: 'Password123!' },
     });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
@@ -819,7 +821,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
 
     fillIdentityAndCredentials();
     fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'secret123' },
+      target: { value: 'Password123!' },
     });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 

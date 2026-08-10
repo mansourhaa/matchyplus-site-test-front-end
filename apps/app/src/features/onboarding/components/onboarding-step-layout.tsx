@@ -2,7 +2,7 @@
 
 import { AuthLayout } from '@/features/auth/components/auth-layout';
 import { MatchyLogo } from '@/features/auth/components/matchy-logo';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { LangPickerLight } from './lang-picker-light';
@@ -94,13 +94,15 @@ export function StepCtaRow({
   disabled?: boolean;
   loading?: boolean;
 }) {
+  const busy = Boolean(disabled || loading);
   return (
     <div className="mt-8 flex gap-3">
       {onBack && (
         <button
           type="button"
           onClick={onBack}
-          className="rounded-2xl px-6 py-4"
+          disabled={busy}
+          className="rounded-2xl px-6 py-4 disabled:opacity-50"
           style={{ background: '#F5F5F5', color: '#888', fontSize: '14px', fontWeight: 700 }}
         >
           Retour
@@ -109,15 +111,19 @@ export function StepCtaRow({
       <button
         type="button"
         onClick={onContinue}
-        disabled={disabled}
-        className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-white"
+        disabled={busy}
+        className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-white disabled:opacity-80"
         style={{
-          background: !disabled ? 'linear-gradient(90deg, #61BCA6, #2F76BB)' : '#D5D5D5',
+          background: !busy ? 'linear-gradient(90deg, #61BCA6, #2F76BB)' : '#D5D5D5',
           fontSize: '15px',
           fontWeight: 700,
         }}
       >
-        {loading ? null : (continueIcon ?? <Check size={18} />)}
+        {loading ? (
+          <Loader2 size={18} className="animate-spin" />
+        ) : (
+          (continueIcon ?? <Check size={18} />)
+        )}
         {continueLabel}
       </button>
     </div>
@@ -161,6 +167,7 @@ export function OnboardingStepLayout({
       totalSteps={hideProgress ? undefined : totalSteps}
       stepLabel={stepLabel}
       hideVideoFeature
+      showPanelLangPicker={false}
     >
       {/* Desktop — Matchy: logo left, language right */}
       <div className="hidden h-full flex-col bg-[#FAFBFC] md:flex">

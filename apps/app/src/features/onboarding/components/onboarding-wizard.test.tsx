@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OnboardingWizard } from './onboarding-wizard';
 
@@ -137,7 +137,12 @@ function renderWizard(
 }
 
 describe('OnboardingWizard', () => {
+  beforeEach(() => {
+    window.localStorage.setItem('matchy_locale', 'fr');
+  });
+
   afterEach(() => {
+    window.localStorage.removeItem('matchy_locale');
     vi.clearAllMocks();
     searchParamsRef.current = new URLSearchParams();
     registeredCallbackRef.current = undefined;

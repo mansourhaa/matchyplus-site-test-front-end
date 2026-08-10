@@ -2,9 +2,13 @@
 
 import { AuthenticatedProfileAvatar } from '@/components/matchy/authenticated-profile-image';
 import { matchyBrand } from '@/components/matchy/brand';
+import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { useLocationGate } from '@/features/location/location-context';
+import {
+  useAutoCaptureGrantedLocation,
+  useLocationGate,
+} from '@/features/location/location-context';
 import { MatchScoreBadge } from '@/features/matching/components/live-ai-score';
 import { LocationRequiredOverlay } from '@/features/matching/components/location-required-overlay';
 import { ProfileDetailModal } from '@/features/matching/components/profile-detail-modal';
@@ -227,6 +231,7 @@ export function SearchView() {
     requestBrowserLocation,
     locationSynced,
   } = useLocationGate();
+  useAutoCaptureGrantedLocation();
 
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -303,11 +308,13 @@ export function SearchView() {
 
   // Initial + filter/query-driven reloads (not append).
   useEffect(() => {
-    if (!locationSynced || latitude == null || longitude == null) return;
-
-    // Defer the execution to avoid the synchronous setState warning
     const timer = setTimeout(() => {
-      void loadSearchFeed('replace');
+      if (!locationSynced || latitude == null || longitude == null) {
+        setProfiles([]);
+        setLoaded(false);
+      } else {
+        void loadSearchFeed('replace');
+      }
     }, 0);
 
     return () => clearTimeout(timer);
@@ -369,6 +376,7 @@ export function SearchView() {
         style={{ background: 'white', borderBottom: '1px solid #F0F0F0' }}
       >
         <p style={{ fontSize: 18, fontWeight: 700, color: '#1A1A2E' }}>{title}</p>
+        <MatchyHeaderActions />
       </div>
 
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-4 md:px-8">

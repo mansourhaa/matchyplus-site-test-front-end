@@ -216,22 +216,21 @@ describe('NotificationService', () => {
 
     it('creates and pushes when there is no recent notification from the same viewer', async () => {
       const { service, prisma, push } = createService();
-      prisma.notification.findFirst.mockResolvedValue(null);
+      prisma.notification.findMany.mockResolvedValue([]);
       prisma.notification.create.mockResolvedValue({ id: 'notif-1' });
 
       const result = await service.createIfNoRecentDuplicate(payload, 15 * 60 * 1000);
 
-      expect(prisma.notification.findFirst).toHaveBeenCalledWith({
+      expect(prisma.notification.findMany).toHaveBeenCalledWith({
         where: {
           user_id: 'user-2',
           type: 'PROFILE_VIEW',
           created_at: { gte: expect.any(Date) },
-          AND: [
-            { NOT: { data: { path: ['silent'], equals: true } } },
-            { data: { path: ['viewerId'], equals: 'user-1' } },
-          ],
+          data: { path: ['viewerId'], equals: 'user-1' },
         },
-        select: { id: true },
+        select: { id: true, data: true },
+        orderBy: { created_at: 'desc' },
+        take: 20,
       });
       expect(prisma.notification.create).toHaveBeenCalled();
       expect(push).toHaveBeenCalledWith(
@@ -244,7 +243,9 @@ describe('NotificationService', () => {
 
     it('skips the write and the push when the same viewer already notified this recipient recently', async () => {
       const { service, prisma, push } = createService();
-      prisma.notification.findFirst.mockResolvedValue({ id: 'existing-notif' });
+      prisma.notification.findMany.mockResolvedValue([
+        { id: 'existing-notif', data: { viewerId: 'user-1' } },
+      ]);
 
       const result = await service.createIfNoRecentDuplicate(payload, 15 * 60 * 1000);
 
@@ -253,9 +254,23 @@ describe('NotificationService', () => {
       expect(result).toEqual({ created: false });
     });
 
+    it('ignores silent cooldown markers when deciding whether an in-app duplicate exists', async () => {
+      const { service, prisma, push } = createService();
+      prisma.notification.findMany.mockResolvedValue([
+        { id: 'silent-1', data: { viewerId: 'user-1', silent: true } },
+      ]);
+      prisma.notification.create.mockResolvedValue({ id: 'notif-1' });
+
+      const result = await service.createIfNoRecentDuplicate(payload, 15 * 60 * 1000);
+
+      expect(prisma.notification.create).toHaveBeenCalled();
+      expect(push).toHaveBeenCalled();
+      expect(result).toEqual({ created: true });
+    });
+
     it('runs the dedupe check and the insert inside a serializable transaction', async () => {
       const { service, prisma } = createService();
-      prisma.notification.findFirst.mockResolvedValue(null);
+      prisma.notification.findMany.mockResolvedValue([]);
       prisma.notification.create.mockResolvedValue({ id: 'notif-1' });
 
       await service.createIfNoRecentDuplicate(payload, 15 * 60 * 1000);
@@ -360,6 +375,13 @@ describe('NotificationService', () => {
           created_at: createdAt,
         },
         {
+          id: 'silent-1',
+          type: 'PROFILE_VIEW',
+          data: { viewerId: 'user-9', viewerName: 'Muted', silent: true },
+          read_at: createdAt,
+          created_at: createdAt,
+        },
+        {
           id: 'notif-2',
           type: 'PROFILE_VIEW',
           data: { viewerId: 'user-3', viewerName: 'John Doe' },
@@ -371,12 +393,9 @@ describe('NotificationService', () => {
       const result = await service.list('user-2');
 
       expect(prisma.notification.findMany).toHaveBeenCalledWith({
-        where: {
-          user_id: 'user-2',
-          NOT: { data: { path: ['silent'], equals: true } },
-        },
+        where: { user_id: 'user-2' },
         orderBy: { created_at: 'desc' },
-        take: 50,
+        take: 100,
       });
       expect(result).toEqual([
         {
@@ -398,18 +417,20 @@ describe('NotificationService', () => {
   });
 
   describe('unreadCount', () => {
-    it('counts only unread notifications for the given user', async () => {
+    it('counts only unread non-silent notifications for the given user', async () => {
       const { service, prisma } = createService();
-      prisma.notification.count.mockResolvedValue(3);
+      prisma.notification.findMany.mockResolvedValue([
+        { data: { viewerId: 'a' } },
+        { data: { viewerId: 'b', silent: true } },
+        { data: { viewerId: 'c' } },
+        { data: { viewerId: 'd' } },
+      ]);
 
       const result = await service.unreadCount('user-2');
 
-      expect(prisma.notification.count).toHaveBeenCalledWith({
-        where: {
-          user_id: 'user-2',
-          read_at: null,
-          NOT: { data: { path: ['silent'], equals: true } },
-        },
+      expect(prisma.notification.findMany).toHaveBeenCalledWith({
+        where: { user_id: 'user-2', read_at: null },
+        select: { data: true },
       });
       expect(result).toBe(3);
     });

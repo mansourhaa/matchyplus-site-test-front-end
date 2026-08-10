@@ -1,5 +1,6 @@
 'use client';
 
+import { PasswordRequirements } from '@/components/password-requirements';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import {
   changePassword,
@@ -9,6 +10,7 @@ import {
   requestPhoneLink,
   selectAuth,
 } from '@/features/auth/store/auth-slice';
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { IdentityVerificationCamera } from '@/features/identity-verification/components/identity-verification-camera';
 import {
   fetchIdentityVerificationStatus,
@@ -17,6 +19,7 @@ import {
   selectIdentityVerification,
   submitIdentitySelfie,
 } from '@/features/identity-verification/store/identity-verification-slice';
+import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import {
   AlertTriangle,
@@ -137,6 +140,7 @@ function SubmitButton({
 
 export function ChangePasswordSection() {
   const dispatch = useAppDispatch();
+  const { t } = useI18n();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -152,8 +156,8 @@ export function ChangePasswordSection() {
       setError('Tous les champs sont obligatoires');
       return;
     }
-    if (newPassword.length < 6) {
-      setError('Le nouveau mot de passe doit contenir au moins 6 caractères');
+    if (!isPasswordPolicySatisfied(newPassword)) {
+      setError(t('auth.weakPassword'));
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -196,8 +200,9 @@ export function ChangePasswordSection() {
         onChange={setNewPassword}
         show={showNew}
         setShow={setShowNew}
-        placeholder="6 caractères minimum"
+        placeholder="••••••••"
       />
+      <PasswordRequirements password={newPassword} />
       <PasswordField
         label="Confirmer le mot de passe"
         value={confirmPassword}
@@ -479,7 +484,7 @@ export function IdentityVerificationSection() {
   );
 }
 
-function DeleteAccountSection() {
+export function DeleteAccountSection() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectAuth);

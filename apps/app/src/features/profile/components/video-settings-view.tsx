@@ -2,6 +2,7 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
+import { useI18n } from '@/features/i18n/i18n-provider';
 import {
   VideoRecorderModal,
   buildVideoRecorderTr,
@@ -23,6 +24,8 @@ import { useEffect, useRef, useState } from 'react';
 
 export function VideoSettingsView() {
   const dispatch = useAppDispatch();
+  const { locale, t } = useI18n();
+  const isRtl = locale === 'ar';
   const { profile, loading, error: profileError } = useAppSelector(selectOnboarding);
   const { mediaUploading, mediaError } = useAppSelector(selectProfile);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
@@ -97,40 +100,67 @@ export function VideoSettingsView() {
     const video = videoRef.current;
     if (!video || !previewUrl) return;
     video.muted = false;
-    void video
-      .play()
-      .then(() => setPlaying(true))
-      .catch(() => setPlaying(false));
+    void video.play().then(() => setPlaying(true));
   };
 
-  if (!profile && loading) {
-    return <div className="py-16 text-center text-sm text-[#888]">Chargement de la vidéo…</div>;
+  if (loading && !profile) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-sm text-[#777]">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2F76BB] border-t-transparent" />
+        <p className="mt-3">
+          {locale === 'en'
+            ? 'Loading video...'
+            : locale === 'ar'
+              ? 'جارٍ التحميل...'
+              : 'Chargement de la vidéo…'}
+        </p>
+      </div>
+    );
   }
-  if (!profile && profileError) {
+
+  if (profileError && !profile) {
     return (
       <div className="rounded-2xl bg-white p-6 text-center shadow-sm" role="alert">
-        <p className="text-sm text-[#E24E59]">Impossible de charger votre profil.</p>
+        <p className="text-sm text-[#E24E59]">
+          {locale === 'en'
+            ? 'Unable to load profile.'
+            : locale === 'ar'
+              ? 'تعذر تحميل الملف الشخصي.'
+              : 'Impossible de charger votre profil.'}
+        </p>
         <button
           type="button"
           onClick={() => dispatch(fetchOnboardingProfile())}
           className="mt-4 rounded-xl bg-[#2F76BB] px-5 py-2.5 text-sm font-bold text-white"
         >
-          Réessayer
+          {t('common.retry') || 'Réessayer'}
         </button>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-3">
+    <div className="mx-auto w-full max-w-2xl space-y-3" dir={isRtl ? 'rtl' : 'ltr'}>
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E8F0FA]">
             <Film size={18} color={matchyBrand.blue} />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-[#353535]">Vidéo de présentation</h2>
-            <p className="text-[11px] text-[#888]">Durée max : 20 secondes</p>
+            <h2 className="text-sm font-bold text-[#353535]">
+              {locale === 'en'
+                ? 'Presentation Video'
+                : locale === 'ar'
+                  ? 'فيديو العرض التقديمي'
+                  : 'Vidéo de présentation'}
+            </h2>
+            <p className="text-[11px] text-[#888]">
+              {locale === 'en'
+                ? 'Max length: 20 seconds'
+                : locale === 'ar'
+                  ? 'المدة الأقصى: 20 ثانية'
+                  : 'Durée max : 20 secondes'}
+            </p>
           </div>
         </div>
 
@@ -152,7 +182,17 @@ export function VideoSettingsView() {
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-xs text-white/70">
-                  {authenticated.loading ? 'Chargement de la vidéo…' : 'Vidéo inaccessible'}
+                  {authenticated.loading
+                    ? locale === 'en'
+                      ? 'Loading video...'
+                      : locale === 'ar'
+                        ? 'جارٍ تحميل الفيديو...'
+                        : 'Chargement de la vidéo…'
+                    : locale === 'en'
+                      ? 'Video unavailable'
+                      : locale === 'ar'
+                        ? 'الفيديو غير متاح'
+                        : 'Vidéo inaccessible'}
                 </div>
               )}
               {!playing && previewUrl && (
@@ -160,15 +200,24 @@ export function VideoSettingsView() {
                   type="button"
                   onClick={startPreview}
                   className="absolute inset-0 flex items-center justify-center bg-black/30"
-                  aria-label="Lire la vidéo"
+                  aria-label={
+                    locale === 'en'
+                      ? 'Play video'
+                      : locale === 'ar'
+                        ? 'تشغيل الفيديو'
+                        : 'Lire la vidéo'
+                  }
                 >
                   <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90">
                     <Play size={22} color={matchyBrand.blue} fill={matchyBrand.blue} />
                   </span>
                 </button>
               )}
-              <span className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-[#61BCA6] px-2 py-1 text-[10px] font-bold text-white">
-                <Zap size={10} /> Ajoutée ✓
+              <span
+                className={`absolute top-2 ${isRtl ? 'left-2' : 'right-2'} flex items-center gap-1 rounded-full bg-[#61BCA6] px-2 py-1 text-[10px] font-bold text-white`}
+              >
+                <Zap size={10} />{' '}
+                {locale === 'en' ? 'Added ✓' : locale === 'ar' ? 'تمت الإضافة ✓' : 'Ajoutée ✓'}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -179,16 +228,33 @@ export function VideoSettingsView() {
                 className="flex items-center justify-center gap-2 rounded-xl bg-[#E8F0FA] py-2.5 text-[13px] font-bold text-[#2F76BB] disabled:opacity-60"
               >
                 <Video size={14} />
-                {mediaUploading ? 'Envoi en cours…' : 'Remplacer la vidéo'}
+                {mediaUploading
+                  ? locale === 'en'
+                    ? 'Uploading...'
+                    : locale === 'ar'
+                      ? 'جارٍ الرفع...'
+                      : 'Envoi en cours…'
+                  : locale === 'en'
+                    ? 'Replace video'
+                    : locale === 'ar'
+                      ? 'استبدال الفيديو'
+                      : 'Remplacer la vidéo'}
               </button>
               <button
                 type="button"
                 onClick={handleRemove}
                 disabled={mediaUploading}
                 className="flex items-center justify-center gap-2 rounded-xl bg-[#FFF0F0] py-2.5 text-[13px] font-bold text-[#FF6B6B] disabled:opacity-60"
-                aria-label="Supprimer la vidéo"
+                aria-label={
+                  locale === 'en'
+                    ? 'Delete video'
+                    : locale === 'ar'
+                      ? 'حذف الفيديو'
+                      : 'Supprimer la vidéo'
+                }
               >
-                <Trash2 size={14} /> Supprimer
+                <Trash2 size={14} />{' '}
+                {locale === 'en' ? 'Delete' : locale === 'ar' ? 'حذف' : 'Supprimer'}
               </button>
             </div>
           </div>
@@ -197,17 +263,31 @@ export function VideoSettingsView() {
             type="button"
             onClick={() => setShowRecorder(true)}
             disabled={mediaUploading}
-            className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-[#D0E4F7] py-8 text-[#888] hover:bg-[#F5F7FA] disabled:opacity-60"
+            className="flex w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-[#B8D8F8] bg-gradient-to-b from-[#F5F9FF] to-white py-10 text-[#888] transition-all hover:border-[#2F76BB] hover:bg-[#EEF5FF] disabled:opacity-60"
           >
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E8F0FA]">
-              <Video size={24} color={matchyBrand.blue} />
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F0FA] shadow-sm">
+              <Video size={28} color={matchyBrand.blue} />
             </span>
-            <span className="text-center">
-              <span className="block text-sm font-bold text-[#2F76BB]">
-                Enregistrer ou importer
+            <span className="px-4 text-center">
+              <span className="block text-base font-extrabold text-[#2F76BB]">
+                {locale === 'en'
+                  ? 'Record or import'
+                  : locale === 'ar'
+                    ? 'تسجيل أو استيراد'
+                    : 'Enregistrer ou importer'}
               </span>
-              <span className="mt-0.5 block text-xs text-[#AAA]">
-                {mediaUploading ? 'Envoi en cours…' : 'Caméra ou import · 20s max'}
+              <span className="mt-1 block text-xs text-[#777]">
+                {mediaUploading
+                  ? locale === 'en'
+                    ? 'Uploading...'
+                    : locale === 'ar'
+                      ? 'جارٍ الرفع...'
+                      : 'Envoi en cours…'
+                  : locale === 'en'
+                    ? 'Camera recording or MP4 upload · Max 20 seconds'
+                    : locale === 'ar'
+                      ? 'تسجيل من الكاميرا أو رفع فيديو MP4 · 20 ثانية كحد أقصى'
+                      : 'Caméra ou import MP4 · 20s max'}
               </span>
             </span>
           </button>
@@ -217,9 +297,17 @@ export function VideoSettingsView() {
           <p className="mt-2 text-xs text-[#E74C3C]" role="alert">
             {clientError ||
               (authenticated.error || playbackError
-                ? 'Cette vidéo est inaccessible.'
+                ? locale === 'en'
+                  ? 'This video is unavailable.'
+                  : locale === 'ar'
+                    ? 'هذا الفيديو غير متاح.'
+                    : 'Cette vidéo est inaccessible.'
                 : humanizeMediaError(mediaError)) ||
-              'Échec de la vidéo.'}
+              (locale === 'en'
+                ? 'Video error.'
+                : locale === 'ar'
+                  ? 'خطأ في الفيديو.'
+                  : 'Échec de la vidéo.')}
           </p>
         )}
       </section>
@@ -228,19 +316,29 @@ export function VideoSettingsView() {
         <div className="flex items-start gap-3">
           <AlertCircle size={16} color={matchyBrand.blue} className="mt-0.5 shrink-0" />
           <p className="text-xs leading-5 text-[#2F76BB]">
-            Une vidéo de présentation augmente vos chances de match jusqu&apos;à 3×.
+            {locale === 'en'
+              ? 'A presentation video increases your match chances by up to 3×.'
+              : locale === 'ar'
+                ? 'فيديو العرض التقديمي يزيد فرص المطابقة لديك حتى 3 أضعاف.'
+                : "Une vidéo de présentation augmente vos chances de match jusqu'à 3×."}
           </p>
         </div>
       </aside>
 
       {saved && (
         <div
-          className="fixed right-4 bottom-6 left-4 z-50 flex items-center gap-3 rounded-2xl px-5 py-3 text-white shadow-lg md:right-8 md:left-auto md:w-80"
+          className={`fixed ${isRtl ? 'left-4' : 'right-4'} bottom-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3 text-white shadow-lg md:w-80`}
           style={{ background: matchyBrand.gradient }}
           role="status"
         >
           <Zap size={18} />
-          <span className="text-[13px] font-bold">✓ Vidéo enregistrée avec succès !</span>
+          <span className="text-[13px] font-bold">
+            {locale === 'en'
+              ? '✓ Video saved successfully!'
+              : locale === 'ar'
+                ? '✓ تم حفظ الفيديو بنجاح!'
+                : '✓ Vidéo enregistrée avec succès !'}
+          </span>
         </div>
       )}
 
@@ -248,7 +346,10 @@ export function VideoSettingsView() {
         <VideoRecorderModal
           onVideoReady={handleVideoReady}
           onClose={() => setShowRecorder(false)}
-          tr={buildVideoRecorderTr('fr', 'fr-FR')}
+          tr={buildVideoRecorderTr(
+            locale === 'ar' ? 'ar' : locale === 'en' ? 'en' : 'fr',
+            locale === 'ar' ? 'ar-TN' : locale === 'en' ? 'en-US' : 'fr-FR',
+          )}
         />
       )}
     </div>
