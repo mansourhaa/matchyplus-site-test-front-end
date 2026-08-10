@@ -4,6 +4,7 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
 import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 const LANGUAGE_NAMES: Record<Locale, string> = {
@@ -94,6 +95,8 @@ export function Header() {
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const { locale, setLocale, t } = useI18n();
+  const pathname = usePathname();
+  const isHome = pathname === '/';
 
   useEffect(() => {
     const clickOutside = (e: MouseEvent) => {
@@ -111,7 +114,7 @@ export function Header() {
   };
 
   return (
-    <header className="site-header">
+    <header className={`site-header${isHome ? '' : 'subpage'}`}>
       <div className="header-inner container">
         <Link href="/" className="brand" aria-label="Matchy Plus home">
           <Logo />
@@ -125,7 +128,7 @@ export function Header() {
             <button
               type="button"
               onClick={() => setLangOpen(!langOpen)}
-              className="flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent px-2.5 py-1.5 text-white select-none hover:bg-white/10"
+              className={`flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent px-2.5 py-1.5 select-none hover:bg-white/10 ${isHome ? 'text-white' : 'text-brand-navy'}`}
             >
               <Flag locale={locale} />
               <span className="text-[14px] font-bold">{LANGUAGE_NAMES[locale]}</span>
