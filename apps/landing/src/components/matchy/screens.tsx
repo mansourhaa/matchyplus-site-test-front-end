@@ -66,6 +66,7 @@ export function HeroScreen() {
           width={240}
           height={280}
           className="h-[168px] w-full object-cover"
+          priority
         />
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-white">
           <p className="text-[10px] leading-tight font-bold">Roman, 41</p>

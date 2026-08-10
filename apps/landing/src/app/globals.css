@@ -128,7 +128,7 @@
 }
 
 .container { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
-.site-header { position: absolute; z-index: 10; top: 0; left: 0; right: 0; color: white; }
+.site-header { position: absolute; z-index: 50; top: 0; left: 0; right: 0; color: white; }
 .header-inner { display:flex; align-items:center; justify-content:space-between; min-height:86px; }
 .brand { display:flex; align-items:center; color:inherit; }.site-header .brand-logo { display:block; width:188px; height:auto; filter:brightness(0) invert(1); }.brand-logo-footer { display:block; width:180px; height:auto; filter:brightness(0) invert(1); }
 .desktop-nav { display:flex; align-items:center; gap:24px; font-size:15px; }.desktop-nav a:hover, .mobile-menu a:hover { color:#aaf0e4; }.language-picker { display:flex; align-items:center; gap:4px; position:relative; }.language-picker > span { font-size:18px; line-height:1; }.language-picker select { appearance:none; background:transparent; color:transparent; border:0; width:18px; font-size:0; outline:0; cursor:pointer; position:absolute; inset:0; }.language-picker option { font-size:14px; color:var(--ink); }.nav-cta { background:#fff; color:var(--blue); border-radius:999px; padding:10px 17px; display:flex; align-items:center; gap:6px; font-weight:800; }.mobile-toggle { display:none; background:none; border:0; color:inherit; }.mobile-menu { display:none; }
