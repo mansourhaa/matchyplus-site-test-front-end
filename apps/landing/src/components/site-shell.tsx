@@ -4,7 +4,19 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
 import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+const LANGUAGE_FLAGS: Record<Locale, string> = {
+  fr: '🇫🇷',
+  en: '🇬🇧',
+  ar: '🇹🇳',
+};
+
+const LANGUAGE_NAMES: Record<Locale, string> = {
+  fr: 'FR',
+  en: 'EN',
+  ar: 'AR',
+};
 
 const languageOptions = [
   { value: 'fr', label: 'Français', flag: '🇫🇷' },
@@ -24,10 +36,23 @@ function Logo({ footer = false }: { footer?: boolean }) {
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
   const { locale, setLocale, t } = useI18n();
+
+  useEffect(() => {
+    const clickOutside = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', clickOutside);
+    return () => document.removeEventListener('mousedown', clickOutside);
+  }, []);
 
   const handleLanguageChange = (val: string) => {
     setLocale(val as Locale);
+    setLangOpen(false);
   };
 
   return (
@@ -41,22 +66,40 @@ export function Header() {
           <Link href="/#explore">{t('landing.explore')}</Link>
           <Link href="/#how">{t('landing.how')}</Link>
           <Link href="/#download">{t('landing.download')}</Link>
-          <div className="language-picker">
-            <span aria-hidden="true">
-              {languageOptions.find((option) => option.value === locale)?.flag}
-            </span>
-            <ChevronDown size={14} />
-            <select
-              aria-label="Language"
-              value={locale}
-              onChange={(e) => handleLanguageChange(e.target.value)}
+          <div ref={langRef} className="language-picker-custom relative">
+            <button
+              type="button"
+              onClick={() => setLangOpen(!langOpen)}
+              className="flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent px-2.5 py-1.5 text-white select-none hover:bg-white/10"
             >
-              {languageOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.flag} {option.label}
-                </option>
-              ))}
-            </select>
+              <span aria-hidden="true">{LANGUAGE_FLAGS[locale]}</span>
+              <span className="text-[14px] font-bold">{LANGUAGE_NAMES[locale]}</span>
+              <ChevronDown
+                size={14}
+                className={`transition-transform duration-200 ${langOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {langOpen && (
+              <div className="absolute top-[calc(100%+0.5rem)] right-0 z-50 w-32 overflow-hidden rounded-xl border border-neutral-100 bg-white py-1 shadow-xl">
+                {(['fr', 'en', 'ar'] as Locale[]).map((item) => {
+                  const active = locale === item;
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => handleLanguageChange(item)}
+                      className="flex w-full cursor-pointer items-center justify-between px-3.5 py-2 text-sm font-medium text-neutral-800 transition-colors hover:bg-neutral-50"
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{LANGUAGE_FLAGS[item]}</span>
+                        <span>{LANGUAGE_NAMES[item]}</span>
+                      </span>
+                      {active && <span className="bg-brand-teal h-2 w-2 rounded-full" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
           <Link className="nav-cta" href="/devenir-partenaire">
             {t('landing.cta')} <ArrowUpRight size={15} />
