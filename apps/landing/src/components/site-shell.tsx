@@ -16,7 +16,7 @@ function Logo({ footer = false }: { footer?: boolean }) {
   return (
     <img
       className={`brand-logo${footer ? 'brand-logo-footer' : ''}`}
-      src="/matchy-logo.png"
+      src={footer ? '/logo-matchy-white.svg' : '/matchy-logo.png'}
       alt="Matchy+"
     />
   );
@@ -37,10 +37,10 @@ export function Header() {
           <Logo />
         </Link>
         <nav className="desktop-nav" aria-label="Main navigation">
-          <a href="#services">{t('landing.services')}</a>
-          <a href="#explore">{t('landing.explore')}</a>
-          <a href="#how">{t('landing.how')}</a>
-          <a href="#download">{t('landing.download')}</a>
+          <Link href="/#services">{t('landing.services')}</Link>
+          <Link href="/#explore">{t('landing.explore')}</Link>
+          <Link href="/#how">{t('landing.how')}</Link>
+          <Link href="/#download">{t('landing.download')}</Link>
           <div className="language-picker">
             <span aria-hidden="true">
               {languageOptions.find((option) => option.value === locale)?.flag}
@@ -72,15 +72,15 @@ export function Header() {
       </div>
       {open && (
         <div className="mobile-menu">
-          <a href="#services" onClick={() => setOpen(false)}>
+          <Link href="/#services" onClick={() => setOpen(false)}>
             {t('landing.services')}
-          </a>
-          <a href="#explore" onClick={() => setOpen(false)}>
+          </Link>
+          <Link href="/#explore" onClick={() => setOpen(false)}>
             {t('landing.explore')}
-          </a>
-          <a href="#how" onClick={() => setOpen(false)}>
+          </Link>
+          <Link href="/#how" onClick={() => setOpen(false)}>
             {t('landing.how')}
-          </a>
+          </Link>
           <Link href="/faq" onClick={() => setOpen(false)}>
             {t('landing.faq')}
           </Link>
@@ -127,10 +127,10 @@ export function Footer() {
         </div>
         <div>
           <h3>{locale === 'ar' ? 'اكتشف' : locale === 'en' ? 'Discover' : 'Découvrir'}</h3>
-          <a href="#services">{t('landing.services')}</a>
-          <a href="#explore">{t('landing.explore')}</a>
-          <a href="#how">{t('landing.how')}</a>
-          <a href="#download">{t('landing.download')}</a>
+          <Link href="/#services">{t('landing.services')}</Link>
+          <Link href="/#explore">{t('landing.explore')}</Link>
+          <Link href="/#how">{t('landing.how')}</Link>
+          <Link href="/#download">{t('landing.download')}</Link>
         </div>
         <div>
           <h3>
