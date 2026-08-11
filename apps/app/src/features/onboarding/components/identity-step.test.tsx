@@ -60,11 +60,10 @@ const registeredUser = {
   onboarding_completed: false,
 };
 
-// Photo is required for a phone-signup account (the only kind an unauthenticated
-// visitor can create), but driving the actual <input type="file"> + FileReader round
-// trip isn't needed to exercise the credentials flow below — seeding it via `profile`
-// (read once into local state by the component's own useState initializers) is enough,
-// same as how the existing OAuth tests avoid it by exempting on auth_provider instead.
+// A photo is required for every account now, but driving the actual <input type="file">
+// + FileReader round trip isn't needed to exercise flows below that aren't about the
+// photo itself — seeding it via `profile` (read once into local state by the
+// component's own useState initializers) is enough.
 const unauthenticatedProfileWithPhoto = {
   id: '',
   name: null,
@@ -86,6 +85,8 @@ const unauthenticatedProfileWithPhoto = {
   languages: [],
   onboardingCompleted: false,
 };
+
+const authenticatedProfileWithPhoto = { ...unauthenticatedProfileWithPhoto, id: 'user-1' };
 
 function fillIdentityAndCredentials() {
   fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
@@ -111,7 +112,7 @@ describe('IdentityStep', () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
       <IdentityStep
-        profile={null}
+        profile={authenticatedProfileWithPhoto}
         stepNumber={1}
         totalSteps={3}
         loading={false}
@@ -166,7 +167,7 @@ describe('IdentityStep', () => {
     expect(await screen.findAllByText('La photo de profil est obligatoire.')).not.toHaveLength(0);
   });
 
-  it('does not require a photo for an OAuth account (no phone ever collected)', async () => {
+  it('also requires a photo for an OAuth account — the provider avatar is never copied into User.image', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
       <IdentityStep
@@ -199,19 +200,15 @@ describe('IdentityStep', () => {
     });
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
-    expect(onNext).toHaveBeenCalledWith({
-      name: 'Jane Doe',
-      job: 'Électricien',
-      bio: undefined,
-      profileType: 'INDIVIDUAL',
-    });
+    expect(onNext).not.toHaveBeenCalled();
+    expect(await screen.findAllByText('La photo de profil est obligatoire.')).not.toHaveLength(0);
   });
 
   it('does not require profession for a Looking for (PROVIDER) profile', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
       <IdentityStep
-        profile={null}
+        profile={authenticatedProfileWithPhoto}
         stepNumber={1}
         totalSteps={3}
         loading={false}
@@ -238,7 +235,7 @@ describe('IdentityStep', () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
       <IdentityStep
-        profile={null}
+        profile={authenticatedProfileWithPhoto}
         stepNumber={1}
         totalSteps={3}
         loading={false}
