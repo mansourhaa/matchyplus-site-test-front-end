@@ -254,14 +254,48 @@ pipeline {
             TARGET_SHA=$(cat "$WORKSPACE/deployed-sha.txt")
             echo "waiting for ArgoCD to sync ${TARGET_SHA} on ${ARGOCD_SERVER}"
 
+            # -k is required, and is safe here specifically.
+            #
+            # argocd-server terminates TLS with its own self-signed certificate.
+            # Without -k every call died with curl exit 60 ("SSL certificate
+            # problem: self-signed certificate") and returned an EMPTY body - no
+            # error JSON, nothing to parse, no clue in the log. That is what
+            # actually failed production builds 8 through 11, not the token and
+            # not the response parsing.
+            #
+            # It went unnoticed for a long time because testing the same URL by
+            # hand with `curl -sk` works perfectly, so connectivity and auth both
+            # look healthy when checked manually. The pipeline was the only thing
+            # not passing -k.
+            #
+            # Safe because ARGOCD_SERVER is a ClusterIP: the request never leaves
+            # the node, so there is no meaningful man-in-the-middle to protect
+            # against. The stricter option is mounting ArgoCD's CA and using
+            # --cacert, which is worth doing if this ever talks to a remote
+            # cluster over a real network.
+            CURL_OPTS="-sk --max-time 25"
+
             api() {
-              curl -s --max-time 25 \
+              curl $CURL_OPTS \
                 -H "Authorization: Bearer ${ARGOCD_TOKEN}" \
                 "${ARGOCD_SERVER}/api/v1/applications/${ARGOCD_APP}$1"
             }
 
+            # Fail loudly and immediately if the API is unreachable or the token
+            # is rejected, rather than discovering it 15 minutes later via an
+            # empty poll loop.
+            PROBE=$(curl $CURL_OPTS -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer ${ARGOCD_TOKEN}" \
+              "${ARGOCD_SERVER}/api/v1/applications/${ARGOCD_APP}" || echo 000)
+            if [ "$PROBE" != "200" ]; then
+              echo "cannot reach the ArgoCD API: HTTP ${PROBE} from ${ARGOCD_SERVER}" >&2
+              echo "  000 = connection or TLS failure; 401/403 = the argocd-token credential" >&2
+              exit 1
+            fi
+            echo "ArgoCD API reachable and the token is accepted"
+
             # nudge ArgoCD rather than waiting out its poll interval
-            curl -s -o /dev/null --max-time 25 -X POST \
+            curl $CURL_OPTS -o /dev/null -X POST \
               -H "Authorization: Bearer ${ARGOCD_TOKEN}" \
               "${ARGOCD_SERVER}/api/v1/applications/${ARGOCD_APP}?refresh=normal" || true
 
