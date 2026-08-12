@@ -64,6 +64,7 @@ export function OnboardingWizard() {
     if (finishingRef.current) return;
     if (hasValidatedSession && profile?.onboardingCompleted) {
       router.replace(resolvePostAuthDestination(nextParam, true));
+      router.refresh();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasValidatedSession, profile?.onboardingCompleted]);
@@ -125,6 +126,7 @@ export function OnboardingWizard() {
     // Unlock dashboard chrome immediately — authcheck can catch up in the background.
     dispatch(markOnboardingCompleted());
     router.replace(resolvePostAuthDestination(nextParam, true));
+    router.refresh();
     void dispatch(fetchCurrentUser());
     return true;
   };
