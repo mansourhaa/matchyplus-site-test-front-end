@@ -21,92 +21,6 @@ import { AuthLayout } from './auth-layout';
 import { MatchyLogo } from './matchy-logo';
 import { PhoneInput } from './phone-input';
 
-function FlagFr() {
-  return (
-    <svg width="18" height="13" viewBox="0 0 3 2" className="rounded-sm shrink-0">
-      <rect width="1" height="2" fill="#002395" />
-      <rect x="1" width="1" height="2" fill="#FFFFFF" />
-      <rect x="2" width="1" height="2" fill="#ED2939" />
-    </svg>
-  );
-}
-
-function FlagEn() {
-  return (
-    <svg width="18" height="13" viewBox="0 0 50 30" className="rounded-sm shrink-0">
-      <rect width="50" height="30" fill="#012169" />
-      <path d="M0 0 L50 30 M0 30 L50 0" stroke="#FFF" strokeWidth="6" />
-      <path d="M0 0 L50 30 M0 30 L50 0" stroke="#C8102E" strokeWidth="2" />
-      <path d="M25 0 V30 M0 15 H50" stroke="#FFF" strokeWidth="10" />
-      <path d="M25 0 V30 M0 15 H50" stroke="#C8102E" strokeWidth="6" />
-    </svg>
-  );
-}
-
-function FlagAr() {
-  return (
-    <svg width="18" height="13" viewBox="0 0 120 80" className="rounded-sm shrink-0">
-      <rect width="120" height="80" fill="#E71F19" />
-      <circle cx="60" cy="40" r="20" fill="#FFF" />
-      <circle cx="64" cy="40" r="16" fill="#E71F19" />
-      <circle cx="60" cy="40" r="16" fill="#FFF" />
-      <path d="M 64,32 A 8,8 0 1,0 64,48 A 8,8 0 1,0 64,32 Z" fill="#E71F19" />
-    </svg>
-  );
-}
-
-function getFlag(locale: string) {
-  if (locale === 'fr') return <FlagFr />;
-  if (locale === 'en') return <FlagEn />;
-  return <FlagAr />;
-}
-
-function LanguageSwitcher() {
-  const { locale, setLocale } = useI18n();
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex h-8 items-center gap-1.5 rounded-lg px-2 py-1"
-        style={{ background: '#F5F7FA', border: '1px solid #E0E0E0' }}
-      >
-        {getFlag(locale)}
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#555' }}>{locale.toUpperCase()}</span>
-      </button>
-      {open && (
-        <div
-          className="absolute top-9 right-0 z-50 overflow-hidden rounded-xl shadow-lg"
-          style={{ background: 'white', border: '1px solid #F0F0F0', minWidth: 90 }}
-        >
-          {(['fr', 'en', 'ar'] as const).map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => {
-                setLocale(l);
-                setOpen(false);
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 hover:bg-[#F5F7FA]"
-              style={{
-                fontSize: 12,
-                fontWeight: locale === l ? 700 : 400,
-                color: locale === l ? '#2F76BB' : '#555',
-                background: locale === l ? '#EEF5FF' : 'white',
-              }}
-            >
-              {getFlag(l)}
-              <span>{l.toUpperCase()}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function LinkedInIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -592,7 +506,6 @@ export function LoginForm() {
             )}
             <MatchyLogo size="sm" />
           </div>
-          <LanguageSwitcher />
         </div>
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-10 py-10">
           {formContent}
@@ -624,7 +537,6 @@ export function LoginForm() {
             )}
             <MatchyLogo size="sm" />
           </div>
-          <LanguageSwitcher />
         </div>
         <div className="flex flex-1 flex-col justify-center px-7 py-8">{formContent}</div>
       </div>
