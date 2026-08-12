@@ -14,11 +14,13 @@ import {
   useState,
 } from 'react';
 
-const LOCATION_GRANTED_KEY = 'matchy_location_permission_granted';
-const LOCATION_COORDS_KEY = 'matchy_location_coords';
-
-const IP_FALLBACK_NOTICE =
-  'Using approximate location from your network because precise GPS is unavailable.';
+import {
+  GEOLOCATION_MAX_AGE,
+  GEOLOCATION_TIMEOUT,
+  IP_FALLBACK_NOTICE,
+  LOCATION_COORDS_KEY,
+  LOCATION_GRANTED_KEY,
+} from '@/constants';
 
 type IpGeolocationResponse = {
   success: boolean;
@@ -69,8 +71,8 @@ async function getCurrentCoords(): Promise<{ latitude: number; longitude: number
   if (Capacitor.isNativePlatform()) {
     const position = await Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
-      timeout: 5_000,
-      maximumAge: 60_000,
+      timeout: GEOLOCATION_TIMEOUT,
+      maximumAge: GEOLOCATION_MAX_AGE,
     });
     return {
       latitude: position.coords.latitude,
@@ -85,8 +87,8 @@ async function getCurrentCoords(): Promise<{ latitude: number; longitude: number
   const position = await new Promise<GeolocationPosition>((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, {
       enableHighAccuracy: true,
-      timeout: 5_000,
-      maximumAge: 60_000,
+      timeout: GEOLOCATION_TIMEOUT,
+      maximumAge: GEOLOCATION_MAX_AGE,
     });
   });
 
