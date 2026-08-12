@@ -37,6 +37,23 @@ pipeline {
     // app means editing this line and the build stage - not four stages.
     IMAGE_COMPONENTS = 'api app admin landing ai'
 
+    // Build with BuildKit, not the legacy builder.
+    //
+    // This is a disk decision, not a speed one. api/app/admin/landing are
+    // 4-stage builds whose installer stage runs pnpm install and turbo build
+    // over the whole monorepo - a couple of GB each. The legacy builder writes
+    // every intermediate stage into the image store as a real image, and the
+    // post block below only untags the five finals, so about 8GB per build was
+    // left behind as dangling images. Twelve builds took the disk to 95%,
+    // kubelet raised DiskPressure, tainted the node and evicted every pod;
+    // production was down roughly seven hours on 10 Aug 2026.
+    //
+    // BuildKit keeps intermediates in a cache the daemon size-limits instead
+    // (builder.gc in /etc/docker/daemon.json). This needs the buildx plugin in
+    // the Jenkins image - it is installed there now, and note that without it
+    // the CLI falls back to the legacy builder silently rather than failing.
+    DOCKER_BUILDKIT = '1'
+
     // Baked into the app/admin bundles at BUILD time. Next.js inlines
     // NEXT_PUBLIC_* into the client bundle during the build, so this cannot be
     // injected later as a runtime env var on the Deployment - the browser
@@ -488,10 +505,18 @@ pipeline {
 
   post {
     always {
+      // Untagging the five finals is not cleanup on its own - it only frees the
+      // ~540MB we ship. The multi-stage builds leave several GB of intermediate
+      // layers behind per run, which is what actually filled the disk and took
+      // production down on 10 Aug 2026. BuildKit (DOCKER_BUILDKIT above) stops
+      // that leaking as dangling images, and the prune below clears whatever
+      // still slips through so the pipeline cleans up after itself rather than
+      // relying on the host's nightly cron to notice.
       sh """
         for COMPONENT in ${IMAGE_COMPONENTS}; do
           docker rmi ${REGISTRY_REPO}:\${COMPONENT}-${IMAGE_TAG} || true
         done
+        docker image prune -f || true
       """
     }
   }
