@@ -20,7 +20,7 @@ export function MatchyLogo({ size = 'md', className }: MatchyLogoProps) {
       alt="Matchy+"
       height={height}
       className={className}
-      style={{ height, width: 'auto' }}
+      style={{ height, width: 'auto', flexShrink: 0 }}
     />
   );
 }
@@ -34,7 +34,7 @@ export function MatchyLogoWhite({ size = 'md', className }: MatchyLogoProps) {
       alt="Matchy+"
       height={height}
       className={className}
-      style={{ height, width: 'auto' }}
+      style={{ height, width: 'auto', flexShrink: 0 }}
     />
   );
 }
