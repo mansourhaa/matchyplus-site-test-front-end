@@ -380,6 +380,7 @@ export function SearchView() {
       </div>
 
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-4 md:px-8">
+        {/* Strict Location Gating: Render LocationRequiredOverlay to block search access when location is not synced/granted, without redirecting or logging out the user. */}
         {locationRequired && (
           <LocationRequiredOverlay
             message={accessMessage}
