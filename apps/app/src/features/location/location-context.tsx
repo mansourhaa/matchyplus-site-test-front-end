@@ -1,6 +1,7 @@
 'use client';
 
 import { api } from '@/lib/api';
+import { handleError } from '@/lib/error-handler';
 import { toast } from '@/lib/toast';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
@@ -56,8 +57,8 @@ function readStoredCoords(): { latitude: number; longitude: number } | null {
     ) {
       return { latitude: parsed.latitude, longitude: parsed.longitude };
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    handleError(error, 'readStoredCoords');
   }
   return null;
 }
@@ -112,8 +113,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       try {
         window.localStorage.removeItem(LOCATION_GRANTED_KEY);
         window.localStorage.removeItem(LOCATION_COORDS_KEY);
-      } catch {
-        // ignore
+      } catch (error) {
+        handleError(error, 'clearLocation');
       }
     }
     setLatitude(null);
@@ -150,7 +151,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         }
         status.addEventListener('change', handlePermissionChange);
       })
-      .catch(() => {});
+      .catch((error) => {
+        handleError(error, 'geolocationPermissionQuery');
+      });
 
     return () => {
       permissionStatus?.removeEventListener('change', handlePermissionChange);
@@ -183,7 +186,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       }
       setAccessMessage('Could not determine your location from your network. Try again later.');
       return false;
-    } catch {
+    } catch (error) {
+      handleError(error, 'requestIpFallback');
       setAccessMessage('Could not determine your location from your network. Try again later.');
       return false;
     }
@@ -234,6 +238,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       setAccessMessage(null);
       return true;
     } catch (error) {
+      handleError(error, 'requestBrowserLocation');
       const code =
         error && typeof error === 'object' && 'code' in error ? Number(error.code) : null;
       if (code === 1) {
@@ -311,8 +316,8 @@ export function useAutoCaptureGrantedLocation() {
           void requestBrowserLocation();
         }
       })
-      .catch(() => {
-        // Safari / older browsers may reject permissions.query for geolocation.
+      .catch((error) => {
+        handleError(error, 'useAutoCaptureGrantedLocation');
       });
 
     return () => {
