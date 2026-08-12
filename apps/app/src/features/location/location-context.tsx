@@ -69,7 +69,7 @@ async function getCurrentCoords(): Promise<{ latitude: number; longitude: number
   if (Capacitor.isNativePlatform()) {
     const position = await Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
-      timeout: 15_000,
+      timeout: 5_000,
       maximumAge: 60_000,
     });
     return {
@@ -85,7 +85,7 @@ async function getCurrentCoords(): Promise<{ latitude: number; longitude: number
   const position = await new Promise<GeolocationPosition>((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, {
       enableHighAccuracy: true,
-      timeout: 15_000,
+      timeout: 5_000,
       maximumAge: 60_000,
     });
   });
