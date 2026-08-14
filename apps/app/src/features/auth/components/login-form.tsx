@@ -206,6 +206,7 @@ export function LoginForm() {
   useEffect(() => {
     if (!sessionChecked || !isAuthenticated || !user) return;
     router.replace(resolvePostAuthDestination(searchParams.get('next'), user.onboarding_completed));
+    router.refresh();
   }, [sessionChecked, isAuthenticated, user, router, searchParams]);
 
   const goToPhoneStep = () => {
