@@ -207,6 +207,28 @@ describe('IdentityStep', () => {
     });
   });
 
+  // Regression: an authenticated (e.g. Google OAuth) visitor mid-onboarding has no
+  // /login to go back to — proxy.ts bounces an authenticated visit to /login straight
+  // to /home, and MatchyDashboardShell bounces an incomplete profile from /home right
+  // back to /onboarding. Offering either link here trapped the user in that loop, only
+  // escapable by clearing cookies.
+  it('does not offer a /login escape hatch to an already-authenticated visitor', () => {
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={true}
+        onNext={vi.fn()}
+      />,
+      oauthAuthState,
+    );
+
+    expect(screen.queryAllByText('Retour')).toHaveLength(0);
+    expect(screen.queryAllByText('Connexion')).toHaveLength(0);
+  });
+
   it('does not require profession for a Looking for (PROVIDER) profile', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
@@ -458,6 +480,23 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
 
     expect(screen.queryByText('Numéro de téléphone')).not.toBeInTheDocument();
     expect(firstButton('Enregistrer et continuer')).toBeInTheDocument();
+  });
+
+  it('still offers the /login escape hatch to a genuinely unauthenticated, not-yet-registered visitor', () => {
+    renderWithAuthStore(
+      <IdentityStep
+        profile={unauthenticatedProfileWithPhoto}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onNext={vi.fn()}
+      />,
+      unauthenticatedState,
+    );
+
+    expect(screen.queryAllByText('Retour').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Connexion').length).toBeGreaterThan(0);
   });
 
   it('still requires a photo for a fresh phone signup even with a stale rehydrated OAuth user left over in Redux', () => {
