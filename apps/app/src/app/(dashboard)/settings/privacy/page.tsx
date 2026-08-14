@@ -15,19 +15,10 @@ export default function PrivacyPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleDelete = async () => {
-    const confirmMessage =
-      locale === 'en'
-        ? 'Are you sure you want to permanently delete your account? This action cannot be undone.'
-        : locale === 'ar'
-          ? 'هل أنت متأكد من رغبتك في حذف حسابك بشكل نهائي؟ لا يمكن التراجع عن هذا الإجراء.'
-          : 'Êtes-vous sûr de vouloir supprimer définitivement votre compte ? Cette action est irréversible.';
-
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
-
+    setShowConfirm(false);
     setLoading(true);
     try {
       await dispatch(deleteAccount({ confirm: true })).unwrap();
@@ -119,7 +110,7 @@ export default function PrivacyPage() {
 
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setShowConfirm(true)}
             disabled={loading}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#E74C3C] py-3.5 text-xs font-extrabold text-white transition-colors hover:bg-[#C0392B] disabled:opacity-50"
           >
@@ -138,6 +129,64 @@ export default function PrivacyPage() {
           </button>
         </div>
       </div>
+
+      {showConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4"
+          onClick={() => {
+            if (!loading) setShowConfirm(false);
+          }}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-account-confirm-title"
+            dir={isRtl ? 'rtl' : 'ltr'}
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FDEAEA]">
+              <AlertTriangle size={22} color="#E74C3C" />
+            </div>
+            <h2
+              id="delete-account-confirm-title"
+              className="mt-4 text-base font-extrabold"
+              style={{ color: matchyBrand.textDark }}
+            >
+              {locale === 'en'
+                ? 'Delete your account?'
+                : locale === 'ar'
+                  ? 'حذف حسابك؟'
+                  : 'Supprimer votre compte ?'}
+            </h2>
+            <p className="mt-2 text-xs leading-relaxed text-[#777]">
+              {locale === 'en'
+                ? 'Are you sure you want to permanently delete your account? This action cannot be undone.'
+                : locale === 'ar'
+                  ? 'هل أنت متأكد من رغبتك في حذف حسابك بشكل نهائي؟ لا يمكن التراجع عن هذا الإجراء.'
+                  : 'Êtes-vous sûr de vouloir supprimer définitivement votre compte ? Cette action est irréversible.'}
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 rounded-2xl py-3 text-xs font-bold"
+                style={{ border: `1.5px solid ${matchyBrand.border}`, color: matchyBrand.textDark }}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDelete()}
+                className="flex-1 rounded-2xl bg-[#E74C3C] py-3 text-xs font-extrabold text-white transition-colors hover:bg-[#C0392B]"
+              >
+                {locale === 'en' ? 'Delete' : locale === 'ar' ? 'حذف' : 'Supprimer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
