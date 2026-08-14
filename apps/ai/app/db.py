@@ -4,6 +4,7 @@ import json
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Iterator
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import psycopg
 from psycopg.rows import dict_row
@@ -13,9 +14,18 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _strip_prisma_only_params(database_url: str) -> str:
+    # `schema` is a Prisma connection-string extension psycopg doesn't recognize —
+    # the same DATABASE_URL is shared with the Node side, so strip it here rather
+    # than requiring every deploy config to carry a psycopg-specific variant.
+    parts = urlsplit(database_url)
+    query = [(key, value) for key, value in parse_qsl(parts.query) if key != "schema"]
+    return urlunsplit(parts._replace(query=urlencode(query)))
+
+
 @contextmanager
 def connect(database_url: str) -> Iterator[psycopg.Connection]:
-    with psycopg.connect(database_url, row_factory=dict_row) as conn:
+    with psycopg.connect(_strip_prisma_only_params(database_url), row_factory=dict_row) as conn:
         yield conn
 
 

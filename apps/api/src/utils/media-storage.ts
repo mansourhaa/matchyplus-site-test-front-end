@@ -13,11 +13,15 @@ const UPLOAD_ROOT = join(__dirname, '..', '..', 'uploads');
 export const PHOTOS_DIR = join(UPLOAD_ROOT, 'photos');
 export const VIDEOS_DIR = join(UPLOAD_ROOT, 'videos');
 export const AUDIO_DIR = join(UPLOAD_ROOT, 'audio');
+// Selfies — private, single-use, never served over a GET route, shared with the `ai`
+// container via a bind mount (see compose.dev.yaml).
+export const IDENTITY_DIR = join(UPLOAD_ROOT, 'identity');
 
 export async function ensureUploadDirs(): Promise<void> {
   await mkdir(PHOTOS_DIR, { recursive: true });
   await mkdir(VIDEOS_DIR, { recursive: true });
   await mkdir(AUDIO_DIR, { recursive: true });
+  await mkdir(IDENTITY_DIR, { recursive: true });
 }
 
 /** Writes a validated buffer under `dir` with a fresh UUID filename; returns that filename. */

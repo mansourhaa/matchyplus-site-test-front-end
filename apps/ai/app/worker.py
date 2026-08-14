@@ -9,6 +9,7 @@ from typing import Any
 from app.config import Settings, load_settings
 from app.db import mark_failed, mark_running, mark_succeeded
 from app.processors import get_processor
+from app.processors.verify_identity import warm_face_model
 from app.queue import JobQueue
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,7 @@ class AiWorker:
 
     def run_forever(self) -> None:
         self.queue.ensure_group()
+        self._warm_models()
         logger.info(
             "AI worker online group=%s consumer=%s stream=%s",
             self.settings.consumer_group,
@@ -50,6 +52,20 @@ class AiWorker:
             for message_id, data in messages:
                 self._handle_message(message_id, data)
 
+    def _warm_models(self) -> None:
+        """Loads heavy models before consuming, so the first job isn't the one that pays.
+
+        Runs on the worker thread only — the Flask health server keeps answering during
+        the download, and jobs enqueued meanwhile simply wait in the stream. A failure
+        here is not fatal: the processor loads the model itself on demand, so we log and
+        let the loop start rather than taking the worker down.
+        """
+        try:
+            if warm_face_model():
+                logger.info("Face model warm-up complete")
+        except Exception:  # noqa: BLE001 — warm-up is best-effort by design
+            logger.exception("Face model warm-up failed — first job will load it instead")
+
     def _handle_message(self, message_id: str, data: dict[str, Any]) -> None:
         job_id = data.get("jobId")
         job_type = data.get("type")
@@ -59,7 +75,13 @@ class AiWorker:
             return
 
         logger.info("Processing job id=%s type=%s msg=%s", job_id, job_type, message_id)
-        row = mark_running(self.settings.database_url, job_id)
+        try:
+            row = mark_running(self.settings.database_url, job_id)
+        except Exception as exc:  
+            logger.exception("Failed to mark job %s running — will retry: %s", job_id, exc)
+            time.sleep(0.5)
+            return
+
         if not row:
             logger.warning("Job %s missing or not claimable — acking", job_id)
             self.queue.ack(message_id)

@@ -2,8 +2,8 @@
 
 import { PasswordRequirements } from '@/components/password-requirements';
 import { PhoneInput } from '@/features/auth/components/phone-input';
-import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
+import { useAppDispatch } from '@/features/auth/hooks';
+import { registerPhone, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { EXPERIENCE_OPTIONS } from '@/features/onboarding/constants';
 import { identityStepSchema } from '@/features/onboarding/schemas';
@@ -15,6 +15,7 @@ import {
   uploadProfilePhoto,
   uploadProfileVideo,
 } from '@/features/profile/store/profile-slice';
+import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import {
@@ -137,7 +138,6 @@ type IdentityStepProps = {
     name: string;
     job?: string;
     bio?: string;
-    image?: string;
     profileType: ProfileType;
     experience?: string;
   }) => Promise<boolean>;
@@ -242,22 +242,13 @@ export function IdentityStep({
   }, [profile, t]);
 
   const [hasPendingPhoto, setHasPendingPhoto] = useState(false);
-  const { user } = useAppSelector(selectAuth);
   const name = `${firstName} ${lastName}`.trim();
   const isJobRequired = profileType === 'INDIVIDUAL';
-  // Only a phone-signup account ever needs a real profile photo — matching the old
-  // app's Inscription1 (`requiresPhoto = isPhoneSignupFlow() || Boolean(data.phone)`).
-  // An OAuth account already has a provider avatar concept and never collected a phone.
-  // While !isAuthenticated, this is unconditionally a fresh phone signup — the only kind
-  // of account reachable without a session — so user/profile.auth_provider is ignored
-  // entirely rather than trusted: a stale rehydrated OAuth `user` left over in Redux from
-  // a previous session must not waive the photo requirement for this new signup.
-  const authProvider = isAuthenticated
-    ? (user?.auth_provider ?? profile?.auth_provider ?? 'phone')
-    : 'phone';
-  const isPhotoRequired = authProvider === 'phone';
+  // Every account needs a real profile photo, regardless of how it signed up — an OAuth
+  // account's provider avatar is never actually copied into User.image (see
+  // oauth-authentication.ts), so it starts out just as photo-less as a phone signup.
   const hasPhoto = Boolean(image) || hasPendingPhoto;
-  const missingPhoto = requiredTouched && isPhotoRequired && !hasPhoto;
+  const missingPhoto = requiredTouched && !hasPhoto;
 
   const clearLocalPhotoPreview = () => {
     if (localPhotoPreviewRef.current && typeof URL.revokeObjectURL === 'function') {
@@ -405,6 +396,8 @@ export function IdentityStep({
     experience: profileType === 'INDIVIDUAL' && experience ? experience : undefined,
   });
 
+  const photoPreview = useAuthenticatedMediaUrl(image || null);
+
   // Only ever checks phone/password, never the identity fields above — handleNext
   // validates those once before the first call, but the modal's "Renvoyer le code"
   // button calls this directly and must not re-run that validation on every resend.
@@ -434,7 +427,7 @@ export function IdentityStep({
   };
 
   const handleNext = async () => {
-    if (isPhotoRequired && !image && !pendingPhotoRef.current) {
+    if (!image && !pendingPhotoRef.current) {
       setRequiredTouched(true);
       setError(t('onboarding.identity.errorPhotoRequired'));
       return;
@@ -490,9 +483,11 @@ export function IdentityStep({
 
     setShowOtpModal(false);
     setOtpVerifying(false);
+    // Only reachable now that registerPhone has actually succeeded — an authenticated
+    // session (cookie) is required before uploadProfilePhoto's endpoint will accept it.
+    if (pendingPhotoRef.current && !(await ensurePhotoUploaded())) return;
     // Optional video: a failed flush already clears the success label + sets videoError.
     await flushPendingVideo();
-    if (pendingPhotoRef.current && !(await ensurePhotoUploaded())) return;
     const saved = await onNext(identityPatch());
     if (!saved) {
       setError(t('onboarding.identity.errorSave'));
@@ -529,9 +524,13 @@ export function IdentityStep({
                 }}
                 onClick={() => fileInputRef.current?.click()}
               >
-                {image ? (
+                {photoPreview.url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={image} alt="Profile" className="h-full w-full object-cover" />
+                  <img
+                    src={photoPreview.url}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <ProfileSilhouette />
                 )}
