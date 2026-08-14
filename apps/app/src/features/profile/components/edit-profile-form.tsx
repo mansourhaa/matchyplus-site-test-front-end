@@ -285,19 +285,35 @@ export function EditProfileForm() {
       availabilityDays: overrides.availabilityDays ?? availabilityDays,
       availabilityHours: overrides.availabilityHours ?? availabilityHours,
     };
-    if (!draft.name.trim()) {
+    // A sheet save only patches the field(s) it actually edited (see overrideKeys
+    // below) — validating fields the user isn't touching in this call would block,
+    // say, saving the service type on the fact that availability (a separate sheet,
+    // saved separately) isn't filled in yet.
+    const overrideKeys = Object.keys(overrides) as (keyof ProfileSaveOverrides)[];
+    const touches = (...keys: (keyof ProfileSaveOverrides)[]) =>
+      overrideKeys.length === 0 || keys.some((key) => overrideKeys.includes(key));
+
+    if (touches('name') && !draft.name.trim()) {
       setError('Le nom est obligatoire.');
       return false;
     }
-    if (!draft.interests.length || !draft.goals.length) {
+    if (touches('interests', 'goals') && (!draft.interests.length || !draft.goals.length)) {
       setError('Ajoutez au moins un intérêt et un objectif.');
       return false;
     }
-    if (draft.offerService && (!draft.serviceType || !draft.price.trim())) {
+    if (
+      touches('serviceType', 'price') &&
+      draft.offerService &&
+      (!draft.serviceType || !draft.price.trim())
+    ) {
       setError('Le type et le prix du service sont obligatoires.');
       return false;
     }
-    if (draft.offerService && !draft.availabilityDays.length) {
+    if (
+      touches('availabilityDays', 'availabilityHours') &&
+      draft.offerService &&
+      !draft.availabilityDays.length
+    ) {
       setError('Sélectionnez au moins un jour de disponibilité.');
       return false;
     }
@@ -324,7 +340,6 @@ export function EditProfileForm() {
 
     // Sheet saves pass a single-field override — only PATCH those keys so the click
     // feels snappy instead of rewriting the entire profile on every Enregistrer.
-    const overrideKeys = Object.keys(overrides) as (keyof ProfileSaveOverrides)[];
     let patch: OnboardingProfilePatch = fullPatch;
     if (overrideKeys.length > 0) {
       const partial: Record<string, unknown> = {};
