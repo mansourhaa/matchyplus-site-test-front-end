@@ -148,6 +148,68 @@ describe('EditProfileForm', () => {
     );
   });
 
+  it('saves the service type without requiring availability days to already be set', async () => {
+    const offeringProfile = { ...fetchedProfile, offer_service: true };
+    const savedProfile = {
+      ...offeringProfile,
+      service_type: 'Chauffeur / Transport',
+      price: '20',
+    };
+    vi.mocked(api.get).mockResolvedValue({ data: offeringProfile });
+    vi.mocked(api.patch).mockResolvedValue({ data: savedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    fireEvent.click(await screen.findByText('Type de service'));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Type de service'), {
+      target: { value: 'Chauffeur / Transport' },
+    });
+    fireEvent.change(within(dialog).getByLabelText('Prix (DT/heure)'), {
+      target: { value: '20' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('✓ Profil mis à jour')).toBeInTheDocument();
+    expect(api.patch).toHaveBeenCalledWith(
+      '/users/me/profile',
+      expect.objectContaining({ serviceType: 'Chauffeur / Transport', price: '20' }),
+    );
+  });
+
+  it('saves availability without requiring the service type and price to already be set', async () => {
+    const offeringProfile = { ...fetchedProfile, offer_service: true };
+    const savedProfile = { ...offeringProfile, availability_days: ['Lun'] };
+    vi.mocked(api.get).mockResolvedValue({ data: offeringProfile });
+    vi.mocked(api.patch).mockResolvedValue({ data: savedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    const availabilityHeading = await screen.findByRole('heading', { name: 'Disponibilités' });
+    fireEvent.click(
+      within(availabilityHeading.closest('section') as HTMLElement).getByText('Ajouter'),
+    );
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByText('Lundi'));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('✓ Profil mis à jour')).toBeInTheDocument();
+    expect(api.patch).toHaveBeenCalledWith(
+      '/users/me/profile',
+      expect.objectContaining({ availabilityDays: ['Lun'] }),
+    );
+  });
+
   it('represents a persisted introduction video by filename', async () => {
     vi.mocked(api.get).mockResolvedValue({
       data: {
