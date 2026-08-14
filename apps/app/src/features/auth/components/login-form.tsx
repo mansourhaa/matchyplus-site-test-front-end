@@ -23,7 +23,7 @@ import { PhoneInput } from './phone-input';
 
 function FlagFr() {
   return (
-    <svg width="18" height="13" viewBox="0 0 3 2" className="rounded-sm">
+    <svg width="18" height="13" viewBox="0 0 3 2" className="rounded-sm shrink-0">
       <rect width="1" height="2" fill="#002395" />
       <rect x="1" width="1" height="2" fill="#FFFFFF" />
       <rect x="2" width="1" height="2" fill="#ED2939" />
@@ -33,7 +33,7 @@ function FlagFr() {
 
 function FlagEn() {
   return (
-    <svg width="18" height="13" viewBox="0 0 50 30" className="rounded-sm">
+    <svg width="18" height="13" viewBox="0 0 50 30" className="rounded-sm shrink-0">
       <rect width="50" height="30" fill="#012169" />
       <path d="M0 0 L50 30 M0 30 L50 0" stroke="#FFF" strokeWidth="6" />
       <path d="M0 0 L50 30 M0 30 L50 0" stroke="#C8102E" strokeWidth="2" />
@@ -45,7 +45,7 @@ function FlagEn() {
 
 function FlagAr() {
   return (
-    <svg width="18" height="13" viewBox="0 0 120 80" className="rounded-sm">
+    <svg width="18" height="13" viewBox="0 0 120 80" className="rounded-sm shrink-0">
       <rect width="120" height="80" fill="#E71F19" />
       <circle cx="60" cy="40" r="20" fill="#FFF" />
       <circle cx="64" cy="40" r="16" fill="#E71F19" />
