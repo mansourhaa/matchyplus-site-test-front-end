@@ -1,6 +1,9 @@
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';
-import onlyWarn from 'eslint-plugin-only-warn';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const onlyWarn = require('eslint-plugin-only-warn');
 
 /** @type {import("eslint").Linter.Config[]} */
 export default [
