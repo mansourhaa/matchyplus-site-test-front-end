@@ -144,6 +144,7 @@ export function EditProfileForm() {
   const [showVideoPreview, setShowVideoPreview] = useState(false);
   const [videoPlaybackError, setVideoPlaybackError] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<'photo' | 'video' | null>(null);
   const hydrated = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const serverPhoto = profile?.image ?? null;
@@ -244,6 +245,7 @@ export function EditProfileForm() {
   };
 
   const removePhoto = async () => {
+    setConfirmDelete(null);
     const result = await dispatch(deleteProfilePhoto());
     if (deleteProfilePhoto.fulfilled.match(result)) {
       setLocalPhoto(null);
@@ -253,6 +255,7 @@ export function EditProfileForm() {
   };
 
   const removeVideo = async () => {
+    setConfirmDelete(null);
     setError(null);
     const result = await dispatch(deleteProfileVideo());
     if (deleteProfileVideo.fulfilled.match(result)) {
@@ -481,7 +484,7 @@ export function EditProfileForm() {
           {imageUrl && (
             <button
               type="button"
-              onClick={removePhoto}
+              onClick={() => setConfirmDelete('photo')}
               disabled={mediaUploading}
               className="mb-2 flex items-center gap-1 text-[11px] font-semibold text-[#E24E59] disabled:opacity-50"
             >
@@ -849,7 +852,7 @@ export function EditProfileForm() {
                 </button>
                 <button
                   type="button"
-                  onClick={removeVideo}
+                  onClick={() => setConfirmDelete('video')}
                   disabled={mediaUploading}
                   className="flex h-7 w-7 items-center justify-center rounded-lg bg-white disabled:opacity-40"
                   aria-label="Supprimer la vidéo"
@@ -985,6 +988,69 @@ export function EditProfileForm() {
         setAvailabilityHours={setAvailabilityHours}
         persist={save}
       />
+
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4"
+          onMouseDown={() => setConfirmDelete(null)}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl"
+            onMouseDown={(event) => event.stopPropagation()}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="confirm-delete-title"
+            dir={isRtl ? 'rtl' : 'ltr'}
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FDEAEA]">
+              <Trash2 size={20} color="#E24E59" />
+            </div>
+            <h2 id="confirm-delete-title" className="mt-4 text-base font-extrabold text-[#1A1A2E]">
+              {confirmDelete === 'photo'
+                ? locale === 'en'
+                  ? 'Delete photo?'
+                  : locale === 'ar'
+                    ? 'حذف الصورة؟'
+                    : 'Supprimer la photo ?'
+                : locale === 'en'
+                  ? 'Delete video?'
+                  : locale === 'ar'
+                    ? 'حذف الفيديو؟'
+                    : 'Supprimer la vidéo ?'}
+            </h2>
+            <p className="mt-2 text-xs leading-relaxed text-[#777]">
+              {confirmDelete === 'photo'
+                ? locale === 'en'
+                  ? 'Are you sure you want to delete your profile photo? This action cannot be undone.'
+                  : locale === 'ar'
+                    ? 'هل أنت متأكد من رغبتك في حذف صورة ملفك الشخصي؟ لا يمكن التراجع عن هذا الإجراء.'
+                    : 'Êtes-vous sûr de vouloir supprimer votre photo de profil ? Cette action est irréversible.'
+                : locale === 'en'
+                  ? 'Are you sure you want to delete your presentation video? This action cannot be undone.'
+                  : locale === 'ar'
+                    ? 'هل أنت متأكد من رغبتك في حذف فيديو العرض التقديمي؟ لا يمكن التراجع عن هذا الإجراء.'
+                    : 'Êtes-vous sûr de vouloir supprimer votre vidéo de présentation ? Cette action est irréversible.'}
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 rounded-2xl border border-[#E0E0E0] py-3 text-xs font-bold text-[#1A1A2E]"
+              >
+                {locale === 'en' ? 'Cancel' : locale === 'ar' ? 'إلغاء' : 'Annuler'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void (confirmDelete === 'photo' ? removePhoto() : removeVideo())}
+                className="flex-1 rounded-2xl bg-[#E24E59] py-3 text-xs font-extrabold text-white"
+              >
+                {locale === 'en' ? 'Delete' : locale === 'ar' ? 'حذف' : 'Supprimer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

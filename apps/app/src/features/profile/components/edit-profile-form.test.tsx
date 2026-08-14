@@ -230,6 +230,37 @@ describe('EditProfileForm', () => {
     expect(screen.getByRole('button', { name: 'Supprimer la vidéo' })).toBeInTheDocument();
   });
 
+  it('asks for confirmation before removing the video, and only deletes once confirmed', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        ...fetchedProfile,
+        video: '/uploads/videos/1f3e4151-7f9c-4d7b-a780-c41ef4207feb.mp4',
+      },
+    });
+    vi.mocked(api.delete).mockResolvedValue({ data: { video: null } });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Supprimer la vidéo' }));
+
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(api.delete).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer la vidéo' }));
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Supprimer' }),
+    );
+
+    await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/users/me/profile/video'));
+  });
+
   it('shows a failure message when the save request is rejected', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
     vi.mocked(api.patch).mockRejectedValue(new Error('Network Error'));
@@ -283,7 +314,26 @@ describe('EditProfileForm', () => {
     await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
   });
 
-  it('removes the current photo', async () => {
+  it('asks for confirmation before removing the photo, and does nothing on cancel', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    fireEvent.click(await screen.findByText('Supprimer la photo'));
+
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(api.delete).not.toHaveBeenCalled();
+  });
+
+  it('removes the current photo once confirmed', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
     vi.mocked(api.delete).mockResolvedValue({ data: { image: null } });
     const store = buildStore();
@@ -295,6 +345,9 @@ describe('EditProfileForm', () => {
     );
 
     fireEvent.click(await screen.findByText('Supprimer la photo'));
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Supprimer' }),
+    );
 
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/users/me/profile/photo'));
   });
