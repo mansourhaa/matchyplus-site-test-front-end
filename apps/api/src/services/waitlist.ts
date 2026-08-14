@@ -78,7 +78,7 @@ export class WaitlistService {
 
     if (!smsDisabled) {
       try {
-        await this.smsClient.sendSms(phone, `Matchy+ : votre code est ${code}. Valable 5 min.`);
+        await this.smsClient.sendSms(phone, `MatchyPlus: votre code est ${code}. Valable 5 min.`);
         smsOk = true;
       } catch {
         smsOk = false;
