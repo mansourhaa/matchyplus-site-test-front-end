@@ -56,12 +56,15 @@ async function findFirstPlaceholder(text: string) {
 
 describe('LoginForm — phone step', () => {
   beforeEach(() => {
+    // These tests assert French copy .
+    window.localStorage.setItem('matchy_locale', 'fr');
     process.env.NEXT_PUBLIC_API_URL = 'http://localhost:4000';
     searchParamsRef.current = new URLSearchParams('step=phone');
   });
 
   afterEach(() => {
     vi.clearAllMocks();
+    window.localStorage.removeItem('matchy_locale');
   });
 
   it('shows the phone + password login form by default, with no OTP send step (OTP is never login)', () => {
@@ -190,6 +193,7 @@ describe('LoginForm — phone step', () => {
 
 describe('LoginForm — OAuth start URLs', () => {
   beforeEach(() => {
+    window.localStorage.setItem('matchy_locale', 'fr');
     process.env.NEXT_PUBLIC_API_URL = 'http://localhost:4000';
     searchParamsRef.current = new URLSearchParams();
     Object.defineProperty(window, 'location', {
@@ -200,6 +204,7 @@ describe('LoginForm — OAuth start URLs', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    window.localStorage.removeItem('matchy_locale');
   });
 
   it('starts Google OAuth at /auth/oauth/google (not the old /auth/google)', () => {
@@ -221,11 +226,13 @@ describe('LoginForm — OAuth start URLs', () => {
 
 describe('LoginForm — Créer un compte', () => {
   beforeEach(() => {
+    window.localStorage.setItem('matchy_locale', 'fr');
     searchParamsRef.current = new URLSearchParams();
   });
 
   afterEach(() => {
     vi.clearAllMocks();
+    window.localStorage.removeItem('matchy_locale');
   });
 
   it('goes to the onboarding wizard, where the identity step also collects phone + password + OTP for a new visitor', () => {

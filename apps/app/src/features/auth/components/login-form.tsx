@@ -152,23 +152,24 @@ function getOAuthRedirectUrl(provider: 'google' | 'linkedin') {
 // phone_not_verified and oauth_only_account each get an actionable message; anything
 // else (including a plain wrong password) falls back to the generic one, so a caller
 // can't distinguish "wrong password" from "unknown phone number".
-function loginPhoneErrorMessage(code: string | undefined): string {
+function loginPhoneErrorMessage(code: string | undefined, t: (key: string) => string): string {
   if (code === 'phone_not_verified') {
-    return "Ce numéro de téléphone n'a pas encore été vérifié.";
+    return t('auth.loginForm.errorPhoneNotVerified');
   }
   if (code === 'oauth_only_account') {
-    return 'Ce compte se connecte avec Google ou LinkedIn, pas avec un mot de passe.';
+    return t('auth.loginForm.errorOauthOnlyAccount');
   }
   if (code === 'mobile_session_unavailable') {
-    return "Session mobile indisponible. Vérifiez la configuration de l'application.";
+    return t('auth.loginForm.errorMobileSessionUnavailable');
   }
-  return 'Connexion échouée. Vérifiez votre numéro et votre mot de passe';
+  return t('auth.loginForm.errorLoginFailed');
 }
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+  const { t } = useI18n();
   const {
     loading,
     error: authError,
@@ -231,7 +232,7 @@ export function LoginForm() {
     if (loginPhone.fulfilled.match(resultAction)) {
       goToPostAuthDestination(resultAction.payload.user.onboarding_completed);
     } else {
-      setLocalError(loginPhoneErrorMessage(resultAction.error.message));
+      setLocalError(loginPhoneErrorMessage(resultAction.error.message, t));
     }
   };
 
@@ -242,7 +243,7 @@ export function LoginForm() {
 
   const handleRequestReset = async () => {
     if (nationalNumber.length < country.nationalLength) {
-      setLocalError(`Entrez un numéro de téléphone valide (${country.nationalLength} chiffres)`);
+      setLocalError(t('auth.loginForm.invalidPhoneWithLength', { length: country.nationalLength }));
       return;
     }
 
@@ -254,12 +255,10 @@ export function LoginForm() {
       // The API always returns success here regardless of whether this phone has a
       // password-based account (anti-enumeration) — the copy must stay conditional
       // ("if an account exists") rather than promising an SMS that may not be sent.
-      setResetInfo(
-        "Si un compte avec mot de passe existe pour ce numéro, un code de réinitialisation vient d'être envoyé par SMS.",
-      );
+      setResetInfo(t('auth.loginForm.resetSmsSent'));
       setResetMode(true);
     } catch {
-      setLocalError("Impossible d'envoyer le code de réinitialisation");
+      setLocalError(t('auth.loginForm.resetSendFailed'));
     } finally {
       setResetRequestLoading(false);
     }
@@ -271,9 +270,7 @@ export function LoginForm() {
       !resetCode.trim() ||
       !isPasswordPolicySatisfied(newResetPassword)
     ) {
-      setLocalError(
-        `Entrez un numéro valide (${country.nationalLength} chiffres), le code et un nouveau mot de passe conforme aux règles de sécurité`,
-      );
+      setLocalError(t('auth.loginForm.invalidResetForm', { length: country.nationalLength }));
       return;
     }
 
@@ -287,9 +284,9 @@ export function LoginForm() {
       setNewResetPassword('');
       setResetCode('');
       setResetMode(false);
-      setResetInfo('Mot de passe mis à jour. Vous pouvez maintenant vous connecter.');
+      setResetInfo(t('auth.loginForm.resetSuccess'));
     } catch {
-      setLocalError('Échec de la réinitialisation');
+      setLocalError(t('auth.loginForm.resetFailed'));
     } finally {
       setResetSubmitLoading(false);
     }
@@ -299,12 +296,14 @@ export function LoginForm() {
     <div className="mx-auto w-full max-w-sm">
       <div className="mb-8">
         <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1A1A2E' }}>
-          {localStep === 'login' ? 'Bienvenue 👋' : 'Connexion par téléphone'}
+          {localStep === 'login'
+            ? t('auth.loginForm.welcomeTitle')
+            : t('auth.loginForm.phoneStepTitle')}
         </h1>
         <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.6, marginTop: '6px' }}>
           {localStep === 'login'
-            ? 'Identifiez-vous pour rester au courant de ce qui se passe dans votre sphère professionnelle.'
-            : 'Entrez votre numéro de téléphone et votre mot de passe pour continuer.'}
+            ? t('auth.loginForm.welcomeDesc')
+            : t('auth.loginForm.phoneStepDesc')}
         </p>
       </div>
 
@@ -322,7 +321,7 @@ export function LoginForm() {
                 border: '1px solid #E6F2FF',
               }}
             >
-              Connectez-vous
+              {t('auth.loginForm.signInDivider')}
             </span>
             <div className="h-px flex-1 bg-[#F0F0F0]" />
           </div>
@@ -337,7 +336,7 @@ export function LoginForm() {
               className="flex-1 text-left"
               style={{ fontSize: '14px', fontWeight: 600, color: '#353535' }}
             >
-              Numéro de téléphone
+              {t('auth.loginForm.phoneNumberOption')}
             </span>
             <ChevronRight size={16} color="#CCC" />
           </button>
@@ -353,7 +352,7 @@ export function LoginForm() {
               className="flex-1 text-left"
               style={{ fontSize: '14px', fontWeight: 600, color: '#353535' }}
             >
-              Continuer avec LinkedIn
+              {t('auth.loginForm.continueWithLinkedIn')}
             </span>
             <ChevronRight size={16} color="#CCC" />
           </button>
@@ -369,7 +368,7 @@ export function LoginForm() {
               className="flex-1 text-left"
               style={{ fontSize: '14px', fontWeight: 600, color: '#353535' }}
             >
-              Continuer avec Google
+              {t('auth.loginForm.continueWithGoogle')}
             </span>
             <ChevronRight size={16} color="#CCC" />
           </button>
@@ -386,7 +385,7 @@ export function LoginForm() {
                 border: '1px solid #E6F2FF',
               }}
             >
-              Inscrivez-vous
+              {t('auth.loginForm.signUpDivider')}
             </span>
             <div className="h-px flex-1 bg-[#F0F0F0]" />
           </div>
@@ -407,7 +406,7 @@ export function LoginForm() {
                 fontWeight: 700,
               }}
             >
-              Créer un compte
+              {t('auth.loginForm.createAccount')}
             </button>
           </div>
         </div>
@@ -415,7 +414,7 @@ export function LoginForm() {
         <div>
           <div className="mb-4">
             <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-              Indicatif pays
+              {t('auth.loginForm.countryCodeLabel')}
             </label>
             <PhoneInput
               countryIso={countryIso}
@@ -427,7 +426,9 @@ export function LoginForm() {
           </div>
 
           <div className="mb-4">
-            <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>Mot de passe</label>
+            <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+              {t('auth.password')}
+            </label>
             <div
               className="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3.5"
               style={{ border: '2px solid #2F76BB', background: '#F5F9FF' }}
@@ -437,7 +438,7 @@ export function LoginForm() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Votre mot de passe"
+                placeholder={t('auth.loginForm.passwordPlaceholder')}
                 className="flex-1 bg-transparent text-[#353535] outline-none"
                 style={{ fontSize: '15px' }}
               />
@@ -458,7 +459,7 @@ export function LoginForm() {
               disabled={resetRequestLoading}
               style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
             >
-              {resetRequestLoading ? 'Envoyer le code...' : 'Mot de passe oublié ?'}
+              {resetRequestLoading ? t('auth.loginForm.sendingCode') : t('auth.forgotPassword')}
             </button>
           </div>
 
@@ -469,7 +470,7 @@ export function LoginForm() {
             >
               <div>
                 <label style={{ fontSize: '12px', color: '#888', fontWeight: 600 }}>
-                  Code de réinitialisation
+                  {t('auth.loginForm.resetCodeLabel')}
                 </label>
                 <input
                   type="text"
@@ -484,7 +485,7 @@ export function LoginForm() {
               </div>
               <div>
                 <label style={{ fontSize: '12px', color: '#888', fontWeight: 600 }}>
-                  Nouveau mot de passe
+                  {t('auth.loginForm.newPasswordLabel')}
                 </label>
                 <input
                   type="password"
@@ -492,7 +493,7 @@ export function LoginForm() {
                   onChange={(event) => setNewResetPassword(event.target.value)}
                   className="mt-1 w-full rounded-xl px-4 py-2.5 text-[#353535] outline-none"
                   style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
-                  placeholder="Nouveau mot de passe"
+                  placeholder={t('auth.loginForm.newPasswordLabel')}
                 />
                 <PasswordRequirements password={newResetPassword} />
               </div>
@@ -504,8 +505,8 @@ export function LoginForm() {
                 style={{ background: '#2F76BB', fontSize: '13px', fontWeight: 700 }}
               >
                 {resetSubmitLoading
-                  ? 'Réinitialiser le mot de passe...'
-                  : 'Réinitialiser le mot de passe'}
+                  ? t('auth.loginForm.resettingPassword')
+                  : t('auth.loginForm.resetPasswordSubmit')}
               </button>
             </div>
           )}
@@ -539,7 +540,7 @@ export function LoginForm() {
             }}
           >
             {loading && <Loader2 size={16} className="animate-spin" />}
-            Continuer
+            {t('auth.loginForm.continueButton')}
           </button>
         </div>
       )}
@@ -548,13 +549,13 @@ export function LoginForm() {
         className="mt-8 text-center"
         style={{ fontSize: '11px', color: '#BBBBBB', lineHeight: 1.6 }}
       >
-        En continuant, vous acceptez nos{' '}
+        {t('auth.loginForm.acceptTermsPrefix')}{' '}
         <a href={landingPath('/terms-of-service')} className="text-[#2F76BB] hover:underline">
-          Conditions d&apos;utilisation
+          {t('legal.termsOfService')}
         </a>{' '}
-        et notre{' '}
+        {t('auth.loginForm.acceptTermsMiddle')}{' '}
         <a href={landingPath('/privacy-policy')} className="text-[#2F76BB] hover:underline">
-          Politique de confidentialité
+          {t('legal.privacyPolicy')}
         </a>
       </p>
     </div>
@@ -586,7 +587,7 @@ export function LoginForm() {
                 }}
               >
                 <ArrowLeft size={14} />
-                Retour
+                {t('legal.back')}
               </button>
             )}
             <MatchyLogo size="sm" />
@@ -618,7 +619,7 @@ export function LoginForm() {
                 }}
               >
                 <ArrowLeft size={14} />
-                Retour
+                {t('legal.back')}
               </button>
             )}
             <MatchyLogo size="sm" />
