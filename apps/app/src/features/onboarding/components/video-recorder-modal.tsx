@@ -704,13 +704,12 @@ export function VideoRecorderModal({
       {/* ── CAMERA PREVIEW ── */}
       {(phase === 'preview' || phase === 'recording') && (
         <div className="relative flex flex-1 flex-col">
-          {/* Live video */}
           <video
             ref={liveRef}
             autoPlay
             playsInline
             muted
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-contain"
             style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
           />
 
