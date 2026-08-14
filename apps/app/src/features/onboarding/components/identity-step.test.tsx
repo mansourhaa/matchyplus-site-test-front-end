@@ -833,4 +833,83 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     expect(api.post).not.toHaveBeenCalledWith('/auth/register-phone', expect.anything());
     expect(onNext).not.toHaveBeenCalled();
   });
+
+  it('shows a specific message and skips the OTP modal when the phone is already registered', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    vi.mocked(api.post).mockRejectedValue({
+      isAxiosError: true,
+      response: { data: { code: 'phone_already_registered' } },
+    });
+
+    renderWithAuthStore(
+      <IdentityStep
+        profile={unauthenticatedProfileWithPhoto}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onNext={onNext}
+      />,
+      unauthenticatedState,
+    );
+
+    fillIdentityAndCredentials();
+    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
+      target: { value: 'Password123!' },
+    });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    expect(
+      await screen.findAllByText(
+        'Ce numéro de téléphone est déjà enregistré. Veuillez vous connecter.',
+      ),
+    ).not.toHaveLength(0);
+    expect(screen.queryByPlaceholderText('------')).not.toBeInTheDocument();
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('shows a specific message when register-phone rejects a phone registered during the OTP flow', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/otp/send') {
+        return { data: { message: 'sent', phone: '+21612345678' } };
+      }
+      if (url === '/auth/otp/verify') {
+        return { data: { verified: true, phone: '+21612345678', signupToken: 'grant-1' } };
+      }
+      throw {
+        isAxiosError: true,
+        response: { data: { code: 'phone_already_registered' } },
+      };
+    });
+
+    renderWithAuthStore(
+      <IdentityStep
+        profile={unauthenticatedProfileWithPhoto}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onNext={onNext}
+      />,
+      unauthenticatedState,
+    );
+
+    fillIdentityAndCredentials();
+    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
+      target: { value: 'Password123!' },
+    });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    const codeInput = await findFirstPlaceholder('------');
+    fireEvent.change(codeInput, { target: { value: '123456' } });
+    fireEvent.click(firstButton('Confirmer'));
+
+    expect(
+      await screen.findAllByText(
+        'Ce numéro de téléphone est déjà enregistré. Veuillez vous connecter.',
+      ),
+    ).not.toHaveLength(0);
+    expect(onNext).not.toHaveBeenCalled();
+  });
 });

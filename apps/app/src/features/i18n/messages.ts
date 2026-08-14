@@ -73,6 +73,8 @@ export const messages: Record<Locale, MessageTree> = {
         errorOtpShort: 'Enter the 6-digit code.',
         errorOtpInvalid: 'Invalid code.',
         errorOtpSend: 'Unable to send code. Check your number.',
+        errorPhoneAlreadyRegistered:
+          'This phone number is already registered. Please log in instead.',
         errorCreateAccount: 'Unable to create account.',
         errorSave: 'Failed to save. Please try again.',
         errorVideoUpload: 'Video upload failed.',
@@ -512,6 +514,8 @@ export const messages: Record<Locale, MessageTree> = {
         errorOtpShort: 'Entrez le code à 6 chiffres.',
         errorOtpInvalid: 'Code incorrect.',
         errorOtpSend: "Impossible d'envoyer le code. Vérifiez votre numéro.",
+        errorPhoneAlreadyRegistered:
+          'Ce numéro de téléphone est déjà enregistré. Veuillez vous connecter.',
         errorCreateAccount: 'Impossible de créer le compte.',
         errorSave: 'Échec de la sauvegarde. Réessayez.',
         errorVideoUpload: "Échec de l'upload vidéo.",
@@ -959,6 +963,7 @@ export const messages: Record<Locale, MessageTree> = {
         errorOtpShort: 'أدخل الرمز المكون من 6 أرقام.',
         errorOtpInvalid: 'رمز غير صحيح.',
         errorOtpSend: 'تعذر إرسال الرمز. تحقق من رقمك.',
+        errorPhoneAlreadyRegistered: 'رقم الهاتف هذا مسجل بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.',
         errorCreateAccount: 'تعذر إنشاء الحساب.',
         errorSave: 'فشل الحفظ. حاول مرة أخرى.',
         errorVideoUpload: 'فشل رفع الفيديو.',

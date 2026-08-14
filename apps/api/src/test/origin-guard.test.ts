@@ -35,6 +35,7 @@ describe('origin guard', () => {
   it('allows a state-changing request from an allowed frontend origin', async () => {
     const app = await buildTestApp({
       prisma: {
+        user: { findUnique: async () => null } as never,
         otpChallenge: {
           findFirst: async () => null,
           create: async () => ({}),

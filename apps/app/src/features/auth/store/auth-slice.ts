@@ -62,10 +62,14 @@ async function requireNativeBodyTokens(data: SessionResponse) {
 }
 
 export const sendOtp = createAsyncThunk('auth/sendOtp', async ({ phone }: SendOtpInput) => {
-  const response = await api.post<{ message: string; phone: string }>('/auth/otp/send', {
-    phone,
-  });
-  return response.data;
+  try {
+    const response = await api.post<{ message: string; phone: string }>('/auth/otp/send', {
+      phone,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorCode(error) ?? 'otp_send_failed');
+  }
 });
 
 export const verifyOtp = createAsyncThunk(
@@ -99,14 +103,23 @@ export const loginPhone = createAsyncThunk(
 export const registerPhone = createAsyncThunk(
   'auth/registerPhone',
   async ({ phone, password, name, signupToken }: RegisterPhoneInput) => {
-    const response = await api.post<SessionResponse>('/auth/register-phone', {
-      phone,
-      password,
-      name,
-      signupToken,
-    });
-    await requireNativeBodyTokens(response.data);
-    return response.data;
+    try {
+      const response = await api.post<SessionResponse>('/auth/register-phone', {
+        phone,
+        password,
+        name,
+        signupToken,
+      });
+      await requireNativeBodyTokens(response.data);
+      return response.data;
+    } catch (error) {
+      if (error instanceof Error && error.message === 'mobile_session_unavailable') {
+        throw error;
+      }
+      // Re-thrown as the API's own code (e.g. phone_already_registered) so the
+      // identity step can show a specific message instead of a generic failure.
+      throw new Error(getApiErrorCode(error) ?? 'register_phone_failed');
+    }
   },
 );
 

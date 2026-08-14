@@ -429,6 +429,11 @@ export function IdentityStep({
     setOtpSending(false);
 
     if (!sendOtp.fulfilled.match(sendAction)) {
+      if (sendAction.error.message === 'phone_already_registered') {
+        setShowOtpModal(false);
+        setError(t('onboarding.identity.errorPhoneAlreadyRegistered'));
+        return;
+      }
       setOtpError(t('onboarding.identity.errorOtpSend'));
       return;
     }
@@ -486,7 +491,11 @@ export function IdentityStep({
     );
     if (!registerPhone.fulfilled.match(registerAction)) {
       setOtpVerifying(false);
-      setOtpError(t('onboarding.identity.errorCreateAccount'));
+      setOtpError(
+        registerAction.error.message === 'phone_already_registered'
+          ? t('onboarding.identity.errorPhoneAlreadyRegistered')
+          : t('onboarding.identity.errorCreateAccount'),
+      );
       return;
     }
 
