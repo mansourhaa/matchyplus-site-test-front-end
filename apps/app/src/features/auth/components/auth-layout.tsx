@@ -199,7 +199,7 @@ export function AuthLayout({
       {/* Right content panel */}
       <div className="relative flex min-h-dvh min-h-screen flex-1 flex-col overflow-hidden">
         {showPanelLangPicker ? (
-          <div className="absolute top-4 right-4 z-10">
+          <div className="absolute end-4 top-4 z-10">
             <LangPickerLight />
           </div>
         ) : null}
