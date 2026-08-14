@@ -4,7 +4,7 @@ import { z } from 'zod';
 // for "Looking for" (PROVIDER), matching the old app's Inscription1.
 export const identityStepSchema = z
   .object({
-    name: z.string().trim().min(1),
+    name: z.string().trim().min(1, 'Le nom est obligatoire.'),
     job: z.string().trim().optional(),
     bio: z.string().max(250).optional(),
     image: z.string().optional(),
@@ -17,8 +17,11 @@ export const identityStepSchema = z
 
 export const interestsStepSchema = z
   .object({
-    interests: z.array(z.string()).min(1).max(5),
-    selectedGoals: z.array(z.string()).min(1),
+    interests: z
+      .array(z.string())
+      .min(1, 'Ajoutez au moins un centre d’intérêt.')
+      .max(5, 'Vous pouvez ajouter jusqu’à 5 centres d’intérêt.'),
+    selectedGoals: z.array(z.string()).min(1, 'Sélectionnez au moins un objectif.'),
     offerService: z.boolean(),
     serviceType: z.string().trim().optional(),
     price: z.string().trim().optional(),
