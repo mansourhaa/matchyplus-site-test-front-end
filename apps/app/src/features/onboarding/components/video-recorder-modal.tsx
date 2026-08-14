@@ -243,7 +243,7 @@ export function VideoRecorderModal({
       setCamError(null);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facing, width: { ideal: 720 }, height: { ideal: 1280 } },
+          video: { facingMode: facing },
           audio: true,
         });
         streamRef.current = stream;

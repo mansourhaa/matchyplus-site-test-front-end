@@ -44,4 +44,20 @@ describe('VideoRecorderModal — live preview framing', () => {
     expect(liveVideo).toHaveClass('object-contain');
     expect(liveVideo).not.toHaveClass('object-cover');
   });
+
+  it('does not request a portrait resolution that would force the browser to crop the raw feed', async () => {
+    const getUserMedia = vi.fn().mockResolvedValue(fakeStream());
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: { getUserMedia },
+      configurable: true,
+    });
+
+    const tr = buildVideoRecorderTr('fr', 'fr-FR');
+    render(<VideoRecorderModal onVideoReady={vi.fn()} onClose={vi.fn()} tr={tr} />);
+
+    fireEvent.click(screen.getByText(tr.cameraBtn));
+
+    await waitFor(() => expect(getUserMedia).toHaveBeenCalled());
+    expect(getUserMedia).toHaveBeenCalledWith({ video: { facingMode: 'user' }, audio: true });
+  });
 });
