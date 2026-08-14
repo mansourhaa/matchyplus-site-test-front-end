@@ -177,9 +177,8 @@ export function LoginForm() {
     user,
   } = useAppSelector(selectAuth);
 
-  const [localStep, setLocalStep] = useState<'login' | 'phone'>(
-    searchParams.get('step') === 'phone' ? 'phone' : 'login',
-  );
+  const stepParam = searchParams.get('step');
+  const localStep = stepParam === 'phone' ? 'phone' : 'login';
 
   const [countryIso, setCountryIso] = useState(DEFAULT_PHONE_COUNTRY.iso);
   const [nationalNumber, setNationalNumber] = useState('');
@@ -211,11 +210,9 @@ export function LoginForm() {
 
   const goToPhoneStep = () => {
     router.push('/login?step=phone');
-    setLocalStep('phone');
   };
   const handleBackToLogin = () => {
     router.push('/login');
-    setLocalStep('login');
     setLocalError(null);
     setResetMode(false);
     setResetInfo(null);
