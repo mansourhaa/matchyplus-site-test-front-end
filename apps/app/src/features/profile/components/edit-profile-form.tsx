@@ -764,7 +764,13 @@ export function EditProfileForm() {
         }
         values={languages.map((value) => {
           const option = LANGUAGE_OPTIONS.find((entry) => entry.value === value);
-          return option ? `${option.flag} ${option.label}` : value;
+          if (!option) return value;
+          return (
+            <span key={value} className="inline-flex items-center gap-1.5 align-middle">
+              <ProfileLanguageFlag locale={value} />
+              <span>{option.label}</span>
+            </span>
+          );
         })}
         color="#2F76BB"
         icon={iconBox(<Globe size={15} color="#2F76BB" />, '#EEF5FF')}
@@ -989,6 +995,67 @@ export function EditProfileForm() {
   );
 }
 
+function ProfileLanguageFlag({ locale, size = 14 }: { locale: string; size?: number }) {
+  const width = Math.round(size * 1.45);
+  const wrap = {
+    width,
+    height: size,
+    display: 'inline-flex' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    overflow: 'hidden' as const,
+    flexShrink: 0,
+    borderRadius: 2,
+  };
+  const svg = { display: 'block' as const, width: '100%', height: '100%' };
+
+  if (locale === 'fr') {
+    return (
+      <div style={wrap}>
+        <svg viewBox="0 0 3 2" style={svg} aria-hidden>
+          <rect width="1" height="2" fill="#002395" />
+          <rect x="1" width="1" height="2" fill="#fff" />
+          <rect x="2" width="1" height="2" fill="#ED2939" />
+        </svg>
+      </div>
+    );
+  }
+  if (locale === 'en') {
+    return (
+      <div style={wrap}>
+        <svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice" style={svg} aria-hidden>
+          <rect width="60" height="30" fill="#012169" />
+          <g fill="#fff">
+            <polygon points="0,0 60,30 60,25 5,0" />
+            <polygon points="60,0 0,30 0,25 55,0" />
+          </g>
+          <g fill="#C8102E">
+            <polygon points="0,0 60,30 60,27 3,0" />
+            <polygon points="60,0 0,30 0,27 57,0" />
+            <rect x="25" width="10" height="30" />
+            <rect y="10" width="60" height="10" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+  if (locale === 'ar') {
+    return (
+      <div style={wrap}>
+        <svg viewBox="0 0 3 2" style={svg} aria-hidden>
+          <rect width="3" height="2" fill="#E71F19" />
+          <circle cx="1.5" cy="1" r="0.5" fill="#fff" />
+          <circle cx="1.6" cy="1" r="0.4" fill="#E71F19" />
+          <circle cx="1.5" cy="1" r="0.4" fill="#fff" />
+          <path d="M 1.6,0.8 A 0.2,0.2 0 1,0 1.6,1.2 A 0.2,0.2 0 1,0 1.6,0.8 Z" fill="#E71F19" />
+        </svg>
+      </div>
+    );
+  }
+  const option = LANGUAGE_OPTIONS.find((e) => e.value === locale);
+  return option ? <span style={{ fontSize: size }}>{option.flag}</span> : null;
+}
+
 function TagCard({
   title,
   values,
@@ -997,7 +1064,7 @@ function TagCard({
   onEdit,
 }: {
   title: string;
-  values: string[];
+  values: ReactNode[];
   color: string;
   icon: ReactNode;
   onEdit: () => void;
@@ -1007,9 +1074,9 @@ function TagCard({
       <SectionHeading title={title} icon={icon} onEdit={onEdit} />
       <div className="flex flex-wrap gap-2">
         {values.length ? (
-          values.map((value) => (
+          values.map((value, i) => (
             <span
-              key={value}
+              key={i}
               className="rounded-full px-3 py-1.5 text-xs font-semibold"
               style={{ border: `1px solid ${color}`, color, background: `${color}12` }}
             >
