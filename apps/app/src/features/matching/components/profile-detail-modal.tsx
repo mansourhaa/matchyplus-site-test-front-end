@@ -74,70 +74,53 @@ type Props = {
   busy?: boolean;
 };
 
-const CONTACT_MODE_CONFIG: Record<
-  string,
-  { icon: typeof Video; label: string; desc: string; color: string; bg: string }
-> = {
-  video: {
-    icon: Video,
-    label: 'Appel Vidéo',
-    desc: 'Rencontre en visioconférence',
-    color: '#2F76BB',
-    bg: '#E8F0FA',
-  },
-  café: {
-    icon: Coffee,
-    label: 'Café / Présentiel',
-    desc: 'Rencontre dans un lieu public',
-    color: '#61BCA6',
-    bg: '#E8F7F3',
-  },
-  call: {
-    icon: Phone,
-    label: 'Appel Téléphonique',
-    desc: 'Échange téléphonique direct',
-    color: '#F5A623',
-    bg: '#FFF8EB',
-  },
-  phone: {
-    icon: Phone,
-    label: 'Appel Téléphonique',
-    desc: 'Échange téléphonique direct',
-    color: '#F5A623',
-    bg: '#FFF8EB',
-  },
-  whatsapp: {
-    icon: MessageCircle,
-    label: 'WhatsApp / Chat',
-    desc: 'Contacter via WhatsApp',
-    color: '#25D366',
-    bg: '#E8F9F0',
-  },
-  person: {
-    icon: Coffee,
-    label: 'Rencontre en présentiel',
-    desc: 'Rencontre en face à face',
-    color: '#61BCA6',
-    bg: '#E8F7F3',
-  },
+const CONTACT_MODE_ICONS: Record<string, { icon: typeof Video; color: string; bg: string }> = {
+  video: { icon: Video, color: '#2F76BB', bg: '#E8F0FA' },
+  café: { icon: Coffee, color: '#61BCA6', bg: '#E8F7F3' },
+  call: { icon: Phone, color: '#F5A623', bg: '#FFF8EB' },
+  phone: { icon: Phone, color: '#F5A623', bg: '#FFF8EB' },
+  whatsapp: { icon: MessageCircle, color: '#25D366', bg: '#E8F9F0' },
+  person: { icon: Coffee, color: '#61BCA6', bg: '#E8F7F3' },
 };
 
-const PROFILE_TYPE_LABEL: Record<'INDIVIDUAL' | 'PROVIDER', string> = {
-  INDIVIDUAL: 'Employé',
-  PROVIDER: 'Employeur',
+// Data key -> message-tree key (the messages.ts namespace can't use an accented key name).
+const CONTACT_MODE_TEXT_KEY: Record<string, string> = {
+  video: 'video',
+  café: 'cafe',
+  call: 'call',
+  phone: 'call',
+  whatsapp: 'whatsapp',
+  person: 'person',
 };
 
-const REPORT_REASONS = [
-  { value: 'fraude', label: 'Fraude' },
-  { value: 'fake_profile', label: 'Faux profil' },
-  { value: 'harassment', label: 'Harcèlement' },
-  { value: 'inappropriate_content', label: 'Contenu inapproprié' },
-  { value: 'spam', label: 'Spam' },
-  { value: 'other', label: 'Autre' },
-];
+const REPORT_REASON_VALUES = [
+  'fraude',
+  'fake_profile',
+  'harassment',
+  'inappropriate_content',
+  'spam',
+  'other',
+] as const;
+
+const REPORT_REASON_TEXT_KEY: Record<(typeof REPORT_REASON_VALUES)[number], string> = {
+  fraude: 'fraud',
+  fake_profile: 'fakeProfile',
+  harassment: 'harassment',
+  inappropriate_content: 'inappropriateContent',
+  spam: 'spam',
+  other: 'other',
+};
 
 export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const reportReasons = REPORT_REASON_VALUES.map((value) => ({
+    value,
+    label: t(`profileDetail.reportReasons.${REPORT_REASON_TEXT_KEY[value]}`),
+  }));
+  const profileTypeLabel: Record<'INDIVIDUAL' | 'PROVIDER', string> = {
+    INDIVIDUAL: t('profileDetail.profileTypeEmployee'),
+    PROVIDER: t('profileDetail.profileTypeEmployer'),
+  };
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectAuth);
   const photo = useAuthenticatedMediaUrl(profile.image);
@@ -272,14 +255,14 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
     if (isReporting) return;
     const cleanedDetails = reportDetails.trim();
     if (reportReason === 'other' && !cleanedDetails) {
-      setReportFeedback({ type: 'error', message: 'Merci de préciser la raison du signalement.' });
+      setReportFeedback({ type: 'error', message: t('profileDetail.reportOtherRequired') });
       return;
     }
 
     const targetProfileId = profile.id;
     setIsReporting(true);
     setReportFeedback(null);
-    const selectedLabel = REPORT_REASONS.find((entry) => entry.value === reportReason)?.label;
+    const selectedLabel = reportReasons.find((entry) => entry.value === reportReason)?.label;
     const resultAction = await dispatch(
       reportProfile({
         userId: targetProfileId,
@@ -289,13 +272,13 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
 
     if (displayedProfileIdRef.current === targetProfileId) {
       if (reportProfile.fulfilled.match(resultAction)) {
-        setReportFeedback({ type: 'success', message: 'Compte signalé avec succès.' });
+        setReportFeedback({ type: 'success', message: t('profileDetail.reportSuccess') });
         setReportDetails('');
         setShowReportForm(false);
       } else {
         setReportFeedback({
           type: 'error',
-          message: 'Impossible de signaler ce compte pour le moment.',
+          message: t('profileDetail.reportError'),
         });
       }
       setIsReporting(false);
@@ -310,7 +293,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
       <article
         className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white md:max-w-lg md:rounded-3xl"
         onClick={(event) => event.stopPropagation()}
-        aria-label={`Profil de ${profile.name}`}
+        aria-label={t('profileDetail.profileAlt', { name: profile.name })}
       >
         <div className="relative h-64 w-full overflow-hidden bg-[#E8EEF5]">
           {photo.url ? (
@@ -345,7 +328,9 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                   {profile.rating > 0 && (
                     <span className="flex items-center gap-1 text-xs font-bold text-[#F5A623]">
                       <Star size={13} fill="#F5A623" /> {profile.rating.toFixed(1)}
-                      {profile.reviews ? ` (${profile.reviews} avis)` : ''}
+                      {profile.reviews
+                        ? ` ${t('profileDetail.reviewsCount', { count: profile.reviews })}`
+                        : ''}
                     </span>
                   )}
                 </div>
@@ -360,7 +345,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                   className="shrink-0 rounded-xl px-3 py-1.5 text-sm font-bold text-white"
                   style={{ background: 'rgba(47,118,187,0.9)' }}
                 >
-                  {profile.price} DT/h
+                  {profile.price} {locale === 'en' ? 'TND/h' : locale === 'ar' ? 'د.ت/سا' : 'DT/h'}
                 </span>
               )}
             </div>
@@ -377,7 +362,8 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
               )}
               {profile.experience && (
                 <span className="flex items-center gap-1 text-[#555]">
-                  <Award size={14} color="#2F76BB" /> {profile.experience} exp.
+                  <Award size={14} color="#2F76BB" /> {profile.experience}{' '}
+                  {t('profileDetail.expSuffix')}
                 </span>
               )}
             </div>
@@ -392,7 +378,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
             />
           )}
           {profile.video && video.error && (
-            <p className="text-xs text-[#E24E59]">Vidéo inaccessible.</p>
+            <p className="text-xs text-[#E24E59]">{t('profileDetail.videoUnavailable')}</p>
           )}
 
           {isMatched && ratingOutcome !== 'saved' && ratingOutcome !== 'already_rated' && (
@@ -400,7 +386,9 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
               className="rounded-2xl p-3"
               style={{ background: '#F5F7FA', border: '1px solid #E0E8F0' }}
             >
-              <p className="mb-2 text-[13px] font-bold text-[#353535]">Noter ce profil</p>
+              <p className="mb-2 text-[13px] font-bold text-[#353535]">
+                {t('profileDetail.rateThisProfile')}
+              </p>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -408,7 +396,13 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                     type="button"
                     onClick={() => setSelectedRating(star)}
                     className="rounded-full p-1"
-                    aria-label={`${star} étoile${star > 1 ? 's' : ''}`}
+                    aria-label={
+                      locale === 'en'
+                        ? `${star} star${star > 1 ? 's' : ''}`
+                        : locale === 'ar'
+                          ? `${star} نجمة`
+                          : `${star} étoile${star > 1 ? 's' : ''}`
+                    }
                   >
                     <Star
                       size={18}
@@ -418,7 +412,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                   </button>
                 ))}
                 <span className="ml-1.5 text-xs font-semibold text-[#555]">
-                  {selectedRating > 0 ? `${selectedRating}/5` : 'Choisissez une note'}
+                  {selectedRating > 0 ? `${selectedRating}/5` : t('profileDetail.chooseRating')}
                 </span>
               </div>
               <button
@@ -433,11 +427,11 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                       : 'linear-gradient(90deg, #F5A623, #2F76BB)',
                 }}
               >
-                {isSavingRating ? 'Enregistrement...' : 'Enregistrer la note'}
+                {isSavingRating ? t('profileDetail.savingRating') : t('profileDetail.saveRating')}
               </button>
               {ratingOutcome === 'error' && (
                 <p className="mt-2 text-[11px] font-semibold text-[#2F76BB]">
-                  Impossible d’enregistrer la note.
+                  {t('profileDetail.ratingError')}
                 </p>
               )}
             </div>
@@ -449,10 +443,10 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
               style={{ background: '#F5F7FA', border: '1px solid #DCEAD9' }}
             >
               <p className="text-[13px] font-bold text-[#2F6B3D]">
-                Votre avis a été bien enregistré
+                {t('profileDetail.ratingSavedTitle')}
               </p>
               <p className="mt-1 text-[11px] text-[#5B6E62]">
-                Vous ne pouvez plus noter ce profil.
+                {t('profileDetail.ratingSavedDesc')}
               </p>
             </div>
           )}
@@ -462,7 +456,9 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
               className="rounded-2xl p-3"
               style={{ background: '#F5F7FA', border: '1px solid #DCEAD9' }}
             >
-              <p className="text-[13px] font-bold text-[#2F6B3D]">Vous avez déjà noté ce profil.</p>
+              <p className="text-[13px] font-bold text-[#2F6B3D]">
+                {t('profileDetail.alreadyRated')}
+              </p>
             </div>
           )}
 
@@ -470,7 +466,9 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
 
           {profile.interests.length > 0 && (
             <section>
-              <h2 className="mb-2 text-sm font-bold text-[#353535]">Centres d’intérêt</h2>
+              <h2 className="mb-2 text-sm font-bold text-[#353535]">
+                {t('profileDetail.interests')}
+              </h2>
               <div className="flex flex-wrap gap-2">
                 {profile.interests.map((tag) => (
                   <span
@@ -485,12 +483,15 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
           )}
           {profile.contact_modes && profile.contact_modes.length > 0 && (
             <section>
-              <p className="mb-2 text-[13px] font-bold text-[#353535]">Modes de contact préférés</p>
+              <p className="mb-2 text-[13px] font-bold text-[#353535]">
+                {t('profileDetail.preferredContactModes')}
+              </p>
               <div className="space-y-2">
                 {profile.contact_modes
-                  .filter((mode) => CONTACT_MODE_CONFIG[mode])
+                  .filter((mode) => CONTACT_MODE_ICONS[mode])
                   .map((mode) => {
-                    const cfg = CONTACT_MODE_CONFIG[mode];
+                    const cfg = CONTACT_MODE_ICONS[mode];
+                    const textKey = CONTACT_MODE_TEXT_KEY[mode];
                     const Icon = cfg.icon;
                     return (
                       <div
@@ -505,8 +506,12 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                           <Icon size={18} color="white" />
                         </div>
                         <div>
-                          <p className="text-[13px] font-bold text-[#353535]">{cfg.label}</p>
-                          <p className="text-[11px] text-[#777]">{cfg.desc}</p>
+                          <p className="text-[13px] font-bold text-[#353535]">
+                            {t(`profileDetail.contactModes.${textKey}.label`)}
+                          </p>
+                          <p className="text-[11px] text-[#777]">
+                            {t(`profileDetail.contactModes.${textKey}.desc`)}
+                          </p>
                         </div>
                         <div className="ml-auto">
                           <Check size={16} color={cfg.color} />
@@ -518,12 +523,16 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
             </section>
           )}
           {profile.languages && profile.languages.length > 0 && (
-            <DetailRow icon={<Globe size={15} />} title="Langues" values={profile.languages} />
+            <DetailRow
+              icon={<Globe size={15} />}
+              title={t('profileDetail.languages')}
+              values={profile.languages}
+            />
           )}
           {profile.availability_days && profile.availability_days.length > 0 && (
             <DetailRow
               icon={<Clock size={15} />}
-              title="Disponibilités"
+              title={t('profileDetail.availability')}
               values={[...profile.availability_days, ...(profile.availability_hours ?? [])]}
             />
           )}
@@ -537,7 +546,9 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                 className="px-4 py-2.5"
                 style={{ background: '#F0F7FF', borderBottom: '1px solid #E8EFF5' }}
               >
-                <p className="text-xs font-bold text-[#2F76BB]">Informations du profil</p>
+                <p className="text-xs font-bold text-[#2F76BB]">
+                  {t('profileDetail.profileInformation')}
+                </p>
               </div>
               <div className="space-y-2.5 bg-white px-4 py-3">
                 {profile.activity_sector && (
@@ -550,7 +561,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                   <div className="flex items-center gap-2.5">
                     <User size={14} color="#888" />
                     <span className="text-[13px] text-[#555]">
-                      {PROFILE_TYPE_LABEL[profile.profile_type]}
+                      {profileTypeLabel[profile.profile_type]}
                     </span>
                   </div>
                 )}
@@ -564,7 +575,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                   <div className="flex items-center gap-2.5">
                     <Check size={14} color="#61BCA6" />
                     <span className="text-[13px] font-semibold text-[#61BCA6]">
-                      Offre un service
+                      {t('profileDetail.offersService')}
                     </span>
                   </div>
                 )}
@@ -583,19 +594,18 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
               style={{ background: 'white', border: '1px solid #F1C8CF' }}
             >
               <Shield size={15} color="#D1445E" />
-              <span className="text-[13px] font-extrabold text-[#D1445E]">Signaler ce compte</span>
+              <span className="text-[13px] font-extrabold text-[#D1445E]">
+                {t('profileDetail.reportAccount')}
+              </span>
               <span className="ml-auto text-[11px] font-bold text-[#B35B6A]">
-                {showReportForm ? 'Masquer' : 'Continuer'}
+                {showReportForm ? t('profileDetail.hide') : t('common.continue')}
               </span>
             </button>
             {showReportForm && (
               <div>
-                <p className="mt-2 text-[11px] text-[#8C4A56]">
-                  Choisissez un motif. Si vous choisissez Autre, écrivez la raison avec vos propres
-                  mots.
-                </p>
+                <p className="mt-2 text-[11px] text-[#8C4A56]">{t('profileDetail.reportPrompt')}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  {REPORT_REASONS.map((reason) => {
+                  {reportReasons.map((reason) => {
                     const active = reportReason === reason.value;
                     return (
                       <button
@@ -618,13 +628,13 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                   <textarea
                     value={reportDetails}
                     onChange={(event) => setReportDetails(event.target.value.slice(0, 500))}
-                    placeholder="Décrivez la raison du signalement"
+                    placeholder={t('profileDetail.reportDetailsPlaceholder')}
                     className="mt-3 w-full resize-none rounded-xl px-3 py-2.5 text-xs text-[#444] outline-none"
                     style={{ minHeight: 82, background: 'white', border: '1px solid #EBD3D8' }}
                   />
                 ) : (
                   <p className="mt-2.5 text-[11px] text-[#8C4A56]">
-                    Le signalement sera envoyé directement avec le motif sélectionné.
+                    {t('profileDetail.reportWillBeSent')}
                   </p>
                 )}
                 <div className="mt-3 flex items-center justify-between gap-3">
@@ -641,7 +651,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                       opacity: isReporting ? 0.7 : 1,
                     }}
                   >
-                    {isReporting ? 'Envoi...' : 'Signaler ce compte'}
+                    {isReporting ? t('profileDetail.sending') : t('profileDetail.reportAccount')}
                   </button>
                 </div>
               </div>

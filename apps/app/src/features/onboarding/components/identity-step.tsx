@@ -162,7 +162,7 @@ export function IdentityStep({
   onRegistered,
   onNext,
 }: IdentityStepProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const existingName = splitName(profile?.name ?? '');
@@ -961,7 +961,7 @@ export function IdentityStep({
               }}
               disabled={otpVerifying}
               className="absolute top-4 right-4"
-              aria-label="Fermer"
+              aria-label={t('common.close')}
             >
               <X size={20} color="#9AA5B4" />
             </button>
@@ -974,10 +974,10 @@ export function IdentityStep({
                 <ShieldCheck size={26} color="white" />
               </div>
               <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1A1A2E' }}>
-                Vérifiez votre numéro
+                {t('onboarding.identity.otpModalTitle')}
               </h2>
               <p style={{ fontSize: '13px', color: '#888', marginTop: '6px' }}>
-                Entrez le code envoyé au{' '}
+                {t('onboarding.identity.otpModalDesc')}{' '}
                 <span style={{ fontWeight: 700, color: '#2F76BB' }}>{phone}</span>
               </p>
             </div>
@@ -1028,7 +1028,7 @@ export function IdentityStep({
               }}
             >
               {otpVerifying ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
-              Confirmer
+              {t('onboarding.identity.otpConfirm')}
             </button>
 
             <button
@@ -1044,10 +1044,10 @@ export function IdentityStep({
               }}
             >
               {otpSending
-                ? 'Envoi...'
+                ? t('onboarding.identity.otpSending')
                 : resendCooldown > 0
-                  ? `Renvoyer (${resendCooldown}s)`
-                  : 'Renvoyer le code'}
+                  ? t('onboarding.identity.otpResendCooldown', { seconds: resendCooldown })
+                  : t('onboarding.identity.otpResend')}
             </button>
           </div>
         </div>
@@ -1057,7 +1057,10 @@ export function IdentityStep({
         <VideoRecorderModal
           onVideoReady={handleVideoReady}
           onClose={() => setShowVideoModal(false)}
-          tr={buildVideoRecorderTr('fr', 'fr-FR')}
+          tr={buildVideoRecorderTr(
+            locale === 'ar' ? 'ar' : locale === 'en' ? 'en' : 'fr',
+            locale === 'ar' ? 'ar-TN' : locale === 'en' ? 'en-US' : 'fr-FR',
+          )}
         />
       )}
 

@@ -116,7 +116,7 @@ function splitName(name: string) {
 
 export function EditProfileForm() {
   const dispatch = useAppDispatch();
-  const { locale, t } = useI18n();
+  const { locale } = useI18n();
   const isRtl = locale === 'ar';
   const { profile, loading, error: profileError } = useAppSelector(selectOnboarding);
   const { mediaUploading, mediaError } = useAppSelector(selectProfile);
@@ -224,7 +224,13 @@ export function EditProfileForm() {
     event.target.value = '';
     if (!file) return;
     if (file.size > 8 * 1024 * 1024) {
-      setError('Photo trop volumineuse (8 Mo maximum).');
+      setError(
+        locale === 'en'
+          ? 'Photo too large (8 MB max).'
+          : locale === 'ar'
+            ? 'الصورة كبيرة جدًا (8 ميغابايت كحد أقصى).'
+            : 'Photo trop volumineuse (8 Mo maximum).',
+      );
       return;
     }
     setError(null);
@@ -297,11 +303,23 @@ export function EditProfileForm() {
       overrideKeys.length === 0 || keys.some((key) => overrideKeys.includes(key));
 
     if (touches('name') && !draft.name.trim()) {
-      setError('Le nom est obligatoire.');
+      setError(
+        locale === 'en'
+          ? 'Name is required.'
+          : locale === 'ar'
+            ? 'الاسم مطلوب.'
+            : 'Le nom est obligatoire.',
+      );
       return false;
     }
     if (touches('interests', 'goals') && (!draft.interests.length || !draft.goals.length)) {
-      setError('Ajoutez au moins un intérêt et un objectif.');
+      setError(
+        locale === 'en'
+          ? 'Add at least one interest and one goal.'
+          : locale === 'ar'
+            ? 'أضف اهتمامًا واحدًا وهدفًا واحدًا على الأقل.'
+            : 'Ajoutez au moins un intérêt et un objectif.',
+      );
       return false;
     }
     if (
@@ -309,7 +327,13 @@ export function EditProfileForm() {
       draft.offerService &&
       (!draft.serviceType || !draft.price.trim())
     ) {
-      setError('Le type et le prix du service sont obligatoires.');
+      setError(
+        locale === 'en'
+          ? 'The service type and price are required.'
+          : locale === 'ar'
+            ? 'نوع الخدمة وسعرها مطلوبان.'
+            : 'Le type et le prix du service sont obligatoires.',
+      );
       return false;
     }
     if (
@@ -317,7 +341,13 @@ export function EditProfileForm() {
       draft.offerService &&
       !draft.availabilityDays.length
     ) {
-      setError('Sélectionnez au moins un jour de disponibilité.');
+      setError(
+        locale === 'en'
+          ? 'Select at least one available day.'
+          : locale === 'ar'
+            ? 'اختر يومًا واحدًا على الأقل من أيام التوفر.'
+            : 'Sélectionnez au moins un jour de disponibilité.',
+      );
       return false;
     }
 
@@ -415,7 +445,13 @@ export function EditProfileForm() {
       window.setTimeout(() => setSaved(false), 2500);
       return true;
     } catch {
-      setError('Échec de la sauvegarde. Réessayez.');
+      setError(
+        locale === 'en'
+          ? 'Save failed. Try again.'
+          : locale === 'ar'
+            ? 'فشل الحفظ. حاول مرة أخرى.'
+            : 'Échec de la sauvegarde. Réessayez.',
+      );
       return false;
     } finally {
       setSaving(false);
@@ -423,28 +459,54 @@ export function EditProfileForm() {
   };
 
   if (!profile && loading) {
-    return <div className="py-16 text-center text-sm text-[#888]">Chargement du profil…</div>;
+    return (
+      <div className="py-16 text-center text-sm text-[#888]">
+        {locale === 'en'
+          ? 'Loading profile…'
+          : locale === 'ar'
+            ? 'جارٍ تحميل الملف الشخصي…'
+            : 'Chargement du profil…'}
+      </div>
+    );
   }
   if (!profile && profileError) {
     return (
       <div className="mx-4 my-10 rounded-2xl bg-white p-6 text-center shadow-sm" role="alert">
-        <p className="text-sm text-[#E24E59]">Impossible de charger votre profil.</p>
+        <p className="text-sm text-[#E24E59]">
+          {locale === 'en'
+            ? 'Could not load your profile.'
+            : locale === 'ar'
+              ? 'تعذر تحميل ملفك الشخصي.'
+              : 'Impossible de charger votre profil.'}
+        </p>
         <button
           type="button"
           onClick={() => dispatch(fetchOnboardingProfile())}
           className="mt-4 rounded-xl bg-[#2F76BB] px-5 py-2.5 text-sm font-bold text-white"
         >
-          Réessayer
+          {locale === 'en' ? 'Retry' : locale === 'ar' ? 'إعادة المحاولة' : 'Réessayer'}
         </button>
       </div>
     );
   }
 
   const profileTypeLabel = isIndividual
-    ? 'Je cherche'
+    ? locale === 'en'
+      ? 'Looking for'
+      : locale === 'ar'
+        ? 'أبحث عن'
+        : 'Je cherche'
     : profile?.profile_type === 'PROVIDER'
-      ? 'J’offre'
-      : 'Profil';
+      ? locale === 'en'
+        ? 'Offering'
+        : locale === 'ar'
+          ? 'أعرض'
+          : 'J’offre'
+      : locale === 'en'
+        ? 'Profile'
+        : locale === 'ar'
+          ? 'الملف الشخصي'
+          : 'Profil';
   const completionColor = completion >= 80 ? '#61BCA6' : completion >= 50 ? '#2F76BB' : '#F5A623';
   const completionBackground =
     completion >= 80 ? '#E8F7F3' : completion >= 50 ? '#E8F0FA' : '#FFF8EB';
@@ -458,7 +520,17 @@ export function EditProfileForm() {
             <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#D5E6F5] shadow-md">
               {imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={imageUrl} alt="Photo de profil" className="h-full w-full object-cover" />
+                <img
+                  src={imageUrl}
+                  alt={
+                    locale === 'en'
+                      ? 'Profile photo'
+                      : locale === 'ar'
+                        ? 'صورة الملف الشخصي'
+                        : 'Photo de profil'
+                  }
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <User size={32} color="#2F76BB" />
               )}
@@ -468,7 +540,13 @@ export function EditProfileForm() {
               onClick={() => fileRef.current?.click()}
               disabled={mediaUploading}
               className="absolute right-0 bottom-0 flex h-7 w-7 items-center justify-center rounded-full bg-[#2F76BB] shadow-md disabled:opacity-60"
-              aria-label="Changer la photo de profil"
+              aria-label={
+                locale === 'en'
+                  ? 'Change profile photo'
+                  : locale === 'ar'
+                    ? 'تغيير صورة الملف الشخصي'
+                    : 'Changer la photo de profil'
+              }
             >
               <Camera size={13} color="white" />
             </button>
@@ -488,7 +566,12 @@ export function EditProfileForm() {
               disabled={mediaUploading}
               className="mb-2 flex items-center gap-1 text-[11px] font-semibold text-[#E24E59] disabled:opacity-50"
             >
-              <Trash2 size={11} /> Supprimer la photo
+              <Trash2 size={11} />{' '}
+              {locale === 'en'
+                ? 'Remove photo'
+                : locale === 'ar'
+                  ? 'حذف الصورة'
+                  : 'Supprimer la photo'}
             </button>
           )}
           <span
@@ -499,7 +582,11 @@ export function EditProfileForm() {
               background: completionBackground,
             }}
           >
-            Complété à {completion}%
+            {locale === 'en'
+              ? `${completion}% complete`
+              : locale === 'ar'
+                ? `مكتمل بنسبة ${completion}%`
+                : `Complété à ${completion}%`}
           </span>
           <div className="mb-3 h-1.5 w-full max-w-xs rounded-full bg-[#E8E8E8]">
             <div
@@ -517,10 +604,18 @@ export function EditProfileForm() {
             {profileTypeLabel}
           </span>
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-extrabold text-[#353535]">{name || 'Votre nom'}</h1>
+            <h1 className="text-lg font-extrabold text-[#353535]">
+              {name || (locale === 'en' ? 'Your name' : locale === 'ar' ? 'اسمك' : 'Votre nom')}
+            </h1>
             <span
               className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2F76BB]"
-              aria-label="Profil vérifié"
+              aria-label={
+                locale === 'en'
+                  ? 'Verified profile'
+                  : locale === 'ar'
+                    ? 'ملف موثّق'
+                    : 'Profil vérifié'
+              }
             >
               <Check size={11} color="white" />
             </span>
@@ -528,18 +623,39 @@ export function EditProfileForm() {
               type="button"
               onClick={() => setSheet('identity')}
               className="flex h-6 w-6 items-center justify-center rounded-full border border-[#D0E4F7] bg-[#EEF5FF]"
-              aria-label="Modifier le nom et la profession"
+              aria-label={
+                locale === 'en'
+                  ? 'Edit name and profession'
+                  : locale === 'ar'
+                    ? 'تعديل الاسم والمهنة'
+                    : 'Modifier le nom et la profession'
+              }
             >
               <Pencil size={11} color="#2F76BB" />
             </button>
           </div>
-          <p className="text-[13px] text-[#777]">{job || 'Profession non renseignée'}</p>
+          <p className="text-[13px] text-[#777]">
+            {job ||
+              (locale === 'en'
+                ? 'No profession set'
+                : locale === 'ar'
+                  ? 'لم يتم تحديد المهنة'
+                  : 'Profession non renseignée')}
+          </p>
           <div className="mt-1 flex items-center gap-1 text-xs text-[#888]">
             <span className="mx-1 text-[#CCC]">·</span>
             <Star size={12} color="#F5A623" fill="#F5A623" />
             {profile?.rating ? profile.rating.toFixed(1) : '—'}
           </div>
-          {photo.error && <p className="mt-2 text-xs text-[#E24E59]">Photo inaccessible.</p>}
+          {photo.error && (
+            <p className="mt-2 text-xs text-[#E24E59]">
+              {locale === 'en'
+                ? 'Photo unavailable.'
+                : locale === 'ar'
+                  ? 'الصورة غير متاحة.'
+                  : 'Photo inaccessible.'}
+            </p>
+          )}
         </div>
       </header>
 
@@ -852,7 +968,19 @@ export function EditProfileForm() {
                   onClick={() => setShowVideoPreview((value) => !value)}
                   disabled={video.loading || !video.url}
                   className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-[#2F76BB] disabled:opacity-40"
-                  aria-label={showVideoPreview ? 'Masquer la vidéo' : 'Lire la vidéo'}
+                  aria-label={
+                    showVideoPreview
+                      ? locale === 'en'
+                        ? 'Hide video'
+                        : locale === 'ar'
+                          ? 'إخفاء الفيديو'
+                          : 'Masquer la vidéo'
+                      : locale === 'en'
+                        ? 'Play video'
+                        : locale === 'ar'
+                          ? 'تشغيل الفيديو'
+                          : 'Lire la vidéo'
+                  }
                 >
                   <Play size={13} fill="currentColor" />
                 </button>
@@ -861,7 +989,13 @@ export function EditProfileForm() {
                   onClick={() => setConfirmDelete('video')}
                   disabled={mediaUploading}
                   className="flex h-7 w-7 items-center justify-center rounded-lg bg-white disabled:opacity-40"
-                  aria-label="Supprimer la vidéo"
+                  aria-label={
+                    locale === 'en'
+                      ? 'Delete video'
+                      : locale === 'ar'
+                        ? 'حذف الفيديو'
+                        : 'Supprimer la vidéo'
+                  }
                 >
                   <X size={14} color="#AAA" />
                 </button>
@@ -1135,6 +1269,7 @@ function TagCard({
   icon: ReactNode;
   onEdit: () => void;
 }) {
+  const { locale } = useI18n();
   return (
     <ProfileCard>
       <SectionHeading title={title} icon={icon} onEdit={onEdit} />
@@ -1155,7 +1290,7 @@ function TagCard({
             onClick={onEdit}
             className="flex items-center gap-1 text-[13px] text-[#AAA]"
           >
-            <Plus size={14} /> Ajouter
+            <Plus size={14} /> {locale === 'en' ? 'Add' : locale === 'ar' ? 'إضافة' : 'Ajouter'}
           </button>
         )}
       </div>
@@ -1164,6 +1299,7 @@ function TagCard({
 }
 
 function InfoRow({ label, value, onClick }: { label: string; value: string; onClick: () => void }) {
+  const { locale } = useI18n();
   return (
     <button
       type="button"
@@ -1173,7 +1309,12 @@ function InfoRow({ label, value, onClick }: { label: string; value: string; onCl
       <span>
         <span className="block text-xs text-[#888]">{label}</span>
         <span className="text-sm font-semibold text-[#353535]">
-          {value || 'Appuyez pour modifier'}
+          {value ||
+            (locale === 'en'
+              ? 'Tap to edit'
+              : locale === 'ar'
+                ? 'انقر للتعديل'
+                : 'Appuyez pour modifier')}
         </span>
       </span>
       <ChevronDown size={16} color="#AAA" />
@@ -1217,10 +1358,11 @@ type SheetProps = {
 };
 
 function ProfileSheets(props: SheetProps) {
+  const { locale } = useI18n();
   if (props.sheet === 'interests')
     return (
       <TagEditor
-        title="Centres d’intérêt"
+        title={locale === 'en' ? 'Interests' : locale === 'ar' ? 'الاهتمامات' : 'Centres d’intérêt'}
         values={props.interests}
         suggestions={INTERESTS_SUGGESTIONS}
         maxItems={MAX_INTERESTS}
@@ -1233,7 +1375,7 @@ function ProfileSheets(props: SheetProps) {
   if (props.sheet === 'goals')
     return (
       <TagEditor
-        title="Objectifs"
+        title={locale === 'en' ? 'Goals' : locale === 'ar' ? 'الأهداف' : 'Objectifs'}
         values={props.goals}
         suggestions={GOAL_CATEGORIES.flatMap((category) => category.options)}
         onChange={props.setGoals}
@@ -1245,7 +1387,13 @@ function ProfileSheets(props: SheetProps) {
   if (props.sheet === 'contact')
     return (
       <ChoiceEditor
-        title="Préférences de contact"
+        title={
+          locale === 'en'
+            ? 'Contact preferences'
+            : locale === 'ar'
+              ? 'تفضيلات التواصل'
+              : 'Préférences de contact'
+        }
         values={CONTACT_OPTIONS.map(({ value, label }) => ({ value, label }))}
         selected={props.contactModes}
         multiple
@@ -1258,7 +1406,7 @@ function ProfileSheets(props: SheetProps) {
   if (props.sheet === 'experience')
     return (
       <ChoiceEditor
-        title="Expérience"
+        title={locale === 'en' ? 'Experience' : locale === 'ar' ? 'الخبرة' : 'Expérience'}
         values={EXPERIENCE_OPTIONS.map((value) => ({ value, label: value }))}
         selected={[props.experience]}
         onChange={([value = '']) => props.setExperience(value)}
@@ -1270,7 +1418,9 @@ function ProfileSheets(props: SheetProps) {
   if (props.sheet === 'sector')
     return (
       <ChoiceEditor
-        title="Secteur d’activité"
+        title={
+          locale === 'en' ? 'Industry' : locale === 'ar' ? 'قطاع النشاط' : 'Secteur d’activité'
+        }
         values={SECTOR_OPTIONS.map((value) => ({ value, label: value }))}
         selected={[props.sector]}
         onChange={([value = '']) => props.setSector(value)}
@@ -1282,7 +1432,13 @@ function ProfileSheets(props: SheetProps) {
   if (props.sheet === 'education')
     return (
       <ChoiceEditor
-        title="Niveau d’éducation"
+        title={
+          locale === 'en'
+            ? 'Education level'
+            : locale === 'ar'
+              ? 'المستوى التعليمي'
+              : 'Niveau d’éducation'
+        }
         values={EDUCATION_OPTIONS.map((value) => ({ value, label: value }))}
         selected={[props.education]}
         onChange={([value = '']) => props.setEducation(value)}
@@ -1294,7 +1450,13 @@ function ProfileSheets(props: SheetProps) {
   if (props.sheet === 'languages')
     return (
       <ChoiceEditor
-        title="Langues parlées"
+        title={
+          locale === 'en'
+            ? 'Spoken languages'
+            : locale === 'ar'
+              ? 'اللغات المحكية'
+              : 'Langues parlées'
+        }
         values={LANGUAGE_OPTIONS.map(({ value, label }) => ({ value, label }))}
         selected={props.languages}
         multiple
@@ -1315,9 +1477,14 @@ function ProfileSheets(props: SheetProps) {
 // TagEditor/ChoiceEditor — the parent's bio only changes once Enregistrer actually
 // persists, so dismissing without saving can never leak into a later, unrelated save.
 function BioSheet(props: SheetProps) {
+  const { locale } = useI18n();
   const [draft, setDraft] = useState(props.bio);
   return (
-    <EditSheet title="À propos de vous" onClose={props.close} error={props.error}>
+    <EditSheet
+      title={locale === 'en' ? 'About you' : locale === 'ar' ? 'نبذة عنك' : 'À propos de vous'}
+      onClose={props.close}
+      error={props.error}
+    >
       <textarea
         value={draft}
         maxLength={250}
@@ -1339,25 +1506,38 @@ function BioSheet(props: SheetProps) {
 }
 
 function ServiceSheet(props: SheetProps) {
+  const { locale } = useI18n();
   const [serviceType, setServiceType] = useState(props.serviceType);
   const [price, setPrice] = useState(props.price);
   return (
-    <EditSheet title="Service proposé" onClose={props.close} error={props.error}>
+    <EditSheet
+      title={
+        locale === 'en' ? 'Service offered' : locale === 'ar' ? 'الخدمة المقدمة' : 'Service proposé'
+      }
+      onClose={props.close}
+      error={props.error}
+    >
       <label className="mb-4 block text-xs text-[#888]">
-        Type de service
+        {locale === 'en' ? 'Service type' : locale === 'ar' ? 'نوع الخدمة' : 'Type de service'}
         <select
           value={serviceType}
           onChange={(event) => setServiceType(event.target.value)}
           className="mt-1.5 w-full rounded-xl border border-[#E0E0E0] bg-[#F5F7FA] px-4 py-3 text-sm"
         >
-          <option value="">Choisir</option>
+          <option value="">
+            {locale === 'en' ? 'Choose' : locale === 'ar' ? 'اختر' : 'Choisir'}
+          </option>
           {SERVICE_TYPES.map((value) => (
             <option key={value}>{value}</option>
           ))}
         </select>
       </label>
       <label className="mb-4 block text-xs text-[#888]">
-        Prix (DT/heure)
+        {locale === 'en'
+          ? 'Price (TND/hour)'
+          : locale === 'ar'
+            ? 'السعر (د.ت/ساعة)'
+            : 'Prix (DT/heure)'}
         <input
           inputMode="decimal"
           value={price}
@@ -1379,10 +1559,15 @@ function ServiceSheet(props: SheetProps) {
 }
 
 function AvailabilitySheet(props: SheetProps) {
+  const { locale } = useI18n();
   const [days, setDays] = useState(props.availabilityDays);
   const [hours, setHours] = useState(props.availabilityHours);
   return (
-    <EditSheet title="Disponibilités" onClose={props.close} error={props.error}>
+    <EditSheet
+      title={locale === 'en' ? 'Availability' : locale === 'ar' ? 'أوقات التوفر' : 'Disponibilités'}
+      onClose={props.close}
+      error={props.error}
+    >
       <ChoiceGrid
         values={DAYS.map((day) => ({ value: day.short, label: day.long }))}
         selected={days}
@@ -1405,15 +1590,32 @@ function AvailabilitySheet(props: SheetProps) {
 }
 
 function IdentitySheet(props: SheetProps) {
+  const { locale } = useI18n();
   const split = splitName(props.name);
   const [first, setFirst] = useState(split.firstName);
   const [last, setLast] = useState(split.lastName);
   const [job, setJob] = useState(props.job);
   return (
-    <EditSheet title="Nom et prénom" onClose={props.close} error={props.error}>
-      <SheetInput label="Prénom" value={first} onChange={setFirst} />
-      <SheetInput label="Nom" value={last} onChange={setLast} />
-      <SheetInput label="Profession" value={job} onChange={setJob} />
+    <EditSheet
+      title={locale === 'en' ? 'Name' : locale === 'ar' ? 'الاسم' : 'Nom et prénom'}
+      onClose={props.close}
+      error={props.error}
+    >
+      <SheetInput
+        label={locale === 'en' ? 'First name' : locale === 'ar' ? 'الاسم الأول' : 'Prénom'}
+        value={first}
+        onChange={setFirst}
+      />
+      <SheetInput
+        label={locale === 'en' ? 'Last name' : locale === 'ar' ? 'اللقب' : 'Nom'}
+        value={last}
+        onChange={setLast}
+      />
+      <SheetInput
+        label={locale === 'en' ? 'Profession' : locale === 'ar' ? 'المهنة' : 'Profession'}
+        value={job}
+        onChange={setJob}
+      />
       <SheetButton
         onClick={async () => {
           const nextName = `${first.trim()} ${last.trim()}`.trim();
@@ -1450,13 +1652,14 @@ function SheetInput({
 }
 
 function SheetButton({ onClick }: { onClick: () => void | Promise<void> }) {
+  const { locale } = useI18n();
   return (
     <button
       type="button"
       onClick={onClick}
       className="mt-4 w-full rounded-xl bg-[#2F76BB] py-3 text-sm font-bold text-white"
     >
-      Enregistrer
+      {locale === 'en' ? 'Save' : locale === 'ar' ? 'حفظ' : 'Enregistrer'}
     </button>
   );
 }

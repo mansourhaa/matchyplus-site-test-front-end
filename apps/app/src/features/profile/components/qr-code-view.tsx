@@ -146,7 +146,13 @@ export function QrCodeView() {
 
         <div
           ref={codeRef}
-          aria-label="Code QR de votre profil"
+          aria-label={
+            locale === 'en'
+              ? 'QR code for your profile'
+              : locale === 'ar'
+                ? 'رمز الاستجابة السريعة لملفك الشخصي'
+                : 'Code QR de votre profil'
+          }
           className="mx-auto flex w-fit flex-col items-center rounded-2xl border border-[#E8F0FA] p-5"
         >
           <QRCodeSVG
@@ -163,7 +169,10 @@ export function QrCodeView() {
               excavate: true,
             }}
           />
-          <p className="mt-3 text-sm font-bold text-[#353535]">{profile.name || 'Votre nom'}</p>
+          <p className="mt-3 text-sm font-bold text-[#353535]">
+            {profile.name ||
+              (locale === 'en' ? 'Your name' : locale === 'ar' ? 'اسمك' : 'Votre nom')}
+          </p>
           {profile.job && <p className="text-xs text-[#888]">{profile.job}</p>}
           <div className="my-3 w-full border-t border-dashed border-[#E0E0E0]" />
           <p className="text-center text-[11px] text-[#AAA]">

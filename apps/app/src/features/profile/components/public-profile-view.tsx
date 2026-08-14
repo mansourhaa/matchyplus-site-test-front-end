@@ -1,12 +1,14 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { ProfileDetailModal } from '@/features/matching/components/profile-detail-modal';
 import { fetchPublicProfile, selectProfile } from '@/features/profile/store/profile-slice';
 import { useEffect } from 'react';
 
 export function PublicProfileView({ userId }: { userId: string }) {
   const dispatch = useAppDispatch();
+  const { t } = useI18n();
   const { viewedProfile, viewedProfileLoading, viewedProfileError } = useAppSelector(selectProfile);
 
   useEffect(() => {
@@ -16,14 +18,14 @@ export function PublicProfileView({ userId }: { userId: string }) {
   if (viewedProfileLoading && (!viewedProfile || viewedProfile.id !== userId)) {
     return (
       <div className="flex h-full items-center justify-center py-16 text-sm text-[#888]">
-        Chargement du profil…
+        {t('profile.loadingProfile')}
       </div>
     );
   }
   if (viewedProfileError) {
     return (
       <div className="flex h-full items-center justify-center px-6 py-16 text-center text-sm text-[#888]">
-        Ce profil est introuvable ou inaccessible.
+        {t('profile.notFound')}
       </div>
     );
   }
