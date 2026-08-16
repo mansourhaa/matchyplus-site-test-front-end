@@ -38,6 +38,9 @@ describe('POST /api/v1/auth — error/message translation', () => {
   it('translates a success message instead of returning the raw internal code', async () => {
     const app = await buildTestApp({
       prisma: {
+        user: {
+          findUnique: vi.fn().mockResolvedValue(null),
+        } as never,
         otpChallenge: {
           findFirst: vi.fn().mockResolvedValue(null),
           create: vi.fn().mockResolvedValue({}),
