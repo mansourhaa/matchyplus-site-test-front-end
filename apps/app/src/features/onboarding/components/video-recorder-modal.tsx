@@ -256,7 +256,7 @@ export function VideoRecorderModal({
       setCamError(null);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facing, width: { ideal: 720 }, height: { ideal: 1280 } },
+          video: { facingMode: facing },
           audio: true,
         });
         streamRef.current = stream;
@@ -715,13 +715,12 @@ export function VideoRecorderModal({
       {/* ── CAMERA PREVIEW ── */}
       {(phase === 'preview' || phase === 'recording') && (
         <div className="relative flex flex-1 flex-col">
-          {/* Live video */}
           <video
             ref={liveRef}
             autoPlay
             playsInline
             muted
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-contain"
             style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
           />
 
