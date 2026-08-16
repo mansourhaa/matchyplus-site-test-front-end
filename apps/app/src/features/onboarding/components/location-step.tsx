@@ -1,5 +1,6 @@
 'use client';
 
+import { FlagIcon } from '@/components/matchy/flag-icon';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { useLocationGate } from '@/features/location/location-context';
 import {
@@ -41,97 +42,16 @@ const TIME_ICONS: Record<string, ReactNode> = {
   flexible: <Smile size={14} />,
 };
 
-// Real flag icons, not emoji — country-flag emoji frequently fail to render as actual
-// flags on Windows (shows blank boxes or letter codes instead), unlike macOS/iOS.
 function LangFlag({ langKey, size = 18 }: { langKey: string; size?: number }) {
-  const width = Math.round(size * 1.45);
-  const wrapStyle = {
-    width,
-    height: size,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    flexShrink: 0,
-  } as const;
-  const svgStyle = { display: 'block', width: '100%', height: '100%' } as const;
-
-  if (langKey === 'fr') {
-    return (
-      <div style={wrapStyle}>
-        <svg viewBox="0 0 3 2" style={svgStyle} aria-hidden>
-          <rect width="1" height="2" fill="#002395" />
-          <rect x="1" width="1" height="2" fill="#fff" />
-          <rect x="2" width="1" height="2" fill="#ED2939" />
-        </svg>
-      </div>
-    );
-  }
-  if (langKey === 'en') {
-    return (
-      <div style={wrapStyle}>
-        <svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice" style={svgStyle} aria-hidden>
-          <rect width="60" height="30" fill="#012169" />
-          <g fill="#fff">
-            <polygon points="0,0 60,30 60,25 5,0" />
-            <polygon points="60,0 0,30 0,25 55,0" />
-          </g>
-          <g fill="#C8102E">
-            <polygon points="0,0 60,30 60,27 3,0" />
-            <polygon points="60,0 0,30 0,27 57,0" />
-            <rect x="25" width="10" height="30" />
-            <rect y="10" width="60" height="10" />
-          </g>
-        </svg>
-      </div>
-    );
-  }
-  if (langKey === 'de') {
-    return (
-      <div style={wrapStyle}>
-        <svg viewBox="0 0 5 3" style={svgStyle} aria-hidden>
-          <rect width="5" height="1" fill="#000" />
-          <rect y="1" width="5" height="1" fill="#D00" />
-          <rect y="2" width="5" height="1" fill="#FFCE00" />
-        </svg>
-      </div>
-    );
-  }
-  if (langKey === 'es') {
-    return (
-      <div style={wrapStyle}>
-        <svg viewBox="0 0 3 2" style={svgStyle} aria-hidden>
-          <rect width="3" height="2" fill="#c60b1e" />
-          <rect y="0.5" width="3" height="1" fill="#ffc400" />
-        </svg>
-      </div>
-    );
-  }
-  if (langKey === 'it') {
-    return (
-      <div style={wrapStyle}>
-        <svg viewBox="0 0 3 2" style={svgStyle} aria-hidden>
-          <rect width="1" height="2" fill="#009246" />
-          <rect x="1" width="1" height="2" fill="#fff" />
-          <rect x="2" width="1" height="2" fill="#CE2B37" />
-        </svg>
-      </div>
-    );
-  }
-  if (langKey === 'ar') {
-    return (
-      <div style={wrapStyle}>
-        <svg viewBox="0 0 3 2" style={svgStyle} aria-hidden>
-          <rect width="3" height="2" fill="#E70013" />
-          <circle cx="1.5" cy="1" r="0.6" fill="#fff" />
-          <circle cx="1.65" cy="1" r="0.48" fill="#E70013" />
-          <path
-            d="M1.62 0.62 L1.78 1 L1.62 1.38 L1.95 1.15 L2.05 1.4 L2.1 1.1 L2.35 1.05 L2.1 0.9 L2.05 0.6 L1.95 0.85 Z"
-            fill="#fff"
-          />
-        </svg>
-      </div>
-    );
+  if (
+    langKey === 'fr' ||
+    langKey === 'en' ||
+    langKey === 'ar' ||
+    langKey === 'de' ||
+    langKey === 'es' ||
+    langKey === 'it'
+  ) {
+    return <FlagIcon locale={langKey} size={size} />;
   }
   if (langKey === 'ar-dialect') {
     return (

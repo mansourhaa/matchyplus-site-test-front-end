@@ -1,6 +1,7 @@
 import '@/app/globals.css';
 import { ClientProvider } from '@/components/shared/providers/client-provider';
 import { siteConfig } from '@/config/site';
+import 'flag-icons/css/flag-icons.min.css';
 import type { Metadata } from 'next';
 import { Baloo_2, Cairo } from 'next/font/google';
 
