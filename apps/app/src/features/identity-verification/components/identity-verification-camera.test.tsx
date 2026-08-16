@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/features/i18n/i18n-provider';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,6 +9,14 @@ function fakeStream() {
   return { getTracks: () => [track] } as unknown as MediaStream;
 }
 
+function renderCamera(props: { onCapture: (selfie: Blob) => void; disabled?: boolean }) {
+  return render(
+    <I18nProvider>
+      <IdentityVerificationCamera {...props} />
+    </I18nProvider>,
+  );
+}
+
 describe('IdentityVerificationCamera', () => {
   const originalMediaDevices = navigator.mediaDevices;
   const originalGetContext = HTMLCanvasElement.prototype.getContext;
@@ -16,6 +25,8 @@ describe('IdentityVerificationCamera', () => {
   const originalRevokeObjectURL = URL.revokeObjectURL;
 
   beforeEach(() => {
+    // These tests assert French copy (product default for Tunisian QA).
+    window.localStorage.setItem('matchy_locale', 'fr');
     URL.createObjectURL = vi.fn(() => 'blob:mock-preview-url');
     URL.revokeObjectURL = vi.fn();
     HTMLCanvasElement.prototype.getContext = vi.fn(
@@ -36,6 +47,7 @@ describe('IdentityVerificationCamera', () => {
     URL.createObjectURL = originalCreateObjectURL;
     URL.revokeObjectURL = originalRevokeObjectURL;
     vi.clearAllMocks();
+    window.localStorage.removeItem('matchy_locale');
   });
 
   it('opens the camera and shows the capture button once permission is granted', async () => {
@@ -45,7 +57,7 @@ describe('IdentityVerificationCamera', () => {
       configurable: true,
     });
 
-    render(<IdentityVerificationCamera onCapture={vi.fn()} />);
+    renderCamera({ onCapture: vi.fn() });
     fireEvent.click(screen.getByRole('button', { name: /Ouvrir la caméra/ }));
 
     expect(await screen.findByRole('button', { name: /Capturer/ })).toBeInTheDocument();
@@ -59,7 +71,7 @@ describe('IdentityVerificationCamera', () => {
       configurable: true,
     });
 
-    render(<IdentityVerificationCamera onCapture={vi.fn()} />);
+    renderCamera({ onCapture: vi.fn() });
     fireEvent.click(screen.getByRole('button', { name: /Ouvrir la caméra/ }));
 
     expect(await screen.findByText(/Impossible d'accéder à la caméra/)).toBeInTheDocument();
@@ -74,7 +86,7 @@ describe('IdentityVerificationCamera', () => {
     });
     const onCapture = vi.fn();
 
-    render(<IdentityVerificationCamera onCapture={onCapture} />);
+    renderCamera({ onCapture });
     fireEvent.click(screen.getByRole('button', { name: /Ouvrir la caméra/ }));
     fireEvent.click(await screen.findByRole('button', { name: /Capturer/ }));
 
@@ -92,7 +104,7 @@ describe('IdentityVerificationCamera', () => {
       configurable: true,
     });
 
-    render(<IdentityVerificationCamera onCapture={vi.fn()} />);
+    renderCamera({ onCapture: vi.fn() });
     fireEvent.click(screen.getByRole('button', { name: /Ouvrir la caméra/ }));
     fireEvent.click(await screen.findByRole('button', { name: /Capturer/ }));
     fireEvent.click(await screen.findByRole('button', { name: /Reprendre/ }));

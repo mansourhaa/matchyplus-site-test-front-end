@@ -1,11 +1,12 @@
 import authReducer from '@/features/auth/store/auth-slice';
 import type { AuthState, AuthUser } from '@/features/auth/types';
+import { I18nProvider } from '@/features/i18n/i18n-provider';
 import identityVerificationReducer from '@/features/identity-verification/store/identity-verification-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AccountSettings } from './account-settings';
 
@@ -49,12 +50,27 @@ function buildStore(user: AuthUser) {
 
 function renderAccountSettings(user: AuthUser) {
   const store = buildStore(user);
-  return { store, ...render(<Provider store={store}>{<AccountSettings />}</Provider>) };
+  return {
+    store,
+    ...render(
+      <Provider store={store}>
+        <I18nProvider>
+          <AccountSettings />
+        </I18nProvider>
+      </Provider>,
+    ),
+  };
 }
 
 describe('AccountSettings — identity verification', () => {
+  beforeEach(() => {
+    // These tests assert French copy (product default for Tunisian QA).
+    window.localStorage.setItem('matchy_locale', 'fr');
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
+    window.localStorage.removeItem('matchy_locale');
   });
 
   it('shows the verified state when User.verified is already true', () => {

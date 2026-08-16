@@ -1,5 +1,6 @@
 'use client';
 
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { Camera, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -14,6 +15,7 @@ export function IdentityVerificationCamera({
   onCapture,
   disabled,
 }: IdentityVerificationCameraProps) {
+  const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -39,7 +41,7 @@ export function IdentityVerificationCamera({
       streamRef.current = stream;
       setCameraOpen(true);
     } catch {
-      setError("Impossible d'accéder à la caméra. Vérifiez les autorisations de votre navigateur.");
+      setError(t('identityVerification.camera.cameraError'));
     }
   };
 
@@ -85,7 +87,11 @@ export function IdentityVerificationCamera({
     return (
       <div className="space-y-2">
         <div className="overflow-hidden rounded-2xl" style={{ border: '2px solid #2F76BB' }}>
-          <img src={previewUrl} alt="Selfie capturé" className="w-full" />
+          <img
+            src={previewUrl}
+            alt={t('identityVerification.camera.capturedAlt')}
+            className="w-full"
+          />
         </div>
         <button
           type="button"
@@ -100,7 +106,7 @@ export function IdentityVerificationCamera({
           }}
         >
           <RotateCcw size={15} />
-          Reprendre
+          {t('identityVerification.camera.retake')}
         </button>
       </div>
     );
@@ -127,7 +133,7 @@ export function IdentityVerificationCamera({
           }}
         >
           <Camera size={15} />
-          Capturer
+          {t('identityVerification.camera.capture')}
         </button>
       </div>
     );
@@ -149,7 +155,7 @@ export function IdentityVerificationCamera({
         }}
       >
         <Camera size={15} color="#2F76BB" />
-        Ouvrir la caméra
+        {t('identityVerification.camera.openCamera')}
       </button>
       {error && <p style={{ fontSize: '12px', color: '#B03A4D' }}>{error}</p>}
     </div>

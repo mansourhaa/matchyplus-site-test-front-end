@@ -140,7 +140,7 @@ function SubmitButton({
 
 export function ChangePasswordSection() {
   const dispatch = useAppDispatch();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -153,7 +153,13 @@ export function ChangePasswordSection() {
   const handleSubmit = async () => {
     setError(null);
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('Tous les champs sont obligatoires');
+      setError(
+        locale === 'en'
+          ? 'All fields are required'
+          : locale === 'ar'
+            ? 'جميع الحقول مطلوبة'
+            : 'Tous les champs sont obligatoires',
+      );
       return;
     }
     if (!isPasswordPolicySatisfied(newPassword)) {
@@ -161,7 +167,13 @@ export function ChangePasswordSection() {
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError(
+        locale === 'en'
+          ? 'Passwords do not match'
+          : locale === 'ar'
+            ? 'كلمتا المرور غير متطابقتين'
+            : 'Les mots de passe ne correspondent pas',
+      );
       return;
     }
 
@@ -174,7 +186,13 @@ export function ChangePasswordSection() {
         window.location.href = '/login';
       }, 1500);
     } catch {
-      setError('Échec de la mise à jour du mot de passe. Vérifiez votre mot de passe actuel.');
+      setError(
+        locale === 'en'
+          ? 'Failed to update the password. Check your current password.'
+          : locale === 'ar'
+            ? 'فشل تحديث كلمة المرور. تحقق من كلمة مرورك الحالية.'
+            : 'Échec de la mise à jour du mot de passe. Vérifiez votre mot de passe actuel.',
+      );
     } finally {
       setSubmitting(false);
     }
@@ -184,18 +202,42 @@ export function ChangePasswordSection() {
     <SettingsCard
       icon={<Lock size={18} color="#2F76BB" />}
       iconBackground="#E8F0FA"
-      title="Changer le mot de passe"
-      description="Pour des raisons de sécurité, vous serez déconnecté après la modification."
+      title={
+        locale === 'en'
+          ? 'Change password'
+          : locale === 'ar'
+            ? 'تغيير كلمة المرور'
+            : 'Changer le mot de passe'
+      }
+      description={
+        locale === 'en'
+          ? 'For security reasons, you will be signed out after the change.'
+          : locale === 'ar'
+            ? 'لأسباب أمنية، سيتم تسجيل خروجك بعد التعديل.'
+            : 'Pour des raisons de sécurité, vous serez déconnecté après la modification.'
+      }
     >
       <PasswordField
-        label="Mot de passe actuel"
+        label={
+          locale === 'en'
+            ? 'Current password'
+            : locale === 'ar'
+              ? 'كلمة المرور الحالية'
+              : 'Mot de passe actuel'
+        }
         value={currentPassword}
         onChange={setCurrentPassword}
         show={showCurrent}
         setShow={setShowCurrent}
       />
       <PasswordField
-        label="Nouveau mot de passe"
+        label={
+          locale === 'en'
+            ? 'New password'
+            : locale === 'ar'
+              ? 'كلمة المرور الجديدة'
+              : 'Nouveau mot de passe'
+        }
         value={newPassword}
         onChange={setNewPassword}
         show={showNew}
@@ -204,16 +246,37 @@ export function ChangePasswordSection() {
       />
       <PasswordRequirements password={newPassword} />
       <PasswordField
-        label="Confirmer le mot de passe"
+        label={
+          locale === 'en'
+            ? 'Confirm password'
+            : locale === 'ar'
+              ? 'تأكيد كلمة المرور'
+              : 'Confirmer le mot de passe'
+        }
         value={confirmPassword}
         onChange={setConfirmPassword}
         show={showNew}
         setShow={setShowNew}
       />
       {error && <InlineBanner kind="error" message={error} />}
-      {success && <InlineBanner kind="success" message="Mot de passe mis à jour. Redirection..." />}
+      {success && (
+        <InlineBanner
+          kind="success"
+          message={
+            locale === 'en'
+              ? 'Password updated. Redirecting...'
+              : locale === 'ar'
+                ? 'تم تحديث كلمة المرور. جارٍ إعادة التوجيه...'
+                : 'Mot de passe mis à jour. Redirection...'
+          }
+        />
+      )}
       <SubmitButton onClick={handleSubmit} disabled={submitting} loading={submitting}>
-        Mettre à jour le mot de passe
+        {locale === 'en'
+          ? 'Update password'
+          : locale === 'ar'
+            ? 'تحديث كلمة المرور'
+            : 'Mettre à jour le mot de passe'}
       </SubmitButton>
     </SettingsCard>
   );
@@ -259,6 +322,7 @@ function PasswordField({
 
 export function PhoneLinkSection() {
   const dispatch = useAppDispatch();
+  const { locale } = useI18n();
   const { user } = useAppSelector(selectAuth);
   const [countryIso, setCountryIso] = useState(DEFAULT_PHONE_COUNTRY.iso);
   const [nationalNumber, setNationalNumber] = useState('');
@@ -276,7 +340,13 @@ export function PhoneLinkSection() {
     setError(null);
     setInfo(null);
     if (nationalNumber.length < country.nationalLength) {
-      setError('Entrez un numéro de téléphone valide');
+      setError(
+        locale === 'en'
+          ? 'Enter a valid phone number'
+          : locale === 'ar'
+            ? 'أدخل رقم هاتف صالحًا'
+            : 'Entrez un numéro de téléphone valide',
+      );
       return;
     }
 
@@ -284,12 +354,22 @@ export function PhoneLinkSection() {
     try {
       await dispatch(requestPhoneLink({ phone })).unwrap();
       setCodeVisible(true);
-      setInfo('Code envoyé par SMS.');
+      setInfo(
+        locale === 'en'
+          ? 'Code sent by SMS.'
+          : locale === 'ar'
+            ? 'تم إرسال الرمز عبر رسالة نصية.'
+            : 'Code envoyé par SMS.',
+      );
     } catch {
       // Most common case right now: 403 phone_link_not_allowed, since this is only
       // reachable for social (Google/LinkedIn) accounts.
       setError(
-        "Échec de l'envoi du code — le lien de téléphone n'est disponible que pour les comptes Google/LinkedIn.",
+        locale === 'en'
+          ? 'Failed to send the code — phone linking is only available for Google/LinkedIn accounts.'
+          : locale === 'ar'
+            ? 'فشل إرسال الرمز — ربط الهاتف متاح فقط لحسابات Google/LinkedIn.'
+            : "Échec de l'envoi du code — le lien de téléphone n'est disponible que pour les comptes Google/LinkedIn.",
       );
     } finally {
       setRequestLoading(false);
@@ -300,7 +380,13 @@ export function PhoneLinkSection() {
     setError(null);
     setInfo(null);
     if (!code.trim()) {
-      setError('Entrez le code de vérification');
+      setError(
+        locale === 'en'
+          ? 'Enter the verification code'
+          : locale === 'ar'
+            ? 'أدخل رمز التحقق'
+            : 'Entrez le code de vérification',
+      );
       return;
     }
 
@@ -309,9 +395,21 @@ export function PhoneLinkSection() {
       await dispatch(confirmPhoneLink({ phone, code: code.trim() })).unwrap();
       setCode('');
       setCodeVisible(false);
-      setInfo('Numéro de téléphone confirmé avec succès.');
+      setInfo(
+        locale === 'en'
+          ? 'Phone number confirmed successfully.'
+          : locale === 'ar'
+            ? 'تم تأكيد رقم الهاتف بنجاح.'
+            : 'Numéro de téléphone confirmé avec succès.',
+      );
     } catch {
-      setError('Échec de la confirmation du numéro');
+      setError(
+        locale === 'en'
+          ? 'Failed to confirm the number'
+          : locale === 'ar'
+            ? 'فشل تأكيد الرقم'
+            : 'Échec de la confirmation du numéro',
+      );
     } finally {
       setConfirmLoading(false);
     }
@@ -321,12 +419,28 @@ export function PhoneLinkSection() {
     <SettingsCard
       icon={<Phone size={18} color="#61BCA6" />}
       iconBackground="#E8F7F3"
-      title="Lier un numéro de téléphone"
-      description={`Actuel : ${user?.phone ?? '-'} (réservé aux comptes Google/LinkedIn)`}
+      title={
+        locale === 'en'
+          ? 'Link a phone number'
+          : locale === 'ar'
+            ? 'ربط رقم هاتف'
+            : 'Lier un numéro de téléphone'
+      }
+      description={
+        locale === 'en'
+          ? `Current: ${user?.phone ?? '-'} (Google/LinkedIn accounts only)`
+          : locale === 'ar'
+            ? `الحالي: ${user?.phone ?? '-'} (حسابات Google/LinkedIn فقط)`
+            : `Actuel : ${user?.phone ?? '-'} (réservé aux comptes Google/LinkedIn)`
+      }
     >
       <div>
         <label style={{ fontSize: '12px', color: '#7F8A9A', fontWeight: 700 }}>
-          Numéro de téléphone
+          {locale === 'en'
+            ? 'Phone number'
+            : locale === 'ar'
+              ? 'رقم الهاتف'
+              : 'Numéro de téléphone'}
         </label>
         <div className="mt-1">
           <PhoneInput
@@ -338,13 +452,19 @@ export function PhoneLinkSection() {
         </div>
       </div>
       <SubmitButton onClick={handleRequestCode} disabled={requestLoading} loading={requestLoading}>
-        Envoyer le code
+        {locale === 'en' ? 'Send code' : locale === 'ar' ? 'إرسال الرمز' : 'Envoyer le code'}
       </SubmitButton>
 
       {codeVisible && (
         <>
           <TextField
-            label="Code de vérification"
+            label={
+              locale === 'en'
+                ? 'Verification code'
+                : locale === 'ar'
+                  ? 'رمز التحقق'
+                  : 'Code de vérification'
+            }
             value={code}
             onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
             placeholder="123456"
@@ -354,7 +474,11 @@ export function PhoneLinkSection() {
             disabled={confirmLoading}
             loading={confirmLoading}
           >
-            Confirmer le numéro
+            {locale === 'en'
+              ? 'Confirm number'
+              : locale === 'ar'
+                ? 'تأكيد الرقم'
+                : 'Confirmer le numéro'}
           </SubmitButton>
         </>
       )}
@@ -373,6 +497,7 @@ const TERMINAL_STATUSES = new Set(['SUCCEEDED', 'FAILED', 'CANCELLED']);
 
 export function IdentityVerificationSection() {
   const dispatch = useAppDispatch();
+  const { locale } = useI18n();
   const { user } = useAppSelector(selectAuth);
   const { job, identityVerified, submitting, restored, error } = useAppSelector(
     selectIdentityVerification,
@@ -394,7 +519,11 @@ export function IdentityVerificationSection() {
 
     if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
       setTimeoutError(
-        'La vérification prend plus de temps que prévu. Revenez sur cette page dans quelques minutes pour voir le résultat.',
+        locale === 'en'
+          ? 'Verification is taking longer than expected. Come back to this page in a few minutes to see the result.'
+          : locale === 'ar'
+            ? 'يستغرق التحقق وقتًا أطول من المتوقع. عد إلى هذه الصفحة بعد بضع دقائق لرؤية النتيجة.'
+            : 'La vérification prend plus de temps que prévu. Revenez sur cette page dans quelques minutes pour voir le résultat.',
       );
       return;
     }
@@ -405,7 +534,7 @@ export function IdentityVerificationSection() {
     }, POLL_INTERVAL_MS);
 
     return () => window.clearTimeout(timer);
-  }, [job, dispatch]);
+  }, [job, dispatch, locale]);
 
   const handleCapture = (selfie: Blob) => {
     pollAttemptsRef.current = 0;
@@ -424,10 +553,31 @@ export function IdentityVerificationSection() {
       <SettingsCard
         icon={<ShieldCheck size={18} color="#61BCA6" />}
         iconBackground="#E8F7F3"
-        title="Identité vérifiée"
-        description="Votre selfie correspond à votre photo de profil."
+        title={
+          locale === 'en'
+            ? 'Identity verified'
+            : locale === 'ar'
+              ? 'تم التحقق من الهوية'
+              : 'Identité vérifiée'
+        }
+        description={
+          locale === 'en'
+            ? 'Your selfie matches your profile photo.'
+            : locale === 'ar'
+              ? 'صورتك الشخصية مطابقة لصورة ملفك الشخصي.'
+              : 'Votre selfie correspond à votre photo de profil.'
+        }
       >
-        <InlineBanner kind="success" message="Identité vérifiée ✓" />
+        <InlineBanner
+          kind="success"
+          message={
+            locale === 'en'
+              ? 'Identity verified ✓'
+              : locale === 'ar'
+                ? 'تم التحقق من الهوية ✓'
+                : 'Identité vérifiée ✓'
+          }
+        />
       </SettingsCard>
     );
   }
@@ -440,8 +590,20 @@ export function IdentityVerificationSection() {
     <SettingsCard
       icon={<ShieldCheck size={18} color="#2F76BB" />}
       iconBackground="#E8F0FA"
-      title="Vérifier mon identité"
-      description="Prenez un selfie pour le comparer à votre photo de profil."
+      title={
+        locale === 'en'
+          ? 'Verify my identity'
+          : locale === 'ar'
+            ? 'التحقق من هويتي'
+            : 'Vérifier mon identité'
+      }
+      description={
+        locale === 'en'
+          ? 'Take a selfie to compare it against your profile photo.'
+          : locale === 'ar'
+            ? 'التقط صورة شخصية لمقارنتها بصورة ملفك الشخصي.'
+            : 'Prenez un selfie pour le comparer à votre photo de profil.'
+      }
     >
       {restored && !isPending && !failed && (
         <IdentityVerificationCamera onCapture={handleCapture} disabled={submitting} />
@@ -449,7 +611,17 @@ export function IdentityVerificationSection() {
 
       {(!restored || isPending) && (
         <p style={{ fontSize: '13px', color: '#687284', fontWeight: 600 }}>
-          {restored ? 'Vérification en cours...' : 'Chargement...'}
+          {restored
+            ? locale === 'en'
+              ? 'Verification in progress...'
+              : locale === 'ar'
+                ? 'التحقق جارٍ...'
+                : 'Vérification en cours...'
+            : locale === 'en'
+              ? 'Loading...'
+              : locale === 'ar'
+                ? 'جارٍ التحميل...'
+                : 'Chargement...'}
         </p>
       )}
 
@@ -461,8 +633,16 @@ export function IdentityVerificationSection() {
             kind="error"
             message={
               noFaceDetected
-                ? "Aucun visage n'a été détecté. Placez-vous face à la caméra, dans un endroit bien éclairé, sans lunettes de soleil ni masque."
-                : 'La vérification a échoué — le selfie ne correspond pas à votre photo de profil.'
+                ? locale === 'en'
+                  ? 'No face was detected. Face the camera in a well-lit area, without sunglasses or a mask.'
+                  : locale === 'ar'
+                    ? 'لم يتم اكتشاف أي وجه. واجه الكاميرا في مكان مضاء جيدًا، دون نظارات شمسية أو قناع.'
+                    : "Aucun visage n'a été détecté. Placez-vous face à la caméra, dans un endroit bien éclairé, sans lunettes de soleil ni masque."
+                : locale === 'en'
+                  ? 'Verification failed — the selfie does not match your profile photo.'
+                  : locale === 'ar'
+                    ? 'فشل التحقق — الصورة الشخصية لا تطابق صورة ملفك الشخصي.'
+                    : 'La vérification a échoué — le selfie ne correspond pas à votre photo de profil.'
             }
           />
           <button
@@ -476,7 +656,7 @@ export function IdentityVerificationSection() {
               color: '#253044',
             }}
           >
-            Réessayer
+            {locale === 'en' ? 'Retry' : locale === 'ar' ? 'إعادة المحاولة' : 'Réessayer'}
           </button>
         </>
       )}
@@ -487,6 +667,7 @@ export function IdentityVerificationSection() {
 export function DeleteAccountSection() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { locale } = useI18n();
   const { user } = useAppSelector(selectAuth);
   const hasPassword = Boolean(user?.has_password);
   const [password, setPassword] = useState('');
@@ -505,8 +686,16 @@ export function DeleteAccountSection() {
     } catch {
       setError(
         user?.phone
-          ? "Impossible d'envoyer le code. Réessayez."
-          : 'Ajoutez un téléphone à votre compte avant de le supprimer.',
+          ? locale === 'en'
+            ? 'Could not send the code. Please try again.'
+            : locale === 'ar'
+              ? 'تعذر إرسال الرمز. حاول مرة أخرى.'
+              : "Impossible d'envoyer le code. Réessayez."
+          : locale === 'en'
+            ? 'Add a phone number to your account before deleting it.'
+            : locale === 'ar'
+              ? 'أضف رقم هاتف إلى حسابك قبل حذفه.'
+              : 'Ajoutez un téléphone à votre compte avant de le supprimer.',
       );
     } finally {
       setSubmitting(false);
@@ -528,8 +717,16 @@ export function DeleteAccountSection() {
     } catch {
       setError(
         hasPassword
-          ? 'Échec de la suppression. Vérifiez votre mot de passe.'
-          : 'Échec de la suppression. Vérifiez le code OTP.',
+          ? locale === 'en'
+            ? 'Deletion failed. Check your password.'
+            : locale === 'ar'
+              ? 'فشل الحذف. تحقق من كلمة مرورك.'
+              : 'Échec de la suppression. Vérifiez votre mot de passe.'
+          : locale === 'en'
+            ? 'Deletion failed. Check the OTP code.'
+            : locale === 'ar'
+              ? 'فشل الحذف. تحقق من رمز التحقق.'
+              : 'Échec de la suppression. Vérifiez le code OTP.',
       );
     } finally {
       setSubmitting(false);
@@ -540,16 +737,26 @@ export function DeleteAccountSection() {
     <SettingsCard
       icon={<Trash2 size={18} color="#E24E59" />}
       iconBackground="#FFF3F3"
-      title="Supprimer le compte"
+      title={
+        locale === 'en' ? 'Delete account' : locale === 'ar' ? 'حذف الحساب' : 'Supprimer le compte'
+      }
       description={
         hasPassword
-          ? 'Action irréversible. Confirmez avec votre mot de passe.'
-          : 'Action irréversible. Un code SMS est requis (comptes sans mot de passe).'
+          ? locale === 'en'
+            ? 'Irreversible action. Confirm with your password.'
+            : locale === 'ar'
+              ? 'إجراء لا رجعة فيه. أكّد باستخدام كلمة مرورك.'
+              : 'Action irréversible. Confirmez avec votre mot de passe.'
+          : locale === 'en'
+            ? 'Irreversible action. An SMS code is required (accounts without a password).'
+            : locale === 'ar'
+              ? 'إجراء لا رجعة فيه. رمز الرسائل القصيرة مطلوب (الحسابات بدون كلمة مرور).'
+              : 'Action irréversible. Un code SMS est requis (comptes sans mot de passe).'
       }
     >
       {hasPassword ? (
         <TextField
-          label="Mot de passe"
+          label={locale === 'en' ? 'Password' : locale === 'ar' ? 'كلمة المرور' : 'Mot de passe'}
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
@@ -557,7 +764,7 @@ export function DeleteAccountSection() {
       ) : (
         <>
           <TextField
-            label="Code OTP"
+            label={locale === 'en' ? 'OTP code' : locale === 'ar' ? 'رمز التحقق' : 'Code OTP'}
             type="text"
             value={otpCode}
             onChange={(event) => setOtpCode(event.target.value)}
@@ -574,7 +781,17 @@ export function DeleteAccountSection() {
               color: '#253044',
             }}
           >
-            {otpSent ? 'Renvoyer le code' : 'Envoyer le code SMS'}
+            {otpSent
+              ? locale === 'en'
+                ? 'Resend code'
+                : locale === 'ar'
+                  ? 'إعادة إرسال الرمز'
+                  : 'Renvoyer le code'
+              : locale === 'en'
+                ? 'Send SMS code'
+                : locale === 'ar'
+                  ? 'إرسال رمز الرسائل القصيرة'
+                  : 'Envoyer le code SMS'}
           </button>
         </>
       )}
@@ -587,7 +804,11 @@ export function DeleteAccountSection() {
           className="w-full rounded-xl py-3 text-white"
           style={{ background: '#E24E59', fontSize: '14px', fontWeight: 700 }}
         >
-          Supprimer mon compte
+          {locale === 'en'
+            ? 'Delete my account'
+            : locale === 'ar'
+              ? 'حذف حسابي'
+              : 'Supprimer mon compte'}
         </button>
       ) : (
         <div className="flex gap-3">
@@ -602,7 +823,7 @@ export function DeleteAccountSection() {
               color: '#253044',
             }}
           >
-            Annuler
+            {locale === 'en' ? 'Cancel' : locale === 'ar' ? 'إلغاء' : 'Annuler'}
           </button>
           <button
             type="button"
@@ -615,7 +836,17 @@ export function DeleteAccountSection() {
               fontWeight: 700,
             }}
           >
-            {submitting ? 'Suppression...' : 'Confirmer la suppression'}
+            {submitting
+              ? locale === 'en'
+                ? 'Deleting...'
+                : locale === 'ar'
+                  ? 'جارٍ الحذف...'
+                  : 'Suppression...'
+              : locale === 'en'
+                ? 'Confirm deletion'
+                : locale === 'ar'
+                  ? 'تأكيد الحذف'
+                  : 'Confirmer la suppression'}
           </button>
         </div>
       )}
@@ -624,6 +855,7 @@ export function DeleteAccountSection() {
 }
 
 export function AccountSettings() {
+  const { locale } = useI18n();
   return (
     <div
       className="min-h-screen"
@@ -634,10 +866,10 @@ export function AccountSettings() {
         style={{ background: 'white', borderBottom: '1px solid #EEF0F3' }}
       >
         <Link href="/" style={{ fontSize: '13px', fontWeight: 700, color: '#667085' }}>
-          ← Retour
+          {locale === 'en' ? '← Back' : locale === 'ar' ? '→ رجوع' : '← Retour'}
         </Link>
         <h1 className="ml-4" style={{ fontSize: '16px', fontWeight: 800, color: '#253044' }}>
-          Mon compte
+          {locale === 'en' ? 'My account' : locale === 'ar' ? 'حسابي' : 'Mon compte'}
         </h1>
       </div>
 

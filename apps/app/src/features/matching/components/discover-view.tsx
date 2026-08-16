@@ -231,7 +231,7 @@ export function DiscoverView() {
                   }}
                 />
                 <p className="mt-2 text-[#888]" style={{ fontSize: 14 }}>
-                  Chargement des profils...
+                  {t('matching.loadingProfiles')}
                 </p>
               </div>
             ) : locationRequired ? null : (

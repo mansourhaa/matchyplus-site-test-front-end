@@ -2,6 +2,7 @@
 
 import { useAppDispatch } from '@/features/auth/hooks';
 import { exchangeOAuthCode } from '@/features/auth/store/auth-slice';
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -14,26 +15,26 @@ import { useEffect, useRef, useState } from 'react';
  * one-time code for real tokens via POST /auth/oauth/exchange, then signs the user in the
  * same way any other login flow does.
  */
-function oauthErrorMessage(code: string): string {
+function oauthErrorMessage(code: string, t: (key: string) => string): string {
   switch (code) {
     case 'access_denied':
-      return 'Connexion annulée. Vous pouvez réessayer ou utiliser une autre méthode.';
+      return t('oauthCallback.errorAccessDenied');
     case 'oauth_invalid_state':
-      return 'La session de connexion a expiré. Revenez à la page de connexion et réessayez.';
+      return t('oauthCallback.errorInvalidState');
     case 'oauth_token_exchange_failed':
-      return "La connexion Google/LinkedIn n'a pas pu être validée. Vérifiez la configuration OAuth (redirect URI) ou réessayez.";
+      return t('oauthCallback.errorTokenExchangeFailed');
     case 'oauth_email_unverified':
-      return "L'e-mail de ce compte n'est pas vérifié chez le fournisseur. Vérifiez-le, puis réessayez, ou connectez-vous autrement.";
+      return t('oauthCallback.errorEmailUnverified');
     case 'oauth_link_conflict':
-      return 'Ce compte Google/LinkedIn est déjà lié à un autre utilisateur.';
+      return t('oauthCallback.errorLinkConflict');
     case 'oauth_link_email_mismatch':
-      return "L'e-mail du fournisseur ne correspond pas à votre compte.";
+      return t('oauthCallback.errorLinkEmailMismatch');
     case 'oauth_provider_not_configured':
-      return "Ce fournisseur de connexion n'est pas configuré sur le serveur.";
+      return t('oauthCallback.errorProviderNotConfigured');
     case 'oauth_profile_fetch_failed':
-      return 'Impossible de récupérer votre profil auprès du fournisseur. Réessayez.';
+      return t('oauthCallback.errorProfileFetchFailed');
     default:
-      return 'La connexion via ce fournisseur a échoué. Réessayez ou utilisez une autre méthode.';
+      return t('oauthCallback.errorGeneric');
   }
 }
 
@@ -41,6 +42,7 @@ export function OAuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+  const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const hasRun = useRef(false);
 
@@ -51,13 +53,13 @@ export function OAuthCallback() {
     async function run() {
       const oauthError = searchParams.get('error');
       if (oauthError) {
-        setError(oauthErrorMessage(oauthError));
+        setError(oauthErrorMessage(oauthError, t));
         return;
       }
 
       const code = searchParams.get('code');
       if (!code) {
-        setError('Code de connexion manquant.');
+        setError(t('oauthCallback.errorCodeMissing'));
         return;
       }
 
@@ -72,15 +74,15 @@ export function OAuthCallback() {
           );
           router.refresh();
         } else {
-          setError('La connexion a échoué. Réessayez.');
+          setError(t('oauthCallback.errorLoginFailed'));
         }
       } catch {
-        setError('La connexion a échoué. Réessayez.');
+        setError(t('oauthCallback.errorLoginFailed'));
       }
     }
 
     void run();
-  }, [dispatch, router, searchParams]);
+  }, [dispatch, router, searchParams, t]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white px-6">
@@ -98,13 +100,13 @@ export function OAuthCallback() {
               fontWeight: 700,
             }}
           >
-            Retour à la connexion
+            {t('oauthCallback.backToLogin')}
           </Link>
         </>
       ) : (
         <>
           <Loader2 size={28} className="animate-spin" color="#2F76BB" />
-          <p style={{ fontSize: '14px', color: '#888' }}>Connexion en cours...</p>
+          <p style={{ fontSize: '14px', color: '#888' }}>{t('oauthCallback.signingIn')}</p>
         </>
       )}
     </div>

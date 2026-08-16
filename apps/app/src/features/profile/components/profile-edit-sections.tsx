@@ -128,6 +128,7 @@ export function TagEditor({
   onSave: (values: string[]) => Promise<boolean>;
   error?: string | null;
 }) {
+  const { locale } = useI18n();
   const [draft, setDraft] = useState(values);
   const [input, setInput] = useState('');
 
@@ -163,19 +164,26 @@ export function TagEditor({
             }
           }}
           className="min-w-0 flex-1 rounded-xl border border-[#E0E0E0] bg-[#F5F7FA] px-3 py-2.5 text-[13px] outline-none"
-          placeholder={`Ajouter ${title.toLowerCase()}`}
+          placeholder={
+            locale === 'en'
+              ? `Add ${title.toLowerCase()}`
+              : locale === 'ar'
+                ? `إضافة ${title}`
+                : `Ajouter ${title.toLowerCase()}`
+          }
         />
         <button
           type="button"
           onClick={() => add(input)}
           className="rounded-xl bg-[#E8F7F3] px-3 text-xs font-bold text-[#2A8F76]"
         >
-          Ajouter
+          {locale === 'en' ? 'Add' : locale === 'ar' ? 'إضافة' : 'Ajouter'}
         </button>
       </div>
       {maxItems && (
         <p className="mb-3 text-xs text-[#888]">
-          {draft.length}/{maxItems} sélectionnés
+          {draft.length}/{maxItems}{' '}
+          {locale === 'en' ? 'selected' : locale === 'ar' ? 'محدد' : 'sélectionnés'}
         </p>
       )}
       <div className="mb-4 flex flex-wrap gap-2">
@@ -190,7 +198,9 @@ export function TagEditor({
           </button>
         ))}
       </div>
-      <p className="mb-2 text-xs font-semibold text-[#777]">Suggestions</p>
+      <p className="mb-2 text-xs font-semibold text-[#777]">
+        {locale === 'en' ? 'Suggestions' : locale === 'ar' ? 'اقتراحات' : 'Suggestions'}
+      </p>
       <div className="mb-5 flex flex-wrap gap-2">
         {availableSuggestions.map((suggestion) => (
           <button
@@ -204,7 +214,13 @@ export function TagEditor({
           </button>
         ))}
         {availableSuggestions.length === 0 && (
-          <p className="text-xs text-[#999]">Aucune suggestion disponible.</p>
+          <p className="text-xs text-[#999]">
+            {locale === 'en'
+              ? 'No suggestions available.'
+              : locale === 'ar'
+                ? 'لا توجد اقتراحات متاحة.'
+                : 'Aucune suggestion disponible.'}
+          </p>
         )}
       </div>
       <SheetSave
@@ -302,6 +318,7 @@ export function ChoiceEditor({
 }
 
 function SheetSave({ onClick }: { onClick: () => void | Promise<void> }) {
+  const { locale } = useI18n();
   const [saving, setSaving] = useState(false);
 
   return (
@@ -320,7 +337,17 @@ function SheetSave({ onClick }: { onClick: () => void | Promise<void> }) {
       }}
       className="w-full rounded-xl bg-[#2F76BB] py-3 text-sm font-bold text-white disabled:opacity-60"
     >
-      {saving ? 'Enregistrement…' : 'Enregistrer'}
+      {saving
+        ? locale === 'en'
+          ? 'Saving...'
+          : locale === 'ar'
+            ? 'جارٍ الحفظ...'
+            : 'Enregistrement…'
+        : locale === 'en'
+          ? 'Save'
+          : locale === 'ar'
+            ? 'حفظ'
+            : 'Enregistrer'}
     </button>
   );
 }
@@ -344,6 +371,7 @@ export function ExperienceSection({
   onChange: (values: ProfileExperience[]) => void;
   onSave: (values: ProfileExperience[]) => Promise<boolean>;
 }) {
+  const { locale } = useI18n();
   const [editing, setEditing] = useState<ProfileExperience | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -365,7 +393,13 @@ export function ExperienceSection({
       onChange(next);
       setEditing(null);
     } else {
-      setSaveError('Échec de la sauvegarde. Réessayez.');
+      setSaveError(
+        locale === 'en'
+          ? 'Save failed. Please try again.'
+          : locale === 'ar'
+            ? 'فشل الحفظ. حاول مرة أخرى.'
+            : 'Échec de la sauvegarde. Réessayez.',
+      );
     }
   };
   const save = (entry: ProfileExperience) => {
@@ -383,7 +417,13 @@ export function ExperienceSection({
     <>
       <ProfileCard>
         <SectionHeading
-          title="Expériences professionnelles"
+          title={
+            locale === 'en'
+              ? 'Professional experience'
+              : locale === 'ar'
+                ? 'الخبرات المهنية'
+                : 'Expériences professionnelles'
+          }
           icon={
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EEF5FF]">
               <Briefcase size={15} color="#2F76BB" />
@@ -395,7 +435,7 @@ export function ExperienceSection({
               onClick={() => openEditor(emptyExperience())}
               className="flex items-center gap-1 rounded-lg bg-[#EEF5FF] px-2.5 py-1 text-xs font-semibold text-[#2F76BB]"
             >
-              <Plus size={11} /> Ajouter
+              <Plus size={11} /> {locale === 'en' ? 'Add' : locale === 'ar' ? 'إضافة' : 'Ajouter'}
             </button>
           }
         />
@@ -414,7 +454,12 @@ export function ExperienceSection({
                     {entry.title}
                   </span>
                   <span className="block text-xs text-[#555]">
-                    {entry.company || 'Entreprise non renseignée'}
+                    {entry.company ||
+                      (locale === 'en'
+                        ? 'Company not specified'
+                        : locale === 'ar'
+                          ? 'الشركة غير محددة'
+                          : 'Entreprise non renseignée')}
                   </span>
                 </span>
                 <Pencil size={14} color="#AAA" />
@@ -424,7 +469,13 @@ export function ExperienceSection({
         ) : (
           <div className="flex flex-col items-center gap-1 py-4 text-xs text-[#AAA]">
             <Clock size={24} color="#DDD" />
-            <p>Aucune expérience pour l&apos;instant</p>
+            <p>
+              {locale === 'en'
+                ? 'No experience yet'
+                : locale === 'ar'
+                  ? 'لا توجد خبرة حتى الآن'
+                  : "Aucune expérience pour l'instant"}
+            </p>
           </div>
         )}
       </ProfileCard>
@@ -457,38 +508,59 @@ function ExperienceEditor({
   saving: boolean;
   error: string | null;
 }) {
+  const { locale } = useI18n();
   const [draft, setDraft] = useState(value);
   return (
     <EditSheet
-      title={value.id ? "Modifier l'expérience" : 'Ajouter une expérience'}
+      title={
+        value.id
+          ? locale === 'en'
+            ? 'Edit experience'
+            : locale === 'ar'
+              ? 'تعديل الخبرة'
+              : "Modifier l'expérience"
+          : locale === 'en'
+            ? 'Add an experience'
+            : locale === 'ar'
+              ? 'إضافة خبرة'
+              : 'Ajouter une expérience'
+      }
       onClose={onClose}
       error={error}
     >
       <EditorInput
-        label="Intitulé du poste *"
+        label={
+          locale === 'en'
+            ? 'Job title *'
+            : locale === 'ar'
+              ? 'المسمى الوظيفي *'
+              : 'Intitulé du poste *'
+        }
         value={draft.title}
         onChange={(title) => setDraft({ ...draft, title })}
       />
       <EditorInput
-        label="Entreprise"
+        label={locale === 'en' ? 'Company' : locale === 'ar' ? 'الشركة' : 'Entreprise'}
         value={draft.company}
         onChange={(company) => setDraft({ ...draft, company })}
       />
       <EditorInput
-        label="Type de contrat"
+        label={
+          locale === 'en' ? 'Contract type' : locale === 'ar' ? 'نوع العقد' : 'Type de contrat'
+        }
         value={draft.type}
         onChange={(type) => setDraft({ ...draft, type })}
       />
       <div className="grid grid-cols-2 gap-3">
         <EditorInput
           type="month"
-          label="Début"
+          label={locale === 'en' ? 'Start' : locale === 'ar' ? 'البداية' : 'Début'}
           value={draft.startDate}
           onChange={(startDate) => setDraft({ ...draft, startDate })}
         />
         <EditorInput
           type="month"
-          label="Fin"
+          label={locale === 'en' ? 'End' : locale === 'ar' ? 'النهاية' : 'Fin'}
           value={draft.endDate}
           onChange={(endDate) => setDraft({ ...draft, endDate })}
           disabled={draft.current}
@@ -506,7 +578,11 @@ function ExperienceEditor({
             })
           }
         />
-        Poste actuel
+        {locale === 'en'
+          ? 'Current position'
+          : locale === 'ar'
+            ? 'الوظيفة الحالية'
+            : 'Poste actuel'}
       </label>
       <div className="flex gap-2">
         {onDelete && <DeleteButton onClick={onDelete} disabled={saving} />}
@@ -516,7 +592,17 @@ function ExperienceEditor({
           onClick={() => onSave({ ...draft, title: draft.title.trim() })}
           className="flex-1 rounded-xl bg-[#2F76BB] py-3 text-sm font-bold text-white disabled:bg-[#DDD]"
         >
-          {saving ? 'Enregistrement…' : 'Enregistrer'}
+          {saving
+            ? locale === 'en'
+              ? 'Saving...'
+              : locale === 'ar'
+                ? 'جارٍ الحفظ...'
+                : 'Enregistrement…'
+            : locale === 'en'
+              ? 'Save'
+              : locale === 'ar'
+                ? 'حفظ'
+                : 'Enregistrer'}
         </button>
       </div>
     </EditSheet>
@@ -542,6 +628,7 @@ export function EducationSection({
   onChange: (values: ProfileEducation[]) => void;
   onSave: (values: ProfileEducation[]) => Promise<boolean>;
 }) {
+  const { locale } = useI18n();
   const [editing, setEditing] = useState<ProfileEducation | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -563,7 +650,13 @@ export function EducationSection({
       onChange(next);
       setEditing(null);
     } else {
-      setSaveError('Échec de la sauvegarde. Réessayez.');
+      setSaveError(
+        locale === 'en'
+          ? 'Save failed. Please try again.'
+          : locale === 'ar'
+            ? 'فشل الحفظ. حاول مرة أخرى.'
+            : 'Échec de la sauvegarde. Réessayez.',
+      );
     }
   };
   const save = (entry: ProfileEducation) => {
@@ -581,7 +674,13 @@ export function EducationSection({
     <>
       <ProfileCard>
         <SectionHeading
-          title="Formations & Diplômes"
+          title={
+            locale === 'en'
+              ? 'Education & Diplomas'
+              : locale === 'ar'
+                ? 'التعليم والشهادات'
+                : 'Formations & Diplômes'
+          }
           icon={
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F0FBF8]">
               <GraduationCap size={15} color="#61BCA6" />
@@ -593,7 +692,7 @@ export function EducationSection({
               onClick={() => openEditor(emptyEducation())}
               className="flex items-center gap-1 rounded-lg bg-[#E8F7F3] px-2.5 py-1 text-xs font-semibold text-[#2A8F76]"
             >
-              <Plus size={11} /> Ajouter
+              <Plus size={11} /> {locale === 'en' ? 'Add' : locale === 'ar' ? 'إضافة' : 'Ajouter'}
             </button>
           }
         />
@@ -611,7 +710,9 @@ export function EducationSection({
                   {entry.school}
                 </span>
                 <span className="block text-xs text-[#555]">
-                  {entry.degree || entry.field || 'Formation'}
+                  {entry.degree ||
+                    entry.field ||
+                    (locale === 'en' ? 'Education' : locale === 'ar' ? 'التعليم' : 'Formation')}
                 </span>
               </span>
               <Pencil size={14} color="#AAA" />
@@ -620,13 +721,31 @@ export function EducationSection({
         ) : (
           <div className="flex flex-col items-center gap-1 py-4 text-xs text-[#AAA]">
             <GraduationCap size={24} color="#DDD" />
-            <p>Aucune formation pour l&apos;instant</p>
+            <p>
+              {locale === 'en'
+                ? 'No education yet'
+                : locale === 'ar'
+                  ? 'لا يوجد تعليم حتى الآن'
+                  : "Aucune formation pour l'instant"}
+            </p>
           </div>
         )}
       </ProfileCard>
       {editing && (
         <EditSheet
-          title={editing.id ? 'Modifier la formation' : 'Ajouter une formation'}
+          title={
+            editing.id
+              ? locale === 'en'
+                ? 'Edit education'
+                : locale === 'ar'
+                  ? 'تعديل التعليم'
+                  : 'Modifier la formation'
+              : locale === 'en'
+                ? 'Add an education'
+                : locale === 'ar'
+                  ? 'إضافة تعليم'
+                  : 'Ajouter une formation'
+          }
           onClose={closeEditor}
           error={saveError}
         >
@@ -653,40 +772,55 @@ function EducationEditor({
   onDelete?: () => void;
   saving: boolean;
 }) {
+  const { locale } = useI18n();
   const [draft, setDraft] = useState(value);
   return (
     <>
       <EditorInput
-        label="École / Établissement *"
+        label={
+          locale === 'en'
+            ? 'School / Institution *'
+            : locale === 'ar'
+              ? 'المدرسة / المؤسسة *'
+              : 'École / Établissement *'
+        }
         value={draft.school}
         onChange={(school) => setDraft({ ...draft, school })}
       />
       <EditorInput
-        label="Diplôme"
+        label={locale === 'en' ? 'Degree' : locale === 'ar' ? 'الشهادة' : 'Diplôme'}
         value={draft.degree}
         onChange={(degree) => setDraft({ ...draft, degree })}
       />
       <EditorInput
-        label="Domaine d'études"
+        label={
+          locale === 'en' ? 'Field of study' : locale === 'ar' ? 'مجال الدراسة' : "Domaine d'études"
+        }
         value={draft.field}
         onChange={(field) => setDraft({ ...draft, field })}
       />
       <div className="grid grid-cols-2 gap-3">
         <EditorInput
           type="month"
-          label="Début"
+          label={locale === 'en' ? 'Start' : locale === 'ar' ? 'البداية' : 'Début'}
           value={draft.startDate}
           onChange={(startDate) => setDraft({ ...draft, startDate })}
         />
         <EditorInput
           type="month"
-          label="Fin"
+          label={locale === 'en' ? 'End' : locale === 'ar' ? 'النهاية' : 'Fin'}
           value={draft.endDate}
           onChange={(endDate) => setDraft({ ...draft, endDate })}
         />
       </div>
       <EditorInput
-        label="Mention / Résultat"
+        label={
+          locale === 'en'
+            ? 'Honors / Result'
+            : locale === 'ar'
+              ? 'التقدير / النتيجة'
+              : 'Mention / Résultat'
+        }
         value={draft.result}
         onChange={(result) => setDraft({ ...draft, result })}
       />
@@ -698,7 +832,17 @@ function EducationEditor({
           onClick={() => onSave({ ...draft, school: draft.school.trim() })}
           className="flex-1 rounded-xl bg-[#61BCA6] py-3 text-sm font-bold text-white disabled:bg-[#DDD]"
         >
-          {saving ? 'Enregistrement…' : 'Enregistrer'}
+          {saving
+            ? locale === 'en'
+              ? 'Saving...'
+              : locale === 'ar'
+                ? 'جارٍ الحفظ...'
+                : 'Enregistrement…'
+            : locale === 'en'
+              ? 'Save'
+              : locale === 'ar'
+                ? 'حفظ'
+                : 'Enregistrer'}
         </button>
       </div>
     </>
@@ -733,13 +877,14 @@ function EditorInput({
 }
 
 function DeleteButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
+  const { locale } = useI18n();
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       className="rounded-xl bg-[#FEE2E2] px-4 text-[#E24E59] disabled:opacity-50"
-      aria-label="Supprimer"
+      aria-label={locale === 'en' ? 'Delete' : locale === 'ar' ? 'حذف' : 'Supprimer'}
     >
       <Trash2 size={16} />
     </button>

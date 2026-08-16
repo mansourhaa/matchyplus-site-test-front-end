@@ -1,5 +1,6 @@
 'use client';
 
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { Mic, MicOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -39,6 +40,7 @@ export function FieldMicButton({
   disabled,
   small = false,
 }: FieldMicButtonProps) {
+  const { t } = useI18n();
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,7 +141,13 @@ export function FieldMicButton({
         }}
         disabled={disabled}
         aria-pressed={listening}
-        title={listening ? 'Arrêter' : error ? `Erreur micro : ${error}` : 'Dicter'}
+        title={
+          listening
+            ? t('fieldMic.stop')
+            : error
+              ? t('fieldMic.micError', { error })
+              : t('fieldMic.dictate')
+        }
         className="flex shrink-0 items-center justify-center rounded-xl transition-all disabled:opacity-40"
         style={{
           width: size,
@@ -152,7 +160,7 @@ export function FieldMicButton({
                 : 'linear-gradient(135deg, #61BCA6, #2F76BB)',
           boxShadow: listening ? '0 0 0 4px rgba(231,76,60,0.2)' : 'none',
         }}
-        aria-label={listening ? 'Arrêter la dictée' : 'Dicter'}
+        aria-label={listening ? t('fieldMic.stopDictation') : t('fieldMic.dictate')}
       >
         {listening ? (
           <MicOff size={iconSize} color="white" />
@@ -165,7 +173,7 @@ export function FieldMicButton({
           className="absolute top-full z-10 mt-1 max-w-40 text-center whitespace-nowrap"
           style={{ fontSize: '10px', color: '#E67E22', fontWeight: 600 }}
         >
-          Erreur micro
+          {t('fieldMic.micErrorLabel')}
         </span>
       )}
     </div>

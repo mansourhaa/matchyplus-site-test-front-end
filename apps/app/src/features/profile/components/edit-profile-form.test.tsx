@@ -4,7 +4,7 @@ import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EditProfileForm } from './edit-profile-form';
 
@@ -48,8 +48,14 @@ const fetchedProfile = {
 };
 
 describe('EditProfileForm', () => {
+  beforeEach(() => {
+    // These tests assert French copy (product default for Tunisian QA).
+    window.localStorage.setItem('matchy_locale', 'fr');
+  });
+
   afterEach(() => {
     vi.resetAllMocks();
+    window.localStorage.removeItem('matchy_locale');
   });
 
   it('hydrates the fields from the fetched profile', async () => {

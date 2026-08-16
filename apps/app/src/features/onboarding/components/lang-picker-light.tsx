@@ -18,7 +18,7 @@ type LangPickerLightProps = {
 
 /** Matchy Inscription AuthLayout `LangPickerLight` — flag button + FR/EN/AR menu. */
 export function LangPickerLight({ menuAlign }: LangPickerLightProps) {
-  const { locale, setLocale } = useI18n();
+  const { locale, setLocale, t } = useI18n();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const resolvedAlign = menuAlign ?? (locale === 'ar' ? 'left' : 'right');
@@ -44,8 +44,8 @@ export function LangPickerLight({ menuAlign }: LangPickerLightProps) {
           width: 44,
           height: 38,
         }}
-        title="Sélectionner la langue"
-        aria-label="Sélectionner la langue"
+        title={t('common.selectLanguage')}
+        aria-label={t('common.selectLanguage')}
         aria-expanded={open}
       >
         <FlagIcon locale={locale} size={18} />
