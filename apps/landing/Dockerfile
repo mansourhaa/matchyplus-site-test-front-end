@@ -46,7 +46,15 @@ ENV HOSTNAME=0.0.0.0
 
 RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs
 
-# no apps/landing/public - this app ships no static assets dir, unlike apps/app.
+# This comment used to say landing ships no public/ dir. That stopped being
+# true once the marketing site grew real assets - logo-matchy.svg,
+# logo-matchy-white.svg, robots.txt, and the hero/testimonial photos under
+# public/matchy/ (selfie-man.png, pro-man.png, referenced through Next's image
+# optimizer). The copy was never added when they landed, so none of it existed
+# in the production image: the header logo was blank, robots.txt 404'd, and
+# every photo Next's optimizer tried to read from public/ came back missing.
+# Next.js serves public/ at the site root, same as apps/app already does below.
+COPY --from=installer /app/apps/landing/public ./apps/landing/public
 COPY --from=installer --chown=nextjs:nodejs /app/apps/landing/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/landing/.next/static ./apps/landing/.next/static
 
