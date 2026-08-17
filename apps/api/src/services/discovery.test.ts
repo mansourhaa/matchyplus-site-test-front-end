@@ -105,6 +105,25 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(result.has_more).toBe(false);
   });
 
+  // Regression: a phone signup gets a real User row (name defaulting to the phone
+  // number itself) as soon as the OTP is verified, well before onboarding is
+  // finished. Without this filter, anyone who abandons onboarding mid-way was still
+  // swipeable by everyone else, showing up with their phone number as a name and no
+  // photo.
+  it('excludes candidates who never finished onboarding', async () => {
+    const prisma = createMockPrisma([candidate('a')]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      context: 'swipe',
+    });
+
+    const [{ where }] = prisma.user.findMany.mock.calls[0];
+    expect(where).toMatchObject({ onboarding_completed_at: { not: null } });
+  });
+
   it('filters by serviceTypes and maxDistanceKm', async () => {
     const prisma = createMockPrisma([
       candidate('near', {

@@ -99,6 +99,15 @@ export class DiscoveryService {
           id: { notIn: [...excluded] },
           status: UserStatus.ACTIVE,
           role: Role.USER,
+          // A phone signup gets a real User row (name defaults to the phone number
+          // itself — see registerWithPhone) the moment the OTP is verified, well
+          // before onboarding is ever finished. Without this, anyone who abandons
+          // onboarding mid-way is still swipeable by everyone else, showing up with
+          // their phone number as a name and no photo. completeOnboarding() is the
+          // only place that sets this, and it already enforces photo/name/interests
+          // first, so this single filter is enough to keep incomplete profiles out
+          // of the feed.
+          onboarding_completed_at: { not: null },
           ...(query.profileType ? { profile_type: query.profileType } : {}),
         },
         select: feedUserSelect,
