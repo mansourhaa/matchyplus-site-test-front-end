@@ -2,6 +2,7 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
+import { APP_LOGIN_URL } from '@/lib/constants';
 import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -119,7 +120,7 @@ export function Header() {
               </div>
             )}
           </div>
-          <Link className="nav-cta" href="/devenir-partenaire">
+          <Link className="nav-cta" href={APP_LOGIN_URL}>
             {t('landing.cta')} <ArrowUpRight size={15} />
           </Link>
         </nav>
