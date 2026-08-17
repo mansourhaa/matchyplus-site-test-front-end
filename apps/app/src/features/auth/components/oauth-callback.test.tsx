@@ -37,6 +37,8 @@ const oauthUser = {
 
 describe('OAuthCallback', () => {
   beforeEach(() => {
+    // These tests assert French copy (product default for Tunisian QA).
+    window.localStorage.setItem('matchy_locale', 'fr');
     vi.mocked(api.post).mockResolvedValue({
       data: { access_token: 'access-1', refresh_token: 'refresh-1', user: oauthUser },
     });
@@ -45,6 +47,7 @@ describe('OAuthCallback', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    window.localStorage.removeItem('matchy_locale');
   });
 
   it('exchanges the code and routes to the default destination when no next param is present', async () => {

@@ -53,6 +53,10 @@ export class PhoneAuthenticationService {
     if (!phone) {
       throw new Error('invalid_phone');
     }
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
+    if (existing) {
+      throw new Error('phone_already_registered');
+    }
 
     const code = await this.otpChallengeService.createChallenge(
       phone,

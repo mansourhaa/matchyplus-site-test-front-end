@@ -2,6 +2,7 @@
 
 import { AuthLayout } from '@/features/auth/components/auth-layout';
 import { MatchyLogo } from '@/features/auth/components/matchy-logo';
+import { useI18n } from '@/features/i18n/i18n-provider';
 import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -11,6 +12,8 @@ import { LangPickerLight } from './lang-picker-light';
  * separate from (and in addition to) AuthLayout's own left-panel step bar, matching
  * the old app's Inscription1..5 (StepProgressBar + "Étape X sur Y" / "XX%" row). */
 export function StepProgress({ step, total }: { step: number; total: number }) {
+  const { t } = useI18n();
+
   return (
     <div className="mb-6">
       <div className="flex gap-1.5">
@@ -25,11 +28,9 @@ export function StepProgress({ step, total }: { step: number; total: number }) {
         ))}
       </div>
       <div className="mt-2 flex items-center justify-between">
-        <p style={{ fontSize: '12px', color: '#888' }}>
-          Étape {step} sur {total}
-        </p>
+        <p style={{ fontSize: '12px', color: '#888' }}>{t('layout.stepOf', { step, total })}</p>
         <p style={{ fontSize: '12px', color: '#2F76BB', fontWeight: 700 }}>
-          {Math.round((step / total) * 100)}%
+          {t('layout.stepProgress', { progress: Math.round((step / total) * 100) })}
         </p>
       </div>
     </div>

@@ -60,6 +60,9 @@ export interface VideoRecorderTranslations {
   permBlockedDesc: string;
   permBlockedRetry: string;
   permBlockedClose: string;
+  micRefused: string;
+  invalidVideoFile: string;
+  chooseAnotherMethod: string;
 }
 
 interface VideoRecorderModalProps {
@@ -103,6 +106,10 @@ export function buildVideoRecorderTr(
         "Autorisez l'accès à la caméra et au microphone pour enregistrer votre vidéo de présentation.",
       permBlockedRetry: 'Autoriser',
       permBlockedClose: 'Annuler',
+      micRefused:
+        'Microphone refusé. Autorisez le micro pour enregistrer votre vidéo de présentation.',
+      invalidVideoFile: '⚠️ Fichier vidéo invalide.',
+      chooseAnotherMethod: 'Choisir une autre méthode',
     },
     en: {
       chooseModeTitle: 'Presentation video',
@@ -126,6 +133,9 @@ export function buildVideoRecorderTr(
       permBlockedDesc: 'Allow camera and microphone access to record your presentation video.',
       permBlockedRetry: 'Allow',
       permBlockedClose: 'Cancel',
+      micRefused: 'Microphone denied. Allow the microphone to record your presentation video.',
+      invalidVideoFile: '⚠️ Invalid video file.',
+      chooseAnotherMethod: 'Choose another method',
     },
     ar: {
       chooseModeTitle: 'فيديو التعريف',
@@ -149,6 +159,9 @@ export function buildVideoRecorderTr(
       permBlockedDesc: 'اسمح بالوصول إلى الكاميرا والميكروفون لتسجيل فيديو التعريف.',
       permBlockedRetry: 'السماح',
       permBlockedClose: 'إلغاء',
+      micRefused: 'تم رفض الميكروفون. اسمح باستخدام الميكروفون لتسجيل فيديو التعريف.',
+      invalidVideoFile: '⚠️ ملف الفيديو غير صالح.',
+      chooseAnotherMethod: 'اختر طريقة أخرى',
     },
   };
   return TR[lang];
@@ -243,7 +256,7 @@ export function VideoRecorderModal({
       setCamError(null);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facing, width: { ideal: 720 }, height: { ideal: 1280 } },
+          video: { facingMode: facing },
           audio: true,
         });
         streamRef.current = stream;
@@ -301,9 +314,7 @@ export function VideoRecorderModal({
       if (!result.ok) {
         setPermissionBlocked(true);
         if (result.reason === 'microphone') {
-          setCamError(
-            'Microphone refusé. Autorisez le micro pour enregistrer votre vidéo de présentation.',
-          );
+          setCamError(tr.micRefused);
         }
         return;
       }
@@ -359,7 +370,7 @@ export function VideoRecorderModal({
     };
     videoEl.onerror = () => {
       URL.revokeObjectURL(url);
-      setUploadError('⚠️ Fichier vidéo invalide.');
+      setUploadError(tr.invalidVideoFile);
       setPhase('choose');
     };
   };
@@ -704,13 +715,12 @@ export function VideoRecorderModal({
       {/* ── CAMERA PREVIEW ── */}
       {(phase === 'preview' || phase === 'recording') && (
         <div className="relative flex flex-1 flex-col">
-          {/* Live video */}
           <video
             ref={liveRef}
             autoPlay
             playsInline
             muted
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-contain"
             style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
           />
 
@@ -881,7 +891,7 @@ export function VideoRecorderModal({
               className="flex w-full items-center justify-center py-2.5"
             >
               <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px' }}>
-                {isRtl ? 'اختر طريقة أخرى' : 'Choisir une autre méthode'}
+                {tr.chooseAnotherMethod}
               </span>
             </button>
           </div>

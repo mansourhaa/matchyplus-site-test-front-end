@@ -158,12 +158,17 @@ export class TokenService {
     }
 
     const stored = await this.prisma.refreshToken.findUnique({ where: { id: payload.jti } });
-    if (
-      !stored ||
-      stored.revoked_at !== null ||
-      stored.expires_at < new Date() ||
-      stored.token_hash !== sha256(rawToken)
-    ) {
+    if (!stored || stored.expires_at < new Date() || stored.token_hash !== sha256(rawToken)) {
+      throw new Error('invalid_refresh_token');
+    }
+
+    if (stored.revoked_at !== null) {
+      // If token was revoked more than 30s ago, treat as token theft / replay attack and revoke all sessions
+      const gracePeriodMs = 30 * 1000;
+      const isOutsideGracePeriod = Date.now() - stored.revoked_at.getTime() > gracePeriodMs;
+      if (isOutsideGracePeriod) {
+        await this.revokeAllRefreshTokens(stored.user_id);
+      }
       throw new Error('invalid_refresh_token');
     }
 
@@ -190,7 +195,6 @@ export class TokenService {
     });
 
     if (consumed.count === 0) {
-      await this.revokeAllRefreshTokens(user.id);
       throw new Error('invalid_refresh_token');
     }
 

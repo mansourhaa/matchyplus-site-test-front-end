@@ -2,6 +2,7 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
+import { APP_LOGIN_URL } from '@/lib/constants';
 import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -13,64 +14,23 @@ const LANGUAGE_NAMES: Record<Locale, string> = {
   ar: 'AR',
 };
 
-function Flag({ locale, size = 15 }: { locale: Locale; size?: number }) {
-  const width = Math.round(size * 1.45);
-  const wrap = {
-    width,
-    height: size,
-    display: 'inline-flex' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    overflow: 'hidden' as const,
-    flexShrink: 0,
-    borderRadius: 2,
-    boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
-  };
-  const svg = { display: 'block' as const, width: '100%', height: '100%' };
+// Renders via the flag-icons package (real, professionally-made flag SVGs), not
+// hand-drawn shapes — flag-icons keys by country, not language: English maps to the
+// UK (`gb`), Arabic maps to Tunisia (`tn`, this app's own Arabic-speaking market).
+const COUNTRY_CODE: Record<Locale, string> = { fr: 'fr', en: 'gb', ar: 'tn' };
 
-  if (locale === 'fr') {
-    return (
-      <div style={wrap}>
-        <svg viewBox="0 0 3 2" style={svg} aria-hidden>
-          <rect width="1" height="2" fill="#002395" />
-          <rect x="1" width="1" height="2" fill="#fff" />
-          <rect x="2" width="1" height="2" fill="#ED2939" />
-        </svg>
-      </div>
-    );
-  }
-  if (locale === 'en') {
-    return (
-      <div style={wrap}>
-        <svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice" style={svg} aria-hidden>
-          <rect width="60" height="30" fill="#012169" />
-          <g fill="#fff">
-            <polygon points="0,0 60,30 60,25 5,0" />
-            <polygon points="60,0 0,30 0,25 55,0" />
-          </g>
-          <g fill="#C8102E">
-            <polygon points="0,0 60,30 60,27 3,0" />
-            <polygon points="60,0 0,30 0,27 57,0" />
-            <rect x="25" width="10" height="30" />
-            <rect y="10" width="60" height="10" />
-          </g>
-        </svg>
-      </div>
-    );
-  }
-  // ar — Tunisia flag strip
+function Flag({ locale, size = 15 }: { locale: Locale; size?: number }) {
   return (
-    <div style={wrap}>
-      <svg viewBox="0 0 3 2" style={svg} aria-hidden>
-        <rect width="3" height="2" fill="#E70013" />
-        <circle cx="1.5" cy="1" r="0.55" fill="#fff" />
-        <circle cx="1.62" cy="1" r="0.42" fill="#E70013" />
-        <path
-          d="M1.58 0.68 L1.72 1 L1.58 1.32 L1.88 1.12 L1.98 1.35 L2.02 1.05 L2.25 1 L2.02 0.88 L1.98 0.62 L1.88 0.85 Z"
-          fill="#fff"
-        />
-      </svg>
-    </div>
+    <span
+      className={`fi fi-${COUNTRY_CODE[locale]}`}
+      style={{
+        fontSize: size,
+        borderRadius: 2,
+        boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
+        flexShrink: 0,
+      }}
+      aria-hidden
+    />
   );
 }
 
@@ -160,7 +120,7 @@ export function Header() {
               </div>
             )}
           </div>
-          <Link className="nav-cta" href="/devenir-partenaire">
+          <Link className="nav-cta" href={APP_LOGIN_URL}>
             {t('landing.cta')} <ArrowUpRight size={15} />
           </Link>
         </nav>

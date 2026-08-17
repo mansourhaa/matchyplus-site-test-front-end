@@ -1,6 +1,14 @@
 'use client';
 
+import {
+  GEOLOCATION_MAX_AGE,
+  GEOLOCATION_TIMEOUT,
+  IP_FALLBACK_NOTICE,
+  LOCATION_COORDS_KEY,
+  LOCATION_GRANTED_KEY,
+} from '@/constants';
 import { api } from '@/lib/api';
+import { handleError } from '@/lib/error-handler';
 import { toast } from '@/lib/toast';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
@@ -13,12 +21,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-
-const LOCATION_GRANTED_KEY = 'matchy_location_permission_granted';
-const LOCATION_COORDS_KEY = 'matchy_location_coords';
-
-const IP_FALLBACK_NOTICE =
-  'Using approximate location from your network because precise GPS is unavailable.';
 
 type IpGeolocationResponse = {
   success: boolean;
@@ -54,8 +56,8 @@ function readStoredCoords(): { latitude: number; longitude: number } | null {
     ) {
       return { latitude: parsed.latitude, longitude: parsed.longitude };
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    handleError(error, 'readStoredCoords');
   }
   return null;
 }
@@ -69,8 +71,8 @@ async function getCurrentCoords(): Promise<{ latitude: number; longitude: number
   if (Capacitor.isNativePlatform()) {
     const position = await Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
-      timeout: 15_000,
-      maximumAge: 60_000,
+      timeout: GEOLOCATION_TIMEOUT,
+      maximumAge: GEOLOCATION_MAX_AGE,
     });
     return {
       latitude: position.coords.latitude,
@@ -85,8 +87,8 @@ async function getCurrentCoords(): Promise<{ latitude: number; longitude: number
   const position = await new Promise<GeolocationPosition>((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, {
       enableHighAccuracy: true,
-      timeout: 15_000,
-      maximumAge: 60_000,
+      timeout: GEOLOCATION_TIMEOUT,
+      maximumAge: GEOLOCATION_MAX_AGE,
     });
   });
 
@@ -110,8 +112,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       try {
         window.localStorage.removeItem(LOCATION_GRANTED_KEY);
         window.localStorage.removeItem(LOCATION_COORDS_KEY);
-      } catch {
-        // ignore
+      } catch (error) {
+        handleError(error, 'clearLocation');
       }
     }
     setLatitude(null);
@@ -148,7 +150,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         }
         status.addEventListener('change', handlePermissionChange);
       })
-      .catch(() => {});
+      .catch((error) => {
+        handleError(error, 'geolocationPermissionQuery');
+      });
 
     return () => {
       permissionStatus?.removeEventListener('change', handlePermissionChange);
@@ -181,7 +185,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       }
       setAccessMessage('Could not determine your location from your network. Try again later.');
       return false;
-    } catch {
+    } catch (error) {
+      handleError(error, 'requestIpFallback');
       setAccessMessage('Could not determine your location from your network. Try again later.');
       return false;
     }
@@ -232,6 +237,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       setAccessMessage(null);
       return true;
     } catch (error) {
+      handleError(error, 'requestBrowserLocation');
       const code =
         error && typeof error === 'object' && 'code' in error ? Number(error.code) : null;
       if (code === 1) {
@@ -309,8 +315,8 @@ export function useAutoCaptureGrantedLocation() {
           void requestBrowserLocation();
         }
       })
-      .catch(() => {
-        // Safari / older browsers may reject permissions.query for geolocation.
+      .catch((error) => {
+        handleError(error, 'useAutoCaptureGrantedLocation');
       });
 
     return () => {

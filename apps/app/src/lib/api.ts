@@ -24,7 +24,7 @@ export function getApiErrorCode(error: unknown): string | undefined {
 
 let refreshPromise: Promise<void> | null = null;
 
-async function refreshSession(): Promise<void> {
+export async function refreshSession(): Promise<void> {
   const native = isNativeMobileClient();
   const refreshToken = native ? mobileTokenStorage.getRefresh() : null;
   const mobileHeaders = native ? await getMobileAuthHeaders() : {};
@@ -79,19 +79,9 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Bootstrap authcheck with no access cookie at all — refresh cannot help on web
-    // (and Cap with empty Preferences). Skip the follow-up /auth/refresh so the API
-    // log is not spammed with invalid_refresh_token while the user is simply logged out
-    // (e.g. on /login before Google OAuth).
-    const authMessage = String(
-      (error.response?.data as { message?: string } | undefined)?.message ?? '',
-    );
-    const isAuthCheck = config.url?.includes('/auth/authcheck');
-    const missingAccessToken = authMessage.includes('entity-not-found');
-    if (isAuthCheck && missingAccessToken) {
-      if (!isNativeMobileClient() || !mobileTokenStorage.getRefresh()) {
-        return Promise.reject(error);
-      }
+    // On native mobile (Capacitor), if there is no refresh token in storage, refresh cannot succeed.
+    if (isNativeMobileClient() && !mobileTokenStorage.getRefresh()) {
+      return Promise.reject(error);
     }
 
     config._retried = true;

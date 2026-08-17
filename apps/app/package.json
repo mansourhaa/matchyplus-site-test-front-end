@@ -27,6 +27,7 @@
     "@saas-boilerplate/ui": "workspace:*",
     "axios": "^1.18.1",
     "date-fns": "^4.4.0",
+    "flag-icons": "^7.5.0",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.23.0",
     "next": "16.2.12",

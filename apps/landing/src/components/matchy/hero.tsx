@@ -1,6 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { APP_LOGIN_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
@@ -51,7 +52,7 @@ export function Hero() {
             transition={{ duration: 0.7, delay: 0.3 }}
           >
             <Link
-              href="/devenir-partenaire"
+              href={APP_LOGIN_URL}
               className="text-brand-blue mt-8 inline-block rounded-lg bg-white px-7 py-3.5 text-sm font-semibold shadow-lg transition-transform hover:scale-[1.03]"
             >
               {t('landing.cta')}

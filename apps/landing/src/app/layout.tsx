@@ -1,4 +1,5 @@
 import { I18nProvider } from '@/features/i18n/i18n-provider';
+import 'flag-icons/css/flag-icons.min.css';
 import type { Metadata } from 'next';
 import { Cairo } from 'next/font/google';
 import { Baloo_2 } from 'next/font/google';

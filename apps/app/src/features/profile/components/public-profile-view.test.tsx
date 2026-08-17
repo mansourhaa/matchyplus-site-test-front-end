@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PublicProfileView } from './public-profile-view';
 
@@ -68,8 +68,14 @@ const publicProfile = {
 };
 
 describe('PublicProfileView', () => {
+  beforeEach(() => {
+    // These tests assert French copy (product default for Tunisian QA).
+    window.localStorage.setItem('matchy_locale', 'fr');
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
+    window.localStorage.removeItem('matchy_locale');
   });
 
   it('fetches and renders the profile', async () => {
