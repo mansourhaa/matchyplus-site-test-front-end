@@ -12,8 +12,8 @@ const OAUTH_SCOPE = ['openid', 'email', 'profile'];
 const GOOGLE_CONFIGURATION = {
   authorizeHost: 'https://accounts.google.com',
   authorizePath: '/o/oauth2/v2/auth',
-  tokenHost: 'https://www.googleapis.com',
-  tokenPath: '/oauth2/v4/token',
+  tokenHost: 'https://oauth2.googleapis.com',
+  tokenPath: '/token',
 };
 
 const LINKEDIN_CONFIGURATION = {
@@ -57,6 +57,10 @@ async function oauthPlugin(fastify: FastifyInstance) {
       credentials: {
         client: { id: config.googleClientId, secret: config.googleClientSecret },
         auth: GOOGLE_CONFIGURATION,
+        options: {
+          bodyFormat: 'form',
+          authorizationMethod: 'body',
+        },
       },
       startRedirectPath: '/api/v1/auth/oauth/google',
       callbackUri: config.googleRedirectUri,
@@ -76,6 +80,10 @@ async function oauthPlugin(fastify: FastifyInstance) {
       credentials: {
         client: { id: config.linkedinClientId, secret: config.linkedinClientSecret },
         auth: LINKEDIN_CONFIGURATION,
+        options: {
+          bodyFormat: 'form',
+          authorizationMethod: 'body',
+        },
       },
       startRedirectPath: '/api/v1/auth/oauth/linkedin',
       callbackUri: config.linkedinRedirectUri,

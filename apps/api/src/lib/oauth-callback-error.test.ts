@@ -13,6 +13,12 @@ describe('normalizeOAuthCallbackError', () => {
     expect(normalizeOAuthCallbackError('Response Error: 400 Bad Request')).toBe(
       'oauth_token_exchange_failed',
     );
+    expect(normalizeOAuthCallbackError('Response Error: 401 Unauthorized')).toBe(
+      'oauth_token_exchange_failed',
+    );
+    expect(normalizeOAuthCallbackError('{"error":"invalid_grant"}')).toBe(
+      'oauth_token_exchange_failed',
+    );
   });
 
   it('fails closed on empty or unknown messages', () => {
