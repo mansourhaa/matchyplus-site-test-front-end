@@ -97,6 +97,13 @@ See [location.md](../features/location.md).
 | `REFRESH_TOKEN_TTL_DAYS` | Yes | Number of days before a refresh token expires. |
 | `VERIFICATION_CODE_SECRET` | Yes | HMAC key used to hash phone OTP codes before they're stored — the plaintext code is never persisted. |
 
+### Rate Limiting
+
+| Variable | Required | Description | Default |
+| -------- | -------- | ----------- | ------- |
+| `RATE_LIMIT_GLOBAL_MAX` | No | Global max requests per time window | `100` |
+| `RATE_LIMIT_GLOBAL_WINDOW` | No | Global rate limit time window | `1 minute` |
+
 ### TunisieSMS (phone OTP delivery) — optional at startup
 
 This app owns the entire OTP lifecycle itself (generation, hashing, expiry, attempts —

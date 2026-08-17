@@ -127,4 +127,10 @@ export const config = {
     process.env.LINKEDIN_REDIRECT_URI ??
     `${process.env.API_BASE_URL ?? 'http://localhost:8000'}/api/v1/auth/oauth/linkedin/callback`,
   oauthExchangeCodeTtlSeconds: parseInt(process.env.OAUTH_EXCHANGE_CODE_TTL_SECONDS ?? '60', 10),
+
+  /**
+   * Rate limiting (global)
+   */
+  rateLimitGlobalMax: parseInt(process.env.RATE_LIMIT_GLOBAL_MAX ?? '100', 10),
+  rateLimitGlobalWindow: process.env.RATE_LIMIT_GLOBAL_WINDOW ?? '1 minute',
 };

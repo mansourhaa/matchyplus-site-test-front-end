@@ -226,24 +226,10 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     return request.cookies?.[MEMBER_REFRESH_COOKIE] || undefined;
   }
 
-  /**
-   * The global limit (100/min) is far too generous for credential checking, so both login
-   * routes get their own budget. @fastify/rate-limit evaluates at `onRequest`, before the body
-   * is parsed, so this can only be keyed per IP (the plugin default) — a per-account key is not
-   * reachable here. Successful logins count towards the budget too.
-   */
-  const loginRateLimit = {
-    rateLimit: {
-      max: 10,
-      timeWindow: '15 minutes',
-    },
-  };
-
   fastify.post<{ Body: LoginPayload }>(
     '/admin/login',
     {
       schema: adminLoginSchema,
-      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
@@ -309,7 +295,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/otp/verify',
     {
       schema: verifyOtpSchema,
-      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
@@ -329,7 +314,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/login-phone',
     {
       schema: loginPhoneSchema,
-      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
@@ -346,7 +330,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/register-phone',
     {
       schema: registerPhoneSchema,
-      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
@@ -363,7 +346,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/refresh',
     {
       schema: refreshSchema,
-      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
@@ -451,7 +433,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/password-reset/confirm',
     {
       schema: confirmPasswordResetSchema,
-      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
@@ -468,7 +449,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     {
       schema: changePasswordSchema,
       preHandler: [fastify.verifyToken],
-      config: loginRateLimit,
     },
     async (request, reply) => {
       try {
@@ -627,7 +607,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/oauth/exchange',
     {
       schema: oauthExchangeSchema,
-      config: loginRateLimit,
     },
     async (request, reply) => {
       try {

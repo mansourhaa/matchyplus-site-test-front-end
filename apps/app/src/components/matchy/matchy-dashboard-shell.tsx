@@ -2,17 +2,18 @@
 
 import { MatchyAppShell } from '@/components/matchy/matchy-app-shell';
 import { MatchyPrimaryShell } from '@/components/matchy/matchy-primary-shell';
-import { useAppSelector } from '@/features/auth/hooks';
+import { Spinner } from '@/components/shared/spinner';
+import { useAppSelector, useProactiveRefresh } from '@/features/auth/hooks';
 import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { Spinner } from '@/components/shared/spinner';
 import { Suspense, useEffect } from 'react';
 
 const PRIMARY_PATHS = new Set(['/home', '/matches']);
 
 function DashboardChrome({ children }: { children: ReactNode }) {
+  useProactiveRefresh();
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useI18n();
