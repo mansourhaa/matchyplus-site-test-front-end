@@ -37,6 +37,23 @@ pipeline {
     // app means editing this line and the build stage - not four stages.
     IMAGE_COMPONENTS = 'api app admin landing ai'
 
+    // Build with BuildKit, not the legacy builder.
+    //
+    // This is a disk decision, not a speed one. api/app/admin/landing are
+    // 4-stage builds whose installer stage runs pnpm install and turbo build
+    // over the whole monorepo - a couple of GB each. The legacy builder writes
+    // every intermediate stage into the image store as a real image, and the
+    // post block below only untags the five finals, so about 8GB per build was
+    // left behind as dangling images. Twelve builds took the disk to 95%,
+    // kubelet raised DiskPressure, tainted the node and evicted every pod;
+    // production was down roughly seven hours on 10 Aug 2026.
+    //
+    // BuildKit keeps intermediates in a cache the daemon size-limits instead
+    // (builder.gc in /etc/docker/daemon.json). This needs the buildx plugin in
+    // the Jenkins image - it is installed there now, and note that without it
+    // the CLI falls back to the legacy builder silently rather than failing.
+    DOCKER_BUILDKIT = '1'
+
     // Baked into the app/admin bundles at BUILD time. Next.js inlines
     // NEXT_PUBLIC_* into the client bundle during the build, so this cannot be
     // injected later as a runtime env var on the Deployment - the browser
@@ -48,6 +65,39 @@ pipeline {
     // blocks as mixed content. Changing the staging scheme therefore requires
     // rebuilding app and admin, not just editing the ConfigMap.
     STAGING_API_URL = "https://api.staging.matchy.local/api/v1"
+    PROD_API_URL = "https://api.matchyplus.com/api/v1"
+
+    // Which of the two gets compiled into app and admin, decided by branch.
+    //
+    // This has to be a build-time decision and it has to be per-branch. Until
+    // now every build used the staging URL unconditionally, so a build on main
+    // produced production frontends hardcoded to api.staging.matchy.local - a
+    // hostname that does not resolve on the public internet. They would have
+    // deployed, reported healthy, and failed in every browser.
+    //
+    // The consequence to keep in mind: app and admin images are NOT portable
+    // between environments, so a staging-tested app image cannot be promoted to
+    // prod - only api, ai and landing can. Making the frontend read its API URL
+    // at runtime would restore build-once-deploy-many for all five; until then
+    // prod frontends must be built from main.
+    FRONTEND_API_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://api.matchyplus.com/api/v1' : 'https://api.staging.matchy.local/api/v1'}"
+
+    // The other two cross-site URLs, inlined at build time for the same reason.
+    //
+    // FRONTEND_APP_URL  - landing's Connexion/Inscription buttons.
+    // FRONTEND_LANDING_URL - where apps/app/src/proxy.ts sends /privacy-policy
+    //                        and /terms-of-service.
+    //
+    // Both shipped to production with their localhost fallbacks compiled in,
+    // because nothing passed them: landing's Dockerfile carried a comment saying
+    // it read no NEXT_PUBLIC_* vars, which stopped being true when the marketing
+    // site was migrated from Vite to Next. The result was a Connexion button
+    // that sent visitors to their own machine and two dead legal links.
+    //
+    // Nothing at deploy time can correct these - Next.js compiles them into the
+    // bundle - so a wrong value here means rebuilding, not editing a ConfigMap.
+    FRONTEND_APP_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://app.matchyplus.com' : 'https://app.staging.matchy.local'}"
+    FRONTEND_LANDING_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://matchyplus.com' : 'https://staging.matchy.local'}"
   }
 
   stages {
@@ -344,9 +394,9 @@ pipeline {
       steps {
         sh """
           docker build --pull -t ${REGISTRY_REPO}:api-${IMAGE_TAG} -f apps/api/Dockerfile .
-          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${STAGING_API_URL} -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
-          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${STAGING_API_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
-          docker build --pull -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} --build-arg NEXT_PUBLIC_LANDING_URL=${FRONTEND_LANDING_URL} -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_APP_URL=${FRONTEND_APP_URL} -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
           docker build --pull -t ${REGISTRY_REPO}:ai-${IMAGE_TAG} -f apps/ai/Dockerfile apps/ai
         """
       }
@@ -455,10 +505,18 @@ pipeline {
 
   post {
     always {
+      // Untagging the five finals is not cleanup on its own - it only frees the
+      // ~540MB we ship. The multi-stage builds leave several GB of intermediate
+      // layers behind per run, which is what actually filled the disk and took
+      // production down on 10 Aug 2026. BuildKit (DOCKER_BUILDKIT above) stops
+      // that leaking as dangling images, and the prune below clears whatever
+      // still slips through so the pipeline cleans up after itself rather than
+      // relying on the host's nightly cron to notice.
       sh """
         for COMPONENT in ${IMAGE_COMPONENTS}; do
           docker rmi ${REGISTRY_REPO}:\${COMPONENT}-${IMAGE_TAG} || true
         done
+        docker image prune -f || true
       """
     }
   }
