@@ -104,7 +104,7 @@ describe('api response interceptor', () => {
     expect(notifyAuthFailure).toHaveBeenCalled();
   });
 
-  it('does not attempt refresh when authcheck fails with no access token at all', async () => {
+  it('refreshes session via cookie and retries when authcheck fails with 401 on web', async () => {
     let refreshCalls = 0;
     axios.defaults.adapter = async () => {
       refreshCalls += 1;
@@ -117,14 +117,25 @@ describe('api response interceptor', () => {
       };
     };
 
+    let attempt = 0;
     api.defaults.adapter = async (config) => {
-      const error = fakeAxiosError(config as never);
-      error.response!.data = { status: 401, message: 'entity-not-found' };
-      throw error;
+      attempt += 1;
+      if (attempt === 1) {
+        const error = fakeAxiosError(config as never);
+        error.response!.data = { status: 401, message: 'entity-not-found' };
+        throw error;
+      }
+      return {
+        data: { user: { id: 'user-1' } },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      };
     };
 
-    await expect(api.get('/auth/authcheck')).rejects.toBeTruthy();
-    expect(refreshCalls).toBe(0);
-    expect(clearAuthSession).not.toHaveBeenCalled();
+    const response = await api.get('/auth/authcheck');
+    expect(refreshCalls).toBe(1);
+    expect(response.data).toEqual({ user: { id: 'user-1' } });
   });
 });
