@@ -52,7 +52,7 @@ export async function handleProviderOAuthCallback(
       return redirectOAuthError(providerError);
     }
 
-    const { token } = await oauth2.getAccessTokenFromAuthorizationCodeFlow(request);
+    const { token } = await oauth2.getAccessTokenFromAuthorizationCodeFlow(request, reply);
     const profile =
       provider === 'google'
         ? await fetchGoogleProfile(token.access_token)
@@ -80,6 +80,7 @@ export async function handleProviderOAuthCallback(
     request.log.info({ provider, finalCallbackUrl }, 'oauth callback success → SPA');
     return reply.redirect(finalCallbackUrl);
   } catch (err) {
+    request.log.error({ err, provider }, 'OAuth callback exception');
     return redirectOAuthError((err as Error).message || 'oauth_profile_fetch_failed');
   }
 }
