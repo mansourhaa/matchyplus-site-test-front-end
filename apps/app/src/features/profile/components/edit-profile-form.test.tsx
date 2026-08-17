@@ -4,7 +4,7 @@ import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EditProfileForm } from './edit-profile-form';
 
@@ -48,8 +48,14 @@ const fetchedProfile = {
 };
 
 describe('EditProfileForm', () => {
+  beforeEach(() => {
+    // These tests assert French copy (product default for Tunisian QA).
+    window.localStorage.setItem('matchy_locale', 'fr');
+  });
+
   afterEach(() => {
     vi.resetAllMocks();
+    window.localStorage.removeItem('matchy_locale');
   });
 
   it('hydrates the fields from the fetched profile', async () => {
@@ -148,6 +154,68 @@ describe('EditProfileForm', () => {
     );
   });
 
+  it('saves the service type without requiring availability days to already be set', async () => {
+    const offeringProfile = { ...fetchedProfile, offer_service: true };
+    const savedProfile = {
+      ...offeringProfile,
+      service_type: 'Chauffeur / Transport',
+      price: '20',
+    };
+    vi.mocked(api.get).mockResolvedValue({ data: offeringProfile });
+    vi.mocked(api.patch).mockResolvedValue({ data: savedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    fireEvent.click(await screen.findByText('Type de service'));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Type de service'), {
+      target: { value: 'Chauffeur / Transport' },
+    });
+    fireEvent.change(within(dialog).getByLabelText('Prix (DT/heure)'), {
+      target: { value: '20' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('✓ Profil mis à jour')).toBeInTheDocument();
+    expect(api.patch).toHaveBeenCalledWith(
+      '/users/me/profile',
+      expect.objectContaining({ serviceType: 'Chauffeur / Transport', price: '20' }),
+    );
+  });
+
+  it('saves availability without requiring the service type and price to already be set', async () => {
+    const offeringProfile = { ...fetchedProfile, offer_service: true };
+    const savedProfile = { ...offeringProfile, availability_days: ['Lun'] };
+    vi.mocked(api.get).mockResolvedValue({ data: offeringProfile });
+    vi.mocked(api.patch).mockResolvedValue({ data: savedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    const availabilityHeading = await screen.findByRole('heading', { name: 'Disponibilités' });
+    fireEvent.click(
+      within(availabilityHeading.closest('section') as HTMLElement).getByText('Ajouter'),
+    );
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByText('Lundi'));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('✓ Profil mis à jour')).toBeInTheDocument();
+    expect(api.patch).toHaveBeenCalledWith(
+      '/users/me/profile',
+      expect.objectContaining({ availabilityDays: ['Lun'] }),
+    );
+  });
+
   it('represents a persisted introduction video by filename', async () => {
     vi.mocked(api.get).mockResolvedValue({
       data: {
@@ -166,6 +234,37 @@ describe('EditProfileForm', () => {
     expect(await screen.findByText('1f3e4151-7f9c-4d7b-a780-c41ef4207feb.mp4')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Lire la vidéo' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Supprimer la vidéo' })).toBeInTheDocument();
+  });
+
+  it('asks for confirmation before removing the video, and only deletes once confirmed', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        ...fetchedProfile,
+        video: '/uploads/videos/1f3e4151-7f9c-4d7b-a780-c41ef4207feb.mp4',
+      },
+    });
+    vi.mocked(api.delete).mockResolvedValue({ data: { video: null } });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Supprimer la vidéo' }));
+
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(api.delete).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer la vidéo' }));
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Supprimer' }),
+    );
+
+    await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/users/me/profile/video'));
   });
 
   it('shows a failure message when the save request is rejected', async () => {
@@ -221,7 +320,26 @@ describe('EditProfileForm', () => {
     await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
   });
 
-  it('removes the current photo', async () => {
+  it('asks for confirmation before removing the photo, and does nothing on cancel', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    fireEvent.click(await screen.findByText('Supprimer la photo'));
+
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(api.delete).not.toHaveBeenCalled();
+  });
+
+  it('removes the current photo once confirmed', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
     vi.mocked(api.delete).mockResolvedValue({ data: { image: null } });
     const store = buildStore();
@@ -233,6 +351,9 @@ describe('EditProfileForm', () => {
     );
 
     fireEvent.click(await screen.findByText('Supprimer la photo'));
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Supprimer' }),
+    );
 
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/users/me/profile/photo'));
   });

@@ -15,6 +15,7 @@ import {
   uploadProfilePhoto,
   uploadProfileVideo,
 } from '@/features/profile/store/profile-slice';
+import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import {
@@ -137,7 +138,6 @@ type IdentityStepProps = {
     name: string;
     job?: string;
     bio?: string;
-    image?: string;
     profileType: ProfileType;
     experience?: string;
   }) => Promise<boolean>;
@@ -162,7 +162,7 @@ export function IdentityStep({
   onRegistered,
   onNext,
 }: IdentityStepProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const existingName = splitName(profile?.name ?? '');
@@ -405,6 +405,8 @@ export function IdentityStep({
     experience: profileType === 'INDIVIDUAL' && experience ? experience : undefined,
   });
 
+  const photoPreview = useAuthenticatedMediaUrl(image || null);
+
   // Only ever checks phone/password, never the identity fields above — handleNext
   // validates those once before the first call, but the modal's "Renvoyer le code"
   // button calls this directly and must not re-run that validation on every resend.
@@ -427,6 +429,11 @@ export function IdentityStep({
     setOtpSending(false);
 
     if (!sendOtp.fulfilled.match(sendAction)) {
+      if (sendAction.error.message === 'phone_already_registered') {
+        setShowOtpModal(false);
+        setError(t('onboarding.identity.errorPhoneAlreadyRegistered'));
+        return;
+      }
       setOtpError(t('onboarding.identity.errorOtpSend'));
       return;
     }
@@ -484,15 +491,21 @@ export function IdentityStep({
     );
     if (!registerPhone.fulfilled.match(registerAction)) {
       setOtpVerifying(false);
-      setOtpError(t('onboarding.identity.errorCreateAccount'));
+      setOtpError(
+        registerAction.error.message === 'phone_already_registered'
+          ? t('onboarding.identity.errorPhoneAlreadyRegistered')
+          : t('onboarding.identity.errorCreateAccount'),
+      );
       return;
     }
 
     setShowOtpModal(false);
     setOtpVerifying(false);
+    // Only reachable now that registerPhone has actually succeeded — an authenticated
+    // session (cookie) is required before uploadProfilePhoto's endpoint will accept it.
+    if (pendingPhotoRef.current && !(await ensurePhotoUploaded())) return;
     // Optional video: a failed flush already clears the success label + sets videoError.
     await flushPendingVideo();
-    if (pendingPhotoRef.current && !(await ensurePhotoUploaded())) return;
     const saved = await onNext(identityPatch());
     if (!saved) {
       setError(t('onboarding.identity.errorSave'));
@@ -504,7 +517,13 @@ export function IdentityStep({
       step={stepNumber}
       totalSteps={totalSteps}
       stepLabel={t('onboarding.identity.title')}
-      onBack={() => router.push('/login')}
+      // An authenticated (e.g. Google OAuth) visitor has no /login to go back to —
+      // they already have a session and onboarding is mandatory before /home, so
+      // /login would immediately bounce them right back here (see proxy.ts's
+      // authenticated-visits-/login → /home redirect, and MatchyDashboardShell's
+      // incomplete-profile → /onboarding redirect). Only offer this for a fresh,
+      // not-yet-authenticated phone signup, where /login is a real "cancel".
+      onBack={isAuthenticated ? undefined : () => router.push('/login')}
       backLabel={t('common.back')}
     >
       <div className="mx-auto w-full max-w-2xl">
@@ -529,9 +548,13 @@ export function IdentityStep({
                 }}
                 onClick={() => fileInputRef.current?.click()}
               >
-                {image ? (
+                {photoPreview.url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={image} alt="Profile" className="h-full w-full object-cover" />
+                  <img
+                    src={photoPreview.url}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <ProfileSilhouette />
                 )}
@@ -905,18 +928,22 @@ export function IdentityStep({
           loading={loading || otpSending || isUploadingVideo}
         />
 
-        <Link
-          href="/login"
-          className="mt-3 block w-full rounded-2xl py-3 text-center"
-          style={{
-            border: '1.5px solid #E0E0E0',
-            fontSize: '14px',
-            fontWeight: 600,
-            color: '#555',
-          }}
-        >
-          {t('onboarding.identity.login')}
-        </Link>
+        {/* Same reasoning as onBack above: an already-authenticated visitor has no
+            /login to go back to — it would only bounce them right back here. */}
+        {!isAuthenticated && (
+          <Link
+            href="/login"
+            className="mt-3 block w-full rounded-2xl py-3 text-center"
+            style={{
+              border: '1.5px solid #E0E0E0',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#555',
+            }}
+          >
+            {t('onboarding.identity.login')}
+          </Link>
+        )}
       </div>
     </OnboardingStepLayout>
   );
@@ -943,7 +970,7 @@ export function IdentityStep({
               }}
               disabled={otpVerifying}
               className="absolute top-4 right-4"
-              aria-label="Fermer"
+              aria-label={t('common.close')}
             >
               <X size={20} color="#9AA5B4" />
             </button>
@@ -956,10 +983,10 @@ export function IdentityStep({
                 <ShieldCheck size={26} color="white" />
               </div>
               <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1A1A2E' }}>
-                Vérifiez votre numéro
+                {t('onboarding.identity.otpModalTitle')}
               </h2>
               <p style={{ fontSize: '13px', color: '#888', marginTop: '6px' }}>
-                Entrez le code envoyé au{' '}
+                {t('onboarding.identity.otpModalDesc')}{' '}
                 <span style={{ fontWeight: 700, color: '#2F76BB' }}>{phone}</span>
               </p>
             </div>
@@ -1010,7 +1037,7 @@ export function IdentityStep({
               }}
             >
               {otpVerifying ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
-              Confirmer
+              {t('onboarding.identity.otpConfirm')}
             </button>
 
             <button
@@ -1026,10 +1053,10 @@ export function IdentityStep({
               }}
             >
               {otpSending
-                ? 'Envoi...'
+                ? t('onboarding.identity.otpSending')
                 : resendCooldown > 0
-                  ? `Renvoyer (${resendCooldown}s)`
-                  : 'Renvoyer le code'}
+                  ? t('onboarding.identity.otpResendCooldown', { seconds: resendCooldown })
+                  : t('onboarding.identity.otpResend')}
             </button>
           </div>
         </div>
@@ -1039,7 +1066,10 @@ export function IdentityStep({
         <VideoRecorderModal
           onVideoReady={handleVideoReady}
           onClose={() => setShowVideoModal(false)}
-          tr={buildVideoRecorderTr('fr', 'fr-FR')}
+          tr={buildVideoRecorderTr(
+            locale === 'ar' ? 'ar' : locale === 'en' ? 'en' : 'fr',
+            locale === 'ar' ? 'ar-TN' : locale === 'en' ? 'en-US' : 'fr-FR',
+          )}
         />
       )}
 

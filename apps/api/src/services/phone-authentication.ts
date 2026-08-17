@@ -28,7 +28,7 @@ export type PhoneAuthServiceOptions = AbstractServiceOptions & {
 };
 
 function otpMessage(code: string): string {
-  return `Matchy+: your verification code is ${code}.`;
+  return `MatchyPlus: your verification code is ${code}.`;
 }
 
 const noopLogger: Logger = { warn: () => {} };
@@ -52,6 +52,10 @@ export class PhoneAuthenticationService {
     const phone = normalizePhoneForAuth(payload.phone);
     if (!phone) {
       throw new Error('invalid_phone');
+    }
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
+    if (existing) {
+      throw new Error('phone_already_registered');
     }
 
     const code = await this.otpChallengeService.createChallenge(

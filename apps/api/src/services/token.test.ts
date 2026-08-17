@@ -389,7 +389,7 @@ describe('TokenService', () => {
     expect(result.refreshToken).toBeTypeOf('string');
   });
 
-  it('treats refresh reuse as theft and revokes all sessions', async () => {
+  it('treats refresh reuse outside grace period as theft and revokes all sessions', async () => {
     const prisma = createMockPrisma();
     const service = new TokenService({ prisma: prisma as never });
 
@@ -399,22 +399,42 @@ describe('TokenService', () => {
       crypto.createHash('sha256').update(refreshToken).digest('hex'),
     );
 
+    // Revoked 60 seconds ago (outside 30s grace window)
     prisma.refreshToken.findUnique.mockResolvedValue({
       id: decoded.jti,
       user_id: 'user-1',
       token_hash: storedTokenHash,
       expires_at: new Date(Date.now() + 60_000),
-      revoked_at: null,
+      revoked_at: new Date(Date.now() - 60_000),
     });
-    prisma.user.findUniqueOrThrow.mockResolvedValue({ ...activeUser });
-    prisma.refreshToken.updateMany
-      .mockResolvedValueOnce({ count: 0 }) // consume fails — already used
-      .mockResolvedValueOnce({ count: 2 }); // revoke-all
 
     await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow('invalid_refresh_token');
     expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
       where: { user_id: 'user-1', revoked_at: null },
       data: { revoked_at: expect.any(Date) },
     });
+  });
+
+  it('rejects reuse within grace period without revoking all user sessions', async () => {
+    const prisma = createMockPrisma();
+    const service = new TokenService({ prisma: prisma as never });
+
+    const refreshToken = await service.issueRefreshToken('user-1');
+    const decoded = jwt.decode(refreshToken) as JwtPayload & { jti: string };
+    const storedTokenHash = await import('node:crypto').then((crypto) =>
+      crypto.createHash('sha256').update(refreshToken).digest('hex'),
+    );
+
+    // Revoked 5 seconds ago (within 30s grace window for concurrent race)
+    prisma.refreshToken.findUnique.mockResolvedValue({
+      id: decoded.jti,
+      user_id: 'user-1',
+      token_hash: storedTokenHash,
+      expires_at: new Date(Date.now() + 60_000),
+      revoked_at: new Date(Date.now() - 5_000),
+    });
+
+    await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow('invalid_refresh_token');
+    expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
   });
 });

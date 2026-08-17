@@ -41,7 +41,7 @@ import {
 } from '@/features/notifications/store/notifications-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, Bell, Check, Eye, Lock, MapPin, RefreshCw, Star, X } from 'lucide-react';
+import { AlertTriangle, Bell, Check, Lock, MapPin, RefreshCw, Star, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -231,7 +231,7 @@ export function DiscoverView() {
                   }}
                 />
                 <p className="mt-2 text-[#888]" style={{ fontSize: 14 }}>
-                  Chargement des profils...
+                  {t('matching.loadingProfiles')}
                 </p>
               </div>
             ) : locationRequired ? null : (
@@ -314,21 +314,6 @@ export function DiscoverView() {
                           style={{ fontSize: 10, background: 'rgba(47,118,187,0.7)' }}
                         >
                           {t('matching.seeDetails')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDetailProfileId(top.id);
-                            setDetailOpen(true);
-                          }}
-                          className="flex h-9 w-9 items-center justify-center rounded-full"
-                          style={{
-                            background: 'rgba(0,0,0,0.45)',
-                            border: '1px solid rgba(255,255,255,0.35)',
-                          }}
-                          aria-label={t('matching.seeDetails')}
-                        >
-                          <Eye size={17} color="white" />
                         </button>
                       </div>
 

@@ -22,7 +22,9 @@ export function normalizeOAuthCallbackError(raw: string | undefined | null): str
   }
 
   if (message === 'Invalid state') return 'oauth_invalid_state';
-  if (/^Response Error:\s*400/i.test(message)) return 'oauth_token_exchange_failed';
+  if (/^Response Error:\s*(400|401)/i.test(message)) return 'oauth_token_exchange_failed';
+  if (/invalid_grant|invalid_request|invalid_client/i.test(message))
+    return 'oauth_token_exchange_failed';
   if (/access_denied/i.test(message)) return 'access_denied';
 
   return 'oauth_failed';

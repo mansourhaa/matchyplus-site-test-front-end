@@ -6,9 +6,18 @@ import { configureStore } from '@reduxjs/toolkit';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type ProfileDetailData, ProfileDetailModal } from './profile-detail-modal';
+
+beforeEach(() => {
+  // These tests assert French copy (product default for Tunisian QA).
+  window.localStorage.setItem('matchy_locale', 'fr');
+});
+
+afterEach(() => {
+  window.localStorage.removeItem('matchy_locale');
+});
 
 vi.mock('@/lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api')>();

@@ -43,6 +43,7 @@ const oauthAuthState = {
     name: null,
     auth_provider: 'google',
     email_verified: true,
+    verified: false,
     onboarding_completed: false,
   },
 };
@@ -148,6 +149,7 @@ describe('IdentityStep', () => {
           name: null,
           auth_provider: 'phone',
           email_verified: false,
+          verified: false,
           onboarding_completed: false,
         },
       },
@@ -184,6 +186,7 @@ describe('IdentityStep', () => {
           name: null,
           auth_provider: 'google',
           email_verified: true,
+          verified: false,
           onboarding_completed: false,
         },
       },
@@ -202,6 +205,28 @@ describe('IdentityStep', () => {
       bio: undefined,
       profileType: 'INDIVIDUAL',
     });
+  });
+
+  // Regression: an authenticated (e.g. Google OAuth) visitor mid-onboarding has no
+  // /login to go back to — proxy.ts bounces an authenticated visit to /login straight
+  // to /home, and MatchyDashboardShell bounces an incomplete profile from /home right
+  // back to /onboarding. Offering either link here trapped the user in that loop, only
+  // escapable by clearing cookies.
+  it('does not offer a /login escape hatch to an already-authenticated visitor', () => {
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={true}
+        onNext={vi.fn()}
+      />,
+      oauthAuthState,
+    );
+
+    expect(screen.queryAllByText('Retour')).toHaveLength(0);
+    expect(screen.queryAllByText('Connexion')).toHaveLength(0);
   });
 
   it('does not require profession for a Looking for (PROVIDER) profile', async () => {
@@ -258,6 +283,77 @@ describe('IdentityStep', () => {
       bio: undefined,
       profileType: 'INDIVIDUAL',
     });
+  });
+
+  it('uploads a newly picked photo through the real upload endpoint before saving the rest of the identity fields', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    vi.mocked(api.post).mockResolvedValue({ data: { image: '/uploads/photos/new.jpg' } });
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={true}
+        onNext={onNext}
+      />,
+      oauthAuthState,
+    );
+
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+      target: { value: 'Électricien' },
+    });
+    const file = new File(['abc'], 'selfie.jpg', { type: 'image/jpeg' });
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.click(firstButton('Enregistrer et continuer'));
+
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/users/me/profile/photo', expect.any(FormData)),
+    );
+    // Not a base64 data URL riding along in the PATCH — the upload endpoint above is
+    // what persists User.image now, matching edit-profile's own pipeline exactly.
+    await waitFor(() =>
+      expect(onNext).toHaveBeenCalledWith({
+        name: 'Jane Doe',
+        job: 'Électricien',
+        bio: undefined,
+        profileType: 'INDIVIDUAL',
+      }),
+    );
+  });
+
+  it('shows an error and does not save the identity fields when the photo upload fails', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    vi.mocked(api.post).mockRejectedValue(new Error('upload failed'));
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={true}
+        onNext={onNext}
+      />,
+      oauthAuthState,
+    );
+
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+      target: { value: 'Électricien' },
+    });
+    const file = new File(['abc'], 'selfie.jpg', { type: 'image/jpeg' });
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.click(firstButton('Enregistrer et continuer'));
+
+    expect(await screen.findAllByText('Échec de l’envoi de la photo. Réessayez.')).not.toHaveLength(
+      0,
+    );
+    expect(onNext).not.toHaveBeenCalled();
   });
 
   it('hydrates resumed progress once the profile fetch resolves after mount', () => {
@@ -386,6 +482,23 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     expect(firstButton('Enregistrer et continuer')).toBeInTheDocument();
   });
 
+  it('still offers the /login escape hatch to a genuinely unauthenticated, not-yet-registered visitor', () => {
+    renderWithAuthStore(
+      <IdentityStep
+        profile={unauthenticatedProfileWithPhoto}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onNext={vi.fn()}
+      />,
+      unauthenticatedState,
+    );
+
+    expect(screen.queryAllByText('Retour').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Connexion').length).toBeGreaterThan(0);
+  });
+
   it('still requires a photo for a fresh phone signup even with a stale rehydrated OAuth user left over in Redux', () => {
     const onNext = vi.fn().mockResolvedValue(true);
     // A previous OAuth session's user can still be sitting in Redux (e.g. redux-persist)
@@ -508,6 +621,67 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
         profileType: 'INDIVIDUAL',
       }),
     );
+  });
+
+  it('uploads a freshly picked photo only after registerPhone succeeds (an authenticated session is required first)', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    const callOrder: string[] = [];
+    vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/otp/send') {
+        return { data: { message: 'sent', phone: '+21612345678' } };
+      }
+      if (url === '/auth/otp/verify') {
+        return {
+          data: { verified: true, phone: '+21612345678', signupToken: 'valid-grant-token' },
+        };
+      }
+      if (url === '/auth/register-phone') {
+        callOrder.push('register-phone');
+        return {
+          data: { access_token: 'access-1', refresh_token: 'refresh-1', user: registeredUser },
+        };
+      }
+      if (url === '/users/me/profile/photo') {
+        callOrder.push('upload-photo');
+        return { data: { image: '/uploads/photos/new.jpg' } };
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
+
+    renderWithAuthStore(
+      <IdentityStep
+        profile={{ ...unauthenticatedProfileWithPhoto, image: null }}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onNext={onNext}
+      />,
+      unauthenticatedState,
+    );
+
+    fillIdentityAndCredentials();
+    const file = new File(['abc'], 'selfie.jpg', { type: 'image/jpeg' });
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    // handlePhotoChange reads the file via FileReader before setting `image` — wait for
+    // that preview to actually land, or the missing-photo check below would still see
+    // the pre-selection empty state and block submission before the OTP modal opens.
+    await waitFor(() => expect(document.querySelector('img')).toBeInTheDocument());
+    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
+      target: { value: 'Password123!' },
+    });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    const codeInput = await findFirstPlaceholder('------');
+    fireEvent.change(codeInput, { target: { value: '123456' } });
+    fireEvent.click(firstButton('Confirmer'));
+
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/users/me/profile/photo', expect.any(FormData)),
+    );
+    await waitFor(() => expect(onNext).toHaveBeenCalled());
+    expect(callOrder).toEqual(['register-phone', 'upload-photo']);
   });
 
   it('calls onRegistered before even attempting registerPhone, not just before onNext', async () => {
@@ -696,6 +870,85 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
 
     await screen.findAllByText('Code incorrect.');
     expect(api.post).not.toHaveBeenCalledWith('/auth/register-phone', expect.anything());
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('shows a specific message and skips the OTP modal when the phone is already registered', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    vi.mocked(api.post).mockRejectedValue({
+      isAxiosError: true,
+      response: { data: { code: 'phone_already_registered' } },
+    });
+
+    renderWithAuthStore(
+      <IdentityStep
+        profile={unauthenticatedProfileWithPhoto}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onNext={onNext}
+      />,
+      unauthenticatedState,
+    );
+
+    fillIdentityAndCredentials();
+    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
+      target: { value: 'Password123!' },
+    });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    expect(
+      await screen.findAllByText(
+        'Ce numéro de téléphone est déjà enregistré. Veuillez vous connecter.',
+      ),
+    ).not.toHaveLength(0);
+    expect(screen.queryByPlaceholderText('------')).not.toBeInTheDocument();
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('shows a specific message when register-phone rejects a phone registered during the OTP flow', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/otp/send') {
+        return { data: { message: 'sent', phone: '+21612345678' } };
+      }
+      if (url === '/auth/otp/verify') {
+        return { data: { verified: true, phone: '+21612345678', signupToken: 'grant-1' } };
+      }
+      throw {
+        isAxiosError: true,
+        response: { data: { code: 'phone_already_registered' } },
+      };
+    });
+
+    renderWithAuthStore(
+      <IdentityStep
+        profile={unauthenticatedProfileWithPhoto}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={false}
+        onNext={onNext}
+      />,
+      unauthenticatedState,
+    );
+
+    fillIdentityAndCredentials();
+    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
+      target: { value: 'Password123!' },
+    });
+    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
+
+    const codeInput = await findFirstPlaceholder('------');
+    fireEvent.change(codeInput, { target: { value: '123456' } });
+    fireEvent.click(firstButton('Confirmer'));
+
+    expect(
+      await screen.findAllByText(
+        'Ce numéro de téléphone est déjà enregistré. Veuillez vous connecter.',
+      ),
+    ).not.toHaveLength(0);
     expect(onNext).not.toHaveBeenCalled();
   });
 });

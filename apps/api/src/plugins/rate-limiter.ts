@@ -1,6 +1,8 @@
 import ratelimit, { FastifyRateLimitOptions } from '@fastify/rate-limit';
 import fp from 'fastify-plugin';
 
+import { config } from '../config.js';
+
 /**
  * A low overhead rate limiter for your routes.
  * Uses Redis when available so limits are shared across API replicas.
@@ -10,8 +12,8 @@ import fp from 'fastify-plugin';
 export default fp<FastifyRateLimitOptions>(
   async (fastify) => {
     await fastify.register(ratelimit, {
-      max: 100,
-      timeWindow: '1 minute',
+      max: config.rateLimitGlobalMax,
+      timeWindow: config.rateLimitGlobalWindow,
       ...(fastify.redisClient ? { redis: fastify.redisClient } : {}),
     });
   },

@@ -20,6 +20,21 @@ describe('identityStepSchema', () => {
     ).toBe(false);
   });
 
+  // Regression: every constraint here must carry an explicit message, or a failure
+  // falls back to Zod's raw technical wording (e.g. "Too small: expected string to
+  // have >=1 characters") leaking straight to the user instead of friendly copy.
+  it('rejects a missing name with a friendly message, not a raw Zod error', () => {
+    const result = identityStepSchema.safeParse({
+      name: '',
+      job: 'Électricien',
+      profileType: 'INDIVIDUAL',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe('Le nom est obligatoire.');
+    }
+  });
+
   it('rejects bio over 250 characters', () => {
     expect(
       identityStepSchema.safeParse({
@@ -54,6 +69,20 @@ describe('interestsStepSchema', () => {
 
   it('rejects no goals selected', () => {
     expect(interestsStepSchema.safeParse({ ...base, selectedGoals: [] }).success).toBe(false);
+  });
+
+  it('rejects no interests or goals with friendly messages, not raw Zod errors', () => {
+    const noInterests = interestsStepSchema.safeParse({ ...base, interests: [] });
+    expect(noInterests.success).toBe(false);
+    if (!noInterests.success) {
+      expect(noInterests.error.issues[0]?.message).toBe('Ajoutez au moins un centre d’intérêt.');
+    }
+
+    const noGoals = interestsStepSchema.safeParse({ ...base, selectedGoals: [] });
+    expect(noGoals.success).toBe(false);
+    if (!noGoals.success) {
+      expect(noGoals.error.issues[0]?.message).toBe('Sélectionnez au moins un objectif.');
+    }
   });
 
   it('requires serviceType and price when offerService is true', () => {

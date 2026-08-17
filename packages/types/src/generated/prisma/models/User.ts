@@ -83,6 +83,7 @@ export type UserMinAggregateOutputType = {
   google_id: string | null;
   linkedin_id: string | null;
   phone_verified: boolean | null;
+  verified: boolean | null;
   token_version: number | null;
   looking_for: string | null;
   activity_sector: string | null;
@@ -132,6 +133,7 @@ export type UserMaxAggregateOutputType = {
   google_id: string | null;
   linkedin_id: string | null;
   phone_verified: boolean | null;
+  verified: boolean | null;
   token_version: number | null;
   looking_for: string | null;
   activity_sector: string | null;
@@ -189,6 +191,7 @@ export type UserCountAggregateOutputType = {
   google_id: number;
   linkedin_id: number;
   phone_verified: number;
+  verified: number;
   token_version: number;
   goals: number;
   looking_for: number;
@@ -262,6 +265,7 @@ export type UserMinAggregateInputType = {
   google_id?: true;
   linkedin_id?: true;
   phone_verified?: true;
+  verified?: true;
   token_version?: true;
   looking_for?: true;
   activity_sector?: true;
@@ -311,6 +315,7 @@ export type UserMaxAggregateInputType = {
   google_id?: true;
   linkedin_id?: true;
   phone_verified?: true;
+  verified?: true;
   token_version?: true;
   looking_for?: true;
   activity_sector?: true;
@@ -368,6 +373,7 @@ export type UserCountAggregateInputType = {
   google_id?: true;
   linkedin_id?: true;
   phone_verified?: true;
+  verified?: true;
   token_version?: true;
   goals?: true;
   looking_for?: true;
@@ -514,6 +520,7 @@ export type UserGroupByOutputType = {
   google_id: string | null;
   linkedin_id: string | null;
   phone_verified: boolean;
+  verified: boolean;
   token_version: number;
   goals: string[];
   looking_for: string | null;
@@ -592,6 +599,7 @@ export type UserWhereInput = {
   google_id?: Prisma.StringNullableFilter<'User'> | string | null;
   linkedin_id?: Prisma.StringNullableFilter<'User'> | string | null;
   phone_verified?: Prisma.BoolFilter<'User'> | boolean;
+  verified?: Prisma.BoolFilter<'User'> | boolean;
   token_version?: Prisma.IntFilter<'User'> | number;
   goals?: Prisma.StringNullableListFilter<'User'>;
   looking_for?: Prisma.StringNullableFilter<'User'> | string | null;
@@ -675,6 +683,7 @@ export type UserOrderByWithRelationInput = {
   google_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
+  verified?: Prisma.SortOrder;
   token_version?: Prisma.SortOrder;
   goals?: Prisma.SortOrder;
   looking_for?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -759,6 +768,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     onboarding_completed_at?: Prisma.DateTimeNullableFilter<'User'> | Date | string | null;
     email_verified?: Prisma.BoolFilter<'User'> | boolean;
     phone_verified?: Prisma.BoolFilter<'User'> | boolean;
+    verified?: Prisma.BoolFilter<'User'> | boolean;
     token_version?: Prisma.IntFilter<'User'> | number;
     goals?: Prisma.StringNullableListFilter<'User'>;
     looking_for?: Prisma.StringNullableFilter<'User'> | string | null;
@@ -844,6 +854,7 @@ export type UserOrderByWithAggregationInput = {
   google_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrderInput | Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
+  verified?: Prisma.SortOrder;
   token_version?: Prisma.SortOrder;
   goals?: Prisma.SortOrder;
   looking_for?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -912,6 +923,7 @@ export type UserScalarWhereWithAggregatesInput = {
   google_id?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   linkedin_id?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   phone_verified?: Prisma.BoolWithAggregatesFilter<'User'> | boolean;
+  verified?: Prisma.BoolWithAggregatesFilter<'User'> | boolean;
   token_version?: Prisma.IntWithAggregatesFilter<'User'> | number;
   goals?: Prisma.StringNullableListFilter<'User'>;
   looking_for?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
@@ -970,6 +982,7 @@ export type UserCreateInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -1050,6 +1063,7 @@ export type UserUncheckedCreateInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -1132,6 +1146,7 @@ export type UserUpdateInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1214,6 +1229,7 @@ export type UserUncheckedUpdateInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1294,6 +1310,7 @@ export type UserCreateManyInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -1354,6 +1371,7 @@ export type UserUpdateManyMutationInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1414,6 +1432,7 @@ export type UserUncheckedUpdateManyInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1472,6 +1491,7 @@ export type UserCountOrderByAggregateInput = {
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
+  verified?: Prisma.SortOrder;
   token_version?: Prisma.SortOrder;
   goals?: Prisma.SortOrder;
   looking_for?: Prisma.SortOrder;
@@ -1533,6 +1553,7 @@ export type UserMaxOrderByAggregateInput = {
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
+  verified?: Prisma.SortOrder;
   token_version?: Prisma.SortOrder;
   looking_for?: Prisma.SortOrder;
   activity_sector?: Prisma.SortOrder;
@@ -1582,6 +1603,7 @@ export type UserMinOrderByAggregateInput = {
   google_id?: Prisma.SortOrder;
   linkedin_id?: Prisma.SortOrder;
   phone_verified?: Prisma.SortOrder;
+  verified?: Prisma.SortOrder;
   token_version?: Prisma.SortOrder;
   looking_for?: Prisma.SortOrder;
   activity_sector?: Prisma.SortOrder;
@@ -2327,6 +2349,7 @@ export type UserCreateWithoutRefresh_tokensInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -2406,6 +2429,7 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -2515,6 +2539,7 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2596,6 +2621,7 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2675,6 +2701,7 @@ export type UserCreateWithoutOtp_challengesInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -2754,6 +2781,7 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -2863,6 +2891,7 @@ export type UserUpdateWithoutOtp_challengesInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2944,6 +2973,7 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3023,6 +3053,7 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -3102,6 +3133,7 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -3211,6 +3243,7 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3292,6 +3325,7 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3371,6 +3405,7 @@ export type UserCreateWithoutReports_madeInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -3450,6 +3485,7 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -3537,6 +3573,7 @@ export type UserCreateWithoutReports_receivedInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -3616,6 +3653,7 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -3725,6 +3763,7 @@ export type UserUpdateWithoutReports_madeInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3806,6 +3845,7 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3907,6 +3947,7 @@ export type UserUpdateWithoutReports_receivedInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3988,6 +4029,7 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4067,6 +4109,7 @@ export type UserCreateWithoutSwipes_madeInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -4146,6 +4189,7 @@ export type UserUncheckedCreateWithoutSwipes_madeInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -4233,6 +4277,7 @@ export type UserCreateWithoutSwipes_receivedInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -4312,6 +4357,7 @@ export type UserUncheckedCreateWithoutSwipes_receivedInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -4421,6 +4467,7 @@ export type UserUpdateWithoutSwipes_madeInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4502,6 +4549,7 @@ export type UserUncheckedUpdateWithoutSwipes_madeInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4603,6 +4651,7 @@ export type UserUpdateWithoutSwipes_receivedInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4684,6 +4733,7 @@ export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4763,6 +4813,7 @@ export type UserCreateWithoutSwipe_logsInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -4842,6 +4893,7 @@ export type UserUncheckedCreateWithoutSwipe_logsInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -4929,6 +4981,7 @@ export type UserCreateWithoutSwipe_log_targetsInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -5008,6 +5061,7 @@ export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -5117,6 +5171,7 @@ export type UserUpdateWithoutSwipe_logsInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5198,6 +5253,7 @@ export type UserUncheckedUpdateWithoutSwipe_logsInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5299,6 +5355,7 @@ export type UserUpdateWithoutSwipe_log_targetsInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5380,6 +5437,7 @@ export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5459,6 +5517,7 @@ export type UserCreateWithoutMatches_as_lowInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -5538,6 +5597,7 @@ export type UserUncheckedCreateWithoutMatches_as_lowInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -5625,6 +5685,7 @@ export type UserCreateWithoutMatches_as_highInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -5704,6 +5765,7 @@ export type UserUncheckedCreateWithoutMatches_as_highInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -5813,6 +5875,7 @@ export type UserUpdateWithoutMatches_as_lowInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5894,6 +5957,7 @@ export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5995,6 +6059,7 @@ export type UserUpdateWithoutMatches_as_highInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6076,6 +6141,7 @@ export type UserUncheckedUpdateWithoutMatches_as_highInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6155,6 +6221,7 @@ export type UserCreateWithoutConversations_as_lowInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -6234,6 +6301,7 @@ export type UserUncheckedCreateWithoutConversations_as_lowInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -6321,6 +6389,7 @@ export type UserCreateWithoutConversations_as_highInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -6400,6 +6469,7 @@ export type UserUncheckedCreateWithoutConversations_as_highInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -6509,6 +6579,7 @@ export type UserUpdateWithoutConversations_as_lowInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6590,6 +6661,7 @@ export type UserUncheckedUpdateWithoutConversations_as_lowInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6691,6 +6763,7 @@ export type UserUpdateWithoutConversations_as_highInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6772,6 +6845,7 @@ export type UserUncheckedUpdateWithoutConversations_as_highInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6851,6 +6925,7 @@ export type UserCreateWithoutMessages_sentInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -6930,6 +7005,7 @@ export type UserUncheckedCreateWithoutMessages_sentInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -7039,6 +7115,7 @@ export type UserUpdateWithoutMessages_sentInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7120,6 +7197,7 @@ export type UserUncheckedUpdateWithoutMessages_sentInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7199,6 +7277,7 @@ export type UserCreateWithoutMessage_likesInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -7278,6 +7357,7 @@ export type UserUncheckedCreateWithoutMessage_likesInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -7387,6 +7467,7 @@ export type UserUpdateWithoutMessage_likesInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7468,6 +7549,7 @@ export type UserUncheckedUpdateWithoutMessage_likesInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7547,6 +7629,7 @@ export type UserCreateWithoutLocationInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -7626,6 +7709,7 @@ export type UserUncheckedCreateWithoutLocationInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -7735,6 +7819,7 @@ export type UserUpdateWithoutLocationInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7816,6 +7901,7 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7895,6 +7981,7 @@ export type UserCreateWithoutBlocks_madeInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -7974,6 +8061,7 @@ export type UserUncheckedCreateWithoutBlocks_madeInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -8061,6 +8149,7 @@ export type UserCreateWithoutBlocks_receivedInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -8140,6 +8229,7 @@ export type UserUncheckedCreateWithoutBlocks_receivedInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -8249,6 +8339,7 @@ export type UserUpdateWithoutBlocks_madeInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -8330,6 +8421,7 @@ export type UserUncheckedUpdateWithoutBlocks_madeInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -8431,6 +8523,7 @@ export type UserUpdateWithoutBlocks_receivedInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -8512,6 +8605,7 @@ export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -8591,6 +8685,7 @@ export type UserCreateWithoutRatings_givenInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -8670,6 +8765,7 @@ export type UserUncheckedCreateWithoutRatings_givenInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -8757,6 +8853,7 @@ export type UserCreateWithoutRatings_receivedInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -8836,6 +8933,7 @@ export type UserUncheckedCreateWithoutRatings_receivedInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -8945,6 +9043,7 @@ export type UserUpdateWithoutRatings_givenInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9026,6 +9125,7 @@ export type UserUncheckedUpdateWithoutRatings_givenInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9127,6 +9227,7 @@ export type UserUpdateWithoutRatings_receivedInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9208,6 +9309,7 @@ export type UserUncheckedUpdateWithoutRatings_receivedInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9287,6 +9389,7 @@ export type UserCreateWithoutNotificationsInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -9366,6 +9469,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -9475,6 +9579,7 @@ export type UserUpdateWithoutNotificationsInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9556,6 +9661,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9635,6 +9741,7 @@ export type UserCreateWithoutAiJobsInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -9714,6 +9821,7 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   google_id?: string | null;
   linkedin_id?: string | null;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: number;
   goals?: Prisma.UserCreategoalsInput | string[];
   looking_for?: string | null;
@@ -9823,6 +9931,7 @@ export type UserUpdateWithoutAiJobsInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9904,6 +10013,7 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   token_version?: Prisma.IntFieldUpdateOperationsInput | number;
   goals?: Prisma.UserUpdategoalsInput | string[];
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -10241,6 +10351,7 @@ export type UserSelect<
     google_id?: boolean;
     linkedin_id?: boolean;
     phone_verified?: boolean;
+    verified?: boolean;
     token_version?: boolean;
     goals?: boolean;
     looking_for?: boolean;
@@ -10327,6 +10438,7 @@ export type UserSelectCreateManyAndReturn<
     google_id?: boolean;
     linkedin_id?: boolean;
     phone_verified?: boolean;
+    verified?: boolean;
     token_version?: boolean;
     goals?: boolean;
     looking_for?: boolean;
@@ -10390,6 +10502,7 @@ export type UserSelectUpdateManyAndReturn<
     google_id?: boolean;
     linkedin_id?: boolean;
     phone_verified?: boolean;
+    verified?: boolean;
     token_version?: boolean;
     goals?: boolean;
     looking_for?: boolean;
@@ -10450,6 +10563,7 @@ export type UserSelectScalar = {
   google_id?: boolean;
   linkedin_id?: boolean;
   phone_verified?: boolean;
+  verified?: boolean;
   token_version?: boolean;
   goals?: boolean;
   looking_for?: boolean;
@@ -10510,6 +10624,7 @@ export type UserOmit<
   | 'google_id'
   | 'linkedin_id'
   | 'phone_verified'
+  | 'verified'
   | 'token_version'
   | 'goals'
   | 'looking_for'
@@ -10636,6 +10751,7 @@ export type $UserPayload<
       google_id: string | null;
       linkedin_id: string | null;
       phone_verified: boolean;
+      verified: boolean;
       /**
        * Bumped on password change / reset so outstanding access JWTs fail verification.
        */
@@ -11489,6 +11605,7 @@ export interface UserFieldRefs {
   readonly google_id: Prisma.FieldRef<'User', 'String'>;
   readonly linkedin_id: Prisma.FieldRef<'User', 'String'>;
   readonly phone_verified: Prisma.FieldRef<'User', 'Boolean'>;
+  readonly verified: Prisma.FieldRef<'User', 'Boolean'>;
   readonly token_version: Prisma.FieldRef<'User', 'Int'>;
   readonly goals: Prisma.FieldRef<'User', 'String[]'>;
   readonly looking_for: Prisma.FieldRef<'User', 'String'>;

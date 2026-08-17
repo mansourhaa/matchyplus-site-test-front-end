@@ -187,6 +187,7 @@ describe('AuthenticationService', () => {
         phone_verified: true,
         google_id: null,
         linkedin_id: null,
+        verified: false,
         role: 'USER',
         onboarding_completed_at: new Date('2026-01-01'),
         password: null,
@@ -208,6 +209,7 @@ describe('AuthenticationService', () => {
           phone_verified: true,
           google_id: true,
           linkedin_id: true,
+          verified: true,
           role: true,
           onboarding_completed_at: true,
           password: true,
@@ -225,6 +227,7 @@ describe('AuthenticationService', () => {
         google_linked: false,
         linkedin_linked: false,
         has_password: false,
+        verified: false,
         role: 'USER',
         onboarding_completed: true,
       });

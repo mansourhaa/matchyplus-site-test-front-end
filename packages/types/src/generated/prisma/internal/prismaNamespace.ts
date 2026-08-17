@@ -1970,6 +1970,7 @@ export const UserScalarFieldEnum = {
   google_id: 'google_id',
   linkedin_id: 'linkedin_id',
   phone_verified: 'phone_verified',
+  verified: 'verified',
   token_version: 'token_version',
   goals: 'goals',
   looking_for: 'looking_for',

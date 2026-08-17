@@ -9,6 +9,7 @@ type SessionUserSource = {
   google_id?: string | null;
   linkedin_id?: string | null;
   password?: string | null;
+  verified: boolean;
   onboarding_completed_at: Date | null;
 };
 
@@ -23,6 +24,7 @@ export type MemberSessionUser = {
   google_linked: boolean;
   linkedin_linked: boolean;
   has_password: boolean;
+  verified: boolean;
   onboarding_completed: boolean;
 };
 
@@ -44,6 +46,7 @@ export function toMemberSessionUser(user: SessionUserSource): MemberSessionUser 
     google_linked: Boolean(user.google_id),
     linkedin_linked: Boolean(user.linkedin_id),
     has_password: Boolean(user.password),
+    verified: user.verified,
     onboarding_completed: Boolean(user.onboarding_completed_at),
   };
 }

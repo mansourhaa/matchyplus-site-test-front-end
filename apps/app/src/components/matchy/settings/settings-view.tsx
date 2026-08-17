@@ -1,6 +1,7 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import { FlagIcon } from '@/components/matchy/flag-icon';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { logout, selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
@@ -29,9 +30,13 @@ import {
   Video,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 
-const LANG_FLAGS: Record<Locale, string> = { fr: '🇫🇷', en: '🇬🇧', ar: '🇹🇳' };
+const LANG_FLAGS: Record<Locale, ReactNode> = {
+  fr: <FlagIcon locale="fr" size={13} />,
+  en: <FlagIcon locale="en" size={13} />,
+  ar: <FlagIcon locale="ar" size={13} />,
+};
 const LANG_NAMES: Record<Locale, string> = { fr: 'Français', en: 'English', ar: 'العربية' };
 
 type SettingsItem = {
@@ -44,7 +49,7 @@ type SettingsItem = {
   bg: string;
   onClick?: () => void;
   badge?: string;
-  badgeFlag?: string;
+  badgeFlag?: ReactNode;
 };
 
 export function SettingsView() {
@@ -304,10 +309,11 @@ export function SettingsView() {
                     </span>
                     {item.badge && (
                       <span
-                        className="rounded-full px-2 py-0.5 text-[11px] font-bold"
+                        className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold"
                         style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
                       >
-                        {item.badgeFlag ? `${item.badgeFlag} ${item.badge}` : item.badge}
+                        {item.badgeFlag}
+                        <span>{item.badge}</span>
                       </span>
                     )}
                     <ChevronRight
@@ -377,7 +383,7 @@ export function SettingsView() {
                         locale === l ? `2px solid ${matchyBrand.blue}` : '2px solid transparent',
                     }}
                   >
-                    <span style={{ fontSize: 18 }}>{LANG_FLAGS[l]}</span>
+                    <span className="flex shrink-0 items-center">{LANG_FLAGS[l]}</span>
                     <span className="text-sm font-semibold" style={{ color: '#303030' }}>
                       {LANG_NAMES[l]}
                     </span>

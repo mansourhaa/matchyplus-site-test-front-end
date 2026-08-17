@@ -79,6 +79,11 @@ describe('InterestsStep', () => {
     fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
+    // Regression: schemas.ts's array .min(1) must carry an explicit message, or this
+    // falls back to Zod's raw technical wording ("Too small: expected array to have
+    // >=1 items") leaking straight to the user instead of friendly copy.
+    expect(await screen.findAllByText('Ajoutez au moins un centre d’intérêt.')).not.toHaveLength(0);
+    expect(screen.queryByText(/expected array/i)).not.toBeInTheDocument();
   });
 
   it('blocks submission and shows an error when no goals are selected', async () => {
@@ -98,6 +103,8 @@ describe('InterestsStep', () => {
     fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
+    expect(await screen.findAllByText('Sélectionnez au moins un objectif.')).not.toHaveLength(0);
+    expect(screen.queryByText(/expected array/i)).not.toBeInTheDocument();
   });
 
   it('hides the "offer a service" card for a PROVIDER (Employeur) profile', () => {

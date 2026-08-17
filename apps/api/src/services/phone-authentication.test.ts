@@ -43,6 +43,7 @@ describe('PhoneAuthenticationService', () => {
   describe('sendOtp', () => {
     it('creates a SIGNUP_VERIFICATION challenge and sends it by SMS', async () => {
       const { service, prisma, smsClient } = createService();
+      prisma.user.findUnique.mockResolvedValue(null);
       prisma.otpChallenge.findFirst.mockResolvedValue(null);
 
       const result = await service.sendOtp({ phone: '+33 6 12 34 56 78' });
@@ -55,6 +56,17 @@ describe('PhoneAuthenticationService', () => {
       });
       expect(smsClient.sendSms).toHaveBeenCalledWith('+33612345678', expect.any(String));
       expect(result).toEqual({ message: 'otp_sent', phone: '+33612345678' });
+    });
+
+    it('rejects a phone that is already registered without sending an OTP', async () => {
+      const { service, prisma, smsClient } = createService();
+      prisma.user.findUnique.mockResolvedValue({ id: 'user-1', phone: '+33612345678' });
+
+      await expect(service.sendOtp({ phone: '+33 6 12 34 56 78' })).rejects.toThrow(
+        'phone_already_registered',
+      );
+      expect(prisma.otpChallenge.create).not.toHaveBeenCalled();
+      expect(smsClient.sendSms).not.toHaveBeenCalled();
     });
   });
 
