@@ -80,6 +80,7 @@ export async function handleProviderOAuthCallback(
     request.log.info({ provider, finalCallbackUrl }, 'oauth callback success → SPA');
     return reply.redirect(finalCallbackUrl);
   } catch (err) {
+    console.error(`[oauth ${provider} callback error]`, err);
     request.log.error({ err, provider }, 'OAuth callback exception');
     return redirectOAuthError((err as Error).message || 'oauth_profile_fetch_failed');
   }
