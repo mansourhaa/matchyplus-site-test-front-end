@@ -295,7 +295,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
         onClick={(event) => event.stopPropagation()}
         aria-label={t('profileDetail.profileAlt', { name: profile.name })}
       >
-        <div className="relative h-64 w-full overflow-hidden bg-[#E8EEF5]">
+        <div className="relative h-[42vh] w-full overflow-hidden bg-[#E8EEF5] md:h-[50vh]">
           {photo.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photo.url} alt="" className="h-full w-full object-cover" />

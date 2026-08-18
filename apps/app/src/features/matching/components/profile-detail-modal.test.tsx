@@ -310,6 +310,27 @@ describe('ProfileDetailModal — rating', () => {
   });
 });
 
+describe('ProfileDetailModal — hero photo framing', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // Regression: a fixed h-64 (256px) band cropped portrait photos far more
+  // aggressively than legacy's viewport-relative h-[42vh]/h-[50vh] hero, cutting off
+  // the top of the subject's head. object-cover itself is unchanged (legacy doesn't
+  // bias the crop either) -- the container just needs to be tall enough that the crop
+  // stays close to the photo's natural portrait aspect ratio.
+  it('gives the hero photo a viewport-relative height instead of a fixed short band', () => {
+    const { container } = renderModal(buildStore(), { image: 'https://example.com/photo.jpg' });
+
+    const heroImage = container.querySelector('img');
+    expect(heroImage).not.toBeNull();
+    const heroContainer = heroImage?.parentElement;
+    expect(heroContainer).toHaveClass('h-[42vh]', 'md:h-[50vh]');
+    expect(heroContainer).not.toHaveClass('h-64');
+  });
+});
+
 describe('ProfileDetailModal — profile info card', () => {
   afterEach(() => {
     vi.clearAllMocks();
