@@ -32,6 +32,12 @@ RUN pnpm install
 
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# Where the app sends users for the marketing site's legal pages. proxy.ts
+# redirects /privacy-policy and /terms-of-service here, so leaving the localhost
+# fallback compiled in makes both dead links in production - and those two are
+# not optional pages to lose.
+ARG NEXT_PUBLIC_LANDING_URL=http://localhost:3002
+ENV NEXT_PUBLIC_LANDING_URL=${NEXT_PUBLIC_LANDING_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm turbo build --filter=@saas-boilerplate/app
 

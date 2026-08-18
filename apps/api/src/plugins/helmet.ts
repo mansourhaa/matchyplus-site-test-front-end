@@ -29,6 +29,18 @@ export default fp(
           connectSrc: ["'self'", 'https://*'],
         },
       },
+      // Profile photos and presentation videos are served by this API but
+      // rendered by the front ends on app.matchyplus.com and admin.matchyplus.com.
+      // helmet defaults this header to "same-origin", which tells the browser to
+      // refuse the file whenever the page requesting it is on a different origin -
+      // so every video failed in production with
+      //   net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin
+      // while the upload itself had succeeded and the file was on disk.
+      //
+      // "same-site" rather than "cross-origin": app/admin/api all share the
+      // registrable domain matchyplus.com, so this permits our own front ends and
+      // still refuses arbitrary third-party sites hotlinking user media.
+      crossOriginResourcePolicy: { policy: 'same-site' },
       xContentTypeOptions: false,
     });
   },
