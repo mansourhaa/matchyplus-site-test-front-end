@@ -8,7 +8,7 @@ HOST="${MATCHY_SSH_HOST:-151.80.235.192}"
 
 KEY="${MATCHY_SSH_KEY:-}"
 if [ -z "$KEY" ]; then
-  for f in ~/.ssh/matchy_console ~/.ssh/id_ed25519 ~/.ssh/id_rsa ~/.ssh/id_ecdsa; do
+  for f in ~/.ssh/matchy-pipline-main ~/.ssh/matchy_console ~/.ssh/id_ed25519 ~/.ssh/id_rsa ~/.ssh/id_ecdsa; do
     [ -r "$f" ] && { KEY="$f"; break; }
   done
 fi
@@ -26,9 +26,9 @@ for p in 8090 9090 8443 9091 9095; do
   fi
 done
 
-echo "Connecting to $HOST as $USER_NAME"
+echo "Connecting to $HOST as $USER_NAME using key $KEY"
 echo
-echo " Jenkins      http://localhost:8090"
+echo " Jenkins       http://localhost:8090"
 echo " SonarQube    http://localhost:9090"
 echo " ArgoCD       https://localhost:8443"
 echo " Prometheus   http://localhost:9091"
