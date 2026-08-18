@@ -30,18 +30,8 @@ COPY turbo.json turbo.json
 
 RUN pnpm install
 
-# Where the "Connexion" and "Inscription" buttons send visitors. Next.js inlines
-# NEXT_PUBLIC_* into the client bundle at BUILD time, so this cannot be set on
-# the Deployment or in a ConfigMap afterwards - the string is already compiled
-# into the JavaScript.
-#
-# This file used to claim landing read no NEXT_PUBLIC_* vars. That was true while
-# landing was a placeholder page; the Vite-to-Next migration replaced it with a
-# real marketing site that reads NEXT_PUBLIC_APP_URL, and the stale comment meant
-# nobody passed it. Production shipped with the localhost fallback compiled in,
-# so every visitor who clicked Connexion was sent to their own machine.
-ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
-ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+# landing is a static marketing site - it reads no NEXT_PUBLIC_* vars, so
+# there's nothing to bake in at build time here (unlike app/admin).
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm turbo build --filter=@saas-boilerplate/landing
 
@@ -56,15 +46,7 @@ ENV HOSTNAME=0.0.0.0
 
 RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs
 
-# This comment used to say landing ships no public/ dir. That stopped being
-# true once the marketing site grew real assets - logo-matchy.svg,
-# logo-matchy-white.svg, robots.txt, and the hero/testimonial photos under
-# public/matchy/ (selfie-man.png, pro-man.png, referenced through Next's image
-# optimizer). The copy was never added when they landed, so none of it existed
-# in the production image: the header logo was blank, robots.txt 404'd, and
-# every photo Next's optimizer tried to read from public/ came back missing.
-# Next.js serves public/ at the site root, same as apps/app already does below.
-COPY --from=installer /app/apps/landing/public ./apps/landing/public
+# no apps/landing/public - this app ships no static assets dir, unlike apps/app.
 COPY --from=installer --chown=nextjs:nodejs /app/apps/landing/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/landing/.next/static ./apps/landing/.next/static
 
