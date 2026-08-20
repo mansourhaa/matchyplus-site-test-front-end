@@ -21,7 +21,6 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 const FEATURES = [
@@ -32,7 +31,6 @@ const FEATURES = [
 ];
 
 export function AdminLoginForm() {
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const { admin, loading, error } = useAppSelector(selectAdminAuth);
 
@@ -59,9 +57,12 @@ export function AdminLoginForm() {
   useEffect(() => {
     if (!admin || !hasAdminSessionMarker()) return;
 
-    router.replace('/admin');
-    router.refresh();
-  }, [admin, router]);
+    // A client-side transition (router.push/replace) doesn't guarantee the browser has
+    // committed the admin session cookie yet — it's set via a cross-origin Set-Cookie from
+    // the API, which only middleware sees reliably on a real navigation. A hard navigation
+    // forces that, avoiding "logged in but stuck on /login until you refresh".
+    window.location.assign('/admin');
+  }, [admin]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -75,8 +76,7 @@ export function AdminLoginForm() {
     const resultAction = await dispatch(adminLogin({ email: email.trim(), password }));
 
     if (adminLogin.fulfilled.match(resultAction)) {
-      router.push('/admin');
-      router.refresh();
+      window.location.assign('/admin');
       return;
     }
 
