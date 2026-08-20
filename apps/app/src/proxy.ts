@@ -1,5 +1,4 @@
 import { AUTH_COOKIE } from '@/lib/auth';
-import { getLandingBaseUrl } from '@/lib/landing';
 import {
   hasUsableAccessTokenCookie,
   isNeutralRoute,
@@ -8,14 +7,6 @@ import {
 } from '@/lib/route-auth';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-function redirectToLanding(path: string, request: NextRequest) {
-  const landing = getLandingBaseUrl();
-  const lang = request.nextUrl.searchParams.get('lang');
-  const target = new URL(path, `${landing}/`);
-  if (lang) target.searchParams.set('lang', lang);
-  return NextResponse.redirect(target);
-}
 
 /**
  * Edge gate for the member app. (dashboard) and every other non-public/non-neutral
@@ -28,22 +19,6 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE)?.value;
   const usableSession = hasUsableAccessTokenCookie(token);
   const { pathname } = request.nextUrl;
-
-  // Legal docs live on the marketing site — keep old app URLs working.
-  if (
-    pathname === '/public/privacy-policy' ||
-    pathname === '/privacy-policy' ||
-    pathname === '/settings/privacy-policy'
-  ) {
-    return redirectToLanding('/privacy-policy', request);
-  }
-  if (
-    pathname === '/public/terms-of-service' ||
-    pathname === '/terms-of-service' ||
-    pathname === '/settings/terms-of-service'
-  ) {
-    return redirectToLanding('/terms-of-service', request);
-  }
 
   // /oauth-callback, /onboarding, /register — see NEUTRAL_ROUTES in route-auth.ts.
   if (isNeutralRoute(pathname)) {

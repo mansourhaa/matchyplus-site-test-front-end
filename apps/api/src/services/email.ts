@@ -226,7 +226,7 @@ export class EmailService {
     subject?: string;
   }): Promise<{ success: boolean; messageId?: string; simulated?: boolean }> {
     try {
-      const destination = 'hello@matchy.tn';
+      const destination = process.env.CONTACT_EMAIL || 'Contact@matchyplus.com';
       const isPartner = input.type === 'partner';
       const subject =
         input.subject ||

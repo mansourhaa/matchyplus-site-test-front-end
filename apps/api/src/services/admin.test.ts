@@ -8,6 +8,7 @@ function createMockPrisma() {
       findMany: vi.fn(),
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
+      create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
       count: vi.fn(),
@@ -345,6 +346,196 @@ describe('AdminService', () => {
     expect(prisma.user.count.mock.calls[0][0].where.role.in).toEqual(visible);
     expect(prisma.user.groupBy.mock.calls[0][0].where.role.in).toEqual(visible);
     expect(prisma.user.groupBy.mock.calls[1][0].where.role.in).toEqual(visible);
+  });
+});
+
+describe('AdminService createUser', () => {
+  function validPayload(overrides: Partial<Record<string, unknown>> = {}) {
+    return {
+      name: 'Amine Ben Salah',
+      phone: '20123456',
+      password: 'Matchy2026!',
+      profileType: 'INDIVIDUAL',
+      job: 'Plombier',
+      interests: ['bricolage'],
+      selectedGoals: ['find-clients'],
+      image: 'data:image/png;base64,aaaa',
+      ...overrides,
+    } as never;
+  }
+
+  it('creates a member account with the phone normalized and the password hashed', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'u1' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    const result = await service.createUser(validPayload());
+
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { phone: '+21620123456' } });
+    const data = prisma.user.create.mock.calls[0][0].data;
+    expect(data.phone).toBe('+21620123456');
+    expect(data.auth_provider).toBe('phone');
+    expect(data.phone_verified).toBe(true);
+    expect(data.password).not.toBe('Matchy2026!');
+    expect(result).toEqual({ id: 'u1' });
+  });
+
+  it('rejects an unparseable phone number', async () => {
+    const prisma = createMockPrisma();
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(service.createUser(validPayload({ phone: '   ' }))).rejects.toMatchObject({
+      message: 'invalid phone number',
+      statusCode: 400,
+    });
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a phone that is already registered', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'existing' });
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(service.createUser(validPayload())).rejects.toMatchObject({
+      message: 'phone already registered',
+      statusCode: 400,
+    });
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an email that is already registered', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce(null) // phone lookup
+      .mockResolvedValueOnce({ id: 'existing' }); // email lookup
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.createUser(validPayload({ email: 'Amine@Example.com' })),
+    ).rejects.toMatchObject({ message: 'email already registered', statusCode: 400 });
+    expect(prisma.user.findUnique).toHaveBeenLastCalledWith({
+      where: { email: 'amine@example.com' },
+    });
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a password that fails the security policy', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(service.createUser(validPayload({ password: 'weakpass' }))).rejects.toMatchObject({
+      message: 'password does not meet the security policy',
+      statusCode: 400,
+    });
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a blank name', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(service.createUser(validPayload({ name: '   ' }))).rejects.toMatchObject({
+      message: 'name is required',
+      statusCode: 400,
+    });
+  });
+
+  it('requires a job for an individual profile', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(service.createUser(validPayload({ job: undefined }))).rejects.toMatchObject({
+      message: 'job is required for an individual profile',
+      statusCode: 400,
+      code: 'onboarding_incomplete',
+    });
+  });
+
+  it('does not require a job for a provider profile', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'u1' });
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.createUser(validPayload({ profileType: 'PROVIDER', job: undefined })),
+    ).resolves.toEqual({ id: 'u1' });
+  });
+
+  it('requires at least one interest', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(service.createUser(validPayload({ interests: [] }))).rejects.toMatchObject({
+      message: 'at least one interest is required',
+      statusCode: 400,
+    });
+  });
+
+  it('requires at least one goal', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(service.createUser(validPayload({ selectedGoals: [] }))).rejects.toMatchObject({
+      message: 'at least one goal is required',
+      statusCode: 400,
+    });
+  });
+
+  it('requires service type and price when offering a service', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(service.createUser(validPayload({ offerService: true }))).rejects.toMatchObject({
+      message: 'service type and price are required when offering a service',
+      statusCode: 400,
+    });
+  });
+
+  it('accepts a service offer once type and price are provided', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'u1' });
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.createUser(
+        validPayload({ offerService: true, serviceType: 'Plomberie', price: '50 DT' }),
+      ),
+    ).resolves.toEqual({ id: 'u1' });
+  });
+
+  it('allows creating a user without a profile photo', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'u1' });
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(service.createUser(validPayload({ image: undefined }))).resolves.toEqual({
+      id: 'u1',
+    });
+  });
+
+  it('rejects an image that is already a stored media path', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.createUser(
+        validPayload({ image: '/uploads/photos/11111111-1111-1111-1111-111111111111.jpg' }),
+      ),
+    ).rejects.toMatchObject({
+      message: 'image must be a newly uploaded photo, not a stored path',
+      statusCode: 400,
+    });
   });
 });
 

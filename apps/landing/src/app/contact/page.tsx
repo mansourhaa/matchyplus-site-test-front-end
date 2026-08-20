@@ -1,5 +1,6 @@
 'use client';
 
+import { CountryCodeSelector } from '@/components/country-code-selector';
 import { PageFrame } from '@/components/site-shell';
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
@@ -12,6 +13,7 @@ const data: Record<
   {
     title: string;
     subtitle: string;
+    badge: string;
     name: string;
     email: string;
     phone: string;
@@ -19,9 +21,13 @@ const data: Record<
     send: string;
     sending: string;
     sent: string;
+    sentSub: string;
+    sendAnother: string;
     infoTitle: string;
     infoText: string;
+    emailLabel: string;
     directContact: string;
+    turnaroundNotice: string;
     location: string;
   }
 > = {
@@ -29,6 +35,7 @@ const data: Record<
     title: 'Contactez-nous',
     subtitle:
       'Une question, une idée ou besoin d’aide ? Écrivez-nous et notre équipe vous répondra dans les plus brefs délais.',
+    badge: 'Support & Contact',
     name: 'Nom complet',
     email: 'Adresse e-mail',
     phone: 'Numéro de téléphone (optionnel)',
@@ -36,16 +43,22 @@ const data: Record<
     send: 'Envoyer le message',
     sending: 'Envoi du message...',
     sent: 'Merci ! Votre message a bien été envoyé.',
+    sentSub: 'Notre équipe reviendra vers vous à l’adresse {email} sous 24 heures ouvrées.',
+    sendAnother: 'Envoyer un autre message',
     infoTitle: 'Parlons de votre projet',
     infoText:
       'Notre équipe est à votre disposition pour vous accompagner dans l’utilisation de Matchy+ ou pour toute proposition de partenariat.',
+    emailLabel: 'E-mail',
     directContact: 'Contact direct',
-    location: 'Tunis, Tunisie (Panafricain)',
+    turnaroundNotice: '🚀 Réception directe et traitement sous 24h ouvrées.',
+    location:
+      'Immeuble AOUN, 5ème étage, Lotissement Stade Lamine, Rue 20 Mars, Cité Jawhara, Sousse, Tunisie',
   },
   en: {
     title: 'Contact us',
     subtitle:
       'A question, an idea or need help? Write to us and our team will get back to you promptly.',
+    badge: 'Support & Contact',
     name: 'Full name',
     email: 'Email address',
     phone: 'Phone number (optional)',
@@ -53,15 +66,21 @@ const data: Record<
     send: 'Send message',
     sending: 'Sending message...',
     sent: 'Thank you! Your message has been sent successfully.',
+    sentSub: 'Our team will get back to you at {email} within 24 business hours.',
+    sendAnother: 'Send another message',
     infoTitle: "Let's talk about your project",
     infoText:
       'Our team is here to assist you with Matchy+ or discuss partnership opportunities across the continent.',
+    emailLabel: 'E-mail',
     directContact: 'Direct contact',
-    location: 'Tunis, Tunisia (Pan-African)',
+    turnaroundNotice: '🚀 Direct receipt and processing within 24 business hours.',
+    location:
+      'AOUN Building, 5th Floor, Stade Lamine Subdivision, 20 Mars Street, Cité Jawhara, Sousse, Tunisia',
   },
   ar: {
     title: 'اتصل بنا',
     subtitle: 'لديك سؤال أو فكرة أو تحتاج إلى المساعدة؟ اكتب لنا وسيرد فريقنا عليك في أقرب وقت.',
+    badge: 'الدعم والتواصل',
     name: 'الاسم الكامل',
     email: 'البريد الإلكتروني',
     phone: 'رقم الهاتف (اختياري)',
@@ -69,10 +88,14 @@ const data: Record<
     send: 'إرسال الرسالة',
     sending: 'جاري إرسال الرسالة...',
     sent: 'شكرًا لك! تم إرسال رسالتك بنجاح.',
+    sentSub: 'سيعود فريقنا إليك عبر البريد {email} خلال 24 ساعة عمل.',
+    sendAnother: 'إرسال رسالة أخرى',
     infoTitle: 'دعنا نتحدث عن مشروعك',
     infoText: 'فريقنا متاح لمساعدتك في استخدام Matchy+ أو لمناقشة أي مقترح شراكة.',
+    emailLabel: 'البريد الإلكتروني',
     directContact: 'اتصال مباشر',
-    location: 'تونس، الجمهورية التونسية (عموم إفريقيا)',
+    turnaroundNotice: '🚀 استلام مباشر ومعالجة خلال 24 ساعة عمل.',
+    location: 'عمارة عون، الطابق الخامس، تقسيم ملعب الأمين، نهج 20 مارس، حي جوهرة، سوسة، تونس',
   },
 };
 
@@ -81,6 +104,7 @@ export default function Contact() {
   const t = data[locale];
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [countryCode, setCountryCode] = useState('+216');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -93,6 +117,7 @@ export default function Contact() {
     setLoading(true);
 
     try {
+      const fullPhone = form.phone ? `${countryCode} ${form.phone}`.trim() : '';
       await fetch(`${API_URL}/v1/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,7 +125,7 @@ export default function Contact() {
           type: 'contact',
           name: form.name,
           email: form.email,
-          phone: form.phone,
+          phone: fullPhone,
           message: form.message,
         }),
       });
@@ -124,7 +149,7 @@ export default function Contact() {
             <div className="flex flex-col justify-between md:col-span-5">
               <div>
                 <span className="bg-brand-teal/10 text-brand-teal inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold">
-                  <MessageSquare className="h-3.5 w-3.5" /> Support & Contact
+                  <MessageSquare className="h-3.5 w-3.5" /> {t.badge}
                 </span>
                 <h2 className="text-brand-navy mt-4 text-2xl font-extrabold sm:text-3xl">
                   {t.infoTitle}
@@ -139,12 +164,12 @@ export default function Contact() {
                       <Mail className="h-5 w-5" />
                     </span>
                     <div>
-                      <p className="text-muted-foreground text-xs">E-mail</p>
+                      <p className="text-muted-foreground text-xs">{t.emailLabel}</p>
                       <a
-                        href="mailto:hello@matchy.tn"
+                        href="mailto:Contact@matchyplus.com"
                         className="hover:text-brand-blue font-semibold"
                       >
-                        hello@matchy.tn
+                        Contact@matchyplus.com
                       </a>
                     </div>
                   </div>
@@ -155,17 +180,9 @@ export default function Contact() {
                     </span>
                     <div>
                       <p className="text-muted-foreground text-xs">{t.directContact}</p>
-                      <span className="font-semibold">+216 70 000 000</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3.5 text-sm text-neutral-700">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-neutral-100 text-amber-500">
-                      <MapPin className="h-5 w-5" />
-                    </span>
-                    <div>
-                      <p className="text-muted-foreground text-xs">Localisation</p>
-                      <span className="font-semibold">{t.location}</span>
+                      <a href="tel:+21694670292" className="hover:text-brand-teal font-semibold">
+                        +216 94 670 292
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -173,7 +190,7 @@ export default function Contact() {
 
               <div className="bg-brand-blue/5 border-brand-blue/10 mt-8 rounded-2xl border p-4">
                 <p className="text-brand-navy/80 text-xs leading-relaxed font-medium">
-                  🚀 Réception directe et traitement sous 24h ouvrées.
+                  {t.turnaroundNotice}
                 </p>
               </div>
             </div>
@@ -187,11 +204,7 @@ export default function Contact() {
                   </div>
                   <h3 className="text-brand-navy mt-4 text-xl font-bold">{t.sent}</h3>
                   <p className="text-muted-foreground mt-2 max-w-sm text-sm">
-                    Notre équipe reviendra vers vous à l’adresse{' '}
-                    <span className="text-brand-navy font-semibold">
-                      {form.email || 'indiquée'}
-                    </span>{' '}
-                    sous 24 heures ouvrées.
+                    {t.sentSub.replace('{email}', form.email || '...')}
                   </p>
                   <button
                     onClick={() => {
@@ -200,7 +213,7 @@ export default function Contact() {
                     }}
                     className="text-brand-teal mt-6 text-sm font-semibold hover:underline"
                   >
-                    Envoyer un autre message
+                    {t.sendAnother}
                   </button>
                 </div>
               ) : (
@@ -237,13 +250,21 @@ export default function Contact() {
                       <label className="text-brand-navy mb-1.5 block text-xs font-bold">
                         {t.phone}
                       </label>
-                      <input
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder="+216 -- --- ---"
-                        className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
-                      />
+                      <div className="flex items-center gap-2">
+                        <CountryCodeSelector
+                          value={countryCode}
+                          onChange={setCountryCode}
+                          locale={locale}
+                          disabled={loading}
+                        />
+                        <input
+                          type="tel"
+                          value={form.phone}
+                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                          placeholder="-- --- ---"
+                          className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
 

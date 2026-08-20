@@ -25,7 +25,7 @@ const authenticatedHeadersSchema = {
   },
 };
 
-const profileExperienceSchema = {
+export const profileExperienceSchema = {
   type: 'object',
   additionalProperties: false,
   required: ['id', 'title', 'company', 'type', 'startDate', 'endDate', 'current'],
@@ -40,7 +40,7 @@ const profileExperienceSchema = {
   },
 };
 
-const profileEducationSchema = {
+export const profileEducationSchema = {
   type: 'object',
   additionalProperties: false,
   required: ['id', 'school', 'degree', 'field', 'startDate', 'endDate', 'result'],

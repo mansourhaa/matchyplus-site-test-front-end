@@ -4,7 +4,7 @@ import { AdminAvatarImage } from '@/components/admin/admin-avatar-image';
 import { PLAN_COLOR, PLAN_LABEL, STATUS_COLOR, STATUS_LABEL } from '@/features/admin-users/labels';
 import type { AdminManagedUser, AdminUserFilters } from '@/features/admin-users/types';
 import { useAdminUserPhoto } from '@/hooks/use-admin-user-photo';
-import { Check, Download, Edit2, Eye, MapPin, Search, Star, Trash2 } from 'lucide-react';
+import { Check, Download, Edit2, Eye, MapPin, Search, Star, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
 const GRID_COLUMNS = '32px 2.5fr 1.5fr 1fr 1fr 1fr 1fr 100px';
@@ -59,6 +59,7 @@ export function AdminUsersSection({
   onFiltersChange,
   onOpenUser,
   onDeleteUser,
+  onAddUser,
 }: {
   users: AdminManagedUser[];
   filters: AdminUserFilters;
@@ -66,6 +67,7 @@ export function AdminUsersSection({
   onFiltersChange: (changes: Partial<AdminUserFilters>) => void;
   onOpenUser: (user: AdminManagedUser) => void;
   onDeleteUser: (user: AdminManagedUser) => void;
+  onAddUser: () => void;
 }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -161,6 +163,16 @@ export function AdminUsersSection({
         >
           <Download size={14} />
           Exporter
+        </button>
+
+        <button
+          type="button"
+          onClick={onAddUser}
+          className="flex items-center gap-1.5 rounded-xl px-3 py-2"
+          style={{ background: '#61BCA6', color: 'white', fontSize: '13px', fontWeight: 600 }}
+        >
+          <UserPlus size={14} />
+          Ajouter un utilisateur
         </button>
       </div>
 

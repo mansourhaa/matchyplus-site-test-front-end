@@ -1,5 +1,6 @@
 'use client';
 
+import { CountryCodeSelector } from '@/components/country-code-selector';
 import { PageFrame } from '@/components/site-shell';
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
@@ -10,6 +11,7 @@ import { useState } from 'react';
 const data: Record<
   'fr' | 'en' | 'ar',
   {
+    eyebrow: string;
     title: string;
     subtitle: string;
     badge: string;
@@ -22,12 +24,16 @@ const data: Record<
     email: string;
     phone: string;
     requestText: string;
+    requestPlaceholder: string;
     submit: string;
     submitting: string;
     success: string;
+    successSub: string;
+    sendAnother: string;
   }
 > = {
   fr: {
+    eyebrow: 'Matchy Wallet & Partenaires',
     title: 'Devenez Partenaire Matchy+',
     subtitle:
       'Rejoignez le premier réseau panafricain de professionnels et développez votre clientèle locale en toute simplicité.',
@@ -55,11 +61,17 @@ const data: Record<
     email: 'Adresse e-mail',
     phone: 'Numéro de téléphone',
     requestText: 'Votre demande / Présentation de votre activité',
+    requestPlaceholder:
+      'Décrivez brièvement vos services, compétences et besoins pour ce partenariat...',
     submit: 'Rejoindre le réseau professionnel',
     submitting: 'Envoi de votre demande...',
     success: 'Demande envoyée ! Notre équipe partenaires vous contactera rapidement.',
+    successSub:
+      'Un conseiller vous guidera pas à pas pour maximiser votre impact dès le premier jour.',
+    sendAnother: 'Soumettre une autre inscription',
   },
   en: {
+    eyebrow: 'Matchy Wallet & Partners',
     title: 'Become a Matchy+ Partner',
     subtitle:
       'Join the premier pan-African network of skilled professionals and grow your local client base seamlessly.',
@@ -87,11 +99,15 @@ const data: Record<
     email: 'Email address',
     phone: 'Phone number',
     requestText: 'Your request / Activity overview',
+    requestPlaceholder: 'Briefly describe your services, skills, and goals for this partnership...',
     submit: 'Join the professional network',
     submitting: 'Submitting application...',
     success: 'Application sent! Our partner team will reach out to you shortly.',
+    successSub: 'An advisor will guide you step by step to maximize your impact from day one.',
+    sendAnother: 'Submit another application',
   },
   ar: {
+    eyebrow: 'محفظة ماتشي والشركاء',
     title: 'كن شريكًا مع ماتشي بلس',
     subtitle: 'انضم إلى الشبكة الإفريقية الرائدة للمهنيين وطوّر قاعدة عملائك المحلية بكل سهولة.',
     badge: 'برنامج الشركاء المعتمدين',
@@ -118,9 +134,12 @@ const data: Record<
     email: 'البريد الإلكتروني',
     phone: 'رقم الهاتف',
     requestText: 'تفاصيل طلبك / نبذة عن نشاطك وخدماتك',
+    requestPlaceholder: 'صف باختصار خدماتك، مهاراتك وتطلعاتك من هذه الشراكة...',
     submit: 'الانضمام إلى شبكة المحترفين',
     submitting: 'جاري إرسال الطلب...',
     success: 'تم إرسال الطلب بنجاح! سيتواصل معك فريق الشركاء قريبًا.',
+    successSub: 'سيرشدك مستشار خطوة بخطوة لتحقيق أقصى استفادة منذ اليوم الأول.',
+    sendAnother: 'إرسال طلب تسجيل آخر',
   },
 };
 
@@ -129,6 +148,7 @@ export default function Partner() {
   const t = data[locale];
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [countryCode, setCountryCode] = useState('+216');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -141,6 +161,7 @@ export default function Partner() {
     setLoading(true);
 
     try {
+      const fullPhone = form.phone ? `${countryCode} ${form.phone}`.trim() : '';
       await fetch(`${API_URL}/v1/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -148,7 +169,7 @@ export default function Partner() {
           type: 'partner',
           name: form.name,
           email: form.email,
-          phone: form.phone,
+          phone: fullPhone,
           requestText: form.requestText,
         }),
       });
@@ -165,7 +186,7 @@ export default function Partner() {
   return (
     <PageFrame>
       <main className="bg-neutral-50/60 pb-28">
-        <SubpageHero eyebrow="Matchy Wallet & Partners" title={t.title} subtitle={t.subtitle} />
+        <SubpageHero eyebrow={t.eyebrow} title={t.title} subtitle={t.subtitle} />
 
         <div className="relative z-20 container -mt-10 max-w-5xl sm:-mt-14">
           <div className="grid grid-cols-1 gap-8 rounded-3xl border border-neutral-100 bg-white p-6 shadow-2xl sm:p-10 md:grid-cols-12 md:gap-12">
@@ -201,13 +222,6 @@ export default function Partner() {
                   ))}
                 </div>
               </div>
-
-              <div className="from-brand-blue/10 to-brand-teal/10 border-brand-teal/20 mt-8 flex items-center gap-3 rounded-2xl border bg-gradient-to-r p-4">
-                <ShieldCheck className="text-brand-teal h-8 w-8 shrink-0" />
-                <p className="text-brand-navy text-xs leading-relaxed font-semibold">
-                  Profil vérifié et badge VIP pour renforcer la confiance avec vos futurs clients.
-                </p>
-              </div>
             </div>
 
             {/* Right Column: Form */}
@@ -223,10 +237,7 @@ export default function Partner() {
                     ✓
                   </div>
                   <h3 className="text-brand-navy mt-4 text-xl font-bold">{t.success}</h3>
-                  <p className="text-muted-foreground mt-2 max-w-sm text-sm">
-                    Un conseiller vous guidera pas à pas pour maximiser votre impact dès le premier
-                    jour.
-                  </p>
+                  <p className="text-muted-foreground mt-2 max-w-sm text-sm">{t.successSub}</p>
                   <button
                     onClick={() => {
                       setSubmitted(false);
@@ -234,7 +245,7 @@ export default function Partner() {
                     }}
                     className="text-brand-teal mt-6 text-sm font-semibold hover:underline"
                   >
-                    Soumettre une autre inscription
+                    {t.sendAnother}
                   </button>
                 </div>
               ) : (
@@ -271,14 +282,22 @@ export default function Partner() {
                       <label className="text-brand-navy mb-1.5 block text-xs font-bold">
                         {t.phone}
                       </label>
-                      <input
-                        required
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder="+216 -- --- ---"
-                        className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
-                      />
+                      <div className="flex items-center gap-2">
+                        <CountryCodeSelector
+                          value={countryCode}
+                          onChange={setCountryCode}
+                          locale={locale}
+                          disabled={loading}
+                        />
+                        <input
+                          required
+                          type="tel"
+                          value={form.phone}
+                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                          placeholder="94 670 292"
+                          className="focus:border-brand-teal focus:ring-brand-teal/20 min-w-0 flex-1 rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -291,7 +310,7 @@ export default function Partner() {
                       rows={4}
                       value={form.requestText}
                       onChange={(e) => setForm({ ...form, requestText: e.target.value })}
-                      placeholder="Décrivez brièvement vos services, compétences et besoins pour ce partenariat..."
+                      placeholder={t.requestPlaceholder}
                       className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
                     />
                   </div>

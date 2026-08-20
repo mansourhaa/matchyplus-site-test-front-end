@@ -1,5 +1,6 @@
 'use client';
 
+import { AdminAddUserModal } from '@/components/admin/admin-add-user-modal';
 import { AdminAnalyticsSection } from '@/components/admin/admin-analytics-section';
 import { AdminDashboardSection } from '@/components/admin/admin-dashboard-section';
 import { AdminPlansSection } from '@/components/admin/admin-plans-section';
@@ -107,6 +108,7 @@ export function AdminPanel() {
   const [previousSection, setPreviousSection] = useState<AdminSection>('users');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userToDelete, setUserToDelete] = useState<AdminManagedUser | null>(null);
+  const [addUserOpen, setAddUserOpen] = useState(false);
 
   useEffect(() => {
     void dispatch(fetchAdminStats());
@@ -397,6 +399,7 @@ export function AdminPanel() {
               onFiltersChange={(changes) => dispatch(setFilters(changes))}
               onOpenUser={(user) => openUserDetail(user, 'users')}
               onDeleteUser={(user) => setUserToDelete(user)}
+              onAddUser={() => setAddUserOpen(true)}
             />
           )}
 
@@ -449,6 +452,12 @@ export function AdminPanel() {
           if (userToDelete) void handleDelete(userToDelete.id);
         }}
         onCancel={() => setUserToDelete(null)}
+      />
+
+      <AdminAddUserModal
+        isOpen={addUserOpen}
+        onClose={() => setAddUserOpen(false)}
+        onCreated={() => void dispatch(fetchAdminStats())}
       />
     </div>
   );

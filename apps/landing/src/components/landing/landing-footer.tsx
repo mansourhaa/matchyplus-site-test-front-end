@@ -1,0 +1,107 @@
+'use client';
+
+import Link from 'next/link';
+import type { ReactNode } from 'react';
+
+const LOGO_SRC = '/logo-matchy.svg';
+
+export type LandingFooterCopy = {
+  footerDesc: string;
+  quickLinks: string;
+  howItWorksLink: string;
+  ourServicesLink: string;
+  legal: string;
+  privacy: string;
+  terms: string;
+  safety: string;
+  allRights: string;
+};
+
+type LandingFooterProps = {
+  translations: LandingFooterCopy;
+  onJoin: () => void;
+};
+
+function FooterLink({ href, children }: { href: string; children: ReactNode }) {
+  const className =
+    'text-sm text-white/65 transition-colors duration-200 hover:text-white focus-visible:text-white focus-visible:outline-none';
+
+  if (href.startsWith('#')) {
+    return (
+      <a href={href} className={className}>
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  );
+}
+
+export function LandingFooter({ translations, onJoin }: LandingFooterProps) {
+  const year = new Date().getFullYear();
+
+  return (
+    <footer className="relative overflow-hidden text-white">
+      <div className="absolute inset-0 bg-[#0B1F33]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(97,188,166,0.18),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(47,118,187,0.22),transparent_50%)]" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#61BCA6]/70 to-transparent" />
+
+      <div className="relative mx-auto max-w-7xl px-4 pt-14 pb-8 md:pt-16">
+        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr] md:gap-12">
+          <div className="max-w-md space-y-4">
+            <img src={LOGO_SRC} alt="Matchy+" className="h-7 brightness-0 invert" />
+            <p className="text-sm leading-relaxed text-white/65">{translations.footerDesc}</p>
+            <button
+              type="button"
+              onClick={onJoin}
+              className="inline-flex items-center rounded-full bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              {translations.quickLinks}
+            </button>
+          </div>
+
+          <div>
+            <h4 className="mb-4 text-xs font-bold tracking-[0.14em] text-white/45 uppercase">
+              {translations.quickLinks}
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <FooterLink href="#how-it-works">{translations.howItWorksLink}</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="#services">{translations.ourServicesLink}</FooterLink>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="mb-4 text-xs font-bold tracking-[0.14em] text-white/45 uppercase">
+              {translations.legal}
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <FooterLink href="/privacy-policy">{translations.privacy}</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/terms-of-service">{translations.terms}</FooterLink>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-center text-xs text-white/45 sm:flex-row sm:text-start">
+          <p>
+            &copy; {year} Matchy+. {translations.allRights}.
+          </p>
+          <p className="bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] bg-clip-text font-semibold text-transparent">
+            Matchy+
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}

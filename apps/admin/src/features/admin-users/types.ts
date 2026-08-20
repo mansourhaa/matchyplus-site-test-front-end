@@ -52,8 +52,61 @@ export interface AdminUsersState {
   selectedUser: AdminManagedUser | null;
   loadingUsers: boolean;
   loadingStats: boolean;
+  creatingUser: boolean;
   error: string | null;
   filters: AdminUserFilters;
+}
+
+/**
+ * What the admin "Add user" form collects: the same fields a real phone signup +
+ * completed onboarding would produce, minus OTP — the admin vouches for the phone
+ * instead. Mirrors the API's `AdminCreateUserPayload` field-for-field.
+ */
+export interface AdminCreateUserInput {
+  name: string;
+  phone: string;
+  password: string;
+  email?: string;
+  plan?: UserPlan;
+  profileType: 'INDIVIDUAL' | 'PROVIDER';
+  job?: string;
+  bio?: string;
+  image?: string;
+  city?: string;
+  offerService?: boolean;
+  serviceType?: string;
+  price?: string;
+  interests?: string[];
+  selectedGoals?: string[];
+  availabilityDays?: string[];
+  availabilityHours?: string[];
+  contactModes?: string[];
+  languages?: string[];
+  experience?: string;
+  sector?: string;
+  educationLevel?: string;
+  experiences?: AdminExperienceEntry[];
+  educations?: AdminEducationEntry[];
+}
+
+export interface AdminExperienceEntry {
+  id: string;
+  title: string;
+  company: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+}
+
+export interface AdminEducationEntry {
+  id: string;
+  school: string;
+  degree: string;
+  field: string;
+  startDate: string;
+  endDate: string;
+  result: string;
 }
 
 /** Editable subset of the detail panel form. */

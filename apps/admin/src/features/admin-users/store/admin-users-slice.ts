@@ -1,8 +1,10 @@
 import { adminApi } from '@/lib/admin-api';
 import type { RootState } from '@/lib/store';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import axios from 'axios';
 
 import type {
+  AdminCreateUserInput,
   AdminManagedUser,
   AdminStats,
   AdminUserFilters,
@@ -17,6 +19,7 @@ const initialState: AdminUsersState = {
   selectedUser: null,
   loadingUsers: false,
   loadingStats: false,
+  creatingUser: false,
   error: null,
   filters: {
     search: '',
@@ -50,6 +53,22 @@ export const fetchAdminUserById = createAsyncThunk(
   async (id: string) => {
     const response = await adminApi.get(`/admin/users/${id}`);
     return response.data.user as AdminManagedUser;
+  },
+);
+
+export const createAdminUser = createAsyncThunk(
+  'adminUsers/createUser',
+  async (input: AdminCreateUserInput, { rejectWithValue }) => {
+    try {
+      const response = await adminApi.post('/admin/users', input);
+      return response.data.user as AdminManagedUser;
+    } catch (error) {
+      const message =
+        (axios.isAxiosError(error) &&
+          (error.response?.data as { message?: string } | undefined)?.message) ||
+        "Impossible de créer l'utilisateur.";
+      return rejectWithValue(message);
+    }
   },
 );
 
@@ -120,6 +139,20 @@ const adminUsersSlice = createSlice({
       .addCase(fetchAdminUserById.fulfilled, (state, action) => {
         state.selectedUser = action.payload;
         upsertUser(state, action.payload);
+      })
+      .addCase(createAdminUser.pending, (state) => {
+        state.creatingUser = true;
+      })
+      .addCase(createAdminUser.fulfilled, (state, action) => {
+        state.creatingUser = false;
+        state.error = null;
+        state.users = [action.payload, ...state.users];
+        state.total += 1;
+      })
+      .addCase(createAdminUser.rejected, (state, action) => {
+        state.creatingUser = false;
+        state.error =
+          (action.payload as string | undefined) ?? "Impossible de créer l'utilisateur.";
       })
       .addCase(updateAdminUser.fulfilled, (state, action) => {
         state.error = null;
