@@ -269,11 +269,12 @@ export class AdminService {
     return { deleted: true };
   }
 
-  async getStats(): Promise<AdminUserStatsResult> {
+  async getStats(actor: AdminActor): Promise<AdminUserStatsResult> {
+    const where: Prisma.UserWhereInput = { role: { in: rolesBelow(actor.role) } };
     const [totalUsers, byStatus, byPlan] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.user.groupBy({ by: ['status'], _count: { _all: true } }),
-      this.prisma.user.groupBy({ by: ['plan'], _count: { _all: true } }),
+      this.prisma.user.count({ where }),
+      this.prisma.user.groupBy({ by: ['status'], where, _count: { _all: true } }),
+      this.prisma.user.groupBy({ by: ['plan'], where, _count: { _all: true } }),
     ]);
 
     const statusCount = (status: UserStatus) =>

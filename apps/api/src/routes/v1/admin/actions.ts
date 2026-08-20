@@ -130,7 +130,10 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   );
 
   fastify.get('/stats', { schema: adminStatsSchema }, async (request, reply) => {
-    const stats = await adminService.getStats();
+    const stats = await adminService.getStats({
+      id: request.loggedUser.id,
+      role: request.loggedUser.role,
+    });
     return reply.code(200).send({ stats });
   });
 

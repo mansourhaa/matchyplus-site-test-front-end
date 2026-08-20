@@ -316,7 +316,7 @@ describe('AdminService', () => {
 
     const service = new AdminService({ prisma: prisma as never });
 
-    await expect(service.getStats()).resolves.toEqual({
+    await expect(service.getStats({ id: 'sa1', role: 'SUPER_ADMIN' } as never)).resolves.toEqual({
       totalUsers: 2,
       activeUsers: 2,
       inactiveUsers: 0,
@@ -325,6 +325,26 @@ describe('AdminService', () => {
       premiumUsers: 0,
       premiumPlusUsers: 0,
     });
+  });
+
+  // Regression: totalUsers counted every account in the table, including admins the caller
+  // can't even see on the Users page (which is correctly scoped by rolesBelow) — a MODERATOR
+  // saw a higher dashboard total than the list it's meant to summarize.
+  it.each([
+    ['SUPPORT', ['USER']],
+    ['MODERATOR', ['USER', 'SUPPORT']],
+    ['SUPER_ADMIN', ['USER', 'SUPPORT', 'MODERATOR']],
+  ])('scopes the stats a %s sees to the roles below them', async (role, visible) => {
+    const prisma = createMockPrisma();
+    prisma.user.count.mockResolvedValue(0);
+    prisma.user.groupBy.mockResolvedValue([]);
+
+    const service = new AdminService({ prisma: prisma as never });
+    await service.getStats({ id: 'a1', role } as never);
+
+    expect(prisma.user.count.mock.calls[0][0].where.role.in).toEqual(visible);
+    expect(prisma.user.groupBy.mock.calls[0][0].where.role.in).toEqual(visible);
+    expect(prisma.user.groupBy.mock.calls[1][0].where.role.in).toEqual(visible);
   });
 });
 
