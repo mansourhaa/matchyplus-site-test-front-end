@@ -4,6 +4,7 @@ import { REPORT_STATUS_COLOR, REPORT_STATUS_LABEL } from '@/features/admin-repor
 import type { AdminReport, ReportStatus } from '@/features/admin-reports/types';
 import { STATUS_COLOR, STATUS_LABEL } from '@/features/admin-users/labels';
 import type { UserStatus } from '@/features/admin-users/types';
+import { useAdminUserPhoto } from '@/hooks/use-admin-user-photo';
 import { Ban, CheckCircle, Flag, ShieldCheck, UserRound, XCircle } from 'lucide-react';
 
 const STATUS_FILTERS: { key: 'all' | ReportStatus; label: string }[] = [
@@ -21,12 +22,24 @@ const REPORT_ACTIONS: { status: ReportStatus; label: string; icon: typeof CheckC
   { status: 'DISMISSED', label: 'Rejeter', icon: XCircle },
 ];
 
-function Avatar({ name, image, size = 40 }: { name: string; image: string | null; size?: number }) {
-  if (image) {
+function Avatar({
+  id,
+  name,
+  image,
+  size = 40,
+}: {
+  id: string;
+  name: string;
+  image: string | null;
+  size?: number;
+}) {
+  const photoUrl = useAdminUserPhoto(id, image);
+
+  if (photoUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={image}
+        src={photoUrl}
         alt={name}
         className="rounded-xl object-cover"
         style={{ width: size, height: size }}
@@ -58,7 +71,12 @@ function ReportRow({
         <div className="flex items-center gap-2">
           <UserRound size={14} color="#888" />
           <span style={{ fontSize: '12px', color: '#888' }}>Signalé par</span>
-          <Avatar name={report.reporter.name} image={report.reporter.image} size={22} />
+          <Avatar
+            id={report.reporter.id}
+            name={report.reporter.name}
+            image={report.reporter.image}
+            size={22}
+          />
           <span style={{ fontSize: '13px', fontWeight: 700, color: '#353535' }}>
             {report.reporter.name}
           </span>
@@ -198,7 +216,7 @@ export function AdminReportsSection({
               className="flex flex-wrap items-center gap-3 p-4"
               style={{ background: '#FFF8F8', borderBottom: '1px solid #FFECEC' }}
             >
-              <Avatar name={reported.name} image={reported.image} />
+              <Avatar id={reported.id} name={reported.name} image={reported.image} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <p style={{ fontSize: '15px', fontWeight: 800, color: '#1A1A2E' }}>

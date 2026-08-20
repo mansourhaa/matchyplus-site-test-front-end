@@ -95,6 +95,24 @@ export const adminGetUserSchema = {
   },
 };
 
+export const adminGetUserPhotoSchema = {
+  tags: ['admin'],
+  summary: "Serve a user's stored profile photo for the admin panel",
+  params: {
+    type: 'object',
+    properties: { id: { type: 'string' } },
+    required: ['id'],
+  },
+  response: {
+    200: {
+      description: 'The photo file, streamed as binary image data',
+      type: 'string',
+      contentMediaType: 'image/*',
+    },
+    ...errorResponses,
+  },
+};
+
 export const adminUpdateUserSchema = {
   tags: ['admin'],
   params: {

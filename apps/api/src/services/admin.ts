@@ -14,6 +14,7 @@ import {
 } from '../types/admin.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import { badRequest, forbidden, insufficientPrivileges, notFound } from '../utils/http-errors.js';
+import { filenameFromStoredPath, isStoredMediaPath } from '../utils/media-storage.js';
 import { assertMinimumRole, outranks, rolesBelow } from '../utils/roles.js';
 import { TokenService } from './token.js';
 
@@ -167,6 +168,21 @@ export class AdminService {
     } catch (err) {
       throw notFound('user not found');
     }
+  }
+
+  /**
+   * The admin session is a separate audience from the member session that guards
+   * GET /profiles/media/photos/:filename, so the panel can never reuse that route directly —
+   * it needs its own, gated by the same hierarchy as every other admin read of a user's data.
+   */
+  async getUserPhotoFilename(actor: AdminActor, id: string): Promise<string> {
+    await this.assertCanManage(actor, id);
+
+    const target = await this.prisma.user.findUnique({ where: { id }, select: { image: true } });
+    if (!target || !isStoredMediaPath(target.image, 'photos')) {
+      throw notFound('photo not found', 'photo_not_found');
+    }
+    return filenameFromStoredPath(target.image);
   }
 
   /**

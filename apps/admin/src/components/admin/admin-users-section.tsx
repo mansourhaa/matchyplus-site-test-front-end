@@ -1,11 +1,25 @@
 'use client';
 
+import { AdminAvatarImage } from '@/components/admin/admin-avatar-image';
 import { PLAN_COLOR, PLAN_LABEL, STATUS_COLOR, STATUS_LABEL } from '@/features/admin-users/labels';
 import type { AdminManagedUser, AdminUserFilters } from '@/features/admin-users/types';
+import { useAdminUserPhoto } from '@/hooks/use-admin-user-photo';
 import { Check, Download, Edit2, Eye, MapPin, Search, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 const GRID_COLUMNS = '32px 2.5fr 1.5fr 1fr 1fr 1fr 1fr 100px';
+
+function UserRowAvatar({ user }: { user: AdminManagedUser }) {
+  const photoUrl = useAdminUserPhoto(user.id, user.image);
+  return (
+    <AdminAvatarImage
+      photoUrl={photoUrl}
+      name={user.name}
+      className="h-9 w-9 rounded-xl"
+      fontSize={13}
+    />
+  );
+}
 
 function buildCsv(users: AdminManagedUser[]) {
   const header = [
@@ -246,23 +260,7 @@ export function AdminUsersSection({
             </button>
 
             <div className="flex min-w-0 items-center gap-2">
-              {user.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.image}
-                  alt={user.name}
-                  className="h-9 w-9 shrink-0 rounded-xl object-cover"
-                />
-              ) : (
-                <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                  style={{ background: 'linear-gradient(135deg, #2F76BB, #61BCA6)' }}
-                >
-                  <span className="text-white" style={{ fontSize: '13px', fontWeight: 800 }}>
-                    {user.name.charAt(0)}
-                  </span>
-                </div>
-              )}
+              <UserRowAvatar user={user} />
               <div className="min-w-0">
                 <p
                   className="truncate"
