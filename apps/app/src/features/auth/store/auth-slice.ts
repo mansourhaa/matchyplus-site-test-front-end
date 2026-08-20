@@ -228,9 +228,19 @@ export const requestAccountDeleteOtp = createAsyncThunk(
 export const exchangeOAuthCode = createAsyncThunk(
   'auth/exchangeOAuthCode',
   async ({ code }: ExchangeOAuthCodeInput) => {
-    const response = await api.post<SessionResponse>('/auth/oauth/exchange', { code });
-    await requireNativeBodyTokens(response.data);
-    return response.data;
+    try {
+      const response = await api.post<SessionResponse>('/auth/oauth/exchange', { code });
+      await requireNativeBodyTokens(response.data);
+      return response.data;
+    } catch (error) {
+      if (error instanceof Error && error.message === 'mobile_session_unavailable') {
+        throw error;
+      }
+      // Re-thrown as the error's own message so OAuthCallback can branch on the exact API
+      // code (account_banned / account_inactive / invalid_exchange_code) via
+      // exchangeOAuthCode.rejected's action.error.message, same pattern as loginPhone.
+      throw new Error(getApiErrorCode(error) ?? 'oauth_exchange_failed');
+    }
   },
 );
 

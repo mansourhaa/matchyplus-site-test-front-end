@@ -83,6 +83,8 @@ const ERROR_STATUS: Record<
   invalid_refresh_token: 'unauthorized',
   oauth_only_account: 'forbidden',
   phone_not_verified: 'forbidden',
+  account_banned: 'forbidden',
+  account_inactive: 'forbidden',
   phone_already_registered: 'conflict',
   phone_not_found: 'notFound',
   user_not_found: 'notFound',

@@ -160,6 +160,24 @@ describe('PhoneAuthenticationService', () => {
       ).rejects.toThrow('phone_not_verified');
     });
 
+    it.each(['BANNED', 'INACTIVE'] as const)(
+      'rejects a correct password for a %s account with a distinct error, not invalid_credentials',
+      async (status) => {
+        const { service, prisma } = createService();
+        prisma.user.findUnique.mockResolvedValue({
+          id: 'user-1',
+          phone: '+33612345678',
+          password: await hashPassword('password123'),
+          phone_verified: true,
+          status,
+        });
+
+        await expect(
+          service.loginWithPhone({ phone: '+33612345678', password: 'password123' }),
+        ).rejects.toThrow(status === 'BANNED' ? 'account_banned' : 'account_inactive');
+      },
+    );
+
     it('rejects an unknown phone with the generic invalid_credentials error', async () => {
       const { service, prisma } = createService();
       prisma.user.findUnique.mockResolvedValue(null);

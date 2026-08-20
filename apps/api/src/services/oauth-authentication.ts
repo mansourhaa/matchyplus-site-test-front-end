@@ -1,4 +1,4 @@
-import { PrismaClient } from '@saas-boilerplate/types';
+import { PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
 import { config } from '../config.js';
 import { generateExchangeCode, hashExchangeCode } from '../lib/oauth-exchange-code.js';
@@ -153,6 +153,17 @@ export class OAuthAuthenticationService {
         id: record.user_id,
       },
     });
+
+    // The exchange code can only exist for a user who already completed a real OAuth
+    // handshake with the provider — reaching this point already proves the caller owns
+    // that identity, so surfacing a moderation status specifically here can't be used to
+    // enumerate banned/inactive accounts (same reasoning as the phone login gate).
+    if (user.status === UserStatus.BANNED) {
+      throw new Error('account_banned');
+    }
+    if (user.status === UserStatus.INACTIVE) {
+      throw new Error('account_inactive');
+    }
 
     const tokens = await this.tokenService.issueTokenPair(user);
 
