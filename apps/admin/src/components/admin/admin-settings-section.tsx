@@ -184,6 +184,7 @@ const labelStyle: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   background: '#F5F7FA',
+  color: '#1A1A2E',
   border: '1.5px solid #E0E0E0',
   fontSize: '14px',
 };
