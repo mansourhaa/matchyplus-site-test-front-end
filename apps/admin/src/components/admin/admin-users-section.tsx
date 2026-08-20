@@ -100,7 +100,7 @@ export function AdminUsersSection({
           <input
             className="flex-1 bg-transparent text-[#353535] outline-none"
             style={{ fontSize: '13px' }}
-            placeholder="Nom, email, rôle..."
+            placeholder="Nom, email, domaine..."
             aria-label="Rechercher un utilisateur"
             value={filters.search}
             onChange={(event) => onFiltersChange({ search: event.target.value })}
