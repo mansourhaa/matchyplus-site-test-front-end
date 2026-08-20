@@ -54,6 +54,7 @@ describe('EditProfileForm', () => {
   });
 
   afterEach(() => {
+    vi.clearAllTimers();
     vi.resetAllMocks();
     window.localStorage.removeItem('matchy_locale');
   });

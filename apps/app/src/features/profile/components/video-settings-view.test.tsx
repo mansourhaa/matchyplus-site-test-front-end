@@ -48,6 +48,7 @@ const baseProfile = {
 
 describe('VideoSettingsView', () => {
   afterEach(() => {
+    vi.clearAllTimers();
     vi.clearAllMocks();
   });
 

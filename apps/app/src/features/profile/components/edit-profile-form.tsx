@@ -153,6 +153,12 @@ export function EditProfileForm() {
   const video = useAuthenticatedMediaUrl(serverVideo, { stream: true });
 
   useEffect(() => {
+    if (!saved) return;
+    const timer = window.setTimeout(() => setSaved(false), 2500);
+    return () => window.clearTimeout(timer);
+  }, [saved]);
+
+  useEffect(() => {
     dispatch(fetchOnboardingProfile());
   }, [dispatch]);
 
@@ -442,7 +448,6 @@ export function EditProfileForm() {
       // trust the fulfilled/rejected thunk result directly instead.
       await dispatch(updateOnboardingProfile(patch)).unwrap();
       setSaved(true);
-      window.setTimeout(() => setSaved(false), 2500);
       return true;
     } catch {
       setError(

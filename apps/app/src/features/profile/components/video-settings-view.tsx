@@ -51,9 +51,14 @@ export function VideoSettingsView() {
     [localPreview],
   );
 
+  useEffect(() => {
+    if (!saved) return;
+    const timer = window.setTimeout(() => setSaved(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [saved]);
+
   const showToast = () => {
     setSaved(true);
-    window.setTimeout(() => setSaved(false), 3000);
   };
 
   const handleVideoReady = async (blob: Blob, blobUrl: string, filename: string) => {

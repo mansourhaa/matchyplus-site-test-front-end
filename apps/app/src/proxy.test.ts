@@ -28,7 +28,7 @@ function location(res: Response): string {
 
 describe('proxy auth gate', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-08-07T12:00:00Z'));
   });
 
