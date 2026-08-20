@@ -1,7 +1,6 @@
 import { adminApi } from '@/lib/admin-api';
 import type { RootState } from '@/lib/store';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { createSelector } from 'reselect';
 
 import type {
   AdminManagedUser,
@@ -21,7 +20,6 @@ const initialState: AdminUsersState = {
   error: null,
   filters: {
     search: '',
-    category: 'Tous',
     plan: 'all',
     status: 'all',
   },
@@ -41,7 +39,6 @@ export const fetchAdminUsers = createAsyncThunk(
         search: filters.search || undefined,
         status: filters.status !== 'all' ? filters.status : undefined,
         plan: filters.plan !== 'all' ? filters.plan : undefined,
-        category: filters.category !== 'Tous' ? filters.category : undefined,
       },
     });
     return response.data as { users: AdminManagedUser[]; total: number };
@@ -157,14 +154,5 @@ export const { setFilters, selectUser } = adminUsersSlice.actions;
 export const selectAdminUsersState = (state: RootState) => state.adminUsers;
 
 export const selectAdminUsers = selectAdminUsersState;
-
-/** Category filter options are derived from whatever the loaded users actually declare. */
-export const selectCategoryOptions = createSelector([selectAdminUsersState], (adminUsers) => {
-  const categories = new Set<string>();
-  adminUsers.users.forEach((user) => {
-    if (user.category?.trim()) categories.add(user.category.trim());
-  });
-  return ['Tous', ...Array.from(categories).sort((a, b) => a.localeCompare(b, 'fr'))];
-});
 
 export default adminUsersSlice.reducer;

@@ -46,7 +46,7 @@ ENV HOSTNAME=0.0.0.0
 
 RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs
 
-# no apps/admin/public - this app ships no static assets dir, unlike apps/app.
+COPY --from=installer /app/apps/admin/public ./apps/admin/public
 COPY --from=installer --chown=nextjs:nodejs /app/apps/admin/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/admin/.next/static ./apps/admin/.next/static
 

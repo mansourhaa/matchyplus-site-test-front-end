@@ -24,10 +24,6 @@ export function useProactiveRefresh() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    if (lastRefreshRef.current === 0) {
-      lastRefreshRef.current = Date.now();
-    }
-
     const performSilentRefresh = async () => {
       try {
         await refreshSession();
@@ -36,6 +32,14 @@ export function useProactiveRefresh() {
         // Ignored: Axios interceptor already handles notifyAuthFailure if refresh token is genuinely invalid
       }
     };
+
+    // Fire immediately on first mount so the cookie is renewed before the first
+    // navigation, covering the case where the tab was idle long enough for the
+    // background timer to be throttled by the browser.
+    if (lastRefreshRef.current === 0) {
+      lastRefreshRef.current = Date.now(); // prevent double-fire if effect re-runs quickly
+      void performSilentRefresh();
+    }
 
     // Periodic background timer
     const interval = setInterval(() => {

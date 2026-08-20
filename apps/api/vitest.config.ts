@@ -38,6 +38,7 @@ export default defineConfig({
       TWILIO_VERIFY_SERVICE_SID: 'test-twilio-verify-service-sid',
       REFRESH_TOKEN_SECRET: 'test-refresh-token-secret',
       REFRESH_TOKEN_TTL_DAYS: '120',
+      ADMIN_REFRESH_TOKEN_TTL: '12h',
       MOBILE_CLIENT_SECRET: 'test-mobile-client-secret',
 
       // NODE_ENV is 'test' here, so the CORS plugin requires an explicit allowlist.

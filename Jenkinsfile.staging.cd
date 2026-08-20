@@ -1,0 +1,363 @@
+// CD for staging. Deploys an already-built, already-signed set of images.
+//
+// Mirrors Jenkinsfile.prod.cd, with one structural difference that drives the
+// whole design: staging is a SEPARATE machine (vps-cba18317) and Jenkins runs on
+// production. Staging's Kubernetes API and its ArgoCD are both closed to the
+// internet - only 22, 80 and 443 are open - so this pipeline cannot talk to that
+// cluster the way the production one does.
+//
+// That is deliberate and worth keeping. Opening 6443 from production to staging,
+// or handing Jenkins a staging kubeconfig, would mean a compromise of the CI host
+// reaches both environments. The previous Jenkinsfile.cd assumed exactly that: it
+// used a 'kubeconfig-staging' credential and ran kubectl against the cluster,
+// which was fine when staging lived on the same box and is not fine now.
+//
+// So the contract here is git, not the cluster:
+//
+//   Jenkins pushes an image tag to the GitOps staging branch, and staging's own
+//   ArgoCD (syncPolicy.automated) pulls it. Nothing connects inbound.
+//
+// The cost is that this pipeline cannot watch pods. It verifies over the public
+// HTTPS endpoints instead, which is weaker than `rollout status` but is also what
+// a user would actually experience. Where that is not enough, read the ArgoCD UI
+// through the tunnel - infra/tools/matchy-connect-console.sh.
+//
+// Job setup in Jenkins (Pipeline job, NOT multibranch):
+//   - Pipeline script from SCM, this repo, branch */staging
+//   - Script Path: Jenkinsfile.staging.cd
+//   - Credential 'gitops-repo-creds' (username + token with write access)
+//   - Global env: REGISTRY_REPO
+
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+    timeout(time: 40, unit: 'MINUTES')
+  }
+
+  parameters {
+    string(
+      name: 'IMAGE_TAG',
+      defaultValue: '',
+      description: 'Tag to deploy, without the component prefix - e.g. matchy-staging-2. ' +
+                   'CI produces these; this job only consumes one. Leave empty and the build fails ' +
+                   'rather than guessing, because guessing here means deploying something nobody chose.'
+    )
+    booleanParam(
+      name: 'VERIFY_SIGNATURES',
+      defaultValue: true,
+      description: 'Verify every image Cosign signature before deploying. The point of signing in CI ' +
+                   'is that CD checks it; turning this off makes the signature decorative.'
+    )
+    booleanParam(
+      name: 'RUN_SMOKE',
+      defaultValue: true,
+      description: 'Probe the public staging endpoints after the deploy.'
+    )
+    booleanParam(
+      name: 'RUN_ZAP',
+      defaultValue: true,
+      description: 'OWASP ZAP baseline scan against app, admin and api. ON by default here, unlike ' +
+                   'production: scanning a live site aims traffic at real users, while scanning ' +
+                   'staging is what the environment exists for. If DAST only ever runs on prod it ' +
+                   'ends up never running.'
+    )
+    booleanParam(
+      name: 'RUN_K6',
+      defaultValue: false,
+      description: 'k6 load test. OFF by default, and not for the usual reason - this box has 3.7GB ' +
+                   'of RAM against production\'s 7.7GB, and currently carries k3s, ArgoCD, the app ' +
+                   'stack, Woodpecker and the not-yet-retired Compose stack. Load testing it tests ' +
+                   'the machine, not the application. Turn on once Compose is retired.'
+    )
+  }
+
+  environment {
+    REGISTRY_REPO = "${env.REGISTRY_REPO}"
+    IMAGE_COMPONENTS = 'api app admin landing ai'
+
+    STG_LANDING_HOST = 'staging.matchyplus.com'
+    STG_APP_HOST = 'app.staging.matchyplus.com'
+    STG_ADMIN_HOST = 'admin.staging.matchyplus.com'
+    STG_API_HOST = 'api.staging.matchyplus.com'
+
+    GITOPS_REPO = "${env.GITOPS_REPO ?: 'github.com/matchy-plus/matchy-plus-gitops.git'}"
+    // staging tracks the staging branch; production tracks main. Hardcoded rather
+    // than derived, so this job cannot be pointed at production by accident.
+    GITOPS_BRANCH = 'staging'
+    GITOPS_STAGING_PATH = 'k8s/overlays/staging'
+  }
+
+  stages {
+
+    stage('Validate release') {
+      steps {
+        script {
+          def missing = []
+          if (!params.IMAGE_TAG?.trim()) missing << 'IMAGE_TAG (build parameter)'
+          if (!env.REGISTRY_REPO?.trim()) missing << 'REGISTRY_REPO (Jenkins global env var)'
+          if (missing) error("Cannot deploy. Missing:\n  - ${missing.join('\n  - ')}")
+
+          // A tag from main carries PRODUCTION urls compiled into the app and
+          // admin bundles - NEXT_PUBLIC_* is inlined at build time. Deploying one
+          // here gives staging frontends that call api.matchyplus.com, so testers
+          // read and write production data while every pod reports healthy. That
+          // happened on 18 Aug; this check exists so it cannot happen twice.
+          if (params.IMAGE_TAG ==~ /.*matchy-main-\d+$/) {
+            error("Refusing to deploy '${params.IMAGE_TAG}' to staging.\n" +
+                  "Images built from main have production URLs compiled into the app and admin\n" +
+                  "bundles, so staging would call api.matchyplus.com. Build the staging branch instead.")
+          }
+          echo "deploying ${params.IMAGE_TAG} to staging"
+        }
+      }
+    }
+
+    stage('Verify signed images') {
+      when { expression { params.VERIFY_SIGNATURES } }
+      steps {
+        withCredentials([file(credentialsId: 'cosign-public-key', variable: 'COSIGN_PUB')]) {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+
+            # cosign is not installed on this agent and is not meant to be. CI and
+            # Jenkinsfile.prod.cd both fetch it the same way, pinned by version and
+            # checksum: an unpinned download would let the tool that validates our
+            # supply chain become the unvalidated part of it. Bump COSIGN_VERSION
+            # and COSIGN_SHA256 together, from the release's cosign_checksums.txt.
+            COSIGN_VERSION=v3.1.2
+            COSIGN_SHA256=f7622ed3cf22e55e1ae6377c080979ff77a22da9981c11df222a2e444991e7cf
+            if ! command -v cosign >/dev/null 2>&1; then
+              curl -sL -o /tmp/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+              echo "${COSIGN_SHA256}  /tmp/cosign" | sha256sum -c -
+              chmod +x /tmp/cosign
+            fi
+            COSIGN_BIN=$(command -v cosign || echo /tmp/cosign)
+
+            # --key, not keyless. CI signs with cosign-private-key, so verification
+            # has to present the matching public key; keyless flags would fail here
+            # even with cosign installed, because there is no OIDC identity to match.
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              IMAGE="${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"
+              echo "--- verifying $IMAGE"
+              "$COSIGN_BIN" verify --key "$COSIGN_PUB" "$IMAGE" > /dev/null
+              echo "    signature OK"
+            done
+          '''
+        }
+      }
+    }
+
+    stage('Promote to staging') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'gitops-repo-creds',
+                                          usernameVariable: 'GITOPS_USER',
+                                          passwordVariable: 'GITOPS_TOKEN')]) {
+          sh '''
+            set -eu
+            rm -rf /tmp/gitops-staging
+            git clone --depth 1 -b "${GITOPS_BRANCH}" \
+              "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-staging
+            cd /tmp/gitops-staging/${GITOPS_STAGING_PATH}
+
+            # kustomize runs pinned, in a container, like every other tool in
+            # these pipelines. `kustomize edit` exists only in the standalone
+            # binary - the copy embedded in kubectl can build but not edit - and
+            # kustomize is not installed on this agent.
+            #
+            # -v $PWD works only because /tmp is bind-mounted from the host into
+            # the Jenkins container. Jenkins talks to the host's Docker daemon
+            # through the socket, so the daemon resolves this path on the host,
+            # not inside Jenkins. Cloning anywhere else - the workspace, for
+            # instance, which lives in a named volume - would mount an empty
+            # directory and the edits would silently apply to nothing.
+            KUSTOMIZE="docker run --rm -u $(id -u):$(id -g) -v $PWD:/work -w /work registry.k8s.io/kustomize/kustomize:v5.4.3"
+            for COMPONENT in ${IMAGE_COMPONENTS}; do
+              $KUSTOMIZE edit set image \
+                "matchy-${COMPONENT}=${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"
+            done
+
+            echo "--- rendered images ---"
+            kubectl kustomize . | grep -E "^[[:space:]]+image:" | sort -u | sed 's/^/  /'
+
+            # Fail before pushing if the render does not contain what we asked
+            # for. A kustomize edit that silently no-ops would otherwise be
+            # committed and deployed as a no-change "success".
+            for COMPONENT in ${IMAGE_COMPONENTS}; do
+              if ! kubectl kustomize . | grep -q "${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"; then
+                echo "render is missing ${COMPONENT}-${IMAGE_TAG}" >&2
+                exit 1
+              fi
+            done
+
+            cd /tmp/gitops-staging
+            if git diff --quiet; then
+              echo "no change - staging is already on ${IMAGE_TAG}"
+            else
+              git -c user.name="matchy-ci" -c user.email="ci@matchyplus.com" \
+                commit -aqm "staging: deploy ${IMAGE_TAG}"
+              git push origin "HEAD:${GITOPS_BRANCH}"
+              echo "pushed to ${GITOPS_BRANCH}"
+            fi
+            git rev-parse HEAD > /tmp/gitops-staging-sha
+          '''
+        }
+        script {
+          env.TARGET_SHA = readFile('/tmp/gitops-staging-sha').trim()
+          echo "GitOps commit: ${env.TARGET_SHA}"
+        }
+      }
+    }
+
+    stage('Wait for staging rollout') {
+      steps {
+        sh '''
+          set -eu
+          # No cluster access from here by design, so this waits on what a user
+          # would see rather than on pod status. ArgoCD polls git roughly every
+          # three minutes, and the migration hook runs before the Deployments are
+          # updated, so the first minutes of 200s are still the OLD pods. The
+          # sleep is not padding - without it this stage passes instantly against
+          # the previous release.
+          echo "waiting for ArgoCD on staging to pick up ${TARGET_SHA}"
+          sleep 180
+
+          fail=0
+          for HOSTPATH in "${STG_LANDING_HOST}/" "${STG_APP_HOST}/" "${STG_ADMIN_HOST}/" "${STG_API_HOST}/api/v1/health"; do
+            ok=0
+            for i in $(seq 1 30); do
+              CODE=$(curl -sSL -o /dev/null -w '%{http_code}' --max-time 15 "https://${HOSTPATH}" || echo 000)
+              case "$CODE" in 200|301|302|307|308) ok=1; break ;; esac
+              sleep 10
+            done
+            if [ "$ok" = "1" ]; then
+              echo "  OK   https://${HOSTPATH}"
+            else
+              echo "  FAIL https://${HOSTPATH} (last ${CODE})" >&2
+              fail=1
+            fi
+          done
+          [ "$fail" = "0" ] || exit 1
+        '''
+      }
+    }
+
+    stage('Post-deploy smoke test') {
+      when { expression { params.RUN_SMOKE } }
+      steps {
+        sh '''
+          set -eu
+          echo "--- api ---"
+          curl -sS --max-time 20 "https://${STG_API_HOST}/api/v1/health"; echo
+
+          # The check that actually matters after the 18 Aug incident: confirm the
+          # bundles talk to STAGING's api, not production's. NEXT_PUBLIC_* is
+          # compiled in, so this cannot be inferred from the cluster config - it
+          # has to be read out of the served javascript.
+          echo "--- verifying the frontends are not pointed at production ---"
+          for HOST in "${STG_APP_HOST}" "${STG_ADMIN_HOST}"; do
+            HTML=$(curl -sSL --max-time 25 "https://${HOST}/" || true)
+            FOUND=""
+            for CHUNK in $(printf '%s' "$HTML" | grep -oE '/_next/static/chunks/[a-zA-Z0-9_-]+\\.js' | sort -u); do
+              HIT=$(curl -sS --max-time 10 "https://${HOST}${CHUNK}" 2>/dev/null \
+                    | grep -oE 'https://api[a-z.]*\\.matchyplus\\.com' | sort -u | head -1 || true)
+              [ -n "$HIT" ] && { FOUND="$HIT"; break; }
+            done
+            echo "  ${HOST} -> ${FOUND:-<no api url found>}"
+            case "$FOUND" in
+              https://api.staging.matchyplus.com) : ;;
+              https://api.matchyplus.com)
+                echo "  ${HOST} IS CALLING PRODUCTION - this build must not stay deployed" >&2; exit 1 ;;
+              *) echo "  could not confirm the api url for ${HOST}" >&2 ;;
+            esac
+          done
+        '''
+      }
+    }
+
+    stage('DAST - OWASP ZAP') {
+      when { expression { params.RUN_ZAP } }
+      steps {
+        // UNSTABLE, not FAILED. A baseline scan is passive and its findings
+        // include known false positives, so a hit is something to read rather
+        // than a reason to treat the deploy as broken. It must still be visible -
+        // swallowing the result with `|| true` and no summary is how a scan ends
+        // up running for months while nobody reads it.
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+          sh '''#!/usr/bin/env bash
+            set -uo pipefail
+            mkdir -p reports/zap
+            # admin included as well as app and api - it is the highest-value
+            # target on the estate and the one nobody scans, because on
+            # production it sits behind the edge gate.
+            for TARGET_HOST in "$STG_APP_HOST" "$STG_ADMIN_HOST" "$STG_API_HOST"; do
+              SAFE_NAME=$(echo "$TARGET_HOST" | tr '.' '-')
+              docker run --rm -u root \
+                -v "$WORKSPACE/reports/zap:/zap/wrk:rw" \
+                ghcr.io/zaproxy/zaproxy:stable \
+                zap-baseline.py -t "https://${TARGET_HOST}" \
+                  -J "zap-${SAFE_NAME}.json" -r "zap-${SAFE_NAME}.html" \
+                  -m 2 -T 5 || echo "ZAP flagged findings for ${TARGET_HOST} (non-blocking)"
+            done
+
+            echo "--- ZAP summary ---"
+            for J in reports/zap/*.json; do
+              [ -e "$J" ] || continue
+              H=$(grep -o '"riskcode":"3"' "$J" 2>/dev/null | wc -l)
+              M=$(grep -o '"riskcode":"2"' "$J" 2>/dev/null | wc -l)
+              L=$(grep -o '"riskcode":"1"' "$J" 2>/dev/null | wc -l)
+              printf '  %-34s high=%s medium=%s low=%s\\n' "$(basename "$J")" "$H" "$M" "$L"
+            done
+          '''
+        }
+        archiveArtifacts artifacts: 'reports/zap/*', allowEmptyArchive: true
+      }
+    }
+
+    stage('Performance - k6') {
+      when { expression { params.RUN_K6 } }
+      steps {
+        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+          sh '''#!/usr/bin/env bash
+            set -uo pipefail
+            mkdir -p reports/k6
+            K6_EXIT=0
+            docker run --rm -u root \
+              -e "API_BASE=https://${STG_API_HOST}" \
+              -v "$WORKSPACE/ci-scripts:/scripts:ro" \
+              -v "$WORKSPACE/reports/k6:/out:rw" \
+              grafana/k6:latest run --summary-export=/out/k6-summary.json \
+                /scripts/k6-staging-smoke.js || K6_EXIT=$?
+
+            [ -s "$WORKSPACE/reports/k6/k6-summary.json" ] || { echo "k6 produced no summary" >&2; exit 1; }
+            # without this the stage swallows k6's exit code and a breached
+            # threshold reports as a clean pass
+            [ "$K6_EXIT" -eq 0 ] || { echo "k6 exited ${K6_EXIT} - thresholds breached" >&2; exit "$K6_EXIT"; }
+          '''
+        }
+        archiveArtifacts artifacts: 'reports/k6/*', allowEmptyArchive: true
+      }
+    }
+  }
+
+  post {
+    success {
+      echo "staging is on ${params.IMAGE_TAG} (GitOps ${env.TARGET_SHA ?: 'n/a'})"
+    }
+    failure {
+      // No automatic rollback. If the endpoint checks failed, ArgoCD may still be
+      // mid-sync and the old pods may still be serving - reverting a GitOps commit
+      // underneath a partial rollout makes the state harder to reason about, not
+      // easier. Roll back deliberately by running this job with the previous tag.
+      echo "FAILED. Staging may be mid-rollout or serving the previous release."
+      echo "Inspect ArgoCD through the tunnel: infra/tools/matchy-connect-console.sh"
+      echo "To roll back, re-run this job with the previous IMAGE_TAG."
+    }
+    always {
+      sh 'rm -rf /tmp/gitops-staging /tmp/gitops-staging-sha || true'
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { OtpPurpose, PrismaClient, UserStatus } from '@saas-boilerplate/types';
+import { OtpPurpose, PrismaClient } from '@saas-boilerplate/types';
 
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import {
@@ -72,7 +72,6 @@ export class AuthenticationService {
   /**
    * Authenticates against the admin panel. Non-admin accounts are rejected with
    * the same error as invalid credentials so roles cannot be enumerated.
-   * Issues an admin-audience access JWT only (no refresh cookie for admin).
    */
   async adminLogin(payload: LoginPayload) {
     let user;
@@ -111,15 +110,14 @@ export class AuthenticationService {
       throw new Error('invalid_credentials');
     }
 
-    if (user.status !== UserStatus.ACTIVE) {
-      throw new Error('invalid_credentials');
-    }
-
-    const accessToken = this.tokenService.signAccessToken(user, { audience: 'admin' });
+    // Do not reveal whether the account is banned/inactive — issueTokenPair's ACTIVE-status
+    // gate throws the same invalid_credentials error as a bad password.
+    const tokens = await this.tokenService.issueTokenPair(user, { audience: 'admin' });
     const { password: _password, ...safeUser } = user;
 
     return {
-      accessToken,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user: safeUser,
     };
   }

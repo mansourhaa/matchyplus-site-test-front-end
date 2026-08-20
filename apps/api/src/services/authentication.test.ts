@@ -146,7 +146,16 @@ describe('AuthenticationService', () => {
     });
 
     expect(result.accessToken).toBeTypeOf('string');
+    expect(result.refreshToken).toBeTypeOf('string');
     expect(result.user.role).toBe('SUPER_ADMIN');
+    expect(prisma.refreshToken.create).toHaveBeenCalledWith({
+      data: {
+        id: expect.any(String),
+        user_id: 'admin-1',
+        token_hash: expect.any(String),
+        expires_at: expect.any(Date),
+      },
+    });
   });
 
   it.each(['BANNED', 'INACTIVE'])(

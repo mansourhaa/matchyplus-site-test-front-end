@@ -297,6 +297,31 @@ describe('OAuthAuthenticationService', () => {
       issueTokenPairSpy.mockRestore();
     });
 
+    it.each(['BANNED', 'INACTIVE'] as const)(
+      'rejects a %s account with a distinct error, not invalid_credentials',
+      async (status) => {
+        const { service, prisma } = createService();
+
+        prisma.oAuthExchangeCode.findUnique.mockResolvedValue({
+          id: 'exchange-1',
+          user_id: 'user-1',
+          consumed_at: null,
+          expires_at: new Date(Date.now() + 60_000),
+        });
+        prisma.oAuthExchangeCode.updateMany.mockResolvedValue({ count: 1 });
+        prisma.user.findUniqueOrThrow.mockResolvedValue({ id: 'user-1', status });
+
+        const issueTokenPairSpy = vi.spyOn(TokenService.prototype, 'issueTokenPair');
+
+        await expect(service.consumeExchangeCode({ code: 'raw-exchange-code' })).rejects.toThrow(
+          status === 'BANNED' ? 'account_banned' : 'account_inactive',
+        );
+        expect(issueTokenPairSpy).not.toHaveBeenCalled();
+
+        issueTokenPairSpy.mockRestore();
+      },
+    );
+
     it('rejects an already-consumed exchange code without minting tokens', async () => {
       const { service, prisma } = createService();
 

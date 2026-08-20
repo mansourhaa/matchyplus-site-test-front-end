@@ -1,5 +1,6 @@
 'use client';
 
+import { AdminAvatarImage } from '@/components/admin/admin-avatar-image';
 import {
   CONTACT_COLORS,
   CONTACT_ICONS,
@@ -10,6 +11,7 @@ import {
   STATUS_LABEL,
 } from '@/features/admin-users/labels';
 import type { AdminManagedUser, AdminUserUpdate } from '@/features/admin-users/types';
+import { useAdminUserPhoto } from '@/hooks/use-admin-user-photo';
 import {
   Activity,
   AlertTriangle,
@@ -64,6 +66,7 @@ export function AdminUserDetail({
   const [edited, setEdited] = useState<AdminManagedUser>(user);
   const [showBanConfirm, setShowBanConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const photoUrl = useAdminUserPhoto(user.id, user.image);
 
   const isBanned = user.status === 'BANNED';
 
@@ -111,19 +114,12 @@ export function AdminUserDetail({
           </button>
           <span style={{ color: '#CCC', fontSize: '16px' }}>/</span>
           <div className="flex items-center gap-2">
-            {user.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.image} alt={user.name} className="h-7 w-7 rounded-lg object-cover" />
-            ) : (
-              <div
-                className="flex h-7 w-7 items-center justify-center rounded-lg"
-                style={{ background: 'linear-gradient(135deg, #2F76BB, #61BCA6)' }}
-              >
-                <span className="text-white" style={{ fontSize: '11px', fontWeight: 800 }}>
-                  {user.name.charAt(0)}
-                </span>
-              </div>
-            )}
+            <AdminAvatarImage
+              photoUrl={photoUrl}
+              name={user.name}
+              className="h-7 w-7 rounded-lg"
+              fontSize={11}
+            />
             <span style={{ fontSize: '14px', fontWeight: 700, color: '#353535' }}>{user.name}</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -163,23 +159,12 @@ export function AdminUserDetail({
           style={{ background: 'white', border: '1px solid #F0F0F0' }}
         >
           <div className="relative shrink-0">
-            {user.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={user.image}
-                alt={user.name}
-                className="h-16 w-16 rounded-2xl object-cover"
-              />
-            ) : (
-              <div
-                className="flex h-16 w-16 items-center justify-center rounded-2xl"
-                style={{ background: 'linear-gradient(135deg, #2F76BB, #61BCA6)' }}
-              >
-                <span className="text-white" style={{ fontSize: '26px', fontWeight: 900 }}>
-                  {user.name.charAt(0)}
-                </span>
-              </div>
-            )}
+            <AdminAvatarImage
+              photoUrl={photoUrl}
+              name={user.name}
+              className="h-16 w-16 rounded-2xl"
+              fontSize={26}
+            />
             <div
               className="absolute -right-1 -bottom-1 h-4 w-4 rounded-full border-2 border-white"
               style={{ background: STATUS_COLOR[user.status] }}

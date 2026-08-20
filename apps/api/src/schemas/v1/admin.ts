@@ -62,7 +62,6 @@ export const adminListUsersSchema = {
       search: { type: 'string' },
       status: { type: 'string', enum: userStatusEnum },
       plan: { type: 'string', enum: userPlanEnum },
-      category: { type: 'string' },
     },
   },
   response: {
@@ -90,6 +89,24 @@ export const adminGetUserSchema = {
       description: 'Successful response',
       type: 'object',
       properties: { user: adminUser },
+    },
+    ...errorResponses,
+  },
+};
+
+export const adminGetUserPhotoSchema = {
+  tags: ['admin'],
+  summary: "Serve a user's stored profile photo for the admin panel",
+  params: {
+    type: 'object',
+    properties: { id: { type: 'string' } },
+    required: ['id'],
+  },
+  response: {
+    200: {
+      description: 'The photo file, streamed as binary image data',
+      type: 'string',
+      contentMediaType: 'image/*',
     },
     ...errorResponses,
   },

@@ -399,13 +399,15 @@ describe('TokenService', () => {
       crypto.createHash('sha256').update(refreshToken).digest('hex'),
     );
 
-    // Revoked 60 seconds ago (outside 30s grace window)
+    // Revoked 310 seconds ago — outside the 300 s grace window (5 min, matching
+    // REFRESH_INTERVAL_MS in useProactiveRefresh so concurrent-tab refreshes never
+    // trigger false-positive theft detection).
     prisma.refreshToken.findUnique.mockResolvedValue({
       id: decoded.jti,
       user_id: 'user-1',
       token_hash: storedTokenHash,
       expires_at: new Date(Date.now() + 60_000),
-      revoked_at: new Date(Date.now() - 60_000),
+      revoked_at: new Date(Date.now() - 310_000),
     });
 
     await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow('invalid_refresh_token');
@@ -425,7 +427,8 @@ describe('TokenService', () => {
       crypto.createHash('sha256').update(refreshToken).digest('hex'),
     );
 
-    // Revoked 5 seconds ago (within 30s grace window for concurrent race)
+    // Revoked 5 seconds ago — well within the 300 s grace window, as a second tab
+    // presenting the same token immediately after the first tab consumed it would.
     prisma.refreshToken.findUnique.mockResolvedValue({
       id: decoded.jti,
       user_id: 'user-1',
@@ -436,5 +439,77 @@ describe('TokenService', () => {
 
     await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow('invalid_refresh_token');
     expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+  });
+
+  describe('admin audience', () => {
+    const activeAdmin = { ...activeUser, role: 'SUPER_ADMIN' as const };
+
+    it('mints a much shorter-lived refresh token for the admin audience than the member default', async () => {
+      const prisma = createMockPrisma();
+      const service = new TokenService({ prisma: prisma as never });
+
+      await service.issueTokenPair(activeAdmin, { audience: 'admin' });
+
+      const { expires_at } = prisma.refreshToken.create.mock.calls[0]![0].data;
+      const ttlSeconds = (expires_at.getTime() - Date.now()) / 1000;
+
+      // ADMIN_REFRESH_TOKEN_TTL=12h in vitest.config.ts vs. REFRESH_TOKEN_TTL_DAYS=120 for
+      // members — asserting well under a day is enough to prove the shorter TTL was used,
+      // without coupling the test to the exact configured value.
+      expect(ttlSeconds).toBeLessThan(24 * 60 * 60);
+    });
+
+    it('refreshes into a new admin-audience access token for an admin user', async () => {
+      const prisma = createMockPrisma();
+      const service = new TokenService({ prisma: prisma as never });
+
+      const refreshToken = await service.issueRefreshToken('admin-1');
+      const decoded = jwt.decode(refreshToken) as JwtPayload & { jti: string };
+      const createArgs = prisma.refreshToken.create.mock.calls[0]?.[0];
+
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: decoded.jti,
+        user_id: 'admin-1',
+        token_hash: createArgs.data.token_hash,
+        expires_at: new Date(Date.now() + 60_000),
+        revoked_at: null,
+      });
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ ...activeAdmin, id: 'admin-1' });
+      prisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.refreshAccessToken(refreshToken, { audience: 'admin' });
+
+      const payload = jwt.decode(result.accessToken) as JwtPayload;
+      expect(payload.aud).toBe('admin');
+    });
+
+    // Regression: refreshAccessToken must re-check the admin role at refresh time, not just
+    // trust that the refresh token itself is still valid — otherwise a demotion between
+    // login and refresh (or a member's own refresh token presented at the admin route)
+    // would still mint a fresh admin-audience access token.
+    it('refuses to mint an admin-audience token when the user is not an admin role', async () => {
+      const prisma = createMockPrisma();
+      const service = new TokenService({ prisma: prisma as never });
+
+      const refreshToken = await service.issueRefreshToken('user-1');
+      const decoded = jwt.decode(refreshToken) as JwtPayload & { jti: string };
+      const createArgs = prisma.refreshToken.create.mock.calls[0]?.[0];
+
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: decoded.jti,
+        user_id: 'user-1',
+        token_hash: createArgs.data.token_hash,
+        expires_at: new Date(Date.now() + 60_000),
+        revoked_at: null,
+      });
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ ...activeUser, role: 'USER' });
+
+      await expect(service.refreshAccessToken(refreshToken, { audience: 'admin' })).rejects.toThrow(
+        'invalid_refresh_token',
+      );
+      // Never consumed: a demoted/non-admin user must not burn their refresh token on a
+      // rejected admin-audience attempt.
+      expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+    });
   });
 });

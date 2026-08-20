@@ -1,13 +1,27 @@
 'use client';
 
+import { AdminAvatarImage } from '@/components/admin/admin-avatar-image';
 import { PLAN_COLOR, PLAN_LABEL, STATUS_COLOR, STATUS_LABEL } from '@/features/admin-users/labels';
 import type { AdminManagedUser, AdminUserFilters } from '@/features/admin-users/types';
+import { useAdminUserPhoto } from '@/hooks/use-admin-user-photo';
 import { Check, Download, Edit2, Eye, MapPin, Search, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 const GRID_COLUMNS = '32px 2.5fr 1.5fr 1fr 1fr 1fr 1fr 100px';
 
-function buildCsv(users: AdminManagedUser[]) {
+function UserRowAvatar({ user }: { user: AdminManagedUser }) {
+  const photoUrl = useAdminUserPhoto(user.id, user.image);
+  return (
+    <AdminAvatarImage
+      photoUrl={photoUrl}
+      name={user.name}
+      className="h-9 w-9 rounded-xl"
+      fontSize={13}
+    />
+  );
+}
+
+export function buildCsv(users: AdminManagedUser[]) {
   const header = [
     'ID',
     'Nom',
@@ -41,7 +55,6 @@ function buildCsv(users: AdminManagedUser[]) {
 export function AdminUsersSection({
   users,
   filters,
-  categoryOptions,
   loading,
   onFiltersChange,
   onOpenUser,
@@ -49,7 +62,6 @@ export function AdminUsersSection({
 }: {
   users: AdminManagedUser[];
   filters: AdminUserFilters;
-  categoryOptions: string[];
   loading: boolean;
   onFiltersChange: (changes: Partial<AdminUserFilters>) => void;
   onOpenUser: (user: AdminManagedUser) => void;
@@ -61,7 +73,15 @@ export function AdminUsersSection({
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const handleExport = () => {
-    const blob = new Blob([buildCsv(users)], { type: 'text/csv;charset=utf-8;' });
+    // Excel picks its CSV delimiter from the OS list-separator setting, not from the
+    // file itself, so a semicolon-delimited file opened on a comma-locale machine collapses
+    // every field into column A. The `sep=;` directive line and the UTF-8 BOM are Excel's
+    // own documented way to make a CSV self-describing regardless of the opening machine's
+    // regional settings (BOM also fixes accented characters being read as Latin-1/mojibake).
+    const EXCEL_UTF8_BOM = '\uFEFF';
+    const blob = new Blob([`${EXCEL_UTF8_BOM}sep=;\r\n${buildCsv(users)}`], {
+      type: 'text/csv;charset=utf-8;',
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -86,31 +106,12 @@ export function AdminUsersSection({
           <input
             className="flex-1 bg-transparent text-[#353535] outline-none"
             style={{ fontSize: '13px' }}
-            placeholder="Nom, email, rôle..."
+            placeholder="Nom, email, domaine..."
             aria-label="Rechercher un utilisateur"
             value={filters.search}
             onChange={(event) => onFiltersChange({ search: event.target.value })}
           />
         </div>
-
-        <select
-          className="cursor-pointer rounded-xl px-3 py-2 outline-none"
-          style={{
-            fontSize: '13px',
-            color: '#555',
-            background: '#F5F7FA',
-            border: '1px solid #E0E0E0',
-          }}
-          aria-label="Filtrer par catégorie"
-          value={filters.category}
-          onChange={(event) => onFiltersChange({ category: event.target.value })}
-        >
-          {categoryOptions.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
 
         <select
           className="cursor-pointer rounded-xl px-3 py-2 outline-none"
@@ -246,23 +247,7 @@ export function AdminUsersSection({
             </button>
 
             <div className="flex min-w-0 items-center gap-2">
-              {user.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.image}
-                  alt={user.name}
-                  className="h-9 w-9 shrink-0 rounded-xl object-cover"
-                />
-              ) : (
-                <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                  style={{ background: 'linear-gradient(135deg, #2F76BB, #61BCA6)' }}
-                >
-                  <span className="text-white" style={{ fontSize: '13px', fontWeight: 800 }}>
-                    {user.name.charAt(0)}
-                  </span>
-                </div>
-              )}
+              <UserRowAvatar user={user} />
               <div className="min-w-0">
                 <p
                   className="truncate"

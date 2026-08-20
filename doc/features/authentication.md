@@ -240,14 +240,34 @@ shrinking where a stolen refresh token could otherwise be replayed from.
 for Capacitor — from an optional `{ refreshToken }` body, and **rotates** it: the
 presented token is looked up by its hash, checked for revocation/expiry, then
 **atomically** consumed (`updateMany` where `revoked_at: null`). If consume count is 0
-(reuse / theft), every refresh row for that user is revoked and the request fails.
-Both new cookies are set on the response (and body tokens again for mobile).
+(reuse), the request fails; if the token was revoked more than 30 seconds ago
+(a genuine replay, not a benign double-refresh race between two tabs), every refresh
+row for that user is also revoked. Both new cookies are set on the response (and body
+tokens again for mobile).
 
 `POST /api/v1/auth/logout` reads the refresh cookie, best-effort revokes it, and
 clears both cookies regardless of whether revocation succeeded. Changing your password
 (member or admin) or confirming a password reset bumps `User.token_version` and revokes
 **every** refresh token (`revokeAllSessions`), so outstanding access JWTs also fail
 verification immediately.
+
+### Admin refresh tokens
+
+**API**: `POST /api/v1/auth/admin/refresh`
+
+The admin panel has its own refresh token, issued alongside the access JWT on
+`POST /api/v1/auth/admin/login` and stored as a separate `admin_refresh_token`
+HttpOnly cookie (path-scoped to `/api/v1/auth/admin`). It reuses the exact same
+`RefreshToken` table, rotation, and reuse-detection as the member flow —
+`TokenService.refreshAccessToken` takes an `audience` option and re-signs the access
+token for whichever audience the caller asked for — but with one deliberate
+difference: `ADMIN_REFRESH_TOKEN_TTL` is far shorter than `REFRESH_TOKEN_TTL_DAYS`
+(hours, not weeks). A stolen admin session staying silently renewable for a member's
+full 30-day window is a much bigger blast radius than a regular account, so an idle
+admin is forced back through a real login sooner. Refreshing also re-checks the
+account is still an admin role (`isAdminRole`) — a demotion between login and refresh,
+or a member's own refresh token presented at this route, cannot mint a fresh
+admin-audience access token just because the underlying refresh token is still valid.
 
 ## Phone linking
 
@@ -347,7 +367,9 @@ linked phone). Session alone is never enough to delete.
 
 > `/verify-account` (face KYC) and paid-plan screens may still be product stubs — they are
 > not auth-session bugs. The admin panel’s readable `admin_session=1` marker is edge UX
-> only; the API always authorizes against the HttpOnly `admin_access_token` JWT.
+> only; the API always authorizes against the HttpOnly `admin_access_token` JWT, which
+> the admin panel now keeps alive via its own refresh token — see
+> [Admin refresh tokens](#admin-refresh-tokens).
 - The response body is `{ message }` only; no user object (and therefore no password field) is ever returned.
 
 ## CSRF: Origin/Referer validation
@@ -373,7 +395,8 @@ the remaining gap (e.g. a plain HTML form POST) with no separate CSRF-token mach
 | `ACCESS_TOKEN_TTL`                                                                              | API — token expiry                                                                                                                                                |
 | `COOKIE_SECRET`                                                                                 | API — cookie plugin                                                                                                                                               |
 | `REFRESH_TOKEN_SECRET`                                                                          | API — refresh token signing (see [Refresh tokens](#refresh-tokens))                                                                                               |
-| `REFRESH_TOKEN_TTL_DAYS`                                                                        | API — refresh token lifetime                                                                                                                                      |
+| `REFRESH_TOKEN_TTL_DAYS`                                                                        | API — member refresh token lifetime                                                                                                                                      |
+| `ADMIN_REFRESH_TOKEN_TTL`                                                                       | API — admin refresh token lifetime (see [Admin refresh tokens](#admin-refresh-tokens))                                                                            |
 | `VERIFICATION_CODE_SECRET`                                                                      | API — HMAC key used to hash phone OTP codes before storage (never the plaintext code)                                                                            |
 | `TUNISIESMS_KEY` / `TUNISIESMS_SENDER`                                                          | API — phone OTP delivery (optional at startup; required only for OTP-dependent endpoints, see [SMS delivery](#sms-delivery-tunisiesms))                          |
 | `OTP_TTL_MINUTES` / `OTP_MAX_ATTEMPTS` / `OTP_RESEND_COOLDOWN_SECONDS` / `OTP_SIGNUP_GRANT_TTL_MINUTES` | API — OTP challenge lifecycle tuning (optional, sensible defaults — see [OTP challenges](#otp-challenges))                                                        |

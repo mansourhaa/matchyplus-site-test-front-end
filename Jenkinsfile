@@ -2,7 +2,7 @@
 //
 // This pipeline builds, scans, signs and pushes images, then stops. Promoting
 // any of those images to an environment is a separate, manually triggered job
-// driven by Jenkinsfile.cd, so a push can never deploy by itself and a deploy
+// driven by Jenkinsfile.staging.cd and Jenkinsfile.prod.cd, so a push can never deploy by itself and a deploy
 // never rebuilds. The image tag is the contract between the two.
 
 pipeline {
@@ -64,7 +64,7 @@ pipeline {
     // makes the browser issue http requests from an https page, which it
     // blocks as mixed content. Changing the staging scheme therefore requires
     // rebuilding app and admin, not just editing the ConfigMap.
-    STAGING_API_URL = "https://api.staging.matchy.local/api/v1"
+    STAGING_API_URL = "https://api.staging.matchyplus.com/api/v1"
     PROD_API_URL = "https://api.matchyplus.com/api/v1"
 
     // Which of the two gets compiled into app and admin, decided by branch.
@@ -80,7 +80,7 @@ pipeline {
     // prod - only api, ai and landing can. Making the frontend read its API URL
     // at runtime would restore build-once-deploy-many for all five; until then
     // prod frontends must be built from main.
-    FRONTEND_API_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://api.matchyplus.com/api/v1' : 'https://api.staging.matchy.local/api/v1'}"
+    FRONTEND_API_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://api.matchyplus.com/api/v1' : 'https://api.staging.matchyplus.com/api/v1'}"
 
     // The other two cross-site URLs, inlined at build time for the same reason.
     //
@@ -96,8 +96,8 @@ pipeline {
     //
     // Nothing at deploy time can correct these - Next.js compiles them into the
     // bundle - so a wrong value here means rebuilding, not editing a ConfigMap.
-    FRONTEND_APP_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://app.matchyplus.com' : 'https://app.staging.matchy.local'}"
-    FRONTEND_LANDING_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://matchyplus.com' : 'https://staging.matchy.local'}"
+    FRONTEND_APP_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://app.matchyplus.com' : 'https://app.staging.matchyplus.com'}"
+    FRONTEND_LANDING_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://matchyplus.com' : 'https://staging.matchyplus.com'}"
   }
 
   stages {

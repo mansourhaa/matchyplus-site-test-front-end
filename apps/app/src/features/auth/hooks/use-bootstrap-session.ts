@@ -16,13 +16,46 @@ import { useAppDispatch } from './index';
 /**
  * Survives React Strict Mode's double effect invoke so `/auth/authcheck` is not
  * fired twice on a single document load. Reset in tests via
- * `resetBootstrapSessionLatchForTests`.
+ * `resetBootstrapSessionLatchForTests`, and reset on Capacitor App resume / browser
+ * tab-visibility-restore so a foreground-restore re-probes the session instead of
+ * keeping stale redux-persist state.
  */
 let bootstrapStarted = false;
 
 /** Test helper — allow a fresh bootstrap after remounting providers. */
 export function resetBootstrapSessionLatchForTests() {
   bootstrapStarted = false;
+}
+
+/**
+ * Registers a one-time pair of event listeners that reset `bootstrapStarted` when the
+ * app/tab returns to the foreground:
+ *
+ * - `resume`: Capacitor fires this on `window` when a native iOS/Android app returns
+ *   from background. This is a plain DOM event — no `@capacitor/app` import required.
+ * - `visibilitychange` → visible: covers browser tab restore and macOS app focus.
+ *
+ * Both paths reset the latch so the next `useBootstrapSession` render will re-dispatch
+ * `fetchCurrentUser` and re-validate the session against the API.
+ */
+let foregroundListenersRegistered = false;
+
+function registerForegroundListeners() {
+  if (foregroundListenersRegistered || typeof window === 'undefined') return;
+  foregroundListenersRegistered = true;
+
+  // Capacitor dispatches a native 'resume' event on window when the iOS/Android app
+  // returns from background — no plugin package needed.
+  window.addEventListener('resume', () => {
+    bootstrapStarted = false;
+  });
+
+  // Browser tab / PWA: visibilitychange covers tab-switch and app-focus restore.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      bootstrapStarted = false;
+    }
+  });
 }
 
 /**
@@ -41,6 +74,9 @@ export function useBootstrapSession() {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Wire up foreground restore listeners once, on first mount.
+    registerForegroundListeners();
+
     if (bootstrapStarted) return;
     bootstrapStarted = true;
 

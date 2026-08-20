@@ -76,6 +76,12 @@ function loginPhoneErrorMessage(code: string | undefined, t: (key: string) => st
   if (code === 'mobile_session_unavailable') {
     return t('auth.loginForm.errorMobileSessionUnavailable');
   }
+  if (code === 'account_banned') {
+    return t('auth.loginForm.errorAccountBanned');
+  }
+  if (code === 'account_inactive') {
+    return t('auth.loginForm.errorAccountInactive');
+  }
   return t('auth.loginForm.errorLoginFailed');
 }
 

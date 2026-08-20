@@ -33,6 +33,10 @@ function oauthErrorMessage(code: string, t: (key: string) => string): string {
       return t('oauthCallback.errorProviderNotConfigured');
     case 'oauth_profile_fetch_failed':
       return t('oauthCallback.errorProfileFetchFailed');
+    case 'account_banned':
+      return t('oauthCallback.errorAccountBanned');
+    case 'account_inactive':
+      return t('oauthCallback.errorAccountInactive');
     default:
       return t('oauthCallback.errorGeneric');
   }
@@ -74,7 +78,11 @@ export function OAuthCallback() {
           );
           router.refresh();
         } else {
-          setError(t('oauthCallback.errorLoginFailed'));
+          // exchangeOAuthCode re-throws the API's own code as action.error.message (see
+          // auth-slice.ts) — branch on it the same way oauthError above does, instead of
+          // always showing the generic "try again" message regardless of the real reason
+          // (e.g. a banned account, which retrying can never fix).
+          setError(oauthErrorMessage(result.error.message ?? '', t));
         }
       } catch {
         setError(t('oauthCallback.errorLoginFailed'));
