@@ -80,13 +80,13 @@ export function Features() {
       </Reveal>
 
       <div className="mt-16 grid grid-cols-1 items-center gap-12 lg:grid-cols-3 lg:gap-8 xl:gap-12">
-        <div className="flex flex-col gap-10 sm:gap-12 order-2 lg:order-1">
+        <div className="order-2 flex flex-col gap-10 sm:gap-12 lg:order-1">
           {left.map((f, i) => (
             <Feature key={f.title} {...f} align="left" delay={i * 0.1} />
           ))}
         </div>
 
-        <Parallax speed={20} className="flex justify-center order-1 lg:order-2">
+        <Parallax speed={20} className="order-1 flex justify-center lg:order-2">
           <div className="relative flex justify-center drop-shadow-2xl">
             <img
               src="/showcase/features-phone.png"
@@ -96,7 +96,7 @@ export function Features() {
           </div>
         </Parallax>
 
-        <div className="flex flex-col gap-10 sm:gap-12 order-3 lg:order-3">
+        <div className="order-3 flex flex-col gap-10 sm:gap-12 lg:order-3">
           {right.map((f, i) => (
             <Feature key={f.title} {...f} align="right" delay={i * 0.1} />
           ))}

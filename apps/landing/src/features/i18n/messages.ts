@@ -34,7 +34,8 @@ export const messages: Record<Locale, MessageTree> = {
       growText: 'Attirez de nouveaux clients et valorisez vos compétences au cœur de votre région.',
 
       nearTitle: 'Trouvez des services près de vous',
-      nearText: 'Découvrez des professionnels locaux qualifiés et disponibles autour de vous grâce à la géolocalisation intelligente.',
+      nearText:
+        'Découvrez des professionnels locaux qualifiés et disponibles autour de vous grâce à la géolocalisation intelligente.',
 
       aiTitle: "Recommandations alimentées par l'IA",
       aiText:
@@ -145,10 +146,12 @@ export const messages: Record<Locale, MessageTree> = {
         'A smart matching system that brings local talent and business opportunities together in an instant.',
 
       growTitle: 'Grow your visibility',
-      growText: 'Attract new customers and highlight your skills right at the heart of your region.',
+      growText:
+        'Attract new customers and highlight your skills right at the heart of your region.',
 
       nearTitle: 'Find services near you',
-      nearText: 'Discover qualified and available local professionals near you with smart geolocation.',
+      nearText:
+        'Discover qualified and available local professionals near you with smart geolocation.',
 
       aiTitle: 'AI-powered recommendations',
       aiText: 'Tailored suggestions based on your needs, activity history, and exact location.',
@@ -257,7 +260,8 @@ export const messages: Record<Locale, MessageTree> = {
 
       wallet: 'طوّر ظهورك مع Matchy Wallet',
       walletSubtitle: 'مزيد من الظهور. مزيد من الفرص.',
-      walletBody: 'محفظة Matchy Wallet هي المحفظة الرقمية المتكاملة التي تتيح للمهنيين الوصول إلى ميزات مميزة بكل سهولة.',
+      walletBody:
+        'محفظة Matchy Wallet هي المحفظة الرقمية المتكاملة التي تتيح للمهنيين الوصول إلى ميزات مميزة بكل سهولة.',
       walletUsage: 'استخدم رصيدك من أجل:',
       walletBullets: [
         'زيادة ظهور ملفك الشخصي',
@@ -269,7 +273,8 @@ export const messages: Record<Locale, MessageTree> = {
       ],
 
       exploreTitle: 'اكتشف Matchy explore',
-      exploreBody: 'تتيح لك Matchy Explore اكتشاف المحترفين والحرفيين والمستقلين الموثوقين بالقرب منك بفضل تحديد الموقع والمطابقة المخصصة.',
+      exploreBody:
+        'تتيح لك Matchy Explore اكتشاف المحترفين والحرفيين والمستقلين الموثوقين بالقرب منك بفضل تحديد الموقع والمطابقة المخصصة.',
 
       stepsTitle: 'كيف تعمل المنصة',
       stepsSubtitle: 'الخطوات ..',
@@ -282,7 +287,8 @@ export const messages: Record<Locale, MessageTree> = {
       ],
 
       downloadTitle: 'التقِ بمهنيين ملهمين على ماتشي',
-      downloadBody: 'انضم إلى Matchy+ وساهم في بناء أكبر منصة إفريقية للخدمات المحلية المعتمدة على الموقع.',
+      downloadBody:
+        'انضم إلى Matchy+ وساهم في بناء أكبر منصة إفريقية للخدمات المحلية المعتمدة على الموقع.',
       learnMore: 'اعرف أكثر',
 
       downloadBadge: 'تحميل الآن',

@@ -9,7 +9,10 @@ import { useState } from 'react';
 
 type FAQItem = [string, string];
 
-const data: Record<'fr' | 'en' | 'ar', { title: string; intro: string; items: FAQItem[]; moreQuestions: string; contactUs: string }> = {
+const data: Record<
+  'fr' | 'en' | 'ar',
+  { title: string; intro: string; items: FAQItem[]; moreQuestions: string; contactUs: string }
+> = {
   fr: {
     title: 'Questions Fréquentes',
     intro: 'Tout ce que vous devez savoir pour démarrer et tirer le meilleur parti de Matchy+.',
@@ -120,19 +123,15 @@ export default function FAQ() {
   return (
     <PageFrame>
       <main className="bg-neutral-50/60 pb-28">
-        <SubpageHero
-          eyebrow="Matchy+ FAQ"
-          title={t.title}
-          subtitle={t.intro}
-        />
+        <SubpageHero eyebrow="Matchy+ FAQ" title={t.title} subtitle={t.intro} />
 
-        <div className="container relative z-20 -mt-10 sm:-mt-14 max-w-4xl">
+        <div className="relative z-20 container -mt-10 max-w-4xl sm:-mt-14">
           <div className="rounded-3xl border border-neutral-100 bg-white p-6 shadow-2xl sm:p-10">
             <div className="mb-8 flex items-center gap-2 border-b border-neutral-100 pb-5">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-teal/15 text-brand-teal">
+              <span className="bg-brand-teal/15 text-brand-teal grid h-8 w-8 place-items-center rounded-lg">
                 <HelpCircle className="h-4 w-4" />
               </span>
-              <h2 className="text-lg font-bold text-brand-navy">Questions et réponses générales</h2>
+              <h2 className="text-brand-navy text-lg font-bold">Questions et réponses générales</h2>
             </div>
 
             <div className="space-y-4">
@@ -150,13 +149,13 @@ export default function FAQ() {
                     <button
                       type="button"
                       onClick={() => toggle(idx)}
-                      className="flex w-full cursor-pointer items-center justify-between gap-4 p-5 text-left font-bold text-brand-navy sm:text-base text-sm"
+                      className="text-brand-navy flex w-full cursor-pointer items-center justify-between gap-4 p-5 text-left text-sm font-bold sm:text-base"
                     >
                       <span className="flex-1">{question}</span>
                       <span
                         className={`grid h-7 w-7 shrink-0 place-items-center rounded-full transition-transform duration-200 ${
                           isOpen
-                            ? 'bg-brand-teal text-white rotate-180'
+                            ? 'bg-brand-teal rotate-180 text-white'
                             : 'bg-neutral-100 text-neutral-600'
                         }`}
                       >
@@ -164,7 +163,7 @@ export default function FAQ() {
                       </span>
                     </button>
                     {isOpen && (
-                      <div className="px-5 pb-5 pt-1 text-sm text-neutral-600 leading-relaxed border-t border-brand-teal/10">
+                      <div className="border-brand-teal/10 border-t px-5 pt-1 pb-5 text-sm leading-relaxed text-neutral-600">
                         {answer}
                       </div>
                     )}
@@ -174,19 +173,21 @@ export default function FAQ() {
             </div>
 
             {/* Bottom contact prompt */}
-            <div className="mt-10 flex flex-col items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-brand-blue/10 via-brand-teal/10 to-brand-teal/5 p-6 sm:flex-row border border-brand-teal/20">
+            <div className="from-brand-blue/10 via-brand-teal/10 to-brand-teal/5 border-brand-teal/20 mt-10 flex flex-col items-center justify-between gap-4 rounded-2xl border bg-gradient-to-r p-6 sm:flex-row">
               <div className="flex items-center gap-3 text-center sm:text-left">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-blue text-white shadow-md shadow-brand-blue/20">
+                <span className="bg-brand-blue shadow-brand-blue/20 grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white shadow-md">
                   <MessageCircle className="h-5 w-5" />
                 </span>
                 <div>
-                  <h4 className="text-sm font-bold text-brand-navy">{t.moreQuestions}</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">Notre équipe d’assistance est disponible 7j/7.</p>
+                  <h4 className="text-brand-navy text-sm font-bold">{t.moreQuestions}</h4>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    Notre équipe d’assistance est disponible 7j/7.
+                  </p>
                 </div>
               </div>
               <Link
                 href="/contact"
-                className="inline-flex shrink-0 items-center justify-center rounded-xl bg-brand-blue px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-blue/90 transition-transform hover:scale-[1.02]"
+                className="bg-brand-blue hover:bg-brand-blue/90 inline-flex shrink-0 items-center justify-center rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-md transition-transform hover:scale-[1.02]"
               >
                 {t.contactUs}
               </Link>

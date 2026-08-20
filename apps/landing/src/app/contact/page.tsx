@@ -27,7 +27,8 @@ const data: Record<
 > = {
   fr: {
     title: 'Contactez-nous',
-    subtitle: 'Une question, une idée ou besoin d’aide ? Écrivez-nous et notre équipe vous répondra dans les plus brefs délais.',
+    subtitle:
+      'Une question, une idée ou besoin d’aide ? Écrivez-nous et notre équipe vous répondra dans les plus brefs délais.',
     name: 'Nom complet',
     email: 'Adresse e-mail',
     phone: 'Numéro de téléphone (optionnel)',
@@ -36,13 +37,15 @@ const data: Record<
     sending: 'Envoi du message...',
     sent: 'Merci ! Votre message a bien été envoyé.',
     infoTitle: 'Parlons de votre projet',
-    infoText: 'Notre équipe est à votre disposition pour vous accompagner dans l’utilisation de Matchy+ ou pour toute proposition de partenariat.',
+    infoText:
+      'Notre équipe est à votre disposition pour vous accompagner dans l’utilisation de Matchy+ ou pour toute proposition de partenariat.',
     directContact: 'Contact direct',
     location: 'Tunis, Tunisie (Panafricain)',
   },
   en: {
     title: 'Contact us',
-    subtitle: 'A question, an idea or need help? Write to us and our team will get back to you promptly.',
+    subtitle:
+      'A question, an idea or need help? Write to us and our team will get back to you promptly.',
     name: 'Full name',
     email: 'Email address',
     phone: 'Phone number (optional)',
@@ -51,7 +54,8 @@ const data: Record<
     sending: 'Sending message...',
     sent: 'Thank you! Your message has been sent successfully.',
     infoTitle: "Let's talk about your project",
-    infoText: 'Our team is here to assist you with Matchy+ or discuss partnership opportunities across the continent.',
+    infoText:
+      'Our team is here to assist you with Matchy+ or discuss partnership opportunities across the continent.',
     directContact: 'Direct contact',
     location: 'Tunis, Tunisia (Pan-African)',
   },
@@ -112,18 +116,14 @@ export default function Contact() {
   return (
     <PageFrame>
       <main className="bg-neutral-50/60 pb-28">
-        <SubpageHero
-          eyebrow="Matchy+"
-          title={t.title}
-          subtitle={t.subtitle}
-        />
+        <SubpageHero eyebrow="Matchy+" title={t.title} subtitle={t.subtitle} />
 
-        <div className="container relative z-20 -mt-10 sm:-mt-14 max-w-5xl">
+        <div className="relative z-20 container -mt-10 max-w-5xl sm:-mt-14">
           <div className="grid grid-cols-1 gap-8 rounded-3xl border border-neutral-100 bg-white p-6 shadow-2xl sm:p-10 md:grid-cols-12 md:gap-12">
             {/* Left side info */}
             <div className="flex flex-col justify-between md:col-span-5">
               <div>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-teal/10 px-3 py-1 text-xs font-bold text-brand-teal">
+                <span className="bg-brand-teal/10 text-brand-teal inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold">
                   <MessageSquare className="h-3.5 w-3.5" /> Support & Contact
                 </span>
                 <h2 className="text-brand-navy mt-4 text-2xl font-extrabold sm:text-3xl">
@@ -135,23 +135,26 @@ export default function Contact() {
 
                 <div className="mt-8 space-y-4">
                   <div className="flex items-center gap-3.5 text-sm text-neutral-700">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-neutral-100 text-brand-blue">
+                    <span className="text-brand-blue grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-neutral-100">
                       <Mail className="h-5 w-5" />
                     </span>
                     <div>
-                      <p className="text-xs text-muted-foreground">E-mail</p>
-                      <a href="mailto:hello@matchy.tn" className="font-semibold hover:text-brand-blue">
+                      <p className="text-muted-foreground text-xs">E-mail</p>
+                      <a
+                        href="mailto:hello@matchy.tn"
+                        className="hover:text-brand-blue font-semibold"
+                      >
                         hello@matchy.tn
                       </a>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3.5 text-sm text-neutral-700">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-neutral-100 text-brand-teal">
+                    <span className="text-brand-teal grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-neutral-100">
                       <Phone className="h-5 w-5" />
                     </span>
                     <div>
-                      <p className="text-xs text-muted-foreground">{t.directContact}</p>
+                      <p className="text-muted-foreground text-xs">{t.directContact}</p>
                       <span className="font-semibold">+216 70 000 000</span>
                     </div>
                   </div>
@@ -161,15 +164,15 @@ export default function Contact() {
                       <MapPin className="h-5 w-5" />
                     </span>
                     <div>
-                      <p className="text-xs text-muted-foreground">Localisation</p>
+                      <p className="text-muted-foreground text-xs">Localisation</p>
                       <span className="font-semibold">{t.location}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 rounded-2xl bg-brand-blue/5 p-4 border border-brand-blue/10">
-                <p className="text-xs text-brand-navy/80 leading-relaxed font-medium">
+              <div className="bg-brand-blue/5 border-brand-blue/10 mt-8 rounded-2xl border p-4">
+                <p className="text-brand-navy/80 text-xs leading-relaxed font-medium">
                   🚀 Réception directe et traitement sous 24h ouvrées.
                 </p>
               </div>
@@ -178,13 +181,17 @@ export default function Contact() {
             {/* Right side form */}
             <div className="md:col-span-7">
               {submitted ? (
-                <div className="flex h-full min-h-[340px] flex-col items-center justify-center rounded-2xl bg-brand-teal/5 p-8 text-center border border-brand-teal/20">
-                  <div className="grid h-14 w-14 place-items-center rounded-full bg-brand-teal text-white shadow-lg shadow-brand-teal/30">
+                <div className="bg-brand-teal/5 border-brand-teal/20 flex h-full min-h-[340px] flex-col items-center justify-center rounded-2xl border p-8 text-center">
+                  <div className="bg-brand-teal shadow-brand-teal/30 grid h-14 w-14 place-items-center rounded-full text-white shadow-lg">
                     ✓
                   </div>
                   <h3 className="text-brand-navy mt-4 text-xl font-bold">{t.sent}</h3>
-                  <p className="text-muted-foreground mt-2 text-sm max-w-sm">
-                    Notre équipe reviendra vers vous à l’adresse <span className="font-semibold text-brand-navy">{form.email || 'indiquée'}</span> sous 24 heures ouvrées.
+                  <p className="text-muted-foreground mt-2 max-w-sm text-sm">
+                    Notre équipe reviendra vers vous à l’adresse{' '}
+                    <span className="text-brand-navy font-semibold">
+                      {form.email || 'indiquée'}
+                    </span>{' '}
+                    sous 24 heures ouvrées.
                   </p>
                   <button
                     onClick={() => {
@@ -199,7 +206,7 @@ export default function Contact() {
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="text-xs font-bold text-brand-navy block mb-1.5">
+                    <label className="text-brand-navy mb-1.5 block text-xs font-bold">
                       {t.name}
                     </label>
                     <input
@@ -208,13 +215,13 @@ export default function Contact() {
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                       placeholder={t.name}
-                      className="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:border-brand-teal focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal/20"
+                      className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="text-xs font-bold text-brand-navy block mb-1.5">
+                      <label className="text-brand-navy mb-1.5 block text-xs font-bold">
                         {t.email}
                       </label>
                       <input
@@ -223,11 +230,11 @@ export default function Contact() {
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         placeholder="nom@exemple.com"
-                        className="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:border-brand-teal focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal/20"
+                        className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-brand-navy block mb-1.5">
+                      <label className="text-brand-navy mb-1.5 block text-xs font-bold">
                         {t.phone}
                       </label>
                       <input
@@ -235,13 +242,13 @@ export default function Contact() {
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         placeholder="+216 -- --- ---"
-                        className="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:border-brand-teal focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal/20"
+                        className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-brand-navy block mb-1.5">
+                    <label className="text-brand-navy mb-1.5 block text-xs font-bold">
                       {t.message}
                     </label>
                     <textarea
@@ -250,14 +257,14 @@ export default function Contact() {
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
                       placeholder={t.message}
-                      className="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:border-brand-teal focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal/20"
+                      className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-blue py-3.5 px-6 text-sm font-bold text-white shadow-lg shadow-brand-blue/20 transition-all hover:bg-brand-blue/90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
+                    className="bg-brand-blue shadow-brand-blue/20 hover:bg-brand-blue/90 inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
                   >
                     {loading ? (
                       <>

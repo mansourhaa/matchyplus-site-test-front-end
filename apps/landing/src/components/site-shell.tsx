@@ -89,7 +89,7 @@ export function Header() {
             <button
               type="button"
               onClick={() => setLangOpen(!langOpen)}
-              className="flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-white/10 hover:bg-white/20 px-3 py-1.5 select-none text-white transition-colors"
+              className="flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-white/10 px-3 py-1.5 text-white transition-colors select-none hover:bg-white/20"
             >
               <Flag locale={locale} />
               <span className="text-[13px] font-bold">{LANGUAGE_NAMES[locale]}</span>

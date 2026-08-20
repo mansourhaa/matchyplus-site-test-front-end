@@ -21,7 +21,7 @@ function UserRowAvatar({ user }: { user: AdminManagedUser }) {
   );
 }
 
-function buildCsv(users: AdminManagedUser[]) {
+export function buildCsv(users: AdminManagedUser[]) {
   const header = [
     'ID',
     'Nom',
@@ -73,7 +73,15 @@ export function AdminUsersSection({
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const handleExport = () => {
-    const blob = new Blob([buildCsv(users)], { type: 'text/csv;charset=utf-8;' });
+    // Excel picks its CSV delimiter from the OS list-separator setting, not from the
+    // file itself, so a semicolon-delimited file opened on a comma-locale machine collapses
+    // every field into column A. The `sep=;` directive line and the UTF-8 BOM are Excel's
+    // own documented way to make a CSV self-describing regardless of the opening machine's
+    // regional settings (BOM also fixes accented characters being read as Latin-1/mojibake).
+    const EXCEL_UTF8_BOM = '\uFEFF';
+    const blob = new Blob([`${EXCEL_UTF8_BOM}sep=;\r\n${buildCsv(users)}`], {
+      type: 'text/csv;charset=utf-8;',
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

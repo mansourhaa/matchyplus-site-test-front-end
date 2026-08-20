@@ -18,7 +18,7 @@ export function Hero() {
       />
 
       <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pt-32 pb-36 md:grid-cols-2 md:gap-8 md:pt-36 md:pb-48 lg:pt-40 lg:pb-56">
-        <div className="text-white text-center md:text-left">
+        <div className="text-center text-white md:text-left">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -39,7 +39,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="mx-auto mt-4 max-w-md leading-relaxed text-pretty text-white/85 md:mx-0 text-sm sm:text-base"
+            className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-pretty text-white/85 sm:text-base md:mx-0"
           >
             {t('landing.intro')}
           </motion.p>
