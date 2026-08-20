@@ -55,7 +55,6 @@ function buildCsv(users: AdminManagedUser[]) {
 export function AdminUsersSection({
   users,
   filters,
-  categoryOptions,
   loading,
   onFiltersChange,
   onOpenUser,
@@ -63,7 +62,6 @@ export function AdminUsersSection({
 }: {
   users: AdminManagedUser[];
   filters: AdminUserFilters;
-  categoryOptions: string[];
   loading: boolean;
   onFiltersChange: (changes: Partial<AdminUserFilters>) => void;
   onOpenUser: (user: AdminManagedUser) => void;
@@ -106,25 +104,6 @@ export function AdminUsersSection({
             onChange={(event) => onFiltersChange({ search: event.target.value })}
           />
         </div>
-
-        <select
-          className="cursor-pointer rounded-xl px-3 py-2 outline-none"
-          style={{
-            fontSize: '13px',
-            color: '#555',
-            background: '#F5F7FA',
-            border: '1px solid #E0E0E0',
-          }}
-          aria-label="Filtrer par catégorie"
-          value={filters.category}
-          onChange={(event) => onFiltersChange({ category: event.target.value })}
-        >
-          {categoryOptions.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
 
         <select
           className="cursor-pointer rounded-xl px-3 py-2 outline-none"

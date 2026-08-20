@@ -140,7 +140,6 @@ export class AdminService {
     }
     if (query.status) where.status = query.status;
     if (query.plan) where.plan = query.plan;
-    if (query.category) where.category = query.category;
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({

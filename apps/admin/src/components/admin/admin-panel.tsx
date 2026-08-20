@@ -37,7 +37,6 @@ import {
   fetchAdminUserById,
   fetchAdminUsers,
   selectAdminUsers,
-  selectCategoryOptions,
   selectUser,
   setFilters,
   updateAdminUser,
@@ -89,7 +88,6 @@ export function AdminPanel() {
   const { admin } = useAppSelector(selectAdminAuth);
   const { users, stats, selectedUser, loadingUsers, error, filters } =
     useAppSelector(selectAdminUsers);
-  const categoryOptions = useAppSelector(selectCategoryOptions);
   const {
     plans,
     saving: savingPlan,
@@ -395,7 +393,6 @@ export function AdminPanel() {
             <AdminUsersSection
               users={users}
               filters={filters}
-              categoryOptions={categoryOptions}
               loading={loadingUsers}
               onFiltersChange={(changes) => dispatch(setFilters(changes))}
               onOpenUser={(user) => openUserDetail(user, 'users')}

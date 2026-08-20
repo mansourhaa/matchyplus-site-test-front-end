@@ -41,7 +41,6 @@ export interface AdminStats {
 
 export interface AdminUserFilters {
   search: string;
-  category: string;
   plan: 'all' | UserPlan;
   status: 'all' | UserStatus;
 }
