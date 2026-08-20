@@ -2,6 +2,7 @@
 
 import { useAppSelector } from '@/features/auth/hooks';
 import { refreshAdminSession } from '@/lib/admin-api';
+import { hasAdminSessionMarker, refreshAdminSessionMarker } from '@/lib/admin-auth';
 import { useEffect, useRef } from 'react';
 
 import { selectAdminAuth } from '../store/admin-auth-slice';
@@ -20,8 +21,10 @@ export function useAdminProactiveRefresh() {
   const { isAuthenticated } = useAppSelector(selectAdminAuth);
   const lastRefreshRef = useRef<number>(0);
 
+  const shouldRefresh = isAuthenticated || hasAdminSessionMarker();
+
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!shouldRefresh) return;
 
     if (lastRefreshRef.current === 0) {
       lastRefreshRef.current = Date.now();
@@ -56,5 +59,11 @@ export function useAdminProactiveRefresh() {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
+  }, [shouldRefresh]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshAdminSessionMarker();
+    }
   }, [isAuthenticated]);
 }
