@@ -13,6 +13,7 @@ import {
   fetchAdminAnalytics,
   selectAdminAnalytics,
 } from '@/features/admin-analytics/store/admin-analytics-slice';
+import { useAdminProactiveRefresh } from '@/features/admin-auth/hooks/use-admin-proactive-refresh';
 import { ROLE_LABELS } from '@/features/admin-auth/schemas';
 import { adminLogout, selectAdminAuth } from '@/features/admin-auth/store/admin-auth-slice';
 import {
@@ -82,6 +83,7 @@ const NAV_ITEMS: { key: NavKey; icon: LucideIcon; label: string }[] = [
 ];
 
 export function AdminPanel() {
+  useAdminProactiveRefresh();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { admin } = useAppSelector(selectAdminAuth);

@@ -98,6 +98,11 @@ export const config = {
    */
   refreshTokenSecret: requiredVar('REFRESH_TOKEN_SECRET'),
   refreshTokenTtlDays: requiredIntVar('REFRESH_TOKEN_TTL_DAYS'),
+  /**
+   * Much shorter than the member refresh window on purpose — see refreshTokenTtlSeconds()
+   * in token.ts for why an admin session shouldn't stay silently renewable for weeks.
+   */
+  adminRefreshTokenTtlSeconds: requiredDurationSeconds('ADMIN_REFRESH_TOKEN_TTL'),
 
   /**
    * Capacitor mobile client shared secret. Optional at boot — when unset, body JWT

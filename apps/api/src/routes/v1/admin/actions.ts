@@ -32,7 +32,9 @@ import {
 } from '../../../types/admin.js';
 import { AdminListReportsQuery, AdminUpdateReportPayload } from '../../../types/report.js';
 import {
+  ADMIN_REFRESH_COOKIE,
   ADMIN_SESSION_COOKIE,
+  clearAdminRefreshCookieOptions,
   clearAdminSessionCookieOptions,
 } from '../../../utils/admin-session.js';
 import { badRequest, notFound } from '../../../utils/http-errors.js';
@@ -165,7 +167,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     { schema: adminChangePasswordSchema },
     async (request, reply) => {
       const data = await adminService.changePassword(request.loggedUser.id, request.body);
+      // The refresh token behind this cookie was already revoked server-side by
+      // changePassword's revokeAllSessions call — clear the cookie too so the browser
+      // doesn't keep offering a token that would just fail on the next refresh attempt.
       reply.clearCookie(ADMIN_SESSION_COOKIE, clearAdminSessionCookieOptions());
+      reply.clearCookie(ADMIN_REFRESH_COOKIE, clearAdminRefreshCookieOptions());
       return reply.code(200).send(data);
     },
   );

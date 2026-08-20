@@ -52,6 +52,17 @@ export function persistAdminSession(admin: unknown, maxAgeSeconds = ADMIN_SESSIO
 }
 
 /**
+ * `proxy.ts` gates every dashboard navigation on this marker's presence, not on the real
+ * HttpOnly access token it can't see — so its own expiry has to track the real session's
+ * lifetime, not just the value set once at login. Without this, a refreshed access token
+ * would still expire the marker on schedule and bounce a legitimately-still-logged-in admin
+ * back to /login. Call this after every successful refresh (reactive or proactive).
+ */
+export function refreshAdminSessionMarker(maxAgeSeconds = ADMIN_SESSION_MAX_AGE_SECONDS) {
+  setSessionMarker(maxAgeSeconds);
+}
+
+/**
  * Only the API can drop an HttpOnly cookie, hence the logout call. A failure is ignored on
  * purpose: the local session is torn down either way and the cookie expires on its own, so a
  * dead network must never leave an admin stuck in the panel.

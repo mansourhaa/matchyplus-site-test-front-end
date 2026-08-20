@@ -94,7 +94,8 @@ See [location.md](../features/location.md).
 | `ACCESS_TOKEN_TTL`    | No                 | Token expiry (`1d`, `7d`, `12h`) |
 | `COOKIE_SECRET`       | Yes (staging/prod) | Fastify cookie signing           |
 | `REFRESH_TOKEN_SECRET` | Yes | Secret used to sign refresh tokens. Use a different long random value from `ACCESS_TOKEN_SECRET`. |
-| `REFRESH_TOKEN_TTL_DAYS` | Yes | Number of days before a refresh token expires. |
+| `REFRESH_TOKEN_TTL_DAYS` | Yes | Number of days before a member refresh token expires. |
+| `ADMIN_REFRESH_TOKEN_TTL` | Yes | Duration (`12h`, `1d`, …) before an admin refresh token expires — much shorter than the member TTL on purpose, so a stolen admin session can't stay silently renewable for weeks. |
 | `VERIFICATION_CODE_SECRET` | Yes | HMAC key used to hash phone OTP codes before they're stored — the plaintext code is never persisted. |
 
 ### Rate Limiting

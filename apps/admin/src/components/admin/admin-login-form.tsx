@@ -354,7 +354,7 @@ export function AdminLoginForm() {
             className="mt-5 text-center"
             style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}
           >
-            🔒 Connexion sécurisée · Session active pendant 8 heures
+            🔒 Connexion sécurisée · Session renouvelée automatiquement tant que vous êtes actif
           </p>
         </motion.div>
       </div>
