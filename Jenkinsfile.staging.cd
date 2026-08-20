@@ -163,10 +163,20 @@ pipeline {
               "https://${GITOPS_USER}:${GITOPS_TOKEN}@${GITOPS_REPO}" /tmp/gitops-staging
             cd /tmp/gitops-staging/${GITOPS_STAGING_PATH}
 
-            # the standalone kustomize binary: the copy embedded in kubectl can
-            # build but not edit.
+            # kustomize runs pinned, in a container, like every other tool in
+            # these pipelines. `kustomize edit` exists only in the standalone
+            # binary - the copy embedded in kubectl can build but not edit - and
+            # kustomize is not installed on this agent.
+            #
+            # -v $PWD works only because /tmp is bind-mounted from the host into
+            # the Jenkins container. Jenkins talks to the host's Docker daemon
+            # through the socket, so the daemon resolves this path on the host,
+            # not inside Jenkins. Cloning anywhere else - the workspace, for
+            # instance, which lives in a named volume - would mount an empty
+            # directory and the edits would silently apply to nothing.
+            KUSTOMIZE="docker run --rm -u $(id -u):$(id -g) -v $PWD:/work -w /work registry.k8s.io/kustomize/kustomize:v5.4.3"
             for COMPONENT in ${IMAGE_COMPONENTS}; do
-              kustomize edit set image \
+              $KUSTOMIZE edit set image \
                 "matchy-${COMPONENT}=${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"
             done
 
