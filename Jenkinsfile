@@ -2,7 +2,7 @@
 //
 // This pipeline builds, scans, signs and pushes images, then stops. Promoting
 // any of those images to an environment is a separate, manually triggered job
-// driven by Jenkinsfile.cd, so a push can never deploy by itself and a deploy
+// driven by Jenkinsfile.staging.cd and Jenkinsfile.prod.cd, so a push can never deploy by itself and a deploy
 // never rebuilds. The image tag is the contract between the two.
 
 pipeline {

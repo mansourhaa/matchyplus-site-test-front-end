@@ -1,6 +1,6 @@
 // Production CD. Promotes an already-built, already-signed image set to prod.
 //
-// Deliberately a sibling of Jenkinsfile.cd rather than the same file with a
+// Deliberately a sibling of Jenkinsfile.staging.cd rather than the same file with a
 // parameter. Prod differs from staging in ways that are easy to get wrong if
 // they are one boolean apart from each other:
 //
