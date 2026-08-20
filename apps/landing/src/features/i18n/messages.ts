@@ -17,6 +17,8 @@ export const messages: Record<Locale, MessageTree> = {
       contact: 'Contact',
       partner: 'Devenir partenaire',
       delete: 'Supprimer mon compte',
+      privacyPolicy: 'Politique de confidentialité',
+      terms: "Conditions d'utilisation",
       cta: "S'inscrire gratuitement",
 
       eyebrow: 'Matchy Plus',
@@ -133,6 +135,8 @@ export const messages: Record<Locale, MessageTree> = {
       contact: 'Contact',
       partner: 'Become a partner',
       delete: 'Delete account',
+      privacyPolicy: 'Privacy policy',
+      terms: 'Terms of service',
       cta: 'Join for free',
 
       eyebrow: 'Matchy Plus',
@@ -238,6 +242,8 @@ export const messages: Record<Locale, MessageTree> = {
       contact: 'اتصل بنا',
       partner: 'كن شريكًا',
       delete: 'حذف الحساب',
+      privacyPolicy: 'سياسة الخصوصية',
+      terms: 'شروط الخدمة',
       cta: 'سجّل مجانًا',
 
       eyebrow: 'ماتشي بلس',

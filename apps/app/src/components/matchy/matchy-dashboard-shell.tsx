@@ -71,6 +71,10 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     '/settings/history': t('settings.history'),
     '/settings/favorites': t('settings.favorites'),
     '/settings/plans': t('settings.subscription'),
+    '/privacy-policy': t('settings.privacyPolicy'),
+    '/terms-of-service': t('settings.terms'),
+    '/settings/privacy-policy': t('settings.privacyPolicy'),
+    '/settings/terms-of-service': t('settings.terms'),
     '/edit-profile': t('settings.editProfile'),
     '/notifications': t('settings.notifications'),
   };
@@ -85,7 +89,12 @@ function DashboardChrome({ children }: { children: ReactNode }) {
       ? t('dashboard.profile')
       : titleMap[pathname];
   const backPath =
-    pathname === '/edit-profile' || pathname.startsWith('/settings/') ? '/settings' : '/home';
+    pathname === '/edit-profile' ||
+    pathname.startsWith('/settings') ||
+    pathname === '/privacy-policy' ||
+    pathname === '/terms-of-service'
+      ? '/settings'
+      : '/home';
 
   return (
     <MatchyAppShell

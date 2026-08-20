@@ -4,7 +4,7 @@ export const sendContactEmailSchema: FastifySchema = {
   tags: ['contact'],
   summary: 'Send contact or partner application email to administrators',
   description:
-    'Accepts visitor contact messages or partner applications, renders a template, and dispatches via Brevo SMTP to hello@matchy.tn.',
+    'Accepts visitor contact messages or partner applications, renders a template, and dispatches via Brevo SMTP to Contact@matchyplus.com.',
   body: {
     type: 'object',
     required: ['name', 'email'],
