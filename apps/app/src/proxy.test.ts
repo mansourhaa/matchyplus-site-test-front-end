@@ -51,6 +51,8 @@ describe('proxy auth gate', () => {
       '/settings/video',
       '/settings/qr-code',
       '/settings/add-phone-number',
+      '/privacy-policy',
+      '/terms-of-service',
     ];
     for (const path of paths) {
       const res = proxy(request(path));

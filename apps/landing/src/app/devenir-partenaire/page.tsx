@@ -1,5 +1,6 @@
 'use client';
 
+import { CountryCodeSelector } from '@/components/country-code-selector';
 import { PageFrame } from '@/components/site-shell';
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
@@ -129,6 +130,7 @@ export default function Partner() {
   const t = data[locale];
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [countryCode, setCountryCode] = useState('+216');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -141,6 +143,7 @@ export default function Partner() {
     setLoading(true);
 
     try {
+      const fullPhone = form.phone ? `${countryCode} ${form.phone}`.trim() : '';
       await fetch(`${API_URL}/v1/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -148,7 +151,7 @@ export default function Partner() {
           type: 'partner',
           name: form.name,
           email: form.email,
-          phone: form.phone,
+          phone: fullPhone,
           requestText: form.requestText,
         }),
       });
@@ -271,14 +274,22 @@ export default function Partner() {
                       <label className="text-brand-navy mb-1.5 block text-xs font-bold">
                         {t.phone}
                       </label>
-                      <input
-                        required
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder="+216 -- --- ---"
-                        className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
-                      />
+                      <div className="flex items-center gap-2">
+                        <CountryCodeSelector
+                          value={countryCode}
+                          onChange={setCountryCode}
+                          locale={locale}
+                          disabled={loading}
+                        />
+                        <input
+                          required
+                          type="tel"
+                          value={form.phone}
+                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                          placeholder="94 670 292"
+                          className="focus:border-brand-teal focus:ring-brand-teal/20 min-w-0 flex-1 rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
 

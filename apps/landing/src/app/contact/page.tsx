@@ -1,5 +1,6 @@
 'use client';
 
+import { CountryCodeSelector } from '@/components/country-code-selector';
 import { PageFrame } from '@/components/site-shell';
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
@@ -40,7 +41,8 @@ const data: Record<
     infoText:
       'Notre équipe est à votre disposition pour vous accompagner dans l’utilisation de Matchy+ ou pour toute proposition de partenariat.',
     directContact: 'Contact direct',
-    location: 'Tunis, Tunisie (Panafricain)',
+    location:
+      'Immeuble AOUN, 5ème étage, Lotissement Stade Lamine, Rue 20 Mars, Cité Jawhara, Sousse, Tunisie',
   },
   en: {
     title: 'Contact us',
@@ -57,7 +59,8 @@ const data: Record<
     infoText:
       'Our team is here to assist you with Matchy+ or discuss partnership opportunities across the continent.',
     directContact: 'Direct contact',
-    location: 'Tunis, Tunisia (Pan-African)',
+    location:
+      'AOUN Building, 5th Floor, Stade Lamine Subdivision, 20 Mars Street, Cité Jawhara, Sousse, Tunisia',
   },
   ar: {
     title: 'اتصل بنا',
@@ -72,7 +75,7 @@ const data: Record<
     infoTitle: 'دعنا نتحدث عن مشروعك',
     infoText: 'فريقنا متاح لمساعدتك في استخدام Matchy+ أو لمناقشة أي مقترح شراكة.',
     directContact: 'اتصال مباشر',
-    location: 'تونس، الجمهورية التونسية (عموم إفريقيا)',
+    location: 'عمارة عون، الطابق الخامس، تقسيم ملعب الأمين، نهج 20 مارس، حي جوهرة، سوسة، تونس',
   },
 };
 
@@ -81,6 +84,7 @@ export default function Contact() {
   const t = data[locale];
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [countryCode, setCountryCode] = useState('+216');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -93,6 +97,7 @@ export default function Contact() {
     setLoading(true);
 
     try {
+      const fullPhone = form.phone ? `${countryCode} ${form.phone}`.trim() : '';
       await fetch(`${API_URL}/v1/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,7 +105,7 @@ export default function Contact() {
           type: 'contact',
           name: form.name,
           email: form.email,
-          phone: form.phone,
+          phone: fullPhone,
           message: form.message,
         }),
       });
@@ -141,10 +146,10 @@ export default function Contact() {
                     <div>
                       <p className="text-muted-foreground text-xs">E-mail</p>
                       <a
-                        href="mailto:hello@matchy.tn"
+                        href="mailto:Contact@matchyplus.com"
                         className="hover:text-brand-blue font-semibold"
                       >
-                        hello@matchy.tn
+                        Contact@matchyplus.com
                       </a>
                     </div>
                   </div>
@@ -155,19 +160,21 @@ export default function Contact() {
                     </span>
                     <div>
                       <p className="text-muted-foreground text-xs">{t.directContact}</p>
-                      <span className="font-semibold">+216 70 000 000</span>
+                      <a href="tel:+21694670292" className="hover:text-brand-teal font-semibold">
+                        +216 94 670 292
+                      </a>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3.5 text-sm text-neutral-700">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-neutral-100 text-amber-500">
+                  {/* <div className="flex items-start gap-3.5 text-sm text-neutral-700">
+                    <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-neutral-100 text-amber-500">
                       <MapPin className="h-5 w-5" />
                     </span>
                     <div>
-                      <p className="text-muted-foreground text-xs">Localisation</p>
-                      <span className="font-semibold">{t.location}</span>
+                      <p className="text-muted-foreground text-xs">Adresse</p>
+                      <span className="leading-relaxed font-semibold">{t.location}</span>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
@@ -237,13 +244,21 @@ export default function Contact() {
                       <label className="text-brand-navy mb-1.5 block text-xs font-bold">
                         {t.phone}
                       </label>
-                      <input
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder="+216 -- --- ---"
-                        className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
-                      />
+                      <div className="flex items-center gap-2">
+                        <CountryCodeSelector
+                          value={countryCode}
+                          onChange={setCountryCode}
+                          locale={locale}
+                          disabled={loading}
+                        />
+                        <input
+                          type="tel"
+                          value={form.phone}
+                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                          placeholder="-- --- ---"
+                          className="focus:border-brand-teal focus:ring-brand-teal/20 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:bg-white focus:ring-2 focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
 

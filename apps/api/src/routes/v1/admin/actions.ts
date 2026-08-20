@@ -8,6 +8,7 @@ import { PROFILE_PHOTO_CONTENT_TYPES } from '../../../constants.js';
 import {
   adminAnalyticsSchema,
   adminChangePasswordSchema,
+  adminCreateUserSchema,
   adminDeleteUserSchema,
   adminGetUserPhotoSchema,
   adminGetUserSchema,
@@ -25,6 +26,7 @@ import { AdminService } from '../../../services/admin.js';
 import { ReportsService } from '../../../services/reports.js';
 import {
   AdminChangePasswordPayload,
+  AdminCreateUserPayload,
   AdminListUsersQuery,
   AdminUpdatePlanPayload,
   AdminUpdateUserPayload,
@@ -58,6 +60,15 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         request.query,
       );
       return reply.code(200).send(data);
+    },
+  );
+
+  fastify.post<{ Body: AdminCreateUserPayload }>(
+    '/users',
+    { schema: adminCreateUserSchema },
+    async (request, reply) => {
+      const user = await adminService.createUser(request.body);
+      return reply.code(200).send({ user });
     },
   );
 

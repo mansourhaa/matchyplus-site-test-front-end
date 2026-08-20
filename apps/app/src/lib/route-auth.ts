@@ -25,6 +25,8 @@ export const DASHBOARD_PATH_PREFIXES = [
   '/notifications',
   '/edit-profile',
   '/settings',
+  '/privacy-policy',
+  '/terms-of-service',
 ] as const;
 
 const CLOCK_SKEW_SECONDS = 30;
