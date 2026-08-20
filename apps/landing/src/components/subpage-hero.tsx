@@ -15,14 +15,10 @@ export function SubpageHero({
   children?: ReactNode;
 }) {
   return (
-    <section className="from-brand-blue via-brand-blue to-brand-teal relative overflow-hidden bg-gradient-to-br pt-32 pb-24 text-white md:pt-40 md:pb-32">
-      {/* Curved cut at the bottom like the home hero */}
-      <div
-        className="bg-background absolute inset-0"
-        style={{ clipPath: 'polygon(0 84%, 100% 96%, 100% 100%, 0 100%)' }}
-        aria-hidden="true"
-      />
-
+    <section
+      className="from-brand-blue via-brand-blue to-brand-teal relative overflow-hidden bg-gradient-to-br pt-32 pb-36 text-white md:pt-40 md:pb-44"
+      style={{ clipPath: 'polygon(0 0, 100% 0, 100% 88%, 0 100%)' }}
+    >
       <div className="relative z-10 mx-auto max-w-4xl px-5 text-center">
         {eyebrow && (
           <motion.span

@@ -8,35 +8,33 @@ type Props = {
 export function LegalDocumentView({ document, isRtl = false }: Props) {
   return (
     <div
-      className="min-h-full overflow-y-auto"
+      className="w-full"
       style={{
-        background: '#F5F7FA',
         fontFamily: isRtl ? 'var(--font-cairo), sans-serif' : 'var(--font-baloo), sans-serif',
       }}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      <div className="mx-auto max-w-3xl px-4 py-6 md:px-8">
-        <div className="mb-6 text-center">
-          <h1 className="mb-2 text-2xl font-bold text-[#1A1A2E]">{document.heading}</h1>
-          <p className="text-sm text-[#888]">{document.subheading}</p>
-        </div>
-
-        <div className="rounded-xl bg-white p-4 shadow-sm" style={{ border: '1px solid #F0F0F0' }}>
+      <div className="rounded-3xl border border-neutral-100 bg-white p-6 shadow-2xl sm:p-10">
+        <div className="space-y-6">
           {document.sections.map((section, sIdx) => (
             <div
               key={section.title}
-              className={sIdx === 0 ? '' : 'mt-5 border-t border-[#F0F0F0] pt-5'}
+              className={sIdx === 0 ? '' : 'border-t border-neutral-100 pt-6'}
             >
-              <h2 className="mb-2 text-base font-bold text-[#2F76BB]">{section.title}</h2>
-              <p className="text-sm leading-relaxed whitespace-pre-line text-[#555]">
+              <h2 className="text-brand-blue mb-2.5 text-lg font-bold sm:text-xl">
+                {section.title}
+              </h2>
+              <p className="text-sm leading-relaxed whitespace-pre-line text-neutral-600 sm:text-base">
                 {section.content}
               </p>
             </div>
           ))}
         </div>
 
-        <div className="mt-6 rounded-lg bg-blue-50 p-3" style={{ border: '1px solid #D4E1EE' }}>
-          <p className="text-center text-xs text-[#555]">{document.footer}</p>
+        <div className="from-brand-blue/10 via-brand-teal/10 to-brand-teal/5 border-brand-teal/20 mt-8 rounded-2xl border bg-gradient-to-r p-4 text-center">
+          <p className="text-brand-navy text-xs leading-relaxed font-medium sm:text-sm">
+            {document.footer}
+          </p>
         </div>
       </div>
     </div>

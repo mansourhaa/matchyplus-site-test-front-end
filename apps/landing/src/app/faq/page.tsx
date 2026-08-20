@@ -11,12 +11,24 @@ type FAQItem = [string, string];
 
 const data: Record<
   'fr' | 'en' | 'ar',
-  { title: string; intro: string; items: FAQItem[]; moreQuestions: string; contactUs: string }
+  {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    sectionTitle: string;
+    items: FAQItem[];
+    moreQuestions: string;
+    supportAvailability: string;
+    contactUs: string;
+  }
 > = {
   fr: {
+    eyebrow: 'Matchy+ FAQ',
     title: 'Questions Fréquentes',
     intro: 'Tout ce que vous devez savoir pour démarrer et tirer le meilleur parti de Matchy+.',
+    sectionTitle: 'Questions et réponses générales',
     moreQuestions: 'Vous ne trouvez pas la réponse à votre question ?',
+    supportAvailability: 'Notre équipe d’assistance est disponible 7j/7.',
     contactUs: 'Contacter notre équipe',
     items: [
       [
@@ -46,9 +58,12 @@ const data: Record<
     ],
   },
   en: {
+    eyebrow: 'Matchy+ FAQ',
     title: 'Frequently Asked Questions',
     intro: 'Everything you need to know to get started and make the most out of Matchy+.',
+    sectionTitle: 'General Questions & Answers',
     moreQuestions: 'Cannot find the answer you are looking for?',
+    supportAvailability: 'Our support team is available 7 days a week.',
     contactUs: 'Contact our team',
     items: [
       [
@@ -78,9 +93,12 @@ const data: Record<
     ],
   },
   ar: {
+    eyebrow: 'الأسئلة الشائعة ماتشي بلس',
     title: 'الأسئلة الشائعة',
     intro: 'كل ما تحتاج معرفته للبدء وتحقيق أقصى استفادة من منصة ماتشي بلس.',
+    sectionTitle: 'أسئلة وأجوبة عامة',
     moreQuestions: 'لم تجد الإجابة التي تبحث عنها؟',
+    supportAvailability: 'فريق الدعم لدينا متاح طوال أيام الأسبوع 7/7.',
     contactUs: 'تواصل مع فريقنا',
     items: [
       [
@@ -123,7 +141,7 @@ export default function FAQ() {
   return (
     <PageFrame>
       <main className="bg-neutral-50/60 pb-28">
-        <SubpageHero eyebrow="Matchy+ FAQ" title={t.title} subtitle={t.intro} />
+        <SubpageHero eyebrow={t.eyebrow} title={t.title} subtitle={t.intro} />
 
         <div className="relative z-20 container -mt-10 max-w-4xl sm:-mt-14">
           <div className="rounded-3xl border border-neutral-100 bg-white p-6 shadow-2xl sm:p-10">
@@ -131,7 +149,7 @@ export default function FAQ() {
               <span className="bg-brand-teal/15 text-brand-teal grid h-8 w-8 place-items-center rounded-lg">
                 <HelpCircle className="h-4 w-4" />
               </span>
-              <h2 className="text-brand-navy text-lg font-bold">Questions et réponses générales</h2>
+              <h2 className="text-brand-navy text-lg font-bold">{t.sectionTitle}</h2>
             </div>
 
             <div className="space-y-4">
@@ -180,9 +198,7 @@ export default function FAQ() {
                 </span>
                 <div>
                   <h4 className="text-brand-navy text-sm font-bold">{t.moreQuestions}</h4>
-                  <p className="text-muted-foreground mt-0.5 text-xs">
-                    Notre équipe d’assistance est disponible 7j/7.
-                  </p>
+                  <p className="text-muted-foreground mt-0.5 text-xs">{t.supportAvailability}</p>
                 </div>
               </div>
               <Link

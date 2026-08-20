@@ -3,18 +3,20 @@
 import { PageFrame } from '@/components/site-shell';
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { AlertTriangle, Lock, ShieldAlert, Trash2 } from 'lucide-react';
+import { AlertTriangle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 const data: Record<
   'fr' | 'en' | 'ar',
   {
+    eyebrow: string;
     title: string;
     subtitle: string;
     warningTitle: string;
     warningDesc: string;
     emailLabel: string;
     reasonLabel: string;
+    reasonPlaceholder: string;
     button: string;
     confirmText: string;
     sent: string;
@@ -22,6 +24,7 @@ const data: Record<
   }
 > = {
   fr: {
+    eyebrow: 'Matchy+ Confidentialité',
     title: 'Suppression de compte',
     subtitle:
       'Conformément au RGPD et à notre engagement pour la confidentialité de vos données personnelles.',
@@ -30,6 +33,7 @@ const data: Record<
       'La suppression de votre compte effacera définitivement votre profil, vos avis, votre solde Matchy Wallet et vos historiques de conversations.',
     emailLabel: 'Adresse e-mail associée au compte Matchy+',
     reasonLabel: 'Pourquoi souhaitez-vous nous quitter ? (optionnel)',
+    reasonPlaceholder: 'Partagez-nous vos retours pour nous aider à nous améliorer...',
     button: 'Confirmer la demande de suppression',
     confirmText:
       'Je confirme vouloir supprimer définitivement mon compte et toutes les données associées.',
@@ -38,6 +42,7 @@ const data: Record<
       'Votre demande sera traitée par notre équipe sous un délai maximum de 30 jours conformément à notre politique de confidentialité.',
   },
   en: {
+    eyebrow: 'Matchy+ Privacy',
     title: 'Account Deletion',
     subtitle: 'In compliance with GDPR and our strict commitment to personal data privacy.',
     warningTitle: 'Irreversible Action',
@@ -45,6 +50,7 @@ const data: Record<
       'Deleting your account will permanently remove your profile, reviews, Matchy Wallet balance, and chat history.',
     emailLabel: 'Email address associated with your Matchy+ account',
     reasonLabel: 'Why are you leaving? (optional)',
+    reasonPlaceholder: 'Share your feedback to help us improve...',
     button: 'Confirm deletion request',
     confirmText: 'I confirm that I want to permanently delete my account and all associated data.',
     sent: 'Deletion request recorded. You will receive a confirmation email shortly.',
@@ -52,6 +58,7 @@ const data: Record<
       'Your request will be processed by our team within 30 days in accordance with our privacy policy.',
   },
   ar: {
+    eyebrow: 'الخصوصية ماتشي بلس',
     title: 'حذف الحساب',
     subtitle: 'وفقًا لسياسات الخصوصية وحماية بياناتك الشخصية بالكامل.',
     warningTitle: 'إجراء نهائي لا يمكن التراجع عنه',
@@ -59,6 +66,7 @@ const data: Record<
       'سيؤدي حذف حسابك إلى مسح ملفك الشخصي وتقييماتك ورصيد Matchy Wallet وسجل المحادثات نهائيًا.',
     emailLabel: 'البريد الإلكتروني المرتبط بحساب Matchy+',
     reasonLabel: 'ما هو سبب المغادرة؟ (اختياري)',
+    reasonPlaceholder: 'شاركنا ملاحظاتك لمساعدتنا على تحسين خدماتنا...',
     button: 'تأكيد طلب حذف الحساب',
     confirmText: 'أؤكد رغبتي في حذف حسابي وجميع البيانات المرتبطة به نهائيًا.',
     sent: 'تم تسجيل طلب الحذف بنجاح. ستتلقى بريدًا إلكترونيًا لتأكيد العملية قريبًا.',
@@ -81,7 +89,7 @@ export default function DeleteAccount() {
   return (
     <PageFrame>
       <main className="bg-neutral-50/60 pb-28">
-        <SubpageHero eyebrow="Matchy+ Confidentialité" title={t.title} subtitle={t.subtitle} />
+        <SubpageHero eyebrow={t.eyebrow} title={t.title} subtitle={t.subtitle} />
 
         <div className="relative z-20 container -mt-10 max-w-3xl sm:-mt-14">
           <div className="rounded-3xl border border-neutral-100 bg-white p-6 shadow-2xl sm:p-10">
@@ -125,7 +133,7 @@ export default function DeleteAccount() {
                   </label>
                   <textarea
                     rows={4}
-                    placeholder="Partagez-nous vos retours pour nous aider à nous améliorer..."
+                    placeholder={t.reasonPlaceholder}
                     className="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm text-neutral-900 transition-all focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:outline-none"
                   />
                 </div>
