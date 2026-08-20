@@ -35,18 +35,18 @@ function buildUser(overrides: Partial<AdminManagedUser> = {}): AdminManagedUser 
   };
 }
 
-const FILTERS: AdminUserFilters = { search: '', category: 'all', plan: 'all', status: 'all' };
+const FILTERS: AdminUserFilters = { search: '', plan: 'all', status: 'all' };
 
 function renderSection(users: AdminManagedUser[]) {
   return render(
     <AdminUsersSection
       users={users}
       filters={FILTERS}
-      categoryOptions={[]}
       loading={false}
       onFiltersChange={vi.fn()}
       onOpenUser={vi.fn()}
       onDeleteUser={vi.fn()}
+      onAddUser={vi.fn()}
     />,
   );
 }

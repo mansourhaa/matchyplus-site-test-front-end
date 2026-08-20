@@ -1,5 +1,7 @@
 import { Prisma, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
+import { UpdateOnboardingProfileBody } from './onboarding.js';
+
 /**
  * Projection for every user row the admin panel reads. Declared here, in the types layer, so the
  * shape and the type derived from it live together and are shared rather than re-inlined per query.
@@ -48,6 +50,21 @@ export type AdminListUsersQuery = {
   limit?: number;
   search?: string;
   status?: UserStatus;
+  plan?: UserPlan;
+};
+
+/**
+ * Same shape a real phone-signup + completed onboarding produces, minus the OTP step —
+ * the admin vouches for the phone instead. `name`/`profileType` are required here even
+ * though onboarding's own patch payload treats them as progressively-filled-in and
+ * optional, since this creates the account in one shot rather than across wizard steps.
+ */
+export type AdminCreateUserPayload = Omit<UpdateOnboardingProfileBody, 'name' | 'profileType'> & {
+  name: string;
+  phone: string;
+  password: string;
+  email?: string;
+  profileType: 'INDIVIDUAL' | 'PROVIDER';
   plan?: UserPlan;
 };
 

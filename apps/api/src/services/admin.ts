@@ -2,10 +2,12 @@ import bcrypt from 'bcryptjs';
 
 import { Prisma, PrismaClient, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
+import { normalizePhoneForAuth } from '../lib/phone.js';
 import {
   AdminActor,
   AdminAnalyticsResult,
   AdminChangePasswordPayload,
+  AdminCreateUserPayload,
   AdminListUsersQuery,
   AdminUpdatePlanPayload,
   AdminUpdateUserPayload,
@@ -15,6 +17,7 @@ import {
 import { AbstractServiceOptions } from '../types/services.js';
 import { badRequest, forbidden, insufficientPrivileges, notFound } from '../utils/http-errors.js';
 import { filenameFromStoredPath, isStoredMediaPath } from '../utils/media-storage.js';
+import { isPasswordPolicySatisfied } from '../utils/password-policy.js';
 import { assertMinimumRole, outranks, rolesBelow } from '../utils/roles.js';
 import { TokenService } from './token.js';
 
@@ -153,6 +156,99 @@ export class AdminService {
     ]);
 
     return { users, total };
+  }
+
+  /**
+   * Creates a member account in one shot — same end state as a real phone signup that
+   * finished onboarding, minus the OTP step (the admin vouches for the phone instead)..
+   */
+  async createUser(payload: AdminCreateUserPayload) {
+    const phone = normalizePhoneForAuth(payload.phone);
+    if (!phone) {
+      throw badRequest('invalid phone number', 'invalid_phone');
+    }
+
+    if (await this.prisma.user.findUnique({ where: { phone } })) {
+      throw badRequest('phone already registered', 'phone_already_registered');
+    }
+
+    if (payload.email) {
+      const email = payload.email.toLowerCase();
+      if (await this.prisma.user.findUnique({ where: { email } })) {
+        throw badRequest('email already registered', 'email_already_registered');
+      }
+    }
+
+    if (!isPasswordPolicySatisfied(payload.password)) {
+      throw badRequest('password does not meet the security policy', 'weak_password');
+    }
+
+    const name = payload.name.trim();
+    if (!name) {
+      throw badRequest('name is required', 'invalid_name');
+    }
+
+    // Same completeness contract as a real onboarding finish (OnboardingService.completeOnboarding)
+    // — this account skips the wizard entirely, so it must be enforced here instead.
+    const isIndividual = payload.profileType === 'INDIVIDUAL';
+    if (isIndividual && !payload.job?.trim()) {
+      throw badRequest('job is required for an individual profile', 'onboarding_incomplete');
+    }
+    if (!payload.interests?.length) {
+      throw badRequest('at least one interest is required', 'onboarding_incomplete');
+    }
+    if (!payload.selectedGoals?.length) {
+      throw badRequest('at least one goal is required', 'onboarding_incomplete');
+    }
+    if (payload.offerService && (!payload.serviceType?.trim() || !payload.price?.trim())) {
+      throw badRequest(
+        'service type and price are required when offering a service',
+        'onboarding_incomplete',
+      );
+    }
+    // A brand-new account can never already own a real uploaded file — only a base64
+    // data URL (or none) is a legal `image` value here, same guard OnboardingService
+    // applies when a member tries to set someone else's stored photo path as their own.
+    if (payload.image && isStoredMediaPath(payload.image)) {
+      throw badRequest('image must be a newly uploaded photo, not a stored path', 'invalid_image');
+    }
+
+    const hashedPassword = await bcrypt.hash(payload.password, await bcrypt.genSalt(10));
+
+    const user = await this.prisma.user.create({
+      data: {
+        name,
+        phone,
+        email: payload.email?.toLowerCase(),
+        password: hashedPassword,
+        auth_provider: 'phone',
+        phone_verified: true,
+        plan: payload.plan ?? UserPlan.FREE,
+        job: payload.job,
+        bio: payload.bio,
+        image: payload.image,
+        city: payload.city,
+        profile_type: payload.profileType,
+        offer_service: payload.offerService ?? false,
+        service_type: payload.offerService ? payload.serviceType : undefined,
+        price: payload.offerService ? payload.price : undefined,
+        interests: payload.interests,
+        selected_goals: payload.selectedGoals,
+        availability_days: payload.availabilityDays ?? [],
+        availability_hours: payload.availabilityHours ?? [],
+        contact_modes: payload.contactModes ?? [],
+        languages: payload.languages ?? [],
+        experience: isIndividual ? payload.experience : undefined,
+        sector: payload.sector,
+        education_level: payload.educationLevel,
+        experiences: payload.experiences,
+        educations: payload.educations,
+        onboarding_completed_at: new Date(),
+      },
+      select: adminUserSelect,
+    });
+
+    return user;
   }
 
   /** Same hierarchy as the writes: an admin only opens a profile they could act on. */
