@@ -179,8 +179,15 @@ export class TokenService {
     }
 
     if (stored.revoked_at !== null) {
-      // If token was revoked more than 30s ago, treat as token theft / replay attack and revoke all sessions
-      const gracePeriodMs = 30 * 1000;
+      // A token that was already revoked could be a replay attack — but it could also be
+      // a second tab or mobile process presenting the same token slightly after the first
+      // one consumed it during a concurrent proactive refresh. Both tabs call refresh on
+      // the same 5-minute timer, so the window between "first wins" and "second arrives"
+      // can be anywhere from milliseconds to several minutes depending on browser timer
+      // throttling. The grace period must be at least as long as the proactive refresh
+      // interval (5 min = 300 s) to avoid false-positive replay detection; genuine theft
+      // replays an already-spent token well outside that window.
+      const gracePeriodMs = 5 * 60 * 1000; // 300 s — matches REFRESH_INTERVAL_MS in useProactiveRefresh
       const isOutsideGracePeriod = Date.now() - stored.revoked_at.getTime() > gracePeriodMs;
       if (isOutsideGracePeriod) {
         await this.revokeAllRefreshTokens(stored.user_id);

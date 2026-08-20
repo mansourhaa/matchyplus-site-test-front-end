@@ -399,13 +399,15 @@ describe('TokenService', () => {
       crypto.createHash('sha256').update(refreshToken).digest('hex'),
     );
 
-    // Revoked 60 seconds ago (outside 30s grace window)
+    // Revoked 310 seconds ago — outside the 300 s grace window (5 min, matching
+    // REFRESH_INTERVAL_MS in useProactiveRefresh so concurrent-tab refreshes never
+    // trigger false-positive theft detection).
     prisma.refreshToken.findUnique.mockResolvedValue({
       id: decoded.jti,
       user_id: 'user-1',
       token_hash: storedTokenHash,
       expires_at: new Date(Date.now() + 60_000),
-      revoked_at: new Date(Date.now() - 60_000),
+      revoked_at: new Date(Date.now() - 310_000),
     });
 
     await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow('invalid_refresh_token');
@@ -425,7 +427,8 @@ describe('TokenService', () => {
       crypto.createHash('sha256').update(refreshToken).digest('hex'),
     );
 
-    // Revoked 5 seconds ago (within 30s grace window for concurrent race)
+    // Revoked 5 seconds ago — well within the 300 s grace window, as a second tab
+    // presenting the same token immediately after the first tab consumed it would.
     prisma.refreshToken.findUnique.mockResolvedValue({
       id: decoded.jti,
       user_id: 'user-1',
