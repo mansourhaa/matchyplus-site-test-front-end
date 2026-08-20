@@ -57,6 +57,36 @@ export const adminLogoutSchema = {
   },
 };
 
+export const adminRefreshSchema = {
+  tags: ['auth', 'admin'],
+  response: {
+    200: {
+      description: 'Successful response. Both tokens are rotated as HttpOnly cookies, never here.',
+      type: 'object',
+      properties: {
+        ok: { type: 'boolean' },
+      },
+    },
+    '4xx': {
+      type: 'object',
+      properties: {
+        status: { type: 'number' },
+        code: { type: 'string' },
+        message: { type: 'string' },
+      },
+    },
+    500: {
+      description: 'Error response',
+      type: 'object',
+      properties: {
+        status: { type: 'number', default: 500 },
+        code: { type: 'string' },
+        message: { type: 'string' },
+      },
+    },
+  },
+};
+
 export const authCheckSchema = {
   tags: ['auth'],
   headers: {

@@ -8,6 +8,7 @@ import { config } from '../config.js';
  * no longer read the token, which both sessionStorage and a JS-written cookie allowed.
  */
 export const ADMIN_SESSION_COOKIE = 'admin_access_token';
+export const ADMIN_REFRESH_COOKIE = 'admin_refresh_token';
 
 /** Seconds, matching the access token's own lifetime so the two never disagree. */
 function sessionMaxAge(): number {
@@ -37,4 +38,20 @@ export function adminSessionCookieOptions(): CookieSerializeOptions {
 /** Same attributes, zero lifetime: anything else and the browser keeps the original cookie. */
 export function clearAdminSessionCookieOptions(): CookieSerializeOptions {
   return { ...baseOptions(), maxAge: 0 };
+}
+
+// Scoped to the admin auth routes only — the browser never attaches this cookie to any
+// other request, shrinking where a stolen refresh token could otherwise be replayed from.
+// Narrower than the member refresh cookie's `/api/v1/auth` scope on purpose: admin has no
+// other route under `/api/v1/auth/admin` that would ever need to read it.
+export function adminRefreshCookieOptions(): CookieSerializeOptions {
+  return {
+    ...baseOptions(),
+    path: '/api/v1/auth/admin',
+    maxAge: config.adminRefreshTokenTtlSeconds,
+  };
+}
+
+export function clearAdminRefreshCookieOptions(): CookieSerializeOptions {
+  return { ...baseOptions(), path: '/api/v1/auth/admin', maxAge: 0 };
 }

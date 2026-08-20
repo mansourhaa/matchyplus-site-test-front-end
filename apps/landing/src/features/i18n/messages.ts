@@ -26,42 +26,43 @@ export const messages: Record<Locale, MessageTree> = {
       title: 'Une nouvelle façon de trouver et proposer des services',
       body: 'Une mise en relation simple, intelligente et humaine entre les talents locaux et les personnes qui recherchent un service.',
 
-      wallet: 'Développez votre visibilité avec Matchy Wallet',
-      walletBody:
-        "Un portefeuille numérique qui permet aux professionnels d'accéder à des fonctionnalités premium sans complexité.",
-
-      exploreTitle: 'Découvrez Matchy Explore',
-      exploreBody:
-        'Trouvez rapidement les profils les plus pertinents autour de vous grâce à la géolocalisation intelligente et au matching personnalisé.',
-
-      stepsTitle: 'Comment ça marche',
-      stepsBody:
-        'Matchy+ simplifie la mise en relation entre les talents locaux et les personnes à la recherche de services.',
-
-      downloadTitle: 'Rencontrez des professionnels inspirants sur Matchy',
-      downloadBody:
-        'Rejoignez la plus grande plateforme panafricaine de mise en relation géolocalisée pour les services locaux.',
-
-      swipeTitle: 'Swiper, matchez, connectez-vous',
+      swipeTitle: 'Swiper, Matchez, Connectez-vous',
       swipeText:
-        'Un système de matching simple et intuitif qui rapproche les bonnes compétences des bonnes opportunités.',
+        'Un système de matching intelligent qui met en relation les talents et les opportunités locales en un instant.',
 
       growTitle: 'Développez votre visibilité',
-      growText: 'Mettez en avant vos services et attirez davantage de clients locaux.',
+      growText: 'Attirez de nouveaux clients et valorisez vos compétences au cœur de votre région.',
 
       nearTitle: 'Trouvez des services près de vous',
-      nearText: 'Découvrez rapidement des professionnels qualifiés autour de votre localisation.',
+      nearText:
+        'Découvrez des professionnels locaux qualifiés et disponibles autour de vous grâce à la géolocalisation intelligente.',
 
       aiTitle: "Recommandations alimentées par l'IA",
       aiText:
-        'Des suggestions pertinentes basées sur vos besoins, votre localisation et votre activité.',
+        'Des suggestions sur mesure basées sur vos besoins, votre historique et votre localisation.',
 
+      wallet: 'Développez votre visibilité avec Matchy Wallet',
+      walletSubtitle: "Plus de visibilité. Plus d'opportunités.",
+      walletBody:
+        "Matchy Wallet est le portefeuille numérique intégré qui permet aux professionnels d'accéder à des fonctionnalités premium sans complexité.",
+      walletUsage: 'Utilisez vos crédits pour :',
       walletBullets: [
         'Booster votre profil',
-        'Remonter dans les résultats',
+        'Remonter dans les résultats de recherche',
         'Augmenter votre visibilité locale',
+        'Mettre en avant vos services',
         'Accéder à des fonctionnalités exclusives',
+        'Générer davantage de contacts qualifiés',
       ],
+
+      exploreTitle: 'Découvrir Matchy explore',
+      exploreBody:
+        'Matchy Explore vous permet de découvrir des professionnels, artisans, freelances et prestataires de confiance près de votre localisation. Grâce à la géolocalisation intelligente et au matching personnalisé, trouvez rapidement les profils les plus pertinents pour répondre à vos besoins.',
+
+      stepsTitle: 'Comment Ça Marche',
+      stepsSubtitle: 'les étapes ..',
+      stepsBody:
+        'Matchy+ simplifie la mise en relation entre les talents locaux et les personnes à la recherche de services.',
 
       steps: [
         [
@@ -76,6 +77,11 @@ export const messages: Record<Locale, MessageTree> = {
           'Brisez la glace en quelques secondes et laissez la magie opérer.',
         ],
       ],
+
+      downloadTitle: 'Rencontrez Des Professionnels Inspirants Sur Matchy',
+      downloadBody:
+        'Rejoignez Matchy+ et participez à la création de la plus grande plateforme panafricaine de mise en relation géolocalisée pour les services locaux.',
+      learnMore: 'En Savoir Plus',
 
       downloadBadge: 'Download now',
       getItOn: 'GET IT ON',
@@ -135,44 +141,53 @@ export const messages: Record<Locale, MessageTree> = {
       title: 'A new way to find and offer services',
       body: 'A simple, smart and human connection between local talent and people looking for a service.',
 
-      wallet: 'Grow your visibility with Matchy Wallet',
-      walletBody: 'A digital wallet that gives professionals access to premium features with ease.',
-
-      exploreTitle: 'Discover Matchy Explore',
-      exploreBody:
-        'Quickly find the most relevant profiles around you through smart geolocation and personalized matching.',
-
-      stepsTitle: 'How it works',
-      stepsBody: 'Matchy+ makes it easy to connect local talent with people looking for services.',
-
-      downloadTitle: 'Meet inspiring professionals on Matchy',
-      downloadBody: 'Join the largest pan-African platform for location-based local services.',
-
-      swipeTitle: 'Swipe, match, connect',
+      swipeTitle: 'Swipe, Match, Connect',
       swipeText:
-        'A simple, intuitive matching system that brings the right skills to the right opportunities.',
+        'A smart matching system that brings local talent and business opportunities together in an instant.',
 
       growTitle: 'Grow your visibility',
-      growText: 'Put your services in the spotlight and attract more local clients.',
+      growText:
+        'Attract new customers and highlight your skills right at the heart of your region.',
 
-      nearTitle: 'Services near you',
-      nearText: 'Discover qualified professionals around your location, fast.',
+      nearTitle: 'Find services near you',
+      nearText:
+        'Discover qualified and available local professionals near you with smart geolocation.',
 
       aiTitle: 'AI-powered recommendations',
-      aiText: 'Relevant suggestions based on your needs, location and activity.',
+      aiText: 'Tailored suggestions based on your needs, activity history, and exact location.',
 
+      wallet: 'Grow your visibility with Matchy Wallet',
+      walletSubtitle: 'More visibility. More opportunities.',
+      walletBody:
+        'Matchy Wallet is the built-in digital wallet that gives professionals access to premium features with zero complexity.',
+      walletUsage: 'Use your credits to:',
       walletBullets: [
         'Boost your profile',
         'Rise in search results',
         'Increase your local visibility',
+        'Highlight your services',
         'Access exclusive features',
+        'Generate more qualified leads',
       ],
+
+      exploreTitle: 'Discover Matchy explore',
+      exploreBody:
+        'Matchy Explore allows you to discover trusted professionals, artisans, freelancers and service providers near your location. Smart geolocation and tailored matching help you quickly find the best matches for your needs.',
+
+      stepsTitle: 'How It Works',
+      stepsSubtitle: 'the steps ..',
+      stepsBody: 'Matchy+ makes it easy to connect local talent with people looking for services.',
 
       steps: [
         ['1', 'Swipe', 'Our algorithm does the work and suggests relevant profiles every day.'],
         ['2', 'Choose a profile', 'Match when interest is mutual.'],
         ['3', 'Get in touch', 'Break the ice in seconds.'],
       ],
+
+      downloadTitle: 'Meet Inspiring Professionals On Matchy',
+      downloadBody:
+        'Join Matchy+ and take part in building the largest pan-African platform for location-based local services.',
+      learnMore: 'Learn More',
 
       downloadBadge: 'Download now',
       getItOn: 'GET IT ON',
@@ -231,42 +246,50 @@ export const messages: Record<Locale, MessageTree> = {
       title: 'طريقة جديدة للعثور على الخدمات وتقديمها',
       body: 'ربط بسيط وذكي وإنساني بين المواهب المحلية والأشخاص الذين يبحثون عن خدمة.',
 
-      wallet: 'طوّر ظهورك مع Matchy Wallet',
-      walletBody: 'محفظة رقمية تمنح المهنيين ميزات مميزة بسهولة.',
-
-      exploreTitle: 'اكتشف Matchy Explore',
-      exploreBody: 'اعثر بسرعة على الملفات المناسبة من حولك بفضل تحديد الموقع والمطابقة الذكية.',
-
-      stepsTitle: 'كيف تعمل المنصة',
-      stepsBody: 'تسهّل Matchy+ التواصل بين المواهب المحلية والأشخاص الباحثين عن الخدمات.',
-
-      downloadTitle: 'التقِ بمهنيين ملهمين على ماتشي',
-      downloadBody: 'انضم إلى أكبر منصة إفريقية للخدمات المحلية المعتمدة على الموقع.',
-
       swipeTitle: 'تصفّح، طابق، تواصل',
-      swipeText: 'نظام مطابقة بسيط وبديهي يقرّب المهارات من الفرص المناسبة.',
+      swipeText: 'نظام مطابقة ذكي يقرّب المهارات من الفرص المحلية المناسبة في لحظات.',
 
       growTitle: 'طوّر ظهورك',
-      growText: 'ضع خدماتك في الواجهة واجذب المزيد من العملاء المحليين.',
+      growText: 'اجذب عملاء جدد وأبرز كفاءاتك في قلب منطقتك.',
 
       nearTitle: 'خدمات بالقرب منك',
-      nearText: 'اكتشف مهنيين مؤهلين حول موقعك بسرعة.',
+      nearText: 'اكتشف مهنيين محليين مؤهلين ومتاحين من حولك بفضل تحديد الموقع الذكي.',
 
       aiTitle: 'توصيات بالذكاء الاصطناعي',
-      aiText: 'اقتراحات مناسبة حسب احتياجاتك وموقعك ونشاطك.',
+      aiText: 'اقتراحات مخصصة بناءً على احتياجاتك وسجل نشاطك وموقعك الدقيق.',
 
+      wallet: 'طوّر ظهورك مع Matchy Wallet',
+      walletSubtitle: 'مزيد من الظهور. مزيد من الفرص.',
+      walletBody:
+        'محفظة Matchy Wallet هي المحفظة الرقمية المتكاملة التي تتيح للمهنيين الوصول إلى ميزات مميزة بكل سهولة.',
+      walletUsage: 'استخدم رصيدك من أجل:',
       walletBullets: [
         'زيادة ظهور ملفك الشخصي',
         'الظهور أولاً في نتائج البحث',
         'تحسين ظهورك المحلي',
+        'إبراز خدماتك',
         'الوصول إلى ميزات حصرية',
+        'جذب المزيد من جهات الاتصال المؤهلة',
       ],
+
+      exploreTitle: 'اكتشف Matchy explore',
+      exploreBody:
+        'تتيح لك Matchy Explore اكتشاف المحترفين والحرفيين والمستقلين الموثوقين بالقرب منك بفضل تحديد الموقع والمطابقة المخصصة.',
+
+      stepsTitle: 'كيف تعمل المنصة',
+      stepsSubtitle: 'الخطوات ..',
+      stepsBody: 'تسهّل Matchy+ التواصل بين المواهب المحلية والأشخاص الباحثين عن الخدمات.',
 
       steps: [
         ['1', 'تصفّح', 'اكتشف الأشخاص المناسبين وتواصل معهم بسهولة.'],
         ['2', 'اختر ملفًا', 'تطابق مع الآخرين عند وجود اهتمام متبادل.'],
         ['3', 'تواصل', 'ابدأ المحادثة في ثوانٍ ودع الباقي للمنصة.'],
       ],
+
+      downloadTitle: 'التقِ بمهنيين ملهمين على ماتشي',
+      downloadBody:
+        'انضم إلى Matchy+ وساهم في بناء أكبر منصة إفريقية للخدمات المحلية المعتمدة على الموقع.',
+      learnMore: 'اعرف أكثر',
 
       downloadBadge: 'تحميل الآن',
       getItOn: 'تحميل من',

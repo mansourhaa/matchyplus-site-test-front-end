@@ -5,9 +5,6 @@ import { APP_LOGIN_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
-import { PhoneFrame } from './phone-frame';
-import { HeroScreen } from './screens';
-
 export function Hero() {
   const { t } = useI18n();
 
@@ -20,8 +17,8 @@ export function Hero() {
         aria-hidden="true"
       />
 
-      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 px-5 pt-32 pb-40 md:grid-cols-2 md:pt-40 md:pb-56">
-        <div className="text-white">
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pt-32 pb-36 md:grid-cols-2 md:gap-8 md:pt-36 md:pb-48 lg:pt-40 lg:pb-56">
+        <div className="text-center text-white md:text-left">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -34,7 +31,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-4xl leading-tight font-bold text-balance md:text-5xl"
+            className="text-3xl leading-tight font-bold text-balance sm:text-4xl md:text-4xl lg:text-5xl"
           >
             {t('landing.hero')}
           </motion.h1>
@@ -42,7 +39,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="mt-4 max-w-md leading-relaxed text-pretty text-white/85"
+            className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-pretty text-white/85 sm:text-base md:mx-0"
           >
             {t('landing.intro')}
           </motion.p>
@@ -61,18 +58,21 @@ export function Hero() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 60, rotate: -4 }}
-          animate={{ opacity: 1, y: 0, rotate: 0 }}
+          initial={{ opacity: 0, y: 60, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           className="flex justify-center md:justify-end"
         >
           <motion.div
-            animate={{ y: [0, -14, 0] }}
+            animate={{ y: [0, -12, 0] }}
             transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+            className="relative flex justify-center drop-shadow-2xl"
           >
-            <PhoneFrame>
-              <HeroScreen />
-            </PhoneFrame>
+            <img
+              src="/showcase/hero-phone.png"
+              alt="Matchy+ Profil Découverte"
+              className="h-auto max-h-[480px] w-auto max-w-[280px] object-contain sm:max-w-[320px] md:max-h-[520px] md:max-w-[320px] lg:max-h-[580px] lg:max-w-[360px]"
+            />
           </motion.div>
         </motion.div>
       </div>

@@ -154,6 +154,27 @@ describe('LoginForm — phone step', () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
+  // Regression: a banned/deactivated account has correct credentials — the account is
+  // just blocked — so it must not be lumped in with "wrong password or unknown phone"
+  // under the same generic invalid_credentials message.
+  it.each([
+    ['account_banned', /banni/],
+    ['account_inactive', /désactivé/],
+  ])('shows a specific message for %s', async (code, expectedText) => {
+    vi.mocked(api.post).mockRejectedValue(apiErrorWithCode(code));
+
+    renderWithAuthStore(<LoginForm />);
+
+    fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
+    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
+      target: { value: 'secret123' },
+    });
+    fireEvent.click(firstButton('Continuer'));
+
+    expect((await screen.findAllByText(expectedText))[0]).toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
   it('falls back to the generic message for invalid_credentials (wrong password or unknown phone)', async () => {
     vi.mocked(api.post).mockRejectedValue(apiErrorWithCode('invalid_credentials'));
 

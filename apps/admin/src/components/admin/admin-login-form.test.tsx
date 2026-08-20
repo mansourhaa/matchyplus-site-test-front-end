@@ -3,17 +3,11 @@ import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AdminLoginForm } from './admin-login-form';
 
-const push = vi.fn();
-const replace = vi.fn();
-const refresh = vi.fn();
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push, replace, refresh }),
-}));
+const assignMock = vi.fn();
 
 function renderForm(preloadedState?: Partial<ReturnType<typeof rootReducer>>) {
   const store = configureStore({
@@ -37,13 +31,16 @@ function submit(email: string, password: string) {
 }
 
 describe('AdminLoginForm', () => {
+  beforeEach(() => {
+    vi.stubGlobal('location', { ...window.location, assign: assignMock });
+  });
+
   afterEach(() => {
     // vitest runs without `globals`, so testing-library's automatic cleanup is not installed.
     cleanup();
     vi.restoreAllMocks();
-    push.mockClear();
-    replace.mockClear();
-    refresh.mockClear();
+    vi.unstubAllGlobals();
+    assignMock.mockClear();
     sessionStorage.clear();
     document.cookie = 'admin_session=; path=/; max-age=0';
   });
@@ -85,7 +82,7 @@ describe('AdminLoginForm', () => {
     const { store } = renderForm();
     submit('admin@matchyplus.tn', 'matchy2026');
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith('/admin'));
+    await waitFor(() => expect(assignMock).toHaveBeenCalledWith('/admin'));
 
     // `withCredentials` or the browser drops the Set-Cookie on this cross-origin call.
     expect(post).toHaveBeenCalledWith(
@@ -107,7 +104,7 @@ describe('AdminLoginForm', () => {
     renderForm();
     submit('a@x.tn', 'matchy2026');
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith('/admin'));
+    await waitFor(() => expect(assignMock).toHaveBeenCalledWith('/admin'));
 
     // The whole point of the HttpOnly cookie: an injected script finds no credential here.
     const readable = JSON.stringify(sessionStorage) + document.cookie + localStorage.length;
@@ -126,8 +123,7 @@ describe('AdminLoginForm', () => {
     expect(
       await screen.findByText('Identifiants incorrects. Vérifiez votre email et mot de passe.'),
     ).toBeInTheDocument();
-    expect(push).not.toHaveBeenCalled();
-    expect(replace).not.toHaveBeenCalled();
+    expect(assignMock).not.toHaveBeenCalled();
     expect(document.cookie).not.toContain('admin_session');
   });
 
@@ -149,8 +145,7 @@ describe('AdminLoginForm', () => {
       },
     });
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith('/admin'));
-    expect(push).not.toHaveBeenCalled();
+    await waitFor(() => expect(assignMock).toHaveBeenCalledWith('/admin'));
   });
 
   it('stays on login when stale admin state exists but the session marker is gone', async () => {
@@ -171,7 +166,6 @@ describe('AdminLoginForm', () => {
     });
 
     await waitFor(() => expect(screen.getByText('Connexion Admin')).toBeInTheDocument());
-    expect(replace).not.toHaveBeenCalled();
-    expect(push).not.toHaveBeenCalled();
+    expect(assignMock).not.toHaveBeenCalled();
   });
 });

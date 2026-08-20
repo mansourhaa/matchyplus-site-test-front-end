@@ -13,6 +13,7 @@ import {
   fetchAdminAnalytics,
   selectAdminAnalytics,
 } from '@/features/admin-analytics/store/admin-analytics-slice';
+import { useAdminProactiveRefresh } from '@/features/admin-auth/hooks/use-admin-proactive-refresh';
 import { ROLE_LABELS } from '@/features/admin-auth/schemas';
 import { adminLogout, selectAdminAuth } from '@/features/admin-auth/store/admin-auth-slice';
 import {
@@ -36,7 +37,6 @@ import {
   fetchAdminUserById,
   fetchAdminUsers,
   selectAdminUsers,
-  selectCategoryOptions,
   selectUser,
   setFilters,
   updateAdminUser,
@@ -82,12 +82,12 @@ const NAV_ITEMS: { key: NavKey; icon: LucideIcon; label: string }[] = [
 ];
 
 export function AdminPanel() {
+  useAdminProactiveRefresh();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { admin } = useAppSelector(selectAdminAuth);
   const { users, stats, selectedUser, loadingUsers, error, filters } =
     useAppSelector(selectAdminUsers);
-  const categoryOptions = useAppSelector(selectCategoryOptions);
   const {
     plans,
     saving: savingPlan,
@@ -393,7 +393,6 @@ export function AdminPanel() {
             <AdminUsersSection
               users={users}
               filters={filters}
-              categoryOptions={categoryOptions}
               loading={loadingUsers}
               onFiltersChange={(changes) => dispatch(setFilters(changes))}
               onOpenUser={(user) => openUserDetail(user, 'users')}

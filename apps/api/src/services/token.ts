@@ -6,13 +6,25 @@ import { PrismaClient, User, UserStatus } from '@saas-boilerplate/types';
 
 import { config } from '../config.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { isAdminRole } from '../utils/roles.js';
 
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const DAY_IN_SECONDS = 24 * 60 * 60;
 
 export type AccessTokenAudience = 'member' | 'admin';
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
+}
+
+/**
+ * Admin sessions get a much shorter refresh window than members — a stolen admin cookie
+ * silently renewable for the member's full 30 days is a far bigger blast radius than a
+ * regular account, so an idle admin is forced back through a real login sooner.
+ */
+function refreshTokenTtlSeconds(audience: AccessTokenAudience): number {
+  return audience === 'admin'
+    ? config.adminRefreshTokenTtlSeconds
+    : config.refreshTokenTtlDays * DAY_IN_SECONDS;
 }
 
 type RefreshTokenPayload = {
@@ -53,14 +65,17 @@ export class TokenService {
     );
   }
 
-  async issueRefreshToken(userId: string): Promise<string> {
-    const { refreshTokenSecret, refreshTokenTtlDays } = config;
+  async issueRefreshToken(
+    userId: string,
+    ttlSeconds: number = config.refreshTokenTtlDays * DAY_IN_SECONDS,
+  ): Promise<string> {
+    const { refreshTokenSecret } = config;
     const jti = nanoid();
-    const expiresAt = new Date(Date.now() + refreshTokenTtlDays * DAY_IN_MS);
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
 
     const payload: RefreshTokenPayload = { sub: userId, jti, type: 'refresh' };
     const token = jwt.sign(payload, refreshTokenSecret as Secret, {
-      expiresIn: `${refreshTokenTtlDays}d`,
+      expiresIn: ttlSeconds,
     });
 
     await this.prisma.refreshToken.create({
@@ -91,7 +106,7 @@ export class TokenService {
 
     const [accessToken, refreshToken] = [
       this.signAccessToken(user, options),
-      await this.issueRefreshToken(user.id),
+      await this.issueRefreshToken(user.id, refreshTokenTtlSeconds(options.audience)),
     ];
     return { accessToken, refreshToken };
   }
@@ -146,6 +161,7 @@ export class TokenService {
 
   async refreshAccessToken(
     rawToken: string,
+    options: { audience: AccessTokenAudience } = { audience: 'member' },
   ): Promise<{ accessToken: string; refreshToken: string }> {
     let payload: RefreshTokenPayload;
     try {
@@ -183,6 +199,13 @@ export class TokenService {
       throw new Error('invalid_refresh_token');
     }
 
+    // Same role gate adminLogin applies at issuance — a demotion between login and refresh
+    // (or a member's refresh token presented at the admin route) must not mint a fresh
+    // admin-audience token just because the underlying refresh token itself is still valid.
+    if (options.audience === 'admin' && !isAdminRole(user.role)) {
+      throw new Error('invalid_refresh_token');
+    }
+
     // Atomic consume — a second presentation of the same refresh (reuse) sees count 0.
     const consumed = await this.prisma.refreshToken.updateMany({
       where: {
@@ -198,9 +221,12 @@ export class TokenService {
       throw new Error('invalid_refresh_token');
     }
 
-    const refreshToken = await this.issueRefreshToken(user.id);
+    const refreshToken = await this.issueRefreshToken(
+      user.id,
+      refreshTokenTtlSeconds(options.audience),
+    );
     return {
-      accessToken: this.signAccessToken(user, { audience: 'member' }),
+      accessToken: this.signAccessToken(user, options),
       refreshToken,
     };
   }

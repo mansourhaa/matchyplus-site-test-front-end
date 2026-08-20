@@ -14,11 +14,14 @@ export function Steps() {
       id="how"
     >
       <Reveal direction="right" className="md:sticky md:top-28">
-        <div className="bg-brand-teal mb-5 h-1 w-10 rounded" />
-        <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
+        <div className="bg-brand-blue mb-5 h-1 w-14 rounded-full" />
+        <h2 className="text-brand-blue text-2xl font-extrabold text-balance sm:text-3xl md:text-4xl lg:text-[2.2rem] lg:leading-tight">
           {t('landing.stepsTitle')}
+          <span className="mt-1 block text-xl font-bold opacity-90 sm:text-2xl">
+            {t('landing.stepsSubtitle')}
+          </span>
         </h2>
-        <p className="text-muted-foreground mt-5 max-w-md leading-relaxed text-pretty">
+        <p className="text-muted-foreground mt-5 max-w-md text-sm leading-relaxed text-pretty md:text-base">
           {t('landing.stepsBody')}
         </p>
       </Reveal>

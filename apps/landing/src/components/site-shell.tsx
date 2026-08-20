@@ -75,7 +75,7 @@ export function Header() {
   };
 
   return (
-    <header className={`site-header${isHome ? '' : 'subpage'}`}>
+    <header className="site-header">
       <div className="header-inner container">
         <Link href="/" className="brand" aria-label="Matchy Plus home">
           <Logo />
@@ -84,15 +84,15 @@ export function Header() {
           <Link href="/#services">{t('landing.services')}</Link>
           <Link href="/#explore">{t('landing.explore')}</Link>
           <Link href="/#how">{t('landing.how')}</Link>
-          <Link href="/#download">{t('landing.download')}</Link>
+          <Link href="/contact">{t('landing.contact')}</Link>
           <div ref={langRef} className="language-picker-custom relative">
             <button
               type="button"
               onClick={() => setLangOpen(!langOpen)}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-transparent px-2.5 py-1.5 select-none hover:bg-white/10 ${isHome ? 'text-white' : 'text-brand-navy'}`}
+              className="flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-white/10 px-3 py-1.5 text-white transition-colors select-none hover:bg-white/20"
             >
               <Flag locale={locale} />
-              <span className="text-[14px] font-bold">{LANGUAGE_NAMES[locale]}</span>
+              <span className="text-[13px] font-bold">{LANGUAGE_NAMES[locale]}</span>
               <ChevronDown
                 size={14}
                 className={`transition-transform duration-200 ${langOpen ? 'rotate-180' : ''}`}
@@ -125,7 +125,7 @@ export function Header() {
           </Link>
         </nav>
         <button
-          className="mobile-toggle"
+          className="mobile-toggle text-white"
           aria-label={open ? 'Close menu' : 'Open menu'}
           onClick={() => setOpen(!open)}
         >

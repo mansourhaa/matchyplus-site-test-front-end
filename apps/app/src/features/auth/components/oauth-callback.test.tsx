@@ -22,6 +22,8 @@ vi.mock('@/lib/api', () => ({
     get: vi.fn(),
     delete: vi.fn(),
   },
+  getApiErrorCode: (error: unknown) =>
+    (error as { response?: { data?: { code?: string } } } | undefined)?.response?.data?.code,
 }));
 
 const oauthUser = {
@@ -103,5 +105,22 @@ describe('OAuthCallback', () => {
 
     expect(await screen.findByText('Code de connexion manquant.')).toBeInTheDocument();
     expect(api.post).not.toHaveBeenCalled();
+  });
+
+  // Regression: the redirect from the provider always looks like a success (?code=...) —
+  // a banned/inactive account only fails one step later, at the code-exchange call. That
+  // rejection used to be swallowed into a generic "try again" message regardless of the
+  // real reason, which is actively misleading for a permanent block like a ban.
+  it.each([
+    ['account_banned', 'Ce compte a été banni.'],
+    ['account_inactive', 'Ce compte a été désactivé.'],
+  ])('shows a specific message when the exchange rejects with %s', async (code, expected) => {
+    searchParamsRef.current = new URLSearchParams('code=abc123');
+    vi.mocked(api.post).mockRejectedValue({ isAxiosError: true, response: { data: { code } } });
+
+    renderWithAuthStore(<OAuthCallback />);
+
+    expect(await screen.findByText(expected)).toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,7 @@ import { handleProviderOAuthCallback } from '../../../lib/oauth-callback-handler
 import {
   adminLoginSchema,
   adminLogoutSchema,
+  adminRefreshSchema,
   authCheckSchema,
   changePasswordSchema,
   confirmPasswordResetSchema,
@@ -41,8 +42,11 @@ import {
   VerifyOtpPayload,
 } from '../../../types/auth.js';
 import {
+  ADMIN_REFRESH_COOKIE,
   ADMIN_SESSION_COOKIE,
+  adminRefreshCookieOptions,
   adminSessionCookieOptions,
+  clearAdminRefreshCookieOptions,
   clearAdminSessionCookieOptions,
 } from '../../../utils/admin-session.js';
 import {
@@ -79,6 +83,8 @@ const ERROR_STATUS: Record<
   invalid_refresh_token: 'unauthorized',
   oauth_only_account: 'forbidden',
   phone_not_verified: 'forbidden',
+  account_banned: 'forbidden',
+  account_inactive: 'forbidden',
   phone_already_registered: 'conflict',
   phone_not_found: 'notFound',
   user_not_found: 'notFound',
@@ -152,8 +158,8 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   ) {
     reply.setCookie(MEMBER_ACCESS_COOKIE, tokens.accessToken, memberAccessCookieOptions());
     reply.setCookie(MEMBER_REFRESH_COOKIE, tokens.refreshToken, memberRefreshCookieOptions());
-    // Never leave an admin JWT sticky when a member session is established (AUTH-01).
-    reply.clearCookie(ADMIN_SESSION_COOKIE, clearAdminSessionCookieOptions());
+    // Never leave an admin session sticky when a member session is established (AUTH-01).
+    clearAdminSessionCookies(reply);
   }
 
   function clearMemberSessionCookies(reply: import('fastify').FastifyReply) {
@@ -161,10 +167,23 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     reply.clearCookie(MEMBER_REFRESH_COOKIE, clearMemberRefreshCookieOptions());
   }
 
-  function setAdminSessionCookie(reply: import('fastify').FastifyReply, accessToken: string) {
-    reply.setCookie(ADMIN_SESSION_COOKIE, accessToken, adminSessionCookieOptions());
+  function setAdminSessionCookies(
+    reply: import('fastify').FastifyReply,
+    tokens: { accessToken: string; refreshToken: string },
+  ) {
+    reply.setCookie(ADMIN_SESSION_COOKIE, tokens.accessToken, adminSessionCookieOptions());
+    reply.setCookie(ADMIN_REFRESH_COOKIE, tokens.refreshToken, adminRefreshCookieOptions());
     // Admin login must not leave a member session usable on shared cookie domain.
     clearMemberSessionCookies(reply);
+  }
+
+  function clearAdminSessionCookies(reply: import('fastify').FastifyReply) {
+    reply.clearCookie(ADMIN_SESSION_COOKIE, clearAdminSessionCookieOptions());
+    reply.clearCookie(ADMIN_REFRESH_COOKIE, clearAdminRefreshCookieOptions());
+  }
+
+  function cookieAdminRefreshToken(request: FastifyRequest): string | undefined {
+    return request.cookies?.[ADMIN_REFRESH_COOKIE] || undefined;
   }
 
   function memberSessionResponse(
@@ -235,9 +254,10 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await authService.adminLogin(request.body);
 
-        // The panel never receives the token in the body: it goes out as an HttpOnly cookie
-        // the browser replays on its own, so no script running in the panel can read it.
-        setAdminSessionCookie(reply, data.accessToken);
+        // The panel never receives either token in the body: they go out as HttpOnly
+        // cookies the browser replays on its own, so no script running in the panel can
+        // read them.
+        setAdminSessionCookies(reply, data);
 
         return reply.code(200).send({
           user: _.omit(data.user, ['password']),
@@ -250,13 +270,44 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
   /**
    * An HttpOnly cookie cannot be cleared by the panel, so ending a session has to come back
-   * here. Unauthenticated on purpose: it only clears a cookie, and a caller whose session
+   * here. Unauthenticated on purpose: it only clears cookies, and a caller whose session
    * already expired must still be able to tidy up.
    */
   fastify.post('/admin/logout', { schema: adminLogoutSchema }, async (request, reply) => {
-    reply.clearCookie(ADMIN_SESSION_COOKIE, clearAdminSessionCookieOptions());
+    const refreshToken = cookieAdminRefreshToken(request);
+    if (refreshToken) {
+      await tokenService.revokeRefreshToken(refreshToken).catch(() => undefined);
+    }
+    clearAdminSessionCookies(reply);
     return reply.code(200).send({ ok: true });
   });
+
+  /**
+   * Browser-only (the admin panel has no Capacitor client), so unlike /refresh this never
+   * needs to read a body token or echo one back — the rotated pair only ever leaves as the
+   * two HttpOnly cookies.
+   */
+  fastify.post('/admin/refresh', { schema: adminRefreshSchema }, async (request, reply) => {
+    try {
+      const refreshToken = cookieAdminRefreshToken(request);
+      if (!refreshToken) {
+        // Logged-out panels hit this after an authcheck-equivalent 401 — return 401
+        // without throwing so the global error handler does not log a full stack as ERROR.
+        return reply.code(401).send({
+          status: 401,
+          code: 'invalid_refresh_token',
+          message: translate(request, 'invalid_refresh_token'),
+        });
+      }
+
+      const data = await tokenService.refreshAccessToken(refreshToken, { audience: 'admin' });
+      setAdminSessionCookies(reply, data);
+      return reply.code(200).send({ ok: true });
+    } catch (err) {
+      throw mapError(err as Error, request);
+    }
+  });
+
   fastify.get(
     '/authcheck',
     {

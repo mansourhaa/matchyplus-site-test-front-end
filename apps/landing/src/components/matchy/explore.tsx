@@ -1,90 +1,44 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
-import { useRef } from 'react';
 
-import { Reveal, motion, useMounted, useScroll, useTransform } from './motion';
-import { PhoneFrame } from './phone-frame';
-import { ExploreScreen, ProfileScreen } from './screens';
-
-function CascadingPhones() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
-  const yFront = useTransform(scrollYProgress, [0, 1], [60, -60]);
-  const yBack = useTransform(scrollYProgress, [0, 1], [-40, 40]);
-
-  return (
-    <div ref={ref} className="relative flex min-h-[440px] items-center justify-center">
-      <motion.div style={{ y: yFront }} className="relative z-10">
-        <PhoneFrame className="rotate-[-4deg]">
-          <ExploreScreen />
-        </PhoneFrame>
-      </motion.div>
-      <motion.div
-        style={{ y: yBack }}
-        className="absolute top-16 right-0 z-20 hidden scale-90 sm:block"
-      >
-        <PhoneFrame className="rotate-[6deg]">
-          <ProfileScreen />
-        </PhoneFrame>
-      </motion.div>
-    </div>
-  );
-}
-
-function StaticPhones() {
-  return (
-    <div className="relative flex min-h-[440px] items-center justify-center">
-      <div className="relative z-10">
-        <PhoneFrame className="rotate-[-4deg]">
-          <ExploreScreen />
-        </PhoneFrame>
-      </div>
-      <div className="absolute top-16 right-0 z-20 hidden scale-90 sm:block">
-        <PhoneFrame className="rotate-[6deg]">
-          <ProfileScreen />
-        </PhoneFrame>
-      </div>
-    </div>
-  );
-}
+import { Parallax, Reveal } from './motion';
 
 export function Explore() {
-  const mounted = useMounted();
   const { t } = useI18n();
 
   return (
-    <section className="relative overflow-hidden bg-neutral-50/50 py-20">
+    <section className="relative py-20 sm:py-24 md:py-28 lg:py-32" id="explore-map">
+      {/* Rounded organic card shape on the bottom right */}
       <div
-        className="from-brand-teal to-brand-blue pointer-events-none absolute top-1/3 right-0 z-0 h-80 w-80 translate-x-1/3 rounded-[3rem] bg-gradient-to-br opacity-20"
-        style={{ transform: 'translateX(35%) rotate(-15deg)' }}
+        className="from-brand-blue to-brand-teal pointer-events-none absolute right-0 bottom-0 z-0 h-[420px] w-[300px] rounded-[3.5rem] bg-gradient-to-br opacity-85 sm:h-[480px] sm:w-[380px] sm:rounded-[4.5rem] md:h-[540px] md:w-[420px] md:rounded-[5rem] lg:h-[620px] lg:w-[500px] lg:rounded-[5.5rem]"
+        style={{ transform: 'translate(20%, 15%) rotate(20deg)' }}
         aria-hidden="true"
       />
-      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-5 md:grid-cols-2">
-        <Reveal direction="right">
-          <div className="bg-brand-teal mb-5 h-1 w-10 rounded" />
-          <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
+
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 md:grid-cols-12 md:gap-8 lg:gap-14">
+        <Reveal direction="right" className="text-center md:col-span-6 md:text-left lg:col-span-5">
+          <div className="bg-brand-blue mx-auto mb-5 h-1 w-14 rounded-full md:mx-0" />
+          <h2 className="text-brand-blue text-2xl font-extrabold text-balance sm:text-3xl md:text-3xl lg:text-[2.2rem] lg:leading-tight">
             {t('landing.exploreTitle')}
           </h2>
-          <p className="text-muted-foreground mt-5 max-w-lg leading-relaxed text-pretty">
+          <p className="text-muted-foreground mx-auto mt-4 max-w-lg text-sm leading-relaxed md:mx-0 md:text-base">
             {t('landing.exploreBody')}
           </p>
-          <div className="mt-8">
-            <Link
-              href="/devenir-partenaire"
-              className="text-brand-teal inline-flex items-center gap-2 text-sm font-semibold hover:underline"
-            >
-              {t('landing.discoverMore')} <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
         </Reveal>
 
-        {mounted ? <CascadingPhones /> : <StaticPhones />}
+        <Parallax
+          speed={25}
+          className="relative z-10 flex justify-center md:col-span-6 lg:col-span-7"
+        >
+          <div className="relative flex w-full justify-center drop-shadow-2xl">
+            <img
+              src="/showcase/explore-map.png"
+              alt="Matchy Explore Carte Panafricaine des Talents"
+              className="h-auto max-h-[460px] w-full max-w-[480px] object-contain sm:max-w-[540px] md:max-h-[500px] md:max-w-[500px] lg:max-h-[580px] lg:max-w-[700px]"
+            />
+          </div>
+        </Parallax>
       </div>
     </section>
   );

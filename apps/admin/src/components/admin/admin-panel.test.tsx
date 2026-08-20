@@ -517,6 +517,17 @@ describe('AdminPanel', () => {
   });
 
   describe('Paramètres', () => {
+    // Regression: the password fields had a light-gray background but no explicit text
+    // color, so they inherited the theme's default foreground — near-white in dark mode,
+    // making the typed dots invisible against the input's own background until selected.
+    it('gives the password fields an explicit dark text color', async () => {
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Paramètres' }));
+
+      expect(screen.getByLabelText('Mot de passe actuel')).toHaveStyle({ color: '#1A1A2E' });
+      expect(screen.getByLabelText('Nouveau mot de passe')).toHaveStyle({ color: '#1A1A2E' });
+    });
+
     it('changes the password through the api', async () => {
       const post = vi
         .spyOn(adminApi, 'post')

@@ -14,6 +14,7 @@ import {
 } from '../types/admin.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import { badRequest, forbidden, insufficientPrivileges, notFound } from '../utils/http-errors.js';
+import { filenameFromStoredPath, isStoredMediaPath } from '../utils/media-storage.js';
 import { assertMinimumRole, outranks, rolesBelow } from '../utils/roles.js';
 import { TokenService } from './token.js';
 
@@ -139,7 +140,6 @@ export class AdminService {
     }
     if (query.status) where.status = query.status;
     if (query.plan) where.plan = query.plan;
-    if (query.category) where.category = query.category;
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
@@ -167,6 +167,21 @@ export class AdminService {
     } catch (err) {
       throw notFound('user not found');
     }
+  }
+
+  /**
+   * The admin session is a separate audience from the member session that guards
+   * GET /profiles/media/photos/:filename, so the panel can never reuse that route directly —
+   * it needs its own, gated by the same hierarchy as every other admin read of a user's data.
+   */
+  async getUserPhotoFilename(actor: AdminActor, id: string): Promise<string> {
+    await this.assertCanManage(actor, id);
+
+    const target = await this.prisma.user.findUnique({ where: { id }, select: { image: true } });
+    if (!target || !isStoredMediaPath(target.image, 'photos')) {
+      throw notFound('photo not found', 'photo_not_found');
+    }
+    return filenameFromStoredPath(target.image);
   }
 
   /**
@@ -253,11 +268,12 @@ export class AdminService {
     return { deleted: true };
   }
 
-  async getStats(): Promise<AdminUserStatsResult> {
+  async getStats(actor: AdminActor): Promise<AdminUserStatsResult> {
+    const where: Prisma.UserWhereInput = { role: { in: rolesBelow(actor.role) } };
     const [totalUsers, byStatus, byPlan] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.user.groupBy({ by: ['status'], _count: { _all: true } }),
-      this.prisma.user.groupBy({ by: ['plan'], _count: { _all: true } }),
+      this.prisma.user.count({ where }),
+      this.prisma.user.groupBy({ by: ['status'], where, _count: { _all: true } }),
+      this.prisma.user.groupBy({ by: ['plan'], where, _count: { _all: true } }),
     ]);
 
     const statusCount = (status: UserStatus) =>

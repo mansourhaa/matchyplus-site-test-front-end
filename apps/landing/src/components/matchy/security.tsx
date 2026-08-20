@@ -1,44 +1,53 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { Check } from 'lucide-react';
 
 import { Parallax, Reveal } from './motion';
-import { PhoneFrame } from './phone-frame';
-import { FaceScanScreen } from './screens';
 
 export function Security() {
   const { t } = useI18n();
   const bullets = t('landing.walletBullets') as unknown as string[];
 
   return (
-    <section className="relative overflow-hidden py-20" id="explore">
-      {/* brand accent shape */}
+    <section className="relative py-20 sm:py-24 md:py-28 lg:py-32" id="explore">
+      {/* Rounded organic card shape on the left */}
       <div
-        className="from-brand-blue to-brand-teal pointer-events-none absolute top-1/2 left-0 z-0 h-72 w-72 -translate-x-1/3 -translate-y-1/2 rounded-[3rem] bg-gradient-to-br opacity-20"
-        style={{ transform: 'translate(-30%, -50%) rotate(20deg)' }}
+        className="from-brand-blue to-brand-teal pointer-events-none absolute top-1/2 left-0 z-0 h-[420px] w-[300px] -translate-y-1/2 rounded-[3.5rem] bg-gradient-to-br opacity-85 sm:h-[480px] sm:w-[380px] sm:rounded-[4.5rem] md:h-[540px] md:w-[420px] md:rounded-[5rem] lg:h-[620px] lg:w-[500px] lg:rounded-[5.5rem]"
+        style={{ transform: 'translate(-25%, -50%) rotate(-20deg)' }}
         aria-hidden="true"
       />
-      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-5 md:grid-cols-2">
-        <Parallax speed={50} className="flex justify-center md:justify-start">
-          <PhoneFrame dark>
-            <FaceScanScreen />
-          </PhoneFrame>
+
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 md:grid-cols-12 md:gap-8 lg:gap-14">
+        <Parallax
+          speed={30}
+          className="relative z-10 flex justify-center md:col-span-5 md:justify-start lg:col-span-5"
+        >
+          <div className="relative flex justify-center drop-shadow-2xl">
+            <img
+              src="/showcase/wallet-phone.png"
+              alt="Matchy Wallet"
+              className="h-auto max-h-[500px] w-auto max-w-[260px] object-contain sm:max-w-[300px] md:max-h-[540px] md:max-w-[290px] lg:max-h-[640px] lg:max-w-[370px]"
+            />
+          </div>
         </Parallax>
 
-        <Reveal direction="left">
-          <div className="bg-brand-teal mb-5 h-1 w-10 rounded" />
-          <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
+        <Reveal direction="left" className="text-center md:col-span-7 md:text-left lg:col-span-7">
+          <div className="bg-brand-blue mx-auto mb-5 h-1 w-14 rounded-full md:mx-0" />
+          <h2 className="text-brand-blue text-2xl font-extrabold text-balance sm:text-3xl md:text-3xl lg:text-[2.2rem] lg:leading-tight">
             {t('landing.wallet')}
+            <span className="mt-1 block">{t('landing.walletSubtitle')}</span>
           </h2>
-          <p className="text-muted-foreground mt-5 max-w-lg leading-relaxed text-pretty">
+          <p className="text-muted-foreground mx-auto mt-4 max-w-lg text-sm leading-relaxed md:mx-0 md:text-base">
             {t('landing.walletBody')}
           </p>
-          <ul className="text-muted-foreground mt-6 space-y-3 text-sm">
+          <p className="text-muted-foreground mt-4 text-sm font-medium md:text-base">
+            {t('landing.walletUsage')}
+          </p>
+          <ul className="text-muted-foreground mx-auto mt-3 max-w-md space-y-2.5 text-sm md:mx-0 md:max-w-none md:text-base">
             {Array.isArray(bullets) &&
               bullets.map((bullet, idx) => (
-                <li key={idx} className="flex items-center gap-3">
-                  <Check className="text-brand-teal h-5 w-5 shrink-0" />
+                <li key={idx} className="flex items-start justify-center gap-2.5 md:justify-start">
+                  <span className="bg-muted-foreground mt-2 h-1.5 w-1.5 shrink-0 rounded-full" />
                   <span>{bullet}</span>
                 </li>
               ))}

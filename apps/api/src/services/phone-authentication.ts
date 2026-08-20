@@ -1,4 +1,4 @@
-import { OtpPurpose, PrismaClient } from '@saas-boilerplate/types';
+import { OtpPurpose, PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
 import { SOCIAL_AUTH_PROVIDERS } from '../constants.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
@@ -111,6 +111,18 @@ export class PhoneAuthenticationService {
     // used to probe whether a phone number has an account at all.
     if (!user.phone_verified) {
       throw new Error('phone_not_verified');
+    }
+
+    // Same reasoning as phone_not_verified above: a moderation status is only ever
+    // reached after the caller already proved they own the password, so surfacing it
+    // specifically here can't be used to enumerate banned/inactive accounts — unlike
+    // issueTokenPair's own generic gate below, which exists for callers that haven't
+    // already made that distinction.
+    if (user.status === UserStatus.BANNED) {
+      throw new Error('account_banned');
+    }
+    if (user.status === UserStatus.INACTIVE) {
+      throw new Error('account_inactive');
     }
 
     const tokens = await this.tokenService.issueTokenPair(user);

@@ -17,11 +17,12 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf .turbo node_modules dist",
-    "test": "node --experimental-strip-types --test src/index.test.ts"
+    "test": "tsx --test src/index.test.ts"
   },
   "devDependencies": {
     "@saas-boilerplate/typescript-config": "workspace:*",
     "@types/node": "^26.1.1",
+    "tsx": "^4.23.1",
     "typescript": "^5.9.3"
   }
 }

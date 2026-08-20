@@ -213,4 +213,136 @@ export class EmailService {
       attachments: logo ? [logo] : [],
     });
   }
+
+  async sendContactMessage(input: {
+    type?: 'contact' | 'partner' | 'custom';
+    name: string;
+    email: string;
+    phone?: string;
+    requestText?: string;
+    message?: string;
+    activity?: string;
+    city?: string;
+    subject?: string;
+  }): Promise<{ success: boolean; messageId?: string; simulated?: boolean }> {
+    try {
+      const destination = 'hello@matchy.tn';
+      const isPartner = input.type === 'partner';
+      const subject =
+        input.subject ||
+        (isPartner
+          ? `[Partenaire Matchy+] Demande de ${input.name}`
+          : `[Contact Matchy+] Nouveau message de ${input.name}`);
+
+      const headerTitle = isPartner
+        ? 'Nouvelle demande de partenariat Matchy+'
+        : 'Nouveau message de contact Matchy+';
+      const headerColor = isPartner ? '#49b8ad' : '#2d79be';
+
+      const senderName = escapeHtml(input.name);
+      const senderEmail = escapeHtml(input.email);
+      const senderPhone = escapeHtml(input.phone || 'Non spécifié');
+      const contentText = escapeHtml(
+        input.requestText || input.message || 'Aucun message fourni.',
+      ).replace(/\n/g, '<br/>');
+
+      const extraRows: string[] = [];
+      if (input.activity) {
+        extraRows.push(`
+          <tr>
+            <td style="padding:10px 14px;font-weight:bold;color:#4b5563;background:#f9fafb;width:160px;border-bottom:1px solid #e5e7eb;">Domaine / Métier</td>
+            <td style="padding:10px 14px;color:#111827;border-bottom:1px solid #e5e7eb;">${escapeHtml(input.activity)}</td>
+          </tr>
+        `);
+      }
+      if (input.city) {
+        extraRows.push(`
+          <tr>
+            <td style="padding:10px 14px;font-weight:bold;color:#4b5563;background:#f9fafb;width:160px;border-bottom:1px solid #e5e7eb;">Ville / Région</td>
+            <td style="padding:10px 14px;color:#111827;border-bottom:1px solid #e5e7eb;">${escapeHtml(input.city)}</td>
+          </tr>
+        `);
+      }
+
+      const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(headerTitle)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="max-width:620px;margin:30px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px rgba(0,0,0,0.06);border:1px solid #e5e7eb;">
+    <div style="background:linear-gradient(135deg, ${headerColor}, #27344a);padding:28px 24px;color:#ffffff;text-align:center;">
+      <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;">Matchy+</div>
+      <div style="font-size:16px;font-weight:600;margin-top:6px;opacity:0.95;">${escapeHtml(headerTitle)}</div>
+    </div>
+    <div style="padding:28px 24px;">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+        <tr>
+          <td style="padding:10px 14px;font-weight:bold;color:#4b5563;background:#f9fafb;width:160px;border-bottom:1px solid #e5e7eb;">Nom & Prénom</td>
+          <td style="padding:10px 14px;color:#111827;font-weight:600;border-bottom:1px solid #e5e7eb;">${senderName}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 14px;font-weight:bold;color:#4b5563;background:#f9fafb;width:160px;border-bottom:1px solid #e5e7eb;">E-mail</td>
+          <td style="padding:10px 14px;color:#111827;border-bottom:1px solid #e5e7eb;">
+            <a href="mailto:${senderEmail}" style="color:#2d79be;text-decoration:none;font-weight:600;">${senderEmail}</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:10px 14px;font-weight:bold;color:#4b5563;background:#f9fafb;width:160px;border-bottom:1px solid #e5e7eb;">Téléphone</td>
+          <td style="padding:10px 14px;color:#111827;border-bottom:1px solid #e5e7eb;">
+            <a href="tel:${senderPhone}" style="color:#2d79be;text-decoration:none;">${senderPhone}</a>
+          </td>
+        </tr>
+        ${extraRows.join('')}
+      </table>
+      <div style="margin-top:20px;">
+        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6b7280;margin-bottom:8px;">
+          ${isPartner ? 'Détails de la demande :' : 'Message :'}
+        </div>
+        <div style="background:#f9fafb;padding:16px 18px;border-radius:10px;border:1px solid #e5e7eb;font-size:14px;line-height:1.6;color:#1f2937;">
+          ${contentText}
+        </div>
+      </div>
+      <div style="margin-top:28px;text-align:center;">
+        <a href="mailto:${senderEmail}?subject=Re: ${encodeURIComponent(headerTitle)}" style="display:inline-block;background:${headerColor};color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+          Répondre directement
+        </a>
+      </div>
+    </div>
+    <div style="background:#f9fafb;padding:16px 24px;border-top:1px solid #e5e7eb;text-align:center;font-size:12px;color:#9ca3af;">
+      Cet e-mail a été envoyé depuis le formulaire Matchy+ vers ${destination}.
+    </div>
+  </div>
+</body>
+</html>
+      `.trim();
+
+      const text = `${subject}\n\nNom: ${input.name}\nEmail: ${input.email}\nPhone: ${input.phone || 'N/A'}\n\nMessage:\n${input.requestText || input.message || 'N/A'}`;
+
+      if (!hasSmtpConfig()) {
+        return { success: true, simulated: true };
+      }
+
+      const from = buildFromHeader();
+      if (!from) {
+        throw new Error('SMTP_FROM must contain a valid email address.');
+      }
+
+      const transporter = await getTransporter();
+      const info = await transporter.sendMail({
+        from,
+        to: destination,
+        replyTo: `"${input.name}" <${input.email}>`,
+        subject,
+        text,
+        html,
+      });
+
+      return { success: true, messageId: info.messageId };
+    } catch (err) {
+      throw err;
+    }
+  }
 }

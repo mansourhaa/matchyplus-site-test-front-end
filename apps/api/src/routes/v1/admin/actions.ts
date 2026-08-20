@@ -1,11 +1,15 @@
 import { FastifyPluginAsync } from 'fastify';
+import { createReadStream, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { UserPlan } from '@saas-boilerplate/types';
 
+import { PROFILE_PHOTO_CONTENT_TYPES } from '../../../constants.js';
 import {
   adminAnalyticsSchema,
   adminChangePasswordSchema,
   adminDeleteUserSchema,
+  adminGetUserPhotoSchema,
   adminGetUserSchema,
   adminListPlansSchema,
   adminListReportsSchema,
@@ -28,9 +32,14 @@ import {
 } from '../../../types/admin.js';
 import { AdminListReportsQuery, AdminUpdateReportPayload } from '../../../types/report.js';
 import {
+  ADMIN_REFRESH_COOKIE,
   ADMIN_SESSION_COOKIE,
+  clearAdminRefreshCookieOptions,
   clearAdminSessionCookieOptions,
 } from '../../../utils/admin-session.js';
+import { badRequest, notFound } from '../../../utils/http-errors.js';
+import { extensionOf } from '../../../utils/media-http.js';
+import { PHOTOS_DIR } from '../../../utils/media-storage.js';
 
 type UserParams = { id: string };
 type PlanParams = { id: UserPlan };
@@ -61,6 +70,26 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         request.params.id,
       );
       return reply.code(200).send({ user });
+    },
+  );
+
+  fastify.get<{ Params: UserParams }>(
+    '/users/:id/photo',
+    { schema: adminGetUserPhotoSchema },
+    async (request, reply) => {
+      const filename = await adminService.getUserPhotoFilename(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.params.id,
+      );
+      const contentType = PROFILE_PHOTO_CONTENT_TYPES[extensionOf(filename)];
+      if (!contentType) throw badRequest('invalid filename', 'invalid_filename');
+
+      const filePath = join(PHOTOS_DIR, filename);
+      if (!existsSync(filePath)) throw notFound('photo not found', 'photo_not_found');
+
+      reply.header('Content-Type', contentType);
+      reply.header('Cache-Control', 'private, max-age=86400');
+      return reply.send(createReadStream(filePath));
     },
   );
 
@@ -103,7 +132,10 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   );
 
   fastify.get('/stats', { schema: adminStatsSchema }, async (request, reply) => {
-    const stats = await adminService.getStats();
+    const stats = await adminService.getStats({
+      id: request.loggedUser.id,
+      role: request.loggedUser.role,
+    });
     return reply.code(200).send({ stats });
   });
 
@@ -135,7 +167,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     { schema: adminChangePasswordSchema },
     async (request, reply) => {
       const data = await adminService.changePassword(request.loggedUser.id, request.body);
+      // The refresh token behind this cookie was already revoked server-side by
+      // changePassword's revokeAllSessions call — clear the cookie too so the browser
+      // doesn't keep offering a token that would just fail on the next refresh attempt.
       reply.clearCookie(ADMIN_SESSION_COOKIE, clearAdminSessionCookieOptions());
+      reply.clearCookie(ADMIN_REFRESH_COOKIE, clearAdminRefreshCookieOptions());
       return reply.code(200).send(data);
     },
   );
