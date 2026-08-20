@@ -192,7 +192,6 @@ export function Footer() {
           <Link href="/#services">{t('landing.services')}</Link>
           <Link href="/#explore">{t('landing.explore')}</Link>
           <Link href="/#how">{t('landing.how')}</Link>
-          <Link href="/contact">{t('landing.contact')}</Link>
         </div>
         <div>
           <h3>
@@ -201,6 +200,9 @@ export function Footer() {
           <Link href="/faq">{t('landing.faq')}</Link>
           <Link href="/contact">{t('landing.contact')}</Link>
           <Link href="/devenir-partenaire">{t('landing.partner')}</Link>
+        </div>
+        <div>
+          <h3>{locale === 'ar' ? 'معلومات قانونية' : locale === 'en' ? 'Legal' : 'Légal'}</h3>
           <Link href="/privacy-policy">{t('landing.privacyPolicy')}</Link>
           <Link href="/terms-of-service">{t('landing.terms')}</Link>
         </div>
