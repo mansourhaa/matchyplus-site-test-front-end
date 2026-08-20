@@ -119,19 +119,35 @@ pipeline {
     stage('Verify signed images') {
       when { expression { params.VERIFY_SIGNATURES } }
       steps {
-        sh '''
-          set -eu
-          command -v cosign >/dev/null || { echo "cosign not on PATH" >&2; exit 1; }
-          for COMPONENT in ${IMAGE_COMPONENTS}; do
-            IMG="${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"
-            echo "verifying ${IMG}"
-            cosign verify \
-              --certificate-identity-regexp='.*' \
-              --certificate-oidc-issuer-regexp='.*' \
-              "${IMG}" >/dev/null
-          done
-          echo "all ${IMAGE_COMPONENTS} signatures verified"
-        '''
+        withCredentials([file(credentialsId: 'cosign-public-key', variable: 'COSIGN_PUB')]) {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+
+            # cosign is not installed on this agent and is not meant to be. CI and
+            # Jenkinsfile.prod.cd both fetch it the same way, pinned by version and
+            # checksum: an unpinned download would let the tool that validates our
+            # supply chain become the unvalidated part of it. Bump COSIGN_VERSION
+            # and COSIGN_SHA256 together, from the release's cosign_checksums.txt.
+            COSIGN_VERSION=v3.1.2
+            COSIGN_SHA256=f7622ed3cf22e55e1ae6377c080979ff77a22da9981c11df222a2e444991e7cf
+            if ! command -v cosign >/dev/null 2>&1; then
+              curl -sL -o /tmp/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+              echo "${COSIGN_SHA256}  /tmp/cosign" | sha256sum -c -
+              chmod +x /tmp/cosign
+            fi
+            COSIGN_BIN=$(command -v cosign || echo /tmp/cosign)
+
+            # --key, not keyless. CI signs with cosign-private-key, so verification
+            # has to present the matching public key; keyless flags would fail here
+            # even with cosign installed, because there is no OIDC identity to match.
+            for COMPONENT in $IMAGE_COMPONENTS; do
+              IMAGE="${REGISTRY_REPO}:${COMPONENT}-${IMAGE_TAG}"
+              echo "--- verifying $IMAGE"
+              "$COSIGN_BIN" verify --key "$COSIGN_PUB" "$IMAGE" > /dev/null
+              echo "    signature OK"
+            done
+          '''
+        }
       }
     }
 
