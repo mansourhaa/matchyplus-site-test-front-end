@@ -1,6 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
+import Image from 'next/image';
 
 import { Parallax, Reveal } from './motion';
 
@@ -23,10 +24,12 @@ export function Security() {
           className="relative z-10 flex justify-center md:col-span-5 md:justify-start lg:col-span-5"
         >
           <div className="relative flex justify-center drop-shadow-2xl">
-            <img
+            <Image
               src="/showcase/wallet-phone.png"
               alt="Matchy Wallet"
-              className="h-auto max-h-[500px] w-auto max-w-[260px] object-contain sm:max-w-[300px] md:max-h-[540px] md:max-w-[290px] lg:max-h-[640px] lg:max-w-[370px]"
+              width={323}
+              height={639}
+              className="block h-auto w-full object-cover"
             />
           </div>
         </Parallax>
