@@ -8,6 +8,7 @@
 
 import argparse
 import datetime
+import glob
 import html
 import json
 import os
@@ -110,6 +111,194 @@ def badge(ok, ok_text="PASSED", bad_text="NEEDS ATTENTION"):
     if ok:
         return '<span class="badge ok">%s</span>' % ok_text
     return '<span class="badge warn">%s</span>' % bad_text
+
+
+# ---------------------------------------------------------------------------
+# Detail tables.
+#
+# The summaries above answer "how many". These answer "which ones". A count
+# plus a pointer to a multi-megabyte JSON file is not something anyone reads,
+# and an UNSTABLE build shows on GitHub as a red cross - whoever clicks through
+# needs the finding on screen, not a filename.
+#
+# Every table is capped. Trivy across five images can produce thousands of
+# rows, and a page that takes a minute to open is the same as no page at all.
+# The raw JSON stays archived next to the report for anyone who needs all of it.
+# ---------------------------------------------------------------------------
+
+SEVERITY_ORDER = {"CRITICAL": 0, "HIGH": 1, "ERROR": 1, "MEDIUM": 2,
+                  "WARNING": 2, "LOW": 3, "INFO": 4, "INFORMATIONAL": 4,
+                  "UNKNOWN": 5}
+ROW_CAP = 200
+
+
+def _sev_key(s):
+    return SEVERITY_ORDER.get(str(s).upper(), 9)
+
+
+def _sev_class(s):
+    s = str(s).upper()
+    if s == "CRITICAL":
+        return "sev-crit"
+    if s in ("HIGH", "ERROR"):
+        return "sev-high"
+    if s in ("MEDIUM", "WARNING"):
+        return "sev-med"
+    if s == "LOW":
+        return "sev-low"
+    return "sev-info"
+
+
+def _short(text, limit=180):
+    text = " ".join(str(text or "").split())
+    return text if len(text) <= limit else text[: limit - 1] + "..."
+
+
+def table(headers, rows, sev_col=0, empty="Nothing found."):
+    if not rows:
+        return '<p class="none">%s</p>' % html.escape(empty)
+    capped = rows[:ROW_CAP]
+    head = "".join("<th>%s</th>" % html.escape(h) for h in headers)
+    body = []
+    for r in capped:
+        cls = _sev_class(r[sev_col]) if sev_col is not None and len(r) > sev_col else ""
+        cells = "".join(
+            '<td class="%s">%s</td>' % (cls if i == sev_col else "", html.escape(str(c)))
+            for i, c in enumerate(r)
+        )
+        body.append("<tr>%s</tr>" % cells)
+    more = ""
+    if len(rows) > ROW_CAP:
+        more = ('<p class="none">Showing the %d most severe of %d. The rest are in '
+                'the raw JSON archived with this report.</p>' % (ROW_CAP, len(rows)))
+    return ('<div class="tablewrap"><table class="data"><thead><tr>%s</tr></thead>'
+            '<tbody>%s</tbody></table></div>%s' % (head, "".join(body), more))
+
+
+def semgrep_findings():
+    data = load_json("reports/semgrep/semgrep-report.json")
+    if data is None:
+        return None
+    rows = []
+    for r in data.get("results", []) or []:
+        extra = r.get("extra", {}) or {}
+        rows.append([
+            extra.get("severity", "UNKNOWN"),
+            _short(r.get("check_id", ""), 60),
+            "%s:%s" % (r.get("path", ""), (r.get("start", {}) or {}).get("line", "")),
+            _short(extra.get("message", "")),
+        ])
+    rows.sort(key=lambda r: (_sev_key(r[0]), r[1]))
+    return rows
+
+
+def trivy_findings():
+    out = {}
+    for comp in COMPONENTS:
+        data = load_json("reports/trivy/trivy-%s-report.json" % comp)
+        if data is None:
+            continue
+        rows = []
+        for res in data.get("Results", []) or []:
+            for v in res.get("Vulnerabilities", []) or []:
+                rows.append([
+                    v.get("Severity", "UNKNOWN"),
+                    v.get("VulnerabilityID", ""),
+                    _short(v.get("PkgName", ""), 40),
+                    _short(v.get("InstalledVersion", ""), 30),
+                    _short(v.get("FixedVersion", "") or "no fix yet", 30),
+                    _short(v.get("Title", "") or v.get("Description", ""), 130),
+                ])
+        rows.sort(key=lambda r: (_sev_key(r[0]), r[1]))
+        out[comp] = rows
+    return out or None
+
+
+def zap_findings():
+    rows = []
+    found = False
+    for path in sorted(glob.glob("reports/zap/*.json")):
+        data = load_json(path)
+        if data is None:
+            continue
+        found = True
+        target = os.path.basename(path).replace("zap-", "").replace(".json", "")
+        for site in data.get("site", []) or []:
+            for a in site.get("alerts", []) or []:
+                rows.append([
+                    (a.get("riskdesc", "Unknown") or "Unknown").split(" ")[0],
+                    _short(a.get("name", ""), 70),
+                    target,
+                    str(len(a.get("instances", []) or [])),
+                    _short(a.get("solution", "") or a.get("desc", "")),
+                ])
+    if not found:
+        return None
+    rows.sort(key=lambda r: (_sev_key(r[0]), r[1]))
+    return rows
+
+
+def k6_metrics():
+    data = load_json("reports/k6/k6-summary.json")
+    if data is None:
+        return None
+    rows = []
+    for name, m in sorted((data.get("metrics", {}) or {}).items()):
+        if not isinstance(m, dict):
+            continue
+        vals = []
+        for key in ("count", "rate", "value", "avg", "min", "med", "p(90)", "p(95)", "max"):
+            v = m.get(key)
+            if v is None:
+                continue
+            vals.append("%s=%.2f" % (key, v) if isinstance(v, float) else "%s=%s" % (key, v))
+        th = m.get("thresholds")
+        if isinstance(th, dict) and th:
+            state = "met" if all(bool(x) for x in th.values()) else "BREACHED"
+        else:
+            state = "-"
+        rows.append([state, name, ", ".join(vals) or "-"])
+    rows.sort(key=lambda r: (r[0] != "BREACHED", r[1]))
+    return rows
+
+
+def detail_sections():
+    out = []
+
+    sg = semgrep_findings()
+    if sg is not None:
+        out.append("<h2>Code scan (Semgrep)</h2>" + table(
+            ["Severity", "Rule", "Location", "What it found"], sg,
+            empty="No code-level findings."))
+
+    tv = trivy_findings()
+    if tv:
+        out.append("<h2>Container vulnerabilities (Trivy)</h2>")
+        for comp, rows in tv.items():
+            crit = sum(1 for r in rows if str(r[0]).upper() == "CRITICAL")
+            high = sum(1 for r in rows if str(r[0]).upper() == "HIGH")
+            out.append(
+                '<h3>%s <span class="count">%d total, %d critical, %d high</span></h3>'
+                % (html.escape(comp), len(rows), crit, high)
+                + table(["Severity", "CVE", "Package", "Installed", "Fixed in", "Summary"],
+                        rows, empty="No vulnerabilities reported for this image."))
+
+    zp = zap_findings()
+    if zp is not None:
+        out.append("<h2>Running-app scan (OWASP ZAP)</h2>" + table(
+            ["Risk", "Alert", "Target", "Instances", "How to fix"], zp,
+            empty="No alerts raised."))
+
+    k6 = k6_metrics()
+    if k6 is not None:
+        out.append("<h2>Load test (k6)</h2>" + table(
+            ["Threshold", "Metric", "Values"], k6, sev_col=None,
+            empty="No load test run for this build."))
+
+    if not out:
+        return ('<h2>Details</h2><p class="none">No scan output was produced for this '
+                'build, which usually means it stopped before the scan stages ran.</p>')
+    return "\n".join(out)
 
 
 def main():
@@ -257,6 +446,7 @@ def main():
     title = {"dev": "Build & security check report",
              "staging": "Staging validation report",
              "prod": "Production release record"}[args.type]
+    details = detail_sections()
     doc = f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <title>{title} — build #{env('BUILD_NUMBER')}</title>
@@ -277,12 +467,35 @@ def main():
  .what {{ margin: .2rem 0; }}
  .detail {{ margin: .2rem 0 0; color: #51606f; font-size: .92rem; }}
  footer {{ margin-top: 2rem; color: #8a97a5; font-size: .85rem; }}
+ h2 {{ margin-top: 2.5rem; border-bottom: 2px solid #e3e8ee; padding-bottom: .3rem; }}
+ h3 {{ margin: 1.5rem 0 .4rem; font-size: 1rem; }}
+ .count {{ font-weight: 400; color: #8a97a5; font-size: .85rem; margin-left: .4rem; }}
+ .none {{ color: #157347; background: #e2f5e9; padding: .5rem .8rem;
+         border-radius: 6px; font-size: .9rem; }}
+ /* wide tables scroll inside their own box rather than pushing the page sideways */
+ .tablewrap {{ overflow-x: auto; margin: .5rem 0 1.5rem; }}
+ table.data {{ font-size: .85rem; margin: 0; }}
+ table.data th {{ width: auto; background: #f6f8fa; position: sticky; top: 0;
+                 white-space: nowrap; }}
+ table.data td {{ vertical-align: top; }}
+ table.data tbody tr:hover {{ background: #f9fbfd; }}
+ .sev-crit, .sev-high, .sev-med, .sev-low, .sev-info {{
+   font-weight: 700; white-space: nowrap; }}
+ .sev-crit {{ color: #8b0000; }}
+ .sev-high {{ color: #b02a37; }}
+ .sev-med  {{ color: #b8860b; }}
+ .sev-low  {{ color: #51606f; }}
+ .sev-info {{ color: #8a97a5; }}
 </style></head><body>
 <h1>{title}</h1>
 <p>This report explains, in plain language, everything that was checked and done for this
 release of <strong>Matchy+</strong>. Green badges mean the check passed.</p>
 <table>{rows}</table>
 {cards}
+<h1 style="margin-top:3rem">Findings in detail</h1>
+<p>Every finding from every scanner, worst first. This is the same data as the raw
+JSON files archived beside this report, rendered so it can actually be read.</p>
+{details}
 <footer>Generated automatically by the Matchy+ CI/CD platform (Jenkins).
 Raw technical scan files are stored next to this report for specialist review.</footer>
 </body></html>"""
