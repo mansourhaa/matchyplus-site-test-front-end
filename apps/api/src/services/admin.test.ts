@@ -148,6 +148,49 @@ describe('AdminService', () => {
     ).rejects.toThrow('insufficient privileges');
   });
 
+  it('extracts the filename from a user with a real uploaded video', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'u1',
+      role: 'USER',
+      video: '/uploads/videos/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11.mp4',
+    });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.getUserVideoFilename({ id: 's1', role: 'SUPPORT' } as never, 'u1'),
+    ).resolves.toBe('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11.mp4');
+  });
+
+  it.each([
+    ['no video at all', null],
+    [
+      'a stored photo path (wrong kind)',
+      '/uploads/photos/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11.jpg',
+    ],
+  ])('rejects with video not found when the user has %s', async (_label, video) => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'USER', video });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.getUserVideoFilename({ id: 's1', role: 'SUPPORT' } as never, 'u1'),
+    ).rejects.toMatchObject({ message: 'video not found', statusCode: 404 });
+  });
+
+  it('refuses to serve a video for a user the actor cannot manage', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'sa1', role: 'SUPER_ADMIN' });
+
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.getUserVideoFilename({ id: 'm1', role: 'MODERATOR' } as never, 'sa1'),
+    ).rejects.toThrow('insufficient privileges');
+  });
+
   it('ignores fields that are not admin-editable', async () => {
     const prisma = createMockPrisma();
     prisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'USER' });

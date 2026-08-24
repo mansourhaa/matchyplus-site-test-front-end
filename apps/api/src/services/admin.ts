@@ -280,6 +280,17 @@ export class AdminService {
     return filenameFromStoredPath(target.image);
   }
 
+  /** Same reasoning as {@link getUserPhotoFilename}, for the presentation video tab. */
+  async getUserVideoFilename(actor: AdminActor, id: string): Promise<string> {
+    await this.assertCanManage(actor, id);
+
+    const target = await this.prisma.user.findUnique({ where: { id }, select: { video: true } });
+    if (!target || !isStoredMediaPath(target.video, 'videos')) {
+      throw notFound('video not found', 'video_not_found');
+    }
+    return filenameFromStoredPath(target.video);
+  }
+
   /**
    * Guards every write against another account: an admin may only act on someone strictly
    * below them in the hierarchy, and never on their own row. Without this a SUPPORT could ban

@@ -38,6 +38,7 @@ const adminUser = {
     city: { type: 'string', nullable: true },
     bio: { type: 'string', nullable: true },
     image: { type: 'string', nullable: true },
+    video: { type: 'string', nullable: true },
     interests: { type: 'array', items: { type: 'string' } },
     languages: { type: 'array', items: { type: 'string' } },
     contact_modes: { type: 'array', items: { type: 'string' } },
@@ -182,6 +183,24 @@ export const adminGetUserPhotoSchema = {
       description: 'The photo file, streamed as binary image data',
       type: 'string',
       contentMediaType: 'image/*',
+    },
+    ...errorResponses,
+  },
+};
+
+export const adminGetUserVideoSchema = {
+  tags: ['admin'],
+  summary: "Serve a user's stored presentation video for the admin panel",
+  params: {
+    type: 'object',
+    properties: { id: { type: 'string' } },
+    required: ['id'],
+  },
+  response: {
+    200: {
+      description: 'The video file, streamed as binary video data',
+      type: 'string',
+      contentMediaType: 'video/*',
     },
     ...errorResponses,
   },

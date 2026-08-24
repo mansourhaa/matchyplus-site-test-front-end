@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { UserPlan } from '@saas-boilerplate/types';
 
-import { PROFILE_PHOTO_CONTENT_TYPES } from '../../../constants.js';
+import { PROFILE_PHOTO_CONTENT_TYPES, PROFILE_VIDEO_CONTENT_TYPES } from '../../../constants.js';
 import {
   adminAnalyticsSchema,
   adminChangePasswordSchema,
@@ -12,6 +12,7 @@ import {
   adminDeleteUserSchema,
   adminGetUserPhotoSchema,
   adminGetUserSchema,
+  adminGetUserVideoSchema,
   adminListPlansSchema,
   adminListReportsSchema,
   adminListUsersSchema,
@@ -41,7 +42,7 @@ import {
 } from '../../../utils/admin-session.js';
 import { badRequest, notFound } from '../../../utils/http-errors.js';
 import { extensionOf } from '../../../utils/media-http.js';
-import { PHOTOS_DIR } from '../../../utils/media-storage.js';
+import { PHOTOS_DIR, VIDEOS_DIR } from '../../../utils/media-storage.js';
 
 type UserParams = { id: string };
 type PlanParams = { id: UserPlan };
@@ -97,6 +98,26 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
       const filePath = join(PHOTOS_DIR, filename);
       if (!existsSync(filePath)) throw notFound('photo not found', 'photo_not_found');
+
+      reply.header('Content-Type', contentType);
+      reply.header('Cache-Control', 'private, max-age=86400');
+      return reply.send(createReadStream(filePath));
+    },
+  );
+
+  fastify.get<{ Params: UserParams }>(
+    '/users/:id/video',
+    { schema: adminGetUserVideoSchema },
+    async (request, reply) => {
+      const filename = await adminService.getUserVideoFilename(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.params.id,
+      );
+      const contentType = PROFILE_VIDEO_CONTENT_TYPES[extensionOf(filename)];
+      if (!contentType) throw badRequest('invalid filename', 'invalid_filename');
+
+      const filePath = join(VIDEOS_DIR, filename);
+      if (!existsSync(filePath)) throw notFound('video not found', 'video_not_found');
 
       reply.header('Content-Type', contentType);
       reply.header('Cache-Control', 'private, max-age=86400');

@@ -21,6 +21,7 @@ export const adminUserSelect = {
   city: true,
   bio: true,
   image: true,
+  video: true,
   interests: true,
   languages: true,
   contact_modes: true,
