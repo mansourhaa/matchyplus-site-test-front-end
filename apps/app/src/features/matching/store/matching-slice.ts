@@ -132,6 +132,18 @@ export const unmatchUser = createAsyncThunk(
   },
 );
 
+export const blockUser = createAsyncThunk(
+  'matching/blockUser',
+  async (targetUserId: string, { rejectWithValue }) => {
+    try {
+      await api.post(`/users/${targetUserId}/block`);
+      return { targetUserId };
+    } catch (error) {
+      return rejectWithValue(apiErrorKey(error, 'matching.errors.block'));
+    }
+  },
+);
+
 const matchingSlice = createSlice({
   name: 'matching',
   initialState,
@@ -232,6 +244,15 @@ const matchingSlice = createSlice({
         );
       })
       .addCase(unmatchUser.rejected, (state, action) => {
+        state.swipeError = String(action.payload || action.error.message);
+      })
+      .addCase(blockUser.fulfilled, (state, action) => {
+        state.matches = state.matches.filter(
+          (row) => row.matched_user_id !== action.payload.targetUserId,
+        );
+        state.feed = state.feed.filter((p) => p.id !== action.payload.targetUserId);
+      })
+      .addCase(blockUser.rejected, (state, action) => {
         state.swipeError = String(action.payload || action.error.message);
       })
       .addCase(logout.fulfilled, resetForNewSession)

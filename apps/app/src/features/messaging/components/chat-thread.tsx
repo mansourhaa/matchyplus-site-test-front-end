@@ -5,6 +5,8 @@ import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { ChatIcebreakers } from '@/features/messaging/components/chat-icebreakers';
+import { ChatOptionsMenu } from '@/features/messaging/components/chat-options-menu';
 import {
   clearSendError,
   fetchConversation,
@@ -58,9 +60,21 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
   /* eslint-disable react-hooks/refs -- synchronous mirror + epoch bump for getUserMedia guard */
   if (conversationIdRef.current !== conversationId) {
     conversationIdRef.current = conversationId;
-    if (acquireInFlightRef.current) {
-      acquireEpochRef.current += 1;
+    acquireEpochRef.current += 1;
+    acquireInFlightRef.current = false;
+    const session = activeRecordingSessionRef.current;
+    if (session) session.uploadOnStop = false;
+    const recorder = mediaRecorderRef.current;
+    mediaRecorderRef.current = null;
+    if (recorder && recorder.state !== 'inactive') {
+      try {
+        recorder.stop();
+      } catch {
+        // Safe noop
+      }
     }
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
   }
   /* eslint-enable react-hooks/refs */
 
@@ -227,28 +241,32 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
   return (
     <div className="flex h-full min-h-0 flex-col" style={{ background: matchyBrand.bg }}>
       <div
-        className="flex items-center gap-3 px-4 py-3 md:px-6"
+        className="flex items-center justify-between gap-3 px-4 py-3 md:px-6"
         style={{ background: 'white', borderBottom: `1px solid ${matchyBrand.border}` }}
       >
-        <AuthenticatedProfileAvatar
-          image={messaging.conversation?.peer?.image}
-          name={name}
-          sizeClassName="h-10 w-10"
-          roundedClassName="rounded-full"
-          textClassName="text-sm font-bold text-white"
-        />
-        <div className="min-w-0">
-          <p className="truncate font-bold" style={{ color: matchyBrand.textDark }}>
-            {name}
-          </p>
-          <p className="text-xs text-[#888]">
-            {messaging.peerTyping
-              ? t('chat.typing')
-              : canSend
-                ? t('chat.active')
-                : t('chat.readOnly')}
-          </p>
+        <div className="flex min-w-0 items-center gap-3">
+          <AuthenticatedProfileAvatar
+            image={messaging.conversation?.peer?.image}
+            name={name}
+            sizeClassName="h-10 w-10"
+            roundedClassName="rounded-full"
+            textClassName="text-sm font-bold text-white"
+          />
+          <div className="min-w-0">
+            <p className="truncate font-bold" style={{ color: matchyBrand.textDark }}>
+              {name}
+            </p>
+            <p className="text-xs text-[#888]">
+              {messaging.peerTyping
+                ? t('chat.typing')
+                : canSend
+                  ? t('chat.active')
+                  : t('chat.readOnly')}
+            </p>
+          </div>
         </div>
+
+        <ChatOptionsMenu peer={messaging.conversation?.peer} conversationId={conversationId} />
       </div>
 
       <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4 md:px-6">
@@ -289,7 +307,13 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
             </button>
           </div>
         ) : messaging.messages.length === 0 ? (
-          <p className="py-12 text-center text-sm text-[#777]">{t('chat.emptyThread')}</p>
+          <ChatIcebreakers
+            peer={messaging.conversation?.peer}
+            onSelect={(msg) => {
+              setDraft(msg);
+            }}
+            disabled={!canSend}
+          />
         ) : (
           messaging.messages.map((message) => {
             const mine = message.sender_id === myUserId;

@@ -113,7 +113,7 @@ export function SettingsView() {
         {
           label: t('settings.notifications'),
           icon: Bell,
-          path: '/notifications',
+          path: '/settings/notifications',
           color: '#E74C3C',
           bg: '#FDEAEA',
         },
