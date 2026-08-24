@@ -1,7 +1,9 @@
 'use client';
 
+import { AdminTransactionsSection } from '@/components/admin/admin-transactions-section';
 import { formatMonth } from '@/features/admin-analytics/types';
 import type { AdminAnalytics } from '@/features/admin-analytics/types';
+import type { AdminTransaction } from '@/features/admin-transactions/types';
 import { PLAN_COLOR, PLAN_LABEL, STATUS_COLOR } from '@/features/admin-users/labels';
 import type { AdminManagedUser, AdminStats } from '@/features/admin-users/types';
 import { CreditCard, type LucideIcon, TrendingDown, TrendingUp, Users, Zap } from 'lucide-react';
@@ -80,14 +82,18 @@ export function AdminDashboardSection({
   stats,
   analytics,
   users,
+  transactions,
   onSelectUser,
   onSeeAll,
+  onSeeAllTransactions,
 }: {
   stats: AdminStats | null;
   analytics: AdminAnalytics | null;
   users: AdminManagedUser[];
+  transactions: AdminTransaction[];
   onSelectUser: (user: AdminManagedUser) => void;
   onSeeAll: () => void;
+  onSeeAllTransactions: () => void;
 }) {
   const total = stats?.totalUsers ?? 0;
   const paying = (stats?.premiumUsers ?? 0) + (stats?.premiumPlusUsers ?? 0);
@@ -255,6 +261,13 @@ export function AdminDashboardSection({
           </div>
         </div>
       </div>
+
+      <AdminTransactionsSection
+        title="Transactions récentes"
+        transactions={transactions}
+        limit={4}
+        onSeeAll={onSeeAllTransactions}
+      />
 
       <div className="rounded-2xl p-5" style={{ background: 'white', border: '1px solid #F0F0F0' }}>
         <div className="mb-4 flex items-center justify-between">
