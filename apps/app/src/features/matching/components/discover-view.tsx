@@ -2,6 +2,7 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
+import { MatchyLogo } from '@/components/matchy/matchy-logo';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import {
@@ -192,9 +193,7 @@ export function DiscoverView() {
           {title}
         </p>
         <div className="flex md:hidden">
-          <span style={{ fontSize: 18, fontWeight: 800, color: '#2F76BB' }}>
-            Matchy<span style={{ color: '#61BCA6' }}>+</span>
-          </span>
+          <MatchyLogo size="sm" />
         </div>
         <MatchyHeaderActions />
       </div>

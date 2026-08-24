@@ -57,7 +57,13 @@ export function HeroScreen() {
             className="h-full w-full object-cover"
           />
         </div>
-        <span className="text-brand-teal text-[11px] font-bold">Matchy</span>
+        <Image
+          src="/logo-matchy.svg"
+          alt="Matchy+"
+          width={60}
+          height={16}
+          className="h-3.5 w-auto"
+        />
       </div>
       <div className="relative mx-3 overflow-hidden rounded-xl">
         <Image
@@ -222,7 +228,13 @@ export function ExploreScreen() {
               className="h-full w-full object-cover"
             />
           </div>
-          <span className="text-brand-teal text-[11px] font-bold">Matchy</span>
+          <Image
+            src="/logo-matchy.svg"
+            alt="Matchy+"
+            width={60}
+            height={16}
+            className="h-3.5 w-auto"
+          />
         </div>
         <Search className="text-brand-navy/40 h-3.5 w-3.5" />
       </div>
