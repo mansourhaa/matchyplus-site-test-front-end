@@ -25,6 +25,12 @@ export class OAuthAuthenticationService {
 
     const existingByProvider = await this.prisma.user.findUnique({ where: providerIdWhere });
     if (existingByProvider) {
+      if (!existingByProvider.image && profile.image) {
+        return this.prisma.user.update({
+          where: { id: existingByProvider.id },
+          data: { image: profile.image },
+        });
+      }
       return existingByProvider;
     }
 
@@ -40,6 +46,7 @@ export class OAuthAuthenticationService {
           where: { id: existingByEmail.id },
           data: {
             email_verified: true,
+            ...(!existingByEmail.image && profile.image ? { image: profile.image } : {}),
             ...(provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id }),
           },
         });
@@ -52,6 +59,7 @@ export class OAuthAuthenticationService {
         email_verified: profile.emailVerified,
         name: profile.name ?? profile.email ?? `${provider}-${profile.id}`,
         auth_provider: provider,
+        ...(profile.image ? { image: profile.image } : {}),
         ...(provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id }),
       },
     });
@@ -95,6 +103,7 @@ export class OAuthAuthenticationService {
       data: {
         email_verified: true,
         ...(profileEmail && !user.email ? { email: profileEmail } : {}),
+        ...(!user.image && profile.image ? { image: profile.image } : {}),
         ...(provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id }),
       },
     });

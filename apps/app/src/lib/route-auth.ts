@@ -5,7 +5,7 @@
  */
 
 /** Routes that bounce *away* when a usable session cookie is present. */
-export const PUBLIC_AUTH_ROUTES = ['/login'] as const;
+export const PUBLIC_AUTH_ROUTES = ['/login', '/reset-password'] as const;
 
 /**
  * Always allowed regardless of auth. See proxy.ts for why each path is neutral.
@@ -51,8 +51,14 @@ export function requiresAuthentication(pathname: string): boolean {
  *   probe only adds noise. Cap with Preferences tokens is handled separately.
  * - `/oauth-callback`: session is established by exchange, not by a prior probe.
  * - `/register`: dead redirect to onboarding.
+ * - `/reset-password`: public auth flow, no session probe needed.
  */
-const SKIP_BOOTSTRAP_AUTHCHECK_PREFIXES = ['/login', '/oauth-callback', '/register'] as const;
+const SKIP_BOOTSTRAP_AUTHCHECK_PREFIXES = [
+  '/login',
+  '/oauth-callback',
+  '/register',
+  '/reset-password',
+] as const;
 
 export function skipsBootstrapAuthCheck(pathname: string): boolean {
   return SKIP_BOOTSTRAP_AUTHCHECK_PREFIXES.some(

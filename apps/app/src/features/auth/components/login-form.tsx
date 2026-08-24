@@ -1,16 +1,9 @@
 'use client';
 
-import { PasswordRequirements } from '@/components/password-requirements';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import {
-  confirmPasswordReset,
-  loginPhone,
-  requestPasswordReset,
-  selectAuth,
-} from '@/features/auth/store/auth-slice';
+import { loginPhone, selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { landingPath } from '@/lib/landing';
-import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { ArrowLeft, ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
@@ -107,16 +100,6 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Phone login is always phone + password — OTP is never a login mechanism itself,
-  // only proof of phone ownership for signup, phone-link, or password reset (see
-  // doc/features/authentication.md).
-  const [resetMode, setResetMode] = useState(false);
-  const [resetCode, setResetCode] = useState('');
-  const [newResetPassword, setNewResetPassword] = useState('');
-  const [resetRequestLoading, setResetRequestLoading] = useState(false);
-  const [resetSubmitLoading, setResetSubmitLoading] = useState(false);
-  const [resetInfo, setResetInfo] = useState<string | null>(null);
-
   const country = getPhoneCountry(countryIso);
   const phone = composeE164Phone(countryIso, nationalNumber);
   const error = localError || authError;
@@ -135,8 +118,6 @@ export function LoginForm() {
   const handleBackToLogin = () => {
     router.push('/login');
     setLocalError(null);
-    setResetMode(false);
-    setResetInfo(null);
   };
 
   const goToPostAuthDestination = (onboardingCompleted: boolean) => {
@@ -161,55 +142,15 @@ export function LoginForm() {
     window.location.href = getOAuthRedirectUrl(provider);
   };
 
-  const handleRequestReset = async () => {
-    if (nationalNumber.length < country.nationalLength) {
-      setLocalError(t('auth.loginForm.invalidPhoneWithLength', { length: country.nationalLength }));
-      return;
+  const handleGoToResetPassword = () => {
+    const params = new URLSearchParams();
+    if (nationalNumber) {
+      params.set('phone', phone);
+      params.set('country', countryIso);
+      params.set('national', nationalNumber);
     }
-
-    setLocalError(null);
-    setResetInfo(null);
-    setResetRequestLoading(true);
-    try {
-      await dispatch(requestPasswordReset({ phone })).unwrap();
-      // The API always returns success here regardless of whether this phone has a
-      // password-based account (anti-enumeration) — the copy must stay conditional
-      // ("if an account exists") rather than promising an SMS that may not be sent.
-      setResetInfo(t('auth.loginForm.resetSmsSent'));
-      setResetMode(true);
-    } catch {
-      setLocalError(t('auth.loginForm.resetSendFailed'));
-    } finally {
-      setResetRequestLoading(false);
-    }
-  };
-
-  const handleConfirmReset = async () => {
-    if (
-      nationalNumber.length < country.nationalLength ||
-      !resetCode.trim() ||
-      !isPasswordPolicySatisfied(newResetPassword)
-    ) {
-      setLocalError(t('auth.loginForm.invalidResetForm', { length: country.nationalLength }));
-      return;
-    }
-
-    setLocalError(null);
-    setResetSubmitLoading(true);
-    try {
-      await dispatch(
-        confirmPasswordReset({ phone, code: resetCode, newPassword: newResetPassword }),
-      ).unwrap();
-      setPassword(newResetPassword);
-      setNewResetPassword('');
-      setResetCode('');
-      setResetMode(false);
-      setResetInfo(t('auth.loginForm.resetSuccess'));
-    } catch {
-      setLocalError(t('auth.loginForm.resetFailed'));
-    } finally {
-      setResetSubmitLoading(false);
-    }
+    const query = params.toString();
+    router.push(query ? `/reset-password?${query}` : '/reset-password');
   };
 
   const formContent = (
@@ -331,7 +272,12 @@ export function LoginForm() {
           </div>
         </div>
       ) : (
-        <div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handlePhoneLogin();
+          }}
+        >
           <div className="mb-4">
             <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
               {t('auth.loginForm.countryCodeLabel')}
@@ -372,64 +318,16 @@ export function LoginForm() {
             </div>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-end">
             <button
               type="button"
-              onClick={handleRequestReset}
-              disabled={resetRequestLoading}
+              onClick={handleGoToResetPassword}
               style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
+              className="transition-all hover:underline"
             >
-              {resetRequestLoading ? t('auth.loginForm.sendingCode') : t('auth.forgotPassword')}
+              {t('auth.forgotPassword')}
             </button>
           </div>
-
-          {resetMode && (
-            <div
-              className="mb-4 space-y-3 rounded-2xl p-3"
-              style={{ background: '#F7FBFF', border: '1px solid #DCEAF8' }}
-            >
-              <div>
-                <label style={{ fontSize: '12px', color: '#888', fontWeight: 600 }}>
-                  {t('auth.loginForm.resetCodeLabel')}
-                </label>
-                <input
-                  type="text"
-                  value={resetCode}
-                  onChange={(event) =>
-                    setResetCode(event.target.value.replace(/\D/g, '').slice(0, 6))
-                  }
-                  className="mt-1 w-full rounded-xl px-4 py-2.5 text-[#353535] outline-none"
-                  style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
-                  placeholder="123456"
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', color: '#888', fontWeight: 600 }}>
-                  {t('auth.loginForm.newPasswordLabel')}
-                </label>
-                <input
-                  type="password"
-                  value={newResetPassword}
-                  onChange={(event) => setNewResetPassword(event.target.value)}
-                  className="mt-1 w-full rounded-xl px-4 py-2.5 text-[#353535] outline-none"
-                  style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
-                  placeholder={t('auth.loginForm.newPasswordLabel')}
-                />
-                <PasswordRequirements password={newResetPassword} />
-              </div>
-              <button
-                type="button"
-                onClick={handleConfirmReset}
-                disabled={resetSubmitLoading}
-                className="w-full rounded-xl py-2.5 text-white"
-                style={{ background: '#2F76BB', fontSize: '13px', fontWeight: 700 }}
-              >
-                {resetSubmitLoading
-                  ? t('auth.loginForm.resettingPassword')
-                  : t('auth.loginForm.resetPasswordSubmit')}
-              </button>
-            </div>
-          )}
 
           {error && (
             <p className="mb-3 text-center" style={{ fontSize: '12px', color: '#E24E59' }}>
@@ -437,14 +335,8 @@ export function LoginForm() {
             </p>
           )}
 
-          {resetInfo && (
-            <p className="mb-3 text-center" style={{ fontSize: '12px', color: '#2F76BB' }}>
-              {resetInfo}
-            </p>
-          )}
-
           <button
-            onClick={handlePhoneLogin}
+            type="submit"
             disabled={
               loading || nationalNumber.length < country.nationalLength || password.length < 6
             }
@@ -462,7 +354,7 @@ export function LoginForm() {
             {loading && <Loader2 size={16} className="animate-spin" />}
             {t('auth.loginForm.continueButton')}
           </button>
-        </div>
+        </form>
       )}
 
       <p

@@ -25,13 +25,15 @@ describe('route-auth', () => {
     vi.useRealTimers();
   });
 
-  it('treats login as public and oauth/onboarding/register as neutral', () => {
+  it('treats login and reset-password as public and oauth/onboarding/register as neutral', () => {
     expect(isPublicAuthRoute('/login')).toBe(true);
     expect(isPublicAuthRoute('/login/extra')).toBe(true);
+    expect(isPublicAuthRoute('/reset-password')).toBe(true);
     expect(isNeutralRoute('/onboarding')).toBe(true);
     expect(isNeutralRoute('/oauth-callback')).toBe(true);
     expect(isNeutralRoute('/register')).toBe(true);
     expect(requiresAuthentication('/login')).toBe(false);
+    expect(requiresAuthentication('/reset-password')).toBe(false);
     expect(requiresAuthentication('/onboarding')).toBe(false);
   });
 
@@ -50,8 +52,9 @@ describe('route-auth', () => {
     expect(requiresAuthentication('/profile/xyz')).toBe(true);
   });
 
-  it('skips bootstrap authcheck on login, oauth-callback, and register only', () => {
+  it('skips bootstrap authcheck on login, reset-password, oauth-callback, and register', () => {
     expect(skipsBootstrapAuthCheck('/login')).toBe(true);
+    expect(skipsBootstrapAuthCheck('/reset-password')).toBe(true);
     expect(skipsBootstrapAuthCheck('/oauth-callback')).toBe(true);
     expect(skipsBootstrapAuthCheck('/register')).toBe(true);
     expect(skipsBootstrapAuthCheck('/onboarding')).toBe(false);

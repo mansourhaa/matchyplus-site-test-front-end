@@ -443,6 +443,45 @@ export const messages: Record<Locale, MessageTree> = {
         errorAccountInactive: 'This account has been deactivated.',
         errorLoginFailed: 'Login failed. Check your phone number and password',
       },
+      resetPassword: {
+        requestTitle: 'Reset your password',
+        requestDesc: 'Enter your phone number to receive a verification code by SMS.',
+        verifyTitle: 'Enter code & new password',
+        verifyDesc: 'Enter the 6-digit code sent to {phone} and choose your new password.',
+        successTitle: 'Password reset successful! 🎉',
+        successDesc:
+          'Your password has been successfully updated. You can now log in with your new credentials.',
+        sendCodeButton: 'Send reset code',
+        resendCode: 'Resend code',
+        resendCooldown: 'Resend in ({seconds}s)',
+        codeLabel: '6-digit SMS code',
+        newPasswordLabel: 'New password',
+        newPasswordPlaceholder: 'Enter new password',
+        confirmPasswordLabel: 'Confirm new password',
+        confirmPasswordPlaceholder: 'Confirm your new password',
+        passwordsDoNotMatch: 'Passwords do not match.',
+        changePhone: 'Change phone number',
+        backToLogin: 'Back to login',
+        submitButton: 'Reset password',
+        submitting: 'Resetting password...',
+        signInCta: 'Sign in to your account',
+        stepLabelRequest: 'Phone number',
+        stepLabelVerify: 'Security & Code',
+        stepLabelSuccess: 'Confirmation',
+        invalidPhoneWithLength: 'Enter a valid phone number ({length} digits)',
+        invalidResetForm:
+          'Enter the 6-digit code and a new password that meets the security requirements.',
+        resetSmsSent:
+          'If an account with a password exists for this number, a reset code has just been sent by SMS.',
+        resetSendFailed: 'Unable to send the reset code. Please try again.',
+        resetFailed: 'Password reset failed. Please check the code and try again.',
+        errorPhoneNotFound:
+          'No account found with this phone number. Please check the number or create an account.',
+        errorInvalidOtp:
+          'Invalid or expired verification code. If no account exists for this number, no code was sent.',
+        noAccountPrompt: "Don't have an account yet?",
+        createAccountLink: 'Create an account',
+      },
     },
     identityVerification: {
       camera: {
@@ -1018,6 +1057,47 @@ export const messages: Record<Locale, MessageTree> = {
         errorAccountInactive: 'Ce compte a été désactivé.',
         errorLoginFailed: 'Connexion échouée. Vérifiez votre numéro et votre mot de passe',
       },
+      resetPassword: {
+        requestTitle: 'Réinitialiser votre mot de passe',
+        requestDesc:
+          'Entrez votre numéro de téléphone pour recevoir un code de vérification par SMS.',
+        verifyTitle: 'Code de vérification et nouveau mot de passe',
+        verifyDesc:
+          'Entrez le code à 6 chiffres envoyé au {phone} et définissez votre nouveau mot de passe.',
+        successTitle: 'Mot de passe réinitialisé ! 🎉',
+        successDesc:
+          'Votre mot de passe a été mis à jour avec succès. Vous pouvez maintenant vous connecter avec vos nouveaux identifiants.',
+        sendCodeButton: 'Envoyer le code',
+        resendCode: 'Renvoyer le code',
+        resendCooldown: 'Renvoyer dans ({seconds}s)',
+        codeLabel: 'Code SMS à 6 chiffres',
+        newPasswordLabel: 'Nouveau mot de passe',
+        newPasswordPlaceholder: 'Entrez votre nouveau mot de passe',
+        confirmPasswordLabel: 'Confirmer le mot de passe',
+        confirmPasswordPlaceholder: 'Confirmez votre nouveau mot de passe',
+        passwordsDoNotMatch: 'Les mots de passe ne correspondent pas.',
+        changePhone: 'Modifier le numéro',
+        backToLogin: 'Retour à la connexion',
+        submitButton: 'Réinitialiser le mot de passe',
+        submitting: 'Réinitialisation en cours...',
+        signInCta: 'Se connecter à votre compte',
+        stepLabelRequest: 'Numéro de téléphone',
+        stepLabelVerify: 'Sécurité et code',
+        stepLabelSuccess: 'Confirmation',
+        invalidPhoneWithLength: 'Entrez un numéro de téléphone valide ({length} chiffres)',
+        invalidResetForm:
+          'Entrez le code à 6 chiffres et un nouveau mot de passe conforme aux règles de sécurité.',
+        resetSmsSent:
+          "Si un compte avec mot de passe existe pour ce numéro, un code de réinitialisation vient d'être envoyé par SMS.",
+        resetSendFailed: "Impossible d'envoyer le code de réinitialisation. Veuillez réessayer.",
+        resetFailed: 'Échec de la réinitialisation. Vérifiez le code et réessayez.',
+        errorPhoneNotFound:
+          "Aucun compte n'a été trouvé avec ce numéro. Vérifiez votre numéro ou créez un compte.",
+        errorInvalidOtp:
+          "Code de vérification invalide ou expiré. Si aucun compte n'existe avec ce numéro, aucun SMS n'a été envoyé.",
+        noAccountPrompt: "Vous n'avez pas encore de compte ?",
+        createAccountLink: 'Créer un compte',
+      },
     },
     identityVerification: {
       camera: {
@@ -1591,6 +1671,44 @@ export const messages: Record<Locale, MessageTree> = {
         errorAccountBanned: 'تم حظر هذا الحساب.',
         errorAccountInactive: 'تم إلغاء تفعيل هذا الحساب.',
         errorLoginFailed: 'فشل تسجيل الدخول. تحقق من رقم هاتفك وكلمة المرور',
+      },
+      resetPassword: {
+        requestTitle: 'إعادة تعيين كلمة المرور',
+        requestDesc: 'أدخل رقم هاتفك لتلقي رمز التحقق عبر رسالة نصية قصيرة (SMS).',
+        verifyTitle: 'رمز التحقق وكلمة المرور الجديدة',
+        verifyDesc: 'أدخل الرمز المكون من 6 أرقام المرسل إلى {phone} وحدد كلمة المرور الجديدة.',
+        successTitle: 'تمت إعادة تعيين كلمة المرور بنجاح! 🎉',
+        successDesc:
+          'تم تحديث كلمة المرور الخاصة بك بنجاح. يمكنك الآن تسجيل الدخول ببياناتك الجديدة.',
+        sendCodeButton: 'إرسال الرمز',
+        resendCode: 'إعادة إرسال الرمز',
+        resendCooldown: 'إعادة الإرسال خلال ({seconds} ث)',
+        codeLabel: 'رمز التحقق (6 أرقام)',
+        newPasswordLabel: 'كلمة المرور الجديدة',
+        newPasswordPlaceholder: 'أدخل كلمة المرور الجديدة',
+        confirmPasswordLabel: 'تأكيد كلمة المرور',
+        confirmPasswordPlaceholder: 'أكد كلمة المرور الجديدة',
+        passwordsDoNotMatch: 'كلمتا المرور غير متطابقتين.',
+        changePhone: 'تغيير رقم الهاتف',
+        backToLogin: 'العودة إلى تسجيل الدخول',
+        submitButton: 'إعادة تعيين كلمة المرور',
+        submitting: 'جارٍ إعادة التعيين...',
+        signInCta: 'تسجيل الدخول إلى حسابك',
+        stepLabelRequest: 'رقم الهاتف',
+        stepLabelVerify: 'الأمان والرمز',
+        stepLabelSuccess: 'التأكيد',
+        invalidPhoneWithLength: 'أدخل رقم هاتف صالح ({length} أرقام)',
+        invalidResetForm: 'أدخل الرمز المكون من 6 أرقام وكلمة مرور جديدة تستوفي شروط الأمان.',
+        resetSmsSent:
+          'إذا كان هناك حساب مرتبط بهذا الرقم، فقد تم إرسال رمز إعادة التعيين عبر رسالة نصية قصيرة.',
+        resetSendFailed: 'تعذّر إرسال رمز إعادة التعيين. يرجى المحاولة مرة أخرى.',
+        resetFailed: 'فشلت عملية إعادة التعيين. يرجى التحقق من الرمز والمحاولة مجدداً.',
+        errorPhoneNotFound:
+          'لم يتم العثور على حساب مرتبط بهذا الرقم. يرجى التحقق من الرقم أو إنشاء حساب جديد.',
+        errorInvalidOtp:
+          'رمز التحقق غير صالح أو منتهي الصلاحية. في حال عدم وجود حساب بهذا الرقم، لم يتم إرسال أي رمز.',
+        noAccountPrompt: 'ليس لديك حساب بعد؟',
+        createAccountLink: 'إنشاء حساب',
       },
     },
     identityVerification: {
