@@ -1,15 +1,12 @@
 'use client';
 
-import { AdminAddTeamMemberModal } from '@/components/admin/admin-add-team-member-modal';
 import { AdminAddUserModal } from '@/components/admin/admin-add-user-modal';
 import { AdminAnalyticsSection } from '@/components/admin/admin-analytics-section';
 import { AdminDashboardSection } from '@/components/admin/admin-dashboard-section';
-import { AdminEditTeamMemberModal } from '@/components/admin/admin-edit-team-member-modal';
 import { AdminPlansSection } from '@/components/admin/admin-plans-section';
 import { AdminReportsSection } from '@/components/admin/admin-reports-section';
 import { AdminSettingsSection } from '@/components/admin/admin-settings-section';
 import { AdminSubscriptionsSection } from '@/components/admin/admin-subscriptions-section';
-import { AdminTeamSection } from '@/components/admin/admin-team-section';
 import { AdminUserDetail } from '@/components/admin/admin-user-detail';
 import { AdminUsersSection } from '@/components/admin/admin-users-section';
 import { ConfirmDeletePopup } from '@/components/admin/confirm-delete-popup';
@@ -36,13 +33,6 @@ import {
 } from '@/features/admin-reports/store/admin-reports-slice';
 import type { ReportStatus } from '@/features/admin-reports/types';
 import {
-  fetchAdminTeam,
-  selectAdminTeam,
-  setTeamFilters,
-  updateAdminTeamMemberStatus,
-} from '@/features/admin-team/store/admin-team-slice';
-import type { AdminTeamMember, TeamStatus } from '@/features/admin-team/types';
-import {
   deleteAdminUser,
   fetchAdminStats,
   fetchAdminUserById,
@@ -65,7 +55,6 @@ import {
   type LucideIcon,
   Package,
   Settings,
-  Shield,
   Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -75,7 +64,6 @@ type AdminSection =
   | 'dashboard'
   | 'users'
   | 'user-detail'
-  | 'team'
   | 'subscriptions'
   | 'plans'
   | 'analytics'
@@ -87,7 +75,6 @@ type NavKey = Exclude<AdminSection, 'user-detail'>;
 const NAV_ITEMS: { key: NavKey; icon: LucideIcon; label: string }[] = [
   { key: 'dashboard', icon: Home, label: 'Tableau de bord' },
   { key: 'users', icon: Users, label: 'Utilisateurs' },
-  { key: 'team', icon: Shield, label: 'Équipe' },
   { key: 'reports', icon: Flag, label: 'Signalements' },
   { key: 'subscriptions', icon: CreditCard, label: 'Abonnements' },
   { key: 'plans', icon: Package, label: 'Gestion Forfaits' },
@@ -116,25 +103,12 @@ export function AdminPanel() {
   } = useAppSelector(selectAdminReports);
   const reportGroups = useAppSelector(selectReportsByReportedUser);
   const pendingReportCount = useAppSelector(selectPendingReportCount);
-  const {
-    members: teamMembers,
-    loading: loadingTeam,
-    error: teamError,
-    filters: teamFilters,
-  } = useAppSelector(selectAdminTeam);
 
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [previousSection, setPreviousSection] = useState<AdminSection>('users');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userToDelete, setUserToDelete] = useState<AdminManagedUser | null>(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
-  const [addTeamMemberOpen, setAddTeamMemberOpen] = useState(false);
-  const [editingTeamMember, setEditingTeamMember] = useState<AdminTeamMember | null>(null);
-
-  // Support has nothing below it among admin roles, so the section is hidden rather than
-  // shown empty — matches the backend's own assertMinimumRole(MODERATOR) gate on /admin/team.
-  const canSeeTeam = admin?.role === 'SUPER_ADMIN' || admin?.role === 'MODERATOR';
-  const visibleNavItems = NAV_ITEMS.filter((item) => item.key !== 'team' || canSeeTeam);
 
   useEffect(() => {
     void dispatch(fetchAdminStats());
@@ -145,15 +119,6 @@ export function AdminPanel() {
   useEffect(() => {
     void dispatch(fetchAdminReports(reportFilter));
   }, [dispatch, reportFilter]);
-
-  useEffect(() => {
-    if (activeSection !== 'team' || !canSeeTeam) return;
-    const timeout = window.setTimeout(() => {
-      void dispatch(fetchAdminTeam(teamFilters));
-    }, 220);
-
-    return () => window.clearTimeout(timeout);
-  }, [dispatch, activeSection, canSeeTeam, teamFilters]);
 
   // Debounced so typing in the search box does not fire a request per keystroke.
   useEffect(() => {
@@ -216,10 +181,6 @@ export function AdminPanel() {
     }
   };
 
-  const handleChangeTeamMemberStatus = (member: AdminTeamMember, status: TeamStatus) => {
-    void dispatch(updateAdminTeamMemberStatus({ id: member.id, status }));
-  };
-
   const handleSetReportStatus = (id: string, status: ReportStatus) => {
     void dispatch(updateAdminReportStatus({ id, status }));
   };
@@ -269,7 +230,7 @@ export function AdminPanel() {
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {visibleNavItems.map(({ key, icon: Icon, label }) => {
+          {NAV_ITEMS.map(({ key, icon: Icon, label }) => {
             const isActive =
               activeSection === key || (activeSection === 'user-detail' && key === 'users');
             const badge = key === 'reports' ? pendingReportCount : 0;
@@ -406,7 +367,7 @@ export function AdminPanel() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {(error ?? plansError ?? analyticsError ?? reportsError ?? teamError) && (
+          {(error ?? plansError ?? analyticsError ?? reportsError) && (
             <p
               className="mb-4 rounded-xl px-4 py-3"
               style={{
@@ -416,7 +377,7 @@ export function AdminPanel() {
                 fontSize: '13px',
               }}
             >
-              {error ?? plansError ?? analyticsError ?? reportsError ?? teamError}
+              {error ?? plansError ?? analyticsError ?? reportsError}
             </p>
           )}
 
@@ -439,19 +400,6 @@ export function AdminPanel() {
               onOpenUser={(user) => openUserDetail(user, 'users')}
               onDeleteUser={(user) => setUserToDelete(user)}
               onAddUser={() => setAddUserOpen(true)}
-            />
-          )}
-
-          {activeSection === 'team' && canSeeTeam && admin && (
-            <AdminTeamSection
-              members={teamMembers}
-              filters={teamFilters}
-              loading={loadingTeam}
-              actorRole={admin.role}
-              onFiltersChange={(changes) => dispatch(setTeamFilters(changes))}
-              onAddMember={() => setAddTeamMemberOpen(true)}
-              onEditMember={(member) => setEditingTeamMember(member)}
-              onChangeStatus={handleChangeTeamMemberStatus}
             />
           )}
 
@@ -510,20 +458,6 @@ export function AdminPanel() {
         isOpen={addUserOpen}
         onClose={() => setAddUserOpen(false)}
         onCreated={() => void dispatch(fetchAdminStats())}
-      />
-
-      {admin && (
-        <AdminAddTeamMemberModal
-          isOpen={addTeamMemberOpen}
-          actorRole={admin.role}
-          onClose={() => setAddTeamMemberOpen(false)}
-        />
-      )}
-
-      <AdminEditTeamMemberModal
-        key={editingTeamMember?.id ?? 'closed'}
-        member={editingTeamMember}
-        onClose={() => setEditingTeamMember(null)}
       />
     </div>
   );

@@ -12,7 +12,6 @@ import {
 } from '@/features/admin-users/labels';
 import type { AdminManagedUser, AdminUserUpdate } from '@/features/admin-users/types';
 import { useAdminUserPhoto } from '@/hooks/use-admin-user-photo';
-import { useAdminUserVideo } from '@/hooks/use-admin-user-video';
 import {
   Activity,
   AlertTriangle,
@@ -22,35 +21,21 @@ import {
   ChevronLeft,
   Clock,
   CreditCard,
-  Crown,
   Edit2,
   Filter,
   Mail,
   MapPin,
   Phone,
-  PlayCircle,
   Save,
   Star,
   Trash2,
   Users,
-  Video,
   X,
   Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 
-type DetailTab = 'profile' | 'activity' | 'subscription' | 'video';
-
-/**
- * Static illustration data, matching legacy's own "Historique de facturation" — there is no
- * real transaction/billing ledger anywhere in the product yet (confirmed: no Transaction/
- * Payment model in the schema), so this stays a mock like legacy's until that gets built.
- */
-const MOCK_BILLING_HISTORY = [
-  { id: 'b1', label: 'Abonnement Premium — Avril 2026', amount: 9.9, date: '01/04/2026' },
-  { id: 'b2', label: 'Abonnement Premium — Mars 2026', amount: 9.9, date: '01/03/2026' },
-  { id: 'b3', label: 'Boost profil × 2', amount: 4, date: '15/02/2026' },
-];
+type DetailTab = 'profile' | 'activity';
 
 const EDITABLE_FIELDS = [
   { label: 'Nom complet', field: 'name', icon: Users },
@@ -82,15 +67,12 @@ export function AdminUserDetail({
   const [showBanConfirm, setShowBanConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const photoUrl = useAdminUserPhoto(user.id, user.image);
-  const videoUrl = useAdminUserVideo(user.id, user.video);
 
   const isBanned = user.status === 'BANNED';
 
   const detailTabs = [
     { key: 'profile' as const, label: 'Profil', icon: Users },
     { key: 'activity' as const, label: 'Activité', icon: Activity },
-    { key: 'subscription' as const, label: 'Abonnement', icon: Crown },
-    { key: 'video' as const, label: 'Vidéo', icon: Video },
   ];
 
   const handleSave = () => {
@@ -528,137 +510,6 @@ export function AdminUserDetail({
                   <p style={{ fontSize: '12px', color: '#888' }}>{label}</p>
                 </div>
               ))}
-            </div>
-          )}
-
-          {activeTab === 'subscription' && (
-            <div className="space-y-4">
-              <div
-                className="rounded-2xl p-5"
-                style={{
-                  background: `linear-gradient(135deg, ${PLAN_COLOR[user.plan]}15, ${PLAN_COLOR[user.plan]}08)`,
-                  border: `1.5px solid ${PLAN_COLOR[user.plan]}33`,
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Crown size={24} color={PLAN_COLOR[user.plan]} />
-                    <div>
-                      <p style={{ fontSize: '16px', fontWeight: 800, color: '#1A1A2E' }}>
-                        {PLAN_LABEL[user.plan]}
-                      </p>
-                      <p style={{ fontSize: '12px', color: '#888' }}>
-                        Inscrit depuis {user.create_at?.slice(0, 10) ?? '—'}
-                      </p>
-                    </div>
-                  </div>
-                  <span
-                    className="rounded-full px-3 py-1"
-                    style={{
-                      background: PLAN_COLOR[user.plan],
-                      color: 'white',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {isBanned ? 'Suspendu' : 'Actif'}
-                  </span>
-                </div>
-              </div>
-
-              <div
-                className="rounded-2xl p-4"
-                style={{ background: 'white', border: '1px solid #F0F0F0' }}
-              >
-                <div className="mb-3 flex items-center justify-between">
-                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#353535' }}>
-                    Historique de facturation
-                  </p>
-                  <span
-                    className="rounded-full px-2 py-0.5"
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      background: '#F5F7FA',
-                      color: '#AAA',
-                    }}
-                    title="Aucun système de paiement réel n'existe encore — ces montants sont illustratifs, comme dans l'ancienne version."
-                  >
-                    Données d’exemple
-                  </span>
-                </div>
-                <div className="space-y-2.5">
-                  {MOCK_BILLING_HISTORY.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between rounded-xl px-3 py-2.5"
-                      style={{ background: '#F5F7FA' }}
-                    >
-                      <div>
-                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#353535' }}>
-                          {item.label}
-                        </p>
-                        <p style={{ fontSize: '11px', color: '#AAA' }}>{item.date}</p>
-                      </div>
-                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#FF6B6B' }}>
-                        -{item.amount} DT
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'video' && (
-            <div className="space-y-4">
-              {videoUrl ? (
-                <>
-                  <div
-                    className="relative overflow-hidden rounded-2xl"
-                    style={{ background: '#000', aspectRatio: '16/9' }}
-                  >
-                    <video
-                      src={videoUrl}
-                      className="h-full w-full object-cover"
-                      controls
-                      preload="metadata"
-                      poster={photoUrl ?? undefined}
-                      style={{ display: 'block' }}
-                    />
-                  </div>
-                  <div
-                    className="rounded-2xl p-4"
-                    style={{ background: 'white', border: '1px solid #F0F0F0' }}
-                  >
-                    <div className="space-y-2">
-                      {[
-                        { label: 'Présenté par', value: user.name },
-                        { label: 'Rôle présenté', value: user.job ?? '—' },
-                        { label: 'Statut', value: isBanned ? 'Masquée (banni)' : 'Visible' },
-                      ].map(({ label, value }) => (
-                        <div
-                          key={label}
-                          className="flex items-center justify-between rounded-xl px-3 py-2"
-                          style={{ background: '#F5F7FA' }}
-                        >
-                          <span style={{ fontSize: '12px', color: '#888' }}>{label}</span>
-                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#353535' }}>
-                            {value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="py-12 text-center">
-                  <PlayCircle size={40} color="#CCC" className="mx-auto mb-3" />
-                  <p style={{ fontSize: '14px', color: '#AAA' }}>
-                    {user.video ? 'Chargement de la vidéo…' : 'Aucune vidéo de présentation'}
-                  </p>
-                </div>
-              )}
             </div>
           )}
         </div>

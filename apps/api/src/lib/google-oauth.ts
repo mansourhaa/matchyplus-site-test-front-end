@@ -3,7 +3,6 @@ export interface OAuthProfile {
   email: string | null;
   emailVerified: boolean;
   name: string | null;
-  image?: string | null;
 }
 
 const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo';
@@ -22,7 +21,6 @@ export async function fetchGoogleProfile(accessToken: string): Promise<OAuthProf
     email?: string;
     email_verified?: boolean;
     name?: string;
-    picture?: string;
   };
 
   if (!data.sub) {
@@ -34,6 +32,5 @@ export async function fetchGoogleProfile(accessToken: string): Promise<OAuthProf
     email: data.email ?? null,
     emailVerified: Boolean(data.email_verified),
     name: data.name ?? null,
-    image: data.picture ?? null,
   };
 }

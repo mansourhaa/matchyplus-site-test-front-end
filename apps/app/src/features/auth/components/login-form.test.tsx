@@ -104,15 +104,19 @@ describe('LoginForm — phone step', () => {
     expect(api.post).not.toHaveBeenCalledWith('/auth/otp/verify', expect.anything());
   });
 
-  it('navigates to /reset-password with query parameters when clicking forgot password', async () => {
+  it('renders visible (explicit text color) inputs in the forgot-password mini-flow', async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: { message: 'reset_code_sent' } });
+
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
     fireEvent.click(firstButton('Mot de passe oublié ?'));
 
-    expect(pushMock).toHaveBeenCalledWith(
-      '/reset-password?phone=%2B21612345678&country=TN&national=12345678',
-    );
+    const codeInput = await findFirstPlaceholder('123456');
+    const newPasswordInput = firstPlaceholder('Nouveau mot de passe');
+
+    expect(codeInput).toHaveClass('text-[#353535]');
+    expect(newPasswordInput).toHaveClass('text-[#353535]');
   });
 
   function apiErrorWithCode(code: string) {

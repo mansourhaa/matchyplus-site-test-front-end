@@ -4,7 +4,6 @@ import {
   IDENTITY_VERIFICATION_RATE_LIMIT,
   PROFILE_PHOTO_RATE_LIMIT,
   PROFILE_VIDEO_RATE_LIMIT,
-  USER_LOCATION_SYNC_RATE_LIMIT,
 } from '../../../constants.js';
 import {
   completeOnboardingSchema,
@@ -15,7 +14,6 @@ import {
   getLoggedUserDataSchema,
   getOnboardingProfileSchema,
   submitIdentitySelfieSchema,
-  syncUserLocationSchema,
   updateOnboardingProfileSchema,
   uploadProfilePhotoSchema,
   uploadProfileVideoSchema,
@@ -30,11 +28,7 @@ import {
   SubmitIdentitySelfieBody,
 } from '../../../types/identity-verification.js';
 import { UpdateOnboardingProfileBody } from '../../../types/onboarding.js';
-import {
-  SyncUserLocationBody,
-  UploadProfilePhotoBody,
-  UploadProfileVideoBody,
-} from '../../../types/profile.js';
+import { UploadProfilePhotoBody, UploadProfileVideoBody } from '../../../types/profile.js';
 import { badRequest, notFound } from '../../../utils/http-errors.js';
 
 const ERROR_STATUS: Record<string, 'badRequest'> = {
@@ -221,23 +215,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     async (request, reply) => {
       try {
         const data = await profileService.deleteVideo(request.loggedUser.id);
-        return reply.code(200).send(data);
-      } catch (err) {
-        throw err;
-      }
-    },
-  );
-
-  fastify.post<{ Body: SyncUserLocationBody }>(
-    '/me/location',
-    {
-      schema: syncUserLocationSchema,
-      config: { rateLimit: USER_LOCATION_SYNC_RATE_LIMIT },
-    },
-    async (request, reply) => {
-      try {
-        const { latitude, longitude } = request.body;
-        const data = await profileService.syncLocation(request.loggedUser.id, latitude, longitude);
         return reply.code(200).send(data);
       } catch (err) {
         throw err;

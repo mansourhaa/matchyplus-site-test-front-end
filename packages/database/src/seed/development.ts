@@ -343,14 +343,8 @@ export default async function seedDev() {
     }
     const row = await prisma.user.upsert({
       where: { email },
-      create: {
-        ...member,
-        onboarding_completed_at: member.onboarding_completed_at ?? new Date('2026-01-01'),
-      },
-      update: {
-        ...rest,
-        onboarding_completed_at: member.onboarding_completed_at ?? new Date('2026-01-01'),
-      },
+      create: member,
+      update: { ...rest },
     });
     members.push({ id: row.id, email: row.email });
 
@@ -418,18 +412,6 @@ export default async function seedDev() {
   }
 
   const matching = await seedMatching(prisma);
-
-  // Ensure all active users in dev database have onboarding_completed_at set
-  await prisma.user.updateMany({
-    where: {
-      status: UserStatus.ACTIVE,
-      onboarding_completed_at: null,
-    },
-    data: {
-      onboarding_completed_at: new Date('2026-01-01'),
-    },
-  });
-
   console.log(
     `[seed] matching demo ready — login ${matching.testerEmail} / ${matching.testerPassword} (${matching.profileCount} nearby profiles + 1 match)`,
   );

@@ -102,7 +102,6 @@ export type OAuthProfilePayload = {
   email: string | null;
   emailVerified: boolean;
   name: string | null;
-  image?: string | null;
 };
 
 export type OAuthExchangePayload = {

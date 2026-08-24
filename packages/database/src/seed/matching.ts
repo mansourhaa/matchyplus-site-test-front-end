@@ -395,204 +395,70 @@ export async function seedMatching(prisma: PrismaClient) {
     created.push({ id: user.id, email: profile.email, likesTester: profile.likesTester });
   }
 
-  // Helper to setup reciprocal swipes, matches, and conversations for a primary user
-  const setupUserMatchesAndChats = async (targetUser: { id: string; name: string }) => {
-    // 1. Incoming RIGHT swipes → reciprocity boost on the feed.
-    for (const profile of created.filter((p) => p.likesTester)) {
-      await prisma.swipe.upsert({
-        where: {
-          swiper_id_target_id: { swiper_id: profile.id, target_id: targetUser.id },
-        },
-        create: {
-          swiper_id: profile.id,
-          target_id: targetUser.id,
-          direction: SwipeDirection.RIGHT,
-        },
-        update: { direction: SwipeDirection.RIGHT },
-      });
-      const existingLog = await prisma.swipeLog.findFirst({
-        where: {
+  // Incoming RIGHT swipes → reciprocity boost on the tester feed.
+  for (const profile of created.filter((p) => p.likesTester)) {
+    const existing = await prisma.swipe.findUnique({
+      where: {
+        swiper_id_target_id: { swiper_id: profile.id, target_id: tester.id },
+      },
+    });
+    await prisma.swipe.upsert({
+      where: {
+        swiper_id_target_id: { swiper_id: profile.id, target_id: tester.id },
+      },
+      create: {
+        swiper_id: profile.id,
+        target_id: tester.id,
+        direction: SwipeDirection.RIGHT,
+      },
+      update: { direction: SwipeDirection.RIGHT },
+    });
+    if (!existing) {
+      await prisma.swipeLog.create({
+        data: {
           user_id: profile.id,
-          target_id: targetUser.id,
+          target_id: tester.id,
           direction: SwipeDirection.RIGHT,
         },
       });
-      if (!existingLog) {
-        await prisma.swipeLog.create({
-          data: {
-            user_id: profile.id,
-            target_id: targetUser.id,
-            direction: SwipeDirection.RIGHT,
-          },
-        });
-      }
     }
+  }
 
-    // Helper to create mutual match + attached conversation
-    const createMutualMatchAndChat = async (
-      peerEmail: string,
-      initialMessages?: Array<{ sender: 'peer' | 'user'; content: string }>,
-    ) => {
-      const peer = created.find((p) => p.email === peerEmail);
-      if (!peer || peer.id === targetUser.id) return;
-
-      // Ensure bidirectional RIGHT swipes
-      await prisma.swipe.upsert({
-        where: {
-          swiper_id_target_id: { swiper_id: targetUser.id, target_id: peer.id },
-        },
-        create: {
-          swiper_id: targetUser.id,
-          target_id: peer.id,
-          direction: SwipeDirection.RIGHT,
-        },
-        update: { direction: SwipeDirection.RIGHT },
-      });
-      await prisma.swipe.upsert({
-        where: {
-          swiper_id_target_id: { swiper_id: peer.id, target_id: targetUser.id },
-        },
-        create: {
-          swiper_id: peer.id,
-          target_id: targetUser.id,
-          direction: SwipeDirection.RIGHT,
-        },
-        update: { direction: SwipeDirection.RIGHT },
-      });
-
-      const { low, high } = pairIds(targetUser.id, peer.id);
-      const match = await prisma.match.upsert({
-        where: {
-          user_low_id_user_high_id: { user_low_id: low, user_high_id: high },
-        },
-        create: { user_low_id: low, user_high_id: high },
-        update: {},
-      });
-
-      const conversation = await prisma.conversation.upsert({
-        where: {
-          user_low_id_user_high_id: { user_low_id: low, user_high_id: high },
-        },
-        create: {
-          match_id: match.id,
-          user_low_id: low,
-          user_high_id: high,
-        },
-        update: {
-          match_id: match.id,
-        },
-      });
-
-      if (initialMessages && initialMessages.length > 0) {
-        const existingCount = await prisma.message.count({
-          where: { conversation_id: conversation.id },
-        });
-        if (existingCount === 0) {
-          for (const [i, msg] of initialMessages.entries()) {
-            const senderId = msg.sender === 'peer' ? peer.id : targetUser.id;
-            await prisma.message.create({
-              data: {
-                conversation_id: conversation.id,
-                sender_id: senderId,
-                content: msg.content,
-                message_type: 'TEXT',
-                is_read: msg.sender === 'user',
-                created_at: new Date(Date.now() - (initialMessages.length - i) * 60_000),
-              },
-            });
-          }
-        }
-      }
-    };
-
-    // 1. Sara Ben Ali: Mutual match, EMPTY thread (perfect to test AI Icebreakers!)
-    await createMutualMatchAndChat('sara.dev@matchy.seed');
-
-    // 2. Sami Mutual: Mutual match, active conversation with 2 messages
-    await createMutualMatchAndChat('soft.mutual@matchy.seed', [
-      { sender: 'peer', content: 'Salut ! Ravi de connecter avec toi sur Matchy+.' },
-      {
-        sender: 'user',
-        content: 'Salut Sami ! Très content aussi, tes projets Flutter ont l’air top.',
+  // Pre-seed one mutual match (Sami Mutual) so /matches is not empty.
+  const mutual = created.find((p) => p.email === 'soft.mutual@matchy.seed');
+  if (mutual) {
+    await prisma.swipe.upsert({
+      where: {
+        swiper_id_target_id: { swiper_id: tester.id, target_id: mutual.id },
       },
-    ]);
-
-    // 3. Youssef Khelifi: Mutual match, 1 unread message from peer
-    await createMutualMatchAndChat('youssef.ux@matchy.seed', [
-      {
-        sender: 'peer',
-        content:
-          'Bonjour ! J’ai vu tes compétences en tech, est-ce que tu cherches des collaborations UX / UI en ce moment ?',
+      create: {
+        swiper_id: tester.id,
+        target_id: mutual.id,
+        direction: SwipeDirection.RIGHT,
       },
-    ]);
+      update: { direction: SwipeDirection.RIGHT },
+    });
+    await prisma.swipe.upsert({
+      where: {
+        swiper_id_target_id: { swiper_id: mutual.id, target_id: tester.id },
+      },
+      create: {
+        swiper_id: mutual.id,
+        target_id: tester.id,
+        direction: SwipeDirection.RIGHT,
+      },
+      update: { direction: SwipeDirection.RIGHT },
+    });
 
-    // 4. Ines H.: Mutual match, 0 messages (perfect to test Rating & Profile details)
-    await createMutualMatchAndChat('ines.h@email.com');
-  };
-
-  // Seed for default matching tester
-  await setupUserMatchesAndChats(tester);
-
-  // Seed / configure user's specific testing account
-  const userKhalil = await prisma.user.upsert({
-    where: { email: 'mohamedkhalil.bchir@polytechnicien.tn' },
-    create: {
-      email: 'mohamedkhalil.bchir@polytechnicien.tn',
-      password: passwordHash,
-      name: 'Mohamed Khalil Bchir',
-      role: Role.USER,
-      status: UserStatus.ACTIVE,
-      plan: UserPlan.FREE,
-      job: 'Software Engineer',
-      category: 'Tech',
-      city: 'Tunis',
-      bio: 'Passionné de développement web, mobile et IA. Créateur de Matchy+.',
-      interests: ['React', 'Node', 'Startup', 'AI', 'Mobile'],
-      goals: [
-        'proposer mes services',
-        'collaborer sur un projet',
-        'rencontrer des personnes près de moi',
-      ],
-      looking_for: 'collaborer sur des projets tech et trouver des prestataires',
-      activity_sector: 'Tech',
-      service_type: 'Full-stack Development',
-      profile_type: ProfileType.INDIVIDUAL,
-      gps_latitude: TUNIS.lat,
-      gps_longitude: TUNIS.lon,
-      rating: 5.0,
-      languages: ['Français', 'Arabe', 'Anglais'],
-      contact_modes: ['call', 'café'],
-      onboarding_completed_at: new Date('2026-01-01'),
-    },
-    update: {
-      status: UserStatus.ACTIVE,
-      gps_latitude: TUNIS.lat,
-      gps_longitude: TUNIS.lon,
-      onboarding_completed_at: new Date('2026-01-01'),
-    },
-  });
-
-  await prisma.userLocation.upsert({
-    where: { user_id: userKhalil.id },
-    create: {
-      user_id: userKhalil.id,
-      latitude: TUNIS.lat,
-      longitude: TUNIS.lon,
-      location_enabled: true,
-      city: 'Tunis',
-      country: 'Tunisia',
-    },
-    update: {
-      latitude: TUNIS.lat,
-      longitude: TUNIS.lon,
-      location_enabled: true,
-      city: 'Tunis',
-      country: 'Tunisia',
-    },
-  });
-
-  // Seed matches & chats for user's account
-  await setupUserMatchesAndChats(userKhalil);
+    const { low, high } = pairIds(tester.id, mutual.id);
+    await prisma.match.upsert({
+      where: {
+        user_low_id_user_high_id: { user_low_id: low, user_high_id: high },
+      },
+      create: { user_low_id: low, user_high_id: high },
+      update: {},
+    });
+  }
 
   return {
     testerEmail: MATCHING_TESTER.email,

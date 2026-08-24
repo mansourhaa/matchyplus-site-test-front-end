@@ -123,36 +123,6 @@ export const deleteProfileVideoSchema = {
   response: mediaUploadResponseSchema,
 };
 
-export const syncUserLocationSchema = {
-  tags: ['profiles'],
-  summary: "Save the current user's coordinates and derive their city from them",
-  description:
-    'Called once the app has real coordinates (device GPS or the IP fallback) so the ' +
-    "profile's city reflects where the member actually is, instead of only the optional " +
-    'free-text city entered once at signup.',
-  security: [{ http: [] }],
-  headers: authenticatedHeadersSchema,
-  body: {
-    type: 'object',
-    additionalProperties: false,
-    required: ['latitude', 'longitude'],
-    properties: {
-      latitude: { type: 'number', minimum: -90, maximum: 90 },
-      longitude: { type: 'number', minimum: -180, maximum: 180 },
-    },
-  },
-  response: {
-    200: {
-      description: 'Successful response — city is null when reverse geocoding failed',
-      type: 'object',
-      properties: {
-        city: { type: 'string', nullable: true },
-      },
-    },
-    ...errorResponses,
-  },
-};
-
 export const notifyProfileViewSchema = {
   tags: ['profiles'],
   summary: 'Let a profile owner know their profile was viewed',
@@ -253,84 +223,6 @@ export const getProfileVideoFileSchema = {
       description: 'A single byte-range slice of the video, per the request Range header',
       type: 'string',
       contentMediaType: 'video/*',
-    },
-    ...errorResponses,
-  },
-};
-
-export const blockUserSchema = {
-  tags: ['profiles'],
-  summary: 'Block a user',
-  security: [{ http: [] }],
-  headers: authenticatedHeadersSchema,
-  params: {
-    type: 'object',
-    additionalProperties: false,
-    required: ['id'],
-    properties: {
-      id: { type: 'string' },
-    },
-  },
-  response: {
-    200: {
-      description: 'User blocked',
-      type: 'object',
-      properties: {
-        blocked: { type: 'boolean' },
-      },
-    },
-    ...errorResponses,
-  },
-};
-
-export const unblockUserSchema = {
-  tags: ['profiles'],
-  summary: 'Unblock a user',
-  security: [{ http: [] }],
-  headers: authenticatedHeadersSchema,
-  params: {
-    type: 'object',
-    additionalProperties: false,
-    required: ['id'],
-    properties: {
-      id: { type: 'string' },
-    },
-  },
-  response: {
-    200: {
-      description: 'User unblocked',
-      type: 'object',
-      properties: {
-        blocked: { type: 'boolean' },
-      },
-    },
-    ...errorResponses,
-  },
-};
-
-export const listBlockedUsersSchema = {
-  tags: ['profiles'],
-  summary: 'List users blocked by the authenticated user',
-  security: [{ http: [] }],
-  headers: authenticatedHeadersSchema,
-  response: {
-    200: {
-      description: 'List of blocked users',
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          name: { type: 'string' },
-          image: { type: 'string', nullable: true },
-          job: { type: 'string', nullable: true },
-          city: { type: 'string', nullable: true },
-          activity_sector: { type: 'string', nullable: true },
-          service_type: { type: 'string', nullable: true },
-          blocked_at: { type: 'string' },
-        },
-        required: ['id', 'name', 'blocked_at'],
-      },
     },
     ...errorResponses,
   },

@@ -18,7 +18,6 @@ function buildUser(overrides: Partial<AdminManagedUser> = {}): AdminManagedUser 
     city: 'Sfax',
     bio: null,
     image: null,
-    video: null,
     interests: [],
     languages: [],
     contact_modes: [],

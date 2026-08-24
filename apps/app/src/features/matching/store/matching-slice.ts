@@ -132,33 +132,6 @@ export const unmatchUser = createAsyncThunk(
   },
 );
 
-export const blockUser = createAsyncThunk(
-  'matching/blockUser',
-  async (targetUserId: string, { rejectWithValue }) => {
-    try {
-      await api.post(`/profiles/${targetUserId}/block`);
-      return { targetUserId };
-    } catch (error) {
-      return rejectWithValue(apiErrorKey(error, 'matching.errors.block'));
-    }
-  },
-);
-
-export const reportUser = createAsyncThunk(
-  'matching/reportUser',
-  async (
-    { targetUserId, reason, details }: { targetUserId: string; reason: string; details?: string },
-    { rejectWithValue },
-  ) => {
-    try {
-      const response = await api.post(`/reports/profiles/${targetUserId}`, { reason, details });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(apiErrorKey(error, 'matching.errors.report'));
-    }
-  },
-);
-
 const matchingSlice = createSlice({
   name: 'matching',
   initialState,
@@ -259,14 +232,6 @@ const matchingSlice = createSlice({
         );
       })
       .addCase(unmatchUser.rejected, (state, action) => {
-        state.swipeError = String(action.payload || action.error.message);
-      })
-      .addCase(blockUser.fulfilled, (state, action) => {
-        state.matches = state.matches.filter(
-          (row) => row.matched_user_id !== action.payload.targetUserId,
-        );
-      })
-      .addCase(blockUser.rejected, (state, action) => {
         state.swipeError = String(action.payload || action.error.message);
       })
       .addCase(logout.fulfilled, resetForNewSession)

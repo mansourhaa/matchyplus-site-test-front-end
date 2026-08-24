@@ -17,7 +17,6 @@ export async function fetchLinkedInProfile(accessToken: string): Promise<OAuthPr
     email?: string;
     email_verified?: boolean;
     name?: string;
-    picture?: string;
   };
 
   if (!data.sub) {
@@ -29,6 +28,5 @@ export async function fetchLinkedInProfile(accessToken: string): Promise<OAuthPr
     email: data.email ?? null,
     emailVerified: Boolean(data.email_verified),
     name: data.name ?? null,
-    image: data.picture ?? null,
   };
 }

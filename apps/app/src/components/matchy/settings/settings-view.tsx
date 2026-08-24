@@ -113,7 +113,7 @@ export function SettingsView() {
         {
           label: t('settings.notifications'),
           icon: Bell,
-          path: '/settings/notifications',
+          path: '/notifications',
           color: '#E74C3C',
           bg: '#FDEAEA',
         },
@@ -161,6 +161,7 @@ export function SettingsView() {
           path: '/settings/plans',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
+          badge: t('nav.planFree'),
         },
       ],
     },
@@ -170,14 +171,14 @@ export function SettingsView() {
         {
           label: t('settings.privacyPolicy'),
           icon: FileText,
-          path: '/privacy-policy',
+          path: '/settings/privacy-policy',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
         },
         {
           label: t('settings.terms'),
           icon: FileText,
-          path: '/terms-of-service',
+          path: '/settings/terms-of-service',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
         },
@@ -224,6 +225,14 @@ export function SettingsView() {
               <p className="truncate text-xs" style={{ color: matchyBrand.muted }}>
                 {email}
               </p>
+              <div
+                className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+                style={{ background: '#F5F5F5', border: '1px solid #E0E0E0' }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 700, color: matchyBrand.muted }}>
+                  {t('nav.planFree')}
+                </span>
+              </div>
             </div>
             <button
               type="button"

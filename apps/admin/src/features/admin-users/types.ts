@@ -14,7 +14,6 @@ export interface AdminManagedUser {
   city: string | null;
   bio: string | null;
   image: string | null;
-  video: string | null;
   interests: string[];
   languages: string[];
   contact_modes: string[];

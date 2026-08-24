@@ -4,7 +4,6 @@ import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch } from '@/features/auth/hooks';
 import { deleteAccount } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { BlockedUsersSection } from '@/features/profile/components/blocked-users-section';
 import { toast } from '@/lib/toast';
 import { AlertTriangle, Lock, ShieldCheck, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -81,9 +80,6 @@ export default function PrivacyPage() {
                 : 'Votre confidentialité est protégée. Matchy+ ne partage jamais vos coordonnées GPS exactes.'}
           </p>
         </aside>
-
-        {/* Blocked Users Section */}
-        <BlockedUsersSection />
 
         {/* Deletion Warning Box */}
         <div

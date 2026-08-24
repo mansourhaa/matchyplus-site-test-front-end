@@ -36,14 +36,3 @@ export type RatingResult = {
   rating: number;
   reviews: number;
 };
-
-export type BlockedUser = {
-  id: string;
-  name: string;
-  image: string | null;
-  job: string | null;
-  city: string | null;
-  activity_sector: string | null;
-  service_type: string | null;
-  blocked_at: string;
-};

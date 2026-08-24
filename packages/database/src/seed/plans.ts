@@ -26,7 +26,7 @@ export const DEFAULT_PLANS: Prisma.PlanCreateInput[] = [
     ],
     swipes_per_day: 10,
     profiles_per_category: 3,
-    messages_per_day: -1,
+    messages_per_day: 5,
     actions_per_day: 10,
     boosts_per_month: 0,
     super_connects_per_month: 0,

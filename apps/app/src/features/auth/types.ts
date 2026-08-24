@@ -14,7 +14,6 @@ export interface AuthUser {
   has_password?: boolean;
   onboarding_completed: boolean;
   role?: string;
-  plan?: string;
 }
 
 // Both session tokens live in HttpOnly cookies the browser attaches automatically —

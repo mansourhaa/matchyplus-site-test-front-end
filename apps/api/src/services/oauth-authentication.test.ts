@@ -42,7 +42,6 @@ describe('OAuthAuthenticationService', () => {
         email: 'new@example.com',
         emailVerified: true,
         name: 'Jane Doe',
-        image: 'https://example.com/avatar.jpg',
       });
 
       expect(prisma.user.create).toHaveBeenCalledWith({
@@ -52,49 +51,17 @@ describe('OAuthAuthenticationService', () => {
           name: 'Jane Doe',
           auth_provider: 'google',
           google_id: 'google-sub-1',
-          image: 'https://example.com/avatar.jpg',
         },
       });
       expect(result.id).toBe('user-1');
     });
 
-    it('updates image on existing user by provider id if image is missing', async () => {
+    it('returns the existing user found by provider id without creating or updating', async () => {
       const { service, prisma } = createService();
       prisma.user.findUnique.mockResolvedValueOnce({
         id: 'user-1',
         google_id: 'google-sub-1',
         auth_provider: 'google',
-        image: null,
-      });
-      prisma.user.update.mockResolvedValue({
-        id: 'user-1',
-        google_id: 'google-sub-1',
-        auth_provider: 'google',
-        image: 'https://example.com/new-avatar.jpg',
-      });
-
-      const result = await service.findOrCreateOAuthUser('google', {
-        id: 'google-sub-1',
-        email: 'existing@example.com',
-        emailVerified: true,
-        name: 'Jane Doe',
-        image: 'https://example.com/new-avatar.jpg',
-      });
-
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
-        data: { image: 'https://example.com/new-avatar.jpg' },
-      });
-      expect(result.id).toBe('user-1');
-    });
-
-    it('returns the existing user found by provider id without updating if image already exists', async () => {
-      const { service, prisma } = createService();
-      prisma.user.findUnique.mockResolvedValueOnce({
-        id: 'user-1',
-        google_id: 'google-sub-1',
-        auth_provider: 'google',
-        image: 'https://example.com/custom.jpg',
       });
 
       const result = await service.findOrCreateOAuthUser('google', {

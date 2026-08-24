@@ -47,10 +47,6 @@ const peerSelect = {
   job: true,
   category: true,
   city: true,
-  interests: true,
-  goals: true,
-  activity_sector: true,
-  service_type: true,
 } as const;
 
 /**
@@ -314,9 +310,6 @@ export class ConversationService {
       for (const row of rows) {
         const peerId = this.peerIdOf(row, userId);
         const flags = await this.blockFlags(userId, peerId);
-        if (flags.i_blocked || flags.blocked_me) {
-          continue;
-        }
         const unread_count = await this.prisma.message.count({
           where: {
             conversation_id: row.id,
