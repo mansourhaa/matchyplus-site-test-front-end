@@ -88,17 +88,21 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     : pathname.startsWith('/profile/')
       ? t('dashboard.profile')
       : titleMap[pathname];
-  const backPath =
+
+  const isSettingsSubpage =
+    pathname.startsWith('/settings/') ||
     pathname === '/edit-profile' ||
-    pathname.startsWith('/settings') ||
+    pathname === '/notifications' ||
     pathname === '/privacy-policy' ||
-    pathname === '/terms-of-service'
-      ? '/settings'
-      : '/home';
+    pathname === '/terms-of-service';
+
+  const showBack = pathname !== '/settings';
+  const backPath = isSettingsSubpage ? '/settings' : '/home';
 
   return (
     <MatchyAppShell
       title={title}
+      showBack={showBack}
       backPath={backPath}
       hideHeader={pathname.startsWith('/chat') || pathname.startsWith('/profile/')}
     >
