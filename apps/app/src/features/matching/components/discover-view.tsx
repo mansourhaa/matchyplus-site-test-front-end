@@ -40,8 +40,8 @@ import {
   selectNotifications,
 } from '@/features/notifications/store/notifications-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
-import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, Bell, Check, Lock, MapPin, Star, X } from 'lucide-react';
+import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
+import { AlertTriangle, Bell, Check, Heart, Lock, MapPin, Star, ThumbsDown, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -128,6 +128,18 @@ export function DiscoverView() {
 
   const title = locale === 'fr' ? 'Accueil' : locale === 'ar' ? 'الرئيسية' : t('nav.home');
 
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  const CATEGORIES = [
+    { id: 'all', label: t('matching.categories.all'), emoji: '✨' },
+    { id: 'Transport', label: t('matching.categories.transport'), emoji: '🚗' },
+    { id: 'Ménage', label: t('matching.categories.cleaning'), emoji: '🧹' },
+    { id: 'Freelance', label: t('matching.categories.freelance'), emoji: '💻' },
+    { id: 'Cuisine', label: t('matching.categories.cooking'), emoji: '🧑‍🍳' },
+    { id: 'Jardinage', label: t('matching.categories.gardening'), emoji: '🌿' },
+    { id: 'Garde enfants', label: t('matching.categories.childcare'), emoji: '👶' },
+  ];
+
   return (
     <div
       className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
@@ -149,12 +161,40 @@ export function DiscoverView() {
         <MatchyHeaderActions />
       </div>
 
+      {/* Top category filter pills row */}
+      <div
+        className="no-scrollbar shrink-0 overflow-x-auto px-4 py-2.5 md:px-8"
+        style={{ background: matchyBrand.bg }}
+      >
+        <div className="flex items-center gap-2">
+          {CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold shadow-2xs transition-all ${
+                  isSelected
+                    ? 'text-white'
+                    : 'border border-[#E5E9F0] bg-white text-[#4A5568] hover:bg-[#F7FAFC]'
+                }`}
+                style={isSelected ? { background: matchyBrand.blue } : undefined}
+              >
+                <span>{cat.emoji}</span>
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
         {/* Main swipe column — full-bleed white when empty so no gray frame around the empty state */}
         <div
           className={
             top
-              ? 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-4 pb-2 md:px-8'
+              ? 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8'
               : 'flex min-h-0 flex-1 flex-col overflow-hidden'
           }
           style={!top ? { background: 'white' } : undefined}
@@ -205,18 +245,34 @@ export function DiscoverView() {
                   {top && (
                     <motion.div
                       key={top.id}
-                      className="absolute overflow-hidden rounded-2xl shadow-xl"
-                      style={{ width: 'min(92%, 440px)', height: 'min(90%, 560px)', zIndex: 1 }}
+                      className="absolute cursor-grab touch-none overflow-hidden rounded-2xl shadow-xl select-none active:cursor-grabbing"
+                      style={{
+                        width: 'min(92%, 440px)',
+                        height: 'min(90%, 560px)',
+                        zIndex: 1,
+                      }}
+                      drag={!matching.swipeLoading ? 'x' : false}
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.7}
+                      onDragEnd={(_e, info) => {
+                        const offset = info.offset.x;
+                        const velocity = info.velocity.x;
+                        if (offset > 100 || velocity > 500) {
+                          void onConnect();
+                        } else if (offset < -100 || velocity < -500) {
+                          void onPass();
+                        }
+                      }}
                       initial={{ scale: 0.95, opacity: 0 }}
                       animate={{
                         scale: 1,
                         opacity: 1,
-                        x: swipeDirection === 'left' ? -420 : swipeDirection === 'right' ? 420 : 0,
+                        x: swipeDirection === 'left' ? -500 : swipeDirection === 'right' ? 500 : 0,
                         rotate:
-                          swipeDirection === 'left' ? -18 : swipeDirection === 'right' ? 18 : 0,
+                          swipeDirection === 'left' ? -22 : swipeDirection === 'right' ? 22 : 0,
                       }}
                       exit={{ scale: 0.95, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
+                      transition={{ duration: 0.25 }}
                     >
                       {topPhoto.url ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -234,13 +290,14 @@ export function DiscoverView() {
                         className="absolute inset-0"
                         style={{
                           background:
-                            'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)',
+                            'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.4) 100%)',
                           pointerEvents: 'none',
                         }}
                       />
 
+                      {/* Top left rating pill */}
                       <div
-                        className="absolute top-3 left-3 flex items-center gap-1 rounded-full px-2.5 py-1"
+                        className="absolute top-3 left-3 flex items-center gap-1 rounded-full px-2.5 py-1 shadow-xs backdrop-blur-md"
                         style={{ background: 'rgba(255,255,255,0.92)' }}
                       >
                         <Star size={12} color="#F5A623" fill="#F5A623" />
@@ -249,24 +306,66 @@ export function DiscoverView() {
                         </span>
                       </div>
 
-                      <div className="absolute top-14 left-3">
-                        <MatchScoreBadge score={top.match_score} size="lg" />
-                      </div>
-
-                      <div className="pointer-events-auto absolute top-3 right-3 z-20 flex flex-col items-end gap-1">
+                      {/* Top right Available pill & Voir details button */}
+                      <div className="pointer-events-auto absolute top-3 right-3 z-20 flex flex-col items-end gap-1.5">
+                        <div
+                          className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-white shadow-xs backdrop-blur-md"
+                          style={{
+                            background: 'rgba(97,188,166,0.9)',
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          <Check size={12} strokeWidth={3} />
+                          <span>{t('matching.available')}</span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
                             setDetailProfileId(top.id);
                             setDetailOpen(true);
                           }}
-                          className="rounded-full px-2 py-0.5 text-white"
-                          style={{ fontSize: 10, background: 'rgba(47,118,187,0.7)' }}
+                          className="flex items-center gap-1 rounded-full px-2.5 py-1 text-white shadow-xs backdrop-blur-md transition-transform hover:scale-105"
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            background: 'rgba(47,118,187,0.85)',
+                          }}
                         >
-                          {t('matching.seeDetails')}
+                          <span>👆</span>
+                          <span>{t('matching.seeDetails')}</span>
                         </button>
                       </div>
 
+                      {/* Top left AI match score badge with pill */}
+                      <div className="absolute top-12 left-3">
+                        <MatchScoreBadge
+                          score={top.match_score}
+                          label={
+                            top.match_type_label ||
+                            (top.match_score >= 75
+                              ? locale === 'en'
+                                ? 'Highly compatible'
+                                : locale === 'ar'
+                                  ? 'متوافق جداً'
+                                  : 'Très compatible'
+                              : top.match_score >= 50
+                                ? locale === 'en'
+                                  ? 'Good match'
+                                  : locale === 'ar'
+                                    ? 'توافق جيد'
+                                    : 'Bonne compatibilité'
+                                : locale === 'en'
+                                  ? 'Partial match'
+                                  : locale === 'ar'
+                                    ? 'توافق جزئي'
+                                    : 'Partiellement compatible')
+                          }
+                          size="lg"
+                        />
+                      </div>
+
+                      {/* Bottom card info */}
                       <div className="absolute right-0 bottom-0 left-0 p-4">
                         <div className="mb-1 flex items-end justify-between">
                           <div>
@@ -296,7 +395,7 @@ export function DiscoverView() {
                         )}
                         {top.bio && (
                           <p
-                            className="mb-3 text-white opacity-75"
+                            className="mb-3 text-white opacity-85"
                             style={{ fontSize: 12, lineHeight: 1.4 }}
                           >
                             {top.bio}
@@ -307,7 +406,7 @@ export function DiscoverView() {
                             {top.interests.slice(0, 5).map((tag) => (
                               <span
                                 key={tag}
-                                className="rounded-full px-2 py-0.5 text-white"
+                                className="rounded-full px-2.5 py-0.5 text-white shadow-2xs"
                                 style={{
                                   fontSize: 11,
                                   background: 'rgba(97,188,166,0.65)',
@@ -346,31 +445,6 @@ export function DiscoverView() {
           {/* Action buttons — Matchy exact */}
           {top && !locationRequired && (
             <>
-              {quota && !quota.unlimited && freeRemaining != null && freeLimit != null && (
-                <div
-                  className="mx-auto mb-2 flex items-center justify-between rounded-xl px-3 py-2"
-                  style={{
-                    background: freeRemaining === 0 ? '#FFF0F0' : '#FFF8EB',
-                    border: `1px solid ${freeRemaining === 0 ? '#FFCCCC' : '#F5A623'}`,
-                    maxWidth: 340,
-                    width: '100%',
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle size={14} color={freeRemaining === 0 ? '#E74C3C' : '#F5A623'} />
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: freeRemaining === 0 ? '#E74C3C' : '#888',
-                      }}
-                    >
-                      {t('matching.quotaLeft', { remaining: freeRemaining })}
-                    </span>
-                  </div>
-                </div>
-              )}
-
               {matching.swipeError && (
                 <div className="mx-auto mb-2 flex w-full max-w-[340px] items-center justify-between rounded-xl bg-[#FFF0F0] px-3 py-2 text-xs text-[#E74C3C]">
                   <span>{t(matching.swipeError)}</span>
@@ -511,13 +585,13 @@ export function DiscoverView() {
                 style={{ borderTop: '1px solid #F0F0F0', paddingTop: 12 }}
               >
                 <AIPicksHeader
-                  count={Math.min(5, matching.feed.filter((p) => p.id !== top?.id).length)}
+                  count={Math.min(3, matching.feed.filter((p) => p.id !== top?.id).length)}
                 />
               </div>
               <div className="flex-1 space-y-1.5 overflow-y-auto">
                 {matching.feedLoading && !matching.feedLoaded ? (
                   <div className="space-y-2">
-                    {[0, 1, 2, 3].map((i) => (
+                    {[0, 1, 2].map((i) => (
                       <div
                         key={i}
                         className="h-14 animate-pulse rounded-xl"
@@ -530,17 +604,13 @@ export function DiscoverView() {
                 ) : (
                   matching.feed
                     .filter((p) => p.id !== top?.id)
-                    .slice(0, 5)
+                    .slice(0, 3)
                     .map((profile, i) => (
                       <AIRecommendationItem
                         key={profile.id}
                         profile={profile}
                         rank={i}
                         onClick={() => {
-                          if (profile.is_locked || i >= 3) {
-                            setForceQuotaModal(true);
-                            return;
-                          }
                           setDetailProfileId(profile.id);
                           setDetailOpen(true);
                         }}

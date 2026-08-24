@@ -82,3 +82,51 @@ export type TargetUserParams = {
 export type RealtimeQuery = {
   access_token?: string;
 };
+
+export type MatchingProfile = {
+  id: string;
+  name: string;
+  image: string | null;
+  bio: string | null;
+  job: string | null;
+  category: string | null;
+  city: string | null;
+  interests: string[];
+  goals: string[];
+  activity_sector: string | null;
+  service_type: string | null;
+  rating: number;
+};
+
+export type SwipeHistoryFilter = 'all' | 'right' | 'left' | 'match';
+
+export type SwipeHistoryQuery = {
+  direction?: SwipeHistoryFilter;
+  limit?: number;
+  offset?: number;
+  q?: string;
+};
+
+export type SwipeHistoryItem = {
+  id: string;
+  direction: SwipeDirection;
+  swiped_at: string;
+  is_matched: boolean;
+  conversation_id: string | null;
+  target: MatchingProfile;
+};
+
+export type SwipeHistoryStats = {
+  total_swipes: number;
+  likes: number;
+  passes: number;
+  matches: number;
+  match_rate: number;
+};
+
+export type SwipeHistoryResponse = {
+  items: SwipeHistoryItem[];
+  total: number;
+  has_more: boolean;
+  stats: SwipeHistoryStats;
+};

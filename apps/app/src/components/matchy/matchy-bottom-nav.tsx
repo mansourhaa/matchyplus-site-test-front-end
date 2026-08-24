@@ -1,10 +1,12 @@
 'use client';
 
+import { AuthenticatedProfileAvatar } from '@/components/matchy/authenticated-profile-image';
 import { matchyBrand } from '@/components/matchy/brand';
 import { useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { selectInboxUnreadCount } from '@/features/messaging/store/messaging-slice';
+import { selectOnboarding } from '@/features/onboarding/store/onboarding-slice';
 import { Home, MessageCircle, Search } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -18,9 +20,10 @@ export function MatchyBottomNav() {
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
   const auth = useAppSelector(selectAuth);
+  const { profile } = useAppSelector(selectOnboarding);
   // Unread messages only — not total match count (that never cleared after reading).
   const matchBadge = useAppSelector(selectInboxUnreadCount);
-  const initial = (auth.user?.name || auth.user?.email || '?').slice(0, 1).toUpperCase();
+  const displayName = auth.user?.name || auth.user?.email || 'User';
 
   const active: NavKey =
     pathname.startsWith('/settings') || pathname === '/edit-profile'
@@ -66,13 +69,19 @@ export function MatchyBottomNav() {
       badge: 0,
       icon: (
         <div
-          className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full text-[10px] font-bold text-white"
+          className="rounded-full transition-all"
           style={{
+            padding: '1px',
             border: `2px solid ${active === 'profile' ? matchyBrand.blue : '#D4DCE8'}`,
-            background: matchyBrand.gradient135,
           }}
         >
-          {initial}
+          <AuthenticatedProfileAvatar
+            image={profile?.image}
+            name={displayName}
+            sizeClassName="h-5.5 w-5.5"
+            roundedClassName="rounded-full"
+            textClassName="text-[10px] font-bold text-white"
+          />
         </div>
       ),
     },

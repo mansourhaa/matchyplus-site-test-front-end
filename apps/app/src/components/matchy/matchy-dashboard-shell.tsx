@@ -10,7 +10,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { Suspense, useEffect } from 'react';
 
-const PRIMARY_PATHS = new Set(['/home', '/matches']);
+const PRIMARY_PATHS = new Set(['/home', '/matches', '/settings']);
 
 function DashboardChrome({ children }: { children: ReactNode }) {
   useProactiveRefresh();
@@ -88,6 +88,8 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     : pathname.startsWith('/profile/')
       ? t('dashboard.profile')
       : titleMap[pathname];
+  const isRootSettings = pathname === '/settings';
+  const showBack = !isRootSettings;
   const backPath =
     pathname === '/edit-profile' ||
     pathname.startsWith('/settings') ||
@@ -99,6 +101,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   return (
     <MatchyAppShell
       title={title}
+      showBack={showBack}
       backPath={backPath}
       hideHeader={pathname.startsWith('/chat') || pathname.startsWith('/profile/')}
     >

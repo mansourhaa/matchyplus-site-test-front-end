@@ -18,6 +18,7 @@ import {
   Lock,
   Phone,
   RefreshCw,
+  X,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -26,7 +27,7 @@ import { AuthLayout } from './auth-layout';
 import { MatchyLogo } from './matchy-logo';
 import { PhoneInput } from './phone-input';
 
-type ResetStep = 'request' | 'verify' | 'success';
+type ResetStep = 'request' | 'new_password' | 'success';
 
 function parseInitialPhoneParams(searchParams: ReturnType<typeof useSearchParams>) {
   const paramCountry = searchParams.get('country');
@@ -61,7 +62,12 @@ export function ResetPasswordForm() {
   const [countryIso, setCountryIso] = useState(initialPhone.countryIso);
   const [nationalNumber, setNationalNumber] = useState(initialPhone.nationalNumber);
 
+  // OTP Modal State
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [code, setCode] = useState('');
+  const [verifiedCode, setVerifiedCode] = useState('');
+
+  // Password fields
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -72,6 +78,7 @@ export function ResetPasswordForm() {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const [localError, setLocalError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   const country = getPhoneCountry(countryIso);
@@ -99,6 +106,7 @@ export function ResetPasswordForm() {
     }
 
     setLocalError(null);
+    setModalError(null);
     if (!isResend) {
       setInfoMessage(null);
     }
@@ -106,11 +114,9 @@ export function ResetPasswordForm() {
 
     try {
       await dispatch(requestPasswordReset({ phone })).unwrap();
-      setInfoMessage(t('auth.resetPassword.resetSmsSent'));
       setResendCooldown(60);
-      if (step === 'request') {
-        setStep('verify');
-      }
+      setOtpModalOpen(true);
+      setCode('');
     } catch {
       setLocalError(t('auth.resetPassword.resetSendFailed'));
     } finally {
@@ -118,10 +124,25 @@ export function ResetPasswordForm() {
     }
   };
 
-  const handleConfirmReset = async () => {
+  const handleVerifyOtpModal = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (code.trim().length !== 6) {
+      setModalError(t('auth.resetPassword.codeLabel'));
+      return;
+    }
+
+    setVerifiedCode(code.trim());
+    setModalError(null);
+    setOtpModalOpen(false);
+    setStep('new_password');
+  };
+
+  const handleConfirmReset = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
     if (
       nationalNumber.length < country.nationalLength ||
-      code.trim().length !== 6 ||
+      verifiedCode.length !== 6 ||
       !isPasswordPolicySatisfied(newPassword)
     ) {
       setLocalError(t('auth.resetPassword.invalidResetForm'));
@@ -140,7 +161,7 @@ export function ResetPasswordForm() {
       await dispatch(
         confirmPasswordReset({
           phone,
-          code: code.trim(),
+          code: verifiedCode,
           newPassword,
         }),
       ).unwrap();
@@ -150,7 +171,10 @@ export function ResetPasswordForm() {
       if (apiCode === 'phone_not_found') {
         setLocalError(t('auth.resetPassword.errorPhoneNotFound'));
       } else if (apiCode === 'invalid_otp') {
-        setLocalError(t('auth.resetPassword.errorInvalidOtp'));
+        // If code expired or was wrong on final submission, reopen modal
+        setStep('request');
+        setOtpModalOpen(true);
+        setModalError(t('auth.resetPassword.errorInvalidOtp'));
       } else {
         setLocalError(t('auth.resetPassword.resetFailed'));
       }
@@ -166,20 +190,20 @@ export function ResetPasswordForm() {
         <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EBF5FB] text-[#2F76BB]">
           {step === 'success' ? (
             <CheckCircle2 size={26} color="#61BCA6" />
-          ) : step === 'verify' ? (
-            <KeyRound size={24} color="#2F76BB" />
-          ) : (
+          ) : step === 'new_password' ? (
             <Lock size={24} color="#2F76BB" />
+          ) : (
+            <KeyRound size={24} color="#2F76BB" />
           )}
         </div>
         <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E' }}>
           {step === 'request' && t('auth.resetPassword.requestTitle')}
-          {step === 'verify' && t('auth.resetPassword.verifyTitle')}
+          {step === 'new_password' && t('auth.resetPassword.newPasswordLabel')}
           {step === 'success' && t('auth.resetPassword.successTitle')}
         </h1>
         <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.6, marginTop: '6px' }}>
           {step === 'request' && t('auth.resetPassword.requestDesc')}
-          {step === 'verify' && t('auth.resetPassword.verifyDesc', { phone })}
+          {step === 'new_password' && t('auth.resetPassword.newPasswordPlaceholder')}
           {step === 'success' && t('auth.resetPassword.successDesc')}
         </p>
       </div>
@@ -269,16 +293,10 @@ export function ResetPasswordForm() {
         </form>
       )}
 
-      {/* STEP 2: Code + New Password */}
-      {step === 'verify' && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleConfirmReset();
-          }}
-          className="space-y-4"
-        >
-          {/* Phone chip */}
+      {/* STEP 2: Set New Password Form (After OTP is verified) */}
+      {step === 'new_password' && (
+        <form onSubmit={handleConfirmReset} className="space-y-4">
+          {/* Phone chip with Verified indicator */}
           <div
             className="flex items-center justify-between rounded-xl px-3.5 py-2.5"
             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}
@@ -286,11 +304,15 @@ export function ResetPasswordForm() {
             <div className="flex items-center gap-2">
               <Phone size={15} color="#2F76BB" />
               <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>{phone}</span>
+              <span className="rounded-full bg-[#E6F9F3] px-2 py-0.5 text-[10px] font-bold text-[#2B8A6E]">
+                ✓ {t('auth.resetPassword.successTitle')}
+              </span>
             </div>
             <button
               type="button"
               onClick={() => {
                 setStep('request');
+                setVerifiedCode('');
                 setLocalError(null);
               }}
               style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
@@ -298,24 +320,6 @@ export function ResetPasswordForm() {
             >
               {t('auth.resetPassword.changePhone')}
             </button>
-          </div>
-
-          {/* 6-digit Code */}
-          <div>
-            <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-              {t('auth.resetPassword.codeLabel')}
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="123456"
-              className="mt-1.5 w-full rounded-2xl px-4 py-3.5 text-center text-xl font-bold tracking-widest text-[#353535] transition-all outline-none focus:ring-2 focus:ring-[#2F76BB]"
-              style={{ border: '2px solid #2F76BB', background: '#F5F9FF' }}
-              disabled={submitLoading}
-            />
           </div>
 
           {/* New Password */}
@@ -377,34 +381,17 @@ export function ResetPasswordForm() {
             </div>
           </div>
 
-          {/* Resend Code */}
-          <div className="flex items-center justify-between pt-1">
-            <button
-              type="button"
-              onClick={() => handleRequestCode(true)}
-              disabled={requestLoading || resendCooldown > 0}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#2F76BB] hover:underline disabled:cursor-not-allowed disabled:text-[#A0AEC0]"
-            >
-              <RefreshCw size={13} className={requestLoading ? 'animate-spin' : ''} />
-              {resendCooldown > 0
-                ? t('auth.resetPassword.resendCooldown', { seconds: resendCooldown })
-                : t('auth.resetPassword.resendCode')}
-            </button>
-          </div>
-
           {/* Submit */}
           <button
             type="submit"
             disabled={
               submitLoading ||
-              code.length !== 6 ||
               !isPasswordPolicySatisfied(newPassword) ||
               newPassword !== confirmPassword
             }
             className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white shadow-sm transition-all hover:shadow-md"
             style={{
               background:
-                code.length === 6 &&
                 isPasswordPolicySatisfied(newPassword) &&
                 newPassword === confirmPassword &&
                 !submitLoading
@@ -429,19 +416,6 @@ export function ResetPasswordForm() {
               <ArrowLeft size={14} />
               {t('auth.resetPassword.backToLogin')}
             </button>
-          </div>
-
-          <div className="mt-4 border-t border-[#F0F0F0] pt-3 text-center">
-            <p style={{ fontSize: '12px', color: '#888' }}>
-              {t('auth.resetPassword.noAccountPrompt')}{' '}
-              <button
-                type="button"
-                onClick={() => router.push('/onboarding')}
-                className="font-bold text-[#2F76BB] hover:underline"
-              >
-                {t('auth.resetPassword.createAccountLink')}
-              </button>
-            </p>
           </div>
         </form>
       )}
@@ -476,6 +450,81 @@ export function ResetPasswordForm() {
           </button>
         </div>
       )}
+
+      {/* Verification OTP Modal Dialog */}
+      {otpModalOpen && (
+        <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
+          <div
+            className="animate-in zoom-in-95 relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl"
+            style={{ border: '1px solid #E2E8F0' }}
+          >
+            <button
+              type="button"
+              onClick={() => setOtpModalOpen(false)}
+              className="absolute top-4 right-4 rounded-full p-1 text-[#94A3B8] transition-colors hover:bg-[#F1F5F9] hover:text-[#1E293B]"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F0F7FF] text-[#2F76BB]">
+                <KeyRound size={24} />
+              </div>
+              <h2 className="text-lg font-bold text-[#1E293B]">
+                {t('auth.resetPassword.verifyTitle')}
+              </h2>
+              <p className="mt-1 text-xs text-[#64748B]">
+                {t('auth.resetPassword.verifyDesc', { phone })}
+              </p>
+            </div>
+
+            {modalError && (
+              <div className="mt-4 rounded-xl bg-[#FEECEC] p-2.5 text-center text-xs font-semibold text-[#E24E59]">
+                {modalError}
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyOtpModal} className="mt-5 space-y-4">
+              <div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="123456"
+                  autoFocus
+                  className="w-full rounded-2xl px-4 py-3.5 text-center text-2xl font-extrabold tracking-widest text-[#1E293B] transition-all outline-none focus:ring-2 focus:ring-[#2F76BB]"
+                  style={{ border: '2px solid #2F76BB', background: '#F8FAFC' }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  onClick={() => handleRequestCode(true)}
+                  disabled={requestLoading || resendCooldown > 0}
+                  className="inline-flex items-center gap-1 font-semibold text-[#2F76BB] hover:underline disabled:text-[#94A3B8]"
+                >
+                  <RefreshCw size={12} className={requestLoading ? 'animate-spin' : ''} />
+                  {resendCooldown > 0
+                    ? t('auth.resetPassword.resendCooldown', { seconds: resendCooldown })
+                    : t('auth.resetPassword.resendCode')}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={code.length !== 6}
+                className="w-full rounded-2xl py-3 text-sm font-bold text-white shadow-xs transition-opacity hover:opacity-95 disabled:opacity-50"
+                style={{ background: 'linear-gradient(90deg, #61BCA6, #2F76BB)' }}
+              >
+                {t('auth.resetPassword.verifyTitle')}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -494,7 +543,7 @@ export function ResetPasswordForm() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={step === 'verify' ? () => setStep('request') : handleBackToLogin}
+              onClick={step === 'new_password' ? () => setStep('request') : handleBackToLogin}
               className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-[#F8FAFC]"
               style={{
                 border: '1px solid #E8E8E8',
@@ -523,7 +572,7 @@ export function ResetPasswordForm() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={step === 'verify' ? () => setStep('request') : handleBackToLogin}
+              onClick={step === 'new_password' ? () => setStep('request') : handleBackToLogin}
               className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-[#F8FAFC]"
               style={{
                 border: '1px solid #E8E8E8',

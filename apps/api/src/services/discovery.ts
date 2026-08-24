@@ -128,23 +128,31 @@ export class DiscoveryService {
         if (serviceTypes.length > 0 && !matchesServiceTypes(candidate, serviceTypes)) continue;
         if (needle && !matchesQuery(candidate, needle)) continue;
 
+        // Language overlap: exclude candidates who do not share at least one language with the swiper.
+        const myLanguages = me.languages ?? [];
+        const candLanguages = candidate.languages ?? [];
+        if (myLanguages.length > 0 && candLanguages.length > 0) {
+          const hasCommonLanguage = myLanguages.some((lang) => candLanguages.includes(lang));
+          if (!hasCommonLanguage) continue;
+        }
+
         const candCoords = resolveCoords(undefined, undefined, candidate);
-        let distKm: number | null = null;
-        if (myCoords && candCoords) {
-          distKm = haversineKm(
-            myCoords.latitude,
-            myCoords.longitude,
-            candCoords.latitude,
-            candCoords.longitude,
-          );
-          if (distKm * 1000 > radiusM) continue;
-        } else if (maxDistanceKm != null) {
-          // Explicit distance filter with no coords → cannot satisfy the radius.
+        if (!myCoords || !candCoords) {
+          // Candidates without a registered GPS location are excluded from discovery swipes.
           continue;
         }
 
+        const distKm = haversineKm(
+          myCoords.latitude,
+          myCoords.longitude,
+          candCoords.latitude,
+          candCoords.longitude,
+        );
+        if (distKm * 1000 > radiusM) continue;
+
         const score = computeMatchScore(toScoringProfile(me), toScoringProfile(candidate), distKm, {
           likedMe: likedMe.has(candidate.id),
+          radiusKm: radiusM / 1000,
         });
 
         if (score.matchGroup === 1) breakdown.g1_complementary += 1;

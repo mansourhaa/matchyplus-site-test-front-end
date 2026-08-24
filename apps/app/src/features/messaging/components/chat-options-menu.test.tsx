@@ -36,9 +36,6 @@ const mockPeer: ConversationPeer = {
   job: 'Full-Stack Developer',
   category: 'Tech',
   city: 'Tunis',
-  interests: ['React', 'Node.js'],
-  activity_sector: 'Tech',
-  service_type: 'Web Development',
 };
 
 function renderComponent() {
@@ -78,8 +75,8 @@ describe('ChatOptionsMenu', () => {
 
     expect(screen.getByText('Voir le profil')).toBeInTheDocument();
     expect(screen.getByText('Annuler le match')).toBeInTheDocument();
-    expect(screen.getByText("Bloquer l'utilisateur")).toBeInTheDocument();
-    expect(screen.getByText("Signaler l'utilisateur")).toBeInTheDocument();
+    expect(screen.getByText('Bloquer l’utilisateur')).toBeInTheDocument();
+    expect(screen.getByText('Signaler le profil')).toBeInTheDocument();
   });
 
   it('opens unmatch confirmation modal and unmatches peer', async () => {
@@ -106,7 +103,7 @@ describe('ChatOptionsMenu', () => {
     renderComponent();
 
     fireEvent.click(screen.getByLabelText('Options de la conversation'));
-    fireEvent.click(screen.getByText("Bloquer l'utilisateur"));
+    fireEvent.click(screen.getByText('Bloquer l’utilisateur'));
 
     expect(screen.getByText('Bloquer Sara Ben Ali ?')).toBeInTheDocument();
 
@@ -130,7 +127,7 @@ describe('ChatOptionsMenu', () => {
     renderComponent();
 
     fireEvent.click(screen.getByLabelText('Options de la conversation'));
-    fireEvent.click(screen.getByText("Signaler l'utilisateur"));
+    fireEvent.click(screen.getByText('Signaler le profil'));
 
     // Check "also block" checkbox
     const alsoBlockCheckbox = screen.getByRole('checkbox');
@@ -157,15 +154,15 @@ describe('ChatOptionsMenu', () => {
     renderComponent();
 
     fireEvent.click(screen.getByLabelText('Options de la conversation'));
-    fireEvent.click(screen.getByText("Signaler l'utilisateur"));
+    fireEvent.click(screen.getByText('Signaler le profil'));
 
     // Submit report
     const submitBtn = screen.getByRole('button', { name: 'Envoyer le signalement' });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('Merci pour votre signalement')).toBeInTheDocument();
-      expect(screen.getByText('Actions recommandées pour vous protéger :')).toBeInTheDocument();
+      expect(screen.getByText('Signalement envoyé')).toBeInTheDocument();
+      expect(screen.getByText('Actions recommandées :')).toBeInTheDocument();
       expect(screen.getByText('Bloquer Sara Ben Ali')).toBeInTheDocument();
       expect(screen.getByText('Annuler le match avec Sara Ben Ali')).toBeInTheDocument();
     });

@@ -7,7 +7,7 @@ import {
 } from '@/features/auth/store/auth-slice';
 import { api, apiErrorKey } from '@/lib/api';
 import type { RootState } from '@/lib/store';
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { type PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
 
 import type {
@@ -15,6 +15,8 @@ import type {
   MatchStateResponse,
   MatchingState,
   SwipeFeedResponse,
+  SwipeHistoryFilter,
+  SwipeHistoryResponse,
   SwipeProfileInput,
   SwipeProfileResult,
   SwipeQuota,
@@ -38,11 +40,34 @@ const initialState: MatchingState = {
   withdrawLoadingId: null,
   celebrationProfile: null,
   showQuotaModal: false,
+  history: [],
+  historyStats: null,
+  historyLoading: false,
+  historyError: null,
+  historyFilter: 'all',
 };
 
 function resetForNewSession(state: MatchingState) {
   Object.assign(state, initialState);
 }
+
+export const fetchSwipeHistory = createAsyncThunk(
+  'matching/fetchSwipeHistory',
+  async (
+    params:
+      { direction?: SwipeHistoryFilter; q?: string; offset?: number; limit?: number } | undefined,
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await api.get<SwipeHistoryResponse>('/swipe/history', {
+        params,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(apiErrorKey(error, 'activityHistory.errorLoading'));
+    }
+  },
+);
 
 export const fetchSwipeFeed = createAsyncThunk(
   'matching/fetchSwipeFeed',
@@ -136,7 +161,7 @@ export const blockUser = createAsyncThunk(
   'matching/blockUser',
   async (targetUserId: string, { rejectWithValue }) => {
     try {
-      await api.post(`/users/${targetUserId}/block`);
+      await api.post(`/profiles/${targetUserId}/block`);
       return { targetUserId };
     } catch (error) {
       return rejectWithValue(apiErrorKey(error, 'matching.errors.block'));
@@ -161,6 +186,9 @@ const matchingSlice = createSlice({
     },
     clearSwipeError(state) {
       state.swipeError = null;
+    },
+    setHistoryFilter(state, action: PayloadAction<SwipeHistoryFilter>) {
+      state.historyFilter = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -255,6 +283,19 @@ const matchingSlice = createSlice({
       .addCase(blockUser.rejected, (state, action) => {
         state.swipeError = String(action.payload || action.error.message);
       })
+      .addCase(fetchSwipeHistory.pending, (state) => {
+        state.historyLoading = true;
+        state.historyError = null;
+      })
+      .addCase(fetchSwipeHistory.fulfilled, (state, action) => {
+        state.historyLoading = false;
+        state.history = action.payload.items ?? [];
+        state.historyStats = action.payload.stats ?? null;
+      })
+      .addCase(fetchSwipeHistory.rejected, (state, action) => {
+        state.historyLoading = false;
+        state.historyError = String(action.payload || action.error.message);
+      })
       .addCase(logout.fulfilled, resetForNewSession)
       .addCase(resetAuthState, resetForNewSession)
       .addCase(changePassword.fulfilled, resetForNewSession)
@@ -263,7 +304,7 @@ const matchingSlice = createSlice({
   },
 });
 
-export const { clearFeed, clearCelebration, closeQuotaModal, clearSwipeError } =
+export const { clearFeed, clearCelebration, closeQuotaModal, clearSwipeError, setHistoryFilter } =
   matchingSlice.actions;
 
 export const selectMatchingState = (state: RootState) => state.matching;
@@ -274,5 +315,13 @@ export const selectTopFeedProfile = createSelector(
   [selectMatchingState],
   (matching) => matching.feed[0] ?? null,
 );
+
+export const selectSwipeHistory = (state: RootState) => state.matching?.history ?? [];
+export const selectSwipeHistoryStats = (state: RootState) => state.matching?.historyStats ?? null;
+export const selectSwipeHistoryLoading = (state: RootState) =>
+  state.matching?.historyLoading ?? false;
+export const selectSwipeHistoryError = (state: RootState) => state.matching?.historyError ?? null;
+export const selectSwipeHistoryFilter = (state: RootState) =>
+  state.matching?.historyFilter ?? 'all';
 
 export default matchingSlice.reducer;

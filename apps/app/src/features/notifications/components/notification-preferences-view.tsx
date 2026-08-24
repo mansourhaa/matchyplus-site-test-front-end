@@ -73,7 +73,7 @@ export function NotificationPreferencesView() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => router.push('/settings')}
             className="inline-flex items-center gap-1.5 text-base font-bold text-[#1E293B] transition-colors hover:text-[#2F76BB]"
           >
             <ChevronLeft size={20} className={isRtl ? 'rotate-180' : ''} />

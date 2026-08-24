@@ -11,6 +11,7 @@ export const feedUserSelect = {
   category: true,
   city: true,
   interests: true,
+  languages: true,
   goals: true,
   looking_for: true,
   activity_sector: true,
@@ -19,6 +20,10 @@ export const feedUserSelect = {
   gps_latitude: true,
   gps_longitude: true,
   rating: true,
+  reviews: true,
+  schedule: true,
+  availability_days: true,
+  availability_hours: true,
   status: true,
   location: {
     select: {
@@ -40,11 +45,18 @@ export function toScoringProfile(user: FeedUser): ScoringProfile {
     goals: user.goals,
     looking_for: user.looking_for,
     bio: user.bio,
+    image: user.image,
     activity_sector: user.activity_sector,
     service_type: user.service_type,
     job: user.job,
     category: user.category,
     profile_type: user.profile_type,
+    languages: user.languages,
+    availability_days: user.availability_days,
+    availability_hours: user.availability_hours,
+    schedule: user.schedule,
+    rating: user.rating,
+    reviews: user.reviews,
   };
 }
 
