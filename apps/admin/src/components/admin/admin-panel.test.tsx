@@ -26,6 +26,7 @@ const baseUser = {
   role: 'USER',
   bio: null,
   image: null,
+  video: null,
   interests: [],
   languages: [],
   contact_modes: [],
