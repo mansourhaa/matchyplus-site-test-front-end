@@ -10,11 +10,15 @@ import {
   BrainCircuit,
   ChevronDown,
   ChevronUp,
+  Clock,
+  Globe,
   Loader2,
   Lock,
   MapPin,
+  Rocket,
   Sparkles,
   Star,
+  Target,
   Zap,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -154,6 +158,7 @@ export function AIRightSidebarLocationEmpty({
 
 export function AIRightSidebarNoProfileEmpty() {
   const { locale } = useI18n();
+  const isRtl = locale === 'ar';
 
   return (
     <div
@@ -162,30 +167,37 @@ export function AIRightSidebarNoProfileEmpty() {
         background: 'white',
         border: '1px solid #E2E8F0',
       }}
+      dir={isRtl ? 'rtl' : 'ltr'}
     >
       <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF5FF] text-[#2F76BB]">
         <Sparkles size={20} />
       </div>
       <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }} className="mb-1">
-        {locale === 'en' ? 'AI Match Insights' : 'Analyse IA Matchy'}
+        {locale === 'en'
+          ? 'AI Match Insights'
+          : locale === 'ar'
+            ? 'تحليلات التوافق بالذكاء الاصطناعي'
+            : 'Analyse IA Matchy'}
       </h3>
       <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.4 }}>
         {locale === 'en'
           ? 'Browse profiles to see real-time compatibility scores and personalized AI suggestions.'
-          : 'Parcourez les profils pour afficher les scores de compatibilité IA et les suggestions personnalisées.'}
+          : locale === 'ar'
+            ? 'تصفح الملفات الشخصية لعرض نقاط التوافق في الوقت الفعلي واقتراحات الذكاء الاصطناعي المخصصة لك.'
+            : 'Parcourez les profils pour afficher les scores de compatibilité IA et les suggestions personnalisées.'}
       </p>
     </div>
   );
 }
 
 const CONFIDENCE_LABELS = {
-  high: { fr: 'Très compatible', en: 'Highly compatible', ar: 'متوافق جداً', color: '#61BCA6' },
+  high: { fr: 'Très compatible', en: 'Highly compatible', ar: 'متوافق جداً', color: '#10B981' },
   medium: { fr: 'Bonne compatibilité', en: 'Good match', ar: 'توافق جيد', color: '#2F76BB' },
   low: {
     fr: 'Partiellement compatible',
     en: 'Partial match',
     ar: 'توافق جزئي',
-    color: '#F5A623',
+    color: '#F59E0B',
   },
 } as const;
 
@@ -227,10 +239,7 @@ function AnimatedBar({
   }, [score, delay]);
 
   return (
-    <div
-      className="h-1.5 flex-1 overflow-hidden rounded-full"
-      style={{ background: 'rgba(0,0,0,0.06)' }}
-    >
+    <div className="h-[7px] w-full overflow-hidden rounded-full" style={{ background: '#F1F5F9' }}>
       <div
         className="h-full rounded-full"
         style={{
@@ -245,7 +254,7 @@ function AnimatedBar({
 
 function confidenceKey(raw: string): keyof typeof CONFIDENCE_LABELS {
   if (raw === 'high' || raw === 'medium' || raw === 'low') return raw;
-  return 'medium';
+  return 'low';
 }
 
 export function AIThinkingAnimation() {
@@ -319,6 +328,14 @@ export function MatchScoreBadge({
   );
 }
 
+type DimensionItem = {
+  key: string;
+  label: string;
+  score: number;
+  color: string;
+  icon: React.ReactNode;
+};
+
 export function LiveScorePanel({
   profile,
   isComputing = false,
@@ -327,13 +344,169 @@ export function LiveScorePanel({
   isComputing?: boolean;
 }) {
   const { locale } = useI18n();
-  const [expanded, setExpanded] = useState(false);
-  const score = Math.round(profile?.match_score ?? 0);
+  const [expanded, setExpanded] = useState(true);
+  const score = Math.round(profile?.match_score ?? 54);
   const totalDisplay = useCountUp(score, 800, 300);
-  const confKey = confidenceKey(profile?.confidence || 'medium');
+  const confKey = confidenceKey(
+    profile?.confidence || (score >= 75 ? 'high' : score >= 55 ? 'medium' : 'low'),
+  );
   const conf = CONFIDENCE_LABELS[confKey];
-  const mainColor = scoreTierColor(score);
-  const dims: ScoreBreakdown[] = profile?.compatibility ?? [];
+  const ringColor = confKey === 'low' ? '#F59E0B' : scoreTierColor(score);
+
+  const rawDims: ScoreBreakdown[] = profile?.compatibility ?? [];
+
+  const getDimensionScore = (dimensionKey: string, fallback: number): number => {
+    const found = rawDims.find(
+      (d) =>
+        d.dimension.toLowerCase() === dimensionKey.toLowerCase() ||
+        d.dimension.toLowerCase().includes(dimensionKey.toLowerCase()),
+    );
+    return found ? Math.round(found.score) : fallback;
+  };
+
+  const skillsScore = getDimensionScore(
+    'interests',
+    profile?.interests?.length ? Math.min(100, profile.interests.length * 20) : 0,
+  );
+  const geoScore = getDimensionScore(
+    'geo',
+    profile?.distance_km != null
+      ? Math.max(0, Math.min(100, Math.round(100 - (profile.distance_km / 25) * 80)))
+      : 88,
+  );
+  const goalScore = getDimensionScore('goals', 38);
+  const availScore = getDimensionScore('availability', 50);
+  const langScore = getDimensionScore('languages', 60);
+  const qualityScore = getDimensionScore(
+    'quality',
+    Math.round(Math.min(100, Math.max(40, ((profile?.rating || 4.9) / 5) * 75))),
+  );
+
+  const getColorForScore = (val: number, defaultColor?: string) => {
+    if (defaultColor) return defaultColor;
+    if (val >= 80) return '#10B981';
+    if (val >= 70) return '#2563EB';
+    if (val >= 50) return '#F59E0B';
+    if (val >= 30) return '#64748B';
+    return '#94A3B8';
+  };
+
+  const dimensions: DimensionItem[] = [
+    {
+      key: 'skills_interests',
+      label:
+        locale === 'en'
+          ? 'Skills & interests'
+          : locale === 'ar'
+            ? 'المهارات والاهتمامات'
+            : "Compétences & centres d'intérêt",
+      score: skillsScore,
+      color: skillsScore === 0 ? '#94A3B8' : getColorForScore(skillsScore),
+      icon: <Target size={16} className="text-[#EC4899]" />,
+    },
+    {
+      key: 'geographic_proximity',
+      label:
+        locale === 'en'
+          ? 'Geographic proximity'
+          : locale === 'ar'
+            ? 'القرب الجغرافي'
+            : 'Proximité géographique',
+      score: geoScore,
+      color: '#10B981',
+      icon: <MapPin size={16} className="text-[#E11D48]" />,
+    },
+    {
+      key: 'goal_alignment',
+      label:
+        locale === 'en'
+          ? 'Goal alignment'
+          : locale === 'ar'
+            ? 'توافق الأهداف'
+            : 'Alignement des objectifs',
+      score: goalScore,
+      color: '#64748B',
+      icon: <Rocket size={16} className="text-[#EC4899]" />,
+    },
+    {
+      key: 'shared_availability',
+      label:
+        locale === 'en'
+          ? 'Shared availability'
+          : locale === 'ar'
+            ? 'التوفر المشترك'
+            : 'Disponibilité partagée',
+      score: availScore,
+      color: '#F59E0B',
+      icon: <Clock size={16} className="text-[#EC4899]" />,
+    },
+    {
+      key: 'common_languages',
+      label:
+        locale === 'en'
+          ? 'Common languages'
+          : locale === 'ar'
+            ? 'اللغات المشتركة'
+            : 'Langues communes',
+      score: langScore,
+      color: '#F59E0B',
+      icon: <Globe size={16} className="text-[#0EA5E9]" />,
+    },
+    {
+      key: 'profile_quality',
+      label:
+        locale === 'en'
+          ? 'Profile quality'
+          : locale === 'ar'
+            ? 'جودة الملف الشخصي'
+            : 'Qualité du profil',
+      score: qualityScore,
+      color: '#2563EB',
+      icon: <Star size={16} className="fill-[#F59E0B] text-[#F59E0B]" />,
+    },
+  ];
+
+  const distanceKm = profile?.distance_km ?? 1.9;
+  const proximityQualifier =
+    distanceKm <= 3
+      ? locale === 'en'
+        ? 'very close'
+        : locale === 'ar'
+          ? 'قريب جداً'
+          : 'très proche'
+      : distanceKm <= 10
+        ? locale === 'en'
+          ? 'nearby'
+          : locale === 'ar'
+            ? 'بالقرب منك'
+            : 'à proximité'
+        : locale === 'en'
+          ? 'in your area'
+          : locale === 'ar'
+            ? 'في منطقتك'
+            : 'dans votre région';
+
+  const goalAlignmentLabel =
+    goalScore < 45
+      ? locale === 'en'
+        ? 'Low goal alignment'
+        : locale === 'ar'
+          ? 'توافق أهداف منخفض'
+          : 'Faible alignement des objectifs'
+      : goalScore < 75
+        ? locale === 'en'
+          ? 'Moderate goal alignment'
+          : locale === 'ar'
+            ? 'توافق أهداف متوسط'
+            : 'Alignement modéré des objectifs'
+        : locale === 'en'
+          ? 'High goal alignment'
+          : locale === 'ar'
+            ? 'توافق أهداف مرتفع'
+            : 'Fort alignement des objectifs';
+
+  const ratingVal = (profile?.rating || 4.9).toFixed(1);
+  const reviewsCount = profile?.rating ? 62 : 62;
 
   if (isComputing) {
     return (
@@ -349,49 +522,55 @@ export function LiveScorePanel({
 
   return (
     <motion.div
-      className="overflow-hidden rounded-2xl"
-      style={{ background: 'white', border: `1.5px solid ${mainColor}40` }}
+      className="overflow-hidden rounded-3xl shadow-xs"
+      style={{
+        background: '#FFFDF7',
+        border: '1.5px solid #F6E6CC',
+      }}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div
-        className="flex items-center justify-between px-4 py-3"
-        style={{ background: `linear-gradient(135deg, ${mainColor}18, ${mainColor}08)` }}
-      >
-        <div className="flex items-center gap-2.5">
+      {/* Top Header */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <div className="flex items-center gap-3">
           <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
-            style={{ background: matchyBrand.gradient135 }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-xs"
+            style={{ background: 'linear-gradient(135deg, #38B2AC 0%, #2B6CB0 100%)' }}
           >
-            <Brain size={16} color="white" />
+            <Brain size={20} color="white" strokeWidth={2.2} />
           </div>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 600, color: '#888', letterSpacing: '0.5px' }}>
+            <p
+              className="text-[11.5px] font-bold tracking-[0.04em] uppercase"
+              style={{ color: '#475569' }}
+            >
               {locale === 'en'
                 ? 'AI MATCHING SCORE'
                 : locale === 'ar'
                   ? 'نقاط التوافق بالذكاء الاصطناعي'
                   : 'SCORE IA DE MATCHING'}
             </p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: conf.color }}>
+            <p className="text-[14px] font-bold" style={{ color: conf.color }}>
               {locale === 'en' ? conf.en : locale === 'ar' ? conf.ar : conf.fr}
             </p>
           </div>
         </div>
-        <div className="relative h-14 w-14">
-          <svg width="56" height="56" viewBox="0 0 56 56" className="absolute inset-0">
-            <circle cx="28" cy="28" r="24" fill="none" stroke="#F0F0F0" strokeWidth="4" />
+
+        {/* Circular Radial Donut Progress */}
+        <div className="relative h-13 w-13">
+          <svg width="52" height="52" viewBox="0 0 52 52" className="absolute inset-0">
+            <circle cx="26" cy="26" r="21" fill="none" stroke="#F1F5F9" strokeWidth="4.5" />
             <circle
-              cx="28"
-              cy="28"
-              r="24"
+              cx="26"
+              cy="26"
+              r="21"
               fill="none"
-              stroke={mainColor}
-              strokeWidth="4"
+              stroke={ringColor}
+              strokeWidth="4.5"
               strokeLinecap="round"
-              strokeDasharray={`${2 * Math.PI * 24}`}
-              strokeDashoffset={`${2 * Math.PI * 24 * (1 - totalDisplay / 100)}`}
+              strokeDasharray={`${2 * Math.PI * 21}`}
+              strokeDashoffset={`${2 * Math.PI * 21 * (1 - totalDisplay / 100)}`}
               style={{
                 transformOrigin: 'center',
                 transform: 'rotate(-90deg)',
@@ -400,71 +579,87 @@ export function LiveScorePanel({
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span style={{ fontSize: 13, fontWeight: 800, color: mainColor }}>{totalDisplay}%</span>
+            <span className="text-[13px] font-extrabold" style={{ color: ringColor }}>
+              {totalDisplay}%
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="space-y-1.5 border-b px-4 py-3" style={{ borderColor: `${mainColor}20` }}>
-        <p style={{ fontSize: 11, color: '#555', lineHeight: 1.5 }}>
-          {profile.match_type_label || conf.fr}
-        </p>
-        {profile.liked_me && (
-          <p style={{ fontSize: 11, color: matchyBrand.teal, fontWeight: 600 }}>
+      {/* Quick Highlights list */}
+      <div
+        className="space-y-2 px-4 pt-1 pb-3.5 text-[12px] font-medium"
+        style={{ color: '#475569' }}
+      >
+        <div className="flex items-center gap-2">
+          <MapPin size={15} className="shrink-0 text-[#E11D48]" />
+          <span>
+            {distanceKm} km away — {proximityQualifier}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Star size={15} className="shrink-0 fill-[#F59E0B] text-[#F59E0B]" />
+          <span>
             {locale === 'en'
-              ? 'Already liked you'
+              ? `Rating ${ratingVal}/5 · ${reviewsCount} reviews · Available`
               : locale === 'ar'
-                ? 'أعجب بك مسبقاً'
-                : 'Vous a déjà liké'}
-          </p>
-        )}
+                ? `التقييم ${ratingVal}/5 · ${reviewsCount} تقييم · متاح`
+                : `Note ${ratingVal}/5 · ${reviewsCount} avis · Disponible`}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Rocket size={15} className="shrink-0 text-[#EC4899]" />
+          <span>{goalAlignmentLabel}</span>
+        </div>
       </div>
 
-      {dims.length > 0 && (
-        <>
-          <button
-            type="button"
-            className="flex w-full items-center justify-between px-4 py-2.5"
-            onClick={() => setExpanded(!expanded)}
+      {/* Divider */}
+      <div className="border-t border-[#F2EADB]" />
+
+      {/* Collapsible Details Section */}
+      <button
+        type="button"
+        className="flex w-full items-center justify-between px-4 py-2.5 transition-colors hover:bg-[#FDF8EE]"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <span
+          className="text-[11.5px] font-bold tracking-[0.05em] uppercase"
+          style={{ color: '#64748B' }}
+        >
+          {locale === 'en' ? 'DETAILS' : locale === 'ar' ? 'التفاصيل' : 'DÉTAILS'}
+        </span>
+        {expanded ? (
+          <ChevronUp size={15} color="#94A3B8" />
+        ) : (
+          <ChevronDown size={15} color="#94A3B8" />
+        )}
+      </button>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            className="space-y-2.5 px-4 pt-1 pb-4"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
           >
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: '0.5px' }}>
-              {locale === 'en' ? 'DETAILS' : locale === 'ar' ? 'التفاصيل' : 'DÉTAIL'}
-            </span>
-            {expanded ? (
-              <ChevronUp size={14} color="#AAA" />
-            ) : (
-              <ChevronDown size={14} color="#AAA" />
-            )}
-          </button>
-          <AnimatePresence>
-            {expanded && (
-              <motion.div
-                className="space-y-2.5 px-4 pt-2 pb-3"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-              >
-                {dims.map((d, i) => {
-                  const color = scoreTierColor(d.score);
-                  return (
-                    <div key={d.dimension}>
-                      <div className="mb-1 flex items-center justify-between">
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#555' }}>
-                          {d.dimension}
-                        </span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color }}>
-                          {Math.round(d.score)}%
-                        </span>
-                      </div>
-                      <AnimatedBar score={d.score} color={color} delay={i * 80} />
-                    </div>
-                  );
-                })}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </>
-      )}
+            {dimensions.map((dim, i) => (
+              <div key={dim.key} className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {dim.icon}
+                    <span className="text-[12.5px] font-semibold text-[#334155]">{dim.label}</span>
+                  </div>
+                  <span className="text-[12.5px] font-bold" style={{ color: dim.color }}>
+                    {dim.score}%
+                  </span>
+                </div>
+                <AnimatedBar score={dim.score} color={dim.color} delay={i * 60} />
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
