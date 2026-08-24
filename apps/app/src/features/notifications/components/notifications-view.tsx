@@ -34,9 +34,15 @@ const DATE_LOCALES: Record<Locale, typeof fr> = {
   ar: arSA,
 };
 
-function getPushCopy(item: NotificationItem, locale: Locale): { title: string; body: string } {
+function getPushCopy(
+  item: NotificationItem,
+  locale: Locale,
+  isFree = true,
+): { title: string; body: string } {
   switch (item.type) {
-    case 'PROFILE_VIEW':
+    case 'PROFILE_VIEW': {
+      const rawName = item.data.viewerName || '';
+      const displayName = isFree ? rawName.trim().split(/\s+/)[0] || rawName : rawName;
       return {
         title:
           locale === 'en'
@@ -46,11 +52,12 @@ function getPushCopy(item: NotificationItem, locale: Locale): { title: string; b
               : 'Vue de profil',
         body:
           locale === 'en'
-            ? `Someone named "${item.data.viewerName}" viewed your profile.`
+            ? `Someone named "${displayName}" viewed your profile.`
             : locale === 'ar'
-              ? `قام شخص باسم "${item.data.viewerName}" بزيارة ملفك الشخصي.`
-              : `Quelqu'un nommé "${item.data.viewerName}" a consulté votre profil.`,
+              ? `قام شخص باسم "${displayName}" بزيارة ملفك الشخصي.`
+              : `Quelqu'un nommé "${displayName}" a consulté votre profil.`,
       };
+    }
     case 'MATCH':
       return {
         title: locale === 'en' ? 'New Match!' : locale === 'ar' ? 'مطابقة جديدة!' : 'Nouveau match',
@@ -62,7 +69,9 @@ function getPushCopy(item: NotificationItem, locale: Locale): { title: string; b
               ? 'إنها مطابقة! افتح التوافقات لبدء المحادثة.'
               : 'Nouveau match ! Ouvrez vos matches pour continuer.'),
       };
-    case 'MATCH_REQUEST':
+    case 'MATCH_REQUEST': {
+      const rawName = item.data.actor_first_name || '';
+      const displayName = isFree ? rawName.trim().split(/\s+/)[0] || rawName : rawName;
       return {
         title:
           item.data.title ||
@@ -70,11 +79,12 @@ function getPushCopy(item: NotificationItem, locale: Locale): { title: string; b
         body:
           item.data.body ||
           (locale === 'en'
-            ? `${item.data.actor_first_name} sent you a match request.`
+            ? `${displayName} sent you a match request.`
             : locale === 'ar'
-              ? `أرسل لك ${item.data.actor_first_name} طلب مطابقة.`
-              : `${item.data.actor_first_name} vous a envoyé une demande de match.`),
+              ? `أرسل لك ${displayName} طلب مطابقة.`
+              : `${displayName} vous a envoyé une demande de match.`),
       };
+    }
     case 'MESSAGE':
       return {
         title:
@@ -117,8 +127,14 @@ function NotificationRow({ item }: { item: NotificationItem }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { locale } = useI18n();
+  const authUser = useAppSelector((state) => state.auth?.user);
+  const isFree = !authUser?.plan || authUser.plan.toUpperCase() === 'FREE';
+  const shouldBlurImage =
+    isFree &&
+    (item.type === 'PROFILE_VIEW' || item.type === 'MATCH' || item.type === 'MATCH_REQUEST');
+
   const avatar = useAuthenticatedMediaUrl(avatarSrc(item));
-  const { title, body } = getPushCopy(item, locale);
+  const { title, body } = getPushCopy(item, locale, isFree);
   const isRtl = locale === 'ar';
 
   const handleClick = async () => {
@@ -148,15 +164,15 @@ function NotificationRow({ item }: { item: NotificationItem }) {
     >
       {avatar.url ? (
         <div
-          className="h-10 w-10 shrink-0 overflow-hidden rounded-full"
+          className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full"
           style={{ border: '1px solid #DCE7F2' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={avatar.url}
             alt=""
-            className="h-full w-full object-cover"
-            style={{ filter: item.type === 'PROFILE_VIEW' ? 'blur(3px)' : undefined }}
+            className={`h-full w-full object-cover ${shouldBlurImage ? 'scale-125' : ''}`}
+            style={{ filter: shouldBlurImage ? 'blur(5px)' : undefined }}
           />
         </div>
       ) : (

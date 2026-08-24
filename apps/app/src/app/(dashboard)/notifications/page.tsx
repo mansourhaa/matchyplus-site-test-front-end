@@ -1,7 +1,7 @@
 'use client';
 
-import { NotificationsView } from '@/features/notifications/components/notifications-view';
+import { NotificationPreferencesView } from '@/features/notifications/components/notification-preferences-view';
 
 export default function NotificationsPage() {
-  return <NotificationsView />;
+  return <NotificationPreferencesView />;
 }
