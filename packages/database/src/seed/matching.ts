@@ -294,7 +294,6 @@ async function upsertUserWithLocation(
       rating: 4.5,
       languages: ['Français', 'Arabe'],
       contact_modes: ['call', 'café'],
-      onboarding_completed_at: new Date('2026-01-01'),
     },
     update: {
       name: data.name,
@@ -314,7 +313,6 @@ async function upsertUserWithLocation(
       gps_latitude: data.lat,
       gps_longitude: data.lon,
       role: data.role ?? Role.USER,
-      onboarding_completed_at: new Date('2026-01-01'),
     },
   });
 
