@@ -123,6 +123,36 @@ export const deleteProfileVideoSchema = {
   response: mediaUploadResponseSchema,
 };
 
+export const syncUserLocationSchema = {
+  tags: ['profiles'],
+  summary: "Save the current user's coordinates and derive their city from them",
+  description:
+    'Called once the app has real coordinates (device GPS or the IP fallback) so the ' +
+    "profile's city reflects where the member actually is, instead of only the optional " +
+    'free-text city entered once at signup.',
+  security: [{ http: [] }],
+  headers: authenticatedHeadersSchema,
+  body: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['latitude', 'longitude'],
+    properties: {
+      latitude: { type: 'number', minimum: -90, maximum: 90 },
+      longitude: { type: 'number', minimum: -180, maximum: 180 },
+    },
+  },
+  response: {
+    200: {
+      description: 'Successful response — city is null when reverse geocoding failed',
+      type: 'object',
+      properties: {
+        city: { type: 'string', nullable: true },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
 export const notifyProfileViewSchema = {
   tags: ['profiles'],
   summary: 'Let a profile owner know their profile was viewed',
