@@ -4,16 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MatchyDashboardShell } from './matchy-dashboard-shell';
 
-const { pushMock, replaceMock, pathnameMock, appShellMock } = vi.hoisted(() => ({
+const { pushMock, replaceMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   replaceMock: vi.fn(),
-  pathnameMock: vi.fn(() => '/home'),
-  appShellMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock, replace: replaceMock }),
-  usePathname: () => pathnameMock(),
+  usePathname: () => '/home',
 }));
 
 vi.mock('@/features/i18n/i18n-provider', () => ({
@@ -29,15 +27,9 @@ vi.mock('./matchy-primary-shell', () => ({
   ),
 }));
 vi.mock('./matchy-app-shell', () => ({
-  MatchyAppShell: (props: {
-    children: React.ReactNode;
-    showBack?: boolean;
-    backPath?: string;
-    title?: string;
-  }) => {
-    appShellMock(props);
-    return <div data-testid="app-shell">{props.children}</div>;
-  },
+  MatchyAppShell: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="app-shell">{children}</div>
+  ),
 }));
 
 const onboardedUser = {
@@ -117,36 +109,5 @@ describe('MatchyDashboardShell — onboarding guard', () => {
 
     expect(screen.queryByText('Dashboard content')).not.toBeInTheDocument();
     expect(assignMock).toHaveBeenCalledWith('/login');
-  });
-
-  it('disables back navigation on the root /settings page', () => {
-    pathnameMock.mockReturnValue('/settings');
-    renderWithAuthStore(<MatchyDashboardShell>{<div>Settings main</div>}</MatchyDashboardShell>, {
-      status: 'authenticated',
-      user: onboardedUser,
-    });
-
-    expect(screen.getByText('Settings main')).toBeInTheDocument();
-    expect(appShellMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        showBack: false,
-      }),
-    );
-  });
-
-  it('enables back navigation redirecting to /settings on settings subpages', () => {
-    pathnameMock.mockReturnValue('/settings/account');
-    renderWithAuthStore(<MatchyDashboardShell>{<div>Account subpage</div>}</MatchyDashboardShell>, {
-      status: 'authenticated',
-      user: onboardedUser,
-    });
-
-    expect(screen.getByText('Account subpage')).toBeInTheDocument();
-    expect(appShellMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        showBack: true,
-        backPath: '/settings',
-      }),
-    );
   });
 });

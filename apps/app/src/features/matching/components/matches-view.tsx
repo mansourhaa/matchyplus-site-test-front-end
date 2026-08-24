@@ -12,7 +12,7 @@ import {
   withdrawPending,
 } from '@/features/matching/store/matching-slice';
 import { fetchInbox, selectMessaging } from '@/features/messaging/store/messaging-slice';
-import { Heart, Loader2, MessageCircle, RefreshCw } from 'lucide-react';
+import { Heart, Loader2, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -29,11 +29,6 @@ export function MatchesView() {
     void dispatch(fetchInbox());
   }, [dispatch]);
 
-  const refresh = () => {
-    void dispatch(fetchMatchState());
-    void dispatch(fetchInbox());
-  };
-
   return (
     <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }}>
       <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-4 md:px-8">
@@ -41,18 +36,7 @@ export function MatchesView() {
           <h1 className="text-2xl font-extrabold" style={{ color: matchyBrand.textDark }}>
             {t('matching.matchesTitle')}
           </h1>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={refresh}
-              className="rounded-full p-2"
-              style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
-              aria-label={t('common.retry')}
-            >
-              <RefreshCw size={16} />
-            </button>
-            <MatchyHeaderActions />
-          </div>
+          <MatchyHeaderActions />
         </div>
 
         <section>

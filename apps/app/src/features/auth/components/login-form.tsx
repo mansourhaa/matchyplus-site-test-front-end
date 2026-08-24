@@ -14,7 +14,6 @@ import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { ArrowLeft, ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -471,13 +470,13 @@ export function LoginForm() {
         style={{ fontSize: '11px', color: '#BBBBBB', lineHeight: 1.6 }}
       >
         {t('auth.loginForm.acceptTermsPrefix')}{' '}
-        <Link href="/terms-of-service" className="text-[#2F76BB] hover:underline">
+        <a href={landingPath('/terms-of-service')} className="text-[#2F76BB] hover:underline">
           {t('legal.termsOfService')}
-        </Link>{' '}
+        </a>{' '}
         {t('auth.loginForm.acceptTermsMiddle')}{' '}
-        <Link href="/privacy-policy" className="text-[#2F76BB] hover:underline">
+        <a href={landingPath('/privacy-policy')} className="text-[#2F76BB] hover:underline">
           {t('legal.privacyPolicy')}
-        </Link>
+        </a>
       </p>
     </div>
   );

@@ -171,14 +171,14 @@ export function SettingsView() {
         {
           label: t('settings.privacyPolicy'),
           icon: FileText,
-          path: '/settings/privacy-policy',
+          path: '/privacy-policy',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
         },
         {
           label: t('settings.terms'),
           icon: FileText,
-          path: '/settings/terms-of-service',
+          path: '/terms-of-service',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
         },

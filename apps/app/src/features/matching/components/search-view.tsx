@@ -27,7 +27,7 @@ import {
 import type { FeedProfile, SwipeFeedResponse } from '@/features/matching/types';
 import { api } from '@/lib/api';
 import { toast } from '@/lib/toast';
-import { Filter, Loader2, Lock, MapPin, RefreshCw, Search, Star, X } from 'lucide-react';
+import { Filter, Loader2, Lock, MapPin, Search, Star, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const SEARCH_PAGE_SIZE = 20;
@@ -429,15 +429,6 @@ export function SearchView() {
                     {activeFilterCount}
                   </span>
                 )}
-              </button>
-              <button
-                type="button"
-                onClick={() => void loadSearchFeed('replace')}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
-                aria-label={t('common.retry')}
-              >
-                <RefreshCw size={16} />
               </button>
             </div>
 

@@ -360,60 +360,6 @@ export const unmatchSchema = {
   },
 };
 
-/** GET /swipe/history */
-export const listSwipeHistorySchema = {
-  tags: ['swipe'],
-  summary: 'List swipe and interaction history',
-  description:
-    'List historical swipes (likes, passes, matches) with target profiles and overall summary statistics. Requires JWT.',
-  security: [{ http: [] }],
-  querystring: {
-    type: 'object',
-    additionalProperties: false,
-    properties: {
-      direction: { type: 'string', enum: ['all', 'right', 'left', 'match'] },
-      limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
-      offset: { type: 'integer', minimum: 0, default: 0 },
-      q: { type: 'string' },
-    },
-  },
-  response: {
-    200: {
-      description: 'Successful response',
-      type: 'object',
-      properties: {
-        items: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              direction: { type: 'string' },
-              swiped_at: { type: 'string' },
-              is_matched: { type: 'boolean' },
-              conversation_id: { type: 'string', nullable: true },
-              target: matchingProfile,
-            },
-          },
-        },
-        total: { type: 'integer' },
-        has_more: { type: 'boolean' },
-        stats: {
-          type: 'object',
-          properties: {
-            total_swipes: { type: 'integer' },
-            likes: { type: 'integer' },
-            passes: { type: 'integer' },
-            matches: { type: 'integer' },
-            match_rate: { type: 'number' },
-          },
-        },
-      },
-    },
-    ...errorResponses,
-  },
-};
-
 /** GET /realtime (WebSocket upgrade) */
 export const realtimeSchema = {
   tags: ['realtime'],

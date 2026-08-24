@@ -10,13 +10,7 @@ export const PUBLIC_AUTH_ROUTES = ['/login'] as const;
 /**
  * Always allowed regardless of auth. See proxy.ts for why each path is neutral.
  */
-export const NEUTRAL_ROUTES = [
-  '/oauth-callback',
-  '/onboarding',
-  '/register',
-  '/privacy-policy',
-  '/terms-of-service',
-] as const;
+export const NEUTRAL_ROUTES = ['/oauth-callback', '/onboarding', '/register'] as const;
 
 /**
  * URL prefixes that map to `app/(dashboard)/**`. Used for tests and docs — the
@@ -31,6 +25,8 @@ export const DASHBOARD_PATH_PREFIXES = [
   '/notifications',
   '/edit-profile',
   '/settings',
+  '/privacy-policy',
+  '/terms-of-service',
 ] as const;
 
 const CLOCK_SKEW_SECONDS = 30;

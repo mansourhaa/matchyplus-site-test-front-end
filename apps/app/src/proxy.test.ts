@@ -51,8 +51,8 @@ describe('proxy auth gate', () => {
       '/settings/video',
       '/settings/qr-code',
       '/settings/add-phone-number',
-      '/settings/privacy-policy',
-      '/settings/terms-of-service',
+      '/privacy-policy',
+      '/terms-of-service',
     ];
     for (const path of paths) {
       const res = proxy(request(path));
@@ -79,8 +79,6 @@ describe('proxy auth gate', () => {
     expect(proxy(request('/onboarding')).status).toBe(200);
     expect(proxy(request('/oauth-callback')).status).toBe(200);
     expect(proxy(request('/register')).status).toBe(200);
-    expect(proxy(request('/privacy-policy')).status).toBe(200);
-    expect(proxy(request('/terms-of-service')).status).toBe(200);
   });
 
   it('sends authenticated visitors away from /login', () => {

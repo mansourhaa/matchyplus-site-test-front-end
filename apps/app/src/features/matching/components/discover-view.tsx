@@ -2,7 +2,6 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
-import { MatchyLogo } from '@/components/matchy/matchy-logo';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import {
@@ -42,59 +41,9 @@ import {
 } from '@/features/notifications/store/notifications-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, Bell, Check, Lock, MapPin, RefreshCw, Star, X } from 'lucide-react';
+import { AlertTriangle, Bell, Check, Lock, MapPin, Star, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-
-function LanguageSwitcher() {
-  const { locale, setLocale } = useI18n();
-  const [open, setOpen] = useState(false);
-  const flags: Record<string, string> = { fr: '🇫🇷', en: '🇬🇧', ar: '🇹🇳' };
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex h-8 w-8 items-center justify-center rounded-lg"
-        style={{ background: '#F5F7FA', border: '1px solid #E0E0E0' }}
-      >
-        <span style={{ fontSize: 14 }}>{flags[locale]}</span>
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="absolute top-9 right-0 z-50 overflow-hidden rounded-xl shadow-lg"
-            style={{ background: 'white', border: '1px solid #F0F0F0', minWidth: 100 }}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-          >
-            {(['fr', 'en', 'ar'] as const).map((l) => (
-              <button
-                key={l}
-                type="button"
-                onClick={() => {
-                  setLocale(l);
-                  setOpen(false);
-                }}
-                className="flex w-full items-center justify-center px-3 py-2 hover:bg-[#F5F7FA]"
-                style={{
-                  fontSize: 13,
-                  fontWeight: locale === l ? 700 : 400,
-                  color: locale === l ? '#2F76BB' : '#555',
-                  background: locale === l ? '#EEF5FF' : 'white',
-                }}
-              >
-                <span style={{ fontSize: 16 }}>{flags[l]}</span>
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 export function DiscoverView() {
   const { t, locale } = useI18n();
@@ -193,7 +142,9 @@ export function DiscoverView() {
           {title}
         </p>
         <div className="flex md:hidden">
-          <MatchyLogo size="sm" />
+          <span style={{ fontSize: 18, fontWeight: 800, color: '#2F76BB' }}>
+            Matchy<span style={{ color: '#61BCA6' }}>+</span>
+          </span>
         </div>
         <MatchyHeaderActions />
       </div>
@@ -562,25 +513,6 @@ export function DiscoverView() {
                 <AIPicksHeader
                   count={Math.min(5, matching.feed.filter((p) => p.id !== top?.id).length)}
                 />
-                <button
-                  type="button"
-                  onClick={() =>
-                    void dispatch(
-                      fetchSwipeFeed(
-                        latitude != null && longitude != null ? { latitude, longitude } : undefined,
-                      ),
-                    )
-                  }
-                  disabled={matching.feedLoading}
-                  className="ml-auto rounded-lg p-1.5 transition-colors hover:bg-[#F0F7FF] disabled:opacity-50"
-                  title="Refresh"
-                >
-                  <RefreshCw
-                    size={13}
-                    color="#2F76BB"
-                    className={matching.feedLoading ? 'animate-spin' : ''}
-                  />
-                </button>
               </div>
               <div className="flex-1 space-y-1.5 overflow-y-auto">
                 {matching.feedLoading && !matching.feedLoaded ? (

@@ -15,8 +15,6 @@ import type {
   MatchStateResponse,
   MatchingState,
   SwipeFeedResponse,
-  SwipeHistoryQuery,
-  SwipeHistoryResponse,
   SwipeProfileInput,
   SwipeProfileResult,
   SwipeQuota,
@@ -40,12 +38,6 @@ const initialState: MatchingState = {
   withdrawLoadingId: null,
   celebrationProfile: null,
   showQuotaModal: false,
-  historyItems: [],
-  historyStats: null,
-  historyLoading: false,
-  historyError: null,
-  historyHasMore: false,
-  historyTotal: 0,
 };
 
 function resetForNewSession(state: MatchingState) {
@@ -136,20 +128,6 @@ export const unmatchUser = createAsyncThunk(
       return { targetUserId };
     } catch (error) {
       return rejectWithValue(apiErrorKey(error, 'matching.errors.unmatch'));
-    }
-  },
-);
-
-export const fetchSwipeHistory = createAsyncThunk(
-  'matching/fetchSwipeHistory',
-  async (query: SwipeHistoryQuery | undefined, { rejectWithValue }) => {
-    try {
-      const response = await api.get<SwipeHistoryResponse>('/swipe/history', {
-        params: query,
-      });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(apiErrorKey(error, 'matching.errors.history'));
     }
   },
 );
@@ -256,21 +234,6 @@ const matchingSlice = createSlice({
       .addCase(unmatchUser.rejected, (state, action) => {
         state.swipeError = String(action.payload || action.error.message);
       })
-      .addCase(fetchSwipeHistory.pending, (state) => {
-        state.historyLoading = true;
-        state.historyError = null;
-      })
-      .addCase(fetchSwipeHistory.fulfilled, (state, action) => {
-        state.historyLoading = false;
-        state.historyItems = action.payload.items;
-        state.historyStats = action.payload.stats;
-        state.historyTotal = action.payload.total;
-        state.historyHasMore = action.payload.has_more;
-      })
-      .addCase(fetchSwipeHistory.rejected, (state, action) => {
-        state.historyLoading = false;
-        state.historyError = String(action.payload || action.error.message);
-      })
       .addCase(logout.fulfilled, resetForNewSession)
       .addCase(resetAuthState, resetForNewSession)
       .addCase(changePassword.fulfilled, resetForNewSession)
@@ -290,10 +253,5 @@ export const selectTopFeedProfile = createSelector(
   [selectMatchingState],
   (matching) => matching.feed[0] ?? null,
 );
-
-export const selectSwipeHistory = (state: RootState) => state.matching.historyItems;
-export const selectSwipeHistoryStats = (state: RootState) => state.matching.historyStats;
-export const selectSwipeHistoryLoading = (state: RootState) => state.matching.historyLoading;
-export const selectSwipeHistoryError = (state: RootState) => state.matching.historyError;
 
 export default matchingSlice.reducer;

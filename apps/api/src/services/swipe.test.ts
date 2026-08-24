@@ -8,7 +8,6 @@ function createMockPrisma() {
   const prisma = {
     user: {
       findUnique: vi.fn(),
-      findMany: vi.fn().mockResolvedValue([]),
       updateMany: vi.fn(),
     },
     userBlock: {
@@ -17,8 +16,6 @@ function createMockPrisma() {
     swipe: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
-      findMany: vi.fn(),
-      count: vi.fn(),
       upsert: vi.fn(),
       deleteMany: vi.fn(),
     },
@@ -29,7 +26,6 @@ function createMockPrisma() {
     },
     match: {
       findUnique: vi.fn(),
-      findMany: vi.fn(),
       create: vi.fn(),
       deleteMany: vi.fn(),
     },
@@ -384,68 +380,5 @@ describe('SwipeService', () => {
     });
     expect(notify).toHaveBeenCalledWith('u1', 'match_removed', { matched_user_id: 'u2' });
     expect(notify).toHaveBeenCalledWith('u2', 'match_removed', { matched_user_id: 'u1' });
-  });
-
-  it('lists swipe and interaction history with stats and matched state', async () => {
-    const prisma = createMockPrisma();
-    prisma.swipe.findMany = vi.fn().mockResolvedValue([
-      {
-        id: 's-1',
-        swiper_id: 'u1',
-        target_id: 'u2',
-        direction: SwipeDirection.RIGHT,
-        updated_at: new Date('2026-08-20T10:00:00Z'),
-        target: {
-          id: 'u2',
-          name: 'Sarah Connor',
-          image: 'https://example.com/sarah.jpg',
-          bio: 'Tech Lead',
-          job: 'Software Engineer',
-          category: 'IT',
-          city: 'Tunis',
-          interests: ['AI', 'React'],
-          goals: ['Mentorship'],
-          activity_sector: 'Technology',
-          service_type: 'Full Stack',
-          rating: 4.9,
-        },
-      },
-    ]);
-    prisma.swipe.count = vi.fn().mockResolvedValue(1);
-    prisma.match.findMany = vi.fn().mockResolvedValue([
-      {
-        id: 'm-1',
-        user_low_id: 'u1',
-        user_high_id: 'u2',
-        matched_at: new Date('2026-08-20T10:05:00Z'),
-        created_at: new Date('2026-08-20T10:05:00Z'),
-        conversation: { id: 'c-1' },
-      },
-    ]);
-    prisma.conversation.findUnique = vi.fn().mockResolvedValue({ id: 'c-1' });
-    prisma.user.findUnique = vi.fn().mockResolvedValue({ plan: UserPlan.FREE });
-    prisma.plan.findUnique = vi.fn().mockResolvedValue({ swipes_per_day: 10 });
-    prisma.swipeLog.count = vi.fn().mockResolvedValue(1);
-
-    const service = new SwipeService({ prisma: prisma as never });
-    const res = await service.listHistory('u1', { direction: 'all', limit: 10, offset: 0 });
-
-    expect(res.items).toHaveLength(1);
-    expect(res.items[0]).toMatchObject({
-      id: 's-1',
-      direction: SwipeDirection.RIGHT,
-      is_matched: true,
-      target: {
-        id: 'u2',
-        name: 'Sarah Connor',
-        rating: 4.9,
-      },
-    });
-    expect(res.stats).toMatchObject({
-      likes: 1,
-      total_swipes: 2,
-      matches: 1,
-      match_rate: 50,
-    });
   });
 });

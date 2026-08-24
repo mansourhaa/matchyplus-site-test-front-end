@@ -5,11 +5,15 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import { getPrivacyPolicy } from '@/lib/legal/privacy-policy';
 import { parseLegalLocale } from '@/lib/legal/types';
 
-export default function PublicPrivacyPolicyPage() {
+export default function AppPrivacyPolicyPage() {
   const { locale } = useI18n();
   const legalLocale = parseLegalLocale(locale);
   const doc = getPrivacyPolicy(legalLocale);
   const isRtl = legalLocale === 'ar';
 
-  return <LegalDocumentView document={doc} isRtl={isRtl} />;
+  return (
+    <div className="h-full overflow-y-auto">
+      <LegalDocumentView document={doc} isRtl={isRtl} />
+    </div>
+  );
 }
