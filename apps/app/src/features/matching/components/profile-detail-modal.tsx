@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
@@ -419,12 +420,11 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                 type="button"
                 onClick={() => void handleSubmitRating()}
                 disabled={selectedRating < 1 || isSavingRating}
-                className="mt-3 rounded-xl px-4 py-2 text-xs font-bold text-white"
+                className="mt-3 rounded-xl px-4 py-2 text-xs font-bold text-white transition-opacity active:scale-98 disabled:cursor-not-allowed"
                 style={{
                   background:
-                    selectedRating < 1 || isSavingRating
-                      ? '#A0A0A0'
-                      : 'linear-gradient(90deg, #F5A623, #2F76BB)',
+                    selectedRating < 1 || isSavingRating ? '#B0B0B0' : matchyBrand.gradient,
+                  opacity: selectedRating < 1 || isSavingRating ? 0.7 : 1,
                 }}
               >
                 {isSavingRating ? t('profileDetail.savingRating') : t('profileDetail.saveRating')}
