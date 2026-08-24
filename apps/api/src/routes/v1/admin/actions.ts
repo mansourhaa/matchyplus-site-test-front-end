@@ -8,6 +8,7 @@ import { PROFILE_PHOTO_CONTENT_TYPES, PROFILE_VIDEO_CONTENT_TYPES } from '../../
 import {
   adminAnalyticsSchema,
   adminChangePasswordSchema,
+  adminCreateTeamMemberSchema,
   adminCreateUserSchema,
   adminDeleteUserSchema,
   adminGetUserPhotoSchema,
@@ -15,6 +16,7 @@ import {
   adminGetUserVideoSchema,
   adminListPlansSchema,
   adminListReportsSchema,
+  adminListTeamSchema,
   adminListUsersSchema,
   adminReportSummarySchema,
   adminStatsSchema,
@@ -27,7 +29,9 @@ import { AdminService } from '../../../services/admin.js';
 import { ReportsService } from '../../../services/reports.js';
 import {
   AdminChangePasswordPayload,
+  AdminCreateTeamMemberPayload,
   AdminCreateUserPayload,
+  AdminListTeamQuery,
   AdminListUsersQuery,
   AdminUpdatePlanPayload,
   AdminUpdateUserPayload,
@@ -70,6 +74,30 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     async (request, reply) => {
       const user = await adminService.createUser(request.body);
       return reply.code(200).send({ user });
+    },
+  );
+
+  fastify.get<{ Querystring: AdminListTeamQuery }>(
+    '/team',
+    { schema: adminListTeamSchema },
+    async (request, reply) => {
+      const data = await adminService.listTeamMembers(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.query,
+      );
+      return reply.code(200).send(data);
+    },
+  );
+
+  fastify.post<{ Body: AdminCreateTeamMemberPayload }>(
+    '/team',
+    { schema: adminCreateTeamMemberSchema },
+    async (request, reply) => {
+      const member = await adminService.createTeamMember(
+        { id: request.loggedUser.id, role: request.loggedUser.role },
+        request.body,
+      );
+      return reply.code(200).send({ member });
     },
   );
 
@@ -164,10 +192,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   );
 
   fastify.get('/stats', { schema: adminStatsSchema }, async (request, reply) => {
-    const stats = await adminService.getStats({
-      id: request.loggedUser.id,
-      role: request.loggedUser.role,
-    });
+    const stats = await adminService.getStats();
     return reply.code(200).send({ stats });
   });
 

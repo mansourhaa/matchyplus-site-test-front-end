@@ -63,23 +63,22 @@ describe('AdminService', () => {
     expect(select.email).toBe(true);
   });
 
-  it.each([
-    ['SUPPORT', ['USER']],
-    ['MODERATOR', ['USER', 'SUPPORT']],
-    ['SUPER_ADMIN', ['USER', 'SUPPORT', 'MODERATOR']],
-  ])('scopes the list a %s sees to the roles below them', async (role, visible) => {
-    const prisma = createMockPrisma();
-    prisma.user.findMany.mockResolvedValue([]);
-    prisma.user.count.mockResolvedValue(0);
+  it.each(['SUPPORT', 'MODERATOR', 'SUPER_ADMIN'])(
+    'scopes the list a %s sees to members only, regardless of their own role',
+    async (role) => {
+      const prisma = createMockPrisma();
+      prisma.user.findMany.mockResolvedValue([]);
+      prisma.user.count.mockResolvedValue(0);
 
-    const service = new AdminService({ prisma: prisma as never });
-    await service.listUsers({ id: 'a1', role } as never, {});
+      const service = new AdminService({ prisma: prisma as never });
+      await service.listUsers({ id: 'a1', role } as never, {});
 
-    const { where } = prisma.user.findMany.mock.calls[0][0];
-    expect(where.role.in).toEqual(visible);
-    // The count has to be scoped the same way or pagination advertises hidden rows.
-    expect(prisma.user.count.mock.calls[0][0].where.role.in).toEqual(visible);
-  });
+      const { where } = prisma.user.findMany.mock.calls[0][0];
+      expect(where.role).toBe('USER');
+      // The count has to be scoped the same way or pagination advertises hidden rows.
+      expect(prisma.user.count.mock.calls[0][0].where.role).toBe('USER');
+    },
+  );
 
   it('refuses to let a moderator open a super admin profile', async () => {
     const prisma = createMockPrisma();
@@ -360,7 +359,7 @@ describe('AdminService', () => {
 
     const service = new AdminService({ prisma: prisma as never });
 
-    await expect(service.getStats({ id: 'sa1', role: 'SUPER_ADMIN' } as never)).resolves.toEqual({
+    await expect(service.getStats()).resolves.toEqual({
       totalUsers: 2,
       activeUsers: 2,
       inactiveUsers: 0,
@@ -371,24 +370,20 @@ describe('AdminService', () => {
     });
   });
 
-  // Regression: totalUsers counted every account in the table, including admins the caller
-  // can't even see on the Users page (which is correctly scoped by rolesBelow) — a MODERATOR
-  // saw a higher dashboard total than the list it's meant to summarize.
-  it.each([
-    ['SUPPORT', ['USER']],
-    ['MODERATOR', ['USER', 'SUPPORT']],
-    ['SUPER_ADMIN', ['USER', 'SUPPORT', 'MODERATOR']],
-  ])('scopes the stats a %s sees to the roles below them', async (role, visible) => {
+  // Regression: totalUsers counted every account in the table, including admin/support/
+  // moderator accounts that aren't members at all — the dashboard total must match what the
+  // members-only Users page actually lists, not the whole User table.
+  it('scopes the stats to members only', async () => {
     const prisma = createMockPrisma();
     prisma.user.count.mockResolvedValue(0);
     prisma.user.groupBy.mockResolvedValue([]);
 
     const service = new AdminService({ prisma: prisma as never });
-    await service.getStats({ id: 'a1', role } as never);
+    await service.getStats();
 
-    expect(prisma.user.count.mock.calls[0][0].where.role.in).toEqual(visible);
-    expect(prisma.user.groupBy.mock.calls[0][0].where.role.in).toEqual(visible);
-    expect(prisma.user.groupBy.mock.calls[1][0].where.role.in).toEqual(visible);
+    expect(prisma.user.count.mock.calls[0][0].where.role).toBe('USER');
+    expect(prisma.user.groupBy.mock.calls[0][0].where.role).toBe('USER');
+    expect(prisma.user.groupBy.mock.calls[1][0].where.role).toBe('USER');
   });
 });
 
@@ -579,6 +574,183 @@ describe('AdminService createUser', () => {
       message: 'image must be a newly uploaded photo, not a stored path',
       statusCode: 400,
     });
+  });
+});
+
+describe('AdminService listTeamMembers', () => {
+  it('refuses a SUPPORT actor outright, without touching the database', async () => {
+    const prisma = createMockPrisma();
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.listTeamMembers({ id: 's1', role: 'SUPPORT' } as never, {}),
+    ).rejects.toThrow('insufficient privileges');
+    expect(prisma.user.findMany).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['MODERATOR', ['SUPPORT']],
+    ['SUPER_ADMIN', ['SUPPORT', 'MODERATOR']],
+  ])('scopes the team a %s sees to staff roles below them', async (role, visible) => {
+    const prisma = createMockPrisma();
+    prisma.user.findMany.mockResolvedValue([]);
+    prisma.user.count.mockResolvedValue(0);
+
+    const service = new AdminService({ prisma: prisma as never });
+    await service.listTeamMembers({ id: 'a1', role } as never, {});
+
+    const { where, select } = prisma.user.findMany.mock.calls[0][0];
+    expect(where.role.in).toEqual(visible);
+    expect(select).not.toHaveProperty('password');
+    expect(prisma.user.count.mock.calls[0][0].where.role.in).toEqual(visible);
+  });
+
+  it('applies a case-insensitive name/email search', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findMany.mockResolvedValue([]);
+    prisma.user.count.mockResolvedValue(0);
+
+    const service = new AdminService({ prisma: prisma as never });
+    await service.listTeamMembers({ id: 'sa1', role: 'SUPER_ADMIN' } as never, {
+      search: 'sami',
+    });
+
+    const { where } = prisma.user.findMany.mock.calls[0][0];
+    expect(where.OR).toEqual([
+      { name: { contains: 'sami', mode: 'insensitive' } },
+      { email: { contains: 'sami', mode: 'insensitive' } },
+    ]);
+  });
+});
+
+describe('AdminService createTeamMember', () => {
+  function validPayload(overrides: Partial<Record<string, unknown>> = {}) {
+    return {
+      name: 'Sami Ben Ali',
+      email: 'sami@matchyplus.tn',
+      password: 'Matchy2026!',
+      role: 'SUPPORT',
+      ...overrides,
+    } as never;
+  }
+
+  it('refuses a SUPPORT actor outright, without touching the database', async () => {
+    const prisma = createMockPrisma();
+    const service = new AdminService({ prisma: prisma as never });
+
+    await expect(
+      service.createTeamMember({ id: 's1', role: 'SUPPORT' } as never, validPayload()),
+    ).rejects.toThrow('insufficient privileges');
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it.each(['MODERATOR', 'SUPER_ADMIN'])(
+    'refuses a %s creating a role they do not outrank',
+    async (role) => {
+      const prisma = createMockPrisma();
+      const service = new AdminService({ prisma: prisma as never });
+
+      await expect(
+        service.createTeamMember(
+          { id: 'a1', role } as never,
+          validPayload({ role: role === 'MODERATOR' ? 'MODERATOR' : 'SUPER_ADMIN' }),
+        ),
+      ).rejects.toThrow('insufficient privileges');
+      expect(prisma.user.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it('lets a MODERATOR create a SUPPORT account', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 't1' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    const result = await service.createTeamMember(
+      { id: 'm1', role: 'MODERATOR' } as never,
+      validPayload(),
+    );
+
+    const { data } = prisma.user.create.mock.calls[0][0];
+    expect(data.email).toBe('sami@matchyplus.tn');
+    expect(data.role).toBe('SUPPORT');
+    expect(data.status).toBe('ACTIVE');
+    expect(data.auth_provider).toBe('email');
+    expect(data.email_verified).toBe(true);
+    expect(data.password).not.toBe('Matchy2026!');
+    expect(result).toEqual({ id: 't1' });
+  });
+
+  it('lets a SUPER_ADMIN create a MODERATOR account', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 't1' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    await service.createTeamMember(
+      { id: 'sa1', role: 'SUPER_ADMIN' } as never,
+      validPayload({ role: 'MODERATOR' }),
+    );
+
+    expect(prisma.user.create.mock.calls[0][0].data.role).toBe('MODERATOR');
+  });
+
+  it('rejects an email that is already registered', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue({ id: 'existing' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    await expect(
+      service.createTeamMember({ id: 'sa1', role: 'SUPER_ADMIN' } as never, validPayload()),
+    ).rejects.toMatchObject({ message: 'email already registered', statusCode: 400 });
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a phone that is already registered', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce(null) // email lookup
+      .mockResolvedValueOnce({ id: 'existing' }); // phone lookup
+
+    const service = new AdminService({ prisma: prisma as never });
+    await expect(
+      service.createTeamMember(
+        { id: 'sa1', role: 'SUPER_ADMIN' } as never,
+        validPayload({ phone: '20123456' }),
+      ),
+    ).rejects.toMatchObject({ message: 'phone already registered', statusCode: 400 });
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a password that fails the security policy', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+
+    const service = new AdminService({ prisma: prisma as never });
+    await expect(
+      service.createTeamMember(
+        { id: 'sa1', role: 'SUPER_ADMIN' } as never,
+        validPayload({ password: 'weakpass' }),
+      ),
+    ).rejects.toMatchObject({
+      message: 'password does not meet the security policy',
+      statusCode: 400,
+    });
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a blank name', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+
+    const service = new AdminService({ prisma: prisma as never });
+    await expect(
+      service.createTeamMember(
+        { id: 'sa1', role: 'SUPER_ADMIN' } as never,
+        validPayload({ name: '   ' }),
+      ),
+    ).rejects.toMatchObject({ message: 'name is required', statusCode: 400 });
   });
 });
 
