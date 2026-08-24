@@ -161,7 +161,6 @@ export function SettingsView() {
           path: '/settings/plans',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
-          badge: t('nav.planFree'),
         },
       ],
     },
@@ -225,14 +224,6 @@ export function SettingsView() {
               <p className="truncate text-xs" style={{ color: matchyBrand.muted }}>
                 {email}
               </p>
-              <div
-                className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-                style={{ background: '#F5F5F5', border: '1px solid #E0E0E0' }}
-              >
-                <span style={{ fontSize: 11, fontWeight: 700, color: matchyBrand.muted }}>
-                  {t('nav.planFree')}
-                </span>
-              </div>
             </div>
             <button
               type="button"

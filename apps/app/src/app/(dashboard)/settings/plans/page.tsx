@@ -48,18 +48,14 @@ export default function PlansPage() {
               </div>
               <div>
                 <p className="text-xs font-bold text-[#888]">
-                  {locale === 'en'
-                    ? 'Active Plan'
-                    : locale === 'ar'
-                      ? 'الخطة الحالية'
-                      : 'Plan actuel'}
+                  {locale === 'en' ? 'Membership' : locale === 'ar' ? 'العضوية' : 'Adhésion'}
                 </p>
                 <h2 className="text-lg font-extrabold" style={{ color: matchyBrand.textDark }}>
                   {locale === 'en'
-                    ? 'Free Member Plan'
+                    ? 'Matchy+ Member'
                     : locale === 'ar'
-                      ? 'الحساب المجاني'
-                      : 'Formule Gratuite'}
+                      ? 'عضوية Matchy+'
+                      : 'Membre Matchy+'}
                 </h2>
               </div>
             </div>
@@ -67,11 +63,11 @@ export default function PlansPage() {
             <span
               className="rounded-full px-3 py-1 text-xs font-bold"
               style={{
-                background: matchyBrand.softBlue,
-                color: matchyBrand.blue,
+                background: matchyBrand.softTeal,
+                color: matchyBrand.teal,
               }}
             >
-              {locale === 'en' ? 'Free' : locale === 'ar' ? 'مجاني' : 'Gratuit'}
+              {locale === 'en' ? 'Active' : locale === 'ar' ? 'مفعل' : 'Actif'}
             </span>
           </div>
         </div>
