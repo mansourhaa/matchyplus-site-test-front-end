@@ -8,7 +8,7 @@ import {
 import { api, getApiErrorCode } from '@/lib/api';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
-import type { MediaUploadResult, PublicProfile, RatingResult } from '../types';
+import type { BlockedUser, MediaUploadResult, PublicProfile, RatingResult } from '../types';
 
 type ProfileState = {
   viewedProfile: PublicProfile | null;
@@ -16,6 +16,10 @@ type ProfileState = {
   viewedProfileError: string | null;
   mediaUploading: boolean;
   mediaError: string | null;
+  blockedUsers: BlockedUser[];
+  blockedUsersLoading: boolean;
+  blockedUsersError: string | null;
+  unblockingId: string | null;
 };
 
 const initialState: ProfileState = {
@@ -24,6 +28,10 @@ const initialState: ProfileState = {
   viewedProfileError: null,
   mediaUploading: false,
   mediaError: null,
+  blockedUsers: [],
+  blockedUsersLoading: false,
+  blockedUsersError: null,
+  unblockingId: null,
 };
 
 function resetForNewSession(state: ProfileState) {
@@ -124,6 +132,33 @@ export const reportProfile = createAsyncThunk(
   },
 );
 
+export const blockProfile = createAsyncThunk('profile/block', async (userId: string) => {
+  try {
+    const response = await api.post<{ blocked: boolean }>(`/profiles/${userId}/block`);
+    return { userId, ...response.data };
+  } catch (error) {
+    throw new Error(getApiErrorCode(error) ?? 'block_failed');
+  }
+});
+
+export const fetchBlockedUsers = createAsyncThunk('profile/fetchBlockedUsers', async () => {
+  try {
+    const response = await api.get<BlockedUser[]>('/profiles/blocks');
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorCode(error) ?? 'fetch_blocked_failed');
+  }
+});
+
+export const unblockProfile = createAsyncThunk('profile/unblock', async (userId: string) => {
+  try {
+    const response = await api.delete<{ blocked: boolean }>(`/profiles/${userId}/block`);
+    return { userId, ...response.data };
+  } catch (error) {
+    throw new Error(getApiErrorCode(error) ?? 'unblock_failed');
+  }
+});
+
 const profileSlice = createSlice({
   name: 'profile',
   initialState,
@@ -194,6 +229,28 @@ const profileSlice = createSlice({
           // until another submit attempt bounces off the API with already_rated.
           state.viewedProfile.viewer_has_rated = true;
         }
+      })
+      .addCase(fetchBlockedUsers.pending, (state) => {
+        state.blockedUsersLoading = true;
+        state.blockedUsersError = null;
+      })
+      .addCase(fetchBlockedUsers.fulfilled, (state, action: PayloadAction<BlockedUser[]>) => {
+        state.blockedUsersLoading = false;
+        state.blockedUsers = action.payload;
+      })
+      .addCase(fetchBlockedUsers.rejected, (state, action) => {
+        state.blockedUsersLoading = false;
+        state.blockedUsersError = action.error.message || 'fetch_blocked_failed';
+      })
+      .addCase(unblockProfile.pending, (state, action) => {
+        state.unblockingId = action.meta.arg;
+      })
+      .addCase(unblockProfile.fulfilled, (state, action) => {
+        state.unblockingId = null;
+        state.blockedUsers = state.blockedUsers.filter((u) => u.id !== action.payload.userId);
+      })
+      .addCase(unblockProfile.rejected, (state) => {
+        state.unblockingId = null;
       })
       .addCase(logout.fulfilled, resetForNewSession)
       .addCase(resetAuthState, resetForNewSession)

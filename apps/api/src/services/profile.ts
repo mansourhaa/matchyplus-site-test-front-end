@@ -366,4 +366,99 @@ export class ProfileService {
       throw err;
     }
   }
+
+  async blockUser(blockerId: string, blockedId: string): Promise<{ blocked: boolean }> {
+    try {
+      if (blockerId === blockedId) {
+        throw badRequest('cannot block yourself', 'cannot_block_self');
+      }
+
+      const target = await this.prisma.user.findUnique({
+        where: { id: blockedId },
+        select: { id: true },
+      });
+      if (!target) throw notFound('user not found', 'user_not_found');
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.userBlock.upsert({
+          where: {
+            blocker_id_blocked_id: { blocker_id: blockerId, blocked_id: blockedId },
+          },
+          create: { blocker_id: blockerId, blocked_id: blockedId },
+          update: {},
+        });
+
+        // Detach conversation and delete active match
+        const [userLow, userHigh] =
+          blockerId < blockedId ? [blockerId, blockedId] : [blockedId, blockerId];
+        await tx.conversation.updateMany({
+          where: { user_low_id: userLow, user_high_id: userHigh },
+          data: { match_id: null },
+        });
+        await tx.match.deleteMany({
+          where: { user_low_id: userLow, user_high_id: userHigh },
+        });
+
+        // Clean up swipes
+        await tx.swipe.deleteMany({
+          where: {
+            OR: [
+              { swiper_id: blockerId, target_id: blockedId },
+              { swiper_id: blockedId, target_id: blockerId },
+            ],
+          },
+        });
+      });
+
+      return { blocked: true };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async unblockUser(blockerId: string, blockedId: string): Promise<{ blocked: boolean }> {
+    try {
+      await this.prisma.userBlock.deleteMany({
+        where: { blocker_id: blockerId, blocked_id: blockedId },
+      });
+      return { blocked: false };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async listBlockedUsers(userId: string) {
+    try {
+      const blocks = await this.prisma.userBlock.findMany({
+        where: { blocker_id: userId },
+        include: {
+          blocked: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+              job: true,
+              city: true,
+              activity_sector: true,
+              service_type: true,
+            },
+          },
+        },
+        orderBy: { created_at: 'desc' },
+      });
+
+      return blocks.map((b) => ({
+        id: b.blocked.id,
+        name: b.blocked.name,
+        image: b.blocked.image,
+        job: b.blocked.job,
+        city: b.blocked.city,
+        activity_sector: b.blocked.activity_sector,
+        service_type: b.blocked.service_type,
+        blocked_at: b.created_at.toISOString(),
+      }));
+    } catch (err) {
+      throw err;
+    }
+  }
 }

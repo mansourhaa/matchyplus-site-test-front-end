@@ -15,6 +15,10 @@ export type ConversationPeer = {
   job: string | null;
   category: string | null;
   city: string | null;
+  interests?: string[];
+  goals?: string[];
+  activity_sector?: string | null;
+  service_type?: string | null;
 };
 
 export type ConversationLastMessage = {

@@ -257,3 +257,81 @@ export const getProfileVideoFileSchema = {
     ...errorResponses,
   },
 };
+
+export const blockUserSchema = {
+  tags: ['profiles'],
+  summary: 'Block a user',
+  security: [{ http: [] }],
+  headers: authenticatedHeadersSchema,
+  params: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      description: 'User blocked',
+      type: 'object',
+      properties: {
+        blocked: { type: 'boolean' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const unblockUserSchema = {
+  tags: ['profiles'],
+  summary: 'Unblock a user',
+  security: [{ http: [] }],
+  headers: authenticatedHeadersSchema,
+  params: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      description: 'User unblocked',
+      type: 'object',
+      properties: {
+        blocked: { type: 'boolean' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const listBlockedUsersSchema = {
+  tags: ['profiles'],
+  summary: 'List users blocked by the authenticated user',
+  security: [{ http: [] }],
+  headers: authenticatedHeadersSchema,
+  response: {
+    200: {
+      description: 'List of blocked users',
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+          image: { type: 'string', nullable: true },
+          job: { type: 'string', nullable: true },
+          city: { type: 'string', nullable: true },
+          activity_sector: { type: 'string', nullable: true },
+          service_type: { type: 'string', nullable: true },
+          blocked_at: { type: 'string' },
+        },
+        required: ['id', 'name', 'blocked_at'],
+      },
+    },
+    ...errorResponses,
+  },
+};

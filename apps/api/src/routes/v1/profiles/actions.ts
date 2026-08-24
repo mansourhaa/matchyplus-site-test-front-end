@@ -9,11 +9,14 @@ import {
   PROFILE_VIEW_RATE_LIMIT,
 } from '../../../constants.js';
 import {
+  blockUserSchema,
   getProfilePhotoFileSchema,
   getProfileVideoFileSchema,
   getPublicProfileSchema,
+  listBlockedUsersSchema,
   notifyProfileViewSchema,
   rateProfileSchema,
+  unblockUserSchema,
 } from '../../../schemas/v1/index.js';
 import { NotificationService } from '../../../services/notification.js';
 import { ProfileService } from '../../../services/profile.js';
@@ -31,6 +34,15 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const notifications = new NotificationService({
     prisma,
     push: (userId, event, payload) => fastify.notifyUser(userId, event, payload),
+  });
+
+  fastify.get('/blocks', { schema: listBlockedUsersSchema }, async (request, reply) => {
+    try {
+      const data = await profileService.listBlockedUsers(request.loggedUser.id);
+      return reply.code(200).send(data);
+    } catch (err) {
+      throw err;
+    }
   });
 
   fastify.get<{ Params: ProfileIdParams }>(
@@ -84,6 +96,32 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
           notified = result.created;
         }
         return reply.code(200).send({ notified });
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
+
+  fastify.post<{ Params: ProfileIdParams }>(
+    '/:id/block',
+    { schema: blockUserSchema },
+    async (request, reply) => {
+      try {
+        const data = await profileService.blockUser(request.loggedUser.id, request.params.id);
+        return reply.code(200).send(data);
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
+
+  fastify.delete<{ Params: ProfileIdParams }>(
+    '/:id/block',
+    { schema: unblockUserSchema },
+    async (request, reply) => {
+      try {
+        const data = await profileService.unblockUser(request.loggedUser.id, request.params.id);
+        return reply.code(200).send(data);
       } catch (err) {
         throw err;
       }

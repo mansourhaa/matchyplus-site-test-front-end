@@ -11,11 +11,22 @@ import {
   selectMatching,
   withdrawPending,
 } from '@/features/matching/store/matching-slice';
+import { getFirstName, getShortDisplayName } from '@/features/messaging/lib/icebreakers';
 import { fetchInbox, selectMessaging } from '@/features/messaging/store/messaging-slice';
-import { Heart, Loader2, MessageCircle, RefreshCw } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Heart,
+  Loader2,
+  MessageSquare,
+  RefreshCw,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export function MatchesView() {
   const { t } = useI18n();
@@ -23,6 +34,7 @@ export function MatchesView() {
   const router = useRouter();
   const matching = useAppSelector(selectMatching);
   const messaging = useAppSelector(selectMessaging);
+  const [pendingOpen, setPendingOpen] = useState(true);
 
   useEffect(() => {
     void dispatch(fetchMatchState());
@@ -34,9 +46,12 @@ export function MatchesView() {
     void dispatch(fetchInbox());
   };
 
+  const visibleInbox = messaging.inbox.filter((row) => !row.i_blocked && !row.blocked_me);
+
   return (
     <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }}>
       <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-4 md:px-8">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold" style={{ color: matchyBrand.textDark }}>
             {t('matching.matchesTitle')}
@@ -45,7 +60,7 @@ export function MatchesView() {
             <button
               type="button"
               onClick={refresh}
-              className="rounded-full p-2"
+              className="rounded-full p-2 transition-transform active:scale-95"
               style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
               aria-label={t('common.retry')}
             >
@@ -55,10 +70,97 @@ export function MatchesView() {
           </div>
         </div>
 
-        <section>
-          <h2 className="mb-3 text-sm font-bold tracking-wide text-[#777] uppercase">
-            {t('chat.inboxTitle')}
+        {matching.swipeError && (
+          <div className="flex items-center justify-between rounded-2xl bg-[#FFF0F0] px-4 py-3 text-sm text-[#E74C3C]">
+            <span>{t(matching.swipeError)}</span>
+            <button type="button" onClick={() => dispatch(clearSwipeError())}>
+              {t('common.close')}
+            </button>
+          </div>
+        )}
+
+        {/* 1. TOP SECTION: Mes Matchs (Horizontal Avatar Row) */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Heart size={16} className="fill-[#E24E59] text-[#E24E59]" />
+            <h2 className="text-sm font-bold text-[#1E293B]">{t('matching.myMatches')}</h2>
+            {matching.matches.length > 0 && (
+              <span className="rounded-full bg-[#61BCA6] px-2 py-0.5 text-[11px] leading-none font-bold text-white">
+                {matching.matches.length}
+              </span>
+            )}
+          </div>
+
+          {matching.matchesLoading && matching.matches.length === 0 ? (
+            <div className="flex items-center justify-center py-6 text-[#777]">
+              <Loader2 className="h-6 w-6 animate-spin text-[#61BCA6]" />
+            </div>
+          ) : matching.matches.length === 0 ? (
+            <div
+              className="rounded-3xl bg-white p-6 text-center shadow-xs"
+              style={{ border: `1px solid ${matchyBrand.border}` }}
+            >
+              <p className="text-sm font-bold text-[#353535]">{t('matching.noMatches')}</p>
+              <p className="mt-1 text-xs text-[#777]">{t('matching.noMatchesHint')}</p>
+              <Link
+                href="/discover"
+                className="mt-4 inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-bold text-white shadow-sm"
+                style={{ background: matchyBrand.gradient }}
+              >
+                <Sparkles size={14} />
+                {t('matching.goToDiscover')}
+              </Link>
+            </div>
+          ) : (
+            <div className="-mx-1 flex gap-4 overflow-x-auto px-1 py-1 pb-2">
+              {matching.matches.map((row) => {
+                const profile = row.profile;
+                if (!profile) return null;
+                const firstName = getFirstName(profile.name);
+                return (
+                  <button
+                    key={`avatar-${row.match_id}`}
+                    type="button"
+                    onClick={() => {
+                      if (row.conversation_id) {
+                        router.push(`/chat/${row.conversation_id}`);
+                      } else {
+                        router.push(`/profile/${profile.id}`);
+                      }
+                    }}
+                    className="flex w-16 shrink-0 flex-col items-center gap-1.5 transition-transform active:scale-95"
+                    aria-label={`Voir le profil de ${profile.name}`}
+                  >
+                    <div className="relative flex flex-col items-center">
+                      <div className="rounded-full border-2 border-[#61BCA6] p-0.5 shadow-sm">
+                        <AuthenticatedProfileAvatar
+                          image={profile.image}
+                          name={profile.name}
+                          sizeClassName="h-14 w-14"
+                          roundedClassName="rounded-full"
+                          textClassName="text-base font-bold text-white"
+                        />
+                      </div>
+                      <span className="z-10 -mt-2.5 rounded-full bg-[#61BCA6] px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white uppercase shadow-xs">
+                        {t('matching.newBadge')}
+                      </span>
+                    </div>
+                    <span className="w-full truncate text-center text-xs font-semibold text-[#444]">
+                      {firstName}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* 2. MIDDLE SECTION: CONVERSATIONS */}
+        <section className="space-y-3">
+          <h2 className="text-xs font-bold tracking-wider text-[#888] uppercase">
+            {t('matching.conversationsTitle')}
           </h2>
+
           {messaging.inboxError ? (
             <div className="space-y-3 py-6 text-center">
               <p className="text-sm text-[#E74C3C]">{t(messaging.inboxError)}</p>
@@ -71,11 +173,11 @@ export function MatchesView() {
                 {t('common.retry')}
               </button>
             </div>
-          ) : messaging.inboxLoading && messaging.inbox.length === 0 ? (
+          ) : messaging.inboxLoading && visibleInbox.length === 0 ? (
             <div className="flex justify-center py-6">
               <Loader2 className="animate-spin" color={matchyBrand.teal} />
             </div>
-          ) : messaging.inbox.length === 0 ? (
+          ) : visibleInbox.length === 0 ? (
             <p
               className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-[#777]"
               style={{ border: `1px solid ${matchyBrand.border}` }}
@@ -83,35 +185,37 @@ export function MatchesView() {
               {t('chat.emptyInbox')}
             </p>
           ) : (
-            <div className="space-y-2">
-              {messaging.inbox.map((row) => {
-                const name = row.peer?.name || t('chat.title');
-                const preview =
-                  row.last_message?.message_type === 'VOICE'
-                    ? t('chat.voicePreview')
-                    : row.last_message?.content || t('chat.noMessages');
+            <div className="space-y-3">
+              {visibleInbox.map((row) => {
+                const name =
+                  getShortDisplayName(row.peer?.name) || row.peer?.name || t('chat.title');
+                const role = row.peer?.service_type || row.peer?.job || row.peer?.category || '';
+                const isVoice = row.last_message?.message_type === 'VOICE';
+                const preview = isVoice
+                  ? t('chat.voicePreview')
+                  : row.last_message?.content || t('matching.startConversationSnippet');
+
                 return (
                   <button
                     key={row.conversation_id}
                     type="button"
                     onClick={() => router.push(`/chat/${row.conversation_id}`)}
-                    className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left"
-                    style={{ border: `1px solid ${matchyBrand.border}` }}
+                    className="flex w-full items-center gap-3.5 rounded-3xl bg-white p-4 text-left shadow-sm transition-all hover:border-[#D6E8FA] hover:shadow-md"
+                    style={{ border: '1px solid #F0F0F0' }}
                   >
-                    <div className="shrink-0">
+                    <div className="relative shrink-0">
                       <AuthenticatedProfileAvatar
                         image={row.peer?.image}
                         name={name}
-                        sizeClassName="h-12 w-12"
+                        sizeClassName="h-14 w-14"
                         roundedClassName="rounded-full"
-                        textClassName="text-sm font-bold text-white"
+                        textClassName="text-base font-bold text-white"
                       />
+                      <span className="absolute right-0 bottom-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#10B981]" />
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 space-y-0.5">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="truncate font-bold" style={{ color: matchyBrand.textDark }}>
-                          {name}
-                        </p>
+                        <p className="truncate text-[15px] font-extrabold text-[#1E293B]">{name}</p>
                         {row.unread_count > 0 && (
                           <span
                             className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
@@ -121,9 +225,16 @@ export function MatchesView() {
                           </span>
                         )}
                       </div>
-                      <p className="truncate text-xs text-[#777]">{preview}</p>
+                      <div className="flex items-center gap-1.5 text-xs text-[#888]">
+                        <MessageSquare size={13} className="shrink-0 text-[#94A3B8]" />
+                        <span className="truncate">{preview}</span>
+                      </div>
+                      {role && (
+                        <p className="truncate pt-0.5 text-xs font-semibold text-[#2F76BB]">
+                          {role}
+                        </p>
+                      )}
                     </div>
-                    <MessageCircle size={16} color={matchyBrand.teal} />
                   </button>
                 );
               })}
@@ -131,153 +242,31 @@ export function MatchesView() {
           )}
         </section>
 
-        {matching.swipeError && (
-          <div className="flex items-center justify-between rounded-2xl bg-[#FFF0F0] px-4 py-3 text-sm text-[#E74C3C]">
-            <span>{t(matching.swipeError)}</span>
-            <button type="button" onClick={() => dispatch(clearSwipeError())}>
-              {t('common.close')}
-            </button>
-          </div>
-        )}
-
-        {matching.matchesLoading && matching.matches.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-[#777]">
-            <Loader2 className="h-8 w-8 animate-spin text-[#61BCA6]" />
-            <p>{t('matching.loadingMatches')}</p>
-          </div>
-        ) : matching.matchesError ? (
-          <div className="space-y-3 py-10 text-center">
-            <p className="text-sm text-[#E74C3C]">{t(matching.matchesError)}</p>
-            <button
-              type="button"
-              onClick={() => void dispatch(fetchMatchState())}
-              className="rounded-2xl px-4 py-2 text-sm font-bold text-white"
-              style={{ background: matchyBrand.gradient }}
-            >
-              {t('common.retry')}
-            </button>
-          </div>
-        ) : (
-          <>
-            {matching.matches.length === 0 ? (
-              <div
-                className="rounded-3xl bg-white px-5 py-12 text-center"
-                style={{ border: `1px solid ${matchyBrand.border}` }}
-              >
-                <div
-                  className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
-                  style={{ background: 'linear-gradient(135deg, #E8F7F3, #E8F0FA)' }}
-                >
-                  <Heart size={28} color={matchyBrand.teal} />
-                </div>
-                <p className="font-bold" style={{ color: matchyBrand.textDark }}>
-                  {t('matching.noMatches')}
-                </p>
-                <p className="mt-2 text-sm text-[#777]">{t('matching.noMatchesDesc')}</p>
-                <Link
-                  href="/home"
-                  className="mt-5 inline-flex rounded-2xl px-4 py-2 text-sm font-bold text-white"
-                  style={{ background: matchyBrand.gradient }}
-                >
-                  {t('matching.exploreProfiles')}
-                </Link>
-              </div>
-            ) : (
-              <>
-                <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
-                  {matching.matches.map((row) => {
-                    const profile = row.profile;
-                    if (!profile) return null;
-                    return (
-                      <button
-                        key={`avatar-${row.match_id}`}
-                        type="button"
-                        onClick={() => router.push(`/profile/${profile.id}`)}
-                        className="flex w-16 shrink-0 flex-col items-center gap-1"
-                      >
-                        <div
-                          style={{
-                            boxShadow: `0 0 0 2px ${matchyBrand.teal}`,
-                            borderRadius: '9999px',
-                          }}
-                        >
-                          <AuthenticatedProfileAvatar
-                            image={profile.image}
-                            name={profile.name}
-                            sizeClassName="h-14 w-14"
-                            roundedClassName="rounded-full"
-                            textClassName="text-lg font-bold text-white"
-                          />
-                        </div>
-                        <span className="w-full truncate text-center text-[10px] font-semibold text-[#555]">
-                          {profile.name.split(' ')[0]}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <section className="space-y-2">
-                  <h2 className="text-sm font-bold tracking-wide text-[#777] uppercase">
-                    {t('matching.myMatches')}
-                  </h2>
-                  {matching.matches.map((row) => {
-                    const profile = row.profile;
-                    if (!profile) return null;
-                    return (
-                      <div
-                        key={row.match_id}
-                        className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 shadow-sm"
-                        style={{ border: `1px solid ${matchyBrand.border}` }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => router.push(`/profile/${profile.id}`)}
-                          className="shrink-0"
-                          aria-label={`Voir le profil de ${profile.name}`}
-                        >
-                          <AuthenticatedProfileAvatar
-                            image={profile.image}
-                            name={profile.name}
-                            sizeClassName="h-14 w-14"
-                            roundedClassName="rounded-full"
-                            textClassName="text-lg font-bold text-white"
-                          />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={!row.conversation_id}
-                          onClick={() => {
-                            if (!row.conversation_id) return;
-                            router.push(`/chat/${row.conversation_id}`);
-                          }}
-                          className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:opacity-50"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p
-                              className="truncate font-bold"
-                              style={{ color: matchyBrand.textDark }}
-                            >
-                              {profile.name}
-                            </p>
-                            <p className="truncate text-xs text-[#777]">
-                              {profile.service_type || profile.job || profile.category}
-                            </p>
-                          </div>
-                          <MessageCircle size={18} color={matchyBrand.teal} />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </section>
-              </>
-            )}
-
-            <section>
-              <h2 className="mb-1 text-sm font-bold tracking-wide text-[#777] uppercase">
+        {/* 3. BOTTOM SECTION: EN ATTENTE */}
+        <section className="space-y-3">
+          <button
+            type="button"
+            onClick={() => setPendingOpen((open) => !open)}
+            className="flex w-full items-center justify-between py-1 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Clock size={16} className="text-[#F59E0B]" />
+              <h2 className="text-xs font-bold tracking-wider text-[#F59E0B] uppercase">
                 {t('matching.pendingSection')}
               </h2>
-              <p className="mb-3 text-xs text-[#999]">{t('matching.pendingNoResponse')}</p>
+              {matching.pending.length > 0 && (
+                <span className="rounded-full border border-[#F59E0B] bg-[#FFFBEB] px-2 py-0.5 text-[10px] leading-none font-bold text-[#F59E0B]">
+                  {matching.pending.length}
+                </span>
+              )}
+            </div>
+            <div className="text-[#888]">
+              {pendingOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </div>
+          </button>
+
+          {pendingOpen && (
+            <div>
               {matching.pending.length === 0 ? (
                 <p
                   className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-[#777]"
@@ -286,12 +275,11 @@ export function MatchesView() {
                   {t('matching.emptyPending')}
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {matching.pending.map((row) => (
                     <div
                       key={row.swipe_id}
-                      className="flex items-center gap-3 rounded-2xl bg-white p-3"
-                      style={{ border: `1px solid ${matchyBrand.border}` }}
+                      className="flex items-center gap-3.5 rounded-2xl border border-[#F0F0F0] bg-white p-3.5 shadow-sm"
                     >
                       <AuthenticatedProfileAvatar
                         image={row.profile.image}
@@ -301,33 +289,43 @@ export function MatchesView() {
                         textClassName="text-sm font-bold text-white"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-bold" style={{ color: matchyBrand.textDark }}>
-                          {row.profile.name}
+                        <p className="truncate text-sm font-bold text-[#1E293B]">
+                          {getShortDisplayName(row.profile.name) || row.profile.name}
                         </p>
                         <p className="truncate text-xs text-[#777]">
                           {row.profile.service_type || row.profile.job || row.profile.category}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        disabled={matching.withdrawLoadingId === row.profile.id}
-                        onClick={() => void dispatch(withdrawPending(row.profile.id))}
-                        className="rounded-xl px-3 py-2 text-xs font-bold"
-                        style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
-                      >
-                        {matching.withdrawLoadingId === row.profile.id ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          t('matching.cancelPending')
-                        )}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1.5 rounded-full border border-[#F59E0B] bg-[#FFFBEB] px-3 py-1 text-xs font-semibold text-[#F59E0B]">
+                          <Clock size={12} />
+                          {t('matching.pendingBadge')}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={matching.withdrawLoadingId === row.profile.id}
+                          onClick={() => void dispatch(withdrawPending(row.profile.id))}
+                          className="rounded-full p-1.5 text-[#AAA] transition-colors hover:bg-[#FFF0F0] hover:text-[#E24E59]"
+                          title={t('matching.cancelPending')}
+                          aria-label={t('matching.cancelPending')}
+                        >
+                          {matching.withdrawLoadingId === row.profile.id ? (
+                            <Loader2 size={14} className="animate-spin text-[#E24E59]" />
+                          ) : (
+                            <X size={14} />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   ))}
+                  <p className="pt-2 text-center text-xs text-[#94A3B8]">
+                    {t('matching.pendingFooter')}
+                  </p>
                 </div>
               )}
-            </section>
-          </>
-        )}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

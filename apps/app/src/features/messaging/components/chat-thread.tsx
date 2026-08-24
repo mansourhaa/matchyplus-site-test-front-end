@@ -5,6 +5,9 @@ import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { ProfileDetailModal } from '@/features/matching/components/profile-detail-modal';
+import { ChatIcebreakers } from '@/features/messaging/components/chat-icebreakers';
+import { ChatOptionsMenu } from '@/features/messaging/components/chat-options-menu';
 import {
   clearSendError,
   fetchConversation,
@@ -18,7 +21,8 @@ import {
 } from '@/features/messaging/store/messaging-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { shouldAbortMicAcquire } from '@/lib/mic-conversation-binding';
-import { Heart, Loader2, Mic, Send } from 'lucide-react';
+import { ArrowLeft, Heart, Loader2, Mic, Send } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 function VoiceBubble({ mediaUrl }: { mediaUrl: string | null }) {
@@ -35,10 +39,13 @@ type ChatThreadProps = {
 export function ChatThread({ conversationId }: ChatThreadProps) {
   const { t } = useI18n();
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const auth = useAppSelector(selectAuth);
   const messaging = useAppSelector(selectMessaging);
   const [draft, setDraft] = useState('');
   const [recording, setRecording] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -223,33 +230,84 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
 
   const name = messaging.conversation?.peer?.name || t('chat.title');
   const canSend = Boolean(messaging.conversation?.can_send);
+  const peer = messaging.conversation?.peer;
+  const peerRole = peer?.service_type || peer?.job || peer?.category;
 
   return (
     <div className="flex h-full min-h-0 flex-col" style={{ background: matchyBrand.bg }}>
+      {/* Header */}
       <div
-        className="flex items-center gap-3 px-4 py-3 md:px-6"
+        className="flex items-center justify-between gap-3 px-4 py-3 md:px-6"
         style={{ background: 'white', borderBottom: `1px solid ${matchyBrand.border}` }}
       >
-        <AuthenticatedProfileAvatar
-          image={messaging.conversation?.peer?.image}
-          name={name}
-          sizeClassName="h-10 w-10"
-          roundedClassName="rounded-full"
-          textClassName="text-sm font-bold text-white"
-        />
-        <div className="min-w-0">
-          <p className="truncate font-bold" style={{ color: matchyBrand.textDark }}>
-            {name}
-          </p>
-          <p className="text-xs text-[#888]">
-            {messaging.peerTyping
-              ? t('chat.typing')
-              : canSend
-                ? t('chat.active')
-                : t('chat.readOnly')}
-          </p>
+        <div className="flex min-w-0 items-center gap-3">
+          {/* Navigation Back Button */}
+          <button
+            type="button"
+            onClick={() => router.push('/matches')}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#64748B] transition-colors hover:bg-slate-100 active:scale-95"
+            aria-label={t('chat.options.back')}
+          >
+            <ArrowLeft size={20} />
+          </button>
+
+          {/* Clickable Peer Header Profile */}
+          <button
+            type="button"
+            onClick={() => setShowProfileModal(true)}
+            className="flex min-w-0 items-center gap-3 text-left transition-opacity hover:opacity-90"
+            aria-label={t('chat.options.viewProfile')}
+          >
+            <div className="relative shrink-0">
+              <AuthenticatedProfileAvatar
+                image={peer?.image}
+                name={name}
+                sizeClassName="h-10 w-10"
+                roundedClassName="rounded-full"
+                textClassName="text-sm font-bold text-white"
+              />
+              {canSend && (
+                <span className="absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-white bg-[#10B981]" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-[#1E293B]">{name}</p>
+              <p className="truncate text-xs text-[#888]">
+                {messaging.peerTyping
+                  ? t('chat.typing')
+                  : peerRole || (canSend ? t('chat.active') : t('chat.readOnly'))}
+              </p>
+            </div>
+          </button>
+        </div>
+
+        {/* Options Menu & Actions */}
+        <div className="flex shrink-0 items-center gap-1">
+          <ChatOptionsMenu peer={peer} conversationId={conversationId} />
         </div>
       </div>
+
+      {/* Profile Detail Modal */}
+      {showProfileModal && peer && (
+        <ProfileDetailModal
+          profile={{
+            id: peer.id,
+            name: peer.name || '',
+            image: peer.image ?? null,
+            bio: peer.bio ?? null,
+            job: peer.job ?? null,
+            category: peer.category ?? null,
+            city: peer.city ?? null,
+            interests: peer.interests ?? [],
+            activity_sector: peer.activity_sector ?? null,
+            service_type: peer.service_type ?? null,
+            offer_service: Boolean(peer.service_type),
+            rating: 5.0,
+            matched: true,
+          }}
+          onClose={() => setShowProfileModal(false)}
+        />
+      )}
 
       <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4 md:px-6">
         {messaging.hasMore && (
@@ -289,7 +347,19 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
             </button>
           </div>
         ) : messaging.messages.length === 0 ? (
-          <p className="py-12 text-center text-sm text-[#777]">{t('chat.emptyThread')}</p>
+          <div className="py-4">
+            <ChatIcebreakers
+              peer={messaging.conversation?.peer}
+              disabled={!canSend}
+              onSelect={(prompt) => {
+                setDraft(prompt);
+                emitTyping(true);
+                if (typingTimer.current) clearTimeout(typingTimer.current);
+                typingTimer.current = setTimeout(() => emitTyping(false), 1200);
+                inputRef.current?.focus();
+              }}
+            />
+          </div>
         ) : (
           messaging.messages.map((message) => {
             const mine = message.sender_id === myUserId;
@@ -361,6 +431,7 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
           <Mic size={18} />
         </button>
         <input
+          ref={inputRef}
           value={draft}
           disabled={!canSend || messaging.sendLoading}
           onChange={(event) => onDraftChange(event.target.value)}

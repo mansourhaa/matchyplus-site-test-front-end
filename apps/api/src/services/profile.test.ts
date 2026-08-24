@@ -13,7 +13,7 @@ vi.mock('../utils/media-storage.js', () => ({
 }));
 
 function createMockPrisma() {
-  return {
+  const mock: Record<string, unknown> = {
     user: {
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
@@ -22,17 +22,27 @@ function createMockPrisma() {
     },
     userBlock: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
+      upsert: vi.fn(),
+      deleteMany: vi.fn(),
     },
     match: {
       findUnique: vi.fn(),
+      deleteMany: vi.fn(),
     },
     conversation: {
       findUnique: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    swipe: {
+      deleteMany: vi.fn(),
     },
     rating: {
       findUnique: vi.fn(),
     },
+    $transaction: vi.fn((cb: (tx: unknown) => Promise<unknown>) => cb(mock)),
   };
+  return mock as any;
 }
 
 function createService(prisma = createMockPrisma()) {
@@ -423,6 +433,69 @@ describe('ProfileService', () => {
         viewerName: "Quelqu'un",
         viewerImage: null,
       });
+    });
+  });
+
+  describe('blockUser and unblockUser', () => {
+    it('rejects blocking oneself', async () => {
+      const { service } = createService();
+      await expect(service.blockUser('user-1', 'user-1')).rejects.toThrow();
+    });
+
+    it('blocks user and cleans up match and swipes', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue({ id: 'user-2' });
+      prisma.$transaction.mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
+        return cb(prisma);
+      });
+
+      const result = await service.blockUser('user-1', 'user-2');
+      expect(result).toEqual({ blocked: true });
+      expect(prisma.userBlock.upsert).toHaveBeenCalled();
+    });
+
+    it('unblocks a user', async () => {
+      const { service, prisma } = createService();
+      const result = await service.unblockUser('user-1', 'user-2');
+      expect(result).toEqual({ blocked: false });
+      expect(prisma.userBlock.deleteMany).toHaveBeenCalledWith({
+        where: { blocker_id: 'user-1', blocked_id: 'user-2' },
+      });
+    });
+
+    it('lists blocked users with profile fields and dates', async () => {
+      const { service, prisma } = createService();
+      prisma.userBlock.findMany.mockResolvedValue([
+        {
+          id: 'block-1',
+          blocker_id: 'user-1',
+          blocked_id: 'user-2',
+          created_at: new Date('2026-08-23T10:00:00Z'),
+          blocked: {
+            id: 'user-2',
+            name: 'Blocked User',
+            image: null,
+            job: 'Designer',
+            city: 'Tunis',
+            activity_sector: 'Design',
+            service_type: 'UI/UX',
+          },
+        },
+      ]);
+
+      const result = await service.listBlockedUsers('user-1');
+      expect(result).toEqual([
+        {
+          id: 'user-2',
+          name: 'Blocked User',
+          image: null,
+          job: 'Designer',
+          city: 'Tunis',
+          activity_sector: 'Design',
+          service_type: 'UI/UX',
+          blocked_at: '2026-08-23T10:00:00.000Z',
+        },
+      ]);
     });
   });
 });
