@@ -1,8 +1,12 @@
 import type { AdminManagedUser, AdminUserFilters } from '@/features/admin-users/types';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AdminUsersSection, buildCsv } from './admin-users-section';
+
+afterEach(() => {
+  cleanup();
+});
 
 function buildUser(overrides: Partial<AdminManagedUser> = {}): AdminManagedUser {
   return {
@@ -35,15 +39,23 @@ function buildUser(overrides: Partial<AdminManagedUser> = {}): AdminManagedUser 
   };
 }
 
-const FILTERS: AdminUserFilters = { search: '', plan: 'all', status: 'all' };
+const FILTERS: AdminUserFilters = { search: '', plan: 'all', status: 'all', category: 'all' };
 
-function renderSection(users: AdminManagedUser[]) {
+function renderSection(
+  users: AdminManagedUser[],
+  overrides: {
+    filters?: AdminUserFilters;
+    categories?: string[];
+    onFiltersChange?: () => void;
+  } = {},
+) {
   return render(
     <AdminUsersSection
       users={users}
-      filters={FILTERS}
+      filters={overrides.filters ?? FILTERS}
       loading={false}
-      onFiltersChange={vi.fn()}
+      categories={overrides.categories ?? []}
+      onFiltersChange={overrides.onFiltersChange ?? vi.fn()}
       onOpenUser={vi.fn()}
       onDeleteUser={vi.fn()}
       onAddUser={vi.fn()}
@@ -67,6 +79,36 @@ describe('buildCsv', () => {
 
     expect(dataLine).toContain('"Sami ""Le Pro"" Ayari"');
     expect(dataLine.split(';')).toHaveLength(10);
+  });
+});
+
+describe('AdminUsersSection', () => {
+  it('shows a fallback label for a member with no job or category', () => {
+    renderSection([buildUser({ job: null, category: null, name: 'Utilisateur' })]);
+
+    // Scoped to a <p>: the domain filter's "no category" option shares this exact label.
+    expect(screen.getByText('Membre Matchy+', { selector: 'p' })).toBeInTheDocument();
+  });
+
+  it('lists real category names as domain filter options', () => {
+    renderSection([buildUser()], { categories: ['Électricité', 'Ménage'] });
+
+    const select = screen.getByLabelText('Filtrer par rôle ou domaine');
+    expect(screen.getByRole('option', { name: 'Tous' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Électricité' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Ménage' })).toBeInTheDocument();
+    expect(select).toBeInTheDocument();
+  });
+
+  it('reports the selected domain back to the caller', () => {
+    const onFiltersChange = vi.fn();
+    renderSection([buildUser()], { categories: ['Électricité'], onFiltersChange });
+
+    fireEvent.change(screen.getByLabelText('Filtrer par rôle ou domaine'), {
+      target: { value: 'Électricité' },
+    });
+
+    expect(onFiltersChange).toHaveBeenCalledWith({ category: 'Électricité' });
   });
 });
 

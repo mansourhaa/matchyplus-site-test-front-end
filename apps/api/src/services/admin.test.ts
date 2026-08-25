@@ -50,6 +50,22 @@ describe('AdminService', () => {
     ]);
   });
 
+  it('filters by a real category name', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findMany.mockResolvedValue([]);
+    prisma.user.count.mockResolvedValue(0);
+
+    const service = new AdminService({ prisma: prisma as never });
+    await service.listUsers(
+      { id: 'sa1', role: 'SUPER_ADMIN' } as never,
+      {
+        category: 'Électricité',
+      } as never,
+    );
+
+    expect(prisma.user.findMany.mock.calls[0][0].where.category).toBe('Électricité');
+  });
+
   it('never selects the password column', async () => {
     const prisma = createMockPrisma();
     prisma.user.findMany.mockResolvedValue([]);

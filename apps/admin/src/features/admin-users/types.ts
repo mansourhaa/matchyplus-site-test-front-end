@@ -43,6 +43,7 @@ export interface AdminUserFilters {
   search: string;
   plan: 'all' | UserPlan;
   status: 'all' | UserStatus;
+  category: 'all' | string;
 }
 
 export interface AdminUsersState {

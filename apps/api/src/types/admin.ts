@@ -51,6 +51,7 @@ export type AdminListUsersQuery = {
   search?: string;
   status?: UserStatus;
   plan?: UserPlan;
+  category?: string;
 };
 
 /**

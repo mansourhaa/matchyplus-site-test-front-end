@@ -56,6 +56,7 @@ export function AdminUsersSection({
   users,
   filters,
   loading,
+  categories,
   onFiltersChange,
   onOpenUser,
   onDeleteUser,
@@ -64,6 +65,8 @@ export function AdminUsersSection({
   users: AdminManagedUser[];
   filters: AdminUserFilters;
   loading: boolean;
+  /** Real category names present among current users, for the domain filter's options. */
+  categories: string[];
   onFiltersChange: (changes: Partial<AdminUserFilters>) => void;
   onOpenUser: (user: AdminManagedUser) => void;
   onDeleteUser: (user: AdminManagedUser) => void;
@@ -108,12 +111,32 @@ export function AdminUsersSection({
           <input
             className="flex-1 bg-transparent text-[#353535] outline-none"
             style={{ fontSize: '13px' }}
-            placeholder="Nom, email, domaine..."
+            placeholder="Nom, email, rôle..."
             aria-label="Rechercher un utilisateur"
             value={filters.search}
             onChange={(event) => onFiltersChange({ search: event.target.value })}
           />
         </div>
+
+        <select
+          className="cursor-pointer rounded-xl px-3 py-2 outline-none"
+          style={{
+            fontSize: '13px',
+            color: '#555',
+            background: '#F5F7FA',
+            border: '1px solid #E0E0E0',
+          }}
+          aria-label="Filtrer par rôle ou domaine"
+          value={filters.category}
+          onChange={(event) => onFiltersChange({ category: event.target.value })}
+        >
+          <option value="all">Tous</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
 
         <select
           className="cursor-pointer rounded-xl px-3 py-2 outline-none"
@@ -206,7 +229,7 @@ export function AdminUsersSection({
         >
           <div />
           <div>Utilisateur</div>
-          <div>Domaine</div>
+          <div>Rôle / Domaine</div>
           <div>Ville</div>
           <div>Forfait</div>
           <div>Statut</div>
@@ -274,7 +297,7 @@ export function AdminUsersSection({
             </div>
 
             <div>
-              <p style={{ fontSize: '12px', color: '#555' }}>{user.job ?? '—'}</p>
+              <p style={{ fontSize: '12px', color: '#555' }}>{user.job ?? 'Membre Matchy+'}</p>
               <div className="mt-0.5 flex flex-wrap gap-1">
                 {user.interests.slice(0, 2).map((tag) => (
                   <span

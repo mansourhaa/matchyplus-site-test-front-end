@@ -25,6 +25,7 @@ const initialState: AdminUsersState = {
     search: '',
     plan: 'all',
     status: 'all',
+    category: 'all',
   },
 };
 
@@ -42,6 +43,7 @@ export const fetchAdminUsers = createAsyncThunk(
         search: filters.search || undefined,
         status: filters.status !== 'all' ? filters.status : undefined,
         plan: filters.plan !== 'all' ? filters.plan : undefined,
+        category: filters.category !== 'all' ? filters.category : undefined,
       },
     });
     return response.data as { users: AdminManagedUser[]; total: number };

@@ -64,6 +64,7 @@ export const adminListUsersSchema = {
       search: { type: 'string' },
       status: { type: 'string', enum: userStatusEnum },
       plan: { type: 'string', enum: userPlanEnum },
+      category: { type: 'string' },
     },
   },
   response: {
