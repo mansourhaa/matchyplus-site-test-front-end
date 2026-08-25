@@ -47,6 +47,7 @@ import type { AdminManagedUser, AdminUserUpdate } from '@/features/admin-users/t
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import {
   BarChart2,
+  Bell,
   ChevronDown,
   CreditCard,
   Flag,
@@ -72,6 +73,25 @@ type AdminSection =
 
 type NavKey = Exclude<AdminSection, 'user-detail'>;
 
+/**
+ * Minutes since `loginAt`, ticking every 30s so the header pill stays roughly live without a
+ * full re-render loop. Null when the session was restored from storage rather than a fresh
+ * login this tab (`loginAt` isn't persisted) — the pill just doesn't render in that case
+ * rather than showing a fabricated duration.
+ */
+function useConnectedMinutes(loginAt: string | null): number | null {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!loginAt) return;
+    const interval = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(interval);
+  }, [loginAt]);
+
+  if (!loginAt) return null;
+  return Math.max(0, Math.floor((now - new Date(loginAt).getTime()) / 60_000));
+}
+
 const NAV_ITEMS: { key: NavKey; icon: LucideIcon; label: string }[] = [
   { key: 'dashboard', icon: Home, label: 'Tableau de bord' },
   { key: 'users', icon: Users, label: 'Utilisateurs' },
@@ -86,7 +106,8 @@ export function AdminPanel() {
   useAdminProactiveRefresh();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { admin } = useAppSelector(selectAdminAuth);
+  const { admin, loginAt } = useAppSelector(selectAdminAuth);
+  const connectedMinutes = useConnectedMinutes(loginAt);
   const { users, stats, selectedUser, loadingUsers, error, filters } =
     useAppSelector(selectAdminUsers);
   const {
@@ -343,25 +364,67 @@ export function AdminPanel() {
             </p>
           </div>
 
-          <div
-            className="flex items-center gap-2 rounded-xl px-3 py-1.5"
-            style={{ background: '#F5F7FA' }}
-          >
-            <div
-              className="flex h-7 w-7 items-center justify-center rounded-full"
-              style={{ background: 'linear-gradient(135deg, #2F76BB, #61BCA6)' }}
-            >
-              <span style={{ fontSize: '12px', fontWeight: 800, color: 'white' }}>
-                {admin?.name?.charAt(0) ?? 'A'}
+          <div className="flex items-center gap-3">
+            {connectedMinutes !== null && (
+              <span
+                className="rounded-full px-2.5 py-1"
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  background: '#E8F7F3',
+                  color: '#61BCA6',
+                }}
+              >
+                Connecté depuis {connectedMinutes}min
               </span>
-            </div>
-            <div>
-              <p style={{ fontSize: '12px', fontWeight: 700, color: '#353535' }}>
-                {admin?.name ?? 'admin'}
-              </p>
-              <p style={{ fontSize: '10px', color: '#888' }}>
-                {admin?.role ? (ROLE_LABELS[admin.role] ?? 'Admin') : 'Admin'}
-              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveSection('reports');
+                dispatch(selectUser(null));
+              }}
+              className="relative flex h-9 w-9 items-center justify-center rounded-xl"
+              style={{ background: '#F5F7FA' }}
+              aria-label="Notifications"
+            >
+              <Bell size={18} color="#555" />
+              {pendingReportCount > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1"
+                  style={{
+                    background: '#E74C3C',
+                    fontSize: '9px',
+                    fontWeight: 800,
+                    color: 'white',
+                  }}
+                >
+                  {pendingReportCount > 9 ? '9+' : pendingReportCount}
+                </span>
+              )}
+            </button>
+
+            <div
+              className="flex items-center gap-2 rounded-xl px-3 py-1.5"
+              style={{ background: '#F5F7FA' }}
+            >
+              <div
+                className="flex h-7 w-7 items-center justify-center rounded-full"
+                style={{ background: 'linear-gradient(135deg, #2F76BB, #61BCA6)' }}
+              >
+                <span style={{ fontSize: '12px', fontWeight: 800, color: 'white' }}>
+                  {admin?.name?.charAt(0) ?? 'A'}
+                </span>
+              </div>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: 700, color: '#353535' }}>
+                  {admin?.name ?? 'admin'}
+                </p>
+                <p style={{ fontSize: '10px', color: '#888' }}>
+                  {admin?.role ? (ROLE_LABELS[admin.role] ?? 'Admin') : 'Admin'}
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -141,6 +141,7 @@ const ANALYTICS = {
   topCities: [{ city: 'Tunis', users: 2 }],
   revenueByPlan: [{ plan: 'Premium', users: 1, monthlyRevenue: 9.9 }],
   totalMatches: 97,
+  matchesThisMonth: 15,
   estimatedMonthlyRevenue: 9.9,
 };
 
@@ -200,9 +201,10 @@ function mockApi() {
   }) as never);
 }
 
-function renderPanel() {
+function renderPanel(preloadedState?: Partial<ReturnType<typeof rootReducer>>) {
   const store = configureStore({
     reducer: rootReducer,
+    preloadedState,
     middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
   });
   return {
@@ -244,13 +246,13 @@ describe('AdminPanel', () => {
     renderPanel();
 
     expect(await screen.findByText('Utilisateurs total')).toBeInTheDocument();
-    expect(screen.getByText('Matches cumulés')).toBeInTheDocument();
+    expect(screen.getByText('Matches ce mois')).toBeInTheDocument();
     expect(screen.getByText('Revenus estimés (DT)')).toBeInTheDocument();
     expect(screen.getByText('Taux conversion')).toBeInTheDocument();
 
     // Conversion is (premium + premium+) / total = 1/3 → 33%, derived not hardcoded.
     expect(screen.getByText('33%')).toBeInTheDocument();
-    expect(screen.getByText('97')).toBeInTheDocument();
+    expect(screen.getByText('15')).toBeInTheDocument();
   });
 
   it('renders the évolution and forfaits panels on the dashboard', async () => {
@@ -266,6 +268,49 @@ describe('AdminPanel', () => {
     // Positive user growth and a negative conversion trend, both from the analytics payload.
     expect(await screen.findByText('14.3%')).toBeInTheDocument();
     expect(screen.getByText('12.5%')).toBeInTheDocument();
+  });
+
+  it('shows a LIVE badge next to Derniers inscrits', async () => {
+    renderPanel();
+
+    expect(await screen.findByText('Derniers inscrits')).toBeInTheDocument();
+    expect(screen.getByText('LIVE')).toBeInTheDocument();
+  });
+
+  describe('header', () => {
+    it('shows the pending-report count on the notification bell and navigates to Signalements', async () => {
+      renderPanel();
+
+      const bell = await screen.findByRole('button', { name: 'Notifications' });
+      // Two of the three seeded reports are PENDING (rep1, rep2 against Riadh T.).
+      expect(within(bell).getByText('2')).toBeInTheDocument();
+
+      fireEvent.click(bell);
+      expect(await screen.findByText('Riadh T.')).toBeInTheDocument();
+    });
+
+    it('shows how long the admin has been connected since a fresh login this session', async () => {
+      const loginAt = new Date(Date.now() - 5 * 60_000).toISOString();
+      renderPanel({
+        adminAuth: {
+          admin: { id: 'a1', name: 'admin', email: 'admin@matchy.plus', role: 'SUPER_ADMIN' },
+          loginAt,
+          loading: false,
+          error: null,
+          passwordChangeLoading: false,
+          passwordChangeError: null,
+        },
+      });
+
+      expect(await screen.findByText('Connecté depuis 5min')).toBeInTheDocument();
+    });
+
+    it('hides the connected-since pill when the session was restored, not freshly logged in', async () => {
+      renderPanel();
+
+      await screen.findByText('Utilisateurs total');
+      expect(screen.queryByText(/Connecté depuis/)).not.toBeInTheDocument();
+    });
   });
 
   it('lists users with their plan and status in the table', async () => {

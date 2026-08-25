@@ -432,6 +432,7 @@ export const adminAnalyticsSchema = {
               },
             },
             totalMatches: { type: 'number' },
+            matchesThisMonth: { type: 'number' },
             estimatedMonthlyRevenue: { type: 'number' },
           },
         },

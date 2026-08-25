@@ -137,5 +137,7 @@ export type AdminAnalyticsResult = {
   /** Monthly recurring revenue estimated from plan price × subscriber count. */
   revenueByPlan: Array<{ plan: string; users: number; monthlyRevenue: number }>;
   totalMatches: number;
+  /** Matches created in the current calendar month, from the real Match table (not the User counter). */
+  matchesThisMonth: number;
   estimatedMonthlyRevenue: number;
 };
