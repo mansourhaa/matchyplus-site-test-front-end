@@ -468,6 +468,39 @@ export class AdminService {
     }));
     const trends = computeTrends(cumulative);
 
+    // Per-plan subscriber growth, month-over-month — this doubles as each paid plan's revenue
+    // trend too, since a plan's monthly revenue is just its subscriber count × a fixed price.
+    // Computed over the same month range as the platform timeline, so a plan with zero new
+    // subscribers this month still carries its prior cumulative total forward correctly.
+    const months = cumulative.map((point) => point.month);
+    const newSubscribersByPlan = new Map<UserPlan, Map<string, number>>();
+    users.forEach((user) => {
+      const month = user.create_at.toISOString().slice(0, 7);
+      const perMonth = newSubscribersByPlan.get(user.plan) ?? new Map<string, number>();
+      perMonth.set(month, (perMonth.get(month) ?? 0) + 1);
+      newSubscribersByPlan.set(user.plan, perMonth);
+    });
+
+    const planTrend = (planId: UserPlan): number | null => {
+      if (months.length < 2) return null;
+      const perMonth = newSubscribersByPlan.get(planId);
+      let running = 0;
+      let previous = 0;
+      let current = 0;
+      months.forEach((month, index) => {
+        running += perMonth?.get(month) ?? 0;
+        if (index === months.length - 2) previous = running;
+        if (index === months.length - 1) current = running;
+      });
+      return monthOverMonthChange(current, previous);
+    };
+
+    const planTrends: AdminAnalyticsResult['planTrends'] = {
+      [UserPlan.FREE]: planTrend(UserPlan.FREE),
+      [UserPlan.PREMIUM]: planTrend(UserPlan.PREMIUM),
+      [UserPlan.PREMIUM_PLUS]: planTrend(UserPlan.PREMIUM_PLUS),
+    };
+
     const planCount = (plan: UserPlan) => users.filter((user) => user.plan === plan).length;
 
     const revenueByPlan = plans
@@ -500,6 +533,7 @@ export class AdminService {
       platformTimeline,
       trends,
       revenueByPlan,
+      planTrends,
       totalMatches: users.reduce((sum, user) => sum + user.matches, 0),
       estimatedMonthlyRevenue:
         Math.round(revenueByPlan.reduce((sum, row) => sum + row.monthlyRevenue, 0) * 100) / 100,

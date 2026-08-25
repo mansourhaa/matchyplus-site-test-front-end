@@ -136,6 +136,12 @@ export type AdminAnalyticsResult = {
   topCities: Array<{ city: string; users: number }>;
   /** Monthly recurring revenue estimated from plan price × subscriber count. */
   revenueByPlan: Array<{ plan: string; users: number; monthlyRevenue: number }>;
+  /**
+   * Month-over-month subscriber growth per plan, including FREE. Doubles as each paid
+   * plan's revenue trend (revenue = subscribers × a fixed price); null when < 2 months
+   * of data exist.
+   */
+  planTrends: Record<UserPlan, number | null>;
   totalMatches: number;
   estimatedMonthlyRevenue: number;
 };

@@ -140,6 +140,7 @@ const ANALYTICS = {
   ],
   topCities: [{ city: 'Tunis', users: 2 }],
   revenueByPlan: [{ plan: 'Premium', users: 1, monthlyRevenue: 9.9 }],
+  planTrends: { FREE: 4.2, PREMIUM: 9.8, PREMIUM_PLUS: 15.3 },
   totalMatches: 97,
   estimatedMonthlyRevenue: 9.9,
 };
@@ -442,9 +443,9 @@ describe('AdminPanel', () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
 
       // The first plan is selected by default; switch to Premium and edit its price.
-      fireEvent.click(await screen.findByText('Premium'));
+      fireEvent.click(await screen.findByRole('button', { name: 'Sélectionner Premium' }));
       fireEvent.change(screen.getByLabelText('Prix (DT / mois)'), { target: { value: '14.5' } });
-      fireEvent.click(screen.getByRole('button', { name: /Enregistrer le forfait/ }));
+      fireEvent.click(screen.getByRole('button', { name: /Sauvegarder/ }));
 
       await waitFor(() =>
         expect(put).toHaveBeenCalledWith(
@@ -471,7 +472,7 @@ describe('AdminPanel', () => {
     it('adds and removes plan features', async () => {
       renderPanel();
       fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
-      fireEvent.click(await screen.findByText('Premium'));
+      fireEvent.click(await screen.findByRole('button', { name: 'Sélectionner Premium' }));
       fireEvent.click(screen.getByRole('button', { name: 'Fonctionnalités' }));
 
       fireEvent.change(screen.getByLabelText('Nouvelle fonctionnalité'), {
@@ -488,7 +489,7 @@ describe('AdminPanel', () => {
     it('reverts local edits when cancelled', async () => {
       renderPanel();
       fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
-      fireEvent.click(await screen.findByText('Premium'));
+      fireEvent.click(await screen.findByRole('button', { name: 'Sélectionner Premium' }));
 
       const price = screen.getByLabelText('Prix (DT / mois)');
       fireEvent.change(price, { target: { value: '99' } });
@@ -496,6 +497,60 @@ describe('AdminPanel', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /Annuler/ }));
       expect(screen.getByLabelText('Prix (DT / mois)')).toHaveValue(9.9);
+    });
+
+    it('shows real subscriber counts, revenue and trend on each plan card', async () => {
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
+
+      // Gratuit: 2 subscribers (STATS.freeUsers) × 0 DT/mois = 0 DT, +4.2% trend.
+      const gratuitCard = await screen.findByRole('group', { name: 'Statistiques Gratuit' });
+      expect(within(gratuitCard).getByText('2')).toBeInTheDocument();
+      const gratuitRevenueRow = within(gratuitCard).getByText('Revenus').closest('div');
+      expect(gratuitRevenueRow).toHaveTextContent('0.00 DT');
+      expect(gratuitRevenueRow).toHaveTextContent('4.2%');
+
+      // Premium: 1 subscriber (STATS.premiumUsers) × 9.9 DT/mois = 9.90 DT, +9.8% trend.
+      // (Coincidentally the same figure as the plan's own price, hence checking the
+      // Revenus row specifically rather than the ambiguous "9.90 DT" string alone.)
+      const premiumCard = screen.getByRole('group', { name: 'Statistiques Premium' });
+      expect(within(premiumCard).getByText('1')).toBeInTheDocument();
+      const premiumRevenueRow = within(premiumCard).getByText('Revenus').closest('div');
+      expect(premiumRevenueRow).toHaveTextContent('9.90 DT');
+      expect(premiumRevenueRow).toHaveTextContent('9.8%');
+    });
+
+    it('shows the sync banner and lets Réinitialiser discard a draft edit', async () => {
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
+
+      expect(await screen.findByText('Synchronisation active')).toBeInTheDocument();
+
+      const reinit = screen.getByRole('button', { name: /Réinitialiser/ });
+      expect(reinit).toBeDisabled();
+
+      fireEvent.change(screen.getByLabelText('Prix (DT / mois)'), { target: { value: '5' } });
+      expect(reinit).toBeEnabled();
+
+      fireEvent.click(reinit);
+      expect(screen.getByLabelText('Prix (DT / mois)')).toHaveValue(0);
+    });
+
+    it('toggles Forfait actif from within the Général tab', async () => {
+      const put = vi
+        .spyOn(adminApi, 'put')
+        .mockResolvedValue({ data: { plan: { ...PLANS[0], is_active: false } } } as never);
+
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
+      // Gratuit is selected by default.
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Désactiver Gratuit (forfait actif)' }),
+      );
+
+      await waitFor(() =>
+        expect(put).toHaveBeenCalledWith('/admin/plans/FREE', { is_active: false }),
+      );
     });
   });
 
