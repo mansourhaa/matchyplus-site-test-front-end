@@ -50,7 +50,7 @@ describe('ResetPasswordForm', () => {
   it('renders step 1 with phone input and back button', () => {
     renderWithAuthStore(<ResetPasswordForm />);
 
-    expect(screen.getAllByText('Réinitialiser votre mot de passe')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Réinitialiser le mot de passe')[0]).toBeInTheDocument();
     expect(firstPlaceholder('XX XXX XXX')).toBeInTheDocument();
     expect(firstButton('Envoyer le code')).toBeInTheDocument();
   });
@@ -80,14 +80,16 @@ describe('ResetPasswordForm', () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getAllByText('Code de vérification et nouveau mot de passe')[0],
-      ).toBeInTheDocument();
+      expect(firstPlaceholder('123456')).toBeInTheDocument();
     });
 
-    expect(firstPlaceholder('123456')).toBeInTheDocument();
-    expect(firstPlaceholder('Entrez votre nouveau mot de passe')).toBeInTheDocument();
-    expect(firstPlaceholder('Confirmez votre nouveau mot de passe')).toBeInTheDocument();
+    fireEvent.change(firstPlaceholder('123456'), { target: { value: '654321' } });
+    fireEvent.submit(firstPlaceholder('123456').closest('form')!);
+
+    await waitFor(() => {
+      expect(firstPlaceholder('Votre nouveau mot de passe')).toBeInTheDocument();
+      expect(firstPlaceholder('Répétez votre nouveau mot de passe')).toBeInTheDocument();
+    });
   });
 
   it('handles step 2 reset password confirmation with valid password policy and moves to step 3', async () => {
@@ -111,10 +113,16 @@ describe('ResetPasswordForm', () => {
     });
 
     fireEvent.change(firstPlaceholder('123456'), { target: { value: '654321' } });
-    fireEvent.change(firstPlaceholder('Entrez votre nouveau mot de passe'), {
+    fireEvent.submit(firstPlaceholder('123456').closest('form')!);
+
+    await waitFor(() => {
+      expect(firstPlaceholder('Votre nouveau mot de passe')).toBeInTheDocument();
+    });
+
+    fireEvent.change(firstPlaceholder('Votre nouveau mot de passe'), {
       target: { value: 'Secret123!' },
     });
-    fireEvent.change(firstPlaceholder('Confirmez votre nouveau mot de passe'), {
+    fireEvent.change(firstPlaceholder('Répétez votre nouveau mot de passe'), {
       target: { value: 'Secret123!' },
     });
 
@@ -135,7 +143,7 @@ describe('ResetPasswordForm', () => {
     });
 
     // Clicking CTA navigates to login
-    fireEvent.click(firstButton('Se connecter à votre compte'));
+    fireEvent.click(firstButton('Se connecter avec le nouveau mot de passe'));
     expect(pushMock).toHaveBeenCalledWith('/login?step=phone');
   });
 
@@ -153,7 +161,7 @@ describe('ResetPasswordForm', () => {
       expect(firstPlaceholder('123456')).toBeInTheDocument();
     });
 
-    // Should be in cooldown initially
+    // Should be in cooldown initially in the modal
     expect(screen.getAllByText(/Renvoyer dans/)[0]).toBeInTheDocument();
   });
 
@@ -171,9 +179,16 @@ describe('ResetPasswordForm', () => {
       expect(firstPlaceholder('123456')).toBeInTheDocument();
     });
 
-    fireEvent.click(firstButton('Modifier le numéro'));
+    fireEvent.change(firstPlaceholder('123456'), { target: { value: '654321' } });
+    fireEvent.submit(firstPlaceholder('123456').closest('form')!);
 
-    expect(screen.getAllByText('Réinitialiser votre mot de passe')[0]).toBeInTheDocument();
+    await waitFor(() => {
+      expect(firstPlaceholder('Votre nouveau mot de passe')).toBeInTheDocument();
+    });
+
+    fireEvent.click(firstButton('Retour'));
+
+    expect(screen.getAllByText('Réinitialiser le mot de passe')[0]).toBeInTheDocument();
     expect(firstPlaceholder('XX XXX XXX')).toBeInTheDocument();
   });
 });

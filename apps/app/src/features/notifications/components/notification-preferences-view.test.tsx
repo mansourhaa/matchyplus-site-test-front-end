@@ -59,17 +59,15 @@ describe('NotificationPreferencesView', () => {
 
     renderWithProviders(<NotificationPreferencesView />, store);
 
-    expect(screen.getByText('Notifications')).toBeInTheDocument();
-    expect(screen.getByText('Active service notifications')).toBeInTheDocument();
-    expect(screen.getByText('All notifications')).toBeInTheDocument();
-    expect(screen.getByText('New matches')).toBeInTheDocument();
-    expect(screen.getByText('New messages')).toBeInTheDocument();
-    expect(screen.getByText('Profile views')).toBeInTheDocument();
-    expect(screen.getByText('Email notifications')).toBeInTheDocument();
+    expect(screen.getByText('Master Notifications')).toBeInTheDocument();
+    expect(screen.getByText('New Matches')).toBeInTheDocument();
+    expect(screen.getByText('New Messages')).toBeInTheDocument();
+    expect(screen.getByText('Profile Views')).toBeInTheDocument();
+    expect(screen.getByText('Email Notifications')).toBeInTheDocument();
 
     // Coming soon / extra items are hidden/commented out
-    expect(screen.queryByText('Push notifications')).not.toBeInTheDocument();
-    expect(screen.queryByText('Promotions & offers')).not.toBeInTheDocument();
+    expect(screen.queryByText('Push Notifications')).not.toBeInTheDocument();
+    expect(screen.queryByText('Promotions & Offers')).not.toBeInTheDocument();
   });
 
   it('toggles all_enabled preference', async () => {
@@ -81,7 +79,7 @@ describe('NotificationPreferencesView', () => {
 
     renderWithProviders(<NotificationPreferencesView />, store);
 
-    await screen.findByText('All notifications');
+    await screen.findByText('Master Notifications');
     const switches = screen.getAllByRole('switch');
     fireEvent.click(switches[0]);
 
@@ -99,7 +97,7 @@ describe('NotificationPreferencesView', () => {
 
     renderWithProviders(<NotificationPreferencesView />, store);
 
-    await screen.findByText('New matches');
+    await screen.findByText('New Matches');
     const switches = screen.getAllByRole('switch');
     fireEvent.click(switches[1]);
 
@@ -117,7 +115,7 @@ describe('NotificationPreferencesView', () => {
 
     renderWithProviders(<NotificationPreferencesView />, store);
 
-    await screen.findByText('New messages');
+    await screen.findByText('New Messages');
     const switches = screen.getAllByRole('switch');
     fireEvent.click(switches[2]);
 
@@ -135,7 +133,7 @@ describe('NotificationPreferencesView', () => {
 
     renderWithProviders(<NotificationPreferencesView />, store);
 
-    await screen.findByText('Profile views');
+    await screen.findByText('Profile Views');
     const switches = screen.getAllByRole('switch');
     fireEvent.click(switches[3]);
 
@@ -153,23 +151,12 @@ describe('NotificationPreferencesView', () => {
 
     renderWithProviders(<NotificationPreferencesView />, store);
 
-    await screen.findByText('Email notifications');
+    await screen.findByText('Email Notifications');
     const switches = screen.getAllByRole('switch');
     fireEvent.click(switches[4]);
 
     await waitFor(() => {
       expect(api.put).toHaveBeenCalledWith('/notifications/preferences', { email: true });
     });
-  });
-
-  it('navigates back when clicking the back button', () => {
-    vi.mocked(api.get).mockResolvedValue({ data: { preferences: defaultPreferences } });
-    const store = buildStore();
-
-    renderWithProviders(<NotificationPreferencesView />, store);
-
-    const backBtn = screen.getByRole('button', { name: /Notifications/i });
-    fireEvent.click(backBtn);
-    expect(mockBack).toHaveBeenCalled();
   });
 });

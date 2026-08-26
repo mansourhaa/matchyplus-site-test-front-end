@@ -258,10 +258,6 @@ export function AccountProfileView() {
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       <div className="mx-auto max-w-2xl space-y-3 px-4 py-6 md:px-8">
-        <h1 className="text-xl font-extrabold" style={{ color: matchyBrand.textDark }}>
-          {t('settings.account')}
-        </h1>
-
         {banner && (
           <div
             className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3"

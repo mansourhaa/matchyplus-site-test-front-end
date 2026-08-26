@@ -256,7 +256,7 @@ export function SearchView() {
 
   const buildParams = useCallback(
     (pageOffset: number) => {
-      const params: Record<string, string | number> = {
+      const params: Record<string, string | number | boolean> = {
         latitude: latitude!,
         longitude: longitude!,
         context: 'search',
@@ -265,9 +265,12 @@ export function SearchView() {
         sort: filters.sort,
       };
       if (debouncedQuery) params.q = debouncedQuery;
-      if (filters.profileType) params.profileType = filters.profileType;
-      if (filters.serviceTypes.length > 0) params.serviceTypes = filters.serviceTypes.join(',');
+      if (filters.sector) params.sector = filters.sector;
+      if (filters.maxDistanceKm) params.maxDistanceKm = filters.maxDistanceKm;
       if (filters.minRating > 0) params.minRating = filters.minRating;
+      if (filters.minPrice > 5) params.minPrice = filters.minPrice;
+      if (filters.maxPrice != null) params.maxPrice = filters.maxPrice;
+      if (filters.availableOnly) params.availableOnly = true;
       return params;
     },
     [latitude, longitude, filters, debouncedQuery],
@@ -401,7 +404,7 @@ export function SearchView() {
                   className="flex-1 bg-transparent text-[#353535] outline-none"
                   style={{ fontSize: 13 }}
                   placeholder={t('search.placeholder')}
-                  value={query}
+                  value={query ?? ''}
                   onChange={(e) => setQuery(e.target.value)}
                 />
                 {query && (

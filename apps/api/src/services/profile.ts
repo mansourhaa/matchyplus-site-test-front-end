@@ -114,9 +114,6 @@ export class ProfileService {
 
       const result = toPublicProfileResult(user);
       const matched = viewerId !== targetUserId && (await this.hasMatch(viewerId, targetUserId));
-      if (result.video && !(viewerId === targetUserId || matched)) {
-        result.video = null;
-      }
 
       // Told to the client for the same reason as `matched`: reopening a profile the
       // viewer already rated should show that state immediately, not the rating picker
@@ -171,28 +168,16 @@ export class ProfileService {
   }
 
   /**
-   * Owner, an active match, or an existing conversation (post-unmatch history) may
-   * stream the profile video — matching legacy canAccessProfileVideo.
+   * Any authenticated active member who is not blocked by the owner may stream
+   * the profile presentation video across discovery and profile details.
    */
   async canAccessVideo(viewerId: string, ownerId: string): Promise<boolean> {
     try {
       if (viewerId === ownerId) return true;
-      if (await this.hasMatch(viewerId, ownerId)) return true;
-
-      // Post-unmatch: allow video if a conversation thread still exists for history.
-      const pair = orderedUserPair(viewerId, ownerId);
-      const conversation = await this.prisma.conversation.findUnique({
-        where: {
-          user_low_id_user_high_id: {
-            user_low_id: pair.userLowId,
-            user_high_id: pair.userHighId,
-          },
-        },
-        select: { id: true },
-      });
-      return Boolean(conversation);
-    } catch (err) {
-      throw err;
+      await this.assertNotBlocked(viewerId, ownerId);
+      return true;
+    } catch {
+      return false;
     }
   }
 

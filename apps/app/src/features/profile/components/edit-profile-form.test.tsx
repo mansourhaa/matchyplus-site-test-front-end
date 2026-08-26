@@ -177,7 +177,7 @@ describe('EditProfileForm', () => {
     fireEvent.change(within(dialog).getByLabelText('Type de service'), {
       target: { value: 'Chauffeur / Transport' },
     });
-    fireEvent.change(within(dialog).getByLabelText('Prix (DT/heure)'), {
+    fireEvent.change(within(dialog).getByLabelText('Prix (DT/jour)'), {
       target: { value: '20' },
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }));

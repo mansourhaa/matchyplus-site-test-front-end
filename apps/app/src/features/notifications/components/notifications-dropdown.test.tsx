@@ -57,10 +57,10 @@ describe('NotificationsDropdown', () => {
     renderWithProviders(<NotificationsDropdown isOpen={true} onClose={onClose} />);
 
     expect(screen.getByText('Notifications')).toBeInTheDocument();
-    expect(screen.getByText('No notifications yet')).toBeInTheDocument();
-    expect(screen.getByText('Notification preferences')).toBeInTheDocument();
+    expect(screen.getByText('No notifications')).toBeInTheDocument();
+    expect(screen.getByText('Notification Settings')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Notification preferences'));
+    fireEvent.click(screen.getByText('Notification Settings'));
     expect(onClose).toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledWith('/settings/notifications');
   });

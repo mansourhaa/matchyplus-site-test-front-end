@@ -1,9 +1,16 @@
 'use client';
 
+import { VideoJSPlayer } from '@/components/video-js-player';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { selectAuth } from '@/features/auth/store/auth-slice';
+import { selectFavorites, toggleFavorite } from '@/features/favorites/store/favorites-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { blockUser, fetchMatchState, unmatchUser } from '@/features/matching/store/matching-slice';
+import {
+  blockUser,
+  fetchMatchState,
+  selectMatching,
+  unmatchUser,
+} from '@/features/matching/store/matching-slice';
 import type { FeedProfile } from '@/features/matching/types';
 import {
   notifyProfileView,
@@ -11,9 +18,11 @@ import {
   reportProfile,
 } from '@/features/profile/store/profile-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
+import { canStreamOrAutoPlay, useVideoSettings } from '@/lib/video-settings';
 import {
   Award,
   Ban,
+  Bookmark,
   Briefcase,
   Check,
   CheckCircle2,
@@ -37,7 +46,8 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 export type ProfileDetailData = {
   id: string;
@@ -119,7 +129,15 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
     void dispatch(notifyProfileView(profile.id));
   }, [dispatch, user, profile.id]);
 
-  const isMatched = Boolean(profile.matched);
+  const matching = useAppSelector(selectMatching);
+  const isMatchedInStore = useMemo(() => {
+    return Boolean(profile.id && matching?.matches?.some((m) => m.matched_user_id === profile.id));
+  }, [profile.id, matching?.matches]);
+  const isMatched = Boolean(profile.matched || isMatchedInStore);
+  const { settings: videoSettings } = useVideoSettings();
+  const shouldAutoPlay = canStreamOrAutoPlay(videoSettings);
+  const { favoriteIds, actionLoading: favActionLoading } = useAppSelector(selectFavorites);
+  const isFavorited = Boolean(profile.id && favoriteIds.includes(profile.id));
 
   // 3-Dots Menu & Modals State
   const [menuOpen, setMenuOpen] = useState(false);
@@ -305,7 +323,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
         aria-label={t('profileDetail.profileAlt', { name: profile.name })}
       >
         {/* Pinned Top Photo Banner Header */}
-        <div className="relative h-[32vh] w-full shrink-0 overflow-hidden bg-[#E8EEF5] sm:h-[40vh]">
+        <div className="relative h-[42vh] w-full shrink-0 overflow-hidden bg-[#E8EEF5] md:h-[50vh]">
           {photo.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photo.url} alt="" className="h-full w-full object-cover" />
@@ -325,68 +343,102 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
             <X size={18} />
           </button>
 
-          {/* 3-Dots Action Menu Trigger Button */}
-          <div className="absolute top-4 right-4" ref={menuRef}>
+          {/* Top Right Action Buttons: Favorite + 3-Dots */}
+          <div className="absolute top-4 right-4 flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setMenuOpen((prev) => !prev)}
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (!profile.id) return;
+                try {
+                  const res = await dispatch(toggleFavorite(profile.id)).unwrap();
+                  if (res.favorited) {
+                    toast.success(t('profileDetail.addedToFavorites', { name: profile.name }));
+                  } else {
+                    toast.success(t('profileDetail.removedFromFavorites', { name: profile.name }));
+                  }
+                } catch {
+                  toast.error(t('common.errorOccurred') || 'Error');
+                }
+              }}
+              disabled={Boolean(profile.id && favActionLoading[profile.id])}
+              aria-label={
+                isFavorited
+                  ? t('profileDetail.removeFromFavorites')
+                  : t('profileDetail.addToFavorites')
+              }
               className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-xs transition-opacity hover:opacity-90 active:scale-95"
-              aria-label={t('chat.options.button')}
-              aria-haspopup="true"
-              aria-expanded={menuOpen}
             >
-              <MoreVertical size={18} />
+              <Bookmark
+                size={17}
+                color={isFavorited ? '#F5A623' : 'white'}
+                fill={isFavorited ? '#F5A623' : 'none'}
+              />
             </button>
 
-            {/* 3-Dots Dropdown Menu */}
-            {menuOpen && (
-              <div
-                className="absolute top-full right-0 z-50 mt-2 w-52 rounded-2xl bg-white py-1.5 shadow-2xl ring-1 ring-black/5"
-                style={{ border: '1px solid #EAEAEA' }}
-              >
-                {/* Report Profile */}
+            {/* 3-Dots Action Menu Trigger Button (only visible when matched: Block, Unmatch, Report) */}
+            {isMatched && (
+              <div className="relative" ref={menuRef}>
                 <button
                   type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setReportSubmitted(false);
-                    setShowReportModal(true);
-                  }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-[#D97706] transition-colors hover:bg-amber-50"
+                  onClick={() => setMenuOpen((prev) => !prev)}
+                  className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-xs transition-opacity hover:opacity-90 active:scale-95"
+                  aria-label={t('chat.options.button')}
+                  aria-haspopup="true"
+                  aria-expanded={menuOpen}
                 >
-                  <Flag size={15} className="text-[#F59E0B]" />
-                  {t('chat.options.report')}
+                  <MoreVertical size={18} />
                 </button>
 
-                {/* Unmatch Profile (if matched) */}
-                {isMatched && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setShowUnmatchModal(true);
-                    }}
-                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-[#E24E59] transition-colors hover:bg-rose-50"
+                {/* 3-Dots Dropdown Menu */}
+                {menuOpen && (
+                  <div
+                    className="absolute top-full right-0 z-50 mt-2 w-52 rounded-2xl bg-white py-1.5 shadow-2xl ring-1 ring-black/5"
+                    style={{ border: '1px solid #EAEAEA' }}
                   >
-                    <HeartOff size={15} className="text-[#E24E59]" />
-                    {t('chat.options.unmatch')}
-                  </button>
+                    {/* Report Profile */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setReportSubmitted(false);
+                        setShowReportModal(true);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-[#D97706] transition-colors hover:bg-amber-50"
+                    >
+                      <Flag size={15} className="text-[#F59E0B]" />
+                      {t('chat.options.report')}
+                    </button>
+
+                    {/* Unmatch Profile */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setShowUnmatchModal(true);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-[#E24E59] transition-colors hover:bg-rose-50"
+                    >
+                      <HeartOff size={15} className="text-[#E24E59]" />
+                      {t('chat.options.unmatch')}
+                    </button>
+
+                    <div className="my-1 border-t border-slate-100" />
+
+                    {/* Block Profile */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setShowBlockModal(true);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-[#DC2626] transition-colors hover:bg-rose-50"
+                    >
+                      <Ban size={15} className="text-[#DC2626]" />
+                      {t('chat.options.block')}
+                    </button>
+                  </div>
                 )}
-
-                <div className="my-1 border-t border-slate-100" />
-
-                {/* Block Profile */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setShowBlockModal(true);
-                  }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-[#DC2626] transition-colors hover:bg-rose-50"
-                >
-                  <Ban size={15} className="text-[#DC2626]" />
-                  {t('chat.options.block')}
-                </button>
               </div>
             )}
           </div>
@@ -427,7 +479,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                   className="shrink-0 rounded-xl px-3 py-1.5 text-sm font-bold text-white"
                   style={{ background: 'rgba(47,118,187,0.9)' }}
                 >
-                  {profile.price} {locale === 'en' ? 'TND/h' : locale === 'ar' ? 'د.ت/سا' : 'DT/h'}
+                  {profile.price} {t('profileDetail.priceUnit')}
                 </span>
               )}
             </div>
@@ -452,12 +504,24 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
           </div>
 
           {video.url && (
-            <video
-              src={video.url}
-              controls
-              playsInline
-              className="aspect-video w-full rounded-2xl bg-black object-cover"
-            />
+            <div className="overflow-hidden rounded-2xl bg-black shadow-md ring-1 ring-black/10">
+              <div className="flex items-center justify-between bg-black/60 px-3.5 py-2 text-white backdrop-blur-xs">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-white/90">
+                  <Video size={13} color="#61BCA6" />
+                  {t('profileDetail.presentationVideo')}
+                </span>
+              </div>
+              <VideoJSPlayer
+                src={video.url}
+                controls
+                playsinline
+                autoplay={shouldAutoPlay}
+                muted={shouldAutoPlay}
+                fluid
+                aspectRatio="16:9"
+                className="max-h-[420px]"
+              />
+            </div>
           )}
           {profile.video && video.error && (
             <p className="text-xs text-[#E24E59]">{t('profileDetail.videoUnavailable')}</p>
@@ -479,11 +543,9 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                     onClick={() => setSelectedRating(star)}
                     className="rounded-full p-1"
                     aria-label={
-                      locale === 'en'
-                        ? `${star} star${star > 1 ? 's' : ''}`
-                        : locale === 'ar'
-                          ? `${star} نجمة`
-                          : `${star} étoile${star > 1 ? 's' : ''}`
+                      star === 1
+                        ? t('profileDetail.starRatingSingular', { count: star })
+                        : t('profileDetail.starRatingPlural', { count: star })
                     }
                   >
                     <Star
@@ -549,6 +611,21 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
               <p className="text-sm leading-relaxed text-[#555]">{profile.bio}</p>
             </div>
           )}
+
+          {/* Visible Report Feature under User Description */}
+          <div className="flex items-center pt-1.5 pb-1">
+            <button
+              type="button"
+              onClick={() => {
+                setReportSubmitted(false);
+                setShowReportModal(true);
+              }}
+              className="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50/90 px-3.5 py-2 text-xs font-bold text-[#DC2626] shadow-2xs transition-all hover:border-rose-300 hover:bg-rose-100 hover:shadow-xs active:scale-95"
+            >
+              <Flag size={14} className="shrink-0 text-[#DC2626]" />
+              <span>{t('chat.options.report') || t('profileDetail.reportProfile')}</span>
+            </button>
+          </div>
 
           {profile.interests.length > 0 && (
             <section>
@@ -699,7 +776,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
         {/* Pinned Bottom Pass / Connect Actions */}
         {(onPass || onConnect) && (
           <div
-            className="flex shrink-0 gap-3 bg-white p-4"
+            className="flex shrink-0 items-center gap-3 bg-white p-4"
             style={{ borderTop: '1px solid #F0F2F5' }}
           >
             {onPass && (
@@ -707,17 +784,18 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                 type="button"
                 disabled={busy}
                 onClick={onPass}
-                className="flex-1 rounded-2xl border border-[#E5E7EB] py-3 font-semibold text-[#353535] transition-colors hover:bg-[#F8FAFC] disabled:opacity-60"
+                className="flex-1 rounded-2xl border border-[#E2E8F0] py-3 font-bold text-[#475569] transition-colors hover:bg-[#F8FAFC] active:scale-[0.98] disabled:opacity-60"
               >
                 {busy ? t('matching.swiping') : t('matching.pass')}
               </button>
             )}
+
             {onConnect && (
               <button
                 type="button"
                 disabled={busy}
                 onClick={onConnect}
-                className="flex-1 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-sm transition-all hover:opacity-95 disabled:opacity-60"
+                className="flex-1 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
               >
                 {busy ? t('matching.swiping') : t('matching.connect')}
               </button>

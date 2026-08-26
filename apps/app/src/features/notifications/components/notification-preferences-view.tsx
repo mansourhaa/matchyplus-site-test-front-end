@@ -69,18 +69,6 @@ export function NotificationPreferencesView() {
   return (
     <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }} dir={dir}>
       <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-6 md:px-6">
-        {/* Top Back Navigation */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => router.push('/settings')}
-            className="inline-flex items-center gap-1.5 text-base font-bold text-[#1E293B] transition-colors hover:text-[#2F76BB]"
-          >
-            <ChevronLeft size={20} className={isRtl ? 'rotate-180' : ''} />
-            <span>{t('notificationSettings.back')}</span>
-          </button>
-        </div>
-
         {/* Active Count Banner Card */}
         <div
           className="relative flex items-center gap-4 overflow-hidden rounded-3xl p-5 text-white shadow-md"

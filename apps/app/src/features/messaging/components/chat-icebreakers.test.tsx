@@ -19,7 +19,6 @@ const mockPeer: ConversationPeer = {
   category: 'Tech',
   city: 'Tunis',
   interests: ['React', 'Node.js'],
-  goals: ['Collaborer sur un projet'],
   activity_sector: 'Tech',
   service_type: 'Web Development',
 };
@@ -70,8 +69,10 @@ describe('ChatIcebreakers component', () => {
       </I18nProvider>,
     );
 
-    expect(screen.getByText('Nouveau match avec Sarah M. !')).toBeInTheDocument();
-    expect(screen.getByText('Envoyez votre premier message 👋')).toBeInTheDocument();
+    expect(screen.getByText('Démarrer une conversation avec Sarah M.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Choisissez un message rapide ou tapez le vôtre ci-dessous :'),
+    ).toBeInTheDocument();
 
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(3);
@@ -93,8 +94,8 @@ describe('ChatIcebreakers component', () => {
       </I18nProvider>,
     );
 
-    expect(screen.getByText('New match with Sarah M. !')).toBeInTheDocument();
-    expect(screen.getByText('Send your first message 👋')).toBeInTheDocument();
+    expect(screen.getByText('Start a conversation with Sarah M.')).toBeInTheDocument();
+    expect(screen.getByText('Choose a quick message or type your own below:')).toBeInTheDocument();
   });
 
   it('disables suggestion buttons when disabled is true', () => {

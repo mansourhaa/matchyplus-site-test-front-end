@@ -21,6 +21,7 @@ export type FeedProfile = {
   id: string;
   name: string;
   image: string | null;
+  video?: string | null;
   bio: string | null;
   job: string | null;
   category: string | null;
@@ -37,6 +38,8 @@ export type FeedProfile = {
   confidence: MatchConfidence;
   compatibility: ScoreBreakdown[];
   liked_me: boolean;
+  price?: string | null;
+  availability_days?: string[];
   /** Search freemium: true when PII was redacted server-side for FREE plans. */
   is_locked?: boolean;
 };
@@ -55,7 +58,7 @@ export type SwipeResult = {
   quota: SwipeQuota;
 };
 
-export type DiscoveryFeedSort = 'match' | 'distance' | 'rating';
+export type DiscoveryFeedSort = 'match' | 'distance' | 'rating' | 'price_asc' | 'price_desc';
 
 export type DiscoveryFeedQuery = {
   latitude?: number;
@@ -70,6 +73,10 @@ export type DiscoveryFeedQuery = {
   maxDistanceKm?: number;
   /** Comma-separated service type / job labels. */
   serviceTypes?: string;
+  sector?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  availableOnly?: boolean;
   profileType?: 'INDIVIDUAL' | 'PROVIDER';
   minRating?: number;
   sort?: DiscoveryFeedSort;

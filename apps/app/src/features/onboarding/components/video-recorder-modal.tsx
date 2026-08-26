@@ -1,11 +1,13 @@
 'use client';
 
+import { VideoJSPlayer } from '@/components/video-js-player';
 import {
   VIDEO_PRESENTATION_TIPS,
   type VoiceLangCode,
   voiceLangToDetectedLang,
 } from '@/features/onboarding/video-tips';
 import { checkAndRequestAvPermission } from '@/lib/permissions';
+import { getStoredVideoSettings, getVideoMediaConstraints } from '@/lib/video-settings';
 import { Capacitor } from '@capacitor/core';
 import {
   AlertCircle,
@@ -255,8 +257,9 @@ export function VideoRecorderModal({
       stopStream();
       setCamError(null);
       try {
+        const videoConstraints = getVideoMediaConstraints(getStoredVideoSettings().quality, facing);
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facing },
+          video: videoConstraints,
           audio: true,
         });
         streamRef.current = stream;
@@ -841,14 +844,17 @@ export function VideoRecorderModal({
       {/* ── REVIEW PHASE ── */}
       {phase === 'review' && (
         <div className="flex flex-1 flex-col">
-          <div className="relative flex-1">
-            <video
-              ref={reviewRef}
-              controls
-              playsInline
-              className="absolute inset-0 h-full w-full object-contain"
-              style={{ background: '#000' }}
-            />
+          <div className="relative flex flex-1 items-center justify-center bg-black p-2">
+            {recordedUrl ? (
+              <VideoJSPlayer
+                src={recordedUrl}
+                controls
+                playsinline
+                fluid
+                aspectRatio="16:9"
+                className="w-full max-w-lg"
+              />
+            ) : null}
           </div>
 
           <div className="space-y-3 px-6 pt-5 pb-8" style={{ background: '#111' }}>

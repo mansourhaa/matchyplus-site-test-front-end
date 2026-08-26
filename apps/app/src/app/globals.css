@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import 'video.js/dist/video-js.css';
 
 @source '../../../../packages/ui/src';
 @source '../';
@@ -205,4 +206,46 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Matchy+ Video.js Theme Overrides */
+.video-js {
+  font-family: inherit;
+  border-radius: 1rem;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.video-js .vjs-big-play-button {
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  line-height: 60px;
+  border-radius: 9999px;
+  background-color: rgba(0, 0, 0, 0.65) !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease-in-out;
+}
+
+.video-js:hover .vjs-big-play-button {
+  background-color: rgba(47, 118, 187, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.video-js .vjs-play-progress {
+  background-color: #2F76BB !important;
+}
+
+.video-js .vjs-volume-level {
+  background-color: #61BCA6 !important;
+}
+
+.video-js .vjs-control-bar {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent) !important;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
 }

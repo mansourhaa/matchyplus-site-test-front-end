@@ -261,6 +261,8 @@ const matchingSlice = createSlice({
         state.pending = state.pending.filter(
           (row) => row.profile.id !== action.payload.targetUserId,
         );
+        // Mark feed stale so Discovery re-fetches and includes the withdrawn profile.
+        state.feedLoaded = false;
       })
       .addCase(withdrawPending.rejected, (state, action) => {
         state.withdrawLoadingId = null;
@@ -270,6 +272,8 @@ const matchingSlice = createSlice({
         state.matches = state.matches.filter(
           (row) => row.matched_user_id !== action.payload.targetUserId,
         );
+        // Mark feed stale so Discovery re-fetches and includes the unmatched profile.
+        state.feedLoaded = false;
       })
       .addCase(unmatchUser.rejected, (state, action) => {
         state.swipeError = String(action.payload || action.error.message);

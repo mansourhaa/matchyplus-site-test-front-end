@@ -405,6 +405,7 @@ export const ModelName = {
   UserLocation: 'UserLocation',
   UserBlock: 'UserBlock',
   Rating: 'Rating',
+  Favorite: 'Favorite',
   Notification: 'Notification',
   AiJob: 'AiJob',
   WaitlistEntry: 'WaitlistEntry',
@@ -444,6 +445,7 @@ export type TypeMap<
       | 'userLocation'
       | 'userBlock'
       | 'rating'
+      | 'favorite'
       | 'notification'
       | 'aiJob'
       | 'waitlistEntry'
@@ -1566,6 +1568,80 @@ export type TypeMap<
         };
       };
     };
+    Favorite: {
+      payload: Prisma.$FavoritePayload<ExtArgs>;
+      fields: Prisma.FavoriteFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.FavoriteFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.FavoriteFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload>;
+        };
+        findFirst: {
+          args: Prisma.FavoriteFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.FavoriteFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload>;
+        };
+        findMany: {
+          args: Prisma.FavoriteFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload>[];
+        };
+        create: {
+          args: Prisma.FavoriteCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload>;
+        };
+        createMany: {
+          args: Prisma.FavoriteCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.FavoriteCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload>[];
+        };
+        delete: {
+          args: Prisma.FavoriteDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload>;
+        };
+        update: {
+          args: Prisma.FavoriteUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload>;
+        };
+        deleteMany: {
+          args: Prisma.FavoriteDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.FavoriteUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.FavoriteUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload>[];
+        };
+        upsert: {
+          args: Prisma.FavoriteUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoritePayload>;
+        };
+        aggregate: {
+          args: Prisma.FavoriteAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFavorite>;
+        };
+        groupBy: {
+          args: Prisma.FavoriteGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.FavoriteGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.FavoriteCountArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.FavoriteCountAggregateOutputType> | number;
+        };
+      };
+    };
     Notification: {
       payload: Prisma.$NotificationPayload<ExtArgs>;
       fields: Prisma.NotificationFieldRefs;
@@ -2147,6 +2223,16 @@ export const RatingScalarFieldEnum = {
 export type RatingScalarFieldEnum =
   (typeof RatingScalarFieldEnum)[keyof typeof RatingScalarFieldEnum];
 
+export const FavoriteScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  favorited_id: 'favorited_id',
+  created_at: 'created_at',
+} as const;
+
+export type FavoriteScalarFieldEnum =
+  (typeof FavoriteScalarFieldEnum)[keyof typeof FavoriteScalarFieldEnum];
+
 export const NotificationScalarFieldEnum = {
   id: 'id',
   user_id: 'user_id',
@@ -2642,6 +2728,7 @@ export type GlobalOmitConfig = {
   userLocation?: Prisma.UserLocationOmit;
   userBlock?: Prisma.UserBlockOmit;
   rating?: Prisma.RatingOmit;
+  favorite?: Prisma.FavoriteOmit;
   notification?: Prisma.NotificationOmit;
   aiJob?: Prisma.AiJobOmit;
   waitlistEntry?: Prisma.WaitlistEntryOmit;

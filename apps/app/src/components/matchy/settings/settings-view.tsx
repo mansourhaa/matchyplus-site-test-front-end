@@ -28,6 +28,7 @@ import {
   Star,
   User,
   Video,
+  Wallet,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -50,6 +51,7 @@ type SettingsItem = {
   onClick?: () => void;
   badge?: string;
   badgeFlag?: ReactNode;
+  disabled?: boolean;
 };
 
 export function SettingsView() {
@@ -162,6 +164,15 @@ export function SettingsView() {
           color: matchyBrand.muted,
           bg: '#F5F5F5',
         },
+        {
+          label: t('settings.wallet'),
+          icon: Wallet,
+          path: null,
+          color: '#F5A623',
+          bg: '#FFF8EB',
+          disabled: true,
+          badge: t('settings.comingSoon'),
+        },
       ],
     },
     {
@@ -269,12 +280,16 @@ export function SettingsView() {
                   <button
                     key={item.label}
                     type="button"
-                    className="flex w-full items-center gap-3 px-4 py-3.5 transition-colors hover:bg-[#F9FAFC]"
+                    disabled={item.disabled}
+                    className={`flex w-full items-center gap-3 px-4 py-3.5 transition-colors ${
+                      item.disabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-[#F9FAFC]'
+                    }`}
                     style={{
                       borderBottom:
                         i < group.items.length - 1 ? `1px solid ${matchyBrand.border}` : 'none',
                     }}
                     onClick={() => {
+                      if (item.disabled) return;
                       if (item.onClick) {
                         item.onClick();
                         return;
@@ -300,8 +315,11 @@ export function SettingsView() {
                     </span>
                     {item.badge && (
                       <span
-                        className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold"
-                        style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
+                        className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                        style={{
+                          background: item.disabled ? '#F1F5F9' : matchyBrand.softBlue,
+                          color: item.disabled ? '#64748B' : matchyBrand.blue,
+                        }}
                       >
                         {item.badgeFlag}
                         <span>{item.badge}</span>
