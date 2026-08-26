@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { orderedUserPair } from '../utils/match-pair.js';
-import {
-  RECIPROCITY_BOOST,
-  computeMatchScore,
-  interestJaccardScore,
-} from '../utils/matching-score.js';
+import { RECIPROCITY_BOOST, computeMatchScore, skillsScore } from '../utils/matching-score.js';
 import { utcDayBounds } from '../utils/utc-day.js';
 
 describe('orderedUserPair', () => {
@@ -29,7 +25,7 @@ describe('utcDayBounds', () => {
   });
 });
 
-describe('interestJaccardScore', () => {
+describe('skillsScore', () => {
   it('rewards overlap ratio rather than raw tag count', () => {
     const me = { id: '1', interests: ['react', 'node'] };
     const focused = { id: '2', interests: ['react', 'node'] };
@@ -38,8 +34,8 @@ describe('interestJaccardScore', () => {
       interests: ['react', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
     };
 
-    expect(interestJaccardScore(me, focused)).toBe(100);
-    expect(interestJaccardScore(me, spammy)).toBeLessThan(interestJaccardScore(me, focused));
+    expect(skillsScore(me, focused)).toBe(100);
+    expect(skillsScore(me, spammy)).toBeLessThan(skillsScore(me, focused));
   });
 });
 

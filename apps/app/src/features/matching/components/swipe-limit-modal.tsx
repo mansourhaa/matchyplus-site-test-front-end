@@ -1,11 +1,27 @@
 'use client';
 
+import { useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { selectMatching } from '@/features/matching/store/matching-slice';
+import type { SwipeQuota } from '@/features/matching/types';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Sparkles, Zap } from 'lucide-react';
 
-export function SwipeLimitModal({ onClose }: { onClose: () => void }) {
+export function SwipeLimitModal({
+  onClose,
+  quota: propQuota,
+}: {
+  onClose: () => void;
+  quota?: SwipeQuota | null;
+}) {
   const { t } = useI18n();
+  const matchingState = useAppSelector(selectMatching);
+  const quota = propQuota !== undefined ? propQuota : matchingState.quota;
+
+  const isUnlimited = Boolean(quota?.unlimited);
+  const remaining = quota?.remaining ?? 0;
+  const limit = quota?.limit ?? 10;
+  const isExhausted = !isUnlimited && remaining <= 0;
 
   return (
     <AnimatePresence>
@@ -26,29 +42,95 @@ export function SwipeLimitModal({ onClose }: { onClose: () => void }) {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#E0E0E0] md:hidden" />
-          <div
-            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-            style={{ background: '#FFF0F0' }}
-          >
-            <AlertTriangle size={32} color="#E74C3C" />
-          </div>
+
+          {/* Header Icon */}
+          {isExhausted ? (
+            <div
+              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
+              style={{ background: '#FFF0F0' }}
+            >
+              <AlertTriangle size={32} color="#E74C3C" />
+            </div>
+          ) : isUnlimited ? (
+            <div
+              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
+              style={{ background: '#E8F8F5' }}
+            >
+              <Sparkles size={32} color="#61BCA6" />
+            </div>
+          ) : (
+            <div
+              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
+              style={{ background: '#EBF4FC' }}
+            >
+              <Zap size={32} color="#2F76BB" />
+            </div>
+          )}
+
+          {/* Title */}
           <p className="text-center text-[20px] font-extrabold text-[#1A1A2E]">
-            {t('matching.limitReached')}
+            {isExhausted
+              ? t('matching.limitReached')
+              : isUnlimited
+                ? t('matching.quotaUnlimited')
+                : t('matching.quotaTitle')}
           </p>
+
+          {/* Description */}
           <p className="mt-1.5 text-center text-[13px] leading-relaxed text-[#777]">
-            {t('matching.limitReachedDesc')}
+            {isExhausted
+              ? t('matching.limitReachedDesc')
+              : isUnlimited
+                ? t('matching.quotaUnlimitedDesc')
+                : t('matching.quotaActiveDesc', { remaining, limit })}
           </p>
-          <p className="mt-2 text-center text-[12px] font-semibold text-[#E67E22]">
-            {t('matching.limitReachedHint')}
-          </p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="mt-6 w-full rounded-2xl py-3.5 text-[15px] font-bold text-white"
-            style={{ background: 'linear-gradient(90deg, #61BCA6, #2F76BB)' }}
-          >
-            {t('matching.continueFree')}
-          </button>
+
+          {/* Progress bar when limited and has quota */}
+          {!isUnlimited && (
+            <div
+              className="my-4 rounded-xl bg-[#F8FAFC] p-3 text-center"
+              style={{ border: '1px solid #EDF2F7' }}
+            >
+              <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
+                <span className="text-[#64748B]">{t('matching.quotaTitle')}</span>
+                <span
+                  className={isExhausted ? 'font-bold text-rose-600' : 'font-bold text-[#2F76BB]'}
+                >
+                  {remaining} / {limit}
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min(100, Math.max(0, (remaining / limit) * 100))}%`,
+                    background: isExhausted
+                      ? '#E11D48'
+                      : 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Reset hint */}
+          {!isUnlimited && (
+            <p className="mt-2 text-center text-[12px] font-semibold text-[#E67E22]">
+              {t('matching.limitReachedHint')}
+            </p>
+          )}
+
+          {/* Action button */}
+          <div className="mt-6 flex flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full rounded-2xl py-3.5 text-[15px] font-bold text-white shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99]"
+              style={{ background: 'linear-gradient(90deg, #61BCA6, #2F76BB)' }}
+            >
+              {t('matching.continueFree')}
+            </button>
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

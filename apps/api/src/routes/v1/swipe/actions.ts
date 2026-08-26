@@ -3,6 +3,7 @@ import { FastifyPluginAsync } from 'fastify';
 import {
   listMatchesSchema,
   listPendingSchema,
+  listSwipeHistorySchema,
   postSwipeSchema,
   swipeStatsSchema,
   unmatchSchema,
@@ -10,7 +11,7 @@ import {
   withdrawPendingSchema,
 } from '../../../schemas/v1/matching.js';
 import { SwipeService } from '../../../services/swipe.js';
-import { PostSwipeBody, TargetUserParams } from '../../../types/matching.js';
+import { PostSwipeBody, SwipeHistoryQuery, TargetUserParams } from '../../../types/matching.js';
 
 const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const swipe = new SwipeService({
@@ -56,6 +57,19 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
       try {
         const result = await swipe.withdrawPending(request.loggedUser.id, request.params.userId);
         return reply.code(200).send(result);
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
+
+  fastify.get<{ Querystring: SwipeHistoryQuery }>(
+    '/history',
+    { schema: listSwipeHistorySchema },
+    async (request, reply) => {
+      try {
+        const data = await swipe.listHistory(request.loggedUser.id, request.query);
+        return reply.code(200).send(data);
       } catch (err) {
         throw err;
       }

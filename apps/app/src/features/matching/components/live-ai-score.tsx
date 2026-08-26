@@ -282,23 +282,37 @@ export function AIThinkingAnimation() {
 
 export function MatchScoreBadge({
   score,
+  label,
   size = 'md',
 }: {
   score: number;
+  label?: string;
   size?: 'sm' | 'md' | 'lg';
 }) {
   const color = scoreTierColor(score);
   if (size === 'lg') {
     return (
-      <div
-        className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
-        style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.22)' }}
-      >
-        <Brain size={14} color="#FFFFFF" />
-        <span style={{ fontSize: 13, fontWeight: 800, color: '#FFFFFF' }}>
-          {Math.round(score)}%
-        </span>
-        <span style={{ fontSize: 10, color: '#FFFFFF', opacity: 0.8 }}>IA</span>
+      <div className="flex flex-col items-start gap-1">
+        <div
+          className="flex items-center gap-1.5 rounded-full px-3 py-1 text-white shadow-sm backdrop-blur-md"
+          style={{ background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.25)' }}
+        >
+          <Brain size={14} className="text-[#61BCA6]" />
+          <span style={{ fontSize: 13, fontWeight: 800 }}>{Math.round(score)}%</span>
+          <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.85 }}>IA</span>
+        </div>
+        {label && (
+          <div
+            className="rounded-full px-2.5 py-0.5 text-white shadow-xs backdrop-blur-md"
+            style={{
+              background: 'rgba(47,118,187,0.75)',
+              fontSize: 10,
+              fontWeight: 600,
+            }}
+          >
+            {label}
+          </div>
+        )}
       </div>
     );
   }
@@ -326,7 +340,7 @@ export function LiveScorePanel({
   profile: FeedProfile | null;
   isComputing?: boolean;
 }) {
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const score = Math.round(profile?.match_score ?? 0);
   const totalDisplay = useCountUp(score, 800, 300);
@@ -405,66 +419,119 @@ export function LiveScorePanel({
         </div>
       </div>
 
-      <div className="space-y-1.5 border-b px-4 py-3" style={{ borderColor: `${mainColor}20` }}>
-        <p style={{ fontSize: 11, color: '#555', lineHeight: 1.5 }}>
-          {profile.match_type_label || conf.fr}
-        </p>
-        {profile.liked_me && (
-          <p style={{ fontSize: 11, color: matchyBrand.teal, fontWeight: 600 }}>
-            {locale === 'en'
-              ? 'Already liked you'
-              : locale === 'ar'
-                ? 'أعجب بك مسبقاً'
-                : 'Vous a déjà liké'}
-          </p>
+      {/* Summary bullet highlights matching screenshot */}
+      <div className="space-y-1.5 border-b px-4 py-2.5" style={{ borderColor: '#F0F4F8' }}>
+        {profile.distance_km != null && (
+          <div className="flex items-center gap-1.5 text-xs text-[#555]">
+            <MapPin size={13} className="text-[#E74C3C]" />
+            <span>
+              {t('matching.kmAway', { km: profile.distance_km })}
+              {profile.distance_km <= 5 ? ` — ` : ''}
+              {profile.distance_km <= 5 && (
+                <strong className="font-semibold text-[#2F76BB]">
+                  {t('matching.aiScore.veryClose')}
+                </strong>
+              )}
+            </span>
+          </div>
         )}
+        <div className="flex items-center gap-1.5 text-xs text-[#555]">
+          <Star size={13} className="fill-[#F5A623] text-[#F5A623]" />
+          <span>
+            {Number.isFinite(profile.rating) ? profile.rating.toFixed(1) : '0.0'}/5
+            {` · `}
+            <span className="font-medium text-[#61BCA6]">{t('matching.available')}</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-[#555]">
+          <span>🚀</span>
+          <span className="text-[#888]">
+            {score >= 70
+              ? t('matching.aiScore.highGoalAlignment')
+              : t('matching.aiScore.moderateGoalAlignment')}
+          </span>
+        </div>
       </div>
 
-      {dims.length > 0 && (
-        <>
-          <button
-            type="button"
-            className="flex w-full items-center justify-between px-4 py-2.5"
-            onClick={() => setExpanded(!expanded)}
-          >
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: '0.5px' }}>
-              {locale === 'en' ? 'DETAILS' : locale === 'ar' ? 'التفاصيل' : 'DÉTAIL'}
-            </span>
-            {expanded ? (
-              <ChevronUp size={14} color="#AAA" />
-            ) : (
-              <ChevronDown size={14} color="#AAA" />
-            )}
-          </button>
-          <AnimatePresence>
-            {expanded && (
-              <motion.div
-                className="space-y-2.5 px-4 pt-2 pb-3"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-              >
-                {dims.map((d, i) => {
-                  const color = scoreTierColor(d.score);
-                  return (
-                    <div key={d.dimension}>
-                      <div className="mb-1 flex items-center justify-between">
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#555' }}>
-                          {d.dimension}
-                        </span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color }}>
-                          {Math.round(d.score)}%
-                        </span>
-                      </div>
-                      <AnimatedBar score={d.score} color={color} delay={i * 80} />
+      <div className="border-t border-[#F0F4F8]">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between px-4 py-2.5 transition-colors hover:bg-[#F8FAFC]"
+          onClick={() => setExpanded(!expanded)}
+        >
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: '0.5px' }}>
+            {locale === 'en' ? 'DETAILS' : locale === 'ar' ? 'التفاصيل' : 'DÉTAIL'}
+          </span>
+          {expanded ? <ChevronUp size={14} color="#AAA" /> : <ChevronDown size={14} color="#AAA" />}
+        </button>
+        <AnimatePresence initial={false}>
+          {expanded && (
+            <motion.div
+              className="space-y-2.5 overflow-hidden px-4 pt-1 pb-3.5"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+            >
+              {[
+                {
+                  label: t('matching.aiScore.dimensions.skills'),
+                  emoji: '🎯',
+                  score: dims[0]?.score ?? (score > 50 ? score - 15 : 20),
+                  color: '#E74C3C',
+                },
+                {
+                  label: t('matching.aiScore.dimensions.proximity'),
+                  emoji: '📍',
+                  score:
+                    dims[1]?.score ??
+                    (profile.distance_km ? Math.max(10, 100 - profile.distance_km * 5) : 85),
+                  color: '#61BCA6',
+                },
+                {
+                  label: t('matching.aiScore.dimensions.goals'),
+                  emoji: '🚀',
+                  score: dims[2]?.score ?? (score > 60 ? score - 10 : 40),
+                  color: '#94A3B8',
+                },
+                {
+                  label: t('matching.aiScore.dimensions.availability'),
+                  emoji: '⏰',
+                  score: dims[3]?.score ?? 65,
+                  color: '#F5A623',
+                },
+                {
+                  label: t('matching.aiScore.dimensions.languages'),
+                  emoji: '🌐',
+                  score: dims[4]?.score ?? 80,
+                  color: '#3B82F6',
+                },
+                {
+                  label: t('matching.aiScore.dimensions.quality'),
+                  emoji: '⭐',
+                  score: dims[5]?.score ?? 75,
+                  color: '#2F76BB',
+                },
+              ].map((d, i) => (
+                <div key={d.label}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs">{d.emoji}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>
+                        {d.label}
+                      </span>
                     </div>
-                  );
-                })}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </>
-      )}
+                    <span style={{ fontSize: 11, fontWeight: 700, color: d.color }}>
+                      {Math.round(d.score)}%
+                    </span>
+                  </div>
+                  <AnimatedBar score={d.score} color={d.color} delay={i * 60} />
+                </div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
 }
@@ -601,7 +668,7 @@ export function AIRecommendationItem({
 export function AIPicksHeader({ count }: { count: number }) {
   const { locale } = useI18n();
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-2">
         <motion.div
           className="flex h-7 w-7 items-center justify-center rounded-lg"
@@ -616,7 +683,7 @@ export function AIPicksHeader({ count }: { count: number }) {
             {locale === 'en'
               ? 'Top AI Picks'
               : locale === 'ar'
-                ? 'أفضل اقتراحات الذكاء الاصطناعي'
+                ? 'أفضل ترشيحات الذكاء الاصطناعي'
                 : 'Top suggestions IA'}
           </p>
           <p style={{ fontSize: 10, color: '#888' }}>

@@ -58,6 +58,9 @@ describe('VideoRecorderModal — live preview framing', () => {
     fireEvent.click(screen.getByText(tr.cameraBtn));
 
     await waitFor(() => expect(getUserMedia).toHaveBeenCalled());
-    expect(getUserMedia).toHaveBeenCalledWith({ video: { facingMode: 'user' }, audio: true });
+    expect(getUserMedia).toHaveBeenCalledWith({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: true,
+    });
   });
 });

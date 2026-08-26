@@ -47,9 +47,15 @@ export class DiscoveryService {
           ? Math.min(200, Math.max(1, maxDistanceKm)) * 1000
           : DISCOVERY_RADIUS_M;
       const serviceTypes = parseServiceTypes(query.serviceTypes);
+      const sectorQuery = query.sector?.trim().toLowerCase() ?? '';
       const needle = query.q?.trim().toLowerCase() ?? '';
       const minRatingRaw = asFiniteNumber(query.minRating);
       const minRating = minRatingRaw != null ? Math.min(5, Math.max(0, minRatingRaw)) : null;
+      const minPriceRaw = asFiniteNumber(query.minPrice);
+      const minPrice = minPriceRaw != null ? Math.max(0, minPriceRaw) : null;
+      const maxPriceRaw = asFiniteNumber(query.maxPrice);
+      const maxPrice = maxPriceRaw != null ? Math.max(0, maxPriceRaw) : null;
+      const availableOnly = Boolean(query.availableOnly);
       const sort = query.sort ?? 'match';
 
       const [blocked, matched, excludingLogs, incomingLikes] = await Promise.all([
@@ -99,14 +105,6 @@ export class DiscoveryService {
           id: { notIn: [...excluded] },
           status: UserStatus.ACTIVE,
           role: Role.USER,
-          // A phone signup gets a real User row (name defaults to the phone number
-          // itself — see registerWithPhone) the moment the OTP is verified, well
-          // before onboarding is ever finished. Without this, anyone who abandons
-          // onboarding mid-way is still swipeable by everyone else, showing up with
-          // their phone number as a name and no photo. completeOnboarding() is the
-          // only place that sets this, and it already enforces photo/name/interests
-          // first, so this single filter is enough to keep incomplete profiles out
-          // of the feed.
           onboarding_completed_at: { not: null },
           ...(query.profileType ? { profile_type: query.profileType } : {}),
         },
@@ -126,25 +124,46 @@ export class DiscoveryService {
       for (const candidate of candidates) {
         if (minRating != null && candidate.rating < minRating) continue;
         if (serviceTypes.length > 0 && !matchesServiceTypes(candidate, serviceTypes)) continue;
+        if (sectorQuery && !matchesSector(candidate, sectorQuery)) continue;
+        if (
+          availableOnly &&
+          (!candidate.availability_days || candidate.availability_days.length === 0)
+        )
+          continue;
+        if (minPrice != null || maxPrice != null) {
+          const parsedPrice = parsePriceNumber(candidate.price);
+          if (parsedPrice != null) {
+            if (minPrice != null && parsedPrice < minPrice) continue;
+            if (maxPrice != null && parsedPrice > maxPrice) continue;
+          }
+        }
         if (needle && !matchesQuery(candidate, needle)) continue;
 
+        // Language overlap: exclude candidates who do not share at least one language with the swiper.
+        const myLanguages = (me.languages ?? []).map(normalizeLanguageCode);
+        const candLanguages = (candidate.languages ?? []).map(normalizeLanguageCode);
+        if (myLanguages.length > 0 && candLanguages.length > 0) {
+          const hasCommonLanguage = myLanguages.some((lang) => candLanguages.includes(lang));
+          if (!hasCommonLanguage) continue;
+        }
+
         const candCoords = resolveCoords(undefined, undefined, candidate);
-        let distKm: number | null = null;
-        if (myCoords && candCoords) {
-          distKm = haversineKm(
-            myCoords.latitude,
-            myCoords.longitude,
-            candCoords.latitude,
-            candCoords.longitude,
-          );
-          if (distKm * 1000 > radiusM) continue;
-        } else if (maxDistanceKm != null) {
-          // Explicit distance filter with no coords → cannot satisfy the radius.
+        if (!myCoords || !candCoords) {
+          // Candidates without a registered GPS location are excluded from discovery swipes.
           continue;
         }
 
+        const distKm = haversineKm(
+          myCoords.latitude,
+          myCoords.longitude,
+          candCoords.latitude,
+          candCoords.longitude,
+        );
+        if (distKm * 1000 > radiusM) continue;
+
         const score = computeMatchScore(toScoringProfile(me), toScoringProfile(candidate), distKm, {
           likedMe: likedMe.has(candidate.id),
+          radiusKm: radiusM / 1000,
         });
 
         if (score.matchGroup === 1) breakdown.g1_complementary += 1;
@@ -156,14 +175,17 @@ export class DiscoveryService {
           id: candidate.id,
           name: candidate.name,
           image: candidate.image,
+          video: candidate.video ?? null,
           bio: candidate.bio,
           job: candidate.job,
           category: candidate.category,
           city: candidate.location?.city || candidate.city,
           interests: candidate.interests,
           goals: candidate.goals,
-          activity_sector: candidate.activity_sector,
+          activity_sector: candidate.activity_sector || candidate.sector,
           service_type: candidate.service_type || candidate.job,
+          price: candidate.price,
+          availability_days: candidate.availability_days,
           rating: candidate.rating,
           distance_km: distKm == null ? null : Math.round(distKm * 10) / 10,
           match_score: score.finalScore,
@@ -235,6 +257,7 @@ export class DiscoveryService {
         id: `locked-${absoluteIndex}`,
         name: '███████',
         image: null,
+        video: null,
         bio: null,
         job: null,
         category: profile.category,
@@ -278,12 +301,35 @@ function matchesServiceTypes(candidate: FeedUser, serviceTypes: string[]): boole
   return serviceTypes.some((wanted) => labels.some((label) => label.includes(wanted)));
 }
 
+function matchesSector(candidate: FeedUser, needle: string): boolean {
+  const hay = [
+    candidate.activity_sector,
+    candidate.sector,
+    candidate.service_type,
+    candidate.job,
+    candidate.category,
+  ]
+    .filter(Boolean)
+    .map((value) => value!.toLowerCase());
+  return hay.some((h) => h.includes(needle));
+}
+
+export function parsePriceNumber(raw?: string | null): number | null {
+  if (!raw) return null;
+  const match = raw.match(/\d+(?:[.,]\d+)?/);
+  if (!match) return null;
+  const num = parseFloat(match[0].replace(',', '.'));
+  return Number.isFinite(num) ? num : null;
+}
+
 function matchesQuery(candidate: FeedUser, needle: string): boolean {
   const hay = [
     candidate.name,
     candidate.job,
     candidate.service_type,
     candidate.category,
+    candidate.activity_sector,
+    candidate.sector,
     candidate.city,
     candidate.location?.city,
     ...(candidate.interests || []),
@@ -312,7 +358,36 @@ function compareFeedProfiles(
     if (b.rating !== a.rating) return b.rating - a.rating;
     return b.match_score - a.match_score;
   }
+  if (sort === 'price_asc') {
+    const pa = parsePriceNumber(a.price);
+    const pb = parsePriceNumber(b.price);
+    if (pa != null && pb != null && pa !== pb) return pa - pb;
+    if (pa != null && pb == null) return -1;
+    if (pa == null && pb != null) return 1;
+    return b.match_score - a.match_score;
+  }
+  if (sort === 'price_desc') {
+    const pa = parsePriceNumber(a.price);
+    const pb = parsePriceNumber(b.price);
+    if (pa != null && pb != null && pa !== pb) return pb - pa;
+    if (pa != null && pb == null) return -1;
+    if (pa == null && pb != null) return 1;
+    return b.match_score - a.match_score;
+  }
   if (b.match_score !== a.match_score) return b.match_score - a.match_score;
   if (a.match_group !== b.match_group) return a.match_group - b.match_group;
   return 0;
+}
+
+export function normalizeLanguageCode(lang: string): string {
+  const clean = lang.trim().toLowerCase();
+  if (clean === 'ar' || clean.startsWith('ar') || clean.includes('arab')) return 'ar';
+  if (clean === 'fr' || clean.startsWith('fr') || clean.includes('fran')) return 'fr';
+  if (clean === 'en' || clean.startsWith('en') || clean.includes('angl') || clean.includes('eng'))
+    return 'en';
+  if (clean === 'it' || clean.startsWith('it') || clean.includes('ital')) return 'it';
+  if (clean === 'de' || clean.startsWith('de') || clean.includes('allem') || clean.includes('germ'))
+    return 'de';
+  if (clean === 'es' || clean.startsWith('es') || clean.includes('esp')) return 'es';
+  return clean;
 }

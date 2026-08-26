@@ -67,18 +67,34 @@ describe('MatchesView', () => {
     vi.clearAllMocks();
   });
 
-  it('opens the matched profile when the avatar is clicked', async () => {
-    renderMatches();
+  it('opens the matched profile when the avatar is clicked and no conversation exists', async () => {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/swipe/matches')
+        return Promise.resolve({ data: { matches: [{ ...matchRow, conversation_id: null }] } });
+      if (url === '/swipe/pending') return Promise.resolve({ data: { pending: [] } });
+      if (url === '/conversations') return Promise.resolve({ data: { conversations: [] } });
+      return Promise.reject(new Error(`unexpected request: ${url}`));
+    });
+    const store = configureStore({
+      reducer: { matching: matchingReducer, messaging: messagingReducer },
+    });
+    render(
+      <Provider store={store}>
+        <I18nProvider>
+          <MatchesView />
+        </I18nProvider>
+      </Provider>,
+    );
 
     fireEvent.click(await screen.findByLabelText('Voir le profil de Jane Doe'));
 
     expect(pushMock).toHaveBeenCalledWith('/profile/user-2');
   });
 
-  it('opens the chat when the rest of the match row is clicked', async () => {
+  it('opens the chat when the match is clicked with an existing conversation', async () => {
     renderMatches();
 
-    fireEvent.click(await screen.findByText('Jane Doe'));
+    fireEvent.click(await screen.findByText('Jane'));
 
     expect(pushMock).toHaveBeenCalledWith('/chat/conv-1');
   });

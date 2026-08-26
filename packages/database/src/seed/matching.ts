@@ -30,6 +30,9 @@ type MatchingProfileSeed = {
   plan?: UserPlan;
   lat: number;
   lon: number;
+  price?: string;
+  availability_days?: string[];
+  languages?: string[];
   /** When true, this profile already RIGHT-swiped the tester (liked_me boost). */
   likesTester?: boolean;
 };
@@ -54,6 +57,9 @@ export const MATCHING_TESTER = {
   profile_type: ProfileType.PROVIDER,
   lat: TUNIS.lat,
   lon: TUNIS.lon,
+  price: '60 DT',
+  availability_days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'],
+  languages: ['fr', 'ar', 'en'],
 };
 
 const PROFILES: MatchingProfileSeed[] = [
@@ -267,6 +273,9 @@ async function upsertUserWithLocation(
     profile_type?: ProfileType;
     lat: number;
     lon: number;
+    price?: string;
+    availability_days?: string[];
+    languages?: string[];
   },
 ) {
   const user = await prisma.user.upsert({
@@ -291,9 +300,12 @@ async function upsertUserWithLocation(
       profile_type: data.profile_type,
       gps_latitude: data.lat,
       gps_longitude: data.lon,
+      price: data.price ?? '40 DT',
+      availability_days: data.availability_days ?? ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'],
       rating: 4.5,
-      languages: ['Français', 'Arabe'],
+      languages: data.languages ?? ['fr', 'ar'],
       contact_modes: ['call', 'café'],
+      onboarding_completed_at: new Date(),
     },
     update: {
       name: data.name,
@@ -312,6 +324,10 @@ async function upsertUserWithLocation(
       profile_type: data.profile_type,
       gps_latitude: data.lat,
       gps_longitude: data.lon,
+      price: data.price ?? '40 DT',
+      availability_days: data.availability_days ?? ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'],
+      languages: data.languages ?? ['fr', 'ar'],
+      onboarding_completed_at: new Date(),
       role: data.role ?? Role.USER,
     },
   });

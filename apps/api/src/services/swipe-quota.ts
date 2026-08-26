@@ -41,20 +41,25 @@ export class SwipeQuotaService {
     }
   }
 
-  /** Source of truth for quota: SwipeLog RIGHT rows in the current UTC day. */
-  async countTodayRightSwipes(userId: string, now = new Date()): Promise<number> {
+  /** Source of truth for quota: SwipeLog rows (LEFT & RIGHT) in the current UTC day. */
+  async countTodaySwipes(userId: string, now = new Date()): Promise<number> {
     try {
       const { start, end } = utcDayBounds(now);
       return this.prisma.swipeLog.count({
         where: {
           user_id: userId,
-          direction: SwipeDirection.RIGHT,
+          direction: { in: [SwipeDirection.RIGHT, SwipeDirection.LEFT] },
           swiped_at: { gte: start, lt: end },
         },
       });
     } catch (err) {
       throw err;
     }
+  }
+
+  /** Alias for backwards compatibility with tests and callers */
+  async countTodayRightSwipes(userId: string, now = new Date()): Promise<number> {
+    return this.countTodaySwipes(userId, now);
   }
 
   async buildQuotaSnapshot(userId: string): Promise<SwipeQuota> {
@@ -70,7 +75,7 @@ export class SwipeQuotaService {
           resets_at: 'midnight_utc',
         };
       }
-      const used = await this.countTodayRightSwipes(userId);
+      const used = await this.countTodaySwipes(userId);
       return {
         plan,
         unlimited: false,

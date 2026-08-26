@@ -173,7 +173,7 @@ export class PhoneAuthenticationService {
       where: { phone },
     });
 
-    if (user?.password) {
+    if (user && user.password) {
       try {
         const code = await this.otpChallengeService.createChallenge(
           phone,

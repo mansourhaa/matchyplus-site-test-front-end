@@ -27,7 +27,7 @@ import {
 import type { FeedProfile, SwipeFeedResponse } from '@/features/matching/types';
 import { api } from '@/lib/api';
 import { toast } from '@/lib/toast';
-import { Filter, Loader2, Lock, MapPin, RefreshCw, Search, Star, X } from 'lucide-react';
+import { Filter, Loader2, Lock, MapPin, Search, Star, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const SEARCH_PAGE_SIZE = 20;
@@ -256,7 +256,7 @@ export function SearchView() {
 
   const buildParams = useCallback(
     (pageOffset: number) => {
-      const params: Record<string, string | number> = {
+      const params: Record<string, string | number | boolean> = {
         latitude: latitude!,
         longitude: longitude!,
         context: 'search',
@@ -265,9 +265,12 @@ export function SearchView() {
         sort: filters.sort,
       };
       if (debouncedQuery) params.q = debouncedQuery;
-      if (filters.profileType) params.profileType = filters.profileType;
-      if (filters.serviceTypes.length > 0) params.serviceTypes = filters.serviceTypes.join(',');
+      if (filters.sector) params.sector = filters.sector;
+      if (filters.maxDistanceKm) params.maxDistanceKm = filters.maxDistanceKm;
       if (filters.minRating > 0) params.minRating = filters.minRating;
+      if (filters.minPrice > 5) params.minPrice = filters.minPrice;
+      if (filters.maxPrice != null) params.maxPrice = filters.maxPrice;
+      if (filters.availableOnly) params.availableOnly = true;
       return params;
     },
     [latitude, longitude, filters, debouncedQuery],
@@ -401,7 +404,7 @@ export function SearchView() {
                   className="flex-1 bg-transparent text-[#353535] outline-none"
                   style={{ fontSize: 13 }}
                   placeholder={t('search.placeholder')}
-                  value={query}
+                  value={query ?? ''}
                   onChange={(e) => setQuery(e.target.value)}
                 />
                 {query && (
@@ -429,15 +432,6 @@ export function SearchView() {
                     {activeFilterCount}
                   </span>
                 )}
-              </button>
-              <button
-                type="button"
-                onClick={() => void loadSearchFeed('replace')}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
-                aria-label={t('common.retry')}
-              >
-                <RefreshCw size={16} />
               </button>
             </div>
 

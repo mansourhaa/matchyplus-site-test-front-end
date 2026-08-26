@@ -1,10 +1,14 @@
 /**
- * Scripted Discovery scoring (v5 port) for Fastify product API.
+ * Scripted 6-Dimension Discovery Matching Engine for Fastify API.
+ * Aligned with Matchy+ specification (https://appmatchyplus.figma.site/matching-doc).
  *
- * - No Ollama / embeddings — those belong to apps/ai MATCH/EMBED jobs later.
- * - Interest score uses Jaccard (overlap / union), not raw tag count spam.
- * - Sector-strict intents demote cross-sector candidates to suggestions
- *   instead of dropping them entirely.
+ * Dimensions & Weights:
+ * - 1. Compétences & Intérêts (28%)
+ * - 2. Proximité géographique (22%)
+ * - 3. Alignement des objectifs (18%)
+ * - 4. Disponibilité partagée (12%)
+ * - 5. Langues communes (10%)
+ * - 6. Qualité & Réputation (10%)
  */
 
 export type MatchIntent =
@@ -27,11 +31,18 @@ export type ScoringProfile = {
   goals?: string[] | null;
   looking_for?: string | null;
   bio?: string | null;
+  image?: string | null;
   activity_sector?: string | null;
   service_type?: string | null;
   job?: string | null;
   category?: string | null;
   profile_type?: string | null;
+  languages?: string[] | null;
+  availability_days?: string[] | null;
+  availability_hours?: string[] | null;
+  schedule?: string | null;
+  rating?: number | null;
+  reviews?: number | null;
 };
 
 export type ScoreBreakdown = {
@@ -51,6 +62,18 @@ export type MatchScoreResult = {
   breakdown: ScoreBreakdown[];
   reciprocityBoost: number;
 };
+
+export const WEIGHTS = {
+  skills: 0.28,
+  proximity: 0.22,
+  goals: 0.18,
+  availability: 0.12,
+  languages: 0.1,
+  quality: 0.1,
+} as const;
+
+/** Small boost when the candidate already liked me (incoming RIGHT). */
+export const RECIPROCITY_BOOST = 8;
 
 const INTENT_KEYWORDS: Record<MatchIntent, string[]> = {
   find_job: ['job', 'emploi', 'stage', 'find job', 'candidat', 'cdi', 'cdd', 'mission'],
@@ -96,16 +119,23 @@ const SECTOR_STRICT = new Set<MatchIntent>([
   'need_service',
 ]);
 
-const WEIGHTS = {
-  sector: 0.28,
-  goals: 0.3,
-  interests: 0.17,
-  geo: 0.17,
-  service_type: 0.08,
-} as const;
-
-/** Small boost when the candidate already liked me (incoming RIGHT). */
-export const RECIPROCITY_BOOST = 8;
+const LANG_MAP: Record<string, string> = {
+  arabe: 'ar',
+  arabic: 'ar',
+  عربية: 'ar',
+  'ar-dialect': 'ar',
+  français: 'fr',
+  french: 'fr',
+  francais: 'fr',
+  anglais: 'en',
+  english: 'en',
+  allemand: 'de',
+  german: 'de',
+  italien: 'it',
+  italian: 'it',
+  espagnol: 'es',
+  spanish: 'es',
+};
 
 function norm(value: string | null | undefined): string {
   return String(value || '')
@@ -156,19 +186,8 @@ function interestTokens(profile: ScoringProfile): string[] {
     .toLowerCase()
     .split(/[\s/,]+/)
     .map((w) => w.trim())
-    .filter((w) => w.length >= 4);
+    .filter((w) => w.length >= 3);
   return [...new Set(fallback)];
-}
-
-/** Jaccard similarity × 100 — spam-resistant vs raw overlap count. */
-export function interestJaccardScore(me: ScoringProfile, cand: ScoringProfile): number {
-  const a = new Set(interestTokens(me));
-  const b = new Set(interestTokens(cand));
-  if (a.size === 0 || b.size === 0) return 0;
-  let overlap = 0;
-  for (const token of a) if (b.has(token)) overlap += 1;
-  const union = a.size + b.size - overlap;
-  return Math.round((overlap / union) * 100);
 }
 
 function sectorsCompatible(meSect: string, candSect: string): boolean {
@@ -213,37 +232,109 @@ function scoreMutualGoals(
   return { pts: 0, matchType: 'none' };
 }
 
-function geoScore(distKm: number | null): number {
-  if (distKm == null) return 40;
-  if (distKm <= 2) return 95;
-  if (distKm <= 5) return 85;
-  if (distKm <= 15) return 72;
-  if (distKm <= 30) return 58;
-  return 45;
+/** 1. Compétences & Intérêts (28%): Jaccard + soft substring matches + sector alignment */
+export function skillsScore(me: ScoringProfile, cand: ScoringProfile): number {
+  const userTags = interestTokens(me);
+  const candTags = interestTokens(cand);
+  if (userTags.length === 0 || candTags.length === 0) return 40;
+
+  let intersection = 0;
+  for (const t of userTags) {
+    if (candTags.includes(t)) intersection += 1;
+  }
+  const union = new Set([...userTags, ...candTags]).size;
+  const jaccard = union > 0 ? intersection / union : 0;
+
+  const softMatches = userTags.filter((ut) =>
+    candTags.some((pt) => pt.includes(ut) || ut.includes(pt)),
+  ).length;
+
+  const compatible = sectorsCompatible(sectorLabel(me), sectorLabel(cand));
+  const sectorBoost = compatible ? 1.15 : 0.85;
+
+  return Math.max(
+    20,
+    Math.min(100, Math.round((jaccard * 60 + softMatches * 8 + 15) * sectorBoost)),
+  );
 }
 
-function sectorScore(me: ScoringProfile, cand: ScoringProfile): number {
+/** 2. Proximité géographique (22%): Exponential decay curve */
+export function proximityScore(distKm: number | null, radiusKm = 25): number {
+  if (distKm == null) return 50;
+  if (distKm <= 0.5) return 99;
+  const distRatio = Math.min(1, distKm / Math.max(1, radiusKm));
+  const decay = Math.pow(Math.max(0, 1 - distRatio), 1.6) * 100;
+  return Math.max(10, Math.min(100, Math.round(decay)));
+}
+
+/** 3. Alignement des objectifs (18%): Goal intent matrix */
+export function goalsScore(
+  me: ScoringProfile,
+  cand: ScoringProfile,
+): { score: number; matchType: MatchType } {
+  const myIntents = extractIntents(me);
+  const candIntents = extractIntents(cand);
   const meSect = sectorLabel(me);
   const candSect = sectorLabel(cand);
-  if (!meSect && !candSect) return 40;
-  if (sectorsCompatible(meSect, candSect)) return 90;
-  return 25;
+  const mutual = scoreMutualGoals(myIntents, candIntents, meSect, candSect);
+
+  let score = 50;
+  if (mutual.pts === 25) score = 100;
+  else if (mutual.pts === 18) score = 90;
+  else if (mutual.pts === 10) score = 75;
+  else score = 45;
+
+  return { score, matchType: mutual.matchType };
 }
 
-function serviceTypeScore(me: ScoringProfile, cand: ScoringProfile): number {
-  const a = norm(me.service_type || me.job);
-  const b = norm(cand.service_type || cand.job);
-  if (!a || !b) return 40;
-  if (a === b) return 100;
-  if (a.includes(b) || b.includes(a)) return 75;
-  return 30;
+/** 4. Disponibilité partagée (12%): Days overlap + schedule flexibility */
+export function availabilityScore(me: ScoringProfile, cand: ScoringProfile): number {
+  const myDays = me.availability_days ?? [];
+  const candDays = cand.availability_days ?? [];
+  const candSchedule = String(cand.schedule || '').toLowerCase();
+  const isFlexible = /flexible|24h|disponible|plein temps|full-time/i.test(candSchedule);
+
+  if (myDays.length > 0 && candDays.length > 0) {
+    const dayOverlap = myDays.filter((d) => candDays.includes(d)).length;
+    const dayScore = Math.min(100, (dayOverlap / Math.max(myDays.length, 1)) * 100);
+    const hourScore = isFlexible ? 100 : 70;
+    return Math.round(dayScore * 0.6 + hourScore * 0.4);
+  }
+
+  if (isFlexible) return 90;
+  if (candDays.length > 0 || myDays.length > 0) return 70;
+  return 65;
 }
 
-function goalsToScore(pts: number): number {
-  if (pts === 25) return 100;
-  if (pts === 18) return 90;
-  if (pts === 10) return 75;
-  return 40;
+/** 5. Langues communes (10%): Normalized language overlap + shared bonus */
+export function languageScore(me: ScoringProfile, cand: ScoringProfile): number {
+  const normalize = (langs?: string[] | null) =>
+    (langs || []).map((l) => LANG_MAP[norm(l)] ?? norm(l)).filter(Boolean);
+
+  const myNorm = normalize(me.languages);
+  const candNorm = normalize(cand.languages);
+
+  if (myNorm.length === 0 || candNorm.length === 0) return 70;
+
+  const shared = myNorm.filter((l) => candNorm.includes(l));
+  const union = new Set([...myNorm, ...candNorm]).size;
+
+  const jaccard = union > 0 ? shared.length / union : 0;
+  const bonus = shared.length > 0 ? 15 : 0;
+  return Math.min(100, Math.round(jaccard * 85 + bonus));
+}
+
+/** 6. Qualité & Réputation (10%): Rating + reviews log + completeness */
+export function qualityScore(cand: ScoringProfile): number {
+  const rating = cand.rating ?? 0;
+  const reviews = cand.reviews ?? 0;
+
+  const ratingScore = rating > 0 ? (Math.min(5, Math.max(0, rating)) / 5) * 70 : 45;
+  const reviewBonus = Math.min(30, Math.log10(Math.max(0, reviews) + 1) * 30);
+  const profileCompleteness = (cand.bio ? 5 : 0) + (cand.image ? 5 : 0);
+
+  const score = ratingScore + reviewBonus + profileCompleteness;
+  return Math.max(30, Math.min(100, Math.round(score)));
 }
 
 function labelFor(matchType: MatchType): string {
@@ -274,38 +365,43 @@ export function computeMatchScore(
   me: ScoringProfile,
   cand: ScoringProfile,
   distKm: number | null,
-  options?: { likedMe?: boolean },
+  options?: { likedMe?: boolean; radiusKm?: number },
 ): MatchScoreResult {
-  const myIntents = extractIntents(me);
-  const candIntents = extractIntents(cand);
-  const meSect = sectorLabel(me);
-  const candSect = sectorLabel(cand);
-  const goals = scoreMutualGoals(myIntents, candIntents, meSect, candSect);
+  const goals = goalsScore(me, cand);
+  const skills = skillsScore(me, cand);
+  const proximity = proximityScore(distKm, options?.radiusKm ?? 25);
+  const availability = availabilityScore(me, cand);
+  const languages = languageScore(me, cand);
+  const quality = qualityScore(cand);
 
   const dimensions = [
-    { label: 'sector', score: sectorScore(me, cand), weight: WEIGHTS.sector },
-    { label: 'goals', score: goalsToScore(goals.pts), weight: WEIGHTS.goals },
-    { label: 'interests', score: interestJaccardScore(me, cand), weight: WEIGHTS.interests },
-    { label: 'geo', score: geoScore(distKm), weight: WEIGHTS.geo },
-    {
-      label: 'service_type',
-      score: serviceTypeScore(me, cand),
-      weight: WEIGHTS.service_type,
-    },
+    { label: 'skills', score: skills, weight: WEIGHTS.skills },
+    { label: 'proximity', score: proximity, weight: WEIGHTS.proximity },
+    { label: 'goals', score: goals.score, weight: WEIGHTS.goals },
+    { label: 'availability', score: availability, weight: WEIGHTS.availability },
+    { label: 'languages', score: languages, weight: WEIGHTS.languages },
+    { label: 'quality', score: quality, weight: WEIGHTS.quality },
   ];
 
-  let finalScore = Math.round(dimensions.reduce((sum, d) => sum + d.score * d.weight, 0));
-  const reciprocityBoost = options?.likedMe ? RECIPROCITY_BOOST : 0;
-  finalScore = Math.min(100, finalScore + reciprocityBoost);
+  const rawWeighted = dimensions.reduce((sum, d) => sum + d.score * d.weight, 0);
 
-  // Cross-sector under sector-strict intents: keep as low-priority suggestion, do not drop.
+  // Deterministic seed jitter (±3 pts) to avoid visual ties across re-renders
+  const seed = (cand.id.charCodeAt(0) || 0) + (cand.interests?.length || 0);
+  const jitter = (seed % 7) - 3;
+
+  const reciprocityBoost = options?.likedMe ? RECIPROCITY_BOOST : 0;
+  const clampedBase = Math.min(99, Math.max(40, Math.round(rawWeighted + jitter)));
+  const finalScore = Math.min(100, clampedBase + reciprocityBoost);
+
   let matchType = goals.matchType;
   let matchGroup = groupFor(matchType);
+  const myIntents = extractIntents(me);
+  const meSect = sectorLabel(me);
+  const candSect = sectorLabel(cand);
   const strict = myIntents.some((i) => SECTOR_STRICT.has(i)) && Boolean(norm(meSect));
   if (strict && !sectorsCompatible(meSect, candSect) && matchType === 'none') {
     matchType = 'none';
     matchGroup = 4;
-    finalScore = Math.min(finalScore, 45);
   }
 
   return {
