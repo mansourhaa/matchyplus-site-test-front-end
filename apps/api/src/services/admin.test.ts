@@ -912,6 +912,28 @@ describe('AdminService analytics', () => {
 
     const result = await new AdminService({ prisma: prisma as never }).getAnalytics();
     expect(result.trends).toBeNull();
+    expect(result.planTrends).toEqual({ FREE: null, PREMIUM: null, PREMIUM_PLUS: null });
+  });
+
+  it('computes a per-plan subscriber trend, including a plan with no members at all', async () => {
+    const prisma = createMockPrisma();
+    // June: 4 new Premium subscribers. July: 1 new Free member, no new Premium/Premium+.
+    prisma.user.findMany.mockResolvedValue([
+      { category: 'A', city: 'X', matches: 10, plan: 'PREMIUM', create_at: new Date('2026-06-01') },
+      { category: 'A', city: 'X', matches: 10, plan: 'PREMIUM', create_at: new Date('2026-06-02') },
+      { category: 'A', city: 'X', matches: 10, plan: 'PREMIUM', create_at: new Date('2026-06-03') },
+      { category: 'A', city: 'X', matches: 10, plan: 'PREMIUM', create_at: new Date('2026-06-04') },
+      { category: 'A', city: 'X', matches: 0, plan: 'FREE', create_at: new Date('2026-07-01') },
+    ]);
+    prisma.plan.findMany.mockResolvedValue(plans);
+
+    const result = await new AdminService({ prisma: prisma as never }).getAnalytics();
+
+    expect(result.planTrends).toEqual({
+      FREE: 100, // 0 → 1 subscriber
+      PREMIUM: 0, // cumulative stayed at 4 both months
+      PREMIUM_PLUS: 0, // no members at all — 0 → 0, not treated as "no data"
+    });
   });
 
   it('groups signups by calendar month, oldest first', async () => {

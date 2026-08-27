@@ -515,6 +515,14 @@ export const adminAnalyticsSchema = {
                 },
               },
             },
+            planTrends: {
+              type: 'object',
+              properties: {
+                FREE: { type: 'number', nullable: true },
+                PREMIUM: { type: 'number', nullable: true },
+                PREMIUM_PLUS: { type: 'number', nullable: true },
+              },
+            },
             totalMatches: { type: 'number' },
             matchesThisMonth: { type: 'number' },
             estimatedMonthlyRevenue: { type: 'number' },

@@ -11,6 +11,8 @@ export interface AdminAnalytics {
   matchesByCategory: Array<{ name: string; value: number }>;
   topCities: Array<{ city: string; users: number }>;
   revenueByPlan: Array<{ plan: string; users: number; monthlyRevenue: number }>;
+  /** Month-over-month subscriber growth per plan (including FREE); null when < 2 months of data. */
+  planTrends: Record<'FREE' | 'PREMIUM' | 'PREMIUM_PLUS', number | null>;
   totalMatches: number;
   matchesThisMonth: number;
   estimatedMonthlyRevenue: number;

@@ -540,6 +540,8 @@ export function AdminPanel() {
           {activeSection === 'plans' && (
             <AdminPlansSection
               plans={plans}
+              stats={stats}
+              analytics={analytics}
               saving={savingPlan}
               savedAt={savedAt}
               onSave={handleSavePlan}
