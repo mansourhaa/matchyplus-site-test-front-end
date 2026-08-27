@@ -398,8 +398,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const presented = readRefreshToken(request);
         if (!presented.token) {
-          // Logged-out browsers hit this after authcheck 401 — return 401 without
-          // throwing so the global error handler does not log a full stack as ERROR.
+          clearMemberSessionCookies(reply);
           return reply.code(401).send({
             status: 401,
             code: 'invalid_refresh_token',
@@ -421,6 +420,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           ) {
             data = await tokenService.refreshAccessToken(cookieToken);
           } else {
+            clearMemberSessionCookies(reply);
             throw err;
           }
         }
@@ -428,6 +428,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         setMemberSessionCookies(reply, data);
         return reply.code(200).send(memberRefreshResponse(request, data));
       } catch (err) {
+        clearMemberSessionCookies(reply);
         throw mapError(err as Error, request);
       }
     },

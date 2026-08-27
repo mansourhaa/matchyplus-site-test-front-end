@@ -221,7 +221,7 @@ export function DiscoverView() {
     >
       {/* Header — Matchy exact */}
       <div
-        className="flex shrink-0 items-center justify-between px-4 py-3 md:px-6"
+        className="sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 py-3 md:px-6"
         style={{ background: 'white', borderBottom: '1px solid #F0F0F0' }}
       >
         <div className="flex items-center gap-3">
@@ -237,68 +237,6 @@ export function DiscoverView() {
         </div>
 
         <div className="flex items-center gap-2 md:gap-3">
-          {quota && (
-            <button
-              type="button"
-              onClick={() => setForceQuotaModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
-              style={
-                quota.unlimited
-                  ? {
-                      background: 'linear-gradient(135deg, #F0FDF4 0%, #E8F8F5 100%)',
-                      color: '#0D9488',
-                      border: '1px solid #A7F3D0',
-                      boxShadow: '0 1px 2px rgba(13, 148, 136, 0.08)',
-                    }
-                  : freeRemaining != null && freeRemaining <= 0
-                    ? {
-                        background: '#FFF1F2',
-                        color: '#E11D48',
-                        border: '1px solid #FECDD3',
-                        boxShadow: '0 1px 2px rgba(225, 29, 72, 0.08)',
-                      }
-                    : freeRemaining != null && freeRemaining <= 3
-                      ? {
-                          background: '#FFFBEB',
-                          color: '#D97706',
-                          border: '1px solid #FDE68A',
-                          boxShadow: '0 1px 2px rgba(217, 119, 6, 0.08)',
-                        }
-                      : {
-                          background: 'linear-gradient(135deg, #F0F7FF 0%, #EBF4FC 100%)',
-                          color: '#2F76BB',
-                          border: '1px solid #D0E3F8',
-                          boxShadow: '0 1px 2px rgba(47, 118, 187, 0.08)',
-                        }
-              }
-              title={
-                quota.unlimited
-                  ? t('matching.quotaUnlimited')
-                  : t('matching.quotaLeft', { remaining: freeRemaining ?? 0 })
-              }
-            >
-              <Zap
-                size={13}
-                className={
-                  quota.unlimited
-                    ? 'fill-teal-500 text-teal-500'
-                    : freeRemaining === 0
-                      ? 'fill-rose-500 text-rose-500'
-                      : 'fill-blue-500 text-blue-500'
-                }
-              />
-              <span>
-                {quota.unlimited
-                  ? locale === 'fr'
-                    ? 'Swipes illimités'
-                    : locale === 'ar'
-                      ? 'غير محدود'
-                      : 'Unlimited'
-                  : `${freeRemaining ?? 0} / ${freeLimit ?? 10} swipes`}
-              </span>
-            </button>
-          )}
-
           <MatchyHeaderActions />
         </div>
       </div>
@@ -636,16 +574,37 @@ export function DiscoverView() {
                   onClick={() => setForceQuotaModal(true)}
                   className="mx-auto mt-3 mb-2 flex cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
                   style={{
-                    background: freeRemaining === 0 ? '#FFF0F0' : '#F8FAFC',
-                    color: freeRemaining === 0 ? '#E74C3C' : '#64748B',
-                    border: freeRemaining === 0 ? '1px solid #FFE0E0' : '1px solid #E2E8F0',
+                    background:
+                      freeRemaining === 0
+                        ? '#FFF1F2'
+                        : freeRemaining != null && freeRemaining <= 3
+                          ? '#FFFBEB'
+                          : '#F8FAFC',
+                    color:
+                      freeRemaining === 0
+                        ? '#E11D48'
+                        : freeRemaining != null && freeRemaining <= 3
+                          ? '#D97706'
+                          : '#64748B',
+                    border:
+                      freeRemaining === 0
+                        ? '1px solid #FECDD3'
+                        : freeRemaining != null && freeRemaining <= 3
+                          ? '1px solid #FDE68A'
+                          : '1px solid #E2E8F0',
                     maxWidth: 360,
                     width: '100%',
                   }}
                 >
                   <AlertTriangle
                     size={13}
-                    className={freeRemaining === 0 ? 'text-[#E74C3C]' : 'text-[#64748B]'}
+                    className={
+                      freeRemaining === 0
+                        ? 'text-[#E11D48]'
+                        : freeRemaining != null && freeRemaining <= 3
+                          ? 'text-[#D97706]'
+                          : 'text-[#64748B]'
+                    }
                   />
                   <span>
                     {freeRemaining ?? 0}/{quota.limit ?? 10} actions remaining today
@@ -662,15 +621,9 @@ export function DiscoverView() {
                   type="button"
                   onClick={() => void onPass()}
                   disabled={!top || matching.swipeLoading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 transition-all hover:bg-slate-50 hover:shadow-sm active:scale-[0.97]"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[#E2E8F0] bg-white py-3 font-bold text-[#475569] shadow-xs transition-all hover:bg-[#F8FAFC] active:scale-[0.98] disabled:opacity-60"
                   style={{
-                    background: 'white',
-                    border: '1.5px solid #E2E8F0',
-                    color: '#334155',
                     fontSize: 15,
-                    fontWeight: 700,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                    opacity: top ? 1 : 0.5,
                     whiteSpace: 'nowrap',
                   }}
                 >
@@ -683,22 +636,14 @@ export function DiscoverView() {
                   type="button"
                   onClick={() => void onConnect()}
                   disabled={!top || matching.swipeLoading || isRightSwipeBlocked}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 transition-all hover:brightness-105 active:scale-[0.97]"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
                   style={{
-                    background: isRightSwipeBlocked ? '#E2E8F0' : '#E8F5E9',
-                    color: isRightSwipeBlocked ? '#94A3B8' : '#2E7D32',
-                    border: isRightSwipeBlocked ? '1.5px solid #CBD5E1' : '1.5px solid #C8E6C9',
                     fontSize: 15,
-                    fontWeight: 700,
                     cursor: isRightSwipeBlocked ? 'not-allowed' : 'pointer',
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <Check
-                    size={18}
-                    strokeWidth={2.5}
-                    className={isRightSwipeBlocked ? 'text-[#94A3B8]' : 'text-[#2E7D32]'}
-                  />
+                  <Check size={18} strokeWidth={2.5} className="text-white" />
                   <span>{t('matching.connect')}</span>
                 </button>
               </div>

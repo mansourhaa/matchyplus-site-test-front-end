@@ -194,11 +194,18 @@ export function AdminReportsSection({
 
       {!loading && groups.length === 0 && (
         <div
-          className="flex flex-col items-center gap-2 rounded-2xl p-10 text-center"
+          className="flex flex-col items-center justify-center rounded-2xl p-12 text-center"
           style={{ background: 'white', border: '1px solid #F0F0F0' }}
         >
-          <Flag size={28} color="#CCC" />
-          <p style={{ fontSize: '14px', color: '#888' }}>Aucun signalement pour ce filtre.</p>
+          <div
+            className="mb-3 flex h-16 w-16 items-center justify-center rounded-full"
+            style={{ background: '#F0F0F0' }}
+          >
+            <Flag size={24} color="#CCC" />
+          </div>
+          <p style={{ fontSize: '14px', fontWeight: 600, color: '#888' }}>
+            Aucun signalement pour ce filtre
+          </p>
         </div>
       )}
 

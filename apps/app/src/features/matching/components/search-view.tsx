@@ -375,7 +375,7 @@ export function SearchView() {
       style={{ background: matchyBrand.bg }}
     >
       <div
-        className="flex shrink-0 items-center justify-between px-4 py-3 md:px-6"
+        className="sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 py-3 md:px-6"
         style={{ background: 'white', borderBottom: '1px solid #F0F0F0' }}
       >
         <p style={{ fontSize: 18, fontWeight: 700, color: '#1A1A2E' }}>{title}</p>
@@ -450,12 +450,31 @@ export function SearchView() {
                   </p>
                 </div>
               ) : profiles.length === 0 ? (
-                <p
-                  className="rounded-3xl bg-white px-5 py-10 text-center text-sm text-[#777]"
+                <div
+                  className="flex flex-col items-center justify-center rounded-3xl bg-white px-6 py-12 text-center shadow-xs"
                   style={{ border: `1px solid ${matchyBrand.border}` }}
                 >
-                  {t('search.empty')}
-                </p>
+                  <div
+                    className="mb-4 flex h-16 w-16 items-center justify-center rounded-full"
+                    style={{ background: '#F0F7FF' }}
+                  >
+                    <Search size={28} color={matchyBrand.blue} />
+                  </div>
+                  <p className="text-base font-bold" style={{ color: matchyBrand.textDark }}>
+                    {t('search.empty')}
+                  </p>
+                  {countActiveSearchFilters(filters) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setFilters(DEFAULT_SEARCH_FILTERS)}
+                      className="mt-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-[#2F76BB] transition-colors hover:bg-[#EEF5FF]"
+                      style={{ background: '#F5F9FF', border: '1px solid #D6E8FA' }}
+                    >
+                      <X size={14} />
+                      {t('search.resetFilters')}
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div className="space-y-3">
                   {loading && (

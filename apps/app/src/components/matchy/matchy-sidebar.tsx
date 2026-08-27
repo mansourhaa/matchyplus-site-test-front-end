@@ -42,11 +42,12 @@ export function MatchySidebar() {
 
   return (
     <aside
-      className="hidden min-h-screen shrink-0 flex-col md:flex"
+      className="sticky top-0 hidden h-dvh h-screen shrink-0 flex-col overflow-y-auto md:flex"
       style={{
         width: 220,
         background: 'white',
         borderRight: `1px solid ${matchyBrand.border}`,
+        zIndex: 30,
       }}
     >
       <div

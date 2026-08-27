@@ -784,9 +784,10 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                 type="button"
                 disabled={busy}
                 onClick={onPass}
-                className="flex-1 rounded-2xl border border-[#E2E8F0] py-3 font-bold text-[#475569] transition-colors hover:bg-[#F8FAFC] active:scale-[0.98] disabled:opacity-60"
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[#E2E8F0] py-3 font-bold text-[#475569] transition-colors hover:bg-[#F8FAFC] active:scale-[0.98] disabled:opacity-60"
               >
-                {busy ? t('matching.swiping') : t('matching.pass')}
+                <X size={18} className="text-[#64748B]" strokeWidth={2.5} />
+                <span>{busy ? t('matching.swiping') : t('matching.pass')}</span>
               </button>
             )}
 
@@ -795,9 +796,10 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                 type="button"
                 disabled={busy}
                 onClick={onConnect}
-                className="flex-1 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
               >
-                {busy ? t('matching.swiping') : t('matching.connect')}
+                <Check size={18} strokeWidth={2.5} className="text-white" />
+                <span>{busy ? t('matching.swiping') : t('matching.connect')}</span>
               </button>
             )}
           </div>

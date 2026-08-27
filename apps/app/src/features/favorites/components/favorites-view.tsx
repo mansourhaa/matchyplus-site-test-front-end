@@ -248,30 +248,14 @@ export function FavoritesView() {
 
             <h2 className="text-base font-extrabold" style={{ color: matchyBrand.textDark }}>
               {searchQuery
-                ? locale === 'en'
-                  ? 'No matching favorites found'
-                  : locale === 'ar'
-                    ? 'لم يتم العثور على نتائج مطابقة'
-                    : 'Aucun favori correspondant'
-                : locale === 'en'
-                  ? 'No favorite profiles yet'
-                  : locale === 'ar'
-                    ? 'لا تملك مفضلة بعد'
-                    : 'Aucun favori enregistré'}
+                ? t('settings.favoritesEmptySearchTitle')
+                : t('settings.favoritesEmptyTitle')}
             </h2>
 
             <p className="mt-2 max-w-sm text-xs leading-relaxed text-[#777]">
               {searchQuery
-                ? locale === 'en'
-                  ? 'Try adjusting your search terms.'
-                  : locale === 'ar'
-                    ? 'حاول تغيير كلمات البحث.'
-                    : 'Essayez avec un autre mot-clé.'
-                : locale === 'en'
-                  ? 'Bookmark profiles you like during discovery to keep quick access to their details and connect anytime.'
-                  : locale === 'ar'
-                    ? 'قم بحفظ الملفات التي تعجبك في صفحة الاكتشاف للوصول إليها لاحقاً والاتصال بها.'
-                    : 'Enregistrez les profils qui vous intéressent dans Découvrir pour les retrouver ici et vous connecter plus tard.'}
+                ? t('settings.favoritesEmptySearchDesc')
+                : t('settings.favoritesEmptyDesc')}
             </p>
 
             <Link
@@ -280,13 +264,7 @@ export function FavoritesView() {
               style={{ background: matchyBrand.gradient }}
             >
               <Compass size={15} />
-              <span>
-                {locale === 'en'
-                  ? 'Discover Profiles'
-                  : locale === 'ar'
-                    ? 'استكشاف الملفات الشخصية'
-                    : 'Découvrir des profils'}
-              </span>
+              <span>{t('settings.discoverProfiles')}</span>
             </Link>
           </div>
         ) : (
