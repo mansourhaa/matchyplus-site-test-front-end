@@ -507,6 +507,7 @@ export function AdminPanel() {
               users={users}
               filters={filters}
               loading={loadingUsers}
+              categories={(analytics?.categoryDistribution ?? []).map((entry) => entry.name)}
               onFiltersChange={(changes) => dispatch(setFilters(changes))}
               onOpenUser={(user) => openUserDetail(user, 'users')}
               onDeleteUser={(user) => setUserToDelete(user)}
