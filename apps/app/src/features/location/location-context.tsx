@@ -165,6 +165,15 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setLocationSynced(true);
     setPermissionDenied(false);
     storeCoords(next);
+
+    // Best-effort: keeps the profile's city connected to where the member actually is.
+    // Never awaited — coordinates already live in local state/localStorage regardless of
+    // whether this succeeds, and this can run before a session exists (e.g. a returning
+    // visitor with a previously-granted browser permission, still on the login screen),
+    // where it 401s harmlessly.
+    void api.post('/users/me/location', next).catch((error) => {
+      handleError(error, 'syncUserLocation');
+    });
   }, []);
 
   const requestIpFallback = useCallback(async () => {

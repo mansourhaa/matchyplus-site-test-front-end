@@ -22,6 +22,21 @@ const errorResponses = {
 
 const userStatusEnum = ['ACTIVE', 'INACTIVE', 'BANNED'];
 const userPlanEnum = ['FREE', 'PREMIUM', 'PREMIUM_PLUS'];
+const teamRoleEnum = ['SUPPORT', 'MODERATOR'];
+
+const adminTeamMember = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    email: { type: 'string', nullable: true },
+    phone: { type: 'string', nullable: true },
+    role: { type: 'string' },
+    status: { type: 'string' },
+    last_login: { type: 'string', nullable: true },
+    create_at: { type: 'string' },
+  },
+};
 
 const adminUser = {
   type: 'object',
@@ -38,6 +53,7 @@ const adminUser = {
     city: { type: 'string', nullable: true },
     bio: { type: 'string', nullable: true },
     image: { type: 'string', nullable: true },
+    video: { type: 'string', nullable: true },
     interests: { type: 'array', items: { type: 'string' } },
     languages: { type: 'array', items: { type: 'string' } },
     contact_modes: { type: 'array', items: { type: 'string' } },
@@ -187,6 +203,24 @@ export const adminGetUserPhotoSchema = {
   },
 };
 
+export const adminGetUserVideoSchema = {
+  tags: ['admin'],
+  summary: "Serve a user's stored presentation video for the admin panel",
+  params: {
+    type: 'object',
+    properties: { id: { type: 'string' } },
+    required: ['id'],
+  },
+  response: {
+    200: {
+      description: 'The video file, streamed as binary video data',
+      type: 'string',
+      contentMediaType: 'video/*',
+    },
+    ...errorResponses,
+  },
+};
+
 export const adminUpdateUserSchema = {
   tags: ['admin'],
   params: {
@@ -260,6 +294,55 @@ export const adminDeleteUserSchema = {
       description: 'Successful response',
       type: 'object',
       properties: { deleted: { type: 'boolean' } },
+    },
+    ...errorResponses,
+  },
+};
+
+export const adminListTeamSchema = {
+  tags: ['admin'],
+  summary: 'List admin/support/moderator accounts below the actor in the hierarchy',
+  querystring: {
+    type: 'object',
+    properties: {
+      page: { type: 'number' },
+      limit: { type: 'number' },
+      search: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        team: { type: 'array', items: adminTeamMember },
+        total: { type: 'number' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const adminCreateTeamMemberSchema = {
+  tags: ['admin'],
+  summary: 'Create a Support or Moderator account — never Super Admin, seeded separately',
+  body: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['name', 'email', 'password', 'role'],
+    properties: {
+      name: { type: 'string', minLength: 1, maxLength: 120 },
+      email: { type: 'string', format: 'email' },
+      password: { type: 'string', minLength: 8, maxLength: 128 },
+      phone: { type: 'string', minLength: 1 },
+      role: { type: 'string', enum: teamRoleEnum },
+    },
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: { member: adminTeamMember },
     },
     ...errorResponses,
   },

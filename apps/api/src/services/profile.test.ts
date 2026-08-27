@@ -424,3 +424,68 @@ describe('ProfileService', () => {
     });
   });
 });
+
+describe('ProfileService syncLocation', () => {
+  function createServiceWithGeo(geolocation: { reverseGeocode: ReturnType<typeof vi.fn> }) {
+    const prisma = createMockPrisma();
+    const service = new ProfileService({
+      prisma: prisma as never,
+      geolocation: geolocation as never,
+    });
+    return { service, prisma };
+  }
+
+  it('saves coordinates and the reverse-geocoded city on success', async () => {
+    const reverseGeocode = vi.fn().mockResolvedValue({
+      success: true,
+      provider: 'nominatim',
+      city: 'Tunis',
+      region: 'Tunis',
+      country: 'Tunisia',
+      formattedAddress: 'Tunis, Tunisia',
+    });
+    const { service, prisma } = createServiceWithGeo({ reverseGeocode });
+
+    const result = await service.syncLocation('user-1', 36.8065, 10.1815);
+
+    expect(reverseGeocode).toHaveBeenCalledWith(36.8065, 10.1815);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { gps_latitude: 36.8065, gps_longitude: 10.1815, city: 'Tunis' },
+    });
+    expect(result).toEqual({ city: 'Tunis' });
+  });
+
+  it('still saves coordinates but leaves city untouched when reverse geocoding fails', async () => {
+    const reverseGeocode = vi.fn().mockResolvedValue({
+      success: false,
+      provider: null,
+      city: 'Unknown Location',
+      region: null,
+      country: null,
+      formattedAddress: '36.8065, 10.1815',
+      error: 'Reverse geocoding failed',
+    });
+    const { service, prisma } = createServiceWithGeo({ reverseGeocode });
+
+    const result = await service.syncLocation('user-1', 36.8065, 10.1815);
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { gps_latitude: 36.8065, gps_longitude: 10.1815 },
+    });
+    expect(result).toEqual({ city: null });
+  });
+
+  it('rejects out-of-range coordinates before calling the geocoder or writing anything', async () => {
+    const reverseGeocode = vi.fn();
+    const { service, prisma } = createServiceWithGeo({ reverseGeocode });
+
+    await expect(service.syncLocation('user-1', 200, 10)).rejects.toMatchObject({
+      statusCode: 400,
+      code: 'invalid_coordinates',
+    });
+    expect(reverseGeocode).not.toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
