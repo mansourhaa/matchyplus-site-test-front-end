@@ -35,6 +35,7 @@ import {
   updateAdminReportStatus,
 } from '@/features/admin-reports/store/admin-reports-slice';
 import type { ReportStatus } from '@/features/admin-reports/types';
+import type { AdminTransaction } from '@/features/admin-transactions/types';
 import {
   fetchAdminTeam,
   selectAdminTeam,
@@ -94,6 +95,12 @@ const NAV_ITEMS: { key: NavKey; icon: LucideIcon; label: string }[] = [
   { key: 'analytics', icon: BarChart2, label: 'Analytiques' },
   { key: 'settings', icon: Settings, label: 'Paramètres' },
 ];
+
+// No real transaction/payment backend exists yet (no ledger, no wallet, no boost-purchase
+// tracking — see the admin dashboard audit). The transactions UI is built and ready; it just
+// has nothing to show until that backend exists, so this stays an empty array rather than
+// fabricated rows.
+const NO_TRANSACTIONS: AdminTransaction[] = [];
 
 export function AdminPanel() {
   useAdminProactiveRefresh();
@@ -425,8 +432,10 @@ export function AdminPanel() {
               stats={stats}
               analytics={analytics}
               users={users}
+              transactions={NO_TRANSACTIONS}
               onSelectUser={(user) => openUserDetail(user, 'dashboard')}
               onSeeAll={() => setActiveSection('users')}
+              onSeeAllTransactions={() => setActiveSection('subscriptions')}
             />
           )}
 
@@ -456,7 +465,12 @@ export function AdminPanel() {
           )}
 
           {activeSection === 'subscriptions' && (
-            <AdminSubscriptionsSection stats={stats} plans={plans} analytics={analytics} />
+            <AdminSubscriptionsSection
+              stats={stats}
+              plans={plans}
+              analytics={analytics}
+              transactions={NO_TRANSACTIONS}
+            />
           )}
 
           {activeSection === 'plans' && (
