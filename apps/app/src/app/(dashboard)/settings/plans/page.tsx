@@ -15,24 +15,6 @@ export default function PlansPage() {
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       <div className="mx-auto max-w-2xl space-y-4 px-4 py-6 md:px-8">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#FFF8EB]">
-            <Crown size={20} color="#F5A623" />
-          </div>
-          <div>
-            <h1 className="text-xl font-extrabold" style={{ color: matchyBrand.textDark }}>
-              {t('settings.subscription')}
-            </h1>
-            <p className="text-xs text-[#777]">
-              {locale === 'en'
-                ? 'Manage your subscription and view active benefits'
-                : locale === 'ar'
-                  ? 'إدارة اشتراكك وعرض المزايا المفعلة'
-                  : 'Gérez votre abonnement et découvrez vos avantages'}
-            </p>
-          </div>
-        </div>
-
         {/* Current Plan Card */}
         <div
           className="rounded-3xl bg-white p-6 shadow-xs"

@@ -217,7 +217,7 @@ describe('POST /api/v1/profiles/:id/view', () => {
         $transaction: vi
           .fn()
           .mockImplementation(async (callback) => callback(prismaOverrides)) as never,
-      },
+      } as never,
     });
     apps.push(app);
 
@@ -279,7 +279,7 @@ describe('POST /api/v1/profiles/:id/view', () => {
         $transaction: vi
           .fn()
           .mockImplementation(async (callback) => callback(prismaOverrides)) as never,
-      },
+      } as never,
     });
     apps.push(app);
 
@@ -479,15 +479,14 @@ describe('GET /api/v1/profiles/media/videos/:filename', () => {
     }
   });
 
-  it('rejects a viewer with no active match to the owner', async () => {
+  it('rejects a viewer when blocked by the owner', async () => {
     const app = await buildTestApp({
       prisma: {
         user: {
           findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
           findFirst: vi.fn().mockResolvedValue({ id: 'owner-1' }),
         } as never,
-        match: { findUnique: vi.fn().mockResolvedValue(null) } as never,
-        conversation: { findUnique: vi.fn().mockResolvedValue(null) } as never,
+        userBlock: { findFirst: vi.fn().mockResolvedValue({ id: 'block-1' }) } as never,
       },
     });
     apps.push(app);
@@ -514,7 +513,7 @@ describe('GET /api/v1/profiles/media/videos/:filename', () => {
           findUniqueOrThrow: findUniqueOrThrowForAnyCaller(),
           findFirst: vi.fn().mockResolvedValue({ id: 'owner-1' }),
         } as never,
-        match: { findUnique: vi.fn().mockResolvedValue({ id: 'match-1' }) } as never,
+        userBlock: { findFirst: vi.fn().mockResolvedValue(null) } as never,
       },
     });
     apps.push(app);

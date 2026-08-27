@@ -1,6 +1,7 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import { VideoJSPlayer } from '@/components/video-js-player';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import {
@@ -19,7 +20,21 @@ import {
   uploadProfileVideo,
 } from '@/features/profile/store/profile-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
-import { AlertCircle, Film, Play, Trash2, Video, Zap } from 'lucide-react';
+import { VideoQuality, useVideoSettings } from '@/lib/video-settings';
+import {
+  AlertCircle,
+  Check,
+  Film,
+  Info,
+  Monitor,
+  Play,
+  Sparkles,
+  Trash2,
+  Upload,
+  Video,
+  Wifi,
+  Zap,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export function VideoSettingsView() {
@@ -37,6 +52,10 @@ export function VideoSettingsView() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const serverVideo = profile?.video ?? null;
   const authenticated = useAuthenticatedMediaUrl(serverVideo, { stream: true });
+
+  // Persistent Video Settings
+  const { settings: videoSettings, updateSettings } = useVideoSettings();
+  const [aspectRatio, setAspectRatio] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch(fetchOnboardingProfile());
@@ -96,16 +115,27 @@ export function VideoSettingsView() {
       dispatch(fetchOnboardingProfile());
       setPlaying(false);
       setPlaybackError(false);
+      setAspectRatio(null);
     }
   };
 
   const previewUrl = localPreview || authenticated.url;
   const hasVideo = Boolean(localPreview || serverVideo);
+
   const startPreview = () => {
     const video = videoRef.current;
     if (!video || !previewUrl) return;
     video.muted = false;
     void video.play().then(() => setPlaying(true));
+  };
+
+  const handleLoadedMetadata = () => {
+    setPlaybackError(false);
+    const video = videoRef.current;
+    if (video && video.videoWidth && video.videoHeight) {
+      const ratio = video.videoWidth / video.videoHeight;
+      setAspectRatio(`${video.videoWidth} / ${video.videoHeight}`);
+    }
   };
 
   if (loading && !profile) {
@@ -145,23 +175,27 @@ export function VideoSettingsView() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-3" dir={isRtl ? 'rtl' : 'ltr'}>
-      <section className="rounded-2xl bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E8F0FA]">
-            <Film size={18} color={matchyBrand.blue} />
+    <div className="mx-auto w-full max-w-xl space-y-4" dir={isRtl ? 'rtl' : 'ltr'}>
+      {/* 1. Intro Video Card */}
+      <section
+        className="rounded-3xl bg-white p-5 shadow-xs"
+        style={{ border: '1px solid #F0F0F0' }}
+      >
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F0FA]">
+            <Film size={20} color={matchyBrand.blue} />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-[#353535]">
+            <h2 className="text-base font-extrabold text-[#1A1A2E]">
               {locale === 'en'
-                ? 'Presentation Video'
+                ? 'Intro video'
                 : locale === 'ar'
-                  ? 'فيديو العرض التقديمي'
-                  : 'Vidéo de présentation'}
+                  ? 'فيديو المقدمة'
+                  : "Vidéo d'intro"}
             </h2>
-            <p className="text-[11px] text-[#888]">
+            <p className="text-xs text-[#888]">
               {locale === 'en'
-                ? 'Max length: 20 seconds'
+                ? 'Max duration: 20 seconds'
                 : locale === 'ar'
                   ? 'المدة الأقصى: 20 ثانية'
                   : 'Durée max : 20 secondes'}
@@ -171,22 +205,21 @@ export function VideoSettingsView() {
 
         {hasVideo ? (
           <div>
-            <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-xl bg-[#1A1A2E]">
+            <div className="relative mb-4 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-black">
               {previewUrl ? (
-                <video
-                  key={previewUrl}
-                  ref={videoRef}
+                <VideoJSPlayer
                   src={previewUrl}
-                  className="h-full w-full object-cover"
-                  controls={playing}
-                  playsInline
-                  onPause={() => setPlaying(false)}
-                  onEnded={() => setPlaying(false)}
-                  onLoadedMetadata={() => setPlaybackError(false)}
-                  onError={() => setPlaybackError(true)}
+                  controls
+                  playsinline
+                  fluid
+                  aspectRatio="16:9"
+                  className="w-full"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-xs text-white/70">
+                <div
+                  className="flex h-full w-full items-center justify-center py-20 text-xs text-white/70"
+                  style={{ minHeight: '200px' }}
+                >
                   {authenticated.loading
                     ? locale === 'en'
                       ? 'Loading video...'
@@ -200,39 +233,27 @@ export function VideoSettingsView() {
                         : 'Vidéo inaccessible'}
                 </div>
               )}
-              {!playing && previewUrl && (
-                <button
-                  type="button"
-                  onClick={startPreview}
-                  className="absolute inset-0 flex items-center justify-center bg-black/30"
-                  aria-label={
-                    locale === 'en'
-                      ? 'Play video'
-                      : locale === 'ar'
-                        ? 'تشغيل الفيديو'
-                        : 'Lire la vidéo'
-                  }
-                >
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90">
-                    <Play size={22} color={matchyBrand.blue} fill={matchyBrand.blue} />
-                  </span>
-                </button>
-              )}
+
+              {/* Added badge on top right */}
               <span
-                className={`absolute top-2 ${isRtl ? 'left-2' : 'right-2'} flex items-center gap-1 rounded-full bg-[#61BCA6] px-2 py-1 text-[10px] font-bold text-white`}
+                className={`absolute top-3 ${isRtl ? 'left-3' : 'right-3'} z-10 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold text-white shadow-sm`}
+                style={{ background: '#61BCA6' }}
               >
-                <Zap size={10} />{' '}
+                <Sparkles size={11} />{' '}
                 {locale === 'en' ? 'Added ✓' : locale === 'ar' ? 'تمت الإضافة ✓' : 'Ajoutée ✓'}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+
+            {/* Bottom Actions */}
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setShowRecorder(true)}
                 disabled={mediaUploading}
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#E8F0FA] py-2.5 text-[13px] font-bold text-[#2F76BB] disabled:opacity-60"
+                className="flex items-center justify-center gap-2 rounded-2xl py-3 text-[14px] font-bold text-[#2F76BB] transition-colors hover:bg-[#DDEBFA] disabled:opacity-60"
+                style={{ background: '#EBF4FC' }}
               >
-                <Video size={14} />
+                <Upload size={16} />
                 {mediaUploading
                   ? locale === 'en'
                     ? 'Uploading...'
@@ -240,16 +261,18 @@ export function VideoSettingsView() {
                       ? 'جارٍ الرفع...'
                       : 'Envoi en cours…'
                   : locale === 'en'
-                    ? 'Replace video'
+                    ? 'Change video'
                     : locale === 'ar'
-                      ? 'استبدال الفيديو'
+                      ? 'تغيير الفيديو'
                       : 'Remplacer la vidéo'}
               </button>
+
               <button
                 type="button"
                 onClick={handleRemove}
                 disabled={mediaUploading}
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#FFF0F0] py-2.5 text-[13px] font-bold text-[#FF6B6B] disabled:opacity-60"
+                className="flex items-center justify-center gap-2 rounded-2xl py-3 text-[14px] font-bold text-[#FF6B6B] transition-colors hover:bg-[#FFE5E5] disabled:opacity-60"
+                style={{ background: '#FFF0F0' }}
                 aria-label={
                   locale === 'en'
                     ? 'Delete video'
@@ -258,7 +281,7 @@ export function VideoSettingsView() {
                       : 'Supprimer la vidéo'
                 }
               >
-                <Trash2 size={14} />{' '}
+                <Trash2 size={16} />{' '}
                 {locale === 'en' ? 'Delete' : locale === 'ar' ? 'حذف' : 'Supprimer'}
               </button>
             </div>
@@ -317,17 +340,245 @@ export function VideoSettingsView() {
         )}
       </section>
 
-      <aside className="rounded-2xl border border-[#D0E4F7] bg-[#EEF5FF] p-4">
-        <div className="flex items-start gap-3">
-          <AlertCircle size={16} color={matchyBrand.blue} className="mt-0.5 shrink-0" />
-          <p className="text-xs leading-5 text-[#2F76BB]">
-            {locale === 'en'
-              ? 'A presentation video increases your match chances by up to 3×.'
-              : locale === 'ar'
-                ? 'فيديو العرض التقديمي يزيد فرص المطابقة لديك حتى 3 أضعاف.'
-                : "Une vidéo de présentation augmente vos chances de match jusqu'à 3×."}
-          </p>
+      {/* 2. Video Quality Card */}
+      <section
+        className="rounded-3xl bg-white p-5 shadow-xs"
+        style={{ border: '1px solid #F0F0F0' }}
+      >
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F8F5]">
+            <Monitor size={20} color="#61BCA6" />
+          </div>
+          <h2 className="text-base font-extrabold text-[#1A1A2E]">
+            {locale === 'en' ? 'Video quality' : locale === 'ar' ? 'جودة الفيديو' : 'Qualité vidéo'}
+          </h2>
         </div>
+
+        <div className="space-y-2.5">
+          {/* Option 1: HD */}
+          <div
+            onClick={() => updateSettings({ quality: 'hd' })}
+            className={`flex cursor-pointer items-center justify-between rounded-2xl p-4 transition-all ${
+              videoSettings.quality === 'hd'
+                ? 'border-2 border-[#2F76BB] bg-[#F4F9FD]'
+                : 'border border-[#E5E7EB] bg-white hover:bg-slate-50'
+            }`}
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[14px] font-bold text-[#1A1A2E]">
+                  {locale === 'en'
+                    ? 'High quality (HD)'
+                    : locale === 'ar'
+                      ? 'جودة عالية (HD)'
+                      : 'Haute qualité (HD)'}
+                </span>
+                <span className="rounded bg-[#2F76BB] px-1.5 py-0.5 text-[10px] font-black text-white">
+                  HD
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-[#888]">
+                {locale === 'en'
+                  ? '1080p HD - More data'
+                  : locale === 'ar'
+                    ? '1080p HD - بيانات أكثر'
+                    : '1080p HD - Plus de données'}
+              </p>
+            </div>
+            <div
+              className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                videoSettings.quality === 'hd'
+                  ? 'border-[#2F76BB] bg-[#2F76BB]'
+                  : 'border-[#CBD5E1] bg-white'
+              }`}
+            >
+              {videoSettings.quality === 'hd' && <Check size={12} color="white" strokeWidth={3} />}
+            </div>
+          </div>
+
+          {/* Option 2: Standard */}
+          <div
+            onClick={() => updateSettings({ quality: 'standard' })}
+            className={`flex cursor-pointer items-center justify-between rounded-2xl p-4 transition-all ${
+              videoSettings.quality === 'standard'
+                ? 'border-2 border-[#2F76BB] bg-[#F4F9FD]'
+                : 'border border-[#E5E7EB] bg-white hover:bg-slate-50'
+            }`}
+          >
+            <div>
+              <span className="text-[14px] font-bold text-[#1A1A2E]">
+                {locale === 'en'
+                  ? 'Standard quality'
+                  : locale === 'ar'
+                    ? 'جودة قياسية'
+                    : 'Qualité standard'}
+              </span>
+              <p className="mt-0.5 text-xs text-[#888]">
+                {locale === 'en'
+                  ? '720p - Balanced'
+                  : locale === 'ar'
+                    ? '720p - متوازن'
+                    : '720p - Équilibré'}
+              </p>
+            </div>
+            <div
+              className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                videoSettings.quality === 'standard'
+                  ? 'border-[#2F76BB] bg-[#2F76BB]'
+                  : 'border-[#CBD5E1] bg-white'
+              }`}
+            >
+              {videoSettings.quality === 'standard' && (
+                <Check size={12} color="white" strokeWidth={3} />
+              )}
+            </div>
+          </div>
+
+          {/* Option 3: Data saving */}
+          <div
+            onClick={() => updateSettings({ quality: 'saving' })}
+            className={`flex cursor-pointer items-center justify-between rounded-2xl p-4 transition-all ${
+              videoSettings.quality === 'saving'
+                ? 'border-2 border-[#2F76BB] bg-[#F4F9FD]'
+                : 'border border-[#E5E7EB] bg-white hover:bg-slate-50'
+            }`}
+          >
+            <div>
+              <span className="text-[14px] font-bold text-[#1A1A2E]">
+                {locale === 'en'
+                  ? 'Data saving'
+                  : locale === 'ar'
+                    ? 'توفير البيانات'
+                    : 'Économie de données'}
+              </span>
+              <p className="mt-0.5 text-xs text-[#888]">
+                {locale === 'en'
+                  ? '480p - Less data'
+                  : locale === 'ar'
+                    ? '480p - بيانات أقل'
+                    : '480p - Moins de données'}
+              </p>
+            </div>
+            <div
+              className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                videoSettings.quality === 'saving'
+                  ? 'border-[#2F76BB] bg-[#2F76BB]'
+                  : 'border-[#CBD5E1] bg-white'
+              }`}
+            >
+              {videoSettings.quality === 'saving' && (
+                <Check size={12} color="white" strokeWidth={3} />
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Playback Preferences Card */}
+      <section
+        className="rounded-3xl bg-white p-5 shadow-xs"
+        style={{ border: '1px solid #F0F0F0' }}
+      >
+        <div className="space-y-4">
+          {/* Row 1: Auto-play */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F0FA]">
+                <Play size={18} color="#2F76BB" />
+              </div>
+              <div>
+                <span className="text-[14px] font-bold text-[#1A1A2E]">
+                  {locale === 'en'
+                    ? 'Auto-play'
+                    : locale === 'ar'
+                      ? 'تشغيل تلقائي'
+                      : 'Lecture automatique'}
+                </span>
+                <p className="text-xs text-[#888]">
+                  {locale === 'en'
+                    ? 'Auto-play videos in the feed'
+                    : locale === 'ar'
+                      ? 'تشغيل الفيديو تلقائياً في الخلاصة'
+                      : 'Lire les vidéos automatiquement dans le fil'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={videoSettings.autoPlay}
+              onClick={() => updateSettings({ autoPlay: !videoSettings.autoPlay })}
+              className="relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none"
+              style={{ background: videoSettings.autoPlay ? '#2F76BB' : '#CBD5E1' }}
+              dir="ltr"
+            >
+              <span
+                className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-xs transition-transform duration-200 ease-in-out"
+                style={{
+                  transform: videoSettings.autoPlay ? 'translateX(20px)' : 'translateX(0)',
+                }}
+              />
+            </button>
+          </div>
+
+          <div className="h-[1px] w-full bg-[#F3F4F6]" />
+
+          {/* Row 2: WiFi only */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F8F5]">
+                <Wifi size={18} color="#61BCA6" />
+              </div>
+              <div>
+                <span className="text-[14px] font-bold text-[#1A1A2E]">
+                  {locale === 'en'
+                    ? 'WiFi only'
+                    : locale === 'ar'
+                      ? 'عبر WiFi فقط'
+                      : 'WiFi uniquement'}
+                </span>
+                <p className="text-xs text-[#888]">
+                  {locale === 'en'
+                    ? 'Download videos on WiFi only'
+                    : locale === 'ar'
+                      ? 'تنزيل الفيديوهات عبر شبكة WiFi فقط'
+                      : 'Télécharger les vidéos en WiFi uniquement'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={videoSettings.wifiOnly}
+              onClick={() => updateSettings({ wifiOnly: !videoSettings.wifiOnly })}
+              className="relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none"
+              style={{ background: videoSettings.wifiOnly ? '#2F76BB' : '#CBD5E1' }}
+              dir="ltr"
+            >
+              <span
+                className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-xs transition-transform duration-200 ease-in-out"
+                style={{
+                  transform: videoSettings.wifiOnly ? 'translateX(20px)' : 'translateX(0)',
+                }}
+              />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. AI Boost Callout Banner */}
+      <aside
+        className="flex items-start gap-3 rounded-2xl p-4 shadow-2xs"
+        style={{ background: '#EBF5FB', border: '1px solid #D0E3F8' }}
+      >
+        <Info size={18} color="#2F76BB" className="mt-0.5 shrink-0" />
+        <p className="text-xs leading-relaxed text-[#2F76BB]">
+          {locale === 'en'
+            ? 'A presentation video increases your match chances by up to 3×. It will be analyzed by AI to automatically enrich your profile.'
+            : locale === 'ar'
+              ? 'فيديو العرض التقديمي يزيد فرص المطابقة لديك حتى 3 أضعاف. سيتم تحليله بواسطة الذكاء الاصطناعي لإثراء ملفك الشخصي تلقائياً.'
+              : 'Une vidéo de présentation augmente vos chances de match jusqu’à 3x. Elle sera analysée par IA pour remplir votre profil automatiquement.'}
+        </p>
       </aside>
 
       {saved && (

@@ -3,6 +3,11 @@
 import { matchyBrand } from '@/components/matchy/brand';
 import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
+import {
+  fetchFavoriteIds,
+  selectFavorites,
+  toggleFavorite,
+} from '@/features/favorites/store/favorites-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import {
   useAutoCaptureGrantedLocation,
@@ -30,6 +35,7 @@ import {
   clearSwipeError,
   closeQuotaModal,
   fetchMatchState,
+  fetchQuota,
   fetchSwipeFeed,
   selectMatching,
   selectTopFeedProfile,
@@ -40,19 +46,62 @@ import {
   selectNotifications,
 } from '@/features/notifications/store/notifications-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
+import { useVideoSettings } from '@/lib/video-settings';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
-import { AlertTriangle, Bell, Check, Heart, Lock, MapPin, Star, ThumbsDown, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  Bell,
+  Bookmark,
+  Check,
+  Heart,
+  Lock,
+  MapPin,
+  Play,
+  Star,
+  ThumbsDown,
+  X,
+  Zap,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 export function DiscoverView() {
   const { t, locale } = useI18n();
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { settings: videoSettings } = useVideoSettings();
   const matching = useAppSelector(selectMatching);
   const { unreadCount } = useAppSelector(selectNotifications);
+  const { favoriteIds, actionLoading: favLoading } = useAppSelector(selectFavorites);
   const top = useAppSelector(selectTopFeedProfile);
+  const isTopFavorited = Boolean(top?.id && favoriteIds.includes(top.id));
   const topPhoto = useAuthenticatedMediaUrl(top?.image);
+  const topVideo = useAuthenticatedMediaUrl(top?.video, { stream: true });
+  const cardVideoRef = useRef<HTMLVideoElement>(null);
+  const [userPausedId, setUserPausedId] = useState<string | null>(null);
+  const [userPlayingId, setUserPlayingId] = useState<string | null>(null);
+
+  const isCardVideoPlaying = Boolean(
+    top?.id ? (videoSettings.autoPlay ? userPausedId !== top.id : userPlayingId === top.id) : false,
+  );
+
+  const handleToggleCardVideo = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!top?.id) return;
+    const video = cardVideoRef.current;
+    if (!video) return;
+
+    if (isCardVideoPlaying) {
+      setUserPausedId(top.id);
+      setUserPlayingId(null);
+      video.pause();
+    } else {
+      setUserPausedId(null);
+      setUserPlayingId(top.id);
+      void video.play().catch(() => {});
+    }
+  };
   const {
     latitude,
     longitude,
@@ -64,11 +113,13 @@ export function DiscoverView() {
   } = useLocationGate();
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailProfileId, setDetailProfileId] = useState<string | null>(null);
-  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'up' | null>(null);
   const [forceQuotaModal, setForceQuotaModal] = useState(false);
 
   useEffect(() => {
     void dispatch(fetchNotifications());
+    void dispatch(fetchQuota());
+    void dispatch(fetchFavoriteIds());
   }, [dispatch]);
 
   useAutoCaptureGrantedLocation();
@@ -78,8 +129,11 @@ export function DiscoverView() {
       dispatch(clearFeed());
       return;
     }
-    void dispatch(fetchSwipeFeed({ latitude, longitude }));
-  }, [dispatch, locationSynced, latitude, longitude]);
+    // Re-fetch when location changes or when feedLoaded is reset (e.g. after withdraw/unmatch).
+    if (!matching.feedLoaded) {
+      void dispatch(fetchSwipeFeed({ latitude, longitude }));
+    }
+  }, [dispatch, locationSynced, latitude, longitude, matching.feedLoaded]);
 
   const quota = matching.quota;
   const freeRemaining = quota?.remaining;
@@ -124,21 +178,40 @@ export function DiscoverView() {
     }
   };
 
+  const onFavorite = async () => {
+    if (!top || matching.swipeLoading || Boolean(top.id && favLoading[top.id])) return;
+    setSwipeDirection('up');
+    try {
+      const res = await dispatch(toggleFavorite(top.id)).unwrap();
+      if (res.favorited) {
+        toast.success(
+          locale === 'en'
+            ? `${top.name} added to favorites ⭐`
+            : locale === 'ar'
+              ? `تمت إضافة ${top.name} إلى المفضلة ⭐`
+              : `${top.name} ajouté aux favoris ⭐`,
+        );
+      } else {
+        toast.success(
+          locale === 'en'
+            ? `${top.name} removed from favorites`
+            : locale === 'ar'
+              ? `تمت إزالة ${top.name} من المفضلة`
+              : `${top.name} retiré des favoris`,
+        );
+      }
+      // Swipe up dismisses the card and advances to the next candidate in feed
+      await dispatch(swipeProfile({ targetUserId: top.id, direction: 'left', profile: top }));
+    } catch {
+      toast.error(t('common.errorOccurred') || 'Error');
+    } finally {
+      setSwipeDirection(null);
+    }
+  };
+
   const showHomeFeedLoader = locationSynced && (matching.feedLoading || !matching.feedLoaded);
 
   const title = locale === 'fr' ? 'Accueil' : locale === 'ar' ? 'الرئيسية' : t('nav.home');
-
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-
-  const CATEGORIES = [
-    { id: 'all', label: t('matching.categories.all'), emoji: '✨' },
-    { id: 'Transport', label: t('matching.categories.transport'), emoji: '🚗' },
-    { id: 'Ménage', label: t('matching.categories.cleaning'), emoji: '🧹' },
-    { id: 'Freelance', label: t('matching.categories.freelance'), emoji: '💻' },
-    { id: 'Cuisine', label: t('matching.categories.cooking'), emoji: '🧑‍🍳' },
-    { id: 'Jardinage', label: t('matching.categories.gardening'), emoji: '🌿' },
-    { id: 'Garde enfants', label: t('matching.categories.childcare'), emoji: '👶' },
-  ];
 
   return (
     <div
@@ -150,42 +223,84 @@ export function DiscoverView() {
         className="flex shrink-0 items-center justify-between px-4 py-3 md:px-6"
         style={{ background: 'white', borderBottom: '1px solid #F0F0F0' }}
       >
-        <p className="hidden md:block" style={{ fontSize: 18, fontWeight: 700, color: '#1A1A2E' }}>
-          {title}
-        </p>
-        <div className="flex md:hidden">
-          <span style={{ fontSize: 18, fontWeight: 800, color: '#2F76BB' }}>
-            Matchy<span style={{ color: '#61BCA6' }}>+</span>
-          </span>
+        <div className="flex items-center gap-3">
+          <p
+            className="hidden md:block"
+            style={{ fontSize: 18, fontWeight: 700, color: '#1A1A2E' }}
+          >
+            {title}
+          </p>
+          <div className="flex md:hidden">
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#2F76BB' }}>
+              Matchy<span style={{ color: '#61BCA6' }}>+</span>
+            </span>
+          </div>
         </div>
-        <MatchyHeaderActions />
-      </div>
 
-      {/* Top category filter pills row */}
-      <div
-        className="no-scrollbar shrink-0 overflow-x-auto px-4 py-2.5 md:px-8"
-        style={{ background: matchyBrand.bg }}
-      >
-        <div className="flex items-center gap-2">
-          {CATEGORIES.map((cat) => {
-            const isSelected = selectedCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold shadow-2xs transition-all ${
-                  isSelected
-                    ? 'text-white'
-                    : 'border border-[#E5E9F0] bg-white text-[#4A5568] hover:bg-[#F7FAFC]'
-                }`}
-                style={isSelected ? { background: matchyBrand.blue } : undefined}
-              >
-                <span>{cat.emoji}</span>
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-2 md:gap-3">
+          {quota && (
+            <button
+              type="button"
+              onClick={() => setForceQuotaModal(true)}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              style={
+                quota.unlimited
+                  ? {
+                      background: 'linear-gradient(135deg, #F0FDF4 0%, #E8F8F5 100%)',
+                      color: '#0D9488',
+                      border: '1px solid #A7F3D0',
+                      boxShadow: '0 1px 2px rgba(13, 148, 136, 0.08)',
+                    }
+                  : freeRemaining != null && freeRemaining <= 0
+                    ? {
+                        background: '#FFF1F2',
+                        color: '#E11D48',
+                        border: '1px solid #FECDD3',
+                        boxShadow: '0 1px 2px rgba(225, 29, 72, 0.08)',
+                      }
+                    : freeRemaining != null && freeRemaining <= 3
+                      ? {
+                          background: '#FFFBEB',
+                          color: '#D97706',
+                          border: '1px solid #FDE68A',
+                          boxShadow: '0 1px 2px rgba(217, 119, 6, 0.08)',
+                        }
+                      : {
+                          background: 'linear-gradient(135deg, #F0F7FF 0%, #EBF4FC 100%)',
+                          color: '#2F76BB',
+                          border: '1px solid #D0E3F8',
+                          boxShadow: '0 1px 2px rgba(47, 118, 187, 0.08)',
+                        }
+              }
+              title={
+                quota.unlimited
+                  ? t('matching.quotaUnlimited')
+                  : t('matching.quotaLeft', { remaining: freeRemaining ?? 0 })
+              }
+            >
+              <Zap
+                size={13}
+                className={
+                  quota.unlimited
+                    ? 'fill-teal-500 text-teal-500'
+                    : freeRemaining === 0
+                      ? 'fill-rose-500 text-rose-500'
+                      : 'fill-blue-500 text-blue-500'
+                }
+              />
+              <span>
+                {quota.unlimited
+                  ? locale === 'fr'
+                    ? 'Swipes illimités'
+                    : locale === 'ar'
+                      ? 'غير محدود'
+                      : 'Unlimited'
+                  : `${freeRemaining ?? 0} / ${freeLimit ?? 10} swipes`}
+              </span>
+            </button>
+          )}
+
+          <MatchyHeaderActions />
         </div>
       </div>
 
@@ -251,15 +366,19 @@ export function DiscoverView() {
                         height: 'min(90%, 560px)',
                         zIndex: 1,
                       }}
-                      drag={!matching.swipeLoading ? 'x' : false}
-                      dragConstraints={{ left: 0, right: 0 }}
+                      drag={!matching.swipeLoading}
+                      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
                       dragElastic={0.7}
                       onDragEnd={(_e, info) => {
-                        const offset = info.offset.x;
-                        const velocity = info.velocity.x;
-                        if (offset > 100 || velocity > 500) {
+                        const offsetX = info.offset.x;
+                        const velocityX = info.velocity.x;
+                        const offsetY = info.offset.y;
+                        const velocityY = info.velocity.y;
+                        if (offsetY < -100 || velocityY < -500) {
+                          void onFavorite();
+                        } else if (offsetX > 100 || velocityX > 500) {
                           void onConnect();
-                        } else if (offset < -100 || velocity < -500) {
+                        } else if (offsetX < -100 || velocityX < -500) {
                           void onPass();
                         }
                       }}
@@ -268,13 +387,71 @@ export function DiscoverView() {
                         scale: 1,
                         opacity: 1,
                         x: swipeDirection === 'left' ? -500 : swipeDirection === 'right' ? 500 : 0,
+                        y: swipeDirection === 'up' ? -550 : 0,
                         rotate:
                           swipeDirection === 'left' ? -22 : swipeDirection === 'right' ? 22 : 0,
                       }}
                       exit={{ scale: 0.95, opacity: 0 }}
                       transition={{ duration: 0.25 }}
                     >
-                      {topPhoto.url ? (
+                      {topVideo.url ? (
+                        <>
+                          <video
+                            key={topVideo.url}
+                            ref={cardVideoRef}
+                            src={topVideo.url}
+                            preload="auto"
+                            autoPlay={isCardVideoPlaying}
+                            playsInline
+                            loop
+                            muted
+                            onClick={handleToggleCardVideo}
+                            onPlay={() => {
+                              if (top?.id) {
+                                setUserPlayingId(top.id);
+                                setUserPausedId(null);
+                              }
+                            }}
+                            onPause={() => {
+                              if (top?.id) {
+                                setUserPausedId(top.id);
+                                setUserPlayingId(null);
+                              }
+                            }}
+                            onEnded={() => {
+                              if (top?.id) {
+                                setUserPausedId(top.id);
+                                setUserPlayingId(null);
+                              }
+                            }}
+                            onLoadedData={(e) => {
+                              if (isCardVideoPlaying) {
+                                void e.currentTarget.play().catch(() => {});
+                              }
+                            }}
+                            className="absolute inset-0 h-full w-full cursor-pointer bg-black object-cover"
+                          />
+
+                          {/* Centered Play Button when paused / stopped */}
+                          {!isCardVideoPlaying && (
+                            <button
+                              type="button"
+                              onClick={handleToggleCardVideo}
+                              aria-label={
+                                locale === 'en'
+                                  ? 'Play video'
+                                  : locale === 'ar'
+                                    ? 'تشغيل الفيديو'
+                                    : 'Lire la vidéo'
+                              }
+                              className="pointer-events-auto absolute inset-0 z-20 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-black/60 text-white shadow-2xl backdrop-blur-md transition-all hover:scale-110 active:scale-95"
+                              style={{ border: '2px solid rgba(255,255,255,0.4)' }}
+                            >
+                              <Play size={28} fill="white" className="ml-1 text-white" />
+                            </button>
+                          )}
+                        </>
+                      ) : topPhoto.url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={topPhoto.url}
@@ -455,59 +632,87 @@ export function DiscoverView() {
               )}
 
               <div
-                className="mx-auto mt-1 mb-3 flex items-center justify-center gap-4"
+                className="mx-auto mt-2 mb-3 flex items-center justify-center gap-3.5"
                 style={{ maxWidth: 360, width: '100%' }}
               >
+                {/* Pass Button */}
                 <button
                   type="button"
                   onClick={() => void onPass()}
                   disabled={!top || matching.swipeLoading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3.5 transition-transform active:scale-95"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 transition-all hover:bg-slate-50 hover:shadow-sm active:scale-[0.97]"
                   style={{
                     background: 'white',
-                    border: '2px solid #E0E0E0',
-                    color: '#888',
+                    border: '1.5px solid #E2E8F0',
+                    color: '#475569',
                     fontSize: 15,
                     fontWeight: 700,
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.05)',
                     opacity: top ? 1 : 0.5,
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <X size={20} color="#888" />
-                  {t('matching.pass')}
+                  <X size={20} className="text-[#64748B]" strokeWidth={2.5} />
+                  <span>{t('matching.pass')}</span>
                 </button>
+
+                {/* Connect Button */}
                 <button
                   type="button"
                   onClick={() => void onConnect()}
                   disabled={!top || matching.swipeLoading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3.5 transition-transform active:scale-95"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 transition-all hover:brightness-105 active:scale-[0.97]"
                   style={{
                     background: isRightSwipeBlocked
-                      ? '#D0D0D0'
+                      ? '#CBD5E1'
                       : 'linear-gradient(135deg, #61BCA6 0%, #2F76BB 100%)',
                     color: 'white',
                     fontSize: 15,
                     fontWeight: 700,
-                    boxShadow: isRightSwipeBlocked ? 'none' : '0 6px 20px rgba(47,118,187,0.35)',
+                    boxShadow: isRightSwipeBlocked ? 'none' : '0 8px 22px rgba(47,118,187,0.32)',
                     cursor: isRightSwipeBlocked ? 'not-allowed' : 'pointer',
-                    opacity: isRightSwipeBlocked ? 0.6 : 1,
+                    opacity: isRightSwipeBlocked ? 0.7 : 1,
                     whiteSpace: 'nowrap',
                   }}
                 >
                   {isRightSwipeBlocked ? (
-                    <span className="flex items-center justify-center gap-1">
-                      <Lock size={14} />
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Lock size={15} />
                       Premium
                     </span>
                   ) : (
                     <>
-                      <Check size={20} color="white" />
-                      {t('matching.connect')}
+                      <Check size={20} strokeWidth={2.5} className="text-white" />
+                      <span>{t('matching.connect')}</span>
                     </>
                   )}
                 </button>
               </div>
+
+              {quota && (
+                <div
+                  onClick={() => setForceQuotaModal(true)}
+                  className="mx-auto -mt-1 mb-2 flex cursor-pointer items-center justify-center gap-1.5 text-[11px] font-medium text-[#888] transition-colors hover:text-[#2F76BB]"
+                >
+                  <Zap
+                    size={11}
+                    className={
+                      quota.unlimited
+                        ? 'fill-teal-500 text-teal-500'
+                        : freeRemaining === 0
+                          ? 'fill-rose-500 text-rose-500'
+                          : (freeRemaining ?? 0) <= 3
+                            ? 'fill-amber-500 text-amber-500'
+                            : 'fill-blue-500 text-blue-500'
+                    }
+                  />
+                  <span>
+                    {quota.unlimited
+                      ? t('matching.quotaUnlimited')
+                      : t('matching.quotaLeft', { remaining: freeRemaining ?? 0 })}
+                  </span>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -527,7 +732,23 @@ export function DiscoverView() {
               {top ? (
                 <div className="space-y-3">
                   <div className="relative overflow-hidden rounded-2xl" style={{ height: 130 }}>
-                    {topPhoto.url ? (
+                    {topVideo.url ? (
+                      <video
+                        key={`sidebar-${topVideo.url}`}
+                        src={topVideo.url}
+                        preload="auto"
+                        autoPlay={videoSettings.autoPlay}
+                        playsInline
+                        loop
+                        muted
+                        onLoadedData={(e) => {
+                          if (videoSettings.autoPlay) {
+                            void e.currentTarget.play().catch(() => {});
+                          }
+                        }}
+                        className="h-full w-full bg-black object-cover"
+                      />
+                    ) : topPhoto.url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={topPhoto.url}

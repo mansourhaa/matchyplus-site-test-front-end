@@ -33,7 +33,7 @@ import {
   Star,
   Trash2,
   Users,
-  Video,
+  Video as VideoIcon,
   X,
   Zap,
 } from 'lucide-react';
@@ -90,7 +90,7 @@ export function AdminUserDetail({
     { key: 'profile' as const, label: 'Profil', icon: Users },
     { key: 'activity' as const, label: 'Activité', icon: Activity },
     { key: 'subscription' as const, label: 'Abonnement', icon: Crown },
-    { key: 'video' as const, label: 'Vidéo', icon: Video },
+    { key: 'video' as const, label: 'Vidéo', icon: VideoIcon },
   ];
 
   const handleSave = () => {

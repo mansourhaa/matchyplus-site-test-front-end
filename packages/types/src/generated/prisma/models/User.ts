@@ -634,6 +634,8 @@ export type UserWhereInput = {
   blocks_received?: Prisma.UserBlockListRelationFilter;
   ratings_given?: Prisma.RatingListRelationFilter;
   ratings_received?: Prisma.RatingListRelationFilter;
+  favorites_given?: Prisma.FavoriteListRelationFilter;
+  favorites_received?: Prisma.FavoriteListRelationFilter;
   conversations_as_low?: Prisma.ConversationListRelationFilter;
   conversations_as_high?: Prisma.ConversationListRelationFilter;
   messages_sent?: Prisma.MessageListRelationFilter;
@@ -715,6 +717,8 @@ export type UserOrderByWithRelationInput = {
   blocks_received?: Prisma.UserBlockOrderByRelationAggregateInput;
   ratings_given?: Prisma.RatingOrderByRelationAggregateInput;
   ratings_received?: Prisma.RatingOrderByRelationAggregateInput;
+  favorites_given?: Prisma.FavoriteOrderByRelationAggregateInput;
+  favorites_received?: Prisma.FavoriteOrderByRelationAggregateInput;
   conversations_as_low?: Prisma.ConversationOrderByRelationAggregateInput;
   conversations_as_high?: Prisma.ConversationOrderByRelationAggregateInput;
   messages_sent?: Prisma.MessageOrderByRelationAggregateInput;
@@ -803,6 +807,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     blocks_received?: Prisma.UserBlockListRelationFilter;
     ratings_given?: Prisma.RatingListRelationFilter;
     ratings_received?: Prisma.RatingListRelationFilter;
+    favorites_given?: Prisma.FavoriteListRelationFilter;
+    favorites_received?: Prisma.FavoriteListRelationFilter;
     conversations_as_low?: Prisma.ConversationListRelationFilter;
     conversations_as_high?: Prisma.ConversationListRelationFilter;
     messages_sent?: Prisma.MessageListRelationFilter;
@@ -1014,6 +1020,8 @@ export type UserCreateInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -1095,6 +1103,8 @@ export type UserUncheckedCreateInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -1178,6 +1188,8 @@ export type UserUpdateInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -1261,6 +1273,8 @@ export type UserUncheckedUpdateInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -2252,6 +2266,58 @@ export type UserUpdateOneRequiredWithoutRatings_receivedNestedInput = {
   >;
 };
 
+export type UserCreateNestedOneWithoutFavorites_givenInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutFavorites_givenInput,
+    Prisma.UserUncheckedCreateWithoutFavorites_givenInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFavorites_givenInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserCreateNestedOneWithoutFavorites_receivedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutFavorites_receivedInput,
+    Prisma.UserUncheckedCreateWithoutFavorites_receivedInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFavorites_receivedInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutFavorites_givenNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutFavorites_givenInput,
+    Prisma.UserUncheckedCreateWithoutFavorites_givenInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFavorites_givenInput;
+  upsert?: Prisma.UserUpsertWithoutFavorites_givenInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutFavorites_givenInput,
+      Prisma.UserUpdateWithoutFavorites_givenInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutFavorites_givenInput
+  >;
+};
+
+export type UserUpdateOneRequiredWithoutFavorites_receivedNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutFavorites_receivedInput,
+    Prisma.UserUncheckedCreateWithoutFavorites_receivedInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFavorites_receivedInput;
+  upsert?: Prisma.UserUpsertWithoutFavorites_receivedInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutFavorites_receivedInput,
+      Prisma.UserUpdateWithoutFavorites_receivedInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutFavorites_receivedInput
+  >;
+};
+
 export type UserCreateNestedOneWithoutNotificationsInput = {
   create?: Prisma.XOR<
     Prisma.UserCreateWithoutNotificationsInput,
@@ -2380,6 +2446,8 @@ export type UserCreateWithoutRefresh_tokensInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -2460,6 +2528,8 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -2570,6 +2640,8 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -2652,6 +2724,8 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -2732,6 +2806,8 @@ export type UserCreateWithoutOtp_challengesInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -2812,6 +2888,8 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -2922,6 +3000,8 @@ export type UserUpdateWithoutOtp_challengesInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -3004,6 +3084,8 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -3084,6 +3166,8 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -3164,6 +3248,8 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -3274,6 +3360,8 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -3356,6 +3444,8 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -3436,6 +3526,8 @@ export type UserCreateWithoutReports_madeInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -3516,6 +3608,8 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -3604,6 +3698,8 @@ export type UserCreateWithoutReports_receivedInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -3684,6 +3780,8 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -3794,6 +3892,8 @@ export type UserUpdateWithoutReports_madeInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -3876,6 +3976,8 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -3978,6 +4080,8 @@ export type UserUpdateWithoutReports_receivedInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -4060,6 +4164,8 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -4140,6 +4246,8 @@ export type UserCreateWithoutSwipes_madeInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -4220,6 +4328,8 @@ export type UserUncheckedCreateWithoutSwipes_madeInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -4308,6 +4418,8 @@ export type UserCreateWithoutSwipes_receivedInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -4388,6 +4500,8 @@ export type UserUncheckedCreateWithoutSwipes_receivedInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -4498,6 +4612,8 @@ export type UserUpdateWithoutSwipes_madeInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -4580,6 +4696,8 @@ export type UserUncheckedUpdateWithoutSwipes_madeInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -4682,6 +4800,8 @@ export type UserUpdateWithoutSwipes_receivedInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -4764,6 +4884,8 @@ export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -4844,6 +4966,8 @@ export type UserCreateWithoutSwipe_logsInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -4924,6 +5048,8 @@ export type UserUncheckedCreateWithoutSwipe_logsInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -5012,6 +5138,8 @@ export type UserCreateWithoutSwipe_log_targetsInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -5092,6 +5220,8 @@ export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -5202,6 +5332,8 @@ export type UserUpdateWithoutSwipe_logsInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -5284,6 +5416,8 @@ export type UserUncheckedUpdateWithoutSwipe_logsInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -5386,6 +5520,8 @@ export type UserUpdateWithoutSwipe_log_targetsInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -5468,6 +5604,8 @@ export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -5548,6 +5686,8 @@ export type UserCreateWithoutMatches_as_lowInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -5628,6 +5768,8 @@ export type UserUncheckedCreateWithoutMatches_as_lowInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -5716,6 +5858,8 @@ export type UserCreateWithoutMatches_as_highInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -5796,6 +5940,8 @@ export type UserUncheckedCreateWithoutMatches_as_highInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -5906,6 +6052,8 @@ export type UserUpdateWithoutMatches_as_lowInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -5988,6 +6136,8 @@ export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -6090,6 +6240,8 @@ export type UserUpdateWithoutMatches_as_highInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -6172,6 +6324,8 @@ export type UserUncheckedUpdateWithoutMatches_as_highInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -6253,6 +6407,8 @@ export type UserCreateWithoutConversations_as_lowInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
   message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
@@ -6333,6 +6489,8 @@ export type UserUncheckedCreateWithoutConversations_as_lowInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
   message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
@@ -6421,6 +6579,8 @@ export type UserCreateWithoutConversations_as_highInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
   message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
@@ -6501,6 +6661,8 @@ export type UserUncheckedCreateWithoutConversations_as_highInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
   message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
@@ -6611,6 +6773,8 @@ export type UserUpdateWithoutConversations_as_lowInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
   message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
@@ -6693,6 +6857,8 @@ export type UserUncheckedUpdateWithoutConversations_as_lowInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
   message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
@@ -6795,6 +6961,8 @@ export type UserUpdateWithoutConversations_as_highInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
   message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
@@ -6877,6 +7045,8 @@ export type UserUncheckedUpdateWithoutConversations_as_highInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
   message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
@@ -6957,6 +7127,8 @@ export type UserCreateWithoutMessages_sentInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
@@ -7037,6 +7209,8 @@ export type UserUncheckedCreateWithoutMessages_sentInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
@@ -7147,6 +7321,8 @@ export type UserUpdateWithoutMessages_sentInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
@@ -7229,6 +7405,8 @@ export type UserUncheckedUpdateWithoutMessages_sentInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
@@ -7309,6 +7487,8 @@ export type UserCreateWithoutMessage_likesInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -7389,6 +7569,8 @@ export type UserUncheckedCreateWithoutMessage_likesInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -7499,6 +7681,8 @@ export type UserUpdateWithoutMessage_likesInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -7581,6 +7765,8 @@ export type UserUncheckedUpdateWithoutMessage_likesInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -7660,6 +7846,8 @@ export type UserCreateWithoutLocationInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -7740,6 +7928,8 @@ export type UserUncheckedCreateWithoutLocationInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -7850,6 +8040,8 @@ export type UserUpdateWithoutLocationInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -7932,6 +8124,8 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -8012,6 +8206,8 @@ export type UserCreateWithoutBlocks_madeInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -8092,6 +8288,8 @@ export type UserUncheckedCreateWithoutBlocks_madeInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -8180,6 +8378,8 @@ export type UserCreateWithoutBlocks_receivedInput = {
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -8260,6 +8460,8 @@ export type UserUncheckedCreateWithoutBlocks_receivedInput = {
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -8370,6 +8572,8 @@ export type UserUpdateWithoutBlocks_madeInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -8452,6 +8656,8 @@ export type UserUncheckedUpdateWithoutBlocks_madeInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -8554,6 +8760,8 @@ export type UserUpdateWithoutBlocks_receivedInput = {
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -8636,6 +8844,8 @@ export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -8716,6 +8926,8 @@ export type UserCreateWithoutRatings_givenInput = {
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -8796,6 +9008,8 @@ export type UserUncheckedCreateWithoutRatings_givenInput = {
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -8884,6 +9098,8 @@ export type UserCreateWithoutRatings_receivedInput = {
   blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -8964,6 +9180,8 @@ export type UserUncheckedCreateWithoutRatings_receivedInput = {
   blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -9074,6 +9292,8 @@ export type UserUpdateWithoutRatings_givenInput = {
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -9156,6 +9376,8 @@ export type UserUncheckedUpdateWithoutRatings_givenInput = {
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -9258,6 +9480,8 @@ export type UserUpdateWithoutRatings_receivedInput = {
   blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -9340,6 +9564,728 @@ export type UserUncheckedUpdateWithoutRatings_receivedInput = {
   blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserCreateWithoutFavorites_givenInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  verified?: boolean;
+  token_version?: number;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  notify_all?: boolean;
+  notify_matches?: boolean;
+  notify_messages?: boolean;
+  notify_views?: boolean;
+  notify_email?: boolean;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
+  ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
+};
+
+export type UserUncheckedCreateWithoutFavorites_givenInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  verified?: boolean;
+  token_version?: number;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  notify_all?: boolean;
+  notify_matches?: boolean;
+  notify_messages?: boolean;
+  notify_views?: boolean;
+  notify_email?: boolean;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
+  ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
+};
+
+export type UserCreateOrConnectWithoutFavorites_givenInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutFavorites_givenInput,
+    Prisma.UserUncheckedCreateWithoutFavorites_givenInput
+  >;
+};
+
+export type UserCreateWithoutFavorites_receivedInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  verified?: boolean;
+  token_version?: number;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  notify_all?: boolean;
+  notify_matches?: boolean;
+  notify_messages?: boolean;
+  notify_views?: boolean;
+  notify_email?: boolean;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
+  ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
+  ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeCreateNestedManyWithoutUserInput;
+};
+
+export type UserUncheckedCreateWithoutFavorites_receivedInput = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  password?: string | null;
+  auth_provider?: string;
+  role?: $Enums.Role;
+  status?: $Enums.UserStatus;
+  plan?: $Enums.UserPlan;
+  job?: string | null;
+  category?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  image?: string | null;
+  video?: string | null;
+  interests?: Prisma.UserCreateinterestsInput | string[];
+  languages?: Prisma.UserCreatelanguagesInput | string[];
+  contact_modes?: Prisma.UserCreatecontact_modesInput | string[];
+  experience?: string | null;
+  schedule?: string | null;
+  price?: string | null;
+  rating?: number;
+  reviews?: number;
+  matches?: number;
+  missions?: number;
+  total_earnings?: number;
+  last_login?: Date | string | null;
+  profile_type?: $Enums.ProfileType | null;
+  offer_service?: boolean;
+  service_type?: string | null;
+  sector?: string | null;
+  selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserCreateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserCreateavailability_hoursInput | string[];
+  onboarding_completed_at?: Date | string | null;
+  email_verified?: boolean;
+  google_id?: string | null;
+  linkedin_id?: string | null;
+  phone_verified?: boolean;
+  verified?: boolean;
+  token_version?: number;
+  goals?: Prisma.UserCreategoalsInput | string[];
+  looking_for?: string | null;
+  activity_sector?: string | null;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  notify_all?: boolean;
+  notify_matches?: boolean;
+  notify_messages?: boolean;
+  notify_views?: boolean;
+  notify_email?: boolean;
+  create_at?: Date | string;
+  updated_at?: Date | string;
+  aiJobs?: Prisma.AiJobUncheckedCreateNestedManyWithoutUserInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedCreateNestedManyWithoutUserInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedCreateNestedManyWithoutUserInput;
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput;
+  reports_made?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput;
+  reports_received?: Prisma.ReportUncheckedCreateNestedManyWithoutReportedInput;
+  swipes_made?: Prisma.SwipeUncheckedCreateNestedManyWithoutSwiperInput;
+  swipes_received?: Prisma.SwipeUncheckedCreateNestedManyWithoutTargetInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutUserInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedCreateNestedManyWithoutTargetInput;
+  matches_as_low?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_lowInput;
+  matches_as_high?: Prisma.MatchUncheckedCreateNestedManyWithoutUser_highInput;
+  location?: Prisma.UserLocationUncheckedCreateNestedOneWithoutUserInput;
+  blocks_made?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockerInput;
+  blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
+  ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
+  ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
+  conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
+  messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
+  message_likes?: Prisma.MessageLikeUncheckedCreateNestedManyWithoutUserInput;
+};
+
+export type UserCreateOrConnectWithoutFavorites_receivedInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutFavorites_receivedInput,
+    Prisma.UserUncheckedCreateWithoutFavorites_receivedInput
+  >;
+};
+
+export type UserUpsertWithoutFavorites_givenInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutFavorites_givenInput,
+    Prisma.UserUncheckedUpdateWithoutFavorites_givenInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutFavorites_givenInput,
+    Prisma.UserUncheckedCreateWithoutFavorites_givenInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutFavorites_givenInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutFavorites_givenInput,
+    Prisma.UserUncheckedUpdateWithoutFavorites_givenInput
+  >;
+};
+
+export type UserUpdateWithoutFavorites_givenInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  notify_all?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_matches?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_messages?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_views?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_email?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
+  ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutFavorites_givenInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  notify_all?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_matches?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_messages?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_views?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_email?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
+  ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
+  conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUpsertWithoutFavorites_receivedInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutFavorites_receivedInput,
+    Prisma.UserUncheckedUpdateWithoutFavorites_receivedInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutFavorites_receivedInput,
+    Prisma.UserUncheckedCreateWithoutFavorites_receivedInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutFavorites_receivedInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutFavorites_receivedInput,
+    Prisma.UserUncheckedUpdateWithoutFavorites_receivedInput
+  >;
+};
+
+export type UserUpdateWithoutFavorites_receivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  notify_all?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_matches?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_messages?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_views?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_email?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
+  ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
+  ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
+  conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
+  messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
+  message_likes?: Prisma.MessageLikeUpdateManyWithoutUserNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutFavorites_receivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  auth_provider?: Prisma.StringFieldUpdateOperationsInput | string;
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role;
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus;
+  plan?: Prisma.EnumUserPlanFieldUpdateOperationsInput | $Enums.UserPlan;
+  job?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  interests?: Prisma.UserUpdateinterestsInput | string[];
+  languages?: Prisma.UserUpdatelanguagesInput | string[];
+  contact_modes?: Prisma.UserUpdatecontact_modesInput | string[];
+  experience?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  schedule?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  price?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  rating?: Prisma.FloatFieldUpdateOperationsInput | number;
+  reviews?: Prisma.IntFieldUpdateOperationsInput | number;
+  matches?: Prisma.IntFieldUpdateOperationsInput | number;
+  missions?: Prisma.IntFieldUpdateOperationsInput | number;
+  total_earnings?: Prisma.IntFieldUpdateOperationsInput | number;
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  profile_type?:
+    Prisma.NullableEnumProfileTypeFieldUpdateOperationsInput | $Enums.ProfileType | null;
+  offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
+  experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  educations?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+  availability_days?: Prisma.UserUpdateavailability_daysInput | string[];
+  availability_hours?: Prisma.UserUpdateavailability_hoursInput | string[];
+  onboarding_completed_at?:
+    Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+  email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  google_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  verified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  token_version?: Prisma.IntFieldUpdateOperationsInput | number;
+  goals?: Prisma.UserUpdategoalsInput | string[];
+  looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  activity_sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  gps_latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  gps_longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null;
+  notify_all?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_matches?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_messages?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_views?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  notify_email?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  create_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  aiJobs?: Prisma.AiJobUncheckedUpdateManyWithoutUserNestedInput;
+  refresh_tokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput;
+  oauth_exchange_codes?: Prisma.OAuthExchangeCodeUncheckedUpdateManyWithoutUserNestedInput;
+  otp_challenges?: Prisma.OtpChallengeUncheckedUpdateManyWithoutUserNestedInput;
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput;
+  reports_made?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput;
+  reports_received?: Prisma.ReportUncheckedUpdateManyWithoutReportedNestedInput;
+  swipes_made?: Prisma.SwipeUncheckedUpdateManyWithoutSwiperNestedInput;
+  swipes_received?: Prisma.SwipeUncheckedUpdateManyWithoutTargetNestedInput;
+  swipe_logs?: Prisma.SwipeLogUncheckedUpdateManyWithoutUserNestedInput;
+  swipe_log_targets?: Prisma.SwipeLogUncheckedUpdateManyWithoutTargetNestedInput;
+  matches_as_low?: Prisma.MatchUncheckedUpdateManyWithoutUser_lowNestedInput;
+  matches_as_high?: Prisma.MatchUncheckedUpdateManyWithoutUser_highNestedInput;
+  location?: Prisma.UserLocationUncheckedUpdateOneWithoutUserNestedInput;
+  blocks_made?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockerNestedInput;
+  blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
+  ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
+  ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -9420,6 +10366,8 @@ export type UserCreateWithoutNotificationsInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -9500,6 +10448,8 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -9610,6 +10560,8 @@ export type UserUpdateWithoutNotificationsInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -9692,6 +10644,8 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -9772,6 +10726,8 @@ export type UserCreateWithoutAiJobsInput = {
   blocks_received?: Prisma.UserBlockCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageCreateNestedManyWithoutSenderInput;
@@ -9852,6 +10808,8 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   blocks_received?: Prisma.UserBlockUncheckedCreateNestedManyWithoutBlockedInput;
   ratings_given?: Prisma.RatingUncheckedCreateNestedManyWithoutRaterInput;
   ratings_received?: Prisma.RatingUncheckedCreateNestedManyWithoutRateeInput;
+  favorites_given?: Prisma.FavoriteUncheckedCreateNestedManyWithoutUserInput;
+  favorites_received?: Prisma.FavoriteUncheckedCreateNestedManyWithoutFavoritedInput;
   conversations_as_low?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_lowInput;
   conversations_as_high?: Prisma.ConversationUncheckedCreateNestedManyWithoutUser_highInput;
   messages_sent?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput;
@@ -9962,6 +10920,8 @@ export type UserUpdateWithoutAiJobsInput = {
   blocks_received?: Prisma.UserBlockUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUpdateManyWithoutSenderNestedInput;
@@ -10044,6 +11004,8 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   blocks_received?: Prisma.UserBlockUncheckedUpdateManyWithoutBlockedNestedInput;
   ratings_given?: Prisma.RatingUncheckedUpdateManyWithoutRaterNestedInput;
   ratings_received?: Prisma.RatingUncheckedUpdateManyWithoutRateeNestedInput;
+  favorites_given?: Prisma.FavoriteUncheckedUpdateManyWithoutUserNestedInput;
+  favorites_received?: Prisma.FavoriteUncheckedUpdateManyWithoutFavoritedNestedInput;
   conversations_as_low?: Prisma.ConversationUncheckedUpdateManyWithoutUser_lowNestedInput;
   conversations_as_high?: Prisma.ConversationUncheckedUpdateManyWithoutUser_highNestedInput;
   messages_sent?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput;
@@ -10072,6 +11034,8 @@ export type UserCountOutputType = {
   blocks_received: number;
   ratings_given: number;
   ratings_received: number;
+  favorites_given: number;
+  favorites_received: number;
   conversations_as_low: number;
   conversations_as_high: number;
   messages_sent: number;
@@ -10098,6 +11062,8 @@ export type UserCountOutputTypeSelect<
   blocks_received?: boolean | UserCountOutputTypeCountBlocks_receivedArgs;
   ratings_given?: boolean | UserCountOutputTypeCountRatings_givenArgs;
   ratings_received?: boolean | UserCountOutputTypeCountRatings_receivedArgs;
+  favorites_given?: boolean | UserCountOutputTypeCountFavorites_givenArgs;
+  favorites_received?: boolean | UserCountOutputTypeCountFavorites_receivedArgs;
   conversations_as_low?: boolean | UserCountOutputTypeCountConversations_as_lowArgs;
   conversations_as_high?: boolean | UserCountOutputTypeCountConversations_as_highArgs;
   messages_sent?: boolean | UserCountOutputTypeCountMessages_sentArgs;
@@ -10272,6 +11238,24 @@ export type UserCountOutputTypeCountRatings_receivedArgs<
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountFavorites_givenArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.FavoriteWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountFavorites_receivedArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.FavoriteWhereInput;
+};
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountConversations_as_lowArgs<
   ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
 > = {
@@ -10383,6 +11367,8 @@ export type UserSelect<
     blocks_received?: boolean | Prisma.User$blocks_receivedArgs<ExtArgs>;
     ratings_given?: boolean | Prisma.User$ratings_givenArgs<ExtArgs>;
     ratings_received?: boolean | Prisma.User$ratings_receivedArgs<ExtArgs>;
+    favorites_given?: boolean | Prisma.User$favorites_givenArgs<ExtArgs>;
+    favorites_received?: boolean | Prisma.User$favorites_receivedArgs<ExtArgs>;
     conversations_as_low?: boolean | Prisma.User$conversations_as_lowArgs<ExtArgs>;
     conversations_as_high?: boolean | Prisma.User$conversations_as_highArgs<ExtArgs>;
     messages_sent?: boolean | Prisma.User$messages_sentArgs<ExtArgs>;
@@ -10661,6 +11647,8 @@ export type UserInclude<
   blocks_received?: boolean | Prisma.User$blocks_receivedArgs<ExtArgs>;
   ratings_given?: boolean | Prisma.User$ratings_givenArgs<ExtArgs>;
   ratings_received?: boolean | Prisma.User$ratings_receivedArgs<ExtArgs>;
+  favorites_given?: boolean | Prisma.User$favorites_givenArgs<ExtArgs>;
+  favorites_received?: boolean | Prisma.User$favorites_receivedArgs<ExtArgs>;
   conversations_as_low?: boolean | Prisma.User$conversations_as_lowArgs<ExtArgs>;
   conversations_as_high?: boolean | Prisma.User$conversations_as_highArgs<ExtArgs>;
   messages_sent?: boolean | Prisma.User$messages_sentArgs<ExtArgs>;
@@ -10697,6 +11685,8 @@ export type $UserPayload<
     blocks_received: Prisma.$UserBlockPayload<ExtArgs>[];
     ratings_given: Prisma.$RatingPayload<ExtArgs>[];
     ratings_received: Prisma.$RatingPayload<ExtArgs>[];
+    favorites_given: Prisma.$FavoritePayload<ExtArgs>[];
+    favorites_received: Prisma.$FavoritePayload<ExtArgs>[];
     conversations_as_low: Prisma.$ConversationPayload<ExtArgs>[];
     conversations_as_high: Prisma.$ConversationPayload<ExtArgs>[];
     messages_sent: Prisma.$MessagePayload<ExtArgs>[];
@@ -11482,6 +12472,28 @@ export interface Prisma__UserClient<
   ): Prisma.PrismaPromise<
     | runtime.Types.Result.GetResult<
         Prisma.$RatingPayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  favorites_given<T extends Prisma.User$favorites_givenArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$favorites_givenArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$FavoritePayload<ExtArgs>,
+        T,
+        'findMany',
+        GlobalOmitOptions
+      >
+    | Null
+  >;
+  favorites_received<T extends Prisma.User$favorites_receivedArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$favorites_receivedArgs<ExtArgs>>,
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$FavoritePayload<ExtArgs>,
         T,
         'findMany',
         GlobalOmitOptions
@@ -12504,6 +13516,58 @@ export type User$ratings_receivedArgs<
   take?: number;
   skip?: number;
   distinct?: Prisma.RatingScalarFieldEnum | Prisma.RatingScalarFieldEnum[];
+};
+
+/**
+ * User.favorites_given
+ */
+export type User$favorites_givenArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Favorite
+   */
+  select?: Prisma.FavoriteSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Favorite
+   */
+  omit?: Prisma.FavoriteOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FavoriteInclude<ExtArgs> | null;
+  where?: Prisma.FavoriteWhereInput;
+  orderBy?: Prisma.FavoriteOrderByWithRelationInput | Prisma.FavoriteOrderByWithRelationInput[];
+  cursor?: Prisma.FavoriteWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.FavoriteScalarFieldEnum | Prisma.FavoriteScalarFieldEnum[];
+};
+
+/**
+ * User.favorites_received
+ */
+export type User$favorites_receivedArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the Favorite
+   */
+  select?: Prisma.FavoriteSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the Favorite
+   */
+  omit?: Prisma.FavoriteOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FavoriteInclude<ExtArgs> | null;
+  where?: Prisma.FavoriteWhereInput;
+  orderBy?: Prisma.FavoriteOrderByWithRelationInput | Prisma.FavoriteOrderByWithRelationInput[];
+  cursor?: Prisma.FavoriteWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?: Prisma.FavoriteScalarFieldEnum | Prisma.FavoriteScalarFieldEnum[];
 };
 
 /**

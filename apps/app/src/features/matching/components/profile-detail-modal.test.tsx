@@ -19,6 +19,10 @@ afterEach(() => {
   window.localStorage.removeItem('matchy_locale');
 });
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+}));
+
 vi.mock('@/lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api')>();
   return {
@@ -85,6 +89,7 @@ function renderModal(
 describe('ProfileDetailModal — rating', () => {
   afterEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   it('shows the rating picker for a matched profile', () => {
@@ -370,29 +375,40 @@ describe('ProfileDetailModal — report account', () => {
 
     renderModal(buildStore());
 
-    fireEvent.click(screen.getByRole('button', { name: /Signaler ce compte/ }));
-    fireEvent.click(screen.getByText('Harcèlement'));
-    fireEvent.click(screen.getByRole('button', { name: 'Signaler ce compte' }));
+    fireEvent.click(screen.getByText('Signaler le profil'));
+    fireEvent.click(screen.getByText('Harcèlement ou comportement abusif'));
+    fireEvent.click(screen.getByRole('button', { name: 'Envoyer le signalement' }));
 
     await waitFor(() =>
       expect(api.post).toHaveBeenCalledWith('/reports/profiles/user-2', {
-        reason: 'Harcèlement',
+        reason: 'HARASSMENT',
+        details: undefined,
       }),
     );
-    expect(await screen.findByText('Compte signalé avec succès.')).toBeInTheDocument();
+    expect(await screen.findByText('Signalement envoyé')).toBeInTheDocument();
   });
 
-  it('requires a written reason when "Autre" is selected', async () => {
+  it('submits a report with other reason details', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      data: { reportId: 'report-2', status: 'PENDING', message: 'ok' },
+    });
+
     renderModal(buildStore());
 
-    fireEvent.click(screen.getByRole('button', { name: /Signaler ce compte/ }));
-    fireEvent.click(screen.getByText('Autre'));
-    fireEvent.click(screen.getByRole('button', { name: 'Signaler ce compte' }));
+    fireEvent.click(screen.getByText('Signaler le profil'));
+    fireEvent.click(screen.getByText('Autre motif'));
+    fireEvent.change(screen.getByPlaceholderText(/Fournissez des détails/), {
+      target: { value: 'Comportement suspect' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Envoyer le signalement' }));
 
-    expect(
-      await screen.findByText('Merci de préciser la raison du signalement.'),
-    ).toBeInTheDocument();
-    expect(api.post).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/reports/profiles/user-2', {
+        reason: 'OTHER',
+        details: 'Comportement suspect',
+      }),
+    );
+    expect(await screen.findByText('Signalement envoyé')).toBeInTheDocument();
   });
 });
 

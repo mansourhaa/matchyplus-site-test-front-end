@@ -77,6 +77,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     '/settings/terms-of-service': t('settings.terms'),
     '/edit-profile': t('settings.editProfile'),
     '/notifications': t('settings.notifications'),
+    '/settings/notifications': t('settings.notifications'),
   };
 
   if (isPrimary) {

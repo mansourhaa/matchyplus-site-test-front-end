@@ -179,7 +179,7 @@ export class SwipeService {
       const direction = directionRaw === 'right' ? SwipeDirection.RIGHT : SwipeDirection.LEFT;
 
       const { unlimited } = await this.quota.resolveSwipeQuota(userId);
-      if (direction === SwipeDirection.RIGHT && !unlimited) {
+      if (!unlimited) {
         const quota = await this.quota.buildQuotaSnapshot(userId);
         if ((quota.remaining ?? 0) <= 0) {
           throw tooManyRequests('daily swipe limit reached');

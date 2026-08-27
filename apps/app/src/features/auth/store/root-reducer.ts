@@ -1,3 +1,4 @@
+import favoritesReducer from '@/features/favorites/store/favorites-slice';
 import identityVerificationReducer from '@/features/identity-verification/store/identity-verification-slice';
 import matchingReducer from '@/features/matching/store/matching-slice';
 import messagingReducer from '@/features/messaging/store/messaging-slice';
@@ -28,6 +29,7 @@ const rootReducer = combineReducers({
   profile: profileReducer,
   notifications: notificationsReducer,
   identityVerification: identityVerificationReducer,
+  favorites: favoritesReducer,
 });
 
 export default rootReducer;

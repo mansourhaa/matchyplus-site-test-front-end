@@ -1,5 +1,6 @@
 'use client';
 
+import { VideoJSPlayer } from '@/components/video-js-player';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import {
@@ -816,7 +817,7 @@ export function EditProfileForm() {
               </span>
               <span className="text-sm font-semibold text-[#353535]">
                 {serviceType || (locale === 'en' ? 'Choose' : locale === 'ar' ? 'اختر' : 'Choisir')}{' '}
-                · {price || '0'} DT/{locale === 'en' ? 'hr' : locale === 'ar' ? 'ساعة' : 'heure'}
+                · {price || '0'} DT/{locale === 'en' ? 'day' : locale === 'ar' ? 'يوم' : 'jour'}
               </span>
             </span>
             <ChevronDown size={16} color="#AAA" />
@@ -1024,13 +1025,13 @@ export function EditProfileForm() {
                 </p>
               )}
               {showVideoPreview && video.url && (
-                <video
+                <VideoJSPlayer
                   src={video.url}
                   controls
-                  playsInline
-                  onLoadedMetadata={() => setVideoPlaybackError(false)}
-                  onError={() => setVideoPlaybackError(true)}
-                  className="mt-3 aspect-video w-full rounded-xl bg-black object-contain"
+                  playsinline
+                  fluid
+                  aspectRatio="16:9"
+                  className="mt-3 rounded-xl"
                 />
               )}
               <Link
@@ -1539,10 +1540,10 @@ function ServiceSheet(props: SheetProps) {
       </label>
       <label className="mb-4 block text-xs text-[#888]">
         {locale === 'en'
-          ? 'Price (TND/hour)'
+          ? 'Price (TND/day)'
           : locale === 'ar'
-            ? 'السعر (د.ت/ساعة)'
-            : 'Prix (DT/heure)'}
+            ? 'السعر (د.ت/يوم)'
+            : 'Prix (DT/jour)'}
         <input
           inputMode="decimal"
           value={price}

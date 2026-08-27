@@ -62,6 +62,7 @@ export const ModelName = {
   UserLocation: 'UserLocation',
   UserBlock: 'UserBlock',
   Rating: 'Rating',
+  Favorite: 'Favorite',
   Notification: 'Notification',
   AiJob: 'AiJob',
   WaitlistEntry: 'WaitlistEntry',
@@ -326,6 +327,16 @@ export const RatingScalarFieldEnum = {
 
 export type RatingScalarFieldEnum =
   (typeof RatingScalarFieldEnum)[keyof typeof RatingScalarFieldEnum];
+
+export const FavoriteScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  favorited_id: 'favorited_id',
+  created_at: 'created_at',
+} as const;
+
+export type FavoriteScalarFieldEnum =
+  (typeof FavoriteScalarFieldEnum)[keyof typeof FavoriteScalarFieldEnum];
 
 export const NotificationScalarFieldEnum = {
   id: 'id',

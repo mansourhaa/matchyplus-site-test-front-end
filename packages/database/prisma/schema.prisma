@@ -166,17 +166,19 @@ model User {
   reports_made     Report[] @relation("ReportsMade")
   reports_received Report[] @relation("ReportsReceived")
 
-  swipes_made       Swipe[]       @relation("SwipesMade")
-  swipes_received   Swipe[]       @relation("SwipesReceived")
-  swipe_logs        SwipeLog[]    @relation("SwipeLogsByUser")
-  swipe_log_targets SwipeLog[]    @relation("SwipeLogsOnTarget")
-  matches_as_low    Match[]       @relation("MatchesAsLow")
-  matches_as_high   Match[]       @relation("MatchesAsHigh")
-  location          UserLocation?
-  blocks_made       UserBlock[]   @relation("BlocksMade")
-  blocks_received   UserBlock[]   @relation("BlocksReceived")
-  ratings_given     Rating[]      @relation("RatingsGiven")
-  ratings_received  Rating[]      @relation("RatingsReceived")
+  swipes_made        Swipe[]       @relation("SwipesMade")
+  swipes_received    Swipe[]       @relation("SwipesReceived")
+  swipe_logs         SwipeLog[]    @relation("SwipeLogsByUser")
+  swipe_log_targets  SwipeLog[]    @relation("SwipeLogsOnTarget")
+  matches_as_low     Match[]       @relation("MatchesAsLow")
+  matches_as_high    Match[]       @relation("MatchesAsHigh")
+  location           UserLocation?
+  blocks_made        UserBlock[]   @relation("BlocksMade")
+  blocks_received    UserBlock[]   @relation("BlocksReceived")
+  ratings_given      Rating[]      @relation("RatingsGiven")
+  ratings_received   Rating[]      @relation("RatingsReceived")
+  favorites_given    Favorite[]    @relation("FavoritesGiven")
+  favorites_received Favorite[]    @relation("FavoritesReceived")
 
   conversations_as_low  Conversation[] @relation("ConversationsAsLow")
   conversations_as_high Conversation[] @relation("ConversationsAsHigh")
@@ -420,6 +422,20 @@ model Rating {
 
   @@unique([rater_id, ratee_id])
   @@index([ratee_id])
+}
+
+/// A favorited / bookmarked profile from the discovery feed before matching.
+model Favorite {
+  id           String   @id @default(cuid())
+  user_id      String
+  user         User     @relation("FavoritesGiven", fields: [user_id], references: [id], onDelete: Cascade)
+  favorited_id String
+  favorited    User     @relation("FavoritesReceived", fields: [favorited_id], references: [id], onDelete: Cascade)
+  created_at   DateTime @default(now())
+
+  @@unique([user_id, favorited_id])
+  @@index([user_id, created_at(sort: Desc)])
+  @@index([favorited_id])
 }
 
 /// What kind of event a Notification row represents. Kept as an enum (rather than a free

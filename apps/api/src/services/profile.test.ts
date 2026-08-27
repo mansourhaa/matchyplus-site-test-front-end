@@ -192,20 +192,18 @@ describe('ProfileService', () => {
       expect(result).toBe(true);
     });
 
-    it('rejects a viewer with no match or conversation', async () => {
+    it('rejects a viewer when a block exists', async () => {
       const { service, prisma } = createService();
-      prisma.match.findUnique.mockResolvedValue(null);
-      prisma.conversation.findUnique.mockResolvedValue(null);
+      prisma.userBlock.findFirst.mockResolvedValue({ id: 'block-1' });
 
       const result = await service.canAccessVideo('user-1', 'user-2');
 
       expect(result).toBe(false);
     });
 
-    it('allows a viewer with a conversation after unmatch', async () => {
+    it('allows a viewer without a block', async () => {
       const { service, prisma } = createService();
-      prisma.match.findUnique.mockResolvedValue(null);
-      prisma.conversation.findUnique.mockResolvedValue({ id: 'conv-1' });
+      prisma.userBlock.findFirst.mockResolvedValue(null);
 
       const result = await service.canAccessVideo('user-1', 'user-2');
 

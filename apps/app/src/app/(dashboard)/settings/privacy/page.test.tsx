@@ -1,6 +1,7 @@
 import authReducer from '@/features/auth/store/auth-slice';
 import type { AuthState, AuthUser } from '@/features/auth/types';
 import { I18nProvider } from '@/features/i18n/i18n-provider';
+import profileReducer from '@/features/profile/store/profile-slice';
 import { api } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { configureStore } from '@reduxjs/toolkit';
@@ -49,7 +50,7 @@ function renderPrivacyPage(user: AuthUser = baseUser) {
     user,
   };
   const store = configureStore({
-    reducer: { auth: authReducer },
+    reducer: { auth: authReducer, profile: profileReducer },
     preloadedState: { auth: authState },
   });
   return render(
@@ -98,7 +99,7 @@ describe('PrivacyPage — delete account', () => {
     renderPrivacyPage();
 
     fireEvent.click(screen.getByRole('button', { name: /Supprimer définitivement mon compte/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Supprimer', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^Supprimer$/ }));
 
     await waitFor(() =>
       expect(api.delete).toHaveBeenCalledWith('/auth/account', {
@@ -115,7 +116,7 @@ describe('PrivacyPage — delete account', () => {
     renderPrivacyPage();
 
     fireEvent.click(screen.getByRole('button', { name: /Supprimer définitivement mon compte/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Supprimer', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^Supprimer$/ }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(pushMock).not.toHaveBeenCalled();

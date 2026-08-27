@@ -128,7 +128,7 @@ describe('HistoryPage', () => {
     renderHistoryPage();
 
     await waitFor(() => {
-      expect(screen.getByText('Historique d’activité')).toBeInTheDocument();
+      expect(screen.getByText('Tout')).toBeInTheDocument();
       expect(screen.getByText('Sarah Connor')).toBeInTheDocument();
       expect(screen.getByText('Alexandre Dumas')).toBeInTheDocument();
     });

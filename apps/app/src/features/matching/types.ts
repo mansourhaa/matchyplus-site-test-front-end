@@ -18,6 +18,7 @@ export type MatchingProfile = {
   id: string;
   name: string;
   image: string | null;
+  video?: string | null;
   bio: string | null;
   job: string | null;
   category: string | null;
@@ -25,6 +26,8 @@ export type MatchingProfile = {
   interests: string[];
   activity_sector: string | null;
   service_type: string | null;
+  price?: string | null;
+  availability_days?: string[];
   rating: number;
 };
 
@@ -69,7 +72,7 @@ export type SwipeResult = {
   quota: SwipeQuota;
 };
 
-export type DiscoveryFeedSort = 'match' | 'distance' | 'rating';
+export type DiscoveryFeedSort = 'match' | 'distance' | 'rating' | 'price_asc' | 'price_desc';
 
 export type DiscoveryFeedQuery = {
   latitude?: number;
@@ -80,6 +83,10 @@ export type DiscoveryFeedQuery = {
   q?: string;
   maxDistanceKm?: number;
   serviceTypes?: string;
+  sector?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  availableOnly?: boolean;
   profileType?: 'INDIVIDUAL' | 'PROVIDER';
   minRating?: number;
   sort?: DiscoveryFeedSort;

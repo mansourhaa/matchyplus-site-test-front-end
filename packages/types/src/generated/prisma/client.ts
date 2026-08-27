@@ -135,6 +135,11 @@ export type UserBlock = Prisma.UserBlockModel;
  */
 export type Rating = Prisma.RatingModel;
 /**
+ * Model Favorite
+ * A favorited / bookmarked profile from the discovery feed before matching.
+ */
+export type Favorite = Prisma.FavoriteModel;
+/**
  * Model Notification
  * In-app notification feed. A row is created the moment the triggering event happens,
  * independent of whether the recipient is online — a connected client also gets a live

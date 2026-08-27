@@ -5,7 +5,7 @@ import { MatchyLogo } from '@/components/matchy/matchy-logo';
 import { useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { selectInboxUnreadCount } from '@/features/messaging/store/messaging-slice';
-import { Crown, Home, MessageCircle, Search, User } from 'lucide-react';
+import { Home, MessageCircle, Search, User } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 type NavKey = 'home' | 'search' | 'matches' | 'profile';

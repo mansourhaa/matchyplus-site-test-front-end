@@ -564,13 +564,13 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
       >
         {recording ? (
           /* Live Vocal Recording HUD */
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-200/80 bg-rose-50/80 px-4 py-2.5">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#D0E4F7] bg-[#EEF5FF] px-4 py-2.5">
             <div className="flex items-center gap-2.5">
               {/* Recording Indicator */}
-              <span className="flex h-2.5 w-2.5 rounded-full bg-rose-600"></span>
+              <span className="flex h-2.5 w-2.5 animate-pulse rounded-full bg-[#2F76BB]"></span>
 
               {/* Timer */}
-              <span className="font-mono text-xs font-bold text-rose-700">
+              <span className="font-mono text-xs font-bold text-[#2F76BB]">
                 {Math.floor(recordingSeconds / 60)
                   .toString()
                   .padStart(2, '0')}
@@ -582,7 +582,7 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
                 {[6, 12, 18, 10, 16, 8, 14, 10, 15, 7].map((h, idx) => (
                   <span
                     key={idx}
-                    className="w-0.5 rounded-full bg-rose-400"
+                    className="w-0.5 rounded-full bg-[#61BCA6]"
                     style={{ height: `${h}px` }}
                   />
                 ))}
@@ -594,7 +594,7 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
               <button
                 type="button"
                 onClick={cancelRecording}
-                className="flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100/70"
+                className="flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-[#64748B] transition-colors hover:bg-slate-200/70"
               >
                 <Trash2 size={14} />
                 <span>{t('chat.cancelRecording')}</span>
@@ -603,7 +603,7 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
               <button
                 type="button"
                 onClick={stopRecording}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-rose-500 to-[#E24E59] text-white shadow-xs transition-opacity hover:opacity-95 active:scale-95"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] text-white shadow-xs transition-all hover:brightness-105 active:scale-95"
                 aria-label={t('chat.sendVoiceNote')}
               >
                 <Send size={15} />
