@@ -18,6 +18,9 @@ function createMockPrisma() {
       findMany: vi.fn(),
       update: vi.fn(),
     },
+    match: {
+      count: vi.fn().mockResolvedValue(0),
+    },
     refreshToken: {
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
@@ -913,6 +916,20 @@ describe('AdminService analytics', () => {
     ]);
     // Every member counts toward the total, including the uncategorised one.
     expect(result.totalMatches).toBe(111);
+  });
+
+  it('counts matches this month from the real Match table, not the denormalised counter', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findMany.mockResolvedValue(members);
+    prisma.plan.findMany.mockResolvedValue(plans);
+    prisma.match.count.mockResolvedValue(42);
+
+    const result = await new AdminService({ prisma: prisma as never }).getAnalytics();
+
+    expect(result.matchesThisMonth).toBe(42);
+    expect(prisma.match.count).toHaveBeenCalledWith({
+      where: { matched_at: { gte: expect.any(Date) } },
+    });
   });
 
   it('counts categories and cities, ignoring blanks', async () => {

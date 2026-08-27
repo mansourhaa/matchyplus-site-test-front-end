@@ -12,6 +12,7 @@ export interface AdminAnalytics {
   topCities: Array<{ city: string; users: number }>;
   revenueByPlan: Array<{ plan: string; users: number; monthlyRevenue: number }>;
   totalMatches: number;
+  matchesThisMonth: number;
   estimatedMonthlyRevenue: number;
 }
 

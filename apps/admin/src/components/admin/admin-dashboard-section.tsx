@@ -21,6 +21,18 @@ import {
   YAxis,
 } from 'recharts';
 
+function LiveBadge() {
+  return (
+    <span
+      className="flex items-center gap-1.5 rounded-full px-2 py-0.5"
+      style={{ background: '#E8F7F3', fontSize: '10px', fontWeight: 700, color: '#61BCA6' }}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      LIVE
+    </span>
+  );
+}
+
 function TrendBadge({ value }: { value: number }) {
   const up = value >= 0;
   const color = up ? '#61BCA6' : '#E74C3C';
@@ -126,8 +138,8 @@ export function AdminDashboardSection({
           trend={analytics?.trends?.users}
         />
         <StatCard
-          label="Matches cumulés"
-          value={(analytics?.totalMatches ?? 0).toLocaleString('fr-FR')}
+          label="Matches ce mois"
+          value={(analytics?.matchesThisMonth ?? 0).toLocaleString('fr-FR')}
           icon={Zap}
           color="#61BCA6"
           bg="#E8F7F3"
@@ -271,7 +283,10 @@ export function AdminDashboardSection({
 
       <div className="rounded-2xl p-5" style={{ background: 'white', border: '1px solid #F0F0F0' }}>
         <div className="mb-4 flex items-center justify-between">
-          <p style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A2E' }}>Derniers inscrits</p>
+          <div className="flex items-center gap-2">
+            <p style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A2E' }}>Derniers inscrits</p>
+            <LiveBadge />
+          </div>
           <button
             type="button"
             onClick={onSeeAll}

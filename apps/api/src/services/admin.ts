@@ -514,17 +514,23 @@ export class AdminService {
   }
 
   /**
-   * Everything here is aggregated from rows that actually exist. There is no billing or
-   * matching model yet, so revenue is an estimate of monthly recurring value
-   * (plan price × subscribers) and `matches` is the denormalised counter on User.
+   * Everything here is aggregated from rows that actually exist. There is no billing model
+   * yet, so revenue is an estimate of monthly recurring value (plan price × subscribers).
+   * `totalMatches` sums the denormalised counter on User (all-time); `matchesThisMonth`
+   * queries the real Match table by `matched_at` instead, since the counter carries no
+   * timestamp of its own.
    */
   async getAnalytics(): Promise<AdminAnalyticsResult> {
-    const [users, plans] = await Promise.all([
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [users, plans, matchesThisMonth] = await Promise.all([
       this.prisma.user.findMany({
         where: { role: Role.USER },
         select: { category: true, city: true, matches: true, plan: true, create_at: true },
       }),
       this.prisma.plan.findMany({ orderBy: { sort_order: 'asc' } }),
+      this.prisma.match.count({ where: { matched_at: { gte: startOfMonth } } }),
     ]);
 
     const tally = <T extends string>(rows: (T | null)[]) => {
@@ -607,6 +613,7 @@ export class AdminService {
       trends,
       revenueByPlan,
       totalMatches: users.reduce((sum, user) => sum + user.matches, 0),
+      matchesThisMonth,
       estimatedMonthlyRevenue:
         Math.round(revenueByPlan.reduce((sum, row) => sum + row.monthlyRevenue, 0) * 100) / 100,
     };
