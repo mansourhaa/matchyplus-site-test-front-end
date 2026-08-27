@@ -273,5 +273,29 @@ describe('GeolocationService', () => {
         }),
       );
     });
+
+    it('cleans governorate prefixes and picks governorate over country name when city equals country', async () => {
+      fetchFn.mockResolvedValueOnce(
+        okResponse({
+          address: {
+            city: 'Tunisia',
+            state: "Gouvernorat de l'Ariana",
+            country: 'Tunisia',
+          },
+          display_name: 'Ariana, Tunisia',
+        }),
+      );
+
+      const result = await service.reverseGeocode(36.8665, 10.1647);
+
+      expect(result).toEqual({
+        success: true,
+        provider: 'nominatim',
+        city: 'Ariana',
+        region: "Gouvernorat de l'Ariana",
+        country: 'Tunisia',
+        formattedAddress: 'Ariana, Tunisia',
+      });
+    });
   });
 });

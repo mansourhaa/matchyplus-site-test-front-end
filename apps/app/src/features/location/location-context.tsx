@@ -130,17 +130,15 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     let permissionStatus: PermissionStatus | null = null;
 
     const handlePermissionChange = () => {
-      if (permissionStatus?.state === 'denied' || permissionStatus?.state === 'prompt') {
+      if (permissionStatus?.state === 'denied') {
         clearLocation();
-        if (permissionStatus.state === 'denied') {
-          setPermissionDenied(true);
-          setAccessMessage(
-            'Location permission is disabled or denied. Please enable location to continue.',
-          );
-        } else {
-          setPermissionDenied(false);
-          setAccessMessage(null);
-        }
+        setPermissionDenied(true);
+        setAccessMessage(
+          'Location permission is disabled or denied. Please enable location to continue.',
+        );
+      } else if (permissionStatus?.state === 'granted') {
+        setPermissionDenied(false);
+        setAccessMessage(null);
       }
     };
 
@@ -148,8 +146,11 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       .query({ name: 'geolocation' })
       .then((status) => {
         permissionStatus = status;
-        if (status.state === 'denied' || status.state === 'prompt') {
+        if (status.state === 'denied') {
           handlePermissionChange();
+        } else if (status.state === 'granted') {
+          setPermissionDenied(false);
+          setAccessMessage(null);
         }
         status.addEventListener('change', handlePermissionChange);
       })
@@ -318,7 +319,8 @@ export const useLocationGate = useLocationContext;
  * prompt automatically on mount. Does nothing when permission is explicitly "denied".
  */
 export function useAutoCaptureGrantedLocation() {
-  const { permissionDenied, activating, requestBrowserLocation } = useLocationContext();
+  const { locationSynced, permissionDenied, activating, requestBrowserLocation } =
+    useLocationContext();
 
   useEffect(() => {
     if (activating || permissionDenied) return;
@@ -332,21 +334,23 @@ export function useAutoCaptureGrantedLocation() {
         .query({ name: 'geolocation' })
         .then((status) => {
           if (!cancelled) {
-            if (status.state === 'granted' || status.state === 'prompt') {
+            if (status.state === 'granted' || (!locationSynced && status.state === 'prompt')) {
               void requestBrowserLocation();
             }
           }
         })
         .catch((error) => {
           handleError(error, 'useAutoCaptureGrantedLocation');
-          void requestBrowserLocation();
+          if (!locationSynced) {
+            void requestBrowserLocation();
+          }
         });
 
       return () => {
         cancelled = true;
       };
-    } else {
+    } else if (!locationSynced) {
       void requestBrowserLocation();
     }
-  }, [activating, permissionDenied, requestBrowserLocation]);
+  }, [locationSynced, activating, permissionDenied, requestBrowserLocation]);
 }
