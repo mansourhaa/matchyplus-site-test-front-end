@@ -583,11 +583,10 @@ export function AIRecommendationItem({
           </p>
         </div>
         <div
-          className="flex items-center gap-1 rounded-lg px-2 py-1"
+          className="flex h-7 w-7 items-center justify-center rounded-lg"
           style={{ background: 'rgba(47,118,187,0.1)', color: '#2F76BB' }}
         >
-          <Lock size={12} color="#2F76BB" />
-          <span style={{ fontSize: 10, fontWeight: 700 }}>VIP</span>
+          <Lock size={14} color="#2F76BB" />
         </div>
       </motion.button>
     );

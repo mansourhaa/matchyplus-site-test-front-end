@@ -49,6 +49,7 @@ describe('OAuthAuthenticationService', () => {
           email: 'new@example.com',
           email_verified: true,
           name: 'Jane Doe',
+          image: null,
           auth_provider: 'google',
           google_id: 'google-sub-1',
         },

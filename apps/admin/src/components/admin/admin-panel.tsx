@@ -1,12 +1,15 @@
 'use client';
 
+import { AdminAddTeamMemberModal } from '@/components/admin/admin-add-team-member-modal';
 import { AdminAddUserModal } from '@/components/admin/admin-add-user-modal';
 import { AdminAnalyticsSection } from '@/components/admin/admin-analytics-section';
 import { AdminDashboardSection } from '@/components/admin/admin-dashboard-section';
+import { AdminEditTeamMemberModal } from '@/components/admin/admin-edit-team-member-modal';
 import { AdminPlansSection } from '@/components/admin/admin-plans-section';
 import { AdminReportsSection } from '@/components/admin/admin-reports-section';
 import { AdminSettingsSection } from '@/components/admin/admin-settings-section';
 import { AdminSubscriptionsSection } from '@/components/admin/admin-subscriptions-section';
+import { AdminTeamSection } from '@/components/admin/admin-team-section';
 import { AdminUserDetail } from '@/components/admin/admin-user-detail';
 import { AdminUsersSection } from '@/components/admin/admin-users-section';
 import { ConfirmDeletePopup } from '@/components/admin/confirm-delete-popup';
@@ -32,6 +35,14 @@ import {
   updateAdminReportStatus,
 } from '@/features/admin-reports/store/admin-reports-slice';
 import type { ReportStatus } from '@/features/admin-reports/types';
+import type { AdminTransaction } from '@/features/admin-transactions/types';
+import {
+  fetchAdminTeam,
+  selectAdminTeam,
+  setTeamFilters,
+  updateAdminTeamMemberStatus,
+} from '@/features/admin-team/store/admin-team-slice';
+import type { AdminTeamMember, TeamStatus } from '@/features/admin-team/types';
 import {
   deleteAdminUser,
   fetchAdminStats,
@@ -47,6 +58,7 @@ import type { AdminManagedUser, AdminUserUpdate } from '@/features/admin-users/t
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import {
   BarChart2,
+  Bell,
   ChevronDown,
   CreditCard,
   Flag,
@@ -55,6 +67,7 @@ import {
   type LucideIcon,
   Package,
   Settings,
+  Shield,
   Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -64,6 +77,7 @@ type AdminSection =
   | 'dashboard'
   | 'users'
   | 'user-detail'
+  | 'team'
   | 'subscriptions'
   | 'plans'
   | 'analytics'
@@ -72,9 +86,29 @@ type AdminSection =
 
 type NavKey = Exclude<AdminSection, 'user-detail'>;
 
+/**
+ * Minutes since `loginAt`, ticking every 30s so the header pill stays roughly live without a
+ * full re-render loop. Null when the session was restored from storage rather than a fresh
+ * login this tab (`loginAt` isn't persisted) — the pill just doesn't render in that case
+ * rather than showing a fabricated duration.
+ */
+function useConnectedMinutes(loginAt: string | null): number | null {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!loginAt) return;
+    const interval = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(interval);
+  }, [loginAt]);
+
+  if (!loginAt) return null;
+  return Math.max(0, Math.floor((now - new Date(loginAt).getTime()) / 60_000));
+}
+
 const NAV_ITEMS: { key: NavKey; icon: LucideIcon; label: string }[] = [
   { key: 'dashboard', icon: Home, label: 'Tableau de bord' },
   { key: 'users', icon: Users, label: 'Utilisateurs' },
+  { key: 'team', icon: Shield, label: 'Équipe' },
   { key: 'reports', icon: Flag, label: 'Signalements' },
   { key: 'subscriptions', icon: CreditCard, label: 'Abonnements' },
   { key: 'plans', icon: Package, label: 'Gestion Forfaits' },
@@ -82,11 +116,18 @@ const NAV_ITEMS: { key: NavKey; icon: LucideIcon; label: string }[] = [
   { key: 'settings', icon: Settings, label: 'Paramètres' },
 ];
 
+// No real transaction/payment backend exists yet (no ledger, no wallet, no boost-purchase
+// tracking — see the admin dashboard audit). The transactions UI is built and ready; it just
+// has nothing to show until that backend exists, so this stays an empty array rather than
+// fabricated rows.
+const NO_TRANSACTIONS: AdminTransaction[] = [];
+
 export function AdminPanel() {
   useAdminProactiveRefresh();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { admin } = useAppSelector(selectAdminAuth);
+  const { admin, loginAt } = useAppSelector(selectAdminAuth);
+  const connectedMinutes = useConnectedMinutes(loginAt);
   const { users, stats, selectedUser, loadingUsers, error, filters } =
     useAppSelector(selectAdminUsers);
   const {
@@ -103,12 +144,25 @@ export function AdminPanel() {
   } = useAppSelector(selectAdminReports);
   const reportGroups = useAppSelector(selectReportsByReportedUser);
   const pendingReportCount = useAppSelector(selectPendingReportCount);
+  const {
+    members: teamMembers,
+    loading: loadingTeam,
+    error: teamError,
+    filters: teamFilters,
+  } = useAppSelector(selectAdminTeam);
 
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [previousSection, setPreviousSection] = useState<AdminSection>('users');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userToDelete, setUserToDelete] = useState<AdminManagedUser | null>(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
+  const [addTeamMemberOpen, setAddTeamMemberOpen] = useState(false);
+  const [editingTeamMember, setEditingTeamMember] = useState<AdminTeamMember | null>(null);
+
+  // Support has nothing below it among admin roles, so the section is hidden rather than
+  // shown empty — matches the backend's own assertMinimumRole(MODERATOR) gate on /admin/team.
+  const canSeeTeam = admin?.role === 'SUPER_ADMIN' || admin?.role === 'MODERATOR';
+  const visibleNavItems = NAV_ITEMS.filter((item) => item.key !== 'team' || canSeeTeam);
 
   useEffect(() => {
     void dispatch(fetchAdminStats());
@@ -119,6 +173,15 @@ export function AdminPanel() {
   useEffect(() => {
     void dispatch(fetchAdminReports(reportFilter));
   }, [dispatch, reportFilter]);
+
+  useEffect(() => {
+    if (activeSection !== 'team' || !canSeeTeam) return;
+    const timeout = window.setTimeout(() => {
+      void dispatch(fetchAdminTeam(teamFilters));
+    }, 220);
+
+    return () => window.clearTimeout(timeout);
+  }, [dispatch, activeSection, canSeeTeam, teamFilters]);
 
   // Debounced so typing in the search box does not fire a request per keystroke.
   useEffect(() => {
@@ -181,6 +244,10 @@ export function AdminPanel() {
     }
   };
 
+  const handleChangeTeamMemberStatus = (member: AdminTeamMember, status: TeamStatus) => {
+    void dispatch(updateAdminTeamMemberStatus({ id: member.id, status }));
+  };
+
   const handleSetReportStatus = (id: string, status: ReportStatus) => {
     void dispatch(updateAdminReportStatus({ id, status }));
   };
@@ -230,7 +297,7 @@ export function AdminPanel() {
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {NAV_ITEMS.map(({ key, icon: Icon, label }) => {
+          {visibleNavItems.map(({ key, icon: Icon, label }) => {
             const isActive =
               activeSection === key || (activeSection === 'user-detail' && key === 'users');
             const badge = key === 'reports' ? pendingReportCount : 0;
@@ -343,31 +410,73 @@ export function AdminPanel() {
             </p>
           </div>
 
-          <div
-            className="flex items-center gap-2 rounded-xl px-3 py-1.5"
-            style={{ background: '#F5F7FA' }}
-          >
-            <div
-              className="flex h-7 w-7 items-center justify-center rounded-full"
-              style={{ background: 'linear-gradient(135deg, #2F76BB, #61BCA6)' }}
-            >
-              <span style={{ fontSize: '12px', fontWeight: 800, color: 'white' }}>
-                {admin?.name?.charAt(0) ?? 'A'}
+          <div className="flex items-center gap-3">
+            {connectedMinutes !== null && (
+              <span
+                className="rounded-full px-2.5 py-1"
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  background: '#E8F7F3',
+                  color: '#61BCA6',
+                }}
+              >
+                Connecté depuis {connectedMinutes}min
               </span>
-            </div>
-            <div>
-              <p style={{ fontSize: '12px', fontWeight: 700, color: '#353535' }}>
-                {admin?.name ?? 'admin'}
-              </p>
-              <p style={{ fontSize: '10px', color: '#888' }}>
-                {admin?.role ? (ROLE_LABELS[admin.role] ?? 'Admin') : 'Admin'}
-              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveSection('reports');
+                dispatch(selectUser(null));
+              }}
+              className="relative flex h-9 w-9 items-center justify-center rounded-xl"
+              style={{ background: '#F5F7FA' }}
+              aria-label="Notifications"
+            >
+              <Bell size={18} color="#555" />
+              {pendingReportCount > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1"
+                  style={{
+                    background: '#E74C3C',
+                    fontSize: '9px',
+                    fontWeight: 800,
+                    color: 'white',
+                  }}
+                >
+                  {pendingReportCount > 9 ? '9+' : pendingReportCount}
+                </span>
+              )}
+            </button>
+
+            <div
+              className="flex items-center gap-2 rounded-xl px-3 py-1.5"
+              style={{ background: '#F5F7FA' }}
+            >
+              <div
+                className="flex h-7 w-7 items-center justify-center rounded-full"
+                style={{ background: 'linear-gradient(135deg, #2F76BB, #61BCA6)' }}
+              >
+                <span style={{ fontSize: '12px', fontWeight: 800, color: 'white' }}>
+                  {admin?.name?.charAt(0) ?? 'A'}
+                </span>
+              </div>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: 700, color: '#353535' }}>
+                  {admin?.name ?? 'admin'}
+                </p>
+                <p style={{ fontSize: '10px', color: '#888' }}>
+                  {admin?.role ? (ROLE_LABELS[admin.role] ?? 'Admin') : 'Admin'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {(error ?? plansError ?? analyticsError ?? reportsError) && (
+          {(error ?? plansError ?? analyticsError ?? reportsError ?? teamError) && (
             <p
               className="mb-4 rounded-xl px-4 py-3"
               style={{
@@ -377,7 +486,7 @@ export function AdminPanel() {
                 fontSize: '13px',
               }}
             >
-              {error ?? plansError ?? analyticsError ?? reportsError}
+              {error ?? plansError ?? analyticsError ?? reportsError ?? teamError}
             </p>
           )}
 
@@ -386,8 +495,10 @@ export function AdminPanel() {
               stats={stats}
               analytics={analytics}
               users={users}
+              transactions={NO_TRANSACTIONS}
               onSelectUser={(user) => openUserDetail(user, 'dashboard')}
               onSeeAll={() => setActiveSection('users')}
+              onSeeAllTransactions={() => setActiveSection('subscriptions')}
             />
           )}
 
@@ -396,6 +507,7 @@ export function AdminPanel() {
               users={users}
               filters={filters}
               loading={loadingUsers}
+              categories={(analytics?.categoryDistribution ?? []).map((entry) => entry.name)}
               onFiltersChange={(changes) => dispatch(setFilters(changes))}
               onOpenUser={(user) => openUserDetail(user, 'users')}
               onDeleteUser={(user) => setUserToDelete(user)}
@@ -403,13 +515,33 @@ export function AdminPanel() {
             />
           )}
 
+          {activeSection === 'team' && canSeeTeam && admin && (
+            <AdminTeamSection
+              members={teamMembers}
+              filters={teamFilters}
+              loading={loadingTeam}
+              actorRole={admin.role}
+              onFiltersChange={(changes) => dispatch(setTeamFilters(changes))}
+              onAddMember={() => setAddTeamMemberOpen(true)}
+              onEditMember={(member) => setEditingTeamMember(member)}
+              onChangeStatus={handleChangeTeamMemberStatus}
+            />
+          )}
+
           {activeSection === 'subscriptions' && (
-            <AdminSubscriptionsSection stats={stats} plans={plans} analytics={analytics} />
+            <AdminSubscriptionsSection
+              stats={stats}
+              plans={plans}
+              analytics={analytics}
+              transactions={NO_TRANSACTIONS}
+            />
           )}
 
           {activeSection === 'plans' && (
             <AdminPlansSection
               plans={plans}
+              stats={stats}
+              analytics={analytics}
               saving={savingPlan}
               savedAt={savedAt}
               onSave={handleSavePlan}
@@ -458,6 +590,20 @@ export function AdminPanel() {
         isOpen={addUserOpen}
         onClose={() => setAddUserOpen(false)}
         onCreated={() => void dispatch(fetchAdminStats())}
+      />
+
+      {admin && (
+        <AdminAddTeamMemberModal
+          isOpen={addTeamMemberOpen}
+          actorRole={admin.role}
+          onClose={() => setAddTeamMemberOpen(false)}
+        />
+      )}
+
+      <AdminEditTeamMemberModal
+        key={editingTeamMember?.id ?? 'closed'}
+        member={editingTeamMember}
+        onClose={() => setEditingTeamMember(null)}
       />
     </div>
   );

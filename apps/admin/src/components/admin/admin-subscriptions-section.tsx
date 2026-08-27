@@ -1,7 +1,9 @@
 'use client';
 
+import { AdminTransactionsSection } from '@/components/admin/admin-transactions-section';
 import type { AdminAnalytics } from '@/features/admin-analytics/types';
 import type { AdminPlan } from '@/features/admin-plans/types';
+import type { AdminTransaction } from '@/features/admin-transactions/types';
 import type { AdminStats } from '@/features/admin-users/types';
 import { Crown } from 'lucide-react';
 import {
@@ -20,10 +22,12 @@ export function AdminSubscriptionsSection({
   stats,
   plans,
   analytics,
+  transactions,
 }: {
   stats: AdminStats | null;
   plans: AdminPlan[];
   analytics: AdminAnalytics | null;
+  transactions: AdminTransaction[];
 }) {
   const total = Math.max(1, stats?.totalUsers ?? 0);
 
@@ -81,6 +85,8 @@ export function AdminSubscriptionsSection({
           </div>
         ))}
       </div>
+
+      <AdminTransactionsSection title="Transactions live" transactions={transactions} />
 
       <div className="rounded-2xl p-5" style={{ background: 'white', border: '1px solid #F0F0F0' }}>
         <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">

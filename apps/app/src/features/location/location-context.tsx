@@ -19,6 +19,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -106,6 +107,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [activating, setActivating] = useState(false);
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
+  const lastSyncedCoordsRef = useRef<{ latitude: number; longitude: number } | null>(null);
 
   const clearLocation = useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -119,6 +121,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setLatitude(null);
     setLongitude(null);
     setLocationSynced(false);
+    lastSyncedCoordsRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -165,6 +168,20 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setLocationSynced(true);
     setPermissionDenied(false);
     storeCoords(next);
+
+    // Skip redundant network requests if coordinates have not changed
+    if (
+      lastSyncedCoordsRef.current?.latitude === next.latitude &&
+      lastSyncedCoordsRef.current?.longitude === next.longitude
+    ) {
+      return;
+    }
+    lastSyncedCoordsRef.current = next;
+
+    // Best-effort: keeps the profile's city connected to where the member actually is.
+    void api.post('/users/me/location', next).catch((error) => {
+      handleError(error, 'syncUserLocation');
+    });
   }, []);
 
   const requestIpFallback = useCallback(async () => {
@@ -296,31 +313,40 @@ export function useLocationContext() {
 export const useLocationGate = useLocationContext;
 
 /**
- * If Permissions API reports geolocation already granted, capture coords without the
- * overlay button. Does nothing when state is still "prompt" (needs a user gesture —
- * onboarding Finish or the overlay CTA).
+ * Captures coordinates automatically. When permission is already "granted", gets position
+ * silently. When permission is "prompt" (undecided), invokes the browser's native location
+ * prompt automatically on mount. Does nothing when permission is explicitly "denied".
  */
 export function useAutoCaptureGrantedLocation() {
-  const { locationSynced, activating, requestBrowserLocation } = useLocationContext();
+  const { permissionDenied, activating, requestBrowserLocation } = useLocationContext();
 
   useEffect(() => {
-    if (locationSynced || activating) return;
-    if (typeof navigator === 'undefined' || !navigator.permissions?.query) return;
+    if (activating || permissionDenied) return;
 
-    let cancelled = false;
-    void navigator.permissions
-      .query({ name: 'geolocation' })
-      .then((status) => {
-        if (!cancelled && status.state === 'granted') {
+    if (typeof navigator === 'undefined') return;
+
+    // If Permissions API is available, check state
+    if (navigator.permissions?.query) {
+      let cancelled = false;
+      void navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((status) => {
+          if (!cancelled) {
+            if (status.state === 'granted' || status.state === 'prompt') {
+              void requestBrowserLocation();
+            }
+          }
+        })
+        .catch((error) => {
+          handleError(error, 'useAutoCaptureGrantedLocation');
           void requestBrowserLocation();
-        }
-      })
-      .catch((error) => {
-        handleError(error, 'useAutoCaptureGrantedLocation');
-      });
+        });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [activating, locationSynced, requestBrowserLocation]);
+      return () => {
+        cancelled = true;
+      };
+    } else {
+      void requestBrowserLocation();
+    }
+  }, [activating, permissionDenied, requestBrowserLocation]);
 }

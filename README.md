@@ -120,8 +120,10 @@ pnpm infra:up         # Redis + AI worker only
 pnpm infra:down       # Stop Redis + AI
 pnpm infra:logs       # Tail Redis + AI logs
 pnpm stage            # Start app & api (staging)
+pnpm staging          # Start app & api with .env.staging
 pnpm test             # Run unit tests
 pnpm start            # Build + start app & api (production)
+pnpm prod             # Build + start app & api with .env.production
 pnpm build            # Build all packages
 pnpm lint             # Lint all workspaces
 pnpm db:generate      # Regenerate Prisma client

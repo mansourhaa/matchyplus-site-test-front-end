@@ -60,6 +60,18 @@ describe('AdminUserDetail', () => {
     vi.resetAllMocks();
   });
 
+  it('falls back to "Membre Matchy+" for a plain member with no job, not a dash', () => {
+    renderDetail(buildUser({ job: null }));
+
+    expect(screen.getAllByText('Membre Matchy+').length).toBeGreaterThan(0);
+  });
+
+  it('falls back to "Non renseigné" for an unset field other than job', () => {
+    renderDetail(buildUser({ experience: null, price: null }));
+
+    expect(screen.getAllByText('Non renseigné').length).toBeGreaterThan(0);
+  });
+
   it('shows the current plan and a marked-as-example billing history on the Abonnement tab', () => {
     renderDetail(buildUser({ plan: 'PREMIUM' }));
 

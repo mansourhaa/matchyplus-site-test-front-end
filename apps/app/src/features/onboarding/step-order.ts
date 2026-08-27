@@ -33,5 +33,6 @@ export function isValidOnboardingStep(
   profileType?: ProfileType | null,
 ): step is OnboardingStep {
   if (!step) return false;
+  if (step === 'welcome') return true;
   return getStepOrder(profileType).includes(step as OnboardingStep);
 }

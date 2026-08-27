@@ -7,11 +7,14 @@ import {
   AdminActor,
   AdminAnalyticsResult,
   AdminChangePasswordPayload,
+  AdminCreateTeamMemberPayload,
   AdminCreateUserPayload,
+  AdminListTeamQuery,
   AdminListUsersQuery,
   AdminUpdatePlanPayload,
   AdminUpdateUserPayload,
   AdminUserStatsResult,
+  adminTeamMemberSelect,
   adminUserSelect,
 } from '../types/admin.js';
 import { AbstractServiceOptions } from '../types/services.js';
@@ -129,10 +132,10 @@ export class AdminService {
     const page = Math.max(1, Number(query.page ?? 1));
     const limit = Math.min(200, Math.max(1, Number(query.limit ?? 50)));
 
-    // Reads follow the same hierarchy as writes. Without this a SUPPORT could page through
-    // a SUPER_ADMIN's profile — email, phone, last login — even though every write against
-    // that row is refused.
-    const where: Prisma.UserWhereInput = { role: { in: rolesBelow(actor.role) } };
+    // Members only — admin/support/moderator accounts have their own dedicated section
+    // (listTeamMembers) with a hierarchy-scoped view instead of being mixed in here with
+    // no way to tell staff and members apart.
+    const where: Prisma.UserWhereInput = { role: Role.USER };
 
     if (query.search) {
       where.OR = [
@@ -143,6 +146,7 @@ export class AdminService {
     }
     if (query.status) where.status = query.status;
     if (query.plan) where.plan = query.plan;
+    if (query.category) where.category = query.category;
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
@@ -156,6 +160,96 @@ export class AdminService {
     ]);
 
     return { users, total };
+  }
+
+  /**
+   * The staff-only counterpart to `listUsers`. Scoped the same way listUsers used to be
+   * (hierarchy-based), minus USER — SUPPORT has nothing below it here (rolesBelow(SUPPORT)
+   * is just [USER]), so the list is empty for them; `assertMinimumRole` turns that into an
+   * explicit 403 instead of a silently-empty screen.
+   */
+  async listTeamMembers(actor: AdminActor, query: AdminListTeamQuery) {
+    assertMinimumRole(actor.role, Role.MODERATOR);
+
+    const page = Math.max(1, Number(query.page ?? 1));
+    const limit = Math.min(200, Math.max(1, Number(query.limit ?? 50)));
+    const staffRoles = rolesBelow(actor.role).filter((role) => role !== Role.USER);
+
+    const where: Prisma.UserWhereInput = { role: { in: staffRoles } };
+    if (query.search) {
+      where.OR = [
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { email: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [team, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: adminTeamMemberSelect,
+        orderBy: { create_at: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return { team, total };
+  }
+
+  /**
+   * Creates a Support or Moderator account. Deliberately narrower than `createUser`: a staff
+   * account has no onboarding profile at all, just enough to log in — and only to a role the
+   * actor actually outranks, so a Moderator can seed Support accounts but never another
+   * Moderator, and only a Super Admin can create a Moderator.
+   */
+  async createTeamMember(actor: AdminActor, payload: AdminCreateTeamMemberPayload) {
+    assertMinimumRole(actor.role, Role.MODERATOR);
+
+    if (!outranks(actor.role, payload.role as Role)) {
+      throw insufficientPrivileges();
+    }
+
+    const email = payload.email.toLowerCase();
+    if (await this.prisma.user.findUnique({ where: { email } })) {
+      throw badRequest('email already registered', 'email_already_registered');
+    }
+
+    let phone: string | null = null;
+    if (payload.phone) {
+      phone = normalizePhoneForAuth(payload.phone);
+      if (!phone) {
+        throw badRequest('invalid phone number', 'invalid_phone');
+      }
+      if (await this.prisma.user.findUnique({ where: { phone } })) {
+        throw badRequest('phone already registered', 'phone_already_registered');
+      }
+    }
+
+    if (!isPasswordPolicySatisfied(payload.password)) {
+      throw badRequest('password does not meet the security policy', 'weak_password');
+    }
+
+    const name = payload.name.trim();
+    if (!name) {
+      throw badRequest('name is required', 'invalid_name');
+    }
+
+    const hashedPassword = await bcrypt.hash(payload.password, await bcrypt.genSalt(10));
+
+    return this.prisma.user.create({
+      data: {
+        name,
+        email,
+        phone,
+        password: hashedPassword,
+        auth_provider: 'email',
+        email_verified: true,
+        role: payload.role,
+        status: UserStatus.ACTIVE,
+      },
+      select: adminTeamMemberSelect,
+    });
   }
 
   /**
@@ -280,6 +374,17 @@ export class AdminService {
     return filenameFromStoredPath(target.image);
   }
 
+  /** Same reasoning as {@link getUserPhotoFilename}, for the presentation video tab. */
+  async getUserVideoFilename(actor: AdminActor, id: string): Promise<string> {
+    await this.assertCanManage(actor, id);
+
+    const target = await this.prisma.user.findUnique({ where: { id }, select: { video: true } });
+    if (!target || !isStoredMediaPath(target.video, 'videos')) {
+      throw notFound('video not found', 'video_not_found');
+    }
+    return filenameFromStoredPath(target.video);
+  }
+
   /**
    * Guards every write against another account: an admin may only act on someone strictly
    * below them in the hierarchy, and never on their own row. Without this a SUPPORT could ban
@@ -364,8 +469,10 @@ export class AdminService {
     return { deleted: true };
   }
 
-  async getStats(actor: AdminActor): Promise<AdminUserStatsResult> {
-    const where: Prisma.UserWhereInput = { role: { in: rolesBelow(actor.role) } };
+  async getStats(): Promise<AdminUserStatsResult> {
+    // Members only, same reasoning as listUsers — a dashboard KPI mixing in staff accounts
+    // would inflate "Utilisateurs total" with rows that aren't members at all.
+    const where: Prisma.UserWhereInput = { role: Role.USER };
     const [totalUsers, byStatus, byPlan] = await Promise.all([
       this.prisma.user.count({ where }),
       this.prisma.user.groupBy({ by: ['status'], where, _count: { _all: true } }),
@@ -408,17 +515,23 @@ export class AdminService {
   }
 
   /**
-   * Everything here is aggregated from rows that actually exist. There is no billing or
-   * matching model yet, so revenue is an estimate of monthly recurring value
-   * (plan price × subscribers) and `matches` is the denormalised counter on User.
+   * Everything here is aggregated from rows that actually exist. There is no billing model
+   * yet, so revenue is an estimate of monthly recurring value (plan price × subscribers).
+   * `totalMatches` sums the denormalised counter on User (all-time); `matchesThisMonth`
+   * queries the real Match table by `matched_at` instead, since the counter carries no
+   * timestamp of its own.
    */
   async getAnalytics(): Promise<AdminAnalyticsResult> {
-    const [users, plans] = await Promise.all([
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [users, plans, matchesThisMonth] = await Promise.all([
       this.prisma.user.findMany({
         where: { role: Role.USER },
         select: { category: true, city: true, matches: true, plan: true, create_at: true },
       }),
       this.prisma.plan.findMany({ orderBy: { sort_order: 'asc' } }),
+      this.prisma.match.count({ where: { matched_at: { gte: startOfMonth } } }),
     ]);
 
     const tally = <T extends string>(rows: (T | null)[]) => {
@@ -468,6 +581,39 @@ export class AdminService {
     }));
     const trends = computeTrends(cumulative);
 
+    // Per-plan subscriber growth, month-over-month — this doubles as each paid plan's revenue
+    // trend too, since a plan's monthly revenue is just its subscriber count × a fixed price.
+    // Computed over the same month range as the platform timeline, so a plan with zero new
+    // subscribers this month still carries its prior cumulative total forward correctly.
+    const months = cumulative.map((point) => point.month);
+    const newSubscribersByPlan = new Map<UserPlan, Map<string, number>>();
+    users.forEach((user) => {
+      const month = user.create_at.toISOString().slice(0, 7);
+      const perMonth = newSubscribersByPlan.get(user.plan) ?? new Map<string, number>();
+      perMonth.set(month, (perMonth.get(month) ?? 0) + 1);
+      newSubscribersByPlan.set(user.plan, perMonth);
+    });
+
+    const planTrend = (planId: UserPlan): number | null => {
+      if (months.length < 2) return null;
+      const perMonth = newSubscribersByPlan.get(planId);
+      let running = 0;
+      let previous = 0;
+      let current = 0;
+      months.forEach((month, index) => {
+        running += perMonth?.get(month) ?? 0;
+        if (index === months.length - 2) previous = running;
+        if (index === months.length - 1) current = running;
+      });
+      return monthOverMonthChange(current, previous);
+    };
+
+    const planTrends: AdminAnalyticsResult['planTrends'] = {
+      [UserPlan.FREE]: planTrend(UserPlan.FREE),
+      [UserPlan.PREMIUM]: planTrend(UserPlan.PREMIUM),
+      [UserPlan.PREMIUM_PLUS]: planTrend(UserPlan.PREMIUM_PLUS),
+    };
+
     const planCount = (plan: UserPlan) => users.filter((user) => user.plan === plan).length;
 
     const revenueByPlan = plans
@@ -500,7 +646,9 @@ export class AdminService {
       platformTimeline,
       trends,
       revenueByPlan,
+      planTrends,
       totalMatches: users.reduce((sum, user) => sum + user.matches, 0),
+      matchesThisMonth,
       estimatedMonthlyRevenue:
         Math.round(revenueByPlan.reduce((sum, row) => sum + row.monthlyRevenue, 0) * 100) / 100,
     };

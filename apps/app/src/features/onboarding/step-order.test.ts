@@ -21,10 +21,10 @@ describe('getNextStep', () => {
 });
 
 describe('isValidOnboardingStep', () => {
-  it('rejects removed experience/education/welcome steps while allowing location', () => {
+  it('rejects removed experience/education steps while allowing welcome and location', () => {
     expect(isValidOnboardingStep('experience', 'INDIVIDUAL')).toBe(false);
     expect(isValidOnboardingStep('education', 'INDIVIDUAL')).toBe(false);
-    expect(isValidOnboardingStep('welcome', 'INDIVIDUAL')).toBe(false);
+    expect(isValidOnboardingStep('welcome', 'INDIVIDUAL')).toBe(true);
     expect(isValidOnboardingStep('location', 'INDIVIDUAL')).toBe(true);
     expect(isValidOnboardingStep('interests', 'INDIVIDUAL')).toBe(true);
   });

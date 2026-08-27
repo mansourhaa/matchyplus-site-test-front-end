@@ -21,6 +21,7 @@ export const adminUserSelect = {
   city: true,
   bio: true,
   image: true,
+  video: true,
   interests: true,
   languages: true,
   contact_modes: true,
@@ -39,6 +40,24 @@ export const adminUserSelect = {
 /** A user as exposed to the admin panel: exactly the {@link adminUserSelect} projection, never a password. */
 export type AdminUser = Prisma.UserGetPayload<{ select: typeof adminUserSelect }>;
 
+/**
+ * Projection for admin/support/moderator accounts in the dedicated team-management section —
+ * deliberately leaner than {@link adminUserSelect}: a staff account has no plan, interests,
+ * job, or any other member-profile concept, so those columns are never selected here.
+ */
+export const adminTeamMemberSelect = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  role: true,
+  status: true,
+  last_login: true,
+  create_at: true,
+} satisfies Prisma.UserSelect;
+
+export type AdminTeamMember = Prisma.UserGetPayload<{ select: typeof adminTeamMemberSelect }>;
+
 /** The admin performing the action, taken from the verified token — never from the request body. */
 export type AdminActor = {
   id: string;
@@ -51,6 +70,25 @@ export type AdminListUsersQuery = {
   search?: string;
   status?: UserStatus;
   plan?: UserPlan;
+  category?: string;
+};
+
+export type AdminListTeamQuery = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
+
+/**
+ * Only SUPPORT/MODERATOR are creatable here — SUPER_ADMIN is deliberately excluded, the same
+ * way this whole endpoint is gated to actors who outrank the role they're creating.
+ */
+export type AdminCreateTeamMemberPayload = {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  role: 'SUPPORT' | 'MODERATOR';
 };
 
 /**
@@ -136,6 +174,14 @@ export type AdminAnalyticsResult = {
   topCities: Array<{ city: string; users: number }>;
   /** Monthly recurring revenue estimated from plan price × subscriber count. */
   revenueByPlan: Array<{ plan: string; users: number; monthlyRevenue: number }>;
+  /**
+   * Month-over-month subscriber growth per plan, including FREE. Doubles as each paid
+   * plan's revenue trend (revenue = subscribers × a fixed price); null when < 2 months
+   * of data exist.
+   */
+  planTrends: Record<UserPlan, number | null>;
   totalMatches: number;
+  /** Matches created in the current calendar month, from the real Match table (not the User counter). */
+  matchesThisMonth: number;
   estimatedMonthlyRevenue: number;
 };

@@ -48,7 +48,7 @@ export function MatchyAppShell({
       <div className="flex min-h-dvh min-h-screen flex-1 flex-col overflow-hidden">
         {!hideHeader && (
           <div
-            className="flex shrink-0 items-center gap-3 px-4 py-3 md:hidden"
+            className="sticky top-0 z-20 flex shrink-0 items-center gap-3 px-4 py-3 md:hidden"
             style={{ background: 'white', borderBottom: `1px solid ${matchyBrand.border}` }}
           >
             {showBack && (
@@ -87,7 +87,7 @@ export function MatchyAppShell({
 
         {!hideHeader && title && (
           <div
-            className="hidden shrink-0 items-center gap-3 px-6 py-4 md:flex"
+            className="sticky top-0 z-20 hidden shrink-0 items-center gap-3 px-6 py-4 md:flex"
             style={{ background: 'white', borderBottom: `1px solid ${matchyBrand.border}` }}
           >
             {showBack && (

@@ -190,7 +190,9 @@ export function AdminUserDetail({
           </div>
           <div className="min-w-0 flex-1">
             <p style={{ fontSize: '18px', fontWeight: 800, color: '#1A1A2E' }}>{user.name}</p>
-            <p style={{ fontSize: '13px', color: '#2F76BB', fontWeight: 600 }}>{user.job ?? '—'}</p>
+            <p style={{ fontSize: '13px', color: '#2F76BB', fontWeight: 600 }}>
+              {user.job ?? 'Membre Matchy+'}
+            </p>
             <div className="mt-1 flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1">
                 <Star size={12} color="#F5A623" fill="#F5A623" />
@@ -205,7 +207,9 @@ export function AdminUserDetail({
               </div>
               <div className="flex items-center gap-1">
                 <Award size={12} color="#2F76BB" />
-                <span style={{ fontSize: '12px', color: '#555' }}>{user.experience ?? '—'}</span>
+                <span style={{ fontSize: '12px', color: '#555' }}>
+                  {user.experience ?? 'Non renseigné'}
+                </span>
               </div>
               <span
                 className="rounded-full px-2.5 py-0.5"
@@ -300,7 +304,7 @@ export function AdminUserDetail({
                         >
                           <Icon size={14} color="#888" />
                           <span style={{ fontSize: '13px', color: '#353535' }}>
-                            {user[field] ?? '—'}
+                            {user[field] ?? (field === 'job' ? 'Membre Matchy+' : 'Non renseigné')}
                           </span>
                         </div>
                       )}

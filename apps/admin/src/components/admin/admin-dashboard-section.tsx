@@ -1,7 +1,9 @@
 'use client';
 
+import { AdminTransactionsSection } from '@/components/admin/admin-transactions-section';
 import { formatMonth } from '@/features/admin-analytics/types';
 import type { AdminAnalytics } from '@/features/admin-analytics/types';
+import type { AdminTransaction } from '@/features/admin-transactions/types';
 import { PLAN_COLOR, PLAN_LABEL, STATUS_COLOR } from '@/features/admin-users/labels';
 import type { AdminManagedUser, AdminStats } from '@/features/admin-users/types';
 import { CreditCard, type LucideIcon, TrendingDown, TrendingUp, Users, Zap } from 'lucide-react';
@@ -18,6 +20,18 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+
+function LiveBadge() {
+  return (
+    <span
+      className="flex items-center gap-1.5 rounded-full px-2 py-0.5"
+      style={{ background: '#E8F7F3', fontSize: '10px', fontWeight: 700, color: '#61BCA6' }}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      LIVE
+    </span>
+  );
+}
 
 function TrendBadge({ value }: { value: number }) {
   const up = value >= 0;
@@ -80,14 +94,18 @@ export function AdminDashboardSection({
   stats,
   analytics,
   users,
+  transactions,
   onSelectUser,
   onSeeAll,
+  onSeeAllTransactions,
 }: {
   stats: AdminStats | null;
   analytics: AdminAnalytics | null;
   users: AdminManagedUser[];
+  transactions: AdminTransaction[];
   onSelectUser: (user: AdminManagedUser) => void;
   onSeeAll: () => void;
+  onSeeAllTransactions: () => void;
 }) {
   const total = stats?.totalUsers ?? 0;
   const paying = (stats?.premiumUsers ?? 0) + (stats?.premiumPlusUsers ?? 0);
@@ -120,8 +138,8 @@ export function AdminDashboardSection({
           trend={analytics?.trends?.users}
         />
         <StatCard
-          label="Matches cumulés"
-          value={(analytics?.totalMatches ?? 0).toLocaleString('fr-FR')}
+          label="Matches ce mois"
+          value={(analytics?.matchesThisMonth ?? 0).toLocaleString('fr-FR')}
           icon={Zap}
           color="#61BCA6"
           bg="#E8F7F3"
@@ -256,9 +274,19 @@ export function AdminDashboardSection({
         </div>
       </div>
 
+      <AdminTransactionsSection
+        title="Transactions récentes"
+        transactions={transactions}
+        limit={4}
+        onSeeAll={onSeeAllTransactions}
+      />
+
       <div className="rounded-2xl p-5" style={{ background: 'white', border: '1px solid #F0F0F0' }}>
         <div className="mb-4 flex items-center justify-between">
-          <p style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A2E' }}>Derniers inscrits</p>
+          <div className="flex items-center gap-2">
+            <p style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A2E' }}>Derniers inscrits</p>
+            <LiveBadge />
+          </div>
           <button
             type="button"
             onClick={onSeeAll}
