@@ -125,8 +125,8 @@ export const MAX_RATING = 5;
  */
 export const GEOLOCATION_RATE_LIMIT = { max: 20, timeWindow: '1 minute' };
 
-/** Saving a member's own coordinates only needs to happen when location is (re)granted. */
-export const USER_LOCATION_SYNC_RATE_LIMIT = { max: 10, timeWindow: '1 hour' };
+/** Saving a member's own coordinates happens when location updates or app mounts. */
+export const USER_LOCATION_SYNC_RATE_LIMIT = { max: 60, timeWindow: '1 minute' };
 
 /** Upstream fetch timeouts (ms). */
 export const IP_GEOLOCATION_TIMEOUT_MS = Number(process.env.IP_GEOLOCATION_TIMEOUT_MS || 5_000);

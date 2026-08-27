@@ -305,24 +305,49 @@ export class ProfileService {
     latitude: number,
     longitude: number,
   ): Promise<{ city: string | null }> {
-    const coords = parseLatLon(latitude, longitude);
-    if (!coords) {
-      throw badRequest('invalid latitude or longitude', 'invalid_coordinates');
+    try {
+      const coords = parseLatLon(latitude, longitude);
+      if (!coords) {
+        throw badRequest('invalid latitude or longitude', 'invalid_coordinates');
+      }
+
+      const reverse = await this.geolocation.reverseGeocode(coords.lat, coords.lon);
+      const city = reverse.success && reverse.city !== 'Unknown Location' ? reverse.city : null;
+      const country = reverse.success ? reverse.country : null;
+
+      await Promise.all([
+        this.prisma.user.update({
+          where: { id: userId },
+          data: {
+            gps_latitude: coords.lat,
+            gps_longitude: coords.lon,
+            ...(city ? { city } : {}),
+          },
+        }),
+        this.prisma.userLocation.upsert({
+          where: { user_id: userId },
+          create: {
+            user_id: userId,
+            latitude: coords.lat,
+            longitude: coords.lon,
+            location_enabled: true,
+            city,
+            country,
+          },
+          update: {
+            latitude: coords.lat,
+            longitude: coords.lon,
+            location_enabled: true,
+            ...(city ? { city } : {}),
+            ...(country ? { country } : {}),
+          },
+        }),
+      ]);
+
+      return { city };
+    } catch (err) {
+      throw err;
     }
-
-    const reverse = await this.geolocation.reverseGeocode(coords.lat, coords.lon);
-    const city = reverse.success ? reverse.city : null;
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        gps_latitude: coords.lat,
-        gps_longitude: coords.lon,
-        ...(city ? { city } : {}),
-      },
-    });
-
-    return { city };
   }
 
   /**

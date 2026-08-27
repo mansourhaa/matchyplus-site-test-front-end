@@ -101,14 +101,18 @@ const REVERSE_PROVIDERS: ReverseProvider[] = [
     parse: (d) => {
       const address = d.address as Record<string, unknown> | undefined;
       if (!address || typeof address !== 'object') return null;
+      let rawState = asNullableString(address.state) ?? asNullableString(address.state_district);
+      if (rawState?.startsWith('Gouvernorat ')) {
+        rawState = rawState.replace('Gouvernorat ', '').trim();
+      }
       const city =
         asNullableString(address.city) ??
         asNullableString(address.town) ??
+        rawState ??
         asNullableString(address.village) ??
-        asNullableString(address.county) ??
-        asNullableString(address.state);
+        asNullableString(address.county);
       if (!city) return null;
-      const region = asNullableString(address.state) ?? asNullableString(address.region);
+      const region = rawState ?? asNullableString(address.region);
       const country = asNullableString(address.country);
       return {
         city,
@@ -124,11 +128,9 @@ const REVERSE_PROVIDERS: ReverseProvider[] = [
     url: (lat, lon) =>
       `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(String(lat))}&longitude=${encodeURIComponent(String(lon))}&localityLanguage=en`,
     parse: (d) => {
-      const city =
-        asNullableString(d.city) ??
-        asNullableString(d.locality) ??
-        asNullableString(d.principalSubdivision);
-      const region = asNullableString(d.principalSubdivision);
+      const state = asNullableString(d.principalSubdivision);
+      const city = asNullableString(d.city) ?? state ?? asNullableString(d.locality);
+      const region = state;
       const country = asNullableString(d.countryName);
       if (!city) return null;
       return {

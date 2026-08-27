@@ -299,9 +299,9 @@ Next.js only auto-loads `.env*` files **inside `apps/app/`**. This monorepo keep
 | I want to… | Command |
 | --- | --- |
 | Run local dev | `pnpm dev` |
-| Run staging (app + api) | `pnpm stage` |
+| Run staging (app + api) | `pnpm staging` / `pnpm stage` |
 | Run unit tests | `pnpm test` |
-| Run production (app + api) | `pnpm start` |
+| Run production (app + api) | `pnpm prod` / `pnpm start` |
 | Run API on staging config | `pnpm --filter @saas-boilerplate/api stage` |
 | Run API in production mode | `pnpm --filter @saas-boilerplate/api start` |
 | Build app for production | `pnpm build --filter=@saas-boilerplate/app` |

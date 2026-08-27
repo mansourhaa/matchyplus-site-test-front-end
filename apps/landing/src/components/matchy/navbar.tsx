@@ -26,9 +26,9 @@ export function Navbar() {
       }`}
     >
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 text-white">
-        <div className="flex items-center gap-1.5 text-xl font-extrabold">
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-white/15">M</span>
-          Matchy<span className="text-brand-teal">+</span>
+        <div className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-matchy-white.svg" alt="Matchy+" className="h-7 w-auto" />
         </div>
         <ul className="hidden items-center gap-8 text-sm font-medium md:flex">
           {links.map((l) => (

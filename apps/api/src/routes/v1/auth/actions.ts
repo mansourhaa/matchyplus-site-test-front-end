@@ -158,8 +158,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   ) {
     reply.setCookie(MEMBER_ACCESS_COOKIE, tokens.accessToken, memberAccessCookieOptions());
     reply.setCookie(MEMBER_REFRESH_COOKIE, tokens.refreshToken, memberRefreshCookieOptions());
-    // Never leave an admin session sticky when a member session is established (AUTH-01).
-    clearAdminSessionCookies(reply);
   }
 
   function clearMemberSessionCookies(reply: import('fastify').FastifyReply) {
@@ -173,8 +171,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   ) {
     reply.setCookie(ADMIN_SESSION_COOKIE, tokens.accessToken, adminSessionCookieOptions());
     reply.setCookie(ADMIN_REFRESH_COOKIE, tokens.refreshToken, adminRefreshCookieOptions());
-    // Admin login must not leave a member session usable on shared cookie domain.
-    clearMemberSessionCookies(reply);
   }
 
   function clearAdminSessionCookies(reply: import('fastify').FastifyReply) {

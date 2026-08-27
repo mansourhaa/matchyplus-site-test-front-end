@@ -32,6 +32,9 @@ function createMockPrisma() {
     rating: {
       findUnique: vi.fn(),
     },
+    userLocation: {
+      upsert: vi.fn(),
+    },
   };
 }
 

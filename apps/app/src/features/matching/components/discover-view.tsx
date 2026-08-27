@@ -2,6 +2,7 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
+import { MatchyLogo } from '@/features/auth/components/matchy-logo';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import {
   fetchFavoriteIds,
@@ -231,9 +232,7 @@ export function DiscoverView() {
             {title}
           </p>
           <div className="flex md:hidden">
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#2F76BB' }}>
-              Matchy<span style={{ color: '#61BCA6' }}>+</span>
-            </span>
+            <MatchyLogo size="sm" />
           </div>
         </div>
 
@@ -631,28 +630,51 @@ export function DiscoverView() {
                 </div>
               )}
 
+              {/* Action count pill banner (from Figma design) */}
+              {quota && !quota.unlimited && (
+                <div
+                  onClick={() => setForceQuotaModal(true)}
+                  className="mx-auto mt-3 mb-2 flex cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+                  style={{
+                    background: freeRemaining === 0 ? '#FFF0F0' : '#F8FAFC',
+                    color: freeRemaining === 0 ? '#E74C3C' : '#64748B',
+                    border: freeRemaining === 0 ? '1px solid #FFE0E0' : '1px solid #E2E8F0',
+                    maxWidth: 360,
+                    width: '100%',
+                  }}
+                >
+                  <AlertTriangle
+                    size={13}
+                    className={freeRemaining === 0 ? 'text-[#E74C3C]' : 'text-[#64748B]'}
+                  />
+                  <span>
+                    {freeRemaining ?? 0}/{quota.limit ?? 10} actions remaining today
+                  </span>
+                </div>
+              )}
+
               <div
-                className="mx-auto mt-2 mb-3 flex items-center justify-center gap-3.5"
+                className="mx-auto mb-3 flex items-center justify-center gap-3"
                 style={{ maxWidth: 360, width: '100%' }}
               >
-                {/* Pass Button */}
+                {/* Skip / Pass Button */}
                 <button
                   type="button"
                   onClick={() => void onPass()}
                   disabled={!top || matching.swipeLoading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 transition-all hover:bg-slate-50 hover:shadow-sm active:scale-[0.97]"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 transition-all hover:bg-slate-50 hover:shadow-sm active:scale-[0.97]"
                   style={{
                     background: 'white',
                     border: '1.5px solid #E2E8F0',
-                    color: '#475569',
+                    color: '#334155',
                     fontSize: 15,
                     fontWeight: 700,
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.05)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                     opacity: top ? 1 : 0.5,
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <X size={20} className="text-[#64748B]" strokeWidth={2.5} />
+                  <X size={18} className="text-[#64748B]" strokeWidth={2.5} />
                   <span>{t('matching.pass')}</span>
                 </button>
 
@@ -660,59 +682,26 @@ export function DiscoverView() {
                 <button
                   type="button"
                   onClick={() => void onConnect()}
-                  disabled={!top || matching.swipeLoading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 transition-all hover:brightness-105 active:scale-[0.97]"
+                  disabled={!top || matching.swipeLoading || isRightSwipeBlocked}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 transition-all hover:brightness-105 active:scale-[0.97]"
                   style={{
-                    background: isRightSwipeBlocked
-                      ? '#CBD5E1'
-                      : 'linear-gradient(135deg, #61BCA6 0%, #2F76BB 100%)',
-                    color: 'white',
+                    background: isRightSwipeBlocked ? '#E2E8F0' : '#E8F5E9',
+                    color: isRightSwipeBlocked ? '#94A3B8' : '#2E7D32',
+                    border: isRightSwipeBlocked ? '1.5px solid #CBD5E1' : '1.5px solid #C8E6C9',
                     fontSize: 15,
                     fontWeight: 700,
-                    boxShadow: isRightSwipeBlocked ? 'none' : '0 8px 22px rgba(47,118,187,0.32)',
                     cursor: isRightSwipeBlocked ? 'not-allowed' : 'pointer',
-                    opacity: isRightSwipeBlocked ? 0.7 : 1,
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {isRightSwipeBlocked ? (
-                    <span className="flex items-center justify-center gap-1.5">
-                      <Lock size={15} />
-                      Premium
-                    </span>
-                  ) : (
-                    <>
-                      <Check size={20} strokeWidth={2.5} className="text-white" />
-                      <span>{t('matching.connect')}</span>
-                    </>
-                  )}
+                  <Check
+                    size={18}
+                    strokeWidth={2.5}
+                    className={isRightSwipeBlocked ? 'text-[#94A3B8]' : 'text-[#2E7D32]'}
+                  />
+                  <span>{t('matching.connect')}</span>
                 </button>
               </div>
-
-              {quota && (
-                <div
-                  onClick={() => setForceQuotaModal(true)}
-                  className="mx-auto -mt-1 mb-2 flex cursor-pointer items-center justify-center gap-1.5 text-[11px] font-medium text-[#888] transition-colors hover:text-[#2F76BB]"
-                >
-                  <Zap
-                    size={11}
-                    className={
-                      quota.unlimited
-                        ? 'fill-teal-500 text-teal-500'
-                        : freeRemaining === 0
-                          ? 'fill-rose-500 text-rose-500'
-                          : (freeRemaining ?? 0) <= 3
-                            ? 'fill-amber-500 text-amber-500'
-                            : 'fill-blue-500 text-blue-500'
-                    }
-                  />
-                  <span>
-                    {quota.unlimited
-                      ? t('matching.quotaUnlimited')
-                      : t('matching.quotaLeft', { remaining: freeRemaining ?? 0 })}
-                  </span>
-                </div>
-              )}
             </>
           )}
         </div>
@@ -806,13 +795,13 @@ export function DiscoverView() {
                 style={{ borderTop: '1px solid #F0F0F0', paddingTop: 12 }}
               >
                 <AIPicksHeader
-                  count={Math.min(3, matching.feed.filter((p) => p.id !== top?.id).length)}
+                  count={Math.min(5, matching.feed.filter((p) => p.id !== top?.id).length)}
                 />
               </div>
               <div className="flex-1 space-y-1.5 overflow-y-auto">
                 {matching.feedLoading && !matching.feedLoaded ? (
                   <div className="space-y-2">
-                    {[0, 1, 2].map((i) => (
+                    {[0, 1, 2, 3, 4].map((i) => (
                       <div
                         key={i}
                         className="h-14 animate-pulse rounded-xl"
@@ -825,7 +814,7 @@ export function DiscoverView() {
                 ) : (
                   matching.feed
                     .filter((p) => p.id !== top?.id)
-                    .slice(0, 3)
+                    .slice(0, 5)
                     .map((profile, i) => (
                       <AIRecommendationItem
                         key={profile.id}

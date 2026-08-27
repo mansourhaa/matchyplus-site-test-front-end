@@ -11,7 +11,8 @@ export function Footer() {
     <footer className="bg-brand-blue text-white">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-5 py-14 md:grid-cols-3">
         <div>
-          <div className="text-2xl font-extrabold">LOGO</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-matchy-white.svg" alt="Matchy+" className="h-7 w-auto" />
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/70">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus eget diam at mi
             sollicitudin.

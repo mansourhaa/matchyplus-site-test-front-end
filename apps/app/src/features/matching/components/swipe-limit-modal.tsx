@@ -44,91 +44,31 @@ export function SwipeLimitModal({
           <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#E0E0E0] md:hidden" />
 
           {/* Header Icon */}
-          {isExhausted ? (
-            <div
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-              style={{ background: '#FFF0F0' }}
-            >
-              <AlertTriangle size={32} color="#E74C3C" />
-            </div>
-          ) : isUnlimited ? (
-            <div
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-              style={{ background: '#E8F8F5' }}
-            >
-              <Sparkles size={32} color="#61BCA6" />
-            </div>
-          ) : (
-            <div
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-              style={{ background: '#EBF4FC' }}
-            >
-              <Zap size={32} color="#2F76BB" />
-            </div>
-          )}
+          <div
+            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
+            style={{ background: '#FFF0F0' }}
+          >
+            <AlertTriangle size={32} color="#E74C3C" />
+          </div>
 
           {/* Title */}
           <p className="text-center text-[20px] font-extrabold text-[#1A1A2E]">
-            {isExhausted
-              ? t('matching.limitReached')
-              : isUnlimited
-                ? t('matching.quotaUnlimited')
-                : t('matching.quotaTitle')}
+            Daily limit reached
           </p>
 
           {/* Description */}
-          <p className="mt-1.5 text-center text-[13px] leading-relaxed text-[#777]">
-            {isExhausted
-              ? t('matching.limitReachedDesc')
-              : isUnlimited
-                ? t('matching.quotaUnlimitedDesc')
-                : t('matching.quotaActiveDesc', { remaining, limit })}
+          <p className="mt-2 text-center text-[13px] leading-relaxed text-[#64748B]">
+            You&apos;ve used your {limit} free actions today. Come back tomorrow to continue.
           </p>
-
-          {/* Progress bar when limited and has quota */}
-          {!isUnlimited && (
-            <div
-              className="my-4 rounded-xl bg-[#F8FAFC] p-3 text-center"
-              style={{ border: '1px solid #EDF2F7' }}
-            >
-              <div className="mb-1.5 flex items-center justify-between text-xs font-semibold">
-                <span className="text-[#64748B]">{t('matching.quotaTitle')}</span>
-                <span
-                  className={isExhausted ? 'font-bold text-rose-600' : 'font-bold text-[#2F76BB]'}
-                >
-                  {remaining} / {limit}
-                </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: `${Math.min(100, Math.max(0, (remaining / limit) * 100))}%`,
-                    background: isExhausted
-                      ? '#E11D48'
-                      : 'linear-gradient(90deg, #61BCA6, #2F76BB)',
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Reset hint */}
-          {!isUnlimited && (
-            <p className="mt-2 text-center text-[12px] font-semibold text-[#E67E22]">
-              {t('matching.limitReachedHint')}
-            </p>
-          )}
 
           {/* Action button */}
           <div className="mt-6 flex flex-col gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-2xl py-3.5 text-[15px] font-bold text-white shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99]"
-              style={{ background: 'linear-gradient(90deg, #61BCA6, #2F76BB)' }}
+              className="w-full rounded-2xl bg-slate-100 py-3.5 text-[15px] font-bold text-slate-700 transition-colors hover:bg-slate-200 active:scale-[0.99]"
             >
-              {t('matching.continueFree')}
+              Continue
             </button>
           </div>
         </motion.div>

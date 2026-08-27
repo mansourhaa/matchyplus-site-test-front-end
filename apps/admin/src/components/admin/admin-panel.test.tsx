@@ -275,8 +275,10 @@ describe('AdminPanel', () => {
   it('shows a LIVE badge next to Derniers inscrits', async () => {
     renderPanel();
 
-    expect(await screen.findByText('Derniers inscrits')).toBeInTheDocument();
-    expect(screen.getByText('LIVE')).toBeInTheDocument();
+    const heading = await screen.findByText('Derniers inscrits');
+    expect(heading).toBeInTheDocument();
+    const section = heading.closest('div');
+    expect(within(section!).getByText('LIVE')).toBeInTheDocument();
   });
 
   describe('header', () => {
