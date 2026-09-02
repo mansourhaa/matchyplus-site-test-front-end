@@ -1,7 +1,6 @@
-import { adminApi } from '@/lib/admin-api';
+import { adminApi, extractAdminErrorMessage } from '@/lib/admin-api';
 import type { RootState } from '@/lib/store';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import axios from 'axios';
 
 import type {
   AdminCreateTeamMemberInput,
@@ -22,14 +21,6 @@ const initialState: AdminTeamState = {
   },
 };
 
-function extractErrorMessage(error: unknown, fallback: string): string {
-  return (
-    (axios.isAxiosError(error) &&
-      (error.response?.data as { message?: string } | undefined)?.message) ||
-    fallback
-  );
-}
-
 export const fetchAdminTeam = createAsyncThunk(
   'adminTeam/fetchTeam',
   async (filters: AdminTeamFilters) => {
@@ -47,7 +38,7 @@ export const createAdminTeamMember = createAsyncThunk(
       const response = await adminApi.post('/admin/team', input);
       return response.data.member as AdminTeamMember;
     } catch (error) {
-      return rejectWithValue(extractErrorMessage(error, 'Impossible de créer ce compte.'));
+      return rejectWithValue(extractAdminErrorMessage(error, 'Impossible de créer ce compte.'));
     }
   },
 );
@@ -63,7 +54,7 @@ export const updateAdminTeamMember = createAsyncThunk(
       return response.data.user as AdminTeamMember;
     } catch (error) {
       return rejectWithValue(
-        extractErrorMessage(error, "Impossible d'enregistrer les modifications."),
+        extractAdminErrorMessage(error, "Impossible d'enregistrer les modifications."),
       );
     }
   },
@@ -80,7 +71,7 @@ export const updateAdminTeamMemberStatus = createAsyncThunk(
       return response.data.user as AdminTeamMember;
     } catch (error) {
       return rejectWithValue(
-        extractErrorMessage(error, 'Impossible de modifier le statut de ce compte.'),
+        extractAdminErrorMessage(error, 'Impossible de modifier le statut de ce compte.'),
       );
     }
   },

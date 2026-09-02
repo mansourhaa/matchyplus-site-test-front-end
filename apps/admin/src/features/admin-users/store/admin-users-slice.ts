@@ -1,7 +1,6 @@
-import { adminApi } from '@/lib/admin-api';
+import { adminApi, extractAdminErrorMessage } from '@/lib/admin-api';
 import type { RootState } from '@/lib/store';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import axios from 'axios';
 
 import type {
   AdminCreateUserInput,
@@ -65,35 +64,55 @@ export const createAdminUser = createAsyncThunk(
       const response = await adminApi.post('/admin/users', input);
       return response.data.user as AdminManagedUser;
     } catch (error) {
-      const message =
-        (axios.isAxiosError(error) &&
-          (error.response?.data as { message?: string } | undefined)?.message) ||
-        "Impossible de créer l'utilisateur.";
-      return rejectWithValue(message);
+      return rejectWithValue(extractAdminErrorMessage(error, "Impossible de créer l'utilisateur."));
     }
   },
 );
 
 export const updateAdminUser = createAsyncThunk(
   'adminUsers/updateUser',
-  async ({ id, changes }: { id: string; changes: AdminUserUpdate }) => {
-    const response = await adminApi.put(`/admin/users/${id}`, changes);
-    return response.data.user as AdminManagedUser;
+  async ({ id, changes }: { id: string; changes: AdminUserUpdate }, { rejectWithValue }) => {
+    try {
+      const response = await adminApi.put(`/admin/users/${id}`, changes);
+      return response.data.user as AdminManagedUser;
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, "Impossible d'enregistrer les modifications."),
+      );
+    }
   },
 );
 
 export const updateAdminUserStatus = createAsyncThunk(
   'adminUsers/updateUserStatus',
-  async ({ id, status }: { id: string; status: AdminManagedUser['status'] }) => {
-    const response = await adminApi.patch(`/admin/users/${id}/status`, { status });
-    return response.data.user as AdminManagedUser;
+  async (
+    { id, status }: { id: string; status: AdminManagedUser['status'] },
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await adminApi.patch(`/admin/users/${id}/status`, { status });
+      return response.data.user as AdminManagedUser;
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, 'Impossible de modifier le statut de cet utilisateur.'),
+      );
+    }
   },
 );
 
-export const deleteAdminUser = createAsyncThunk('adminUsers/deleteUser', async (id: string) => {
-  await adminApi.delete(`/admin/users/${id}`);
-  return id;
-});
+export const deleteAdminUser = createAsyncThunk(
+  'adminUsers/deleteUser',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await adminApi.delete(`/admin/users/${id}`);
+      return id;
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, 'Impossible de supprimer cet utilisateur.'),
+      );
+    }
+  },
+);
 
 const upsertUser = (state: AdminUsersState, user: AdminManagedUser) => {
   state.users = state.users.map((entry) => (entry.id === user.id ? user : entry));

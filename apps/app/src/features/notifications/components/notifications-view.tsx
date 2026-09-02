@@ -360,31 +360,13 @@ export function NotificationsView() {
                 : 'Impossible de charger vos notifications.'}
           </p>
         ) : items.length === 0 ? (
-          <div
-            className="rounded-3xl bg-white px-5 py-12 text-center shadow-xs"
-            style={{ border: `1px solid ${matchyBrand.border}` }}
-          >
-            <div
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
-              style={{ background: matchyBrand.softBlue }}
-            >
-              <Bell size={28} color={matchyBrand.blue} />
-            </div>
-            <p className="font-bold" style={{ color: matchyBrand.textDark }}>
-              {locale === 'en'
-                ? 'No notifications yet'
-                : locale === 'ar'
-                  ? 'لا توجد إشعارات حالياً'
-                  : 'Aucune notification pour l’instant'}
-            </p>
-            <p className="mt-2 text-sm text-[#777]">
-              {locale === 'en'
-                ? 'You will be notified here as soon as something happens.'
-                : locale === 'ar'
-                  ? 'ستتلقى إشعاراً هنا بمجرد حدوث أي نشاط.'
-                  : 'Vous serez prévenu ici dès qu’il se passe quelque chose.'}
-            </p>
-          </div>
+          <p className="py-16 text-center text-sm font-medium text-[#64748B]">
+            {locale === 'en'
+              ? 'No notifications yet'
+              : locale === 'ar'
+                ? 'لا توجد إشعارات حالياً'
+                : 'Aucune notification pour l’instant'}
+          </p>
         ) : (
           <div className="space-y-2">
             {error && (

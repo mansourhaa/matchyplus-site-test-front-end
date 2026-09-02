@@ -65,3 +65,29 @@ adminApi.interceptors.response.use(
     }
   },
 );
+
+/**
+ * Cleanly extract and map admin API error messages to user-friendly text.
+ */
+export function extractAdminErrorMessage(
+  error: unknown,
+  fallback = 'Une erreur est survenue. Veuillez réessayer.',
+): string {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as
+      { message?: string; error?: string; code?: string } | undefined;
+    const msg = data?.message || data?.error;
+    if (msg && typeof msg === 'string') {
+      return msg;
+    }
+    const status = error.response?.status;
+    if (status === 401) return 'Session expirée. Veuillez vous reconnecter.';
+    if (status === 403)
+      return 'Vous n’avez pas les privilèges suffisants pour effectuer cette action.';
+    if (status === 404) return 'Ressource introuvable.';
+    if (status === 409) return 'Cette action entre en conflit avec un élément existant.';
+    if (status && status >= 500)
+      return 'Une erreur serveur est survenue. Veuillez réessayer plus tard.';
+  }
+  return fallback;
+}

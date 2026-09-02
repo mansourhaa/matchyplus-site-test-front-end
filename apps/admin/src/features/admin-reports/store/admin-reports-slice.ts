@@ -1,4 +1,4 @@
-import { adminApi } from '@/lib/admin-api';
+import { adminApi, extractAdminErrorMessage } from '@/lib/admin-api';
 import type { RootState } from '@/lib/store';
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
@@ -14,19 +14,31 @@ const initialState: AdminReportsState = {
 
 export const fetchAdminReports = createAsyncThunk(
   'adminReports/fetch',
-  async (statusFilter: AdminReportsState['statusFilter']) => {
-    const response = await adminApi.get('/admin/reports', {
-      params: { status: statusFilter !== 'all' ? statusFilter : undefined },
-    });
-    return response.data.reports as AdminReport[];
+  async (statusFilter: AdminReportsState['statusFilter'], { rejectWithValue }) => {
+    try {
+      const response = await adminApi.get('/admin/reports', {
+        params: { status: statusFilter !== 'all' ? statusFilter : undefined },
+      });
+      return response.data.reports as AdminReport[];
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, 'Impossible de charger les signalements.'),
+      );
+    }
   },
 );
 
 export const updateAdminReportStatus = createAsyncThunk(
   'adminReports/updateStatus',
-  async ({ id, status }: { id: string; status: ReportStatus }) => {
-    const response = await adminApi.patch(`/admin/reports/${id}`, { status });
-    return response.data.report as AdminReport;
+  async ({ id, status }: { id: string; status: ReportStatus }, { rejectWithValue }) => {
+    try {
+      const response = await adminApi.patch(`/admin/reports/${id}`, { status });
+      return response.data.report as AdminReport;
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, 'Impossible de mettre à jour ce signalement.'),
+      );
+    }
   },
 );
 
@@ -48,9 +60,10 @@ const adminReportsSlice = createSlice({
         state.loading = false;
         state.reports = action.payload;
       })
-      .addCase(fetchAdminReports.rejected, (state) => {
+      .addCase(fetchAdminReports.rejected, (state, action) => {
         state.loading = false;
-        state.error = 'Impossible de charger les signalements.';
+        state.error =
+          (action.payload as string | undefined) ?? 'Impossible de charger les signalements.';
       })
       .addCase(updateAdminReportStatus.fulfilled, (state, action) => {
         state.error = null;
@@ -58,8 +71,9 @@ const adminReportsSlice = createSlice({
           report.id === action.payload.id ? action.payload : report,
         );
       })
-      .addCase(updateAdminReportStatus.rejected, (state) => {
-        state.error = 'Impossible de mettre à jour ce signalement.';
+      .addCase(updateAdminReportStatus.rejected, (state, action) => {
+        state.error =
+          (action.payload as string | undefined) ?? 'Impossible de mettre à jour ce signalement.';
       });
   },
 });

@@ -1,4 +1,4 @@
-import { adminApi } from '@/lib/admin-api';
+import { adminApi, extractAdminErrorMessage } from '@/lib/admin-api';
 import type { RootState } from '@/lib/store';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
@@ -13,16 +13,34 @@ const initialState: AdminPlansState = {
   savedAt: null,
 };
 
-export const fetchAdminPlans = createAsyncThunk('adminPlans/fetch', async () => {
-  const response = await adminApi.get('/admin/plans');
-  return response.data.plans as AdminPlan[];
-});
+export const fetchAdminPlans = createAsyncThunk(
+  'adminPlans/fetch',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await adminApi.get('/admin/plans');
+      return response.data.plans as AdminPlan[];
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, 'Impossible de charger les forfaits.'),
+      );
+    }
+  },
+);
 
 export const updateAdminPlan = createAsyncThunk(
   'adminPlans/update',
-  async ({ id, changes }: { id: AdminPlan['id']; changes: AdminPlanUpdate }) => {
-    const response = await adminApi.put(`/admin/plans/${id}`, changes);
-    return response.data.plan as AdminPlan;
+  async (
+    { id, changes }: { id: AdminPlan['id']; changes: AdminPlanUpdate },
+    { rejectWithValue },
+  ) => {
+    try {
+      const response = await adminApi.put(`/admin/plans/${id}`, changes);
+      return response.data.plan as AdminPlan;
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, "Impossible d'enregistrer ce forfait."),
+      );
+    }
   },
 );
 
@@ -40,9 +58,10 @@ const adminPlansSlice = createSlice({
         state.loading = false;
         state.plans = action.payload;
       })
-      .addCase(fetchAdminPlans.rejected, (state) => {
+      .addCase(fetchAdminPlans.rejected, (state, action) => {
         state.loading = false;
-        state.error = 'Impossible de charger les forfaits.';
+        state.error =
+          (action.payload as string | undefined) ?? 'Impossible de charger les forfaits.';
       })
       .addCase(updateAdminPlan.pending, (state) => {
         state.saving = true;
@@ -55,9 +74,10 @@ const adminPlansSlice = createSlice({
           plan.id === action.payload.id ? action.payload : plan,
         );
       })
-      .addCase(updateAdminPlan.rejected, (state) => {
+      .addCase(updateAdminPlan.rejected, (state, action) => {
         state.saving = false;
-        state.error = "Impossible d'enregistrer ce forfait.";
+        state.error =
+          (action.payload as string | undefined) ?? "Impossible d'enregistrer ce forfait.";
       });
   },
 });

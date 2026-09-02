@@ -33,10 +33,7 @@ export function ConversationsInbox() {
             <Loader2 className="animate-spin" color={matchyBrand.teal} />
           </div>
         ) : messaging.inbox.length === 0 ? (
-          <p
-            className="rounded-2xl bg-white px-4 py-8 text-center text-sm text-[#777]"
-            style={{ border: `1px solid ${matchyBrand.border}` }}
-          >
+          <p className="py-16 text-center text-sm font-medium text-[#64748B]">
             {t('chat.emptyInbox')}
           </p>
         ) : (

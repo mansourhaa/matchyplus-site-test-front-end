@@ -329,19 +329,8 @@ export function NotificationsDropdown({ isOpen, onClose }: NotificationsDropdown
                 <p className="text-xs">{t('common.loading') || 'Loading...'}</p>
               </div>
             ) : items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
-                <div
-                  className="mb-3 flex h-12 w-12 items-center justify-center rounded-full"
-                  style={{ background: '#F0F7FF' }}
-                >
-                  <Bell size={22} color="#2F76BB" />
-                </div>
-                <p className="text-xs font-bold" style={{ color: matchyBrand.textDark }}>
-                  {t('notificationSettings.emptyTitle')}
-                </p>
-                <p className="mt-1 max-w-[220px] text-[11px] text-[#94A3B8]">
-                  {t('notificationSettings.emptyDesc')}
-                </p>
+              <div className="py-8 text-center text-xs font-medium text-[#64748B]">
+                {t('notificationSettings.emptyTitle')}
               </div>
             ) : (
               items
