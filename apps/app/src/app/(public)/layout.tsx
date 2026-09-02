@@ -1,11 +1,9 @@
 'use client';
 
-import { matchyBrand } from '@/components/matchy/brand';
-import { MatchyLogo } from '@/features/auth/components/matchy-logo';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
-import { ChevronDown, Globe, LogIn, UserPlus } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowLeft, ChevronDown, Globe } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 const LANGUAGES: { code: Locale; label: string; full: string }[] = [
@@ -16,10 +14,19 @@ const LANGUAGES: { code: Locale; label: string; full: string }[] = [
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   const { locale, setLocale, t, dir } = useI18n();
+  const router = useRouter();
+  const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const activeLang = LANGUAGES.find((l) => l.code === locale) || LANGUAGES[0];
+  const isRtl = locale === 'ar';
+
+  const pageTitle = pathname.includes('privacy-policy')
+    ? t('legal.privacyPolicy')
+    : pathname.includes('terms-of-service')
+      ? t('legal.termsOfService')
+      : t('legal.brandLegal');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -31,108 +38,100 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
-    <div className="flex min-h-screen flex-col bg-[#F5F7FA]" dir={dir}>
-      {/* Top Header */}
-      <header className="sticky top-0 z-30 border-b border-[#E5E7EB] bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-8">
-          <Link href="/login" className="flex items-center gap-2">
-            <MatchyLogo size="md" />
-          </Link>
+    <div className="flex min-h-screen flex-col bg-[#F8FAFC]" dir={dir}>
+      {/* Top Header matching exact design */}
+      <header className="sticky top-0 z-30 border-b border-[#E2E8F0] bg-white/95 backdrop-blur-md">
+        <div className="relative mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-8">
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={handleBack}
+            className="group z-10 inline-flex items-center gap-1.5 rounded-lg py-1.5 pr-2 text-xs font-semibold text-[#334155] transition-colors hover:text-[#0F172A] sm:text-sm"
+          >
+            <ArrowLeft
+              size={16}
+              className={`transition-transform group-hover:-translate-x-0.5 ${
+                isRtl ? 'rotate-180 group-hover:translate-x-0.5' : ''
+              }`}
+            />
+            <span>{t('legal.back')}</span>
+          </button>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Language Selector Dropdown */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                type="button"
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-1.5 text-xs font-bold text-[#334155] shadow-2xs transition-colors hover:bg-[#F1F5F9] active:scale-95"
-                aria-expanded={dropdownOpen}
-                aria-haspopup="true"
+          {/* Centered Page Title */}
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <h2 className="text-xs font-bold tracking-tight text-[#0F172A] sm:text-sm">
+              {pageTitle}
+            </h2>
+          </div>
+
+          {/* Language Selector Dropdown on the right */}
+          <div className="relative z-10" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              className="flex items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-1 text-xs font-bold text-[#334155] shadow-2xs transition-colors hover:bg-[#F1F5F9] active:scale-95"
+              aria-expanded={dropdownOpen}
+              aria-haspopup="true"
+            >
+              <Globe size={13} className="text-[#64748B]" />
+              <span>{activeLang.label}</span>
+              <ChevronDown
+                size={12}
+                className={`text-[#94A3B8] transition-transform duration-200 ${
+                  dropdownOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {dropdownOpen && (
+              <div
+                className="animate-in fade-in zoom-in-95 absolute right-0 z-50 mt-1.5 w-36 rounded-2xl border border-[#E2E8F0] bg-white p-1.5 shadow-lg rtl:right-auto rtl:left-0"
+                style={{ minWidth: '8.5rem' }}
               >
-                <Globe size={14} className="text-[#64748B]" />
-                <span>{activeLang.label}</span>
-                <ChevronDown
-                  size={13}
-                  className={`text-[#94A3B8] transition-transform duration-200 ${
-                    dropdownOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-
-              {dropdownOpen && (
-                <div
-                  className="animate-in fade-in zoom-in-95 absolute right-0 z-50 mt-1.5 w-36 rounded-2xl border border-[#E2E8F0] bg-white p-1.5 shadow-lg"
-                  style={{ minWidth: '8.5rem' }}
-                >
-                  {LANGUAGES.map((lang) => {
-                    const isSelected = locale === lang.code;
-                    return (
-                      <button
-                        key={lang.code}
-                        type="button"
-                        onClick={() => {
-                          setLocale(lang.code);
-                          setDropdownOpen(false);
-                        }}
-                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-                          isSelected
-                            ? 'bg-[#F0F7FF] font-bold text-[#2F76BB]'
-                            : 'text-[#475569] hover:bg-[#F8FAFC] hover:text-[#1E293B]'
+                {LANGUAGES.map((lang) => {
+                  const isSelected = locale === lang.code;
+                  return (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => {
+                        setLocale(lang.code);
+                        setDropdownOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                        isSelected
+                          ? 'bg-[#F0F7FF] font-bold text-[#2F76BB]'
+                          : 'text-[#475569] hover:bg-[#F8FAFC] hover:text-[#1E293B]'
+                      }`}
+                    >
+                      <span>{lang.full}</span>
+                      <span
+                        className={`text-[10px] uppercase ${
+                          isSelected ? 'font-bold text-[#2F76BB]' : 'text-[#94A3B8]'
                         }`}
                       >
-                        <span>{lang.full}</span>
-                        <span
-                          className={`text-[10px] uppercase ${
-                            isSelected ? 'font-bold text-[#2F76BB]' : 'text-[#94A3B8]'
-                          }`}
-                        >
-                          {lang.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Quick Navigation Actions */}
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-[#2F76BB] transition-colors hover:bg-[#F0F7FF]"
-            >
-              <LogIn size={14} />
-              <span>{t('legal.quickActionLogin')}</span>
-            </Link>
-            <Link
-              href="/onboarding"
-              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition-opacity hover:opacity-95"
-              style={{ background: matchyBrand.gradient }}
-            >
-              <UserPlus size={14} />
-              <span>{t('legal.quickActionRegister')}</span>
-            </Link>
+                        {lang.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 py-8 sm:py-10">{children}</main>
-
-      {/* Footer */}
-      <footer className="border-t border-[#E5E7EB] bg-white py-8">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 text-xs text-[#888] sm:flex-row sm:px-8">
-          <p>{t('legal.allRightsReserved', { year: new Date().getFullYear() })}</p>
-          <div className="flex items-center gap-6 font-semibold">
-            <Link href="/terms-of-service" className="hover:text-[#2F76BB] hover:underline">
-              {t('legal.termsOfService')}
-            </Link>
-            <Link href="/privacy-policy" className="hover:text-[#2F76BB] hover:underline">
-              {t('legal.privacyPolicy')}
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <main className="flex-1 py-8 sm:py-12">{children}</main>
     </div>
   );
 }

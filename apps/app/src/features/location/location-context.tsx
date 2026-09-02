@@ -81,22 +81,38 @@ async function getCurrentCoords(): Promise<{ latitude: number; longitude: number
     };
   }
 
-  if (!navigator.geolocation) {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
     throw Object.assign(new Error('unsupported'), { code: 0 });
   }
 
-  const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: GEOLOCATION_TIMEOUT,
-      maximumAge: GEOLOCATION_MAX_AGE,
+  const getPosition = (enableHighAccuracy: boolean, timeout: number) =>
+    new Promise<GeolocationPosition>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy,
+        timeout,
+        maximumAge: GEOLOCATION_MAX_AGE,
+      });
     });
-  });
 
-  return {
-    latitude: position.coords.latitude,
-    longitude: position.coords.longitude,
-  };
+  try {
+    const position = await getPosition(true, 5000);
+    return {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+    };
+  } catch (error: unknown) {
+    const code = error && typeof error === 'object' && 'code' in error ? Number(error.code) : null;
+    if (code === 1) {
+      // Permission explicitly denied by user, do not retry
+      throw error;
+    }
+    // Timeout or position unavailable: retry with standard accuracy (Wi-Fi / IP)
+    const fallbackPosition = await getPosition(false, 10000);
+    return {
+      latitude: fallbackPosition.coords.latitude,
+      longitude: fallbackPosition.coords.longitude,
+    };
+  }
 }
 
 export function LocationProvider({ children }: { children: ReactNode }) {
@@ -136,6 +152,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setAccessMessage(
           'Location permission is disabled or denied. Please enable location to continue.',
         );
+      } else if (permissionStatus?.state === 'prompt') {
+        clearLocation();
+        setPermissionDenied(false);
+        setAccessMessage(null);
       } else if (permissionStatus?.state === 'granted') {
         setPermissionDenied(false);
         setAccessMessage(null);
@@ -148,6 +168,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         permissionStatus = status;
         if (status.state === 'denied') {
           handlePermissionChange();
+        } else if (status.state === 'prompt') {
+          clearLocation();
+          setPermissionDenied(false);
+          setAccessMessage(null);
         } else if (status.state === 'granted') {
           setPermissionDenied(false);
           setAccessMessage(null);

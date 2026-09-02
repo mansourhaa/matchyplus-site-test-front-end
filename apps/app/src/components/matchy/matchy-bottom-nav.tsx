@@ -2,14 +2,18 @@
 
 import { AuthenticatedProfileAvatar } from '@/components/matchy/authenticated-profile-image';
 import { matchyBrand } from '@/components/matchy/brand';
-import { useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
+import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { selectInboxUnreadCount } from '@/features/messaging/store/messaging-slice';
-import { selectOnboarding } from '@/features/onboarding/store/onboarding-slice';
+import {
+  fetchOnboardingProfile,
+  selectOnboarding,
+} from '@/features/onboarding/store/onboarding-slice';
 import { Home, MessageCircle, Search } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 
 type NavKey = 'home' | 'search' | 'matches' | 'profile';
 
@@ -19,11 +23,18 @@ export function MatchyBottomNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
+  const dispatch = useAppDispatch();
   const auth = useAppSelector(selectAuth);
-  const { profile } = useAppSelector(selectOnboarding);
+  const { profile, loading: profileLoading } = useAppSelector(selectOnboarding);
   // Unread messages only — not total match count (that never cleared after reading).
   const matchBadge = useAppSelector(selectInboxUnreadCount);
   const displayName = auth.user?.name || auth.user?.email || 'User';
+
+  useEffect(() => {
+    if (auth.status === 'authenticated' && !profile && !profileLoading) {
+      void dispatch(fetchOnboardingProfile());
+    }
+  }, [auth.status, profile, profileLoading, dispatch]);
 
   const active: NavKey =
     pathname.startsWith('/settings') || pathname === '/edit-profile'

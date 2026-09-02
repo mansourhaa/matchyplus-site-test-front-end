@@ -26,7 +26,6 @@ import {
   LiveScorePanel,
   MatchScoreBadge,
 } from '@/features/matching/components/live-ai-score';
-import { LocationRequiredOverlay } from '@/features/matching/components/location-required-overlay';
 import { MatchCelebrationModal } from '@/features/matching/components/match-celebration-modal';
 import { ProfileDetailModal } from '@/features/matching/components/profile-detail-modal';
 import { SwipeLimitModal } from '@/features/matching/components/swipe-limit-modal';
@@ -180,8 +179,7 @@ export function DiscoverView() {
   };
 
   const onFavorite = async () => {
-    if (!top || matching.swipeLoading || Boolean(top.id && favLoading[top.id])) return;
-    setSwipeDirection('up');
+    if (!top || Boolean(top.id && favLoading[top.id])) return;
     try {
       const res = await dispatch(toggleFavorite(top.id)).unwrap();
       if (res.favorited) {
@@ -201,12 +199,8 @@ export function DiscoverView() {
               : `${top.name} retiré des favoris`,
         );
       }
-      // Swipe up dismisses the card and advances to the next candidate in feed
-      await dispatch(swipeProfile({ targetUserId: top.id, direction: 'left', profile: top }));
     } catch {
       toast.error(t('common.errorOccurred') || 'Error');
-    } finally {
-      setSwipeDirection(null);
     }
   };
 
@@ -242,24 +236,15 @@ export function DiscoverView() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
-        {/* Main swipe column — full-bleed white when empty so no gray frame around the empty state */}
+        {/* Main swipe column */}
         <div
           className={
             top
               ? 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8'
               : 'flex min-h-0 flex-1 flex-col overflow-hidden'
           }
-          style={!top ? { background: 'white' } : undefined}
         >
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
-            {locationRequired && (
-              <LocationRequiredOverlay
-                message={accessMessage}
-                onActivate={() => void requestBrowserLocation()}
-                busy={activating}
-              />
-            )}
-
             {showHomeFeedLoader ? (
               <div className="flex h-full flex-col items-center justify-center px-6 text-center">
                 <div
@@ -309,11 +294,7 @@ export function DiscoverView() {
                       onDragEnd={(_e, info) => {
                         const offsetX = info.offset.x;
                         const velocityX = info.velocity.x;
-                        const offsetY = info.offset.y;
-                        const velocityY = info.velocity.y;
-                        if (offsetY < -100 || velocityY < -500) {
-                          void onFavorite();
-                        } else if (offsetX > 100 || velocityX > 500) {
+                        if (offsetX > 100 || velocityX > 500) {
                           void onConnect();
                         } else if (offsetX < -100 || velocityX < -500) {
                           void onPass();
@@ -420,26 +401,53 @@ export function DiscoverView() {
                         </span>
                       </div>
 
-                      {/* Top right Available pill & Voir details button */}
+                      {/* Top right: Available pill, Bookmark button, & Voir details button */}
                       <div className="pointer-events-auto absolute top-3 right-3 z-20 flex flex-col items-end gap-1.5">
-                        <div
-                          className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-white shadow-xs backdrop-blur-md"
-                          style={{
-                            background: 'rgba(97,188,166,0.9)',
-                            fontSize: 11,
-                            fontWeight: 700,
-                          }}
-                        >
-                          <Check size={12} strokeWidth={3} />
-                          <span>{t('matching.available')}</span>
+                        <div className="flex items-center gap-1.5">
+                          {/* Available pill */}
+                          <div
+                            className="flex h-8 items-center gap-1 rounded-full px-2.5 text-white shadow-xs backdrop-blur-md"
+                            style={{
+                              background: 'rgba(97,188,166,0.9)',
+                              fontSize: 11,
+                              fontWeight: 700,
+                            }}
+                          >
+                            <Check size={12} strokeWidth={3} />
+                            <span>{t('matching.available')}</span>
+                          </div>
+
+                          {/* Bookmark / Favorite button on the right */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void onFavorite();
+                            }}
+                            disabled={Boolean(top.id && favLoading[top.id])}
+                            aria-label={
+                              isTopFavorited
+                                ? t('profileDetail.removeFromFavorites')
+                                : t('profileDetail.addToFavorites')
+                            }
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-xs transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
+                          >
+                            <Bookmark
+                              size={16}
+                              color={isTopFavorited ? '#F5A623' : 'white'}
+                              fill={isTopFavorited ? '#F5A623' : 'none'}
+                            />
+                          </button>
                         </div>
+
+                        {/* See details button */}
                         <button
                           type="button"
                           onClick={() => {
                             setDetailProfileId(top.id);
                             setDetailOpen(true);
                           }}
-                          className="flex items-center gap-1 rounded-full px-2.5 py-1 text-white shadow-xs backdrop-blur-md transition-transform hover:scale-105"
+                          className="flex items-center gap-1 rounded-full px-2.5 py-1 text-white shadow-xs backdrop-blur-md transition-transform hover:scale-105 active:scale-95"
                           style={{
                             fontSize: 11,
                             fontWeight: 600,
@@ -657,10 +665,7 @@ export function DiscoverView() {
           style={{ width: 320, borderLeft: '1px solid #F0F0F0', background: matchyBrand.bg }}
         >
           {locationRequired || !locationSynced ? (
-            <AIRightSidebarLocationEmpty
-              onActivate={() => void requestBrowserLocation()}
-              activating={activating}
-            />
+            <AIRightSidebarLocationEmpty />
           ) : (
             <>
               {top ? (

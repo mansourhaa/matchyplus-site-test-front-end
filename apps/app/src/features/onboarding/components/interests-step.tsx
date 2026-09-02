@@ -149,6 +149,8 @@ export function InterestsStep({
       step={stepNumber}
       totalSteps={totalSteps}
       stepLabel={t('onboarding.interests.title')}
+      onBack={onBack}
+      backLabel={t('common.back')}
     >
       <div className="mx-auto w-full max-w-2xl">
         <StepProgress step={stepNumber} total={totalSteps} />

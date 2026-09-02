@@ -19,32 +19,32 @@ export function LocationRequiredOverlay({
 
   return (
     <div
-      className="absolute inset-0 z-30 flex items-center justify-center px-6"
-      style={{ background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(10px)' }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/25 p-4"
+      style={{ backdropFilter: 'blur(1px)' }}
     >
-      <div className="w-full max-w-md rounded-3xl border border-[#E5EEF8] bg-white p-6 text-center shadow-xl">
+      <div className="animate-in fade-in zoom-in-95 w-full max-w-md rounded-3xl border border-white/15 bg-white p-6 text-center shadow-2xl duration-200">
         <div
-          className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full"
-          style={{ background: '#EEF5FF' }}
+          className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl shadow-xs"
+          style={{ background: '#EEF5FF', border: '1px solid #DCEBFA' }}
         >
-          <MapPin size={24} color="#2F76BB" />
+          <MapPin size={26} color="#2F76BB" strokeWidth={2.2} />
         </div>
-        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#353535' }}>
+        <h3 className="text-xl font-extrabold text-[#1A1A2E]">
           {locale === 'en'
             ? 'Location required'
             : locale === 'ar'
               ? 'الموقع الجغرافي مطلوب'
               : 'Localisation requise'}
         </h3>
-        <p className="mt-2" style={{ fontSize: 13, lineHeight: 1.6, color: '#666' }}>
+        <p className="mt-2 text-sm leading-relaxed text-[#555]">
           {locale === 'en'
-            ? 'Enable location to view profiles in Home and Search. Without permission, no profiles will be visible.'
+            ? 'Enable location to use Matchy+. Without location permission, access to the application and profiles is blocked.'
             : locale === 'ar'
-              ? 'قم بتمكين الموقع الجغرافي لعرض الملفات الشخصية في الرئيسية والبحث. بدون إذن، لن تكون الملفات الشخصية مرئية.'
-              : 'Activez la localisation pour afficher les profils dans Home et Recherche. Sans autorisation, aucun profil ne sera visible.'}
+              ? 'يرجى تفعيل إذن الموقع الجغرافي للمتابعة في Matchy+. بدون إذن الموقع، لا يمكن الوصول إلى التطبيق.'
+              : 'Activez la géolocalisation pour utiliser Matchy+. Sans autorisation de localisation, l’accès à l’application et aux profils est bloqué.'}
         </p>
         {message && (
-          <p className="mt-3" style={{ fontSize: 12, lineHeight: 1.5, color: '#B45309' }}>
+          <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs leading-relaxed text-[#B45309]">
             {locale === 'en'
               ? 'Location permission is disabled or denied. Please enable location to continue.'
               : locale === 'ar'
@@ -56,13 +56,12 @@ export function LocationRequiredOverlay({
           type="button"
           onClick={onActivate}
           disabled={busy}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white transition-all active:scale-95"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white shadow-lg transition-all hover:brightness-105 active:scale-95 disabled:opacity-60"
           style={{
             background: matchyBrand.gradient,
             fontSize: 15,
             fontWeight: 700,
             boxShadow: '0 4px 20px rgba(47,118,187,0.4)',
-            opacity: busy ? 0.6 : 1,
           }}
         >
           {busy ? <RefreshCw size={18} className="animate-spin" /> : <MapPin size={18} />}
@@ -71,14 +70,14 @@ export function LocationRequiredOverlay({
               ? 'Activating...'
               : locale === 'ar'
                 ? 'جارٍ التفعيل...'
-                : 'Activation...'
+                : 'Activation…'
             : locale === 'en'
               ? 'Enable location'
               : locale === 'ar'
                 ? 'تفعيل الموقع'
                 : 'Activer la localisation'}
         </button>
-        <p className="mt-3" style={{ fontSize: 11, color: '#888' }}>
+        <p className="mt-3 text-xs text-[#888]">
           {locale === 'en'
             ? 'Allow location access when prompted by your browser.'
             : locale === 'ar'

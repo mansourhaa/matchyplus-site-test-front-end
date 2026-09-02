@@ -19,135 +19,31 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-export function AIRightSidebarLocationEmpty({
-  onActivate,
-  activating,
-}: {
-  onActivate: () => void;
-  activating: boolean;
-}) {
+export function AIRightSidebarLocationEmpty() {
   const { locale } = useI18n();
-  const isRtl = locale === 'ar';
 
   return (
-    <div className="flex flex-col gap-3 p-1">
-      <div
-        className="relative overflow-hidden rounded-2xl p-4 text-center shadow-xs"
-        style={{
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #F5F9FF 100%)',
-          border: '1px solid #E2E8F0',
-        }}
-        dir={isRtl ? 'rtl' : 'ltr'}
-      >
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#61BCA6]/20 to-[#2F76BB]/20 text-[#2F76BB]">
-          <Sparkles size={22} className="animate-pulse" />
-        </div>
-        <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }} className="mb-1">
-          {locale === 'en'
-            ? 'Live AI Matching'
-            : locale === 'ar'
-              ? 'تحليل التوافق بالذكاء الاصطناعي'
-              : 'Matchs IA en direct'}
-        </h3>
-        <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.4 }} className="mb-4">
-          {locale === 'en'
-            ? 'Enable location to unlock live AI compatibility scoring and top recommendations near you.'
-            : locale === 'ar'
-              ? 'قم بتمكين الموقع الجغرافي لتفعيل التوافق المباشر وأفضل التوصيات القريبة منك.'
-              : 'Activez la localisation pour calculer en direct votre score IA et débloquer les recommandations Top Picks.'}
-        </p>
-
-        <div className={`mb-4 space-y-2 ${isRtl ? 'text-right' : 'text-left'}`}>
-          <div className="flex items-center gap-2.5 rounded-xl border border-[#EDF2F7] bg-white p-2.5 shadow-xs">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EEF5FF] text-[#2F76BB]">
-              <BrainCircuit size={15} />
-            </div>
-            <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#2D3748' }}>
-                {locale === 'en'
-                  ? 'AI Compatibility'
-                  : locale === 'ar'
-                    ? 'التوافق بالذكاء الاصطناعي'
-                    : 'Affinité IA'}
-              </p>
-              <p style={{ fontSize: 10, color: '#718096' }}>
-                {locale === 'en'
-                  ? 'Real-time match scoring'
-                  : locale === 'ar'
-                    ? 'حساب التوافق في الوقت الفعلي'
-                    : 'Score calculé en temps réel'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 rounded-xl border border-[#EDF2F7] bg-white p-2.5 shadow-xs">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F7F3] text-[#61BCA6]">
-              <Star size={15} />
-            </div>
-            <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#2D3748' }}>
-                {locale === 'en'
-                  ? 'Top AI Picks'
-                  : locale === 'ar'
-                    ? 'أفضل ترشيحات الذكاء الاصطناعي'
-                    : 'Top AI Picks'}
-              </p>
-              <p style={{ fontSize: 10, color: '#718096' }}>
-                {locale === 'en'
-                  ? 'Personalized recommendations'
-                  : locale === 'ar'
-                    ? 'توصيات مخصصة لك'
-                    : 'Recommandations sur-mesure'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 rounded-xl border border-[#EDF2F7] bg-white p-2.5 shadow-xs">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#FFF5E6] text-[#F5A623]">
-              <MapPin size={15} />
-            </div>
-            <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#2D3748' }}>
-                {locale === 'en'
-                  ? 'Proximity Filter'
-                  : locale === 'ar'
-                    ? 'ميزة القرب الجغرافي'
-                    : 'Proximité'}
-              </p>
-              <p style={{ fontSize: 10, color: '#718096' }}>
-                {locale === 'en'
-                  ? 'Profiles near your area'
-                  : locale === 'ar'
-                    ? 'ملفات شخصية قريبة منك'
-                    : 'Profils autour de chez vous'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={onActivate}
-          disabled={activating}
-          className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-60"
-          style={{ background: matchyBrand.gradient, fontSize: 12 }}
-        >
-          {activating ? <Loader2 size={15} className="animate-spin" /> : <MapPin size={15} />}
-          <span>
-            {activating
-              ? locale === 'en'
-                ? 'Activating...'
-                : locale === 'ar'
-                  ? 'جارٍ التفعيل...'
-                  : 'Activation...'
-              : locale === 'en'
-                ? 'Enable location'
-                : locale === 'ar'
-                  ? 'تفعيل الموقع'
-                  : 'Activer la localisation'}
-          </span>
-        </button>
+    <div
+      className="flex flex-col items-center justify-center rounded-2xl bg-white p-6 text-center shadow-xs"
+      style={{ border: '1px solid #E2E8F0' }}
+    >
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EEF5FF] text-[#2F76BB]">
+        <Sparkles size={22} />
       </div>
+      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }} className="mb-1">
+        {locale === 'en'
+          ? 'Live AI Matching'
+          : locale === 'ar'
+            ? 'تحليل التوافق بالذكاء الاصطناعي'
+            : 'Matchs IA en direct'}
+      </h3>
+      <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.5 }}>
+        {locale === 'en'
+          ? 'Live compatibility scores and personalized recommendations will appear here.'
+          : locale === 'ar'
+            ? 'ستظهر مؤشرات التوافق والتوصيات المخصصة هنا.'
+            : 'Les analyses de compatibilité et les suggestions personnalisées apparaîtront ici.'}
+      </p>
     </div>
   );
 }
