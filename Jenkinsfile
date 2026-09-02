@@ -14,7 +14,42 @@ pipeline {
 
   options {
     timestamps()
-    disableConcurrentBuilds()
+
+    // Two different guards against two different problems.
+    //
+    // disableConcurrentBuilds stops the SAME branch running twice - two builds
+    // of dev racing each other over one workspace.
+    //
+    // lock() stops DIFFERENT branches running heavy work at the same time,
+    // which disableConcurrentBuilds does nothing about and which is what
+    // actually bit us: on 27 Aug staging #11 ran its vitest suite from
+    // 15:42-15:47 while dev #38 was inside `pnpm turbo build` in a Docker
+    // build. The location-step suite, normally 18-20s, took 36.8s and one
+    // test blew its 15s timeout. The build was recorded as a genuine test
+    // failure. Builds #12 and #13 passed the identical test minutes later on
+    // an idle box, which is the proof it was contention and not a regression.
+    //
+    // Two executors on a 4-core host that also runs production, postgres,
+    // SonarQube and ArgoCD cannot honestly run two of these pipelines at once.
+    // The executors stay at 2 so light work (branch indexing, a CD promotion)
+    // still overlaps; this lock serialises only the pipelines that fight over
+    // CPU. Needs the lockable-resources plugin.
+    lock(resource: 'matchy-ci-heavy')
+
+    // Nothing was rotating build history. Jenkins keeps every build's log and
+    // artifacts forever, on the host whose disk filling to 95% took production
+    // down for 7h16m on 10 Aug 2026. artifactNumToKeep is deliberately lower
+    // than numToKeep: the console log of an old build is small and worth
+    // keeping for history, the archived reports and scan JSONs next to it are
+    // not.
+    buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
+
+    // A backstop, not the real guard. The real guards are the per-stage
+    // timeouts below, which are sized to the stage they wrap so a hang is
+    // caught in minutes rather than hours. This one only exists so that a
+    // hang somewhere without its own timeout cannot hold an executor - and
+    // with only two executors, one stuck build is half the CI capacity gone.
+    timeout(time: 3, unit: 'HOURS')
   }
 
   environment {
@@ -120,7 +155,15 @@ pipeline {
 
     stage('Prepare report dirs') {
       steps {
-        sh 'mkdir -p reports/semgrep reports/trivy'
+        // rm before mkdir: the workspace is reused between builds, so a
+        // junit.xml or a trivy report left by the previous run would other-
+        // wise be picked up and published as if this build had produced it.
+        // That matters most on the failure path, where the stage that should
+        // have written the file never ran.
+        sh '''
+          rm -rf reports apps/*/test-results
+          mkdir -p reports/semgrep reports/trivy reports/final
+        '''
       }
     }
 
@@ -133,6 +176,7 @@ pipeline {
       // also picking up .pnpm-store (untracked, ~60k files) and blowing
       // scan time up to 10+ min for no reason.
       agent { docker { image 'returntocorp/semgrep:latest'; args '-u root -v /var/lib/jenkins/semgrep-cache:/root/.semgrep'; reuseNode true } }
+      options { timeout(time: 20, unit: 'MINUTES') }
       steps {
         sh '''
           mkdir -p reports/semgrep
@@ -145,6 +189,32 @@ pipeline {
             echo '{"results":[],"errors":[]}' > reports/semgrep/semgrep-report.json
           fi
         '''
+        // Until now the SAST stage could not change the build result at all:
+        // `|| true` swallows semgrep's exit code, and nothing downstream read
+        // the JSON. A scan finding a hardcoded secret looked exactly like a
+        // clean one - the findings existed only in an HTML report nobody opens
+        // unless they already suspect something.
+        //
+        // ERROR is semgrep's highest severity and is what p/secrets uses for a
+        // real credential. Those now mark the build UNSTABLE, matching how
+        // Trivy already treats a CRITICAL CVE. WARNING and INFO stay advisory:
+        // they are numerous, frequently stylistic, and gating on them would
+        // train everyone to ignore the colour of the build, which is the one
+        // failure mode worse than not gating at all.
+        script {
+          def sg = readJSON file: 'reports/semgrep/semgrep-report.json'
+          def errs = sg.results.findAll { it.extra?.severity == 'ERROR' }
+          if (errs) {
+            echo "Semgrep found ${errs.size()} ERROR-severity finding(s):"
+            errs.take(10).each { echo "  ${it.path}:${it.start?.line} ${it.check_id}" }
+            if (errs.size() > 10) {
+              echo "  ... and ${errs.size() - 10} more, all listed in the build report"
+            }
+            unstable("Semgrep: ${errs.size()} ERROR-severity finding(s)")
+          } else {
+            echo "Semgrep: ${sg.results.size()} finding(s), none at ERROR severity."
+          }
+        }
       }
       // reset ownership so the next build's checkout doesn't choke on
       // root-owned files
@@ -167,9 +237,15 @@ pipeline {
       // ships a broken/no-op act(). apps/api's vitest config already forces
       // this on its own, so this just makes it consistent everywhere.
       agent { docker { image 'node:22-alpine'; args '-u root'; reuseNode true } }
+      options { timeout(time: 45, unit: 'MINUTES') }
       environment {
         HUSKY = '0'
         NODE_ENV = 'test'
+        // Switches the vitest configs from the plain console reporter to
+        // console + junit. Set here rather than relying on Jenkins exporting
+        // CI itself, so the trigger for writing junit.xml is visible in this
+        // file instead of being an implicit property of the agent.
+        CI = 'true'
         DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/ci?schema=public'
         NEXT_PUBLIC_API_URL = 'http://localhost:8000/api/v1'
         ACCESS_TOKEN_SECRET = 'ci-access-token-secret'
@@ -202,6 +278,20 @@ pipeline {
       post {
         always {
           sh 'chown -R "$(stat -c "%u:%g" .)" . 2>/dev/null || true'
+          // Test results existed only as console text before this. That is why
+          // the 27 Aug staging failure took a person reading a 1266-line log to
+          // explain: a single test timing out at 15s looks identical in the log
+          // to a test that is genuinely broken. Jenkins keeps per-test history
+          // across builds, so with the XML it labels that case a flake by
+          // itself and shows how long each test took over time.
+          //
+          // allowEmptyResults, because this runs on the failure path too: if
+          // the build died in `pnpm install` or `pnpm lint`, no suite ever ran
+          // and there is legitimately nothing to publish. Without it the junit
+          // step would fail the build a second time for the wrong reason and
+          // bury the real error.
+          junit testResults: 'apps/api/test-results/junit.xml,apps/app/test-results/junit.xml,apps/admin/test-results/junit.xml', allowEmptyResults: true, skipPublishingChecks: true
+          archiveArtifacts artifacts: 'apps/*/test-results/junit.xml', allowEmptyArchive: true
         }
       }
     }
@@ -211,15 +301,19 @@ pipeline {
     // SonarQube stage so coverage.xml exists by the time the scanner runs.
     stage('AI service tests') {
       agent { docker { image 'python:3.12-slim'; args '-u root'; reuseNode true } }
+      options { timeout(time: 25, unit: 'MINUTES') }
       steps {
         sh '''
           pip install --no-cache-dir -r apps/ai/requirements.txt -r apps/ai/requirements-dev.txt
-          cd apps/ai && python -m pytest -q
+          mkdir -p apps/ai/test-results
+          cd apps/ai && python -m pytest -q --junitxml=test-results/junit.xml
         '''
       }
       post {
         always {
           sh 'chown -R "$(stat -c "%u:%g" .)" . 2>/dev/null || true'
+          junit testResults: 'apps/ai/test-results/junit.xml', allowEmptyResults: true, skipPublishingChecks: true
+          archiveArtifacts artifacts: 'apps/ai/test-results/junit.xml', allowEmptyArchive: true
         }
       }
     }
@@ -299,11 +393,26 @@ pipeline {
       }
     }
 
-    // logging only for now, doesn't affect build status at all - coverage is
-    // genuinely too low right now for a real gate to be meaningful (per
-    // Khalil), so this reports the result without failing or marking the
-    // build unstable. Tighten this back up once coverage catches up.
+    // Split gate, not an all-or-nothing one.
+    //
+    // This used to be pure echo: a failing SonarQube quality gate changed
+    // nothing about the build, because coverage is genuinely too low for a
+    // full gate to mean anything and failing on it would have made every
+    // build red on day one.
+    //
+    // The problem with that is it also silenced the SECURITY conditions, which
+    // have nothing to do with coverage and are exactly what this platform is
+    // for. So the gate is now read condition by condition:
+    //
+    //   security conditions  (vulnerabilities, security rating, hotspots)
+    //     -> UNSTABLE, same treatment as a Trivy CRITICAL or a Semgrep ERROR
+    //   everything else      (coverage, duplication, maintainability)
+    //     -> reported in the log, build unaffected
+    //
+    // When coverage catches up, promoting the rest is deleting the SECURITY
+    // filter on one line - the plumbing is already here.
     stage('Quality Gate') {
+      options { timeout(time: 10, unit: 'MINUTES') }
       steps {
         script {
           def token = env.SONAR_TOKEN_CAPTURED
@@ -373,13 +482,41 @@ pipeline {
             return
           }
           def qgStatus = qgJson?.projectStatus?.status ?: 'UNKNOWN'
+          def conditions = qgJson?.projectStatus?.conditions ?: []
 
-          if (qgStatus == 'ERROR') {
-            echo "quality gate failed - see ${sonarUrl}/dashboard?id=${projectKey}"
-          } else if (qgStatus != 'OK') {
-            echo "quality gate returned unexpected status: ${qgStatus}"
-          } else {
+          // Metric keys Sonar uses for the security side of the gate. Prefixed
+          // new_* variants are the "on new code" conditions, which are the ones
+          // a project with legacy debt actually wants to enforce.
+          def SECURITY_METRICS = [
+            'vulnerabilities', 'new_vulnerabilities',
+            'security_rating', 'new_security_rating',
+            'security_hotspots_reviewed', 'new_security_hotspots_reviewed',
+            'security_review_rating', 'new_security_review_rating',
+          ]
+
+          def failed = conditions.findAll { it.status == 'ERROR' }
+          def failedSecurity = failed.findAll { SECURITY_METRICS.contains(it.metricKey) }
+          def failedOther = failed - failedSecurity
+
+          if (qgStatus == 'OK') {
             echo "Quality Gate PASSED"
+          } else if (qgStatus != 'ERROR') {
+            echo "quality gate returned unexpected status: ${qgStatus}"
+          }
+
+          failedOther.each {
+            echo "  [advisory] ${it.metricKey}: ${it.actualValue} (threshold ${it.comparator} ${it.errorThreshold})"
+          }
+          failedSecurity.each {
+            echo "  [SECURITY] ${it.metricKey}: ${it.actualValue} (threshold ${it.comparator} ${it.errorThreshold})"
+          }
+
+          if (failedSecurity) {
+            echo "Security conditions failed the quality gate - see ${sonarUrl}/dashboard?id=${projectKey}"
+            unstable("SonarQube: ${failedSecurity.size()} security condition(s) failed")
+          } else if (failedOther) {
+            echo "Quality gate failed only on non-security conditions (advisory while coverage " +
+                 "is being brought up) - see ${sonarUrl}/dashboard?id=${projectKey}"
           }
         }
       }
@@ -391,6 +528,7 @@ pipeline {
     // the Dockerfile's localhost:8000 default instead of the staging API.
     // landing reads no NEXT_PUBLIC_* vars, and ai is a python service.
     stage('Build images') {
+      options { timeout(time: 40, unit: 'MINUTES') }
       steps {
         sh """
           docker build --pull -t ${REGISTRY_REPO}:api-${IMAGE_TAG} -f apps/api/Dockerfile .
@@ -399,6 +537,7 @@ pipeline {
           docker build --pull --build-arg NEXT_PUBLIC_APP_URL=${FRONTEND_APP_URL} -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
           docker build --pull -t ${REGISTRY_REPO}:ai-${IMAGE_TAG} -f apps/ai/Dockerfile apps/ai
         """
+        sh 'mkdir -p reports/stages && touch reports/stages/build'
       }
     }
 
@@ -410,6 +549,7 @@ pipeline {
     // --exit-code 1 would stop the script at the first failing scan and
     // leave the rest with no report at all.
     stage('Trivy scan') {
+      options { timeout(time: 20, unit: 'MINUTES') }
       steps {
         catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
           sh """
@@ -431,6 +571,7 @@ pipeline {
     }
 
     stage('Push images') {
+      options { timeout(time: 30, unit: 'MINUTES') }
       steps {
         withCredentials([usernamePassword(credentialsId: 'registry-creds', usernameVariable: 'REG_USER', passwordVariable: 'REG_PASS')]) {
           // derive the registry host from REGISTRY_REPO instead of assuming
@@ -452,11 +593,13 @@ pipeline {
               docker push ${REGISTRY_REPO}:\${COMPONENT}-${IMAGE_TAG}
             done
           """
+        sh 'mkdir -p reports/stages && touch reports/stages/push'
         }
       }
     }
 
     stage('Cosign sign') {
+      options { timeout(time: 15, unit: 'MINUTES') }
       steps {
         withCredentials([
           file(credentialsId: 'cosign-private-key', variable: 'COSIGN_KEY_FILE'),
@@ -484,27 +627,43 @@ pipeline {
               "$COSIGN_BIN" sign --key "$COSIGN_KEY_FILE" --yes "$REGISTRY_REPO:$COMPONENT-$IMAGE_TAG"
             done
           '''
+        sh 'mkdir -p reports/stages && touch reports/stages/sign'
         }
-      }
-    }
-
-    stage('Publish report') {
-      steps {
-        sh 'python3 ci-scripts/generate_report.py --type dev --dest reports/final'
-        publishHTML(target: [
-          reportDir: 'reports/final',
-          reportFiles: 'report.html',
-          reportName: 'Matchy+ Dev Build Report',
-          keepAll: true,
-          alwaysLinkToLastBuild: true
-        ])
-        archiveArtifacts artifacts: 'reports/final/**', allowEmptyArchive: true
       }
     }
   }
 
   post {
     always {
+      // The report is generated here, not as a final stage, and that is the
+      // whole point of moving it.
+      //
+      // As a stage it was the last one, so any earlier failure skipped it.
+      // Staging #11 failed in Lint & Test on 27 Aug and produced no report at
+      // all - the one build where someone actually wanted to see the findings
+      // was the one build with nothing to look at. A report is most useful on
+      // the builds that go wrong, so it now runs on every outcome.
+      //
+      // BUILD_RESULT is passed in because currentBuild.currentResult is only
+      // knowable here, at the end. The script renders whatever scan output
+      // exists and says plainly which stages never ran, instead of the old
+      // behaviour of asserting everything passed because it could only ever
+      // run after everything had.
+      script {
+        withEnv(["BUILD_RESULT=${currentBuild.currentResult}"]) {
+          sh 'python3 ci-scripts/generate_report.py --type dev --dest reports/final || true'
+        }
+      }
+      publishHTML(target: [
+        reportDir: 'reports/final',
+        reportFiles: 'report.html',
+        reportName: 'Matchy+ Dev Build Report',
+        keepAll: true,
+        alwaysLinkToLastBuild: true,
+        allowMissing: true
+      ])
+      archiveArtifacts artifacts: 'reports/final/**', allowEmptyArchive: true
+
       // Untagging the five finals is not cleanup on its own - it only frees the
       // ~540MB we ship. The multi-stage builds leave several GB of intermediate
       // layers behind per run, which is what actually filled the disk and took
@@ -512,6 +671,10 @@ pipeline {
       // that leaking as dangling images, and the prune below clears whatever
       // still slips through so the pipeline cleans up after itself rather than
       // relying on the host's nightly cron to notice.
+      //
+      // This runs after the report on purpose: the report reads the Trivy JSON,
+      // not the images, but keeping the order explicit means a future change
+      // that does inspect an image still finds it there.
       sh """
         for COMPONENT in ${IMAGE_COMPONENTS}; do
           docker rmi ${REGISTRY_REPO}:\${COMPONENT}-${IMAGE_TAG} || true

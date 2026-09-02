@@ -14,8 +14,12 @@ import json
 import os
 import shutil
 import subprocess
+import xml.etree.ElementTree as ET
 
 COMPONENTS = ("api", "app", "admin", "landing", "ai")
+
+SAST_WHAT = ("An automatic tool read through the application source code looking for known "
+             "insecure coding patterns (the kind attackers exploit).")
 
 
 def env(name, default="(unknown)"):
@@ -105,6 +109,148 @@ def k6_summary():
         "avg_ms": dur.get("avg"),
         "error_rate": failed.get("value"),
     }
+
+
+# ---------------------------------------------------------------------------
+# Which stages actually ran.
+#
+# This report used to be the last stage in the pipeline, so its existence was
+# proof that everything before it had passed and every card could hardcode
+# "PASSED". It now runs in post{always}, on failed and unstable builds too, so
+# nothing may be assumed. Each check below looks for the artifact a stage
+# leaves behind; the three stages that leave none (build, push, sign) drop a
+# marker file instead.
+# ---------------------------------------------------------------------------
+
+def build_result():
+    # Jenkins passes currentBuild.currentResult in. Anything else means the
+    # script was run by hand.
+    return env("BUILD_RESULT", "UNKNOWN")
+
+
+def stage_ran(name):
+    markers = {
+        "sast": "reports/semgrep/semgrep-report.json",
+        "sonar": "reports/sonarqube/report-task.txt",
+        "build": "reports/stages/build",
+        "push": "reports/stages/push",
+        "sign": "reports/stages/sign",
+    }
+    if name == "tests":
+        return bool(junit_files())
+    if name == "trivy":
+        return bool(glob.glob("reports/trivy/trivy-*-report.json"))
+    return os.path.exists(markers.get(name, ""))
+
+
+def skipped_note(stage_label):
+    return ("This stage did not run - the build stopped before reaching it. "
+            "Nothing here has been verified for this commit.")
+
+
+# ---------------------------------------------------------------------------
+# Test results, read from the JUnit XML the vitest and pytest runs now emit.
+#
+# Counts and per-test failures both come from here. Before this, the report
+# asserted "Lint and automated tests: PASSED" as a constant, which was only
+# ever true because a failing build never got this far.
+# ---------------------------------------------------------------------------
+
+def junit_files():
+    return sorted(glob.glob("apps/*/test-results/junit.xml"))
+
+
+def junit_summary():
+    files = junit_files()
+    if not files:
+        return None
+    total = failures = errors = skipped = 0
+    seconds = 0.0
+    per_app = {}
+    for f in files:
+        app = f.split("/")[1] if "/" in f else f
+        try:
+            root = ET.parse(f).getroot()
+        except Exception:
+            continue
+        # vitest writes <testsuites> with the totals on the root element;
+        # pytest writes <testsuites> wrapping one <testsuite>, and older
+        # pytest writes a bare <testsuite> root. Counting the root when it
+        # carries the totals and the children otherwise covers all three
+        # without double-counting the wrapper.
+        if root.tag == "testsuites" and root.get("tests") is not None:
+            nodes = [root]
+        elif root.tag == "testsuite":
+            nodes = [root]
+        else:
+            nodes = root.findall(".//testsuite")
+        t = fa = er = sk = 0
+        for node in nodes:
+            t += int(node.get("tests") or 0)
+            fa += int(node.get("failures") or 0)
+            er += int(node.get("errors") or 0)
+            sk += int(node.get("skipped") or 0)
+            try:
+                seconds += float(node.get("time") or 0)
+            except ValueError:
+                pass
+        per_app[app] = {"tests": t, "failures": fa, "errors": er, "skipped": sk}
+        total += t
+        failures += fa
+        errors += er
+        skipped += sk
+    if not per_app:
+        return None
+    return {"total": total, "failures": failures, "errors": errors,
+            "skipped": skipped, "seconds": seconds, "per_app": per_app}
+
+
+def junit_findings():
+    """One row per failing test, so a red build names the tests on screen."""
+    rows = []
+    for f in junit_files():
+        app = f.split("/")[1] if "/" in f else f
+        try:
+            root = ET.parse(f).getroot()
+        except Exception:
+            continue
+        for case in root.findall(".//testcase"):
+            bad = case.find("failure")
+            kind = "FAILED"
+            if bad is None:
+                bad = case.find("error")
+                kind = "ERROR"
+            if bad is None:
+                continue
+            msg = bad.get("message") or (bad.text or "")
+            secs = case.get("time") or "0"
+            try:
+                secs = "%.1fs" % float(secs)
+            except ValueError:
+                secs = "-"
+            rows.append([kind, app, _short(case.get("classname") or "", 70),
+                         _short(case.get("name") or "", 90), secs, _short(msg, 200)])
+    return rows
+
+
+def junit_slowest(limit=15):
+    """Slow tests are the ones that flake first when the box is busy."""
+    rows = []
+    for f in junit_files():
+        app = f.split("/")[1] if "/" in f else f
+        try:
+            root = ET.parse(f).getroot()
+        except Exception:
+            continue
+        for case in root.findall(".//testcase"):
+            try:
+                secs = float(case.get("time") or 0)
+            except ValueError:
+                continue
+            rows.append((secs, app, case.get("classname") or "", case.get("name") or ""))
+    rows.sort(reverse=True)
+    return [["%.2fs" % s, app, _short(cn, 70), _short(nm, 90)]
+            for s, app, cn, nm in rows[:limit]]
 
 
 def badge(ok, ok_text="PASSED", bad_text="NEEDS ATTENTION"):
@@ -265,6 +411,21 @@ def k6_metrics():
 def detail_sections():
     out = []
 
+    # Tests come first because on a red build they are almost always the
+    # reason, and scrolling past five scanner tables to find out which test
+    # broke is exactly the friction this section exists to remove.
+    failed = junit_findings()
+    if junit_files():
+        out.append("<h2>Test results</h2>")
+        out.append(table(
+            ["Result", "App", "File", "Test", "Time", "Message"], failed,
+            empty="Every test passed."))
+        slow = junit_slowest()
+        if slow:
+            out.append('<h3>Slowest tests <span class="count">the ones that time out '
+                       'first when the build host is busy</span></h3>'
+                       + table(["Time", "App", "File", "Test"], slow, sev_col=None))
+
     sg = semgrep_findings()
     if sg is not None:
         out.append("<h2>Code scan (Semgrep)</h2>" + table(
@@ -296,8 +457,9 @@ def detail_sections():
             empty="No load test run for this build."))
 
     if not out:
-        return ('<h2>Details</h2><p class="none">No scan output was produced for this '
-                'build, which usually means it stopped before the scan stages ran.</p>')
+        return ('<h2>Details</h2><p class="none">No scan or test output was produced for '
+                'this build. It stopped before any of the stages that generate one. The '
+                'console log has the failing command.</p>')
     return "\n".join(out)
 
 
@@ -309,7 +471,11 @@ def main():
 
     os.makedirs(args.dest, exist_ok=True)
 
-    sha = env("GIT_COMMIT")[:7]
+    # slice only a real sha - env() falls back to the literal "(unknown)",
+    # and [:7] on that produced "(unknow" in the report for every build
+    # run outside Jenkins or before the checkout populated GIT_COMMIT.
+    _sha = env("GIT_COMMIT")
+    sha = _sha[:7] if _sha != "(unknown)" else _sha
     image_tag = env("IMAGE_TAG")
     branch = env("GIT_BRANCH", env("BRANCH_NAME"))
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -320,6 +486,7 @@ def main():
         ("Triggered by", commit_author()),
         ("Code version (commit)", sha),
         ("Report generated", now),
+        ("Build result", build_result()),
         ("API image", f"{REGISTRY_REPO}:api-{image_tag}"),
         ("Web app image", f"{REGISTRY_REPO}:app-{image_tag}"),
         ("AI service image", f"{REGISTRY_REPO}:ai-{image_tag}"),
@@ -327,58 +494,99 @@ def main():
 
     sections = []
 
+    if not stage_ran("sast"):
+        sections.append((
+            "Source code security scan (Semgrep)", SAST_WHAT,
+            badge(False, bad_text="DID NOT RUN"), skipped_note("SAST"),
+        ))
     sg = semgrep_summary()
     if sg is not None:
         noteworthy = sum(v for k, v in sg["by_severity"].items() if k in ("ERROR", "HIGH"))
         detail = ", ".join(f"{v} {k.lower()}" for k, v in sorted(sg["by_severity"].items())) or "no findings"
         sections.append((
-            "Source code security scan (Semgrep)",
-            "An automatic tool read through the application source code looking for known "
-            "insecure coding patterns (the kind attackers exploit).",
+            "Source code security scan (Semgrep)", SAST_WHAT,
             badge(noteworthy == 0, "NO HIGH-RISK FINDINGS", f"{noteworthy} HIGH-RISK FINDINGS"),
             f"Total findings: {sg['total']} ({detail}). Full details: semgrep/semgrep-report.json",
         ))
 
-    sections.append((
-        "Lint and automated tests",
-        "The codebase was checked for style/quality issues (lint) and the automated test "
-        "suite was run across the api, app, and ai packages.",
-        badge(True, "PASSED"),
-        "The pipeline stops here if either step fails, so a report only exists for a passing run.",
-    ))
+    TESTS_WHAT = ("The codebase was checked for style/quality issues (lint) and the automated "
+                  "test suites were run across the api, app, admin and ai packages.")
+    jt = junit_summary()
+    if jt is None:
+        # No XML at all. Either the stage never started, or it died in
+        # `pnpm install` / `pnpm lint` before a single suite executed - which
+        # is itself the useful thing to say, rather than a green badge.
+        sections.append((
+            "Lint and automated tests", TESTS_WHAT,
+            badge(False, bad_text="NO RESULTS"),
+            "No test results were produced. The build stopped during install or lint, "
+            "before any suite ran. The console log for this build has the failing command.",
+        ))
+    else:
+        bad = jt["failures"] + jt["errors"]
+        per = "; ".join(
+            "%s: %d passed" % (a, c["tests"] - c["failures"] - c["errors"] - c["skipped"])
+            + ("" if not (c["failures"] + c["errors"])
+               else ", %d failed" % (c["failures"] + c["errors"]))
+            for a, c in sorted(jt["per_app"].items())
+        )
+        sections.append((
+            "Lint and automated tests", TESTS_WHAT,
+            badge(bad == 0, "%d TESTS PASSED" % jt["total"], "%d OF %d TESTS FAILED" % (bad, jt["total"])),
+            "%s. Total run time %.0f seconds. Every failing test is listed by name below."
+            % (per, jt["seconds"]),
+        ))
 
+    TRIVY_WHAT = ("Each packaged application (container image) was checked against a database "
+                  "of publicly known vulnerabilities in the libraries it ships with.")
     tv = trivy_summary()
-    if tv is not None:
+    if tv is None:
+        sections.append((
+            "Known-vulnerability scan of the built images (Trivy)", TRIVY_WHAT,
+            badge(False, bad_text="DID NOT RUN"), skipped_note("Trivy"),
+        ))
+    else:
         crit = sum(c.get("CRITICAL", 0) for c in tv.values())
         parts = []
         for comp, counts in tv.items():
             d = ", ".join(f"{v} {k.lower()}" for k, v in sorted(counts.items())) or "none found"
             parts.append(f"{comp}: {d}")
         sections.append((
-            "Known-vulnerability scan of the built images (Trivy)",
-            "Each packaged application (container image) was checked against a database of "
-            "publicly known vulnerabilities in the libraries it ships with.",
+            "Known-vulnerability scan of the built images (Trivy)", TRIVY_WHAT,
             badge(crit == 0, "NO CRITICAL VULNERABILITIES", f"{crit} CRITICAL VULNERABILITIES"),
-            "; ".join(parts) + ". Full details: trivy/*.json",
+            "; ".join(parts) + ". Every CVE is listed in full below.",
         ))
 
-    sections.append((
-        "Digital signature (Cosign)",
-        "The api, app, and ai images were cryptographically signed. This proves the exact "
-        "images running in this environment were built by this pipeline and have not been "
-        "tampered with.",
-        badge(True, "SIGNED"),
-        f"Verify anytime with: cosign verify --key cosign.pub {REGISTRY_REPO}:api-{image_tag}",
-    ))
+    COSIGN_WHAT = ("The built images were cryptographically signed. This proves the exact "
+                   "images running in an environment were built by this pipeline and have "
+                   "not been tampered with.")
+    if not stage_ran("sign"):
+        sections.append((
+            "Digital signature (Cosign)", COSIGN_WHAT,
+            badge(False, bad_text="DID NOT RUN"), skipped_note("Cosign"),
+        ))
+    else:
+        sections.append((
+            "Digital signature (Cosign)", COSIGN_WHAT,
+            badge(True, "SIGNED"),
+            f"Verify anytime with: cosign verify --key cosign.pub {REGISTRY_REPO}:api-{image_tag}",
+        ))
 
     if args.type == "dev":
-        sections.append((
-            "Images pushed to the registry",
-            "api, app, and ai images were built, scanned, signed, and pushed. This pipeline "
-            "stops here - dev does not deploy anywhere, it only proves the build is clean.",
-            badge(True, "PUSHED"),
-            f"Tagged {image_tag} in {REGISTRY_REPO}. Promote via a PR from dev to staging when ready.",
-        ))
+        PUSH_WHAT = ("The five images were built, scanned, signed and pushed. This pipeline "
+                     "stops here - dev does not deploy anywhere, it only proves the build "
+                     "is clean.")
+        if not stage_ran("push"):
+            sections.append((
+                "Images pushed to the registry", PUSH_WHAT,
+                badge(False, bad_text="DID NOT RUN"), skipped_note("Push"),
+            ))
+        else:
+            sections.append((
+                "Images pushed to the registry", PUSH_WHAT,
+                badge(True, "PUSHED"),
+                f"Tagged {image_tag} in {REGISTRY_REPO}. Promote via a PR from dev to staging when ready.",
+            ))
 
     if args.type in ("staging", "prod"):
         ns = "matchyplus-staging" if args.type == "staging" else "matchyplus-production"
@@ -387,7 +595,7 @@ def main():
             f"Deployment to {env_name}",
             f"The images built by this pipeline were deployed to the {ns} namespace, and the "
             "pipeline verified the rollout completed and the app answers requests.",
-            badge(True, "DEPLOYED & VERIFIED"),
+            badge(True, "DEPLOYED AND VERIFIED"),
             "Deployed via a version-controlled change to the Kustomize overlay (GitOps) - "
             "every deployment is traceable and reversible.",
         ))
@@ -447,9 +655,27 @@ def main():
              "staging": "Staging validation report",
              "prod": "Production release record"}[args.type]
     details = detail_sections()
+
+    # A one-line verdict at the top. This report is now produced for failed and
+    # unstable builds too, so "what happened" has to be answerable without
+    # reading any of the tables underneath it.
+    result = build_result()
+    banner_text = {
+        "SUCCESS": "Every check passed.",
+        "UNSTABLE": "The build completed, but at least one check needs attention. "
+                    "The cards below say which.",
+        "FAILURE": "The build failed and stopped early. Anything marked DID NOT RUN was "
+                   "never reached, and is not a verdict on this commit.",
+        "ABORTED": "The build was stopped before it finished.",
+    }.get(result, "Generated outside a Jenkins build.")
+    banner_cls = {"SUCCESS": "ok", "UNSTABLE": "warn", "FAILURE": "bad",
+                  "ABORTED": "warn"}.get(result, "info")
+    banner = ('<p class="banner %s"><strong>%s</strong> %s</p>'
+              % (banner_cls, html.escape(result), html.escape(banner_text)))
+
     doc = f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
-<title>{title} — build #{env('BUILD_NUMBER')}</title>
+<title>{title} - build #{env('BUILD_NUMBER')}</title>
 <style>
  body {{ font-family: system-ui, Segoe UI, Arial, sans-serif; margin: 2rem auto; max-width: 860px;
         color: #1c2733; line-height: 1.5; padding: 0 1rem; }}
@@ -466,6 +692,12 @@ def main():
  .badge.warn {{ background: #fdecec; color: #b02a37; }}
  .what {{ margin: .2rem 0; }}
  .detail {{ margin: .2rem 0 0; color: #51606f; font-size: .92rem; }}
+ .banner {{ padding: .7rem 1rem; border-radius: 8px; margin: 1rem 0 1.5rem;
+           border-left: 5px solid; font-size: .95rem; }}
+ .banner.ok   {{ background: #e2f5e9; border-color: #157347; color: #10502f; }}
+ .banner.warn {{ background: #fff4e0; border-color: #b8860b; color: #6b4c00; }}
+ .banner.bad  {{ background: #fdecec; border-color: #b02a37; color: #7d1d26; }}
+ .banner.info {{ background: #eef2f7; border-color: #8a97a5; color: #51606f; }}
  footer {{ margin-top: 2rem; color: #8a97a5; font-size: .85rem; }}
  h2 {{ margin-top: 2.5rem; border-bottom: 2px solid #e3e8ee; padding-bottom: .3rem; }}
  h3 {{ margin: 1.5rem 0 .4rem; font-size: 1rem; }}
@@ -488,6 +720,7 @@ def main():
  .sev-info {{ color: #8a97a5; }}
 </style></head><body>
 <h1>{title}</h1>
+{banner}
 <p>This report explains, in plain language, everything that was checked and done for this
 release of <strong>Matchy+</strong>. Green badges mean the check passed.</p>
 <table>{rows}</table>
@@ -503,13 +736,13 @@ Raw technical scan files are stored next to this report for specialist review.</
         f.write(doc)
 
     # ---------- Markdown (terminal-friendly twin) ----------
-    md = [f"# {title} — build #{env('BUILD_NUMBER')}", ""]
+    md = [f"# {title} - build #{env('BUILD_NUMBER')}", ""]
     for k, v in meta:
         md.append(f"- **{k}**: {v}")
     md.append("")
     for t, what, verdict, detail in sections:
         state = "PASSED" if 'class="badge ok"' in verdict else "NEEDS ATTENTION"
-        md += [f"## {t} — {state}", "", what, "", f"> {detail}", ""]
+        md += [f"## {t} - {state}", "", what, "", f"> {detail}", ""]
     with open(os.path.join(args.dest, "summary.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(md))
 

@@ -74,7 +74,7 @@
     "test": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "**/*.test.ts", "**/*.test.tsx", "vitest.config.*"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**", "test-results/**"]
     },
     "db:generate": {
       "cache": false,
