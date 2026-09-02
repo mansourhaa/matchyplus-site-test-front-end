@@ -32,11 +32,9 @@ export async function handleProviderOAuthCallback(
     request.log.warn({ provider, oauthError: code, raw }, 'oauth callback failed');
     if (linkIntent) {
       const finalCallbackUrl = `${config.frontendUrl}/account-profile?error=${encodeURIComponent(code)}`;
-      console.log(`[oauth] ${provider} final callback url → ${finalCallbackUrl}`);
       return reply.redirect(finalCallbackUrl);
     }
     const finalCallbackUrl = `${config.frontendUrl}/oauth-callback?error=${encodeURIComponent(code)}`;
-    console.log(`[oauth] ${provider} final callback url → ${finalCallbackUrl}`);
     return reply.redirect(finalCallbackUrl);
   };
 
@@ -76,11 +74,9 @@ export async function handleProviderOAuthCallback(
     const code = await oauthAuthService.createExchangeCode(user.id);
 
     const finalCallbackUrl = `${config.frontendUrl}/oauth-callback?code=${code}`;
-    console.log(`[oauth] ${provider} final callback url → ${finalCallbackUrl}`);
     request.log.info({ provider, finalCallbackUrl }, 'oauth callback success → SPA');
     return reply.redirect(finalCallbackUrl);
   } catch (err) {
-    console.error(`[oauth ${provider} callback error]`, err);
     request.log.error({ err, provider }, 'OAuth callback exception');
     return redirectOAuthError((err as Error).message || 'oauth_profile_fetch_failed');
   }

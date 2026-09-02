@@ -6,11 +6,20 @@ import { Check, Flag, Handshake, IdCard, Loader2, Lock, Shield } from 'lucide-re
 import { useState } from 'react';
 
 type WelcomeStepProps = {
+  stepNumber?: number;
+  totalSteps?: number;
   loading: boolean;
   onAccept: () => Promise<boolean>;
+  onBack?: () => void;
 };
 
-export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
+export function WelcomeStep({
+  stepNumber = 4,
+  totalSteps = 4,
+  loading,
+  onAccept,
+  onBack,
+}: WelcomeStepProps) {
   const { t } = useI18n();
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,23 +72,25 @@ export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
 
   return (
     <OnboardingStepLayout
-      step={0}
-      totalSteps={0}
+      step={stepNumber}
+      totalSteps={totalSteps}
       stepLabel={t('onboarding.welcome.title')}
+      onBack={onBack}
+      backLabel={t('common.back')}
       hideProgress
     >
       <div className="mx-auto w-full max-w-md">
         <div
-          className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl"
-          style={{ background: '#EEF5FF' }}
+          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl shadow-xs"
+          style={{ background: '#EEF5FF', border: '1px solid #DCEBFA' }}
         >
           <Shield size={22} color="#2F76BB" strokeWidth={2.2} />
         </div>
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold text-[#1A1A2E] md:text-3xl">
+        <h1 className="flex items-center justify-center gap-2 text-center text-2xl font-extrabold text-[#1A1A2E] md:text-3xl">
           <span>{t('onboarding.welcome.title')}</span>
           <span className="text-2xl">🎉</span>
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-[#718096]">
+        <p className="mt-2 text-center text-sm leading-relaxed text-[#718096]">
           {t('onboarding.welcome.rulesDesc')}
         </p>
 
@@ -127,7 +138,7 @@ export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
           </p>
         )}
 
-        <p className="mt-4 text-center text-xs text-[#A0AEC0]">
+        <p className="mt-3 text-center text-xs leading-relaxed font-normal text-[#888]">
           {t('onboarding.welcome.acceptDisclaimer')}
         </p>
       </div>

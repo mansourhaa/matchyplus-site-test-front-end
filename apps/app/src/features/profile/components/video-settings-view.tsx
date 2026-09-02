@@ -181,26 +181,34 @@ export function VideoSettingsView() {
         className="rounded-3xl bg-white p-5 shadow-xs"
         style={{ border: '1px solid #F0F0F0' }}
       >
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F0FA]">
-            <Film size={20} color={matchyBrand.blue} />
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F0FA]">
+              <Film size={20} color={matchyBrand.blue} />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-[#1A1A2E]">
+                {locale === 'en'
+                  ? 'Intro video'
+                  : locale === 'ar'
+                    ? 'فيديو المقدمة'
+                    : "Vidéo d'intro"}
+              </h2>
+              <p className="text-xs text-[#888]">
+                {locale === 'en'
+                  ? 'Max duration: 20 seconds'
+                  : locale === 'ar'
+                    ? 'المدة القصوى: 20 ثانية'
+                    : 'Durée maximale : 20 secondes'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base font-extrabold text-[#1A1A2E]">
-              {locale === 'en'
-                ? 'Intro video'
-                : locale === 'ar'
-                  ? 'فيديو المقدمة'
-                  : "Vidéo d'intro"}
-            </h2>
-            <p className="text-xs text-[#888]">
-              {locale === 'en'
-                ? 'Max duration: 20 seconds'
-                : locale === 'ar'
-                  ? 'المدة الأقصى: 20 ثانية'
-                  : 'Durée max : 20 secondes'}
-            </p>
-          </div>
+          <span
+            className="rounded-full px-2.5 py-1 text-[11px] font-bold"
+            style={{ background: '#EEF5FF', color: '#2F76BB' }}
+          >
+            {locale === 'en' ? '20s max' : locale === 'ar' ? '20 ثانية كحد أقصى' : '20s max'}
+          </span>
         </div>
 
         {hasVideo ? (
@@ -233,15 +241,6 @@ export function VideoSettingsView() {
                         : 'Vidéo inaccessible'}
                 </div>
               )}
-
-              {/* Added badge on top right */}
-              <span
-                className={`absolute top-3 ${isRtl ? 'left-3' : 'right-3'} z-10 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold text-white shadow-sm`}
-                style={{ background: '#61BCA6' }}
-              >
-                <Sparkles size={11} />{' '}
-                {locale === 'en' ? 'Added ✓' : locale === 'ar' ? 'تمت الإضافة ✓' : 'Ajoutée ✓'}
-              </span>
             </div>
 
             {/* Bottom Actions */}
@@ -312,10 +311,10 @@ export function VideoSettingsView() {
                       ? 'جارٍ الرفع...'
                       : 'Envoi en cours…'
                   : locale === 'en'
-                    ? 'Camera recording or MP4 upload · Max 20 seconds'
+                    ? 'Camera recording or MP4 upload · Max duration: 20 seconds'
                     : locale === 'ar'
-                      ? 'تسجيل من الكاميرا أو رفع فيديو MP4 · 20 ثانية كحد أقصى'
-                      : 'Caméra ou import MP4 · 20s max'}
+                      ? 'تسجيل من الكاميرا أو رفع فيديو MP4 · المدة القصوى: 20 ثانية'
+                      : 'Caméra ou import MP4 · Durée maximale : 20 secondes'}
               </span>
             </span>
           </button>

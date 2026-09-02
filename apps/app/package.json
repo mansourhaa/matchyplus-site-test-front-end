@@ -8,12 +8,12 @@
     "#hooks/*": "./src/hooks/*.tsx"
   },
   "scripts": {
-    "dev": "dotenv -e ../../.env.development -- next dev",
-    "stage": "dotenv -e ../../.env.staging -- next dev",
+    "dev": "dotenv -q -e ../../.env.development -- next dev",
+    "stage": "dotenv -q -e ../../.env.staging -- next dev",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "dotenv -e ../../.env.production -- next build",
-    "start": "dotenv -e ../../.env.production -- next start",
+    "build": "dotenv -q -e ../../.env.production -- next build",
+    "start": "dotenv -q -e ../../.env.production -- next start",
     "lint": "eslint ."
   },
   "dependencies": {

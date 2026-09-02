@@ -1,6 +1,7 @@
 import authReducer from '@/features/auth/store/auth-slice';
 import type { AuthState } from '@/features/auth/types';
 import { I18nProvider } from '@/features/i18n/i18n-provider';
+import { LocationProvider } from '@/features/location/location-context';
 import { configureStore } from '@reduxjs/toolkit';
 import { render } from '@testing-library/react';
 import type { ReactElement } from 'react';
@@ -32,7 +33,9 @@ export function renderWithAuthStore(ui: ReactElement, authState: Partial<AuthSta
     store,
     ...render(
       <I18nProvider>
-        <Provider store={store}>{ui}</Provider>
+        <LocationProvider>
+          <Provider store={store}>{ui}</Provider>
+        </LocationProvider>
       </I18nProvider>,
     ),
   };

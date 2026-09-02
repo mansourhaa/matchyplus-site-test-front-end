@@ -18,18 +18,12 @@ import {
 } from '@/features/matching/store/matching-slice';
 import {
   Bookmark,
-  Briefcase,
-  Check,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Compass,
   MapPin,
   MessageCircle,
   Search,
   Star,
-  Trash2,
-  User,
   X,
   Zap,
 } from 'lucide-react';
@@ -37,24 +31,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
-function formatDate(iso: string, locale: string): string {
-  try {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    return new Intl.DateTimeFormat(
-      locale === 'ar' ? 'ar-TN' : locale === 'en' ? 'en-US' : 'fr-FR',
-      {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      },
-    ).format(d);
-  } catch {
-    return '';
-  }
-}
 
 export function FavoritesView() {
   const { t, locale, dir } = useI18n();
@@ -68,6 +44,8 @@ export function FavoritesView() {
   const matching = useAppSelector(selectMatching);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProfile, setSelectedProfile] = useState<FavoriteProfile | null>(null);
+  const [localPendingIds, setLocalPendingIds] = useState<Set<string>>(() => new Set());
+  const [localMatchedIds, setLocalMatchedIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     void dispatch(fetchFavorites());
@@ -76,20 +54,20 @@ export function FavoritesView() {
 
   // Build lookup sets for connection status
   const matchedIds = useMemo(() => {
-    const set = new Set<string>();
+    const set = new Set<string>(localMatchedIds);
     for (const row of matching.matches ?? []) {
       if (row.matched_user_id) set.add(row.matched_user_id);
     }
     return set;
-  }, [matching.matches]);
+  }, [matching.matches, localMatchedIds]);
 
   const pendingIds = useMemo(() => {
-    const set = new Set<string>();
+    const set = new Set<string>(localPendingIds);
     for (const row of matching.pending ?? []) {
       if (row.profile?.id) set.add(row.profile.id);
     }
     return set;
-  }, [matching.pending]);
+  }, [matching.pending, localPendingIds]);
 
   // Find conversation_id for matched users
   const getConversationId = (profileId: string): string | null => {
@@ -138,6 +116,7 @@ export function FavoritesView() {
         swipeProfile({ targetUserId: profile.id, direction: 'right' }),
       ).unwrap();
       if (res.match) {
+        setLocalMatchedIds((prev) => new Set(prev).add(profile.id));
         toast.success(
           locale === 'en'
             ? `It's a Match with ${profile.name}! 🎉`
@@ -146,6 +125,7 @@ export function FavoritesView() {
               : `C'est un Match avec ${profile.name} ! 🎉`,
         );
       } else {
+        setLocalPendingIds((prev) => new Set(prev).add(profile.id));
         toast.success(
           locale === 'en'
             ? `Connection request sent to ${profile.name}`
@@ -154,6 +134,7 @@ export function FavoritesView() {
               : `Demande de connexion envoyée à ${profile.name}`,
         );
       }
+      void dispatch(fetchMatchState());
     } catch {
       toast.error(t('common.errorOccurred') || 'Error');
     }
@@ -268,107 +249,115 @@ export function FavoritesView() {
             </Link>
           </div>
         ) : (
-          /* Favorites Horizontal Feed List — Exactly like Activity History */
-          <div className="space-y-3">
+          /* Favorites List — Responsive cards with connect status and remove actions */
+          <div className="space-y-3.5">
             {filteredFavorites.map((profile) => {
               const isBusy = Boolean(actionLoading[profile.id]);
+              const isPending = pendingIds.has(profile.id);
+              const isMatched = matchedIds.has(profile.id);
 
               return (
                 <div
                   key={profile.id}
                   onClick={() => setSelectedProfile(profile)}
-                  className="group flex cursor-pointer flex-col gap-3 rounded-3xl bg-white p-4 shadow-xs transition-all hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+                  className="group flex cursor-pointer flex-col gap-3.5 rounded-3xl bg-white p-4.5 shadow-xs transition-all hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
                   style={{ border: `1px solid ${matchyBrand.border}` }}
                 >
-                  {/* Profile Summary */}
-                  <div className="flex items-center gap-3.5">
-                    <div className="relative shrink-0">
-                      <div className="h-14 w-14 overflow-hidden rounded-2xl shadow-inner">
-                        <AuthenticatedProfileAvatar
-                          image={profile.image}
-                          name={profile.name}
-                          sizeClassName="h-14 w-14"
-                          roundedClassName="rounded-2xl"
-                        />
+                  {/* Left Section: Avatar + Details */}
+                  <div className="flex min-w-0 flex-1 items-start gap-3.5">
+                    {/* Avatar with status indicator dot */}
+                    <div className="relative mt-0.5 shrink-0">
+                      <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-[#334155] text-xl font-bold text-white shadow-inner">
+                        {profile.image ? (
+                          <AuthenticatedProfileAvatar
+                            image={profile.image}
+                            name={profile.name}
+                            sizeClassName="h-16 w-16"
+                            roundedClassName="rounded-2xl"
+                          />
+                        ) : (
+                          <span>{(profile.name || 'M').charAt(0).toUpperCase()}</span>
+                        )}
                       </div>
 
-                      {/* Bookmark Icon Bubble */}
-                      <div
-                        className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full shadow-xs ring-2 ring-white"
-                        style={{ background: '#F5A623', color: '#FFF' }}
-                      >
-                        <Bookmark size={10} fill="white" />
-                      </div>
+                      {/* Status indicator dot */}
+                      <span
+                        className="absolute -right-0.5 -bottom-0.5 h-4 w-4 rounded-full shadow-xs ring-2 ring-white"
+                        style={{ background: '#4EAD96' }}
+                      />
                     </div>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                    {/* Middle Details */}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      {/* Name */}
+                      <div className="flex flex-wrap items-baseline gap-1.5">
                         <h2
                           className="truncate text-sm font-extrabold"
                           style={{ color: matchyBrand.textDark }}
                         >
                           {profile.name}
                         </h2>
-
-                        {typeof profile.rating === 'number' && profile.rating > 0 && (
-                          <span className="flex items-center gap-0.5 rounded-md bg-[#FFF8EB] px-1.5 py-0.5 text-[10px] font-bold text-[#F5A623]">
-                            <Star size={10} className="fill-current" />
-                            {profile.rating.toFixed(1)}
-                          </span>
-                        )}
-
-                        {profile.match_score != null && (
-                          <span className="rounded-full bg-[#EBF5FB] px-2 py-0.5 text-[10px] font-bold text-[#2F76BB]">
-                            {profile.match_score}% Match
-                          </span>
-                        )}
                       </div>
 
-                      <p className="truncate text-xs font-semibold text-[#666]">
-                        {profile.service_type || profile.job || profile.category || 'Member'}
-                        {profile.city ? ` · ${profile.city}` : ''}
-                        {profile.distance_km != null ? ` (${profile.distance_km} km)` : ''}
+                      {/* Category & Service / Job */}
+                      <p className="truncate text-xs font-medium text-[#64748B]">
+                        {profile.category ? `${profile.category} / ` : ''}
+                        {profile.service_type || profile.job || 'Member'}
                       </p>
 
-                      <div className="mt-1 flex items-center gap-2">
-                        {profile.experience && (
-                          <span className="flex items-center gap-1 rounded-md bg-[#F5F7FA] px-1.5 py-0.5 text-[10px] font-semibold text-[#555]">
-                            <Briefcase size={9} color="#2F76BB" />
-                            {profile.experience}
-                          </span>
-                        )}
+                      {/* Meta Info: Rating, Distance, Price */}
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs">
+                        <span className="flex items-center gap-1 font-bold text-[#1A1A2E]">
+                          <Star size={13} className="fill-[#F5A623] text-[#F5A623]" />
+                          {typeof profile.rating === 'number' && profile.rating > 0
+                            ? profile.rating.toFixed(1)
+                            : '5.0'}
+                        </span>
+
+                        <span className="text-gray-300">·</span>
+
+                        <span className="flex items-center gap-0.5 font-medium text-[#2F76BB]">
+                          <MapPin size={13} className="shrink-0" />
+                          {profile.distance_km != null
+                            ? `${profile.distance_km} km`
+                            : profile.city || t('settings.favoritesNearby')}
+                        </span>
 
                         {profile.price && (
-                          <span className="rounded-md bg-[#EBF8F5] px-1.5 py-0.5 text-[10px] font-bold text-[#61BCA6]">
-                            {profile.price}
-                          </span>
+                          <>
+                            <span className="text-gray-300">·</span>
+                            <span className="font-bold text-[#0D9488]">{profile.price}</span>
+                          </>
                         )}
-
-                        <span className="text-[10px] text-[#AAA]">
-                          {formatDate(profile.favorited_at, locale)}
-                        </span>
                       </div>
+
+                      {/* Status note if pending */}
+                      {isPending && (
+                        <div className="flex items-center gap-1 pt-0.5 text-[11px] font-semibold text-[#D97706]">
+                          <Clock size={12} className="text-[#D97706]" />
+                          <span>{t('settings.favoritesPendingDesc')}</span>
+                        </div>
+                      )}
+
+                      {/* Tags / Interests Badges */}
+                      {profile.interests && profile.interests.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {profile.interests.slice(0, 4).map((interest) => (
+                            <span
+                              key={interest}
+                              className="rounded-full border border-[#DCEBFA] bg-[#F0F7FF] px-2.5 py-0.5 text-[11px] font-semibold text-[#2F76BB]"
+                            >
+                              {interest}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedProfile(profile);
-                      }}
-                      className="rounded-xl px-3 py-2 text-xs font-bold transition-all hover:bg-gray-100 active:scale-95"
-                      style={{
-                        border: `1px solid ${matchyBrand.border}`,
-                        color: matchyBrand.textDark,
-                      }}
-                    >
-                      {t('activityHistory.viewProfile') || 'Voir profil'}
-                    </button>
-
-                    {matchedIds.has(profile.id) ? (
+                  {/* Right Actions: Connect/Pending status button + Retirer button */}
+                  <div className="flex shrink-0 flex-row items-end gap-2 self-end sm:flex-col sm:self-center">
+                    {isMatched ? (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -376,38 +365,35 @@ export function FavoritesView() {
                           const convId = getConversationId(profile.id);
                           router.push(convId ? `/matches?c=${convId}` : '/matches');
                         }}
-                        className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-white shadow-xs transition-transform hover:scale-105 active:scale-95"
-                        style={{ background: matchyBrand.gradient }}
+                        className="flex items-center justify-center gap-1.5 rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-2 text-xs font-bold text-[#2563EB] shadow-xs transition-transform hover:scale-105 active:scale-95"
                       >
                         <MessageCircle size={13} />
                         <span>
                           {locale === 'en' ? 'Chat' : locale === 'ar' ? 'محادثة' : 'Chat'}
                         </span>
                       </button>
-                    ) : pendingIds.has(profile.id) ? (
-                      <span
-                        className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold shadow-xs"
+                    ) : isPending ? (
+                      <div
+                        className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold shadow-xs select-none"
                         style={{
-                          background: '#FFF8EB',
-                          border: '1px solid #F5D78E',
-                          color: '#C48A1A',
+                          background: '#FFFBEB',
+                          border: '1px solid #FEF08A',
+                          color: '#D97706',
                         }}
                       >
-                        <Clock size={13} />
-                        <span>
-                          {locale === 'en' ? 'Pending' : locale === 'ar' ? 'معلق' : 'En attente'}
-                        </span>
-                      </span>
+                        <Clock size={13} className="text-[#D97706]" />
+                        <span>{t('settings.favoritesPending')}</span>
+                      </div>
                     ) : (
                       <button
                         type="button"
                         onClick={(e) => handleConnect(e, profile)}
                         disabled={isBusy}
-                        className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-white shadow-xs transition-transform hover:scale-105 active:scale-95"
+                        className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold text-white shadow-xs transition-transform hover:scale-105 active:scale-95 disabled:opacity-60"
                         style={{ background: matchyBrand.gradient }}
                       >
                         <Zap size={13} fill="white" />
-                        <span>{t('matching.connect') || 'Connecter'}</span>
+                        <span>{t('settings.favoritesConnect')}</span>
                       </button>
                     )}
 
@@ -415,20 +401,16 @@ export function FavoritesView() {
                       type="button"
                       onClick={(e) => handleRemove(e, profile.id, profile.name)}
                       disabled={isBusy}
-                      aria-label={
-                        locale === 'en'
-                          ? 'Remove from favorites'
-                          : locale === 'ar'
-                            ? 'إزالة من المفضلة'
-                            : 'Retirer des favoris'
-                      }
-                      className="flex h-8 w-8 items-center justify-center rounded-xl transition-colors hover:bg-rose-50 hover:text-red-600 active:scale-95"
+                      aria-label={t('settings.favoritesRemove')}
+                      className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold shadow-xs transition-transform hover:scale-105 active:scale-95 disabled:opacity-60"
                       style={{
-                        border: `1px solid ${matchyBrand.border}`,
-                        color: '#AAA',
+                        background: '#FEF2F2',
+                        border: '1px solid #FEE2E2',
+                        color: '#EF4444',
                       }}
                     >
-                      <Trash2 size={13} />
+                      <X size={13} strokeWidth={2.5} />
+                      <span>{t('settings.favoritesRemove')}</span>
                     </button>
                   </div>
                 </div>
@@ -465,9 +447,20 @@ export function FavoritesView() {
           }}
           onClose={() => setSelectedProfile(null)}
           onConnect={async () => {
-            await dispatch(
-              swipeProfile({ targetUserId: selectedProfile.id, direction: 'right' }),
-            ).unwrap();
+            const targetId = selectedProfile.id;
+            try {
+              const res = await dispatch(
+                swipeProfile({ targetUserId: targetId, direction: 'right' }),
+              ).unwrap();
+              if (res.match) {
+                setLocalMatchedIds((prev) => new Set(prev).add(targetId));
+              } else {
+                setLocalPendingIds((prev) => new Set(prev).add(targetId));
+              }
+              void dispatch(fetchMatchState());
+            } catch {
+              // handled by thunk
+            }
             setSelectedProfile(null);
           }}
           onPass={async () => {

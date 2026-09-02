@@ -33,12 +33,11 @@ export function useProactiveRefresh() {
       }
     };
 
-    // Fire immediately on first mount so the cookie is renewed before the first
-    // navigation, covering the case where the tab was idle long enough for the
-    // background timer to be throttled by the browser.
+    // Initialize timestamp on mount so fresh logins do not immediately race
+    // on a token that was just minted. Subsequent background refreshes are handled
+    // by the interval and visibilitychange listeners.
     if (lastRefreshRef.current === 0) {
-      lastRefreshRef.current = Date.now(); // prevent double-fire if effect re-runs quickly
-      void performSilentRefresh();
+      lastRefreshRef.current = Date.now();
     }
 
     // Periodic background timer

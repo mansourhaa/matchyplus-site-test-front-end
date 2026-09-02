@@ -3,9 +3,18 @@
 import { MatchyAppShell } from '@/components/matchy/matchy-app-shell';
 import { MatchyPrimaryShell } from '@/components/matchy/matchy-primary-shell';
 import { Spinner } from '@/components/shared/spinner';
-import { useAppSelector, useProactiveRefresh } from '@/features/auth/hooks';
+import { useAppDispatch, useAppSelector, useProactiveRefresh } from '@/features/auth/hooks';
 import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import {
+  useAutoCaptureGrantedLocation,
+  useLocationGate,
+} from '@/features/location/location-context';
+import { LocationRequiredOverlay } from '@/features/matching/components/location-required-overlay';
+import {
+  fetchOnboardingProfile,
+  selectOnboarding,
+} from '@/features/onboarding/store/onboarding-slice';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { Suspense, useEffect } from 'react';
@@ -14,10 +23,13 @@ const PRIMARY_PATHS = new Set(['/home', '/matches', '/settings']);
 
 function DashboardChrome({ children }: { children: ReactNode }) {
   useProactiveRefresh();
+  useAutoCaptureGrantedLocation();
   const pathname = usePathname();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const { t } = useI18n();
   const isPrimary = PRIMARY_PATHS.has(pathname);
+  const { locationRequired, activating, accessMessage, requestBrowserLocation } = useLocationGate();
 
   // `user` is null until fetchCurrentUser resolves (see useBootstrapSession) — only
   // redirect once we actually know the profile is incomplete, not during that window.
@@ -28,6 +40,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   // back to /home). Hard-navigate so proxy sees a document request without racing
   // router.replace('/login') against a still-present access_token cookie.
   const { user, isAuthenticated, sessionChecked } = useAppSelector(selectAuth);
+  const { profile, loading: profileLoading } = useAppSelector(selectOnboarding);
   const needsLogin = sessionChecked && !isAuthenticated;
   const needsOnboarding = Boolean(user && !user.onboarding_completed);
   // Fail closed: never paint (dashboard) chrome/children until authcheck settles,
@@ -35,8 +48,14 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   const blockDashboard = !sessionChecked || needsLogin || needsOnboarding;
 
   useEffect(() => {
+    if (isAuthenticated && !profile && !profileLoading) {
+      void dispatch(fetchOnboardingProfile());
+    }
+  }, [isAuthenticated, profile, profileLoading, dispatch]);
+
+  useEffect(() => {
     if (needsLogin) {
-      window.location.assign('/login');
+      window.location.assign('/login?reason=session_expired');
       return;
     }
     if (needsOnboarding) {
@@ -80,10 +99,6 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     '/settings/notifications': t('settings.notifications'),
   };
 
-  if (isPrimary) {
-    return <MatchyPrimaryShell>{children}</MatchyPrimaryShell>;
-  }
-
   const title = pathname.startsWith('/chat')
     ? t('chat.title')
     : pathname.startsWith('/profile/')
@@ -100,14 +115,28 @@ function DashboardChrome({ children }: { children: ReactNode }) {
       : '/home';
 
   return (
-    <MatchyAppShell
-      title={title}
-      showBack={showBack}
-      backPath={backPath}
-      hideHeader={pathname.startsWith('/chat') || pathname.startsWith('/profile/')}
-    >
-      {children}
-    </MatchyAppShell>
+    <>
+      {isPrimary ? (
+        <MatchyPrimaryShell>{children}</MatchyPrimaryShell>
+      ) : (
+        <MatchyAppShell
+          title={title}
+          showBack={showBack}
+          backPath={backPath}
+          hideHeader={pathname.startsWith('/chat') || pathname.startsWith('/profile/')}
+        >
+          {children}
+        </MatchyAppShell>
+      )}
+
+      {locationRequired && (
+        <LocationRequiredOverlay
+          message={accessMessage}
+          onActivate={() => void requestBrowserLocation()}
+          busy={activating}
+        />
+      )}
+    </>
   );
 }
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { AuthLayout } from '@/features/auth/components/auth-layout';
-import { MatchyLogo } from '@/features/auth/components/matchy-logo';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -82,6 +81,7 @@ export function StepCard({
  * step's CTA row (not stacked, unlike the plain login/register forms). */
 export function StepCtaRow({
   onBack,
+  backLabel,
   onContinue,
   continueLabel,
   continueIcon,
@@ -89,13 +89,17 @@ export function StepCtaRow({
   loading,
 }: {
   onBack?: () => void;
+  backLabel?: string;
   onContinue: () => void;
   continueLabel: string;
   continueIcon?: ReactNode;
   disabled?: boolean;
   loading?: boolean;
 }) {
+  const { t } = useI18n();
   const busy = Boolean(disabled || loading);
+  const resolvedBackLabel = backLabel ?? t('common.back');
+
   return (
     <div className="mt-8 flex gap-3">
       {onBack && (
@@ -103,17 +107,16 @@ export function StepCtaRow({
           type="button"
           onClick={onBack}
           disabled={busy}
-          className="rounded-2xl px-6 py-4 disabled:opacity-50"
-          style={{ background: '#F5F5F5', color: '#888', fontSize: '14px', fontWeight: 700 }}
+          className="rounded-2xl bg-[#F5F5F5] px-6 py-4 text-sm font-bold text-[#888] transition-colors hover:bg-[#EAEAEA] disabled:opacity-50"
         >
-          Retour
+          {resolvedBackLabel}
         </button>
       )}
       <button
         type="button"
         onClick={onContinue}
         disabled={busy}
-        className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-white disabled:opacity-80"
+        className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-white transition-opacity disabled:opacity-80"
         style={{
           background: !busy ? 'linear-gradient(90deg, #61BCA6, #2F76BB)' : '#D5D5D5',
           fontSize: '15px',
@@ -136,7 +139,7 @@ type OnboardingStepLayoutProps = {
   totalSteps: number;
   stepLabel: string;
   onBack?: () => void;
-  /** Optional label override for the mobile/desktop header back control (default Retour). */
+  /** Optional label override for the header back control (defaults to t('common.back')). */
   backLabel?: string;
   skipLabel?: string;
   onSkip?: () => void;
@@ -146,21 +149,23 @@ type OnboardingStepLayoutProps = {
 };
 
 /**
- * Shared desktop/mobile shell for every onboarding step. Matches Matchy Inscription1..5:
- * desktop header = Matchy logo + LangPickerLight; mobile header = Retour + LangPickerLight.
- * Bottom CTA "Retour" still lives in each step's StepCtaRow when provided.
+ * Shared desktop/mobile shell for every onboarding step.
+ * Header renders a back navigation button on the left (replacing the logo) and LangPickerLight on the right.
  */
 export function OnboardingStepLayout({
   step,
   totalSteps,
   stepLabel,
   onBack,
-  backLabel = 'Retour',
+  backLabel,
   skipLabel,
   onSkip,
   hideProgress = false,
   children,
 }: OnboardingStepLayoutProps) {
+  const { t } = useI18n();
+  const resolvedBackLabel = backLabel ?? t('common.back');
+
   return (
     <AuthLayout
       activeFeature={Math.max(0, step - 1)}
@@ -170,25 +175,29 @@ export function OnboardingStepLayout({
       hideVideoFeature
       showPanelLangPicker={false}
     >
-      {/* Desktop — Matchy: logo left, language right */}
+      {/* Desktop — Header: Back button left, language right */}
       <div className="hidden h-full flex-col bg-[#FAFBFC] md:flex">
         <div
           className="flex items-center justify-between bg-white px-10 py-5"
           style={{ borderBottom: '1px solid #F0F0F0' }}
         >
-          <div className="flex items-center gap-4">
-            {onBack && (
+          <div className="flex items-center">
+            {onBack ? (
               <button
                 type="button"
                 onClick={onBack}
-                className="flex items-center gap-1"
-                style={{ fontSize: '14px', color: '#888' }}
+                aria-label={resolvedBackLabel}
+                className="group flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F76BB]"
               >
-                <ArrowLeft size={18} />
-                <span>{backLabel}</span>
+                <ArrowLeft
+                  size={18}
+                  className="transition-transform group-hover:-translate-x-0.5 rtl:rotate-180 rtl:group-hover:translate-x-0.5"
+                />
+                <span>{resolvedBackLabel}</span>
               </button>
+            ) : (
+              <div className="h-8" />
             )}
-            <MatchyLogo size="sm" />
           </div>
           <div className="flex items-center gap-3">
             {onSkip && skipLabel && (
@@ -208,21 +217,24 @@ export function OnboardingStepLayout({
         </div>
       </div>
 
-      {/* Mobile — Matchy: Retour left, language right */}
+      {/* Mobile — Header: Back button left, language right */}
       <div className="overflow-y-auto bg-white md:hidden" style={{ minHeight: '100dvh' }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           {onBack ? (
             <button
               type="button"
               onClick={onBack}
-              className="flex items-center gap-1"
-              style={{ fontSize: '14px', color: '#888' }}
+              aria-label={resolvedBackLabel}
+              className="group flex items-center gap-1.5 rounded-xl px-2 py-1 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F76BB]"
             >
-              <ArrowLeft size={18} />
-              <span>{backLabel}</span>
+              <ArrowLeft
+                size={18}
+                className="transition-transform group-hover:-translate-x-0.5 rtl:rotate-180 rtl:group-hover:translate-x-0.5"
+              />
+              <span>{resolvedBackLabel}</span>
             </button>
           ) : (
-            <MatchyLogo size="sm" />
+            <div className="h-8" />
           )}
           <div className="flex items-center gap-2">
             {onSkip && skipLabel && (

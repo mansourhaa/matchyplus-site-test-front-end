@@ -166,12 +166,20 @@ export function OnboardingWizard() {
           stepNumber={stepNumber}
           totalSteps={totalSteps}
           loading={loading}
-          onFinish={finishOnboarding}
+          onNext={goToNextStep}
           onBack={goBack}
         />
       );
     case 'welcome':
-      return <WelcomeStep loading={loading} onAccept={() => finishOnboarding({})} />;
+      return (
+        <WelcomeStep
+          stepNumber={stepNumber}
+          totalSteps={totalSteps}
+          loading={loading}
+          onAccept={() => finishOnboarding({})}
+          onBack={goBack}
+        />
+      );
     default:
       return null;
   }

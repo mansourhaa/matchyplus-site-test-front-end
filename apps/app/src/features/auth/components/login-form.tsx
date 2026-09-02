@@ -101,7 +101,10 @@ export function LoginForm() {
 
   const country = getPhoneCountry(countryIso);
   const phone = composeE164Phone(countryIso, nationalNumber);
-  const error = localError || authError;
+  const reasonParam = searchParams.get('reason');
+  const sessionExpiredNotice =
+    reasonParam === 'session_expired' ? t('common.errors.unauthorized') : null;
+  const error = localError || authError || sessionExpiredNotice;
 
   // Cap cold start: proxy may bounce to /login before Preferences hydrate + mirror
   // cookie sync. Once authcheck confirms a session, leave /login for the app.
