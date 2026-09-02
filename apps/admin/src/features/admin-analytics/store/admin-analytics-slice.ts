@@ -1,4 +1,4 @@
-import { adminApi } from '@/lib/admin-api';
+import { adminApi, extractAdminErrorMessage } from '@/lib/admin-api';
 import type { RootState } from '@/lib/store';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { createSelector } from 'reselect';
@@ -11,10 +11,19 @@ const initialState: AdminAnalyticsState = {
   error: null,
 };
 
-export const fetchAdminAnalytics = createAsyncThunk('adminAnalytics/fetch', async () => {
-  const response = await adminApi.get('/admin/analytics');
-  return response.data.analytics as AdminAnalytics;
-});
+export const fetchAdminAnalytics = createAsyncThunk(
+  'adminAnalytics/fetch',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await adminApi.get('/admin/analytics');
+      return response.data.analytics as AdminAnalytics;
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, 'Impossible de charger les analytiques.'),
+      );
+    }
+  },
+);
 
 const adminAnalyticsSlice = createSlice({
   name: 'adminAnalytics',
@@ -30,9 +39,10 @@ const adminAnalyticsSlice = createSlice({
         state.loading = false;
         state.analytics = action.payload;
       })
-      .addCase(fetchAdminAnalytics.rejected, (state) => {
+      .addCase(fetchAdminAnalytics.rejected, (state, action) => {
         state.loading = false;
-        state.error = 'Impossible de charger les analytiques.';
+        state.error =
+          (action.payload as string | undefined) ?? 'Impossible de charger les analytiques.';
       });
   },
 });

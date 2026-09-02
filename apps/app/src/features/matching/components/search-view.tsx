@@ -440,30 +440,8 @@ export function SearchView() {
                   </p>
                 </div>
               ) : profiles.length === 0 ? (
-                <div
-                  className="flex flex-col items-center justify-center rounded-3xl bg-white px-6 py-12 text-center shadow-xs"
-                  style={{ border: `1px solid ${matchyBrand.border}` }}
-                >
-                  <div
-                    className="mb-4 flex h-16 w-16 items-center justify-center rounded-full"
-                    style={{ background: '#F0F7FF' }}
-                  >
-                    <Search size={28} color={matchyBrand.blue} />
-                  </div>
-                  <p className="text-base font-bold" style={{ color: matchyBrand.textDark }}>
-                    {t('search.empty')}
-                  </p>
-                  {countActiveSearchFilters(filters) > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setFilters(DEFAULT_SEARCH_FILTERS)}
-                      className="mt-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-[#2F76BB] transition-colors hover:bg-[#EEF5FF]"
-                      style={{ background: '#F5F9FF', border: '1px solid #D6E8FA' }}
-                    >
-                      <X size={14} />
-                      {t('search.resetFilters')}
-                    </button>
-                  )}
+                <div className="py-16 text-center text-[15px] font-medium text-[#64748B]">
+                  {t('search.empty')}
                 </div>
               ) : (
                 <div className="space-y-3">

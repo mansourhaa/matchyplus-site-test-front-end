@@ -61,14 +61,9 @@ export function BlockedUsersSection() {
             <Loader2 size={24} className="animate-spin" />
           </div>
         ) : blockedUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-              <ShieldCheck size={24} />
-            </div>
-            <p className="text-xs font-semibold text-[#64748B]">
-              {t('settings.blockedUsersEmpty')}
-            </p>
-          </div>
+          <p className="py-4 text-center text-xs font-medium text-[#64748B]">
+            {t('settings.blockedUsersEmpty')}
+          </p>
         ) : (
           <div className="divide-y divide-slate-100">
             {blockedUsers.map((user) => {

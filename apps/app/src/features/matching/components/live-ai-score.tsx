@@ -23,26 +23,13 @@ export function AIRightSidebarLocationEmpty() {
   const { locale } = useI18n();
 
   return (
-    <div
-      className="flex flex-col items-center justify-center rounded-2xl bg-white p-6 text-center shadow-xs"
-      style={{ border: '1px solid #E2E8F0' }}
-    >
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EEF5FF] text-[#2F76BB]">
-        <Sparkles size={22} />
-      </div>
-      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }} className="mb-1">
+    <div className="py-6 text-center">
+      <p style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>
         {locale === 'en'
-          ? 'Live AI Matching'
-          : locale === 'ar'
-            ? 'تحليل التوافق بالذكاء الاصطناعي'
-            : 'Matchs IA en direct'}
-      </h3>
-      <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.5 }}>
-        {locale === 'en'
-          ? 'Live compatibility scores and personalized recommendations will appear here.'
+          ? 'Live compatibility scores and recommendations will appear here.'
           : locale === 'ar'
             ? 'ستظهر مؤشرات التوافق والتوصيات المخصصة هنا.'
-            : 'Les analyses de compatibilité et les suggestions personnalisées apparaîtront ici.'}
+            : 'Les analyses de compatibilité et les suggestions apparaîtront ici.'}
       </p>
     </div>
   );
@@ -52,23 +39,11 @@ export function AIRightSidebarNoProfileEmpty() {
   const { locale } = useI18n();
 
   return (
-    <div
-      className="flex flex-col items-center justify-center rounded-2xl p-4 text-center shadow-xs"
-      style={{
-        background: 'white',
-        border: '1px solid #E2E8F0',
-      }}
-    >
-      <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF5FF] text-[#2F76BB]">
-        <Sparkles size={20} />
-      </div>
-      <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }} className="mb-1">
-        {locale === 'en' ? 'AI Match Insights' : 'Analyse IA Matchy'}
-      </h3>
-      <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.4 }}>
+    <div className="py-6 text-center">
+      <p style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>
         {locale === 'en'
-          ? 'Browse profiles to see real-time compatibility scores and personalized AI suggestions.'
-          : 'Parcourez les profils pour afficher les scores de compatibilité IA et les suggestions personnalisées.'}
+          ? 'Browse profiles to see real-time compatibility scores.'
+          : 'Parcourez les profils pour afficher les scores de compatibilité IA.'}
       </p>
     </div>
   );

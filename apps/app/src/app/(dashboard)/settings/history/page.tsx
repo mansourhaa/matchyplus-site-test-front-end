@@ -218,55 +218,15 @@ export default function HistoryPage() {
             ))}
           </div>
         ) : filteredItems.length === 0 ? (
-          /* Empty State */
-          <div
-            className="flex flex-col items-center justify-center rounded-3xl bg-white p-10 text-center shadow-xs"
-            style={{ border: `1px solid ${matchyBrand.border}` }}
-          >
-            <div
-              className="mb-4 flex h-20 w-20 items-center justify-center rounded-full shadow-inner"
-              style={{ background: matchyBrand.softBlue }}
-            >
-              {activeFilter === 'right' ? (
-                <Heart size={36} color={matchyBrand.teal} />
-              ) : activeFilter === 'match' ? (
-                <Sparkles size={36} color={matchyBrand.blue} />
-              ) : activeFilter === 'left' ? (
-                <X size={36} color={matchyBrand.muted} />
-              ) : (
-                <Clock size={36} color={matchyBrand.blue} />
-              )}
-            </div>
-
-            <h2 className="text-base font-extrabold" style={{ color: matchyBrand.textDark }}>
-              {activeFilter === 'right'
-                ? t('activityHistory.emptyLikesTitle')
-                : activeFilter === 'match'
-                  ? t('activityHistory.emptyMatchesTitle')
-                  : activeFilter === 'left'
-                    ? t('activityHistory.emptyPassesTitle')
-                    : t('activityHistory.emptyTitle')}
-            </h2>
-
-            <p className="mt-2 max-w-sm text-xs leading-relaxed text-[#777]">
-              {activeFilter === 'right'
-                ? t('activityHistory.emptyLikesDesc')
-                : activeFilter === 'match'
-                  ? t('activityHistory.emptyMatchesDesc')
-                  : activeFilter === 'left'
-                    ? t('activityHistory.emptyPassesDesc')
-                    : t('activityHistory.emptyDesc')}
-            </p>
-
-            <Link
-              href="/home"
-              className="mt-6 flex items-center gap-2 rounded-2xl px-6 py-3 text-xs font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
-              style={{ background: matchyBrand.gradient }}
-            >
-              <Compass size={15} />
-              {t('activityHistory.exploreFeed')}
-            </Link>
-          </div>
+          <p className="py-16 text-center text-sm font-medium text-[#64748B]">
+            {activeFilter === 'right'
+              ? t('activityHistory.emptyLikesTitle')
+              : activeFilter === 'match'
+                ? t('activityHistory.emptyMatchesTitle')
+                : activeFilter === 'left'
+                  ? t('activityHistory.emptyPassesTitle')
+                  : t('activityHistory.emptyTitle')}
+          </p>
         ) : (
           /* Activity Feed List */
           <div className="space-y-3">

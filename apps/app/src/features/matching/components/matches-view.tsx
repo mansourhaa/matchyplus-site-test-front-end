@@ -74,32 +74,8 @@ export function MatchesView() {
       )}
 
       {hasNoMatchesAtAll ? (
-        <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
-          <div
-            className="mb-4 flex h-20 w-20 items-center justify-center rounded-full"
-            style={{ background: 'linear-gradient(135deg, #E8F7F3, #E8F0FA)' }}
-          >
-            <Heart size={36} color="#61BCA6" />
-          </div>
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#353535' }}>
-            {t('chat.emptyInbox')}
-          </p>
-          <p style={{ fontSize: '13px', color: '#888', marginTop: '8px', lineHeight: '1.6' }}>
-            {t('chat.emptyInboxDesc')}
-            <br />
-            {t('chat.emptyInboxDescSuffix')} <strong style={{ color: '#61BCA6' }}>Match</strong> !
-          </p>
-          <Link
-            href="/home"
-            className="mt-6 rounded-xl px-6 py-3 text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
-            style={{
-              background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
-              fontSize: '13px',
-              fontWeight: 700,
-            }}
-          >
-            {t('chat.emptyInboxCta')}
-          </Link>
+        <div className="flex flex-1 items-center justify-center px-6 py-16 text-center text-[15px] font-medium text-[#64748B]">
+          {t('chat.emptyInbox')}
         </div>
       ) : (
         <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-2 md:px-8">
@@ -120,20 +96,8 @@ export function MatchesView() {
                 <Loader2 className="h-6 w-6 animate-spin text-[#61BCA6]" />
               </div>
             ) : matching.matches.length === 0 ? (
-              <div
-                className="rounded-3xl bg-white p-6 text-center shadow-xs"
-                style={{ border: `1px solid ${matchyBrand.border}` }}
-              >
-                <p className="text-sm font-bold text-[#353535]">{t('matching.noMatches')}</p>
-                <p className="mt-1 text-xs text-[#777]">{t('matching.noMatchesHint')}</p>
-                <Link
-                  href="/discover"
-                  className="mt-4 inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-bold text-white shadow-sm"
-                  style={{ background: matchyBrand.gradient }}
-                >
-                  <Sparkles size={14} />
-                  {t('matching.goToDiscover')}
-                </Link>
+              <div className="py-6 text-center text-sm font-medium text-[#64748B]">
+                {t('matching.noMatches')}
               </div>
             ) : (
               <div className="-mx-1 flex gap-4 overflow-x-auto px-1 py-1 pb-2">
@@ -202,30 +166,8 @@ export function MatchesView() {
                 <Loader2 className="animate-spin" color={matchyBrand.teal} />
               </div>
             ) : visibleInbox.length === 0 ? (
-              <div
-                className="flex flex-col items-center justify-center rounded-3xl bg-white px-6 py-10 text-center shadow-xs"
-                style={{ border: `1px solid ${matchyBrand.border}` }}
-              >
-                <div
-                  className="mb-4 flex h-20 w-20 items-center justify-center rounded-full"
-                  style={{ background: 'linear-gradient(135deg, #E8F7F3, #E8F0FA)' }}
-                >
-                  <Heart size={36} color="#61BCA6" />
-                </div>
-                <h3 className="text-base font-extrabold" style={{ color: matchyBrand.textDark }}>
-                  {t('chat.emptyInbox')}
-                </h3>
-                <p className="mt-2 max-w-xs text-xs leading-relaxed text-[#888]">
-                  {t('chat.emptyInboxDesc')}
-                </p>
-                <Link
-                  href="/home"
-                  className="mt-5 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
-                  style={{ background: matchyBrand.gradient }}
-                >
-                  <Sparkles size={14} />
-                  {t('chat.emptyInboxCta')}
-                </Link>
+              <div className="py-8 text-center text-sm font-medium text-[#64748B]">
+                {t('chat.emptyInbox')}
               </div>
             ) : (
               <div className="space-y-3">
@@ -313,10 +255,7 @@ export function MatchesView() {
             {pendingOpen && (
               <div>
                 {matching.pending.length === 0 ? (
-                  <p
-                    className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-[#777]"
-                    style={{ border: `1px solid ${matchyBrand.border}` }}
-                  >
+                  <p className="py-4 text-center text-sm font-medium text-[#64748B]">
                     {t('matching.emptyPending')}
                   </p>
                 ) : (
