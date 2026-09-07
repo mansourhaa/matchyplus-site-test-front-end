@@ -152,9 +152,6 @@ export function Header() {
           <Link href="/devenir-partenaire" onClick={() => setOpen(false)}>
             {t('landing.partner')}
           </Link>
-          <Link href="/suppression-compte" onClick={() => setOpen(false)}>
-            {t('landing.delete')}
-          </Link>
           <div className="mobile-langs">
             {languageOptions.map((option) => (
               <button

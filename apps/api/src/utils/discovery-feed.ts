@@ -30,6 +30,7 @@ export const feedUserSelect = {
   price: true,
   availability_days: true,
   availability_hours: true,
+  verified: true,
   status: true,
   location: {
     select: {

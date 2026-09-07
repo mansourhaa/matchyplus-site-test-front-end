@@ -12,6 +12,9 @@ import {
 /** Tunis metro + Cap Bon — covers common browser GPS along the coast. */
 const TUNIS = { lat: 36.8065, lon: 10.1815 };
 const HAMMAMET = { lat: 36.4, lon: 10.62 };
+/** Kairouan / El Alam coordinates for testing within the strict 25km radius. */
+const KAIROUAN = { lat: 35.8, lon: 10.08 };
+const EL_ALAM = { lat: 35.9099, lon: 10.06 };
 
 type MatchingProfileSeed = {
   email: string;
@@ -19,10 +22,10 @@ type MatchingProfileSeed = {
   job: string;
   category: string;
   city: string;
-  bio: string;
+  bio?: string | null;
   interests: string[];
   goals: string[];
-  looking_for: string;
+  looking_for?: string | null;
   activity_sector: string;
   service_type: string;
   profile_type: ProfileType;
@@ -33,8 +36,11 @@ type MatchingProfileSeed = {
   price?: string;
   availability_days?: string[];
   languages?: string[];
+  contact_modes?: string[];
   /** When true, this profile already RIGHT-swiped the tester (liked_me boost). */
   likesTester?: boolean;
+  /** When true, user has only completed onboarding wizard and does not have a complete profile. */
+  onboardingOnly?: boolean;
 };
 
 /**
@@ -47,16 +53,16 @@ export const MATCHING_TESTER = {
   name: 'Amine Matcher',
   job: 'Product Manager',
   category: 'Tech',
-  city: 'Tunis',
-  bio: 'Je recrute des freelances tech et cherche des prestataires près de Tunis pour prototyper Matchy+.',
+  city: 'Kairouan',
+  bio: 'Je recrute des freelances tech et cherche des prestataires près de Kairouan pour prototyper Matchy+.',
   interests: ['Product', 'Startup', 'Design', 'Networking'],
   goals: ["recruter quelqu'un", 'trouver un prestataire', 'rencontrer des personnes près de moi'],
   looking_for: 'recruter hire freelances et trouver un prestataire près de moi',
   activity_sector: 'Tech',
   service_type: 'Product Management',
   profile_type: ProfileType.PROVIDER,
-  lat: TUNIS.lat,
-  lon: TUNIS.lon,
+  lat: EL_ALAM.lat,
+  lon: EL_ALAM.lon,
   price: '60 DT',
   availability_days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'],
   languages: ['fr', 'ar', 'en'],
@@ -68,7 +74,7 @@ const PROFILES: MatchingProfileSeed[] = [
     name: 'Sara Ben Ali',
     job: 'Développeuse Full-Stack',
     category: 'Tech',
-    city: 'Tunis',
+    city: 'Kairouan',
     bio: 'Full-stack React / Node. Ouverte aux missions produit et startups.',
     interests: ['React', 'Node', 'Startup', 'Product'],
     goals: ['trouver un job', 'proposer mes services', 'collaborer sur un projet'],
@@ -79,8 +85,9 @@ const PROFILES: MatchingProfileSeed[] = [
     image:
       'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     plan: UserPlan.FREE,
-    lat: 36.81,
-    lon: 10.18,
+    lat: 35.912,
+    lon: 10.065,
+    contact_modes: ['call', 'café', 'video'],
     likesTester: true,
   },
   {
@@ -88,7 +95,7 @@ const PROFILES: MatchingProfileSeed[] = [
     name: 'Youssef Khelifi',
     job: 'UX Designer',
     category: 'Design',
-    city: 'Hammamet',
+    city: 'Kairouan',
     bio: 'Designer produit, design systems et prototypes Figma.',
     interests: ['Design', 'Figma', 'Product', 'Startup'],
     goals: ['proposer mes services', 'trouver un partenaire'],
@@ -98,8 +105,9 @@ const PROFILES: MatchingProfileSeed[] = [
     profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1560250097-0b93528c311a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    lat: HAMMAMET.lat + 0.02,
-    lon: HAMMAMET.lon - 0.03,
+    lat: 35.925,
+    lon: 10.075,
+    contact_modes: ['video', 'café'],
     likesTester: true,
   },
   {
@@ -107,7 +115,7 @@ const PROFILES: MatchingProfileSeed[] = [
     name: 'Nadia Trabelsi',
     job: 'Growth Marketer',
     category: 'Marketing',
-    city: 'Nabeul',
+    city: 'Kairouan',
     bio: 'Acquisition, SEO et campagnes pour SaaS B2B.',
     interests: ['Marketing', 'SEO', 'Startup', 'Networking'],
     goals: ['proposer mes services', 'rencontrer des personnes près de moi'],
@@ -118,15 +126,16 @@ const PROFILES: MatchingProfileSeed[] = [
     image:
       'https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     plan: UserPlan.FREE,
-    lat: 36.45,
-    lon: 10.74,
+    lat: 35.88,
+    lon: 10.04,
+    contact_modes: ['call', 'whatsapp'],
   },
   {
     email: 'karim.devops@matchy.seed',
     name: 'Karim Jebali',
     job: 'DevOps Engineer',
     category: 'Tech',
-    city: 'Hammamet',
+    city: 'El Alam',
     bio: 'CI/CD, Kubernetes et infra cloud. Dispo missions courtes.',
     interests: ['DevOps', 'Kubernetes', 'AWS', 'Startup'],
     goals: ['trouver un job', 'proposer mes services'],
@@ -136,8 +145,9 @@ const PROFILES: MatchingProfileSeed[] = [
     profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    lat: HAMMAMET.lat,
-    lon: HAMMAMET.lon,
+    lat: 35.908,
+    lon: 10.058,
+    contact_modes: ['call', 'video', 'café'],
     likesTester: true,
   },
   {
@@ -145,7 +155,7 @@ const PROFILES: MatchingProfileSeed[] = [
     name: 'Leila Mansour',
     job: 'Avocate contrats tech',
     category: 'Juridique',
-    city: 'Hammamet',
+    city: 'Kairouan',
     bio: 'Contrats freelances, CGU et levées de fonds early-stage.',
     interests: ['Legal', 'Startup', 'Contrats'],
     goals: ['proposer mes services', 'trouver un partenaire'],
@@ -155,51 +165,56 @@ const PROFILES: MatchingProfileSeed[] = [
     profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    lat: 36.43,
-    lon: 10.68,
+    lat: 35.85,
+    lon: 10.07,
+    contact_modes: ['call', 'café'],
   },
   {
     email: 'omar.data@matchy.seed',
     name: 'Omar Gharbi',
     job: 'Data Analyst',
     category: 'Tech',
-    city: 'Tunis',
-    bio: 'Dashboards, SQL et insights produit pour équipes growth.',
+    city: 'Kairouan',
+    bio: null,
     interests: ['Data', 'SQL', 'Product', 'Startup'],
     goals: ['trouver un job', 'collaborer sur un projet'],
-    looking_for: 'job emploi data analyst',
+    looking_for: null,
     activity_sector: 'Tech',
     service_type: 'Data Analysis',
     profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    lat: 36.79,
-    lon: 10.16,
+    lat: 35.93,
+    lon: 10.085,
+    contact_modes: ['call', 'café'],
+    onboardingOnly: true,
   },
   {
     email: 'hana.photo@matchy.seed',
     name: 'Hana Belhaj',
     job: 'Photographe pro',
     category: 'Créatif',
-    city: 'Ariana',
-    bio: 'Portraits corporate et shooting produit e-commerce.',
+    city: 'Kairouan',
+    bio: null,
     interests: ['Photo', 'Branding', 'Startup'],
     goals: ['proposer mes services', 'demander un service'],
-    looking_for: 'proposer mes services photographie',
+    looking_for: null,
     activity_sector: 'Créatif',
     service_type: 'Photographie',
     profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1544005313-94ddf0286df2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    lat: 36.85,
-    lon: 10.2,
+    lat: 35.87,
+    lon: 10.03,
+    contact_modes: ['call', 'café'],
+    onboardingOnly: true,
   },
   {
     email: 'mehdi.founder@matchy.seed',
     name: 'Mehdi Saidi',
     job: 'Founder SaaS',
     category: 'Tech',
-    city: 'Tunis',
+    city: 'Kairouan',
     bio: 'Je recrute des profils tech et cherche des partenaires business.',
     interests: ['Startup', 'Product', 'Networking', 'Invest'],
     goals: ["recruter quelqu'un", 'trouver un partenaire', 'lever des fonds'],
@@ -210,15 +225,16 @@ const PROFILES: MatchingProfileSeed[] = [
     image:
       'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     plan: UserPlan.FREE,
-    lat: 36.82,
-    lon: 10.185,
+    lat: 35.82,
+    lon: 10.03,
+    contact_modes: ['call', 'café', 'video'],
   },
   {
     email: 'amira.hr@matchy.seed',
     name: 'Amira Chebbi',
     job: 'HR Business Partner',
     category: 'RH',
-    city: 'Tunis',
+    city: 'Kairouan',
     bio: 'Recrutement tech et freelances pour scale-ups tunisiennes.',
     interests: ['RH', 'Recrutement', 'Tech', 'Networking'],
     goals: ["recruter quelqu'un", 'rencontrer des personnes près de moi'],
@@ -228,15 +244,16 @@ const PROFILES: MatchingProfileSeed[] = [
     profile_type: ProfileType.PROVIDER,
     image:
       'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    lat: 36.805,
-    lon: 10.175,
+    lat: 35.89,
+    lon: 10.09,
+    contact_modes: ['call', 'video'],
   },
   {
     email: 'soft.mutual@matchy.seed',
     name: 'Sami Mutual',
     job: 'Mobile Developer',
     category: 'Tech',
-    city: 'Tunis',
+    city: 'Kairouan',
     bio: 'Flutter / React Native. Déjà matché avec le compte de test pour la page Matches.',
     interests: ['Mobile', 'Flutter', 'Product', 'Startup'],
     goals: ['trouver un job', 'proposer mes services'],
@@ -246,8 +263,9 @@ const PROFILES: MatchingProfileSeed[] = [
     profile_type: ProfileType.INDIVIDUAL,
     image:
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    lat: 36.808,
-    lon: 10.182,
+    lat: 35.91,
+    lon: 10.062,
+    contact_modes: ['call', 'café', 'video'],
   },
 ];
 
@@ -263,11 +281,11 @@ async function upsertUserWithLocation(
     job?: string;
     category?: string;
     city?: string;
-    bio?: string;
+    bio?: string | null;
     image?: string;
     interests?: string[];
     goals?: string[];
-    looking_for?: string;
+    looking_for?: string | null;
     activity_sector?: string;
     service_type?: string;
     profile_type?: ProfileType;
@@ -276,8 +294,11 @@ async function upsertUserWithLocation(
     price?: string;
     availability_days?: string[];
     languages?: string[];
+    contact_modes?: string[];
+    onboardingOnly?: boolean;
   },
 ) {
+  const isOnboardingOnly = Boolean(data.onboardingOnly);
   const user = await prisma.user.upsert({
     where: { email: data.email },
     create: {
@@ -290,11 +311,13 @@ async function upsertUserWithLocation(
       job: data.job,
       category: data.category,
       city: data.city,
-      bio: data.bio,
+      bio: isOnboardingOnly ? null : data.bio,
       image: data.image,
       interests: data.interests ?? [],
       goals: data.goals ?? [],
-      looking_for: data.looking_for,
+      selected_goals: data.goals ?? [],
+      offer_service: Boolean(data.service_type),
+      looking_for: isOnboardingOnly ? null : data.looking_for,
       activity_sector: data.activity_sector,
       service_type: data.service_type,
       profile_type: data.profile_type,
@@ -302,9 +325,11 @@ async function upsertUserWithLocation(
       gps_longitude: data.lon,
       price: data.price ?? '40 DT',
       availability_days: data.availability_days ?? ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'],
-      rating: 4.5,
+      rating: isOnboardingOnly ? 0 : 4.5,
+      reviews: isOnboardingOnly ? 0 : 0,
+      matches: isOnboardingOnly ? 0 : 0,
       languages: data.languages ?? ['fr', 'ar'],
-      contact_modes: ['call', 'café'],
+      contact_modes: data.contact_modes ?? ['call', 'café'],
       onboarding_completed_at: new Date(),
     },
     update: {
@@ -314,11 +339,13 @@ async function upsertUserWithLocation(
       job: data.job,
       category: data.category,
       city: data.city,
-      bio: data.bio,
+      bio: isOnboardingOnly ? null : data.bio,
       image: data.image,
       interests: data.interests ?? [],
       goals: data.goals ?? [],
-      looking_for: data.looking_for,
+      selected_goals: data.goals ?? [],
+      offer_service: Boolean(data.service_type),
+      looking_for: isOnboardingOnly ? null : data.looking_for,
       activity_sector: data.activity_sector,
       service_type: data.service_type,
       profile_type: data.profile_type,
@@ -326,7 +353,9 @@ async function upsertUserWithLocation(
       gps_longitude: data.lon,
       price: data.price ?? '40 DT',
       availability_days: data.availability_days ?? ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'],
+      rating: isOnboardingOnly ? 0 : 4.5,
       languages: data.languages ?? ['fr', 'ar'],
+      contact_modes: data.contact_modes ?? ['call', 'café'],
       onboarding_completed_at: new Date(),
       role: data.role ?? Role.USER,
     },
@@ -407,6 +436,8 @@ export async function seedMatching(prisma: PrismaClient) {
       plan: profile.plan,
       lat: profile.lat,
       lon: profile.lon,
+      contact_modes: profile.contact_modes,
+      onboardingOnly: profile.onboardingOnly,
     });
     created.push({ id: user.id, email: profile.email, likesTester: profile.likesTester });
   }

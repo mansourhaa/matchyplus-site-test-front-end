@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { Camera, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -127,7 +128,7 @@ export function IdentityVerificationCamera({
           disabled={disabled}
           className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-white"
           style={{
-            background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+            background: matchyBrand.gradient,
             fontSize: '13px',
             fontWeight: 700,
           }}

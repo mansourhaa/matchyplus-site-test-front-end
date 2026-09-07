@@ -9,44 +9,52 @@ import {
   selectSwipeHistory,
   selectSwipeHistoryError,
   selectSwipeHistoryLoading,
-  selectSwipeHistoryStats,
 } from '@/features/matching/store/matching-slice';
-import type {
-  MatchingProfile,
-  SwipeHistoryFilter,
-  SwipeHistoryItem,
-} from '@/features/matching/types';
-import {
-  Award,
-  Clock,
-  Compass,
-  Heart,
-  History,
-  MessageCircle,
-  Search,
-  Sparkles,
-  Star,
-  TrendingUp,
-  User,
-  X,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import type { MatchingProfile, SwipeHistoryItem } from '@/features/matching/types';
+import { Eye, Heart, History, Loader2, Sparkles, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-function formatDate(iso: string, locale: string): string {
+type HistoryTab = 'all' | 'viewed' | 'connected' | 'match' | 'left';
+
+function formatTime(iso: string): string {
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    return new Intl.DateTimeFormat(
-      locale === 'ar' ? 'ar-TN' : locale === 'en' ? 'en-US' : 'fr-FR',
-      {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      },
-    ).format(d);
+    return new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(d);
+  } catch {
+    return '';
+  }
+}
+
+function getGroupHeader(iso: string, t: (key: string) => string): string {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const now = new Date();
+
+    const isToday =
+      d.getDate() === now.getDate() &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear();
+
+    if (isToday) return t('activityHistory.today');
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday =
+      d.getDate() === yesterday.getDate() &&
+      d.getMonth() === yesterday.getMonth() &&
+      d.getFullYear() === yesterday.getFullYear();
+
+    if (isYesterday) return t('activityHistory.yesterday');
+
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}`;
   } catch {
     return '';
   }
@@ -54,333 +62,250 @@ function formatDate(iso: string, locale: string): string {
 
 export default function HistoryPage() {
   const { t, locale } = useI18n();
-  const router = useRouter();
   const dispatch = useAppDispatch();
-
   const isRtl = locale === 'ar';
-  const historyItems = useAppSelector(selectSwipeHistory);
-  const historyStats = useAppSelector(selectSwipeHistoryStats);
+
+  const rawItems = useAppSelector(selectSwipeHistory);
   const loading = useAppSelector(selectSwipeHistoryLoading);
   const error = useAppSelector(selectSwipeHistoryError);
 
-  const [activeFilter, setActiveFilter] = useState<SwipeHistoryFilter>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<HistoryTab>('all');
   const [selectedProfile, setSelectedProfile] = useState<MatchingProfile | null>(null);
 
   useEffect(() => {
-    dispatch(fetchSwipeHistory({ direction: activeFilter }));
-  }, [dispatch, activeFilter]);
+    dispatch(fetchSwipeHistory({ direction: 'all' }));
+  }, [dispatch]);
 
-  const handleRefresh = () => {
-    dispatch(fetchSwipeHistory({ direction: activeFilter, q: searchQuery.trim() || undefined }));
-  };
+  // Derived filter & counts
+  const { filteredItems, counts } = useMemo(() => {
+    const items = rawItems ?? [];
 
-  const filteredItems = useMemo(() => {
-    const items = historyItems ?? [];
-    if (!searchQuery.trim()) return items;
-    const q = searchQuery.toLowerCase().trim();
-    return items.filter((item) => {
-      const nameMatch = item?.target?.name?.toLowerCase().includes(q) || false;
-      const jobMatch = item?.target?.job?.toLowerCase().includes(q) || false;
-      const cityMatch = item?.target?.city?.toLowerCase().includes(q) || false;
-      const sectorMatch = item?.target?.activity_sector?.toLowerCase().includes(q) || false;
-      return nameMatch || jobMatch || cityMatch || sectorMatch;
-    });
-  }, [historyItems, searchQuery]);
+    const countsMap = {
+      all: items.length,
+      viewed: items.filter((i) => (i as SwipeHistoryItem & { is_viewed?: boolean }).is_viewed)
+        .length,
+      connected: items.filter((i) => i.direction === 'RIGHT' && !i.is_matched).length,
+      match: items.filter((i) => i.is_matched).length,
+      left: items.filter((i) => i.direction === 'LEFT').length,
+    };
 
-  const filterTabs: { key: SwipeHistoryFilter; label: string; count?: number }[] = [
-    {
-      key: 'all',
-      label: t('activityHistory.tabAll'),
-      count: historyStats?.total_swipes,
-    },
-    {
-      key: 'right',
-      label: t('activityHistory.tabLikes'),
-      count: historyStats?.likes,
-    },
-    {
-      key: 'match',
-      label: t('activityHistory.tabMatches'),
-      count: historyStats?.matches,
-    },
-    {
-      key: 'left',
-      label: t('activityHistory.tabPasses'),
-      count: historyStats?.passes,
-    },
+    let filtered = items;
+    if (activeTab === 'viewed') {
+      filtered = items.filter((i) => (i as SwipeHistoryItem & { is_viewed?: boolean }).is_viewed);
+    } else if (activeTab === 'connected') {
+      filtered = items.filter((i) => i.direction === 'RIGHT' && !i.is_matched);
+    } else if (activeTab === 'match') {
+      filtered = items.filter((i) => i.is_matched);
+    } else if (activeTab === 'left') {
+      filtered = items.filter((i) => i.direction === 'LEFT');
+    }
+
+    return { filteredItems: filtered, counts: countsMap };
+  }, [rawItems, activeTab]);
+
+  // Group items by date header (Today, Yesterday, DD/MM)
+  const groupedItems = useMemo(() => {
+    const groups: { header: string; items: SwipeHistoryItem[] }[] = [];
+    for (const item of filteredItems) {
+      const header = getGroupHeader(item.swiped_at, t);
+      const existing = groups.find((g) => g.header === header);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        groups.push({ header, items: [item] });
+      }
+    }
+    return groups;
+  }, [filteredItems, t]);
+
+  const tabs: { key: HistoryTab; label: string; count: number }[] = [
+    { key: 'all', label: t('activityHistory.tabAll'), count: counts.all },
+    { key: 'viewed', label: t('activityHistory.tabViewed'), count: counts.viewed },
+    { key: 'connected', label: t('activityHistory.tabConnected'), count: counts.connected },
+    { key: 'match', label: t('activityHistory.tabMatches'), count: counts.match },
+    { key: 'left', label: t('activityHistory.tabSkipped'), count: counts.left },
   ];
 
   return (
-    <div
-      className="h-full overflow-y-auto"
-      style={{ background: matchyBrand.bg }}
-      dir={isRtl ? 'rtl' : 'ltr'}
-    >
-      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 md:px-8">
-        {/* Filter Controls & Search */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Segmented Filter Tabs */}
-          <div
-            className="inline-flex rounded-2xl bg-white p-1 shadow-xs"
-            style={{ border: `1px solid ${matchyBrand.border}` }}
-          >
-            {filterTabs.map((tab) => {
-              const active = activeFilter === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveFilter(tab.key)}
-                  className="relative flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-extrabold transition-all"
-                  style={{
-                    background: active ? matchyBrand.blue : 'transparent',
-                    color: active ? '#FFF' : matchyBrand.muted,
-                  }}
-                >
-                  <span>{tab.label}</span>
-                  {typeof tab.count === 'number' && tab.count > 0 && (
-                    <span
-                      className="py-0.2 rounded-full px-1.5 text-[10px] font-bold"
-                      style={{
-                        background: active ? 'rgba(255,255,255,0.25)' : '#F0F0F0',
-                        color: active ? '#FFF' : '#666',
-                      }}
-                    >
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Search Input */}
-          <div className="relative flex-1 sm:max-w-xs">
-            <Search
-              size={15}
-              className={`absolute top-1/2 -translate-y-1/2 text-gray-400 ${
-                isRtl ? 'right-3' : 'left-3'
-              }`}
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('activityHistory.searchPlaceholder')}
-              className={`w-full rounded-2xl bg-white py-2 text-xs font-medium text-gray-800 shadow-xs placeholder:text-gray-400 focus:outline-none ${
-                isRtl ? 'pr-9 pl-3' : 'pr-3 pl-9'
-              }`}
-              style={{ border: `1px solid ${matchyBrand.border}` }}
-            />
-            {searchQuery && (
+    <div className="min-h-full w-full bg-[#F8FAFC] px-4 py-6 md:px-8" dir={isRtl ? 'rtl' : 'ltr'}>
+      <div className="w-full space-y-6">
+        {/* Top Filter Chips */}
+        <div className="flex flex-wrap items-center gap-2">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
               <button
+                key={tab.key}
                 type="button"
-                onClick={() => setSearchQuery('')}
-                className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 ${
-                  isRtl ? 'left-3' : 'right-3'
+                onClick={() => setActiveTab(tab.key)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                  isActive
+                    ? 'bg-[#2F76BB] text-white shadow-xs'
+                    : 'border border-[#E2E8F0] bg-white text-[#475569] hover:bg-[#F1F5F9]'
                 }`}
               >
-                <X size={13} />
+                <span>{tab.label}</span>
+                <span
+                  className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-extrabold ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-[#F1F5F9] text-[#64748B]'
+                  }`}
+                >
+                  {tab.count}
+                </span>
               </button>
-            )}
-          </div>
+            );
+          })}
         </div>
 
-        {/* Error Banner */}
+        {/* Loading State */}
+        {loading && rawItems.length === 0 && (
+          <div className="flex items-center justify-center py-20 text-[#64748B]">
+            <Loader2 className="h-6 w-6 animate-spin text-[#2F76BB]" />
+          </div>
+        )}
+
+        {/* Error State */}
         {error && (
           <div className="flex items-center justify-between rounded-2xl bg-red-50 p-4 text-xs font-semibold text-red-600">
             <span>{t('activityHistory.errorLoading')}</span>
-            <button type="button" onClick={handleRefresh} className="underline hover:no-underline">
+            <button
+              type="button"
+              onClick={() => dispatch(fetchSwipeHistory({ direction: 'all' }))}
+              className="underline hover:no-underline"
+            >
               {t('activityHistory.retry')}
             </button>
           </div>
         )}
 
-        {/* Content List */}
-        {loading && historyItems.length === 0 ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="flex animate-pulse items-center justify-between rounded-3xl bg-white p-4 shadow-xs"
-                style={{ border: `1px solid ${matchyBrand.border}` }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-14 w-14 rounded-2xl bg-gray-200" />
-                  <div className="space-y-2">
-                    <div className="h-4 w-32 rounded-md bg-gray-200" />
-                    <div className="h-3 w-24 rounded-md bg-gray-100" />
-                  </div>
-                </div>
-                <div className="h-6 w-16 rounded-full bg-gray-100" />
-              </div>
-            ))}
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <p className="py-16 text-center text-sm font-medium text-[#64748B]">
-            {activeFilter === 'right'
-              ? t('activityHistory.emptyLikesTitle')
-              : activeFilter === 'match'
-                ? t('activityHistory.emptyMatchesTitle')
-                : activeFilter === 'left'
-                  ? t('activityHistory.emptyPassesTitle')
-                  : t('activityHistory.emptyTitle')}
-          </p>
-        ) : (
-          /* Activity Feed List */
-          <div className="space-y-3">
-            {filteredItems.map((item: SwipeHistoryItem) => {
-              const isMatched = item.is_matched;
-              const isLike = item.direction === 'RIGHT';
-              const isPass = item.direction === 'LEFT';
-              const isSuperlike = item.direction === 'SUPERLIKE';
-
-              return (
-                <div
-                  key={item.id}
-                  className="flex flex-col gap-3 rounded-3xl bg-white p-4 shadow-xs transition-all hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
-                  style={{ border: `1px solid ${matchyBrand.border}` }}
-                >
-                  {/* User Profile Summary */}
-                  <div className="flex items-center gap-3.5">
-                    <div className="relative shrink-0">
-                      {item.target.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.target.image}
-                          alt={item.target.name}
-                          className="h-14 w-14 rounded-2xl object-cover shadow-inner"
-                        />
-                      ) : (
-                        <div
-                          className="flex h-14 w-14 items-center justify-center rounded-2xl font-bold"
-                          style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
-                        >
-                          <User size={24} />
-                        </div>
-                      )}
-
-                      {/* Direction Icon Bubble */}
-                      <div
-                        className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full shadow-xs ring-2 ring-white"
-                        style={{
-                          background: isMatched
-                            ? matchyBrand.blue
-                            : isLike
-                              ? matchyBrand.teal
-                              : isSuperlike
-                                ? '#F5A623'
-                                : '#888',
-                          color: '#FFF',
-                        }}
-                      >
-                        {isMatched ? (
-                          <Sparkles size={10} />
-                        ) : isLike ? (
-                          <Heart size={10} className="fill-current" />
-                        ) : isSuperlike ? (
-                          <Star size={10} className="fill-current" />
-                        ) : (
-                          <X size={10} />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3
-                          className="truncate text-sm font-extrabold"
-                          style={{ color: matchyBrand.textDark }}
-                        >
-                          {item.target.name}
-                        </h3>
-
-                        {typeof item.target.rating === 'number' && item.target.rating > 0 && (
-                          <span className="flex items-center gap-0.5 rounded-md bg-[#FFF8EB] px-1.5 py-0.5 text-[10px] font-bold text-[#F5A623]">
-                            <Star size={10} className="fill-current" />
-                            {item.target.rating.toFixed(1)}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="truncate text-xs font-semibold text-[#666]">
-                        {item.target.job ||
-                          item.target.service_type ||
-                          item.target.activity_sector ||
-                          'Member'}
-                        {item.target.city ? ` · ${item.target.city}` : ''}
-                      </p>
-
-                      <div className="mt-1 flex items-center gap-2">
-                        <span
-                          className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                          style={{
-                            background: isMatched
-                              ? matchyBrand.softBlue
-                              : isLike
-                                ? matchyBrand.softTeal
-                                : '#F5F5F5',
-                            color: isMatched
-                              ? matchyBrand.blue
-                              : isLike
-                                ? matchyBrand.teal
-                                : matchyBrand.muted,
-                          }}
-                        >
-                          {isMatched
-                            ? t('activityHistory.actionMatched')
-                            : isLike
-                              ? t('activityHistory.actionLiked')
-                              : isSuperlike
-                                ? t('activityHistory.actionSuperliked')
-                                : t('activityHistory.actionPassed')}
-                        </span>
-
-                        <span className="text-[10px] text-[#AAA]">
-                          {formatDate(item.swiped_at, locale)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedProfile(item.target)}
-                      className="rounded-xl px-3 py-2 text-xs font-bold transition-all hover:bg-gray-100 active:scale-95"
-                      style={{
-                        border: `1px solid ${matchyBrand.border}`,
-                        color: matchyBrand.textDark,
-                      }}
-                    >
-                      {t('activityHistory.viewProfile')}
-                    </button>
-
-                    {isMatched && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (item.conversation_id) {
-                            router.push(`/matches?c=${item.conversation_id}`);
-                          } else {
-                            router.push('/matches');
-                          }
-                        }}
-                        className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-white shadow-xs transition-transform hover:scale-105 active:scale-95"
-                        style={{ background: matchyBrand.gradient }}
-                      >
-                        <MessageCircle size={13} />
-                        <span>{t('activityHistory.openChat')}</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+        {/* Empty State */}
+        {!loading && filteredItems.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#EBF5FB]">
+              <History size={24} className="text-[#2F76BB]" />
+            </div>
+            <h3 className="text-base font-extrabold text-[#1E293B]">
+              {activeTab === 'viewed'
+                ? t('activityHistory.emptyTitle')
+                : activeTab === 'connected'
+                  ? t('activityHistory.emptyLikesTitle')
+                  : activeTab === 'match'
+                    ? t('activityHistory.emptyMatchesTitle')
+                    : activeTab === 'left'
+                      ? t('activityHistory.emptyPassesTitle')
+                      : t('activityHistory.emptyTitle')}
+            </h3>
+            <p className="mt-1 text-xs font-medium text-[#94A3B8]">
+              {activeTab === 'connected'
+                ? t('activityHistory.emptyLikesDesc')
+                : activeTab === 'match'
+                  ? t('activityHistory.emptyMatchesDesc')
+                  : activeTab === 'left'
+                    ? t('activityHistory.emptyPassesDesc')
+                    : t('activityHistory.emptyDesc')}
+            </p>
           </div>
         )}
+
+        {/* Grouped History List */}
+        <div className="space-y-6">
+          {groupedItems.map((group) => (
+            <div key={group.header} className="space-y-2">
+              {/* Group Date Title + Separator Line */}
+              <div className="flex items-center gap-3">
+                <h2 className="shrink-0 text-xs font-bold text-[#64748B]">{group.header}</h2>
+                <div className="h-[1px] flex-1 bg-[#E2E8F0]" />
+              </div>
+
+              {/* Group Card Container (All items in same card) */}
+              <div className="w-full divide-y divide-[#F1F5F9] overflow-hidden rounded-3xl border border-[#E2E8F0] bg-white shadow-xs">
+                {group.items.map((item) => {
+                  const isMatched = item.is_matched;
+                  const isConnected = item.direction === 'RIGHT' && !isMatched;
+                  const isSkipped = item.direction === 'LEFT';
+                  const isViewed = Boolean(
+                    (item as SwipeHistoryItem & { is_viewed?: boolean }).is_viewed,
+                  );
+
+                  const profileName = item.target.name;
+                  const role =
+                    item.target.job ||
+                    item.target.service_type ||
+                    item.target.activity_sector ||
+                    '';
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => setSelectedProfile(item.target)}
+                      className="flex cursor-pointer items-center justify-between gap-4 p-4 transition-colors hover:bg-[#FAFCFF]"
+                    >
+                      {/* Left: Avatar + Details */}
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="relative shrink-0">
+                          {item.target.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.target.image}
+                              alt={profileName}
+                              className="h-12 w-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EBF5FB] text-sm font-bold text-[#2F76BB]">
+                              {profileName.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-xs font-bold text-[#1E293B]">
+                            {profileName}
+                          </h3>
+
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                            {isMatched ? (
+                              <span className="font-extrabold text-[#FF8A00]">
+                                {t('activityHistory.actionMatched')}
+                              </span>
+                            ) : isConnected ? (
+                              <span className="font-extrabold text-[#61BCA6]">
+                                {t('activityHistory.actionConnectionSent')}
+                              </span>
+                            ) : isSkipped ? (
+                              <span className="font-extrabold text-[#94A3B8]">
+                                {t('activityHistory.actionSkipped')}
+                              </span>
+                            ) : isViewed ? (
+                              <span className="font-extrabold text-[#2F76BB]">
+                                {t('activityHistory.actionViewed')}
+                              </span>
+                            ) : (
+                              <span className="font-extrabold text-[#2F76BB]">
+                                {t('activityHistory.actionLiked')}
+                              </span>
+                            )}
+
+                            {role && (
+                              <>
+                                <span className="text-[#CBD5E1]">-</span>
+                                <span className="truncate text-[#64748B]">{role}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Timestamp */}
+                      <div className="shrink-0 text-right text-[11px] font-semibold text-[#94A3B8]">
+                        {formatTime(item.swiped_at)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Profile Detail Modal */}

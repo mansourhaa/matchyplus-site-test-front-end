@@ -195,9 +195,12 @@ export function VerifyAccountScreen() {
   const noFaceDetected = job?.result?.code === 'no_face_detected';
 
   return (
-    <div className="mx-auto w-full max-w-lg space-y-6 px-4 py-4 md:py-6" dir={dir}>
+    <div
+      className="flex h-full min-h-[calc(100vh-100px)] w-full max-w-md flex-col items-center justify-between py-6 text-center md:py-10"
+      dir={dir}
+    >
       {/* 2. Main Title & Subtitle */}
-      <div className="text-center">
+      <div className="flex flex-col items-center justify-center text-center">
         <h2 className="text-2xl font-extrabold tracking-tight text-[#2F76BB] sm:text-3xl">
           {locale === 'en'
             ? 'Protect your account'
@@ -205,7 +208,7 @@ export function VerifyAccountScreen() {
               ? 'حماية حسابك'
               : 'Protéger votre compte'}
         </h2>
-        <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-[#64748B]">
+        <p className="mt-2 text-xs leading-relaxed font-medium text-[#64748B] sm:text-sm">
           {locale === 'en'
             ? 'Your live capture will be compared to your profile photo via facial recognition.'
             : locale === 'ar'
@@ -217,7 +220,7 @@ export function VerifyAccountScreen() {
       {/* 3. Center Scanner / Frame Container */}
       <div className="flex justify-center">
         <div
-          className="relative flex h-[280px] w-[280px] items-center justify-center overflow-hidden rounded-3xl bg-[#F8FAFC] sm:h-[320px] sm:w-[320px]"
+          className="relative flex h-[340px] w-[280px] items-center justify-center overflow-hidden rounded-3xl bg-[#F8FAFC] sm:h-[400px] sm:w-[320px]"
           style={{ border: '1px dashed #B8D8F8' }}
         >
           {/* Top-Left Corner Marker */}
@@ -470,13 +473,13 @@ export function VerifyAccountScreen() {
       </AnimatePresence>
 
       {/* 6. Action Buttons */}
-      <div className="space-y-3 pt-2">
+      <div className="w-full max-w-[280px] space-y-3 pt-2 sm:max-w-[320px]">
         {alreadyVerified && !cameraOpen && !isProcessing ? (
           <button
             type="button"
             onClick={() => router.push('/settings')}
             className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-bold text-white shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99]"
-            style={{ background: 'linear-gradient(90deg, #61BCA6, #2F76BB)' }}
+            style={{ background: matchyBrand.gradient }}
           >
             <Camera size={18} />
             {locale === 'en' ? 'Finish' : locale === 'ar' ? 'إنهاء' : 'Terminer'}
@@ -488,7 +491,7 @@ export function VerifyAccountScreen() {
               onClick={handleCapture}
               disabled={isProcessing}
               className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-bold text-white shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
-              style={{ background: 'linear-gradient(90deg, #61BCA6, #2F76BB)' }}
+              style={{ background: matchyBrand.gradient }}
             >
               {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <Shield size={18} />}
               {locale === 'en'
@@ -516,7 +519,7 @@ export function VerifyAccountScreen() {
             onClick={() => void openCamera()}
             disabled={isProcessing}
             className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-bold text-white shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
-            style={{ background: 'linear-gradient(90deg, #61BCA6, #2F76BB)' }}
+            style={{ background: matchyBrand.gradient }}
           >
             <Camera size={18} />
             {failed

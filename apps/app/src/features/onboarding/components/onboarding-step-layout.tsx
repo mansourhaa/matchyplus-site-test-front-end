@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { AuthLayout } from '@/features/auth/components/auth-layout';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { ArrowLeft, Check, Loader2 } from 'lucide-react';
@@ -57,7 +58,7 @@ export function StepCard({
           {icon && (
             <div
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-              style={{ background: 'linear-gradient(135deg, #61BCA6, #2F76BB)' }}
+              style={{ background: matchyBrand.gradient135 }}
             >
               {icon}
             </div>
@@ -118,7 +119,7 @@ export function StepCtaRow({
         disabled={busy}
         className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-white transition-opacity disabled:opacity-80"
         style={{
-          background: !busy ? 'linear-gradient(90deg, #61BCA6, #2F76BB)' : '#D5D5D5',
+          background: !busy ? matchyBrand.gradient : '#D5D5D5',
           fontSize: '15px',
           fontWeight: 700,
         }}

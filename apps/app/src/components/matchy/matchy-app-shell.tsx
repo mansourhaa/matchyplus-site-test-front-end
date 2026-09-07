@@ -1,6 +1,7 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import { MatchyBottomNav } from '@/components/matchy/matchy-bottom-nav';
 import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
 import { MatchySidebar } from '@/components/matchy/matchy-sidebar';
 /** Secondary screens: desktop sidebar + mobile/desktop page header with back. */
@@ -47,70 +48,52 @@ export function MatchyAppShell({
 
       <div className="flex min-h-dvh min-h-screen flex-1 flex-col overflow-hidden">
         {!hideHeader && (
-          <div
-            className="sticky top-0 z-20 flex shrink-0 items-center gap-3 px-4 py-3 md:hidden"
-            style={{ background: 'white', borderBottom: `1px solid ${matchyBrand.border}` }}
+          <header
+            className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between px-4 md:px-6"
+            style={{
+              background: 'white',
+              borderBottom: `1px solid ${matchyBrand.border}`,
+              height: 64,
+            }}
           >
-            {showBack && (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                style={{
-                  background: matchyBrand.bg,
-                  border: `1px solid ${matchyBrand.borderStrong}`,
-                }}
-              >
-                <ChevronLeft
-                  size={20}
-                  color={matchyBrand.text}
-                  className={isRtl ? 'rotate-180' : ''}
-                />
-              </button>
-            )}
-            {title && (
-              <span
-                className="flex-1"
-                style={{ fontSize: 16, fontWeight: 700, color: matchyBrand.blue }}
-              >
-                {title}
-              </span>
-            )}
-            <div
-              className="flex items-center gap-2"
-              style={{ [isRtl ? 'marginRight' : 'marginLeft']: 'auto' }}
-            >
-              {rightActions}
+            <div className="flex items-center gap-3">
+              {showBack && (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-slate-100"
+                  style={{
+                    background: matchyBrand.bg,
+                    border: `1px solid ${matchyBrand.borderStrong}`,
+                  }}
+                  aria-label="Go back"
+                >
+                  <ChevronLeft
+                    size={18}
+                    color={matchyBrand.text}
+                    className={isRtl ? 'rotate-180' : ''}
+                  />
+                </button>
+              )}
+              {title && (
+                <h1
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: matchyBrand.textDark,
+                  }}
+                >
+                  {title}
+                </h1>
+              )}
             </div>
-          </div>
+
+            <div className="flex items-center gap-2 md:gap-3">{rightActions}</div>
+          </header>
         )}
 
-        {!hideHeader && title && (
-          <div
-            className="sticky top-0 z-20 hidden shrink-0 items-center gap-3 px-6 py-4 md:flex"
-            style={{ background: 'white', borderBottom: `1px solid ${matchyBrand.border}` }}
-          >
-            {showBack && (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="flex h-8 w-8 items-center justify-center rounded-lg"
-                style={{ background: matchyBrand.bg }}
-              >
-                <ChevronLeft size={18} color="#555" className={isRtl ? 'rotate-180' : ''} />
-              </button>
-            )}
-            <p style={{ fontSize: 18, fontWeight: 700, color: matchyBrand.textDark }}>{title}</p>
-            <div
-              className="flex items-center gap-3"
-              style={{ [isRtl ? 'marginRight' : 'marginLeft']: 'auto' }}
-            >
-              {rightActions}
-            </div>
-          </div>
-        )}
-
-        <div className="relative min-h-0 flex-1 overflow-hidden">{children}</div>
+        <div className="relative min-h-0 flex-1 overflow-hidden pb-[60px] md:pb-0">{children}</div>
+        <MatchyBottomNav />
       </div>
     </div>
   );

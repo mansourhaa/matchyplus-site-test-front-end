@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { PasswordRequirements } from '@/components/password-requirements';
 import { useAppDispatch } from '@/features/auth/hooks';
 import { confirmPasswordReset, requestPasswordReset } from '@/features/auth/store/auth-slice';
@@ -256,7 +257,7 @@ export function ResetPasswordForm() {
             style={{
               background:
                 nationalNumber.length >= country.nationalLength && !requestLoading
-                  ? 'linear-gradient(90deg, #61BCA6, #2F76BB)'
+                  ? matchyBrand.gradient
                   : '#D5D5D5',
               fontSize: '14px',
               fontWeight: 700,
@@ -395,7 +396,7 @@ export function ResetPasswordForm() {
                 isPasswordPolicySatisfied(newPassword) &&
                 newPassword === confirmPassword &&
                 !submitLoading
-                  ? 'linear-gradient(90deg, #61BCA6, #2F76BB)'
+                  ? matchyBrand.gradient
                   : '#D5D5D5',
               fontSize: '14px',
               fontWeight: 700,
@@ -440,7 +441,7 @@ export function ResetPasswordForm() {
             onClick={handleBackToLogin}
             className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white shadow-md transition-all hover:shadow-lg"
             style={{
-              background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+              background: matchyBrand.gradient,
               fontSize: '15px',
               fontWeight: 700,
             }}
@@ -517,7 +518,7 @@ export function ResetPasswordForm() {
                 type="submit"
                 disabled={code.length !== 6}
                 className="w-full rounded-2xl py-3 text-sm font-bold text-white shadow-xs transition-opacity hover:opacity-95 disabled:opacity-50"
-                style={{ background: 'linear-gradient(90deg, #61BCA6, #2F76BB)' }}
+                style={{ background: matchyBrand.gradient }}
               >
                 {t('auth.resetPassword.verifyTitle')}
               </button>

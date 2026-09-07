@@ -41,11 +41,7 @@ export class DiscoveryService {
       );
       const limit = Math.min(Math.max(1, asFiniteNumber(query.limit) ?? DISCOVERY_PAGE_SIZE), 50);
       const offset = Math.max(0, asFiniteNumber(query.offset) ?? 0);
-      const maxDistanceKm = asFiniteNumber(query.maxDistanceKm);
-      const radiusM =
-        maxDistanceKm != null
-          ? Math.min(200, Math.max(1, maxDistanceKm)) * 1000
-          : DISCOVERY_RADIUS_M;
+      const radiusM = DISCOVERY_RADIUS_M;
       const serviceTypes = parseServiceTypes(query.serviceTypes);
       const sectorQuery = query.sector?.trim().toLowerCase() ?? '';
       const needle = query.q?.trim().toLowerCase() ?? '';
@@ -74,7 +70,10 @@ export class DiscoveryService {
         this.prisma.swipeLog.findMany({
           where: {
             user_id: userId,
-            direction: { in: [SwipeDirection.LEFT, SwipeDirection.RIGHT] },
+            direction:
+              query.context === 'search'
+                ? SwipeDirection.LEFT
+                : { in: [SwipeDirection.LEFT, SwipeDirection.RIGHT] },
           },
           select: { target_id: true },
           distinct: ['target_id'],
@@ -186,6 +185,8 @@ export class DiscoveryService {
           service_type: candidate.service_type || candidate.job,
           price: candidate.price,
           availability_days: candidate.availability_days,
+          contact_modes: candidate.contact_modes,
+          verified: candidate.verified,
           rating: candidate.rating,
           distance_km: distKm == null ? null : Math.round(distKm * 10) / 10,
           match_score: score.finalScore,

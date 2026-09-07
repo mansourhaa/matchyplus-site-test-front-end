@@ -51,8 +51,8 @@ export function MatchySidebar() {
       }}
     >
       <div
-        className="flex shrink-0 items-center gap-2 px-5 py-5"
-        style={{ borderBottom: `1px solid ${matchyBrand.border}` }}
+        className="flex h-16 shrink-0 items-center gap-2 px-5"
+        style={{ borderBottom: `1px solid ${matchyBrand.border}`, height: 64 }}
       >
         <MatchyLogo />
       </div>

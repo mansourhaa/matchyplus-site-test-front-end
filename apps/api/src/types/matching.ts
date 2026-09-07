@@ -40,6 +40,8 @@ export type FeedProfile = {
   liked_me: boolean;
   price?: string | null;
   availability_days?: string[];
+  contact_modes?: string[];
+  verified?: boolean;
   /** Search freemium: true when PII was redacted server-side for FREE plans. */
   is_locked?: boolean;
 };

@@ -28,6 +28,8 @@ export type MatchingProfile = {
   service_type: string | null;
   price?: string | null;
   availability_days?: string[];
+  contact_modes?: string[];
+  verified?: boolean;
   rating: number;
 };
 

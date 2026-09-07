@@ -5,7 +5,10 @@ import { VerifyAccountScreen } from '@/features/identity-verification/components
 
 export default function VerifyAccountPage() {
   return (
-    <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }}>
+    <div
+      className="flex min-h-full w-full items-center justify-center overflow-y-auto px-4 py-8 md:px-8"
+      style={{ background: matchyBrand.bg }}
+    >
       <VerifyAccountScreen />
     </div>
   );

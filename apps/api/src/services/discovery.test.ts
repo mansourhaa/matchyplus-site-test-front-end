@@ -174,7 +174,7 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(result.profiles.map((p) => p.id)).toEqual(['shared_fr']);
   });
 
-  it('filters by serviceTypes and maxDistanceKm', async () => {
+  it('filters by serviceTypes and 25km radius', async () => {
     const prisma = createMockPrisma([
       candidate('near', {
         service_type: 'Restauration / Service',
@@ -213,7 +213,6 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     const result = await service.getSwipeFeed('me', {
       latitude: 36.8,
       longitude: 10.18,
-      maxDistanceKm: 20,
       serviceTypes: 'Restauration / Service',
       context: 'swipe',
     });

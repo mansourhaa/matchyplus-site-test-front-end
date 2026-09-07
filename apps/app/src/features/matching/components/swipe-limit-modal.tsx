@@ -7,12 +7,16 @@ import type { SwipeQuota } from '@/features/matching/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, Sparkles, Zap } from 'lucide-react';
 
+export type SwipeLimitModalReason = 'limit' | 'status' | 'locked_profile';
+
 export function SwipeLimitModal({
   onClose,
   quota: propQuota,
+  reason = 'limit',
 }: {
   onClose: () => void;
   quota?: SwipeQuota | null;
+  reason?: SwipeLimitModalReason;
 }) {
   const { t } = useI18n();
   const matchingState = useAppSelector(selectMatching);
@@ -22,6 +26,29 @@ export function SwipeLimitModal({
   const remaining = quota?.remaining ?? 0;
   const limit = quota?.limit ?? 10;
   const isExhausted = !isUnlimited && remaining <= 0;
+
+  // Determine display mode
+  const isLockedProfile = reason === 'locked_profile';
+  const isStatusView = reason === 'status' && !isExhausted;
+
+  let title = t('matching.limitReached');
+  let description = t('matching.limitReachedDesc');
+  let icon = <AlertTriangle size={28} color="#DC2626" />;
+  let iconBg = '#FEF2F2';
+
+  if (isLockedProfile) {
+    title = t('matching.lockedPickTitle');
+    description = t('matching.lockedPickDesc');
+    icon = <Sparkles size={28} color="#D97706" />;
+    iconBg = '#FEF3C7';
+  } else if (isStatusView) {
+    title = t('matching.quotaTitle');
+    description = isUnlimited
+      ? t('matching.quotaUnlimitedDesc')
+      : t('matching.quotaActiveDesc', { remaining, limit });
+    icon = <Zap size={28} color="#D97706" />;
+    iconBg = '#FEF3C7';
+  }
 
   return (
     <AnimatePresence>
@@ -45,21 +72,17 @@ export function SwipeLimitModal({
 
           {/* Header Icon */}
           <div
-            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-            style={{ background: '#FFF0F0' }}
+            className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+            style={{ background: iconBg }}
           >
-            <AlertTriangle size={32} color="#E74C3C" />
+            {icon}
           </div>
 
           {/* Title */}
-          <p className="text-center text-[20px] font-extrabold text-[#1A1A2E]">
-            Daily limit reached
-          </p>
+          <p className="text-left text-[20px] font-extrabold text-[#1A1A2E]">{title}</p>
 
           {/* Description */}
-          <p className="mt-2 text-center text-[13px] leading-relaxed text-[#64748B]">
-            You&apos;ve used your {limit} free actions today. Come back tomorrow to continue.
-          </p>
+          <p className="mt-2 text-left text-[13px] leading-relaxed text-[#64748B]">{description}</p>
 
           {/* Action button */}
           <div className="mt-6 flex flex-col gap-2.5">
@@ -68,7 +91,7 @@ export function SwipeLimitModal({
               onClick={onClose}
               className="w-full rounded-2xl bg-slate-100 py-3.5 text-[15px] font-bold text-slate-700 transition-colors hover:bg-slate-200 active:scale-[0.99]"
             >
-              Continue
+              {t('matching.continueFree')}
             </button>
           </div>
         </motion.div>

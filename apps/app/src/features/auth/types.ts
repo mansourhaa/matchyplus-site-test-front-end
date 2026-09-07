@@ -3,6 +3,7 @@ export interface AuthUser {
   email: string | null;
   phone: string | null;
   name: string | null;
+  image?: string | null;
   auth_provider: string;
   email_verified: boolean;
   phone_verified?: boolean;

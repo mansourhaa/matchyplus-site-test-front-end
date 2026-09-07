@@ -13,6 +13,7 @@ const { pushMock, replaceMock } = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock, replace: replaceMock }),
   usePathname: () => '/home',
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock('@/features/i18n/i18n-provider', () => ({

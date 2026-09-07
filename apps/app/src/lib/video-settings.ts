@@ -15,7 +15,7 @@ const CHANGE_EVENT = 'matchy_video_settings_change';
 
 const DEFAULT_SETTINGS: VideoSettings = {
   quality: 'standard',
-  autoPlay: true,
+  autoPlay: false,
   wifiOnly: false,
 };
 

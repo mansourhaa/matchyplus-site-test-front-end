@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { PasswordRequirements } from '@/components/password-requirements';
 import { PhoneInput } from '@/features/auth/components/phone-input';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
@@ -1025,9 +1026,7 @@ export function IdentityStep({
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
               style={{
                 background:
-                  otpVerifying || code.trim().length < 4
-                    ? '#AFC4DA'
-                    : 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+                  otpVerifying || code.trim().length < 4 ? '#AFC4DA' : matchyBrand.gradient,
                 fontSize: '15px',
                 fontWeight: 700,
               }}

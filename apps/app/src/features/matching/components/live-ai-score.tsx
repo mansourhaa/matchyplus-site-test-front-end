@@ -2,6 +2,7 @@
 
 import { matchyBrand, scoreTierColor } from '@/components/matchy/brand';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { formatRole } from '@/features/matching/lib/format-role';
 import type { FeedProfile, ScoreBreakdown } from '@/features/matching/types';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -15,6 +16,7 @@ import {
   MapPin,
   Sparkles,
   Star,
+  X,
   Zap,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -411,15 +413,19 @@ export function AIRecommendationItem({
   profile,
   rank,
   onClick,
+  onDismiss,
 }: {
   profile: FeedProfile;
   rank: number;
-  onClick: () => void;
+  onClick?: () => void;
+  onDismiss?: () => void;
 }) {
   const isLocked = Boolean(profile.is_locked || rank >= 3);
   const color = scoreTierColor(profile.match_score);
   const count = useCountUp(Math.round(profile.match_score), 600, rank * 80);
-  const role = profile.service_type || profile.job || profile.category || '';
+  const { t } = useI18n();
+  const rawRole = profile.service_type || profile.job || profile.category || '';
+  const role = formatRole(rawRole, t);
   const photo = useAuthenticatedMediaUrl(profile.image);
 
   if (isLocked) {
@@ -427,7 +433,8 @@ export function AIRecommendationItem({
       <motion.button
         type="button"
         onClick={onClick}
-        className="relative flex w-full items-center gap-2.5 overflow-hidden rounded-xl p-2.5 text-left transition-colors hover:bg-[#F5F7FA]"
+        aria-label={t('search.lockedProfile')}
+        className="relative flex w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-xl p-2.5 text-left transition-colors hover:bg-[#F5F7FA] active:scale-[0.99]"
         style={{ border: '1px solid #F0F0F0', background: 'white' }}
         initial={{ opacity: 0, x: -12 }}
         animate={{ opacity: 1, x: 0 }}
@@ -454,10 +461,10 @@ export function AIRecommendationItem({
           </p>
         </div>
         <div
-          className="flex h-7 w-7 items-center justify-center rounded-lg"
-          style={{ background: 'rgba(47,118,187,0.1)', color: '#2F76BB' }}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+          style={{ background: 'rgba(217,119,6,0.12)', color: '#D97706' }}
         >
-          <Lock size={14} color="#2F76BB" />
+          <Lock size={14} color="#D97706" />
         </div>
       </motion.button>
     );
@@ -507,29 +514,51 @@ export function AIRecommendationItem({
           {role}
         </p>
       </div>
-      <div className="relative h-9 w-9 shrink-0">
-        <svg width="36" height="36" viewBox="0 0 36 36" className="absolute inset-0">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="#F0F0F0" strokeWidth="3" />
-          <circle
-            cx="18"
-            cy="18"
-            r="14"
-            fill="none"
-            stroke={color}
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray={`${2 * Math.PI * 14}`}
-            strokeDashoffset={`${2 * Math.PI * 14 * (1 - count / 100)}`}
-            style={{
-              transformOrigin: 'center',
-              transform: 'rotate(-90deg)',
-              transition: 'stroke-dashoffset 0.7s ease',
-            }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span style={{ fontSize: 9, fontWeight: 800, color }}>{count}%</span>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <div className="relative h-9 w-9 shrink-0">
+          <svg width="36" height="36" viewBox="0 0 36 36" className="absolute inset-0">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="#F0F0F0" strokeWidth="3" />
+            <circle
+              cx="18"
+              cy="18"
+              r="14"
+              fill="none"
+              stroke={color}
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray={`${2 * Math.PI * 14}`}
+              strokeDashoffset={`${2 * Math.PI * 14 * (1 - count / 100)}`}
+              style={{
+                transformOrigin: 'center',
+                transform: 'rotate(-90deg)',
+                transition: 'stroke-dashoffset 0.7s ease',
+              }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span style={{ fontSize: 9, fontWeight: 800, color }}>{count}%</span>
+          </div>
         </div>
+        {onDismiss && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+                onDismiss();
+              }
+            }}
+            className="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            aria-label="Dismiss"
+          >
+            <X size={13} />
+          </span>
+        )}
       </div>
     </motion.button>
   );
