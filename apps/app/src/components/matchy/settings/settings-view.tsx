@@ -1,5 +1,6 @@
 'use client';
 
+import { AuthenticatedProfileAvatar } from '@/components/matchy/authenticated-profile-image';
 import { matchyBrand } from '@/components/matchy/brand';
 import { FlagIcon } from '@/components/matchy/flag-icon';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
@@ -24,7 +25,6 @@ import {
   Lock,
   LogOut,
   QrCode,
-  Radio,
   ShieldCheck,
   Star,
   User,
@@ -40,37 +40,6 @@ const LANG_FLAGS: Record<Locale, ReactNode> = {
   ar: <FlagIcon locale="ar" size={13} />,
 };
 const LANG_NAMES: Record<Locale, string> = { fr: 'Français', en: 'English', ar: 'العربية' };
-
-type UserStatus = 'available' | 'busy' | 'invisible';
-
-const STATUS_CONFIG: Record<
-  UserStatus,
-  {
-    labelKey: 'statusAvailable' | 'statusBusy' | 'statusInvisible';
-    color: string;
-    bg: string;
-    dot: string;
-  }
-> = {
-  available: {
-    labelKey: 'statusAvailable',
-    color: '#4EAD96',
-    bg: '#EAF7F3',
-    dot: '#4EAD96',
-  },
-  busy: {
-    labelKey: 'statusBusy',
-    color: '#EF4444',
-    bg: '#FDEAEA',
-    dot: '#EF4444',
-  },
-  invisible: {
-    labelKey: 'statusInvisible',
-    color: '#4B5563',
-    bg: '#F3F4F6',
-    dot: '#4B5563',
-  },
-};
 
 type SettingsItem = {
   label: string;
@@ -92,31 +61,13 @@ export function SettingsView() {
   const dispatch = useAppDispatch();
   const auth = useAppSelector(selectAuth);
   const { profile } = useAppSelector(selectOnboarding);
-  const photo = useAuthenticatedMediaUrl(profile?.image);
+  const photo = useAuthenticatedMediaUrl(profile?.image ?? auth.user?.image);
   const [showLangPicker, setShowLangPicker] = useState(false);
-  const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [status, setStatus] = useState<UserStatus>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = window.localStorage.getItem('matchy_user_status') as UserStatus | null;
-      if (stored && (stored === 'available' || stored === 'busy' || stored === 'invisible')) {
-        return stored;
-      }
-    }
-    return 'available';
-  });
 
   useEffect(() => {
     void dispatch(fetchOnboardingProfile());
   }, [dispatch]);
-
-  const handleSetStatus = (next: UserStatus) => {
-    setStatus(next);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('matchy_user_status', next);
-    }
-    setShowStatusPicker(false);
-  };
 
   const displayName = auth.user?.name || auth.user?.email || 'Matchy';
   const email = auth.user?.email || '';
@@ -163,21 +114,6 @@ export function SettingsView() {
           badgeFlag: LANG_FLAGS[locale],
         },
         {
-          label: t('settings.availabilityStatus'),
-          icon: Radio,
-          path: null,
-          color: STATUS_CONFIG[status].color,
-          bg: STATUS_CONFIG[status].bg,
-          onClick: () => setShowStatusPicker(true),
-          badge: t(`settings.${STATUS_CONFIG[status].labelKey}`),
-          badgeFlag: (
-            <span
-              className="inline-block h-2 w-2 rounded-full"
-              style={{ background: STATUS_CONFIG[status].dot }}
-            />
-          ),
-        },
-        {
           label: t('settings.notifications'),
           icon: Bell,
           path: '/settings/notifications',
@@ -207,8 +143,8 @@ export function SettingsView() {
           label: t('settings.favorites'),
           icon: Star,
           path: '/settings/favorites',
-          color: matchyBrand.blue,
-          bg: matchyBrand.softBlue,
+          color: '#F5A623',
+          bg: '#FFF8EB',
         },
         {
           label: t('settings.qrCode'),
@@ -279,20 +215,13 @@ export function SettingsView() {
           style={{ border: `1px solid ${matchyBrand.border}` }}
         >
           <div className="flex items-center gap-3">
-            <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full text-xl font-bold text-white"
-              style={{
-                border: `2px solid ${matchyBrand.muted}`,
-                background: matchyBrand.gradient135,
-              }}
-            >
-              {photo.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={photo.url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initial
-              )}
-            </div>
+            <AuthenticatedProfileAvatar
+              image={profile?.image ?? auth.user?.image}
+              name={displayName}
+              sizeClassName="h-14 w-14"
+              roundedClassName="rounded-full"
+              textClassName="text-xl font-bold text-white"
+            />
             <div className="min-w-0 flex-1">
               <p className="truncate text-base font-extrabold" style={{ color: matchyBrand.text }}>
                 {displayName}
@@ -471,68 +400,6 @@ export function SettingsView() {
                     )}
                   </button>
                 ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showStatusPicker && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end md:items-center md:justify-center"
-            style={{ background: 'rgba(0,0,0,0.5)' }}
-            onClick={() => setShowStatusPicker(false)}
-          >
-            <motion.div
-              initial={{ y: 60, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 60, opacity: 0 }}
-              className="w-full rounded-t-3xl bg-white p-6 shadow-2xl md:max-w-sm md:rounded-3xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#E5E7EB]" />
-              <p className="mb-4 text-lg font-extrabold" style={{ color: matchyBrand.textDark }}>
-                {t('settings.availabilityStatus')}
-              </p>
-              <div className="space-y-2.5">
-                {(['available', 'busy', 'invisible'] as UserStatus[]).map((s) => {
-                  const cfg = STATUS_CONFIG[s];
-                  const isSelected = status === s;
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => handleSetStatus(s)}
-                      className="flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 transition-all active:scale-[0.99]"
-                      style={{
-                        background: isSelected ? matchyBrand.activeNav : matchyBrand.bg,
-                        border: isSelected
-                          ? `2px solid ${matchyBrand.blue}`
-                          : '2px solid transparent',
-                      }}
-                    >
-                      <span
-                        className="h-4 w-4 shrink-0 rounded-full shadow-xs"
-                        style={{ background: cfg.dot }}
-                      />
-                      <span className="text-sm font-bold" style={{ color: '#303030' }}>
-                        {t(`settings.${cfg.labelKey}`)}
-                      </span>
-                      {isSelected && (
-                        <div
-                          className="ml-auto flex h-6 w-6 items-center justify-center rounded-full"
-                          style={{ background: matchyBrand.blue }}
-                        >
-                          <Check size={14} color="white" strokeWidth={2.5} />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
               </div>
             </motion.div>
           </motion.div>

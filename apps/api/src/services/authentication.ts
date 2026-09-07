@@ -133,6 +133,7 @@ export class AuthenticationService {
           email: true,
           phone: true,
           name: true,
+          image: true,
           auth_provider: true,
           email_verified: true,
           phone_verified: true,

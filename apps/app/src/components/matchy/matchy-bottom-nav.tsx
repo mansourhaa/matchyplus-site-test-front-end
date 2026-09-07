@@ -87,7 +87,7 @@ export function MatchyBottomNav() {
           }}
         >
           <AuthenticatedProfileAvatar
-            image={profile?.image}
+            image={profile?.image ?? auth.user?.image}
             name={displayName}
             sizeClassName="h-5.5 w-5.5"
             roundedClassName="rounded-full"

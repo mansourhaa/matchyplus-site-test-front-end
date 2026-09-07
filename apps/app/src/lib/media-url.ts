@@ -6,7 +6,13 @@
 // so send can prove the uploader owns the file.
 export function resolveMediaUrl(storedPath: string | null | undefined): string | null {
   if (!storedPath) return null;
-  if (storedPath.startsWith('data:')) return storedPath;
+  if (
+    storedPath.startsWith('data:') ||
+    storedPath.startsWith('http://') ||
+    storedPath.startsWith('https://')
+  ) {
+    return storedPath;
+  }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
   const photoMatch = storedPath.match(/^\/uploads\/photos\/([0-9a-f-]{36}\.[a-z0-9]+)$/i);

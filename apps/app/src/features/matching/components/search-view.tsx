@@ -18,15 +18,18 @@ import {
   countActiveSearchFilters,
 } from '@/features/matching/components/search-filters-sheet';
 import { SwipeLimitModal } from '@/features/matching/components/swipe-limit-modal';
+import { formatRole } from '@/features/matching/lib/format-role';
 import {
   closeQuotaModal,
+  fetchMatchState,
   selectMatching,
   swipeProfile,
+  withdrawPending,
 } from '@/features/matching/store/matching-slice';
 import type { FeedProfile, SwipeFeedResponse } from '@/features/matching/types';
 import { api } from '@/lib/api';
 import { toast } from '@/lib/toast';
-import { Filter, Loader2, Lock, MapPin, Search, Star, X } from 'lucide-react';
+import { Check, Clock, Filter, Loader2, Lock, MapPin, Search, Star, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const SEARCH_PAGE_SIZE = 20;
@@ -34,18 +37,30 @@ const SEARCH_PAGE_SIZE = 20;
 function SearchProfileCard({
   profile,
   connectBlocked,
+  connectionStatus,
   onConnect,
-  onSkip,
+  onRemove,
   onDetail,
 }: {
   profile: FeedProfile;
   connectBlocked: boolean;
+  connectionStatus?: 'pending' | 'matched';
   onConnect: (profile: FeedProfile) => void;
-  onSkip: (profile: FeedProfile) => void;
+  onRemove: (profile: FeedProfile) => void;
   onDetail: (profile: FeedProfile) => void;
 }) {
-  const { t } = useI18n();
-  const role = profile.service_type || profile.job || profile.category || '';
+  const { t, locale } = useI18n();
+  const rawRole = profile.service_type || profile.job || profile.category || '';
+  const role = formatRole(rawRole, t);
+
+  const isPending = connectionStatus === 'pending';
+
+  const passLabel = locale === 'fr' ? 'Passer' : locale === 'ar' ? 'تخطي' : 'Pass';
+
+  const removeLabel = locale === 'fr' ? 'Retirer' : locale === 'ar' ? 'إزالة' : 'Remove';
+
+  const pendingLabel =
+    locale === 'fr' ? 'En attente' : locale === 'ar' ? 'في الانتظار' : 'Pending response';
 
   return (
     <div
@@ -110,43 +125,86 @@ function SearchProfileCard({
           </div>
         )}
         <div className="mt-2 flex gap-2" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            disabled={connectBlocked}
-            onClick={() => onConnect(profile)}
-            className="flex-1 rounded-xl py-1.5 text-white transition-opacity"
-            style={{
-              background: connectBlocked
-                ? 'linear-gradient(90deg, #B0B0B0, #888)'
-                : 'linear-gradient(90deg, #61BCA6, #2F76BB)',
-              fontSize: 11,
-              fontWeight: 700,
-              opacity: connectBlocked ? 0.85 : 1,
-            }}
-          >
-            {connectBlocked ? (
-              <span className="inline-flex items-center justify-center gap-1">
-                <Lock size={11} />
-                {t('matching.connect')}
-              </span>
-            ) : (
-              t('matching.connect')
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => onSkip(profile)}
-            className="flex-1 rounded-xl py-1.5 transition-opacity"
-            style={{
-              background: '#F5F5F5',
-              border: '1px solid #E0E0E0',
-              color: '#888',
-              fontSize: 11,
-              fontWeight: 700,
-            }}
-          >
-            {t('matching.skip')}
-          </button>
+          {isPending ? (
+            <>
+              {/* Left Button: Pending response (amber) */}
+              <button
+                type="button"
+                disabled
+                className="flex flex-1 cursor-default items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-bold"
+                style={{
+                  background: '#FFFDF0',
+                  color: '#F59E0B',
+                  border: '1.5px solid #F59E0B',
+                  fontSize: 11,
+                }}
+              >
+                <Clock size={13} color="#F59E0B" />
+                <span>{pendingLabel}</span>
+              </button>
+
+              {/* Right Button: Remove (red) */}
+              <button
+                type="button"
+                onClick={() => onRemove(profile)}
+                className="flex flex-1 items-center justify-center gap-1 rounded-full py-1.5 transition-opacity hover:opacity-90"
+                style={{
+                  background: '#FFF1F2',
+                  border: '1px solid #FECDD3',
+                  color: '#E11D48',
+                  fontSize: 11,
+                  fontWeight: 700,
+                }}
+              >
+                <X size={13} color="#E11D48" />
+                <span>{removeLabel}</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Left Button: Connect (gradient) */}
+              <button
+                type="button"
+                disabled={connectBlocked}
+                onClick={() => onConnect(profile)}
+                className="flex-1 rounded-full py-1.5 text-white transition-opacity hover:opacity-95"
+                style={{
+                  background: connectBlocked
+                    ? 'linear-gradient(90deg, #B0B0B0, #888)'
+                    : matchyBrand.gradient,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  opacity: connectBlocked ? 0.85 : 1,
+                }}
+              >
+                {connectBlocked ? (
+                  <span className="inline-flex items-center justify-center gap-1">
+                    <Lock size={11} />
+                    {t('matching.connect')}
+                  </span>
+                ) : (
+                  t('matching.connect')
+                )}
+              </button>
+
+              {/* Right Button: Pass (secondary neutral) */}
+              <button
+                type="button"
+                onClick={() => onRemove(profile)}
+                className="flex flex-1 items-center justify-center gap-1 rounded-full py-1.5 transition-opacity hover:bg-[#E2E8F0]"
+                style={{
+                  background: '#F1F5F9',
+                  border: '1px solid #CBD5E1',
+                  color: '#475569',
+                  fontSize: 11,
+                  fontWeight: 700,
+                }}
+              >
+                <X size={13} className="text-[#64748B]" />
+                <span>{passLabel}</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -162,7 +220,9 @@ function LockedSearchProfileCard({
   lockedLabel: string;
   onUpgrade: () => void;
 }) {
-  const role = profile.service_type || profile.job || profile.category || '';
+  const { t } = useI18n();
+  const rawRole = profile.service_type || profile.job || profile.category || '';
+  const role = formatRole(rawRole, t);
 
   return (
     <button
@@ -247,6 +307,10 @@ export function SearchView() {
   const requestIdRef = useRef(0);
 
   useEffect(() => {
+    void dispatch(fetchMatchState());
+  }, [dispatch]);
+
+  useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 300);
     return () => window.clearTimeout(timer);
   }, [query]);
@@ -325,7 +389,26 @@ export function SearchView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationSynced, latitude, longitude, filters, debouncedQuery]);
 
-  const visibleProfiles = profiles.filter((p) => !p.is_locked);
+  const [connectedStatuses, setConnectedStatuses] = useState<Record<string, 'pending' | 'matched'>>(
+    {},
+  );
+
+  const getProfileConnectionStatus = useCallback(
+    (profileId: string): 'pending' | 'matched' | undefined => {
+      if (connectedStatuses[profileId]) return connectedStatuses[profileId];
+      if (matching.matches.some((m) => m.profile?.id === profileId)) return 'matched';
+      if (matching.pending.some((p) => p.profile?.id === profileId)) return 'pending';
+      return undefined;
+    },
+    [connectedStatuses, matching.matches, matching.pending],
+  );
+
+  const visibleProfiles = profiles.filter((p) => {
+    if (p.is_locked) return false;
+    const status = getProfileConnectionStatus(p.id);
+    return status !== 'matched';
+  });
+
   const lockedProfiles = profiles.filter((p) => p.is_locked);
 
   const connectBlocked = Boolean(
@@ -349,20 +432,35 @@ export function SearchView() {
       swipeProfile({ targetUserId: profile.id, direction: 'right', profile }),
     );
     if (swipeProfile.fulfilled.match(result)) {
-      removeFromFeed(profile.id);
-      if (result.payload.match) {
+      const isMatch = Boolean(result.payload.match);
+      setConnectedStatuses((prev) => ({
+        ...prev,
+        [profile.id]: isMatch ? 'matched' : 'pending',
+      }));
+      if (isMatch) {
         toast.success(t('matching.itsAMatch'));
+        removeFromFeed(profile.id);
       }
     }
   };
 
-  const handleSkip = async (profile: FeedProfile) => {
+  const handleRemove = async (profile: FeedProfile) => {
     if (profile.is_locked) return;
-    const result = await dispatch(
-      swipeProfile({ targetUserId: profile.id, direction: 'left', profile }),
-    );
-    if (swipeProfile.fulfilled.match(result)) {
-      removeFromFeed(profile.id);
+    const status = getProfileConnectionStatus(profile.id);
+    if (status === 'pending') {
+      await dispatch(withdrawPending(profile.id));
+      setConnectedStatuses((prev) => {
+        const next = { ...prev };
+        delete next[profile.id];
+        return next;
+      });
+    } else {
+      const result = await dispatch(
+        swipeProfile({ targetUserId: profile.id, direction: 'left', profile }),
+      );
+      if (swipeProfile.fulfilled.match(result)) {
+        removeFromFeed(profile.id);
+      }
     }
   };
 
@@ -373,14 +471,6 @@ export function SearchView() {
       className="flex h-full min-h-0 flex-col overflow-hidden"
       style={{ background: matchyBrand.bg }}
     >
-      <div
-        className="sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 py-3 md:px-6"
-        style={{ background: 'white', borderBottom: '1px solid #F0F0F0' }}
-      >
-        <p style={{ fontSize: 18, fontWeight: 700, color: '#1A1A2E' }}>{title}</p>
-        <MatchyHeaderActions />
-      </div>
-
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-4 md:px-8">
         {!locationRequired && (
           <>
@@ -440,8 +530,18 @@ export function SearchView() {
                   </p>
                 </div>
               ) : profiles.length === 0 ? (
-                <div className="py-16 text-center text-[15px] font-medium text-[#64748B]">
-                  {t('search.empty')}
+                <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#EBF5FB]">
+                    <Search size={24} className="text-[#2F76BB]" />
+                  </div>
+                  <h3 className="text-base font-extrabold text-[#1E293B]">{t('search.empty')}</h3>
+                  <p className="mt-1 text-xs font-medium text-[#94A3B8]">
+                    {locale === 'en'
+                      ? 'Try adjusting your search terms or filters'
+                      : locale === 'ar'
+                        ? 'حاول تعديل كلمات البحث أو الفلاتر'
+                        : 'Essayez de modifier vos termes de recherche ou vos filtres'}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -451,13 +551,14 @@ export function SearchView() {
                     </div>
                   )}
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-                    {visibleProfiles.map((profile) => (
+                    {visibleProfiles.map((profile: FeedProfile) => (
                       <SearchProfileCard
                         key={profile.id}
                         profile={profile}
                         connectBlocked={connectBlocked}
+                        connectionStatus={getProfileConnectionStatus(profile.id)}
                         onConnect={(p) => void handleConnect(p)}
-                        onSkip={(p) => void handleSkip(p)}
+                        onRemove={(p) => void handleRemove(p)}
                         onDetail={setDetailProfile}
                       />
                     ))}
@@ -517,7 +618,7 @@ export function SearchView() {
           onPass={() => {
             const profile = detailProfile;
             setDetailProfile(null);
-            void handleSkip(profile);
+            void handleRemove(profile);
           }}
           onConnect={() => {
             const profile = detailProfile;

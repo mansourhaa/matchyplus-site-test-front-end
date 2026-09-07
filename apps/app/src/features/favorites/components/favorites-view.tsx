@@ -147,43 +147,6 @@ export function FavoritesView() {
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 md:px-8">
-        {/* Search Bar */}
-        <div className="relative w-full">
-          <Search
-            size={16}
-            className={`absolute top-1/2 -translate-y-1/2 text-gray-400 ${
-              isRtl ? 'right-3.5' : 'left-3.5'
-            }`}
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={
-              locale === 'en'
-                ? 'Search favorites...'
-                : locale === 'ar'
-                  ? 'البحث في المفضلة...'
-                  : 'Rechercher dans les favoris...'
-            }
-            className={`w-full rounded-2xl bg-white py-2.5 text-xs font-medium text-gray-800 shadow-xs placeholder:text-gray-400 focus:outline-none ${
-              isRtl ? 'pr-10 pl-3.5' : 'pr-3.5 pl-10'
-            }`}
-            style={{ border: `1px solid ${matchyBrand.border}` }}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 ${
-                isRtl ? 'left-3.5' : 'right-3.5'
-              }`}
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-
         {/* Error Banner */}
         {error && (
           <div className="flex items-center justify-between rounded-2xl bg-red-50 p-4 text-xs font-semibold text-red-600">
@@ -214,12 +177,26 @@ export function FavoritesView() {
               </div>
             ))}
           </div>
-        ) : filteredFavorites.length === 0 ? (
-          <p className="py-16 text-center text-sm font-medium text-[#64748B]">
-            {searchQuery
-              ? t('settings.favoritesEmptySearchTitle')
-              : t('settings.favoritesEmptyTitle')}
-          </p>
+        ) : (favorites ?? []).length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF8EB]">
+              <Bookmark size={24} className="text-[#F5A623]" />
+            </div>
+            <h3 className="text-base font-extrabold text-[#1E293B]">
+              {locale === 'en'
+                ? 'No Favorites yet'
+                : locale === 'ar'
+                  ? 'لا توجد مفضلة بعد'
+                  : 'Aucun favori pour le moment'}
+            </h3>
+            <p className="mt-1 text-xs font-medium text-[#94A3B8]">
+              {locale === 'en'
+                ? 'Add profiles to favorites from the home screen'
+                : locale === 'ar'
+                  ? 'أضف الملفات الشخصية إلى المفضلة من الشاشة الرئيسية'
+                  : 'Ajoutez des profils aux favoris depuis l’écran d’accueil'}
+            </p>
+          </div>
         ) : (
           /* Favorites List — Responsive cards with connect status and remove actions */
           <div className="space-y-3.5">
@@ -348,12 +325,12 @@ export function FavoritesView() {
                       <div
                         className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold shadow-xs select-none"
                         style={{
-                          background: '#FFFBEB',
-                          border: '1px solid #FEF08A',
-                          color: '#D97706',
+                          background: '#FFFDF0',
+                          border: '1.5px solid #F59E0B',
+                          color: '#F59E0B',
                         }}
                       >
-                        <Clock size={13} className="text-[#D97706]" />
+                        <Clock size={13} color="#F59E0B" />
                         <span>{t('settings.favoritesPending')}</span>
                       </div>
                     ) : (

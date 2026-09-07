@@ -627,7 +627,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       oauthLinkCookieOptions(),
     );
 
-    const uri = await oauth2.generateAuthorizationUri(request, reply);
+    const baseUri = await oauth2.generateAuthorizationUri(request, reply);
+    const uri =
+      provider === 'google'
+        ? `${baseUri}${baseUri.includes('?') ? '&' : '?'}prompt=select_account`
+        : baseUri;
     return reply.redirect(uri);
   }
 

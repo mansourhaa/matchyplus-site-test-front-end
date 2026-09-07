@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { VideoJSPlayer } from '@/components/video-js-player';
 import {
   VIDEO_PRESENTATION_TIPS,
@@ -102,7 +103,8 @@ export function buildVideoRecorderTr(
       confirmBtn: 'Valider la vidéo',
       uploadBrowse: 'Vérification en cours…',
       videoTooLong: '⚠️ La vidéo dépasse 20 secondes. Veuillez sélectionner une vidéo plus courte.',
-      videoTip: tip,
+      videoTip:
+        "Une vidéo de présentation augmente vos chances de match jusqu'à 3×. Elle sera analysée par IA pour remplir votre profil automatiquement.",
       permBlockedTitle: 'Activer caméra et micro',
       permBlockedDesc:
         "Autorisez l'accès à la caméra et au microphone pour enregistrer votre vidéo de présentation.",
@@ -130,7 +132,8 @@ export function buildVideoRecorderTr(
       confirmBtn: 'Confirm video',
       uploadBrowse: 'Checking file…',
       videoTooLong: '⚠️ Video exceeds 20 seconds. Please select a shorter video.',
-      videoTip: tip,
+      videoTip:
+        'A presentation video increases your match chances by up to 3×. It will be analyzed by AI to automatically complete your profile.',
       permBlockedTitle: 'Enable camera and microphone',
       permBlockedDesc: 'Allow camera and microphone access to record your presentation video.',
       permBlockedRetry: 'Allow',
@@ -156,7 +159,8 @@ export function buildVideoRecorderTr(
       confirmBtn: 'تأكيد الفيديو',
       uploadBrowse: 'جارٍ التحقق من الملف…',
       videoTooLong: '⚠️ الفيديو يتجاوز 20 ثانية. يرجى اختيار فيديو أقصر.',
-      videoTip: tip,
+      videoTip:
+        'يزيد فيديو التعريف من فرص تطابقك حتى 3 أضعاف. سيتم تحليله بواسطة الذكاء الاصطناعي لملء ملفك الشخصي تلقائياً.',
       permBlockedTitle: 'تفعيل الكاميرا والميكروفون',
       permBlockedDesc: 'اسمح بالوصول إلى الكاميرا والميكروفون لتسجيل فيديو التعريف.',
       permBlockedRetry: 'السماح',
@@ -542,7 +546,7 @@ export function VideoRecorderModal({
         >
           <div
             className="flex h-5 w-5 items-center justify-center rounded-full"
-            style={{ background: 'linear-gradient(135deg, #61BCA6, #2F76BB)' }}
+            style={{ background: matchyBrand.gradient135 }}
           >
             <Mic size={10} color="white" />
           </div>
@@ -575,7 +579,7 @@ export function VideoRecorderModal({
         <div className="flex flex-1 flex-col items-center justify-center px-6 pt-16 pb-10">
           <div
             className="mb-6 flex h-24 w-24 items-center justify-center rounded-3xl shadow-2xl"
-            style={{ background: 'linear-gradient(135deg, #61BCA6, #2F76BB)' }}
+            style={{ background: matchyBrand.gradient135 }}
           >
             <Video size={44} color="white" />
           </div>
@@ -603,22 +607,6 @@ export function VideoRecorderModal({
             {tr.chooseModeSubtitle}
           </p>
 
-          {/* Tip */}
-          <div
-            className="mb-8 w-full rounded-2xl px-4 py-3"
-            style={{
-              background: 'rgba(97,188,166,0.12)',
-              border: '1px solid rgba(97,188,166,0.25)',
-            }}
-          >
-            <div className="flex items-start gap-2">
-              <span style={{ fontSize: '14px' }}>💡</span>
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', lineHeight: 1.6 }}>
-                {tr.videoTip}
-              </p>
-            </div>
-          </div>
-
           {/* Upload error */}
           {uploadError && (
             <div
@@ -638,7 +626,7 @@ export function VideoRecorderModal({
               onClick={handleChooseCamera}
               className="flex w-full items-center gap-4 rounded-2xl px-5 py-4 transition-all active:scale-95"
               style={{
-                background: 'linear-gradient(135deg, #61BCA6, #2F76BB)',
+                background: matchyBrand.gradient135,
                 boxShadow: '0 4px 20px rgba(47,118,187,0.4)',
               }}
             >
@@ -688,6 +676,22 @@ export function VideoRecorderModal({
               />
             </button>
           </div>
+
+          {/* Tip / Note (NB) placed under upload body */}
+          <div
+            className="mt-6 w-full rounded-2xl px-4 py-3"
+            style={{
+              background: 'rgba(97,188,166,0.12)',
+              border: '1px solid rgba(97,188,166,0.25)',
+            }}
+          >
+            <div className="flex items-start gap-2">
+              <span style={{ fontSize: '14px' }}>💡</span>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', lineHeight: 1.6 }}>
+                {tr.videoTip}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -696,7 +700,7 @@ export function VideoRecorderModal({
         <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6">
           <div
             className="flex h-20 w-20 items-center justify-center rounded-2xl"
-            style={{ background: 'linear-gradient(135deg, #61BCA6, #2F76BB)' }}
+            style={{ background: matchyBrand.gradient135 }}
           >
             <Video size={36} color="white" />
           </div>
@@ -709,7 +713,7 @@ export function VideoRecorderModal({
           >
             <div
               className="h-full animate-pulse rounded-full"
-              style={{ width: '60%', background: 'linear-gradient(90deg, #61BCA6, #2F76BB)' }}
+              style={{ width: '60%', background: matchyBrand.gradient }}
             />
           </div>
         </div>
@@ -816,7 +820,7 @@ export function VideoRecorderModal({
                   onClick={startRecording}
                   className="flex h-20 w-20 items-center justify-center rounded-full transition-transform active:scale-90"
                   style={{
-                    background: 'linear-gradient(135deg, #61BCA6, #2F76BB)',
+                    background: matchyBrand.gradient135,
                     boxShadow: '0 0 0 6px rgba(97,188,166,0.3)',
                   }}
                 >
@@ -867,7 +871,7 @@ export function VideoRecorderModal({
               onClick={handleConfirm}
               className="flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-white transition-all active:scale-95"
               style={{
-                background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+                background: matchyBrand.gradient,
                 fontSize: '15px',
                 fontWeight: 700,
                 boxShadow: '0 4px 20px rgba(47,118,187,0.4)',
@@ -916,7 +920,7 @@ export function VideoRecorderModal({
           >
             <div
               className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
-              style={{ background: 'linear-gradient(135deg, #61BCA6, #2F76BB)' }}
+              style={{ background: matchyBrand.gradient135 }}
             >
               <Camera size={26} color="white" />
             </div>
@@ -939,7 +943,7 @@ export function VideoRecorderModal({
               onClick={retryCameraPermission}
               className="mb-2.5 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white transition-all active:scale-95"
               style={{
-                background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+                background: matchyBrand.gradient,
                 fontSize: '15px',
                 fontWeight: 700,
                 boxShadow: '0 4px 20px rgba(47,118,187,0.4)',

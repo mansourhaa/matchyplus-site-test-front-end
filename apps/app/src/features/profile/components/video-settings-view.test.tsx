@@ -119,10 +119,10 @@ describe('VideoSettingsView', () => {
     const switches = screen.getAllByRole('switch');
     expect(switches.length).toBe(2);
 
-    // Initial state: autoPlay is true by default
-    expect(switches[0]).toHaveAttribute('aria-checked', 'true');
-    fireEvent.click(switches[0]);
+    // Initial state: autoPlay is false by default
     expect(switches[0]).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(switches[0]);
+    expect(switches[0]).toHaveAttribute('aria-checked', 'true');
 
     // WiFi only is false by default
     expect(switches[1]).toHaveAttribute('aria-checked', 'false');

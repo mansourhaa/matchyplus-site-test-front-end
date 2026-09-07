@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { OnboardingStepLayout } from '@/features/onboarding/components/onboarding-step-layout';
 import { Check, Flag, Handshake, IdCard, Loader2, Lock, Shield } from 'lucide-react';
@@ -120,7 +121,7 @@ export function WelcomeStep({
           disabled={accepting || loading}
           className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 font-bold text-white shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-70"
           style={{
-            background: 'linear-gradient(90deg, #61BCA6 0%, #2F76BB 100%)',
+            background: matchyBrand.gradient,
             fontSize: '15px',
           }}
         >

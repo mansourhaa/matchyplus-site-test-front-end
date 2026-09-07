@@ -2,7 +2,6 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
-import { MatchyLogo } from '@/features/auth/components/matchy-logo';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import {
   fetchFavoriteIds,
@@ -21,14 +20,13 @@ import {
 import {
   AIPicksHeader,
   AIRecommendationItem,
-  AIRightSidebarLocationEmpty,
-  AIRightSidebarNoProfileEmpty,
   LiveScorePanel,
   MatchScoreBadge,
 } from '@/features/matching/components/live-ai-score';
 import { MatchCelebrationModal } from '@/features/matching/components/match-celebration-modal';
 import { ProfileDetailModal } from '@/features/matching/components/profile-detail-modal';
 import { SwipeLimitModal } from '@/features/matching/components/swipe-limit-modal';
+import { formatRole } from '@/features/matching/lib/format-role';
 import {
   clearCelebration,
   clearFeed,
@@ -50,15 +48,19 @@ import { useVideoSettings } from '@/lib/video-settings';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
 import {
   AlertTriangle,
+  BadgeCheck,
   Bell,
   Bookmark,
   Check,
   Heart,
+  Loader2,
   Lock,
   MapPin,
   Play,
   Star,
   ThumbsDown,
+  Volume2,
+  VolumeX,
   X,
   Zap,
 } from 'lucide-react';
@@ -81,6 +83,9 @@ export function DiscoverView() {
   const cardVideoRef = useRef<HTMLVideoElement>(null);
   const [userPausedId, setUserPausedId] = useState<string | null>(null);
   const [userPlayingId, setUserPlayingId] = useState<string | null>(null);
+  const [isCardVideoMuted, setIsCardVideoMuted] = useState(true);
+  const [isVideoBuffering, setIsVideoBuffering] = useState(false);
+  const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<string[]>([]);
 
   const isCardVideoPlaying = Boolean(
     top?.id ? (videoSettings.autoPlay ? userPausedId !== top.id : userPlayingId === top.id) : false,
@@ -115,6 +120,9 @@ export function DiscoverView() {
   const [detailProfileId, setDetailProfileId] = useState<string | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'up' | null>(null);
   const [forceQuotaModal, setForceQuotaModal] = useState(false);
+  const [quotaModalReason, setQuotaModalReason] = useState<'limit' | 'status' | 'locked_profile'>(
+    'limit',
+  );
 
   useEffect(() => {
     void dispatch(fetchNotifications());
@@ -160,6 +168,7 @@ export function DiscoverView() {
   const onConnect = async () => {
     if (!top || matching.swipeLoading) return;
     if (isRightSwipeBlocked) {
+      setQuotaModalReason('limit');
       setForceQuotaModal(true);
       return;
     }
@@ -213,28 +222,6 @@ export function DiscoverView() {
       className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
       style={{ background: matchyBrand.bg }}
     >
-      {/* Header — Matchy exact */}
-      <div
-        className="sticky top-0 z-20 flex shrink-0 items-center justify-between px-4 py-3 md:px-6"
-        style={{ background: 'white', borderBottom: '1px solid #F0F0F0' }}
-      >
-        <div className="flex items-center gap-3">
-          <p
-            className="hidden md:block"
-            style={{ fontSize: 18, fontWeight: 700, color: '#1A1A2E' }}
-          >
-            {title}
-          </p>
-          <div className="flex md:hidden">
-            <MatchyLogo size="sm" />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 md:gap-3">
-          <MatchyHeaderActions />
-        </div>
-      </div>
-
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
         {/* Main swipe column */}
         <div
@@ -322,27 +309,33 @@ export function DiscoverView() {
                             autoPlay={isCardVideoPlaying}
                             playsInline
                             loop
-                            muted
+                            muted={isCardVideoMuted}
                             onClick={handleToggleCardVideo}
+                            onWaiting={() => setIsVideoBuffering(true)}
+                            onPlaying={() => setIsVideoBuffering(false)}
                             onPlay={() => {
+                              setIsVideoBuffering(false);
                               if (top?.id) {
                                 setUserPlayingId(top.id);
                                 setUserPausedId(null);
                               }
                             }}
                             onPause={() => {
+                              setIsVideoBuffering(false);
                               if (top?.id) {
                                 setUserPausedId(top.id);
                                 setUserPlayingId(null);
                               }
                             }}
                             onEnded={() => {
+                              setIsVideoBuffering(false);
                               if (top?.id) {
                                 setUserPausedId(top.id);
                                 setUserPlayingId(null);
                               }
                             }}
                             onLoadedData={(e) => {
+                              setIsVideoBuffering(false);
                               if (isCardVideoPlaying) {
                                 void e.currentTarget.play().catch(() => {});
                               }
@@ -350,8 +343,39 @@ export function DiscoverView() {
                             className="absolute inset-0 h-full w-full cursor-pointer bg-black object-cover"
                           />
 
+                          {/* Video Buffering / Loading Spinner */}
+                          {isVideoBuffering && (
+                            <div className="pointer-events-none absolute inset-0 z-25 flex items-center justify-center bg-black/30 backdrop-blur-xs">
+                              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/60 shadow-2xl backdrop-blur-md">
+                                <Loader2 className="h-8 w-8 animate-spin text-[#61BCA6]" />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Sound control toggle button (Mute / Unmute) */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsCardVideoMuted((prev) => !prev);
+                            }}
+                            aria-label={
+                              isCardVideoMuted
+                                ? t('matching.unmuteVideo') || 'Unmute video'
+                                : t('matching.muteVideo') || 'Mute video'
+                            }
+                            className="pointer-events-auto absolute right-4 bottom-4 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white shadow-md backdrop-blur-md transition-all hover:scale-105 hover:bg-black/80 active:scale-95"
+                            style={{ border: '1px solid rgba(255,255,255,0.3)' }}
+                          >
+                            {isCardVideoMuted ? (
+                              <VolumeX size={16} className="text-white" />
+                            ) : (
+                              <Volume2 size={16} className="text-white" />
+                            )}
+                          </button>
+
                           {/* Centered Play Button when paused / stopped */}
-                          {!isCardVideoPlaying && (
+                          {!isCardVideoPlaying && !isVideoBuffering && (
                             <button
                               type="button"
                               onClick={handleToggleCardVideo}
@@ -459,32 +483,9 @@ export function DiscoverView() {
                         </button>
                       </div>
 
-                      {/* Top left AI match score badge with pill */}
+                      {/* Top left AI match score badge (complementary tag removed per spec) */}
                       <div className="absolute top-12 left-3">
-                        <MatchScoreBadge
-                          score={top.match_score}
-                          label={
-                            top.match_type_label ||
-                            (top.match_score >= 75
-                              ? locale === 'en'
-                                ? 'Highly compatible'
-                                : locale === 'ar'
-                                  ? 'متوافق جداً'
-                                  : 'Très compatible'
-                              : top.match_score >= 50
-                                ? locale === 'en'
-                                  ? 'Good match'
-                                  : locale === 'ar'
-                                    ? 'توافق جيد'
-                                    : 'Bonne compatibilité'
-                                : locale === 'en'
-                                  ? 'Partial match'
-                                  : locale === 'ar'
-                                    ? 'توافق جزئي'
-                                    : 'Partiellement compatible')
-                          }
-                          size="lg"
-                        />
+                        <MatchScoreBadge score={top.match_score} size="lg" />
                       </div>
 
                       {/* Bottom card info */}
@@ -495,13 +496,20 @@ export function DiscoverView() {
                               className="flex items-center gap-1.5 text-white"
                               style={{ fontSize: 22, fontWeight: 700 }}
                             >
-                              {top.name}
+                              <span>{top.name}</span>
+                              {top.verified && (
+                                <BadgeCheck
+                                  size={20}
+                                  className="shrink-0 fill-[#3B82F6] text-[#3B82F6] text-white"
+                                  aria-label="Verified user"
+                                />
+                              )}
                             </h2>
                             <p
                               className="text-white opacity-90"
                               style={{ fontSize: 14, fontWeight: 500 }}
                             >
-                              {top.service_type || top.job || top.category}
+                              {formatRole(top.service_type || top.job || top.category, t)}
                             </p>
                           </div>
                         </div>
@@ -579,43 +587,28 @@ export function DiscoverView() {
               {/* Action count pill banner (from Figma design) */}
               {quota && !quota.unlimited && (
                 <div
-                  onClick={() => setForceQuotaModal(true)}
-                  className="mx-auto mt-3 mb-2 flex cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+                  onClick={() => {
+                    setQuotaModalReason(freeRemaining === 0 ? 'limit' : 'status');
+                    setForceQuotaModal(true);
+                  }}
+                  className="mx-auto mt-3 mb-2 flex cursor-pointer items-center justify-start gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
                   style={{
-                    background:
-                      freeRemaining === 0
-                        ? '#FFF1F2'
-                        : freeRemaining != null && freeRemaining <= 3
-                          ? '#FFFBEB'
-                          : '#F8FAFC',
-                    color:
-                      freeRemaining === 0
-                        ? '#E11D48'
-                        : freeRemaining != null && freeRemaining <= 3
-                          ? '#D97706'
-                          : '#64748B',
-                    border:
-                      freeRemaining === 0
-                        ? '1px solid #FECDD3'
-                        : freeRemaining != null && freeRemaining <= 3
-                          ? '1px solid #FDE68A'
-                          : '1px solid #E2E8F0',
+                    background: freeRemaining === 0 ? '#FFF1F2' : '#FFFBEB',
+                    color: freeRemaining === 0 ? '#E11D48' : '#D97706',
+                    border: freeRemaining === 0 ? '1px solid #FECDD3' : '1px solid #FDE68A',
                     maxWidth: 360,
                     width: '100%',
                   }}
                 >
                   <AlertTriangle
                     size={13}
-                    className={
-                      freeRemaining === 0
-                        ? 'text-[#E11D48]'
-                        : freeRemaining != null && freeRemaining <= 3
-                          ? 'text-[#D97706]'
-                          : 'text-[#64748B]'
-                    }
+                    className={freeRemaining === 0 ? 'text-[#E11D48]' : 'text-[#D97706]'}
                   />
                   <span>
-                    {freeRemaining ?? 0}/{quota.limit ?? 10} actions remaining today
+                    {t('matching.swipeQuotaActionsRemaining', {
+                      remaining: freeRemaining ?? 0,
+                      limit: quota.limit ?? 10,
+                    })}
                   </span>
                 </div>
               )}
@@ -664,9 +657,7 @@ export function DiscoverView() {
           className="hidden flex-col gap-4 overflow-y-auto px-4 py-4 lg:flex"
           style={{ width: 320, borderLeft: '1px solid #F0F0F0', background: matchyBrand.bg }}
         >
-          {locationRequired || !locationSynced ? (
-            <AIRightSidebarLocationEmpty />
-          ) : (
+          {locationRequired || !locationSynced ? null : (
             <>
               {top ? (
                 <div className="space-y-3">
@@ -699,16 +690,20 @@ export function DiscoverView() {
                         {top.name.slice(0, 1)}
                       </div>
                     )}
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)',
-                      }}
-                    />
+                    {/* Gradient overlay only if not showing video (removed for video per item 9) */}
+                    {!topVideo.url && (
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          background:
+                            'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)',
+                        }}
+                      />
+                    )}
                     <div className="absolute bottom-2 left-3">
                       <p style={{ color: 'white', fontSize: 14, fontWeight: 700 }}>{top.name}</p>
                       <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11 }}>
-                        {top.service_type || top.job || top.category}
+                        {formatRole(top.service_type || top.job || top.category, t)}
                       </p>
                     </div>
                     <div className="absolute right-2 bottom-2">
@@ -736,16 +731,19 @@ export function DiscoverView() {
                     isComputing={matching.feedLoading && !matching.feedLoaded}
                   />
                 </div>
-              ) : (
-                <AIRightSidebarNoProfileEmpty />
-              )}
+              ) : null}
 
               <div
                 className="flex items-center gap-2"
                 style={{ borderTop: '1px solid #F0F0F0', paddingTop: 12 }}
               >
                 <AIPicksHeader
-                  count={Math.min(5, matching.feed.filter((p) => p.id !== top?.id).length)}
+                  count={Math.min(
+                    5,
+                    matching.feed.filter(
+                      (p) => p.id !== top?.id && !dismissedSuggestionIds.includes(p.id),
+                    ).length,
+                  )}
                 />
               </div>
               <div className="flex-1 space-y-1.5 overflow-y-auto">
@@ -759,18 +757,29 @@ export function DiscoverView() {
                       />
                     ))}
                   </div>
-                ) : matching.feed.filter((p) => p.id !== top?.id).length === 0 ? (
+                ) : matching.feed.filter(
+                    (p) => p.id !== top?.id && !dismissedSuggestionIds.includes(p.id),
+                  ).length === 0 ? (
                   <DiscoverEmptyPicks />
                 ) : (
                   matching.feed
-                    .filter((p) => p.id !== top?.id)
+                    .filter((p) => p.id !== top?.id && !dismissedSuggestionIds.includes(p.id))
                     .slice(0, 5)
                     .map((profile, i) => (
                       <AIRecommendationItem
                         key={profile.id}
                         profile={profile}
                         rank={i}
+                        onDismiss={() => {
+                          setDismissedSuggestionIds((prev) => [...prev, profile.id]);
+                        }}
                         onClick={() => {
+                          const isLocked = Boolean(profile.is_locked || i >= 3);
+                          if (isLocked) {
+                            setQuotaModalReason('locked_profile');
+                            setForceQuotaModal(true);
+                            return;
+                          }
                           setDetailProfileId(profile.id);
                           setDetailOpen(true);
                         }}
@@ -806,8 +815,10 @@ export function DiscoverView() {
 
       {(matching.showQuotaModal || forceQuotaModal) && (
         <SwipeLimitModal
+          reason={forceQuotaModal ? quotaModalReason : 'limit'}
           onClose={() => {
             setForceQuotaModal(false);
+            setQuotaModalReason('limit');
             dispatch(closeQuotaModal());
           }}
         />

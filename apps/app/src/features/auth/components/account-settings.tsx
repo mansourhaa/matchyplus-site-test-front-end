@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { PasswordRequirements } from '@/components/password-requirements';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import {
@@ -128,7 +129,7 @@ function SubmitButton({
       disabled={disabled}
       className="w-full rounded-xl py-3 text-white"
       style={{
-        background: disabled ? '#AFC4DA' : 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+        background: disabled ? '#AFC4DA' : matchyBrand.gradient,
         fontSize: '14px',
         fontWeight: 700,
       }}

@@ -49,8 +49,8 @@
 }
 
 :root {
-  --matchy-blue: #2f76bb;
-  --matchy-teal: #61bca6;
+  --matchy-blue: #3179bf;
+  --matchy-teal: #48bba0;
   --matchy-bg: #f5f7fa;
   --matchy-active: #eef5ff;
   --matchy-text: #353535;
@@ -219,7 +219,8 @@
 .video-js .vjs-big-play-button {
   top: 50% !important;
   left: 50% !important;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
   width: 64px;
   height: 64px;
   line-height: 60px;
@@ -233,7 +234,7 @@
 .video-js:hover .vjs-big-play-button {
   background-color: rgba(47, 118, 187, 0.85) !important;
   border-color: rgba(255, 255, 255, 0.8) !important;
-  transform: translate(-50%, -50%) scale(1.1);
+  transform: translate(-50%, -50%) scale(1.1) !important;
 }
 
 .video-js .vjs-play-progress {

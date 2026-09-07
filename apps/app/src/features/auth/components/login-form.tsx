@@ -1,8 +1,10 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { loginPhone, selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { landingPath } from '@/lib/landing';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { ArrowLeft, ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
@@ -10,7 +12,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { AuthLayout } from './auth-layout';
-import { MatchyLogo } from './matchy-logo';
 import { PhoneInput } from './phone-input';
 
 function LinkedInIcon() {
@@ -81,7 +82,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const {
     loading,
     error: authError,
@@ -120,6 +121,9 @@ export function LoginForm() {
   const handleBackToLogin = () => {
     router.push('/login');
     setLocalError(null);
+  };
+  const handleBackToLanding = () => {
+    window.location.href = landingPath('/', locale);
   };
 
   const goToPostAuthDestination = (onboardingCompleted: boolean) => {
@@ -253,7 +257,7 @@ export function LoginForm() {
               onClick={() => router.push('/onboarding')}
               className="w-full rounded-2xl py-3.5 text-white"
               style={{
-                background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+                background: matchyBrand.gradient,
                 fontSize: '14px',
                 fontWeight: 700,
               }}
@@ -334,7 +338,7 @@ export function LoginForm() {
             style={{
               background:
                 nationalNumber.length >= country.nationalLength && password.length >= 6 && !loading
-                  ? 'linear-gradient(90deg, #61BCA6, #2F76BB)'
+                  ? matchyBrand.gradient
                   : '#D5D5D5',
               fontSize: '14px',
               fontWeight: 700,
@@ -386,23 +390,21 @@ export function LoginForm() {
           style={{ borderBottom: '1px solid #F5F5F5' }}
         >
           <div className="flex items-center gap-2">
-            {localStep === 'phone' && (
-              <button
-                type="button"
-                onClick={handleBackToLogin}
-                className="flex items-center gap-1 rounded-lg px-2 py-1"
-                style={{
-                  border: '1px solid #E8E8E8',
-                  color: '#667085',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                }}
-              >
-                <ArrowLeft size={14} />
-                {t('legal.back')}
-              </button>
-            )}
-            <MatchyLogo size="sm" />
+            <button
+              type="button"
+              onClick={localStep === 'phone' ? handleBackToLogin : handleBackToLanding}
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-[#F5F5F5]"
+              style={{
+                border: '1px solid #E8E8E8',
+                color: '#334155',
+                fontSize: '13px',
+                fontWeight: 700,
+              }}
+              aria-label={t('common.back')}
+            >
+              <ArrowLeft size={16} />
+              <span>{t('common.back')}</span>
+            </button>
           </div>
         </div>
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-10 py-10">
@@ -417,23 +419,21 @@ export function LoginForm() {
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           <div className="flex items-center gap-2">
-            {localStep === 'phone' && (
-              <button
-                type="button"
-                onClick={handleBackToLogin}
-                className="flex items-center gap-1 rounded-lg px-2 py-1"
-                style={{
-                  border: '1px solid #E8E8E8',
-                  color: '#667085',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                }}
-              >
-                <ArrowLeft size={14} />
-                {t('legal.back')}
-              </button>
-            )}
-            <MatchyLogo size="sm" />
+            <button
+              type="button"
+              onClick={localStep === 'phone' ? handleBackToLogin : handleBackToLanding}
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-[#F5F5F5]"
+              style={{
+                border: '1px solid #E8E8E8',
+                color: '#334155',
+                fontSize: '13px',
+                fontWeight: 700,
+              }}
+              aria-label={t('common.back')}
+            >
+              <ArrowLeft size={16} />
+              <span>{t('common.back')}</span>
+            </button>
           </div>
         </div>
         <div className="flex flex-1 flex-col justify-center px-7 py-8">{formContent}</div>

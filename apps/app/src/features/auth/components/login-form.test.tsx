@@ -239,10 +239,14 @@ describe('LoginForm — OAuth start URLs', () => {
   });
 });
 
-describe('LoginForm — Créer un compte', () => {
+describe('LoginForm — Back button', () => {
   beforeEach(() => {
     window.localStorage.setItem('matchy_locale', 'fr');
     searchParamsRef.current = new URLSearchParams();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, href: '' },
+    });
   });
 
   afterEach(() => {
@@ -250,11 +254,20 @@ describe('LoginForm — Créer un compte', () => {
     window.localStorage.removeItem('matchy_locale');
   });
 
-  it('goes to the onboarding wizard, where the identity step also collects phone + password + OTP for a new visitor', () => {
+  it('navigates to landing page when clicking the back button on main login screen', () => {
     renderWithAuthStore(<LoginForm />);
 
-    fireEvent.click(firstButton('Créer un compte'));
+    fireEvent.click(firstButton('Retour'));
 
-    expect(pushMock).toHaveBeenCalledWith('/onboarding');
+    expect(window.location.href).toBe('http://localhost:3002/?lang=fr');
+  });
+
+  it('navigates back to /login when clicking the back button on phone step', () => {
+    searchParamsRef.current = new URLSearchParams('step=phone');
+    renderWithAuthStore(<LoginForm />);
+
+    fireEvent.click(firstButton('Retour'));
+
+    expect(pushMock).toHaveBeenCalledWith('/login');
   });
 });

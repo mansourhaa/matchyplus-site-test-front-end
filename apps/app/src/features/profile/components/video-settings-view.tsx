@@ -290,7 +290,7 @@ export function VideoSettingsView() {
             type="button"
             onClick={() => setShowRecorder(true)}
             disabled={mediaUploading}
-            className="flex w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-[#B8D8F8] bg-gradient-to-b from-[#F5F9FF] to-white py-10 text-[#888] transition-all hover:border-[#2F76BB] hover:bg-[#EEF5FF] disabled:opacity-60"
+            className="flex w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-[#B8D8F8] bg-white py-10 text-[#888] transition-all hover:border-[#2F76BB] hover:bg-[#EEF5FF] disabled:opacity-60"
           >
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F0FA] shadow-sm">
               <Video size={28} color={matchyBrand.blue} />
@@ -338,6 +338,20 @@ export function VideoSettingsView() {
           </p>
         )}
       </section>
+      {/* 4. AI Boost Callout Banner */}
+      <aside
+        className="flex items-start gap-3 rounded-2xl p-4 shadow-2xs"
+        style={{ background: '#EBF5FB', border: '1px solid #D0E3F8' }}
+      >
+        <Info size={18} color="#2F76BB" className="mt-0.5 shrink-0" />
+        <p className="text-xs leading-relaxed text-[#2F76BB]">
+          {locale === 'en'
+            ? 'A presentation video increases your match chances by up to 3×. It will be analyzed by AI to automatically enrich your profile.'
+            : locale === 'ar'
+              ? 'فيديو العرض التقديمي يزيد فرص المطابقة لديك حتى 3 أضعاف. سيتم تحليله بواسطة الذكاء الاصطناعي لإثراء ملفك الشخصي تلقائياً.'
+              : 'Une vidéo de présentation augmente vos chances de match jusqu’à 3x. Elle sera analysée par IA pour remplir votre profil automatiquement.'}
+        </p>
+      </aside>
 
       {/* 2. Video Quality Card */}
       <section
@@ -564,21 +578,6 @@ export function VideoSettingsView() {
           </div>
         </div>
       </section>
-
-      {/* 4. AI Boost Callout Banner */}
-      <aside
-        className="flex items-start gap-3 rounded-2xl p-4 shadow-2xs"
-        style={{ background: '#EBF5FB', border: '1px solid #D0E3F8' }}
-      >
-        <Info size={18} color="#2F76BB" className="mt-0.5 shrink-0" />
-        <p className="text-xs leading-relaxed text-[#2F76BB]">
-          {locale === 'en'
-            ? 'A presentation video increases your match chances by up to 3×. It will be analyzed by AI to automatically enrich your profile.'
-            : locale === 'ar'
-              ? 'فيديو العرض التقديمي يزيد فرص المطابقة لديك حتى 3 أضعاف. سيتم تحليله بواسطة الذكاء الاصطناعي لإثراء ملفك الشخصي تلقائياً.'
-              : 'Une vidéo de présentation augmente vos chances de match jusqu’à 3x. Elle sera analysée par IA pour remplir votre profil automatiquement.'}
-        </p>
-      </aside>
 
       {saved && (
         <div

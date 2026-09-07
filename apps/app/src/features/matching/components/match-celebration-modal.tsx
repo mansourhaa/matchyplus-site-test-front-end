@@ -2,6 +2,7 @@
 
 import { AuthenticatedProfileAvatar } from '@/components/matchy/authenticated-profile-image';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { formatRole } from '@/features/matching/lib/format-role';
 import type { FeedProfile } from '@/features/matching/types';
 import { motion } from 'framer-motion';
 import { Check, Heart, MessageCircle } from 'lucide-react';
@@ -23,8 +24,9 @@ type Props = {
 export function MatchCelebrationModal({ profile, onContinue, onViewMatches }: Props) {
   const { t, dir } = useI18n();
 
-  const profileJob =
+  const rawJob =
     ('job' in profile && profile.job) || ('service_type' in profile && profile.service_type) || '';
+  const profileJob = formatRole(rawJob, t);
 
   return (
     <motion.div

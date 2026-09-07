@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { PhoneInput } from '@/features/auth/components/phone-input';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
@@ -113,8 +114,7 @@ export function OtpTestForm() {
             disabled={loading || !code.trim()}
             className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
             style={{
-              background:
-                !loading && code.trim() ? 'linear-gradient(90deg, #61BCA6, #2F76BB)' : '#D5D5D5',
+              background: !loading && code.trim() ? matchyBrand.gradient : '#D5D5D5',
               fontSize: '14px',
               fontWeight: 700,
             }}

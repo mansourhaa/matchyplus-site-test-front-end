@@ -63,10 +63,13 @@ async function oauthPlugin(fastify: FastifyInstance) {
       },
       startRedirectPath: '/api/v1/auth/oauth/google',
       callbackUri: config.googleRedirectUri,
+      generateAuthorizationUriExtraParams: () => ({
+        prompt: 'select_account',
+      }),
       cookie: OAUTH_STATE_COOKIE,
       redirectStateCookieName: 'oauth2-google-state',
       verifierCookieName: 'oauth2-google-verifier',
-    });
+    } as any);
   } else {
     fastify.log.warn('Google OAuth disabled — credentials or API_BASE_URL not configured');
   }

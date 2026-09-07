@@ -78,6 +78,7 @@ const feedProfile = {
     service_type: { type: 'string', nullable: true },
     price: { type: 'string', nullable: true },
     availability_days: { type: 'array', items: { type: 'string' } },
+    contact_modes: { type: 'array', items: { type: 'string' } },
     rating: { type: 'number' },
     distance_km: { type: 'number', nullable: true },
     match_score: { type: 'number' },

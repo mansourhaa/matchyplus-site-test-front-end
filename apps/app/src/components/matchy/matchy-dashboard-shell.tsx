@@ -15,7 +15,7 @@ import {
   fetchOnboardingProfile,
   selectOnboarding,
 } from '@/features/onboarding/store/onboarding-slice';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { Suspense, useEffect } from 'react';
 
@@ -25,6 +25,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   useProactiveRefresh();
   useAutoCaptureGrantedLocation();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { t } = useI18n();
@@ -79,6 +80,8 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   }
 
   const titleMap: Record<string, string> = {
+    '/home': searchParams.get('tab') === 'search' ? t('nav.search') : t('nav.home'),
+    '/matches': t('nav.matches'),
     '/settings': t('nav.settings'),
     '/settings/account': t('settings.account'),
     '/settings/password': t('dashboard.password'),
@@ -103,9 +106,9 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     ? t('chat.title')
     : pathname.startsWith('/profile/')
       ? t('dashboard.profile')
-      : titleMap[pathname];
+      : titleMap[pathname] || t('nav.home');
   const isRootSettings = pathname === '/settings';
-  const showBack = !isRootSettings;
+  const showBack = !isPrimary && !isRootSettings;
   const backPath =
     pathname === '/edit-profile' ||
     pathname.startsWith('/settings') ||
@@ -116,18 +119,14 @@ function DashboardChrome({ children }: { children: ReactNode }) {
 
   return (
     <>
-      {isPrimary ? (
-        <MatchyPrimaryShell>{children}</MatchyPrimaryShell>
-      ) : (
-        <MatchyAppShell
-          title={title}
-          showBack={showBack}
-          backPath={backPath}
-          hideHeader={pathname.startsWith('/chat') || pathname.startsWith('/profile/')}
-        >
-          {children}
-        </MatchyAppShell>
-      )}
+      <MatchyAppShell
+        title={title}
+        showBack={showBack}
+        backPath={backPath}
+        hideHeader={pathname.startsWith('/chat') || pathname.startsWith('/profile/')}
+      >
+        {children}
+      </MatchyAppShell>
 
       {locationRequired && (
         <LocationRequiredOverlay
