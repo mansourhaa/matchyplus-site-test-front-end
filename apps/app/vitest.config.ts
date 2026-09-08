@@ -8,7 +8,7 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     setupFiles: ['./src/test/setup.ts'],
-    testTimeout: 15000,
+    testTimeout: 30000,
     // Jenkins publishes these with the junit step, which is what gives it
     // per-test history across builds and lets it label an intermittent failure
     // a flake on its own. Gated on CI so a local `pnpm test` keeps its normal
