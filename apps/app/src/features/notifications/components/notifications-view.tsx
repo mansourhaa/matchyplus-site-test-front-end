@@ -278,7 +278,7 @@ export function NotificationsView() {
   return (
     <div className="min-h-full bg-[#F5F7FA]" dir={dir}>
       {/* Main Container */}
-      <main className="mx-auto w-full max-w-2xl px-4 py-6 md:px-8">
+      <main className="w-full px-4 py-6 md:px-8">
         {/* Latest Notifications Card */}
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
           {/* Card Title Header */}

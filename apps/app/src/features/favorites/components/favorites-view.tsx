@@ -182,7 +182,7 @@ export function FavoritesView() {
       style={{ background: matchyBrand.bg }}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 md:px-8">
+      <div className="w-full space-y-6 px-4 py-6 md:px-8">
         {/* Error Banner */}
         {error && (
           <div className="flex items-center justify-between rounded-2xl bg-red-50 p-4 text-xs font-semibold text-red-600">

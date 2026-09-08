@@ -175,7 +175,7 @@ export function VideoSettingsView() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl space-y-4" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="w-full space-y-4" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* 1. Intro Video Card */}
       <section
         className="rounded-3xl bg-white p-5 shadow-xs"

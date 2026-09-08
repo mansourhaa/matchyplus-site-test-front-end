@@ -68,7 +68,7 @@ export function NotificationPreferencesView() {
 
   return (
     <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }} dir={dir}>
-      <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-6 md:px-6">
+      <div className="w-full space-y-4 px-4 py-6 md:px-8">
         {/* Active Count Banner Card */}
         <div
           className="relative flex items-center gap-4 overflow-hidden rounded-3xl p-5 text-white shadow-md"

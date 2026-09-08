@@ -207,7 +207,7 @@ export function SettingsView() {
 
   return (
     <div className="h-full overflow-y-auto" style={{ background: matchyBrand.bg }} dir={dir}>
-      <div className="mx-auto max-w-2xl space-y-4 px-4 py-4 md:px-8">
+      <div className="w-full space-y-4 px-4 py-4 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
