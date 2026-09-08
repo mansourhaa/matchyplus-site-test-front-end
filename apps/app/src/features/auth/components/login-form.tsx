@@ -1,13 +1,15 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import { HeaderBackButton } from '@/components/matchy/header-back-button';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { loginPhone, selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { landingPath } from '@/lib/landing';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
-import { ArrowLeft, ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
+import { ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -356,23 +358,13 @@ export function LoginForm() {
         style={{ fontSize: '11px', color: '#BBBBBB', lineHeight: 1.6 }}
       >
         {t('auth.loginForm.acceptTermsPrefix')}{' '}
-        <a
-          href="/terms-of-service"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#2F76BB] hover:underline"
-        >
+        <Link href="/terms-of-service" className="text-[#2F76BB] hover:underline">
           {t('legal.termsOfService')}
-        </a>{' '}
+        </Link>{' '}
         {t('auth.loginForm.acceptTermsMiddle')}{' '}
-        <a
-          href="/privacy-policy"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#2F76BB] hover:underline"
-        >
+        <Link href="/privacy-policy" className="text-[#2F76BB] hover:underline">
           {t('legal.privacyPolicy')}
-        </a>
+        </Link>
       </p>
     </div>
   );
@@ -390,21 +382,10 @@ export function LoginForm() {
           style={{ borderBottom: '1px solid #F5F5F5' }}
         >
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <HeaderBackButton
               onClick={localStep === 'phone' ? handleBackToLogin : handleBackToLanding}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-[#F5F5F5]"
-              style={{
-                border: '1px solid #E8E8E8',
-                color: '#334155',
-                fontSize: '13px',
-                fontWeight: 700,
-              }}
-              aria-label={t('common.back')}
-            >
-              <ArrowLeft size={16} />
-              <span>{t('common.back')}</span>
-            </button>
+              label={t('common.back')}
+            />
           </div>
         </div>
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-10 py-10">
@@ -419,21 +400,10 @@ export function LoginForm() {
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <HeaderBackButton
               onClick={localStep === 'phone' ? handleBackToLogin : handleBackToLanding}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-[#F5F5F5]"
-              style={{
-                border: '1px solid #E8E8E8',
-                color: '#334155',
-                fontSize: '13px',
-                fontWeight: 700,
-              }}
-              aria-label={t('common.back')}
-            >
-              <ArrowLeft size={16} />
-              <span>{t('common.back')}</span>
-            </button>
+              label={t('common.back')}
+            />
           </div>
         </div>
         <div className="flex flex-1 flex-col justify-center px-7 py-8">{formContent}</div>

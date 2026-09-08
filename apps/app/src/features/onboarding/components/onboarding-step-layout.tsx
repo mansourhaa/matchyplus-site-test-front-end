@@ -1,9 +1,10 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import { HeaderBackButton } from '@/components/matchy/header-back-button';
 import { AuthLayout } from '@/features/auth/components/auth-layout';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { LangPickerLight } from './lang-picker-light';
@@ -184,18 +185,7 @@ export function OnboardingStepLayout({
         >
           <div className="flex items-center">
             {onBack ? (
-              <button
-                type="button"
-                onClick={onBack}
-                aria-label={resolvedBackLabel}
-                className="group flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F76BB]"
-              >
-                <ArrowLeft
-                  size={18}
-                  className="transition-transform group-hover:-translate-x-0.5 rtl:rotate-180 rtl:group-hover:translate-x-0.5"
-                />
-                <span>{resolvedBackLabel}</span>
-              </button>
+              <HeaderBackButton onClick={onBack} label={resolvedBackLabel} />
             ) : (
               <div className="h-8" />
             )}
@@ -222,18 +212,7 @@ export function OnboardingStepLayout({
       <div className="overflow-y-auto bg-white md:hidden" style={{ minHeight: '100dvh' }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           {onBack ? (
-            <button
-              type="button"
-              onClick={onBack}
-              aria-label={resolvedBackLabel}
-              className="group flex items-center gap-1.5 rounded-xl px-2 py-1 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F76BB]"
-            >
-              <ArrowLeft
-                size={18}
-                className="transition-transform group-hover:-translate-x-0.5 rtl:rotate-180 rtl:group-hover:translate-x-0.5"
-              />
-              <span>{resolvedBackLabel}</span>
-            </button>
+            <HeaderBackButton onClick={onBack} label={resolvedBackLabel} />
           ) : (
             <div className="h-8" />
           )}
