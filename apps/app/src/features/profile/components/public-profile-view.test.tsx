@@ -101,7 +101,7 @@ describe('PublicProfileView', () => {
     expect(await screen.findByText('Jane Doe')).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith('/profiles/user-2');
     expect(screen.getByText('Électricien')).toBeInTheDocument();
-    expect(screen.getByText('Tunis')).toBeInTheDocument();
+    expect(screen.queryByText('Tunis')).not.toBeInTheDocument();
     expect(screen.getByText('Quelques mots sur moi.')).toBeInTheDocument();
     expect(screen.getByText('Bricolage')).toBeInTheDocument();
     expect(screen.getByText('4.5 (3 avis)', { exact: false })).toBeInTheDocument();

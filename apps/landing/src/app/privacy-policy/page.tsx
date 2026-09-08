@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
       <main className="bg-neutral-50/60 pb-28">
         <SubpageHero eyebrow="Matchy+ Legal" title={doc.pageTitle} subtitle={doc.subheading} />
 
-        <div className="relative z-20 container -mt-10 max-w-4xl sm:-mt-14">
+        <div className="relative z-20 -mt-10 w-full px-4 sm:-mt-14 sm:px-6 md:px-8">
           <LegalDocumentView document={doc} isRtl={isRtl} />
         </div>
       </main>

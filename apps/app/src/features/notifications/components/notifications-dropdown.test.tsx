@@ -164,7 +164,9 @@ describe('NotificationsDropdown', () => {
     );
 
     expect(screen.getByText('Profile view')).toBeInTheDocument();
-    expect(screen.getByText('Someone named "Jane" viewed your profile.')).toBeInTheDocument();
+    expect(screen.getByText(/Someone named/)).toBeInTheDocument();
+    const entry = screen.getByText('Jane');
+    expect(entry.tagName).toBe('STRONG');
     const img = container.querySelector('img');
     expect(img).toHaveStyle({ filter: 'blur(5px)' });
   });
@@ -200,8 +202,8 @@ describe('NotificationsDropdown', () => {
 
     renderWithProviders(<NotificationsDropdown isOpen={true} onClose={vi.fn()} />, store);
 
-    expect(
-      screen.getByText('Someone named "Jane Smith Doe" viewed your profile.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Someone named/)).toBeInTheDocument();
+    const entry = screen.getByText('Jane Smith Doe');
+    expect(entry.tagName).toBe('STRONG');
   });
 });

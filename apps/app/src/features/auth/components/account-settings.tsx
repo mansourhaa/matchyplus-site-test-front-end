@@ -874,7 +874,7 @@ export function AccountSettings() {
         </h1>
       </div>
 
-      <div className="mx-auto max-w-2xl space-y-3 px-4 py-6">
+      <div className="w-full space-y-3 px-4 py-6 md:px-8">
         <ChangePasswordSection />
         <PhoneLinkSection />
         <IdentityVerificationSection />

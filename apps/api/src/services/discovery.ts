@@ -41,7 +41,11 @@ export class DiscoveryService {
       );
       const limit = Math.min(Math.max(1, asFiniteNumber(query.limit) ?? DISCOVERY_PAGE_SIZE), 50);
       const offset = Math.max(0, asFiniteNumber(query.offset) ?? 0);
-      const radiusM = DISCOVERY_RADIUS_M;
+      const maxDistanceKm = asFiniteNumber(query.maxDistanceKm);
+      const radiusM =
+        maxDistanceKm != null
+          ? Math.min(200, Math.max(1, maxDistanceKm)) * 1000
+          : DISCOVERY_RADIUS_M;
       const serviceTypes = parseServiceTypes(query.serviceTypes);
       const sectorQuery = query.sector?.trim().toLowerCase() ?? '';
       const needle = query.q?.trim().toLowerCase() ?? '';

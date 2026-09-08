@@ -613,6 +613,7 @@ export function SearchView() {
       {detailProfile && !detailProfile.is_locked && (
         <ProfileDetailModal
           profile={detailProfile}
+          source="search"
           busy={matching.swipeLoading}
           onClose={() => setDetailProfile(null)}
           onPass={() => {

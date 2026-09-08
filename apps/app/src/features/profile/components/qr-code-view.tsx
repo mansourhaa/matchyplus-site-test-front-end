@@ -132,7 +132,7 @@ export function QrCodeView() {
     (locale === 'en' ? 'Freelance' : locale === 'ar' ? 'مستقل' : 'Freelance');
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col items-center" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="flex w-full flex-col items-center" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* 1. Header subtitle */}
       <p className="mb-6 text-center text-sm font-medium text-[#64748B]">
         {locale === 'en'

@@ -35,6 +35,8 @@ AI_WORKER_CONCURRENCY="${AI_WORKER_CONCURRENCY:-1}"
 AI_INTERNAL_TOKEN="${AI_INTERNAL_TOKEN:-}"
 LOG_LEVEL="${LOG_LEVEL:-INFO}"
 
+DISCOVERY_RADIUS_M="${DISCOVERY_RADIUS_M:-25000}"
+
 kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n "${NAMESPACE}" create secret generic saas-api-env \
@@ -50,6 +52,7 @@ kubectl -n "${NAMESPACE}" create secret generic saas-api-env \
   --from-literal=AI_STREAM_KEY="${AI_STREAM_KEY}" \
   --from-literal=AI_CONSUMER_GROUP="${AI_CONSUMER_GROUP}" \
   --from-literal=AI_CACHE_TTL_SECONDS="${AI_CACHE_TTL_SECONDS}" \
+  --from-literal=DISCOVERY_RADIUS_M="${DISCOVERY_RADIUS_M}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n "${NAMESPACE}" create secret generic saas-ai-env \

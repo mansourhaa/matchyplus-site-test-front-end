@@ -176,6 +176,98 @@ describe('OAuthAuthenticationService', () => {
       expect(issueTokenPairSpy).not.toHaveBeenCalled();
       issueTokenPairSpy.mockRestore();
     });
+
+    it('downloads avatar and stores local media path when creating a new user', async () => {
+      const { prisma } = createService();
+      const downloadAvatar = vi.fn().mockResolvedValue('/uploads/photos/saved-uuid.jpg');
+      const service = new OAuthAuthenticationService({
+        prisma: prisma as never,
+        downloadAvatar,
+      });
+
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue({ id: 'user-1' });
+
+      await service.findOrCreateOAuthUser('google', {
+        id: 'google-sub-1',
+        email: 'new@example.com',
+        emailVerified: true,
+        name: 'Jane Doe',
+        image: 'https://lh3.googleusercontent.com/avatar.jpg',
+      });
+
+      expect(downloadAvatar).toHaveBeenCalledWith('https://lh3.googleusercontent.com/avatar.jpg');
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            image: '/uploads/photos/saved-uuid.jpg',
+          }),
+        }),
+      );
+    });
+
+    it('downloads avatar when existing user by provider has no image', async () => {
+      const { prisma } = createService();
+      const downloadAvatar = vi.fn().mockResolvedValue('/uploads/photos/saved-uuid.jpg');
+      const service = new OAuthAuthenticationService({
+        prisma: prisma as never,
+        downloadAvatar,
+      });
+
+      prisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-1',
+        image: null,
+        google_id: 'google-sub-1',
+      });
+      prisma.user.update.mockResolvedValue({ id: 'user-1' });
+
+      await service.findOrCreateOAuthUser('google', {
+        id: 'google-sub-1',
+        email: 'existing@example.com',
+        emailVerified: true,
+        name: 'Jane Doe',
+        image: 'https://lh3.googleusercontent.com/avatar.jpg',
+      });
+
+      expect(downloadAvatar).toHaveBeenCalledWith('https://lh3.googleusercontent.com/avatar.jpg');
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { image: '/uploads/photos/saved-uuid.jpg' },
+      });
+    });
+  });
+
+  describe('linkOAuthProvider', () => {
+    it('downloads avatar when linking provider if user has no image', async () => {
+      const { prisma } = createService();
+      const downloadAvatar = vi.fn().mockResolvedValue('/uploads/photos/saved-uuid.jpg');
+      const service = new OAuthAuthenticationService({
+        prisma: prisma as never,
+        downloadAvatar,
+      });
+
+      prisma.user.findUnique
+        .mockResolvedValueOnce(null) // existingByProvider
+        .mockResolvedValueOnce({ id: 'user-1', email: 'user@example.com', image: null }); // user
+      prisma.user.update.mockResolvedValue({ id: 'user-1' });
+
+      await service.linkOAuthProvider('user-1', 'google', {
+        id: 'google-sub-1',
+        email: 'user@example.com',
+        emailVerified: true,
+        name: 'Jane Doe',
+        image: 'https://lh3.googleusercontent.com/avatar.jpg',
+      });
+
+      expect(downloadAvatar).toHaveBeenCalledWith('https://lh3.googleusercontent.com/avatar.jpg');
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: expect.objectContaining({
+          image: '/uploads/photos/saved-uuid.jpg',
+          google_id: 'google-sub-1',
+        }),
+      });
+    });
   });
 
   describe('createExchangeCode', () => {

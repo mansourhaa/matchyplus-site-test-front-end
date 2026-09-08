@@ -128,7 +128,7 @@ export default function PrivacyPage() {
       style={{ background: matchyBrand.bg }}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      <div className="mx-auto max-w-2xl space-y-4 px-4 py-6 md:px-8">
+      <div className="w-full space-y-4 px-4 py-6 md:px-8">
         {/* 1. Hide My Profile Card */}
         <div
           className="flex items-center justify-between gap-4 rounded-3xl bg-white p-5 shadow-xs"

@@ -196,7 +196,7 @@ export function VerifyAccountScreen() {
 
   return (
     <div
-      className="flex h-full min-h-[calc(100vh-100px)] w-full max-w-md flex-col items-center justify-between py-6 text-center md:py-10"
+      className="flex h-full min-h-[calc(100vh-100px)] w-full flex-col items-center justify-between py-6 text-center md:py-10"
       dir={dir}
     >
       {/* 2. Main Title & Subtitle */}

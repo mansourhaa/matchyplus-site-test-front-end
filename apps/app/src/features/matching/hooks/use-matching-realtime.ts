@@ -164,7 +164,7 @@ export function useMatchingRealtime(enabled = true) {
                       id: String(nextToastId.current++),
                       title: 'Demande de match',
                       body: actorName
-                        ? `Quelqu'un nommé "${actorName}" vous a envoyé une demande de match.`
+                        ? `Quelqu'un nommé ${actorName} vous a envoyé une demande de match.`
                         : 'Quelqu’un vous a envoyé une demande de match.',
                       viewerImage:
                         (notifPayload?.sender_picture as string | null | undefined) ?? null,
@@ -330,7 +330,7 @@ export function useMatchingRealtime(enabled = true) {
                       {
                         id,
                         title: 'Vue de profil',
-                        body: `Quelqu'un nommé "${viewerName}" a consulté votre profil.`,
+                        body: `Quelqu'un nommé ${viewerName} a consulté votre profil.`,
                         viewerImage: message.payload?.viewerImage ?? null,
                       },
                       ...prev,
