@@ -220,6 +220,50 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(result.profiles.map((p) => p.id)).toEqual(['near']);
   });
 
+  it('respects maxDistanceKm query override', async () => {
+    const prisma = createMockPrisma([
+      // ~10km away
+      candidate('near-10km', {
+        location: {
+          latitude: 36.89,
+          longitude: 10.18,
+          location_enabled: true,
+          city: 'Ariana',
+          country: 'TN',
+        },
+      }),
+      // ~20km away
+      candidate('mid-20km', {
+        location: {
+          latitude: 36.98,
+          longitude: 10.18,
+          location_enabled: true,
+          city: 'Raoued',
+          country: 'TN',
+        },
+      }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    // With 15km override, only near-10km should match
+    const result15 = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      maxDistanceKm: 15,
+      context: 'swipe',
+    });
+    expect(result15.profiles.map((p) => p.id)).toEqual(['near-10km']);
+
+    // With 25km override, both should match
+    const result25 = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      maxDistanceKm: 25,
+      context: 'swipe',
+    });
+    expect(result25.profiles.map((p) => p.id)).toEqual(['near-10km', 'mid-20km']);
+  });
+
   it('paginates with offset and reports has_more', async () => {
     const prisma = createMockPrisma([
       candidate('1', { rating: 5, name: 'A' }),

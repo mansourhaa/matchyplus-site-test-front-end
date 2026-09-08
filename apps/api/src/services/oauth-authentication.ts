@@ -4,16 +4,23 @@ import { config } from '../config.js';
 import { generateExchangeCode, hashExchangeCode } from '../lib/oauth-exchange-code.js';
 import { OAuthExchangePayload, OAuthProfilePayload, OAuthProviderName } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { downloadAndSaveOAuthAvatar } from '../utils/oauth-avatar.js';
 import { toMemberSessionUser } from '../utils/session-user.js';
 import { TokenService } from './token.js';
+
+export type OAuthAuthenticationServiceOptions = AbstractServiceOptions & {
+  downloadAvatar?: (url: string) => Promise<string | null>;
+};
 
 export class OAuthAuthenticationService {
   prisma: PrismaClient;
   tokenService: TokenService;
+  downloadAvatar: (url: string) => Promise<string | null>;
 
-  constructor(options: AbstractServiceOptions) {
+  constructor(options: OAuthAuthenticationServiceOptions) {
     this.prisma = options.prisma;
     this.tokenService = new TokenService({ prisma: options.prisma });
+    this.downloadAvatar = options.downloadAvatar ?? downloadAndSaveOAuthAvatar;
   }
 
   // Finds the user for this provider identity, links the provider to an existing
@@ -26,10 +33,13 @@ export class OAuthAuthenticationService {
     const existingByProvider = await this.prisma.user.findUnique({ where: providerIdWhere });
     if (existingByProvider) {
       if (!existingByProvider.image && profile.image) {
-        return this.prisma.user.update({
-          where: { id: existingByProvider.id },
-          data: { image: profile.image },
-        });
+        const localImage = await this.downloadAvatar(profile.image);
+        if (localImage) {
+          return this.prisma.user.update({
+            where: { id: existingByProvider.id },
+            data: { image: localImage },
+          });
+        }
       }
       return existingByProvider;
     }
@@ -42,23 +52,29 @@ export class OAuthAuthenticationService {
         if (!profile.emailVerified) {
           throw new Error('oauth_email_unverified');
         }
+        let localImage: string | null = null;
+        if (!existingByEmail.image && profile.image) {
+          localImage = await this.downloadAvatar(profile.image);
+        }
         return this.prisma.user.update({
           where: { id: existingByEmail.id },
           data: {
             email_verified: true,
-            ...(!existingByEmail.image && profile.image ? { image: profile.image } : {}),
+            ...(localImage ? { image: localImage } : {}),
             ...(provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id }),
           },
         });
       }
     }
 
+    const image = profile.image ? await this.downloadAvatar(profile.image) : null;
+
     return this.prisma.user.create({
       data: {
         email,
         email_verified: profile.emailVerified,
         name: profile.name ?? profile.email ?? `${provider}-${profile.id}`,
-        image: profile.image ?? null,
+        image,
         auth_provider: provider,
         ...(provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id }),
       },
@@ -98,11 +114,16 @@ export class OAuthAuthenticationService {
       throw new Error('oauth_link_email_mismatch');
     }
 
+    let localImage: string | null = null;
+    if (!user.image && profile.image) {
+      localImage = await this.downloadAvatar(profile.image);
+    }
+
     return this.prisma.user.update({
       where: { id: userId },
       data: {
         email_verified: true,
-        ...(!user.image && profile.image ? { image: profile.image } : {}),
+        ...(localImage ? { image: localImage } : {}),
         ...(profileEmail && !user.email ? { email: profileEmail } : {}),
         ...(provider === 'google' ? { google_id: profile.id } : { linkedin_id: profile.id }),
       },

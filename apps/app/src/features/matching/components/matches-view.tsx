@@ -90,7 +90,7 @@ export function MatchesView() {
           </Link>
         </div>
       ) : (
-        <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-2 md:px-8">
+        <div className="w-full space-y-6 px-4 py-2 md:px-8">
           {/* 1. TOP SECTION: Mes Matchs (Horizontal Avatar Row) */}
           {(matching.matchesLoading || matching.matches.length > 0) && (
             <section className="space-y-3">

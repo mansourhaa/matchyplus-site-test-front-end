@@ -32,6 +32,42 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+function formatDailyPrice(price: string | null | undefined, locale: string): string | null {
+  if (!price) return null;
+  const trimmed = price.trim();
+  if (!trimmed) return null;
+
+  const perDaySuffix = locale === 'ar' ? '/يوم' : locale === 'en' ? '/day' : '/jour';
+  const currency = locale === 'ar' ? 'د.ت' : 'DT';
+
+  // If already specified per hour, replace it with per day
+  if (/\/(h|hour|hr|heure|ساعة|س)/i.test(trimmed)) {
+    return trimmed.replace(/\/(h|hour|hr|heure|ساعة|س)/i, perDaySuffix);
+  }
+
+  // If already specifies day
+  if (/\/(day|jour|j|يوم)/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  // If ends with DT, TND, or د.ت without a slash
+  if (/(DT|TND|د\.ت)$/i.test(trimmed)) {
+    return `${trimmed}${perDaySuffix}`;
+  }
+
+  // If purely numeric
+  if (/^\d+(\.\d+)?$/.test(trimmed)) {
+    return `${trimmed} ${currency}${perDaySuffix}`;
+  }
+
+  // If starts with number and contains currency
+  if (/^\d+(\.\d+)?\s*(DT|TND)/i.test(trimmed)) {
+    return `${trimmed}${perDaySuffix}`;
+  }
+
+  return `${trimmed} ${perDaySuffix}`;
+}
+
 export function FavoritesView() {
   const { t, locale, dir } = useI18n();
   const dispatch = useAppDispatch();
@@ -146,7 +182,7 @@ export function FavoritesView() {
       style={{ background: matchyBrand.bg }}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 md:px-8">
+      <div className="w-full space-y-6 px-4 py-6 md:px-8">
         {/* Error Banner */}
         {error && (
           <div className="flex items-center justify-between rounded-2xl bg-red-50 p-4 text-xs font-semibold text-red-600">
@@ -204,164 +240,172 @@ export function FavoritesView() {
               const isBusy = Boolean(actionLoading[profile.id]);
               const isPending = pendingIds.has(profile.id);
               const isMatched = matchedIds.has(profile.id);
+              const dailyPrice = formatDailyPrice(profile.price, locale);
 
               return (
                 <div
                   key={profile.id}
                   onClick={() => setSelectedProfile(profile)}
-                  className="group flex cursor-pointer flex-col gap-3.5 rounded-3xl bg-white p-4.5 shadow-xs transition-all hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+                  className="group flex cursor-pointer flex-col gap-3 rounded-3xl bg-white p-4.5 shadow-xs transition-all hover:shadow-md"
                   style={{ border: `1px solid ${matchyBrand.border}` }}
                 >
-                  {/* Left Section: Avatar + Details */}
-                  <div className="flex min-w-0 flex-1 items-start gap-3.5">
-                    {/* Avatar with status indicator dot */}
-                    <div className="relative mt-0.5 shrink-0">
-                      <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-[#334155] text-xl font-bold text-white shadow-inner">
-                        {profile.image ? (
-                          <AuthenticatedProfileAvatar
-                            image={profile.image}
-                            name={profile.name}
-                            sizeClassName="h-16 w-16"
-                            roundedClassName="rounded-2xl"
-                          />
-                        ) : (
-                          <span>{(profile.name || 'M').charAt(0).toUpperCase()}</span>
-                        )}
-                      </div>
-
-                      {/* Status indicator dot */}
-                      <span
-                        className="absolute -right-0.5 -bottom-0.5 h-4 w-4 rounded-full shadow-xs ring-2 ring-white"
-                        style={{ background: '#4EAD96' }}
-                      />
-                    </div>
-
-                    {/* Middle Details */}
-                    <div className="min-w-0 flex-1 space-y-1">
-                      {/* Name */}
-                      <div className="flex flex-wrap items-baseline gap-1.5">
-                        <h2
-                          className="truncate text-sm font-extrabold"
-                          style={{ color: matchyBrand.textDark }}
-                        >
-                          {profile.name}
-                        </h2>
-                      </div>
-
-                      {/* Category & Service / Job */}
-                      <p className="truncate text-xs font-medium text-[#64748B]">
-                        {profile.category ? `${profile.category} / ` : ''}
-                        {profile.service_type || profile.job || 'Member'}
-                      </p>
-
-                      {/* Meta Info: Rating, Distance, Price */}
-                      <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs">
-                        <span className="flex items-center gap-1 font-bold text-[#1A1A2E]">
-                          <Star size={13} className="fill-[#F5A623] text-[#F5A623]" />
-                          {typeof profile.rating === 'number' && profile.rating > 0
-                            ? profile.rating.toFixed(1)
-                            : '5.0'}
-                        </span>
-
-                        <span className="text-gray-300">·</span>
-
-                        <span className="flex items-center gap-0.5 font-medium text-[#2F76BB]">
-                          <MapPin size={13} className="shrink-0" />
-                          {profile.distance_km != null
-                            ? `${profile.distance_km} km`
-                            : profile.city || t('settings.favoritesNearby')}
-                        </span>
-
-                        {profile.price && (
-                          <>
-                            <span className="text-gray-300">·</span>
-                            <span className="font-bold text-[#0D9488]">{profile.price}</span>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Status note if pending */}
-                      {isPending && (
-                        <div className="flex items-center gap-1 pt-0.5 text-[11px] font-semibold text-[#D97706]">
-                          <Clock size={12} className="text-[#D97706]" />
-                          <span>{t('settings.favoritesPendingDesc')}</span>
+                  {/* Top Row: Avatar + Details + Actions */}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-1 items-start gap-3.5">
+                      {/* Avatar with status indicator dot */}
+                      <div className="relative mt-0.5 shrink-0">
+                        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-[#334155] text-xl font-bold text-white shadow-inner sm:h-16 sm:w-16">
+                          {profile.image ? (
+                            <AuthenticatedProfileAvatar
+                              image={profile.image}
+                              name={profile.name}
+                              sizeClassName="h-14 w-14 sm:h-16 sm:w-16"
+                              roundedClassName="rounded-2xl"
+                            />
+                          ) : (
+                            <span>{(profile.name || 'M').charAt(0).toUpperCase()}</span>
+                          )}
                         </div>
-                      )}
 
-                      {/* Tags / Interests Badges */}
-                      {profile.interests && profile.interests.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {profile.interests.slice(0, 4).map((interest) => (
-                            <span
-                              key={interest}
-                              className="rounded-full border border-[#DCEBFA] bg-[#F0F7FF] px-2.5 py-0.5 text-[11px] font-semibold text-[#2F76BB]"
-                            >
-                              {interest}
+                        {/* Status indicator dot */}
+                        <span
+                          className="absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 rounded-full shadow-xs ring-2 ring-white"
+                          style={{ background: '#4EAD96' }}
+                        />
+                      </div>
+
+                      {/* Middle Details */}
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        {/* Name & Age */}
+                        <div className="flex flex-wrap items-baseline gap-1.5">
+                          <h2
+                            className="truncate text-sm font-extrabold"
+                            style={{ color: matchyBrand.textDark }}
+                          >
+                            {profile.name}
+                          </h2>
+                          {(profile as any).age ? (
+                            <span className="text-xs font-normal text-[#94A3B8]">
+                              {(profile as any).age}{' '}
+                              {locale === 'ar' ? 'سنة' : locale === 'en' ? 'yo' : 'ans'}
                             </span>
-                          ))}
+                          ) : null}
                         </div>
+
+                        {/* Category & Service / Job */}
+                        <p className="truncate text-xs font-medium text-[#64748B]">
+                          {profile.service_type || profile.job || profile.category || 'Member'}
+                        </p>
+
+                        {/* Meta Info: Rating, Distance, Price per day */}
+                        <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs text-[#64748B]">
+                          <span className="flex items-center gap-1 font-bold text-[#1A1A2E]">
+                            <Star size={13} className="fill-[#F5A623] text-[#F5A623]" />
+                            {typeof profile.rating === 'number' && profile.rating > 0
+                              ? profile.rating.toFixed(1)
+                              : '5.0'}
+                          </span>
+
+                          <span className="text-gray-300">·</span>
+
+                          <span className="flex items-center gap-0.5 font-medium text-[#2F76BB]">
+                            <MapPin size={13} className="shrink-0" />
+                            {profile.distance_km != null
+                              ? `${profile.distance_km} km`
+                              : profile.city || t('settings.favoritesNearby')}
+                          </span>
+
+                          {dailyPrice && (
+                            <>
+                              <span className="text-gray-300">·</span>
+                              <span className="font-medium text-[#64748B]">{dailyPrice}</span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Status note if pending */}
+                        {isPending && (
+                          <div className="flex items-center gap-1 pt-0.5 text-[11px] font-semibold text-[#D97706]">
+                            <Clock size={12} className="text-[#D97706]" />
+                            <span>{t('settings.favoritesPendingDesc')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Actions: Connect/Pending status button + Retirer button */}
+                    <div className="flex shrink-0 flex-row items-center gap-2 self-end sm:self-center">
+                      {isMatched ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const convId = getConversationId(profile.id);
+                            router.push(convId ? `/matches?c=${convId}` : '/matches');
+                          }}
+                          className="flex items-center justify-center gap-1.5 rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-2 text-xs font-bold text-[#2563EB] shadow-xs transition-transform hover:scale-105 active:scale-95"
+                        >
+                          <MessageCircle size={13} />
+                          <span>
+                            {locale === 'en' ? 'Chat' : locale === 'ar' ? 'محادثة' : 'Chat'}
+                          </span>
+                        </button>
+                      ) : isPending ? (
+                        <div
+                          className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold shadow-xs select-none"
+                          style={{
+                            background: '#FFFDF0',
+                            border: '1.5px solid #F59E0B',
+                            color: '#F59E0B',
+                          }}
+                        >
+                          <Clock size={13} color="#F59E0B" />
+                          <span>{t('settings.favoritesPending')}</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => handleConnect(e, profile)}
+                          disabled={isBusy}
+                          className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold text-white shadow-xs transition-transform hover:scale-105 active:scale-95 disabled:opacity-60"
+                          style={{ background: matchyBrand.gradient }}
+                        >
+                          <Zap size={13} fill="white" />
+                          <span>{t('settings.favoritesConnect')}</span>
+                        </button>
                       )}
+
+                      <button
+                        type="button"
+                        onClick={(e) => handleRemove(e, profile.id, profile.name)}
+                        disabled={isBusy}
+                        aria-label={t('settings.favoritesRemove')}
+                        className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold shadow-xs transition-transform hover:scale-105 active:scale-95 disabled:opacity-60"
+                        style={{
+                          background: '#FEF2F2',
+                          border: '1px solid #FEE2E2',
+                          color: '#EF4444',
+                        }}
+                      >
+                        <X size={13} strokeWidth={2.5} />
+                        <span>{t('settings.favoritesRemove')}</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Right Actions: Connect/Pending status button + Retirer button */}
-                  <div className="flex shrink-0 flex-row items-end gap-2 self-end sm:flex-col sm:self-center">
-                    {isMatched ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const convId = getConversationId(profile.id);
-                          router.push(convId ? `/matches?c=${convId}` : '/matches');
-                        }}
-                        className="flex items-center justify-center gap-1.5 rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-2 text-xs font-bold text-[#2563EB] shadow-xs transition-transform hover:scale-105 active:scale-95"
-                      >
-                        <MessageCircle size={13} />
-                        <span>
-                          {locale === 'en' ? 'Chat' : locale === 'ar' ? 'محادثة' : 'Chat'}
+                  {/* Bottom Row: Tags / Interests Badges spanning under avatar */}
+                  {profile.interests && profile.interests.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {profile.interests.slice(0, 5).map((interest) => (
+                        <span
+                          key={interest}
+                          className="rounded-full border border-[#DCEBFA] bg-[#F0F7FF] px-2.5 py-0.5 text-[11px] font-semibold text-[#2F76BB]"
+                        >
+                          {interest}
                         </span>
-                      </button>
-                    ) : isPending ? (
-                      <div
-                        className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold shadow-xs select-none"
-                        style={{
-                          background: '#FFFDF0',
-                          border: '1.5px solid #F59E0B',
-                          color: '#F59E0B',
-                        }}
-                      >
-                        <Clock size={13} color="#F59E0B" />
-                        <span>{t('settings.favoritesPending')}</span>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={(e) => handleConnect(e, profile)}
-                        disabled={isBusy}
-                        className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold text-white shadow-xs transition-transform hover:scale-105 active:scale-95 disabled:opacity-60"
-                        style={{ background: matchyBrand.gradient }}
-                      >
-                        <Zap size={13} fill="white" />
-                        <span>{t('settings.favoritesConnect')}</span>
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={(e) => handleRemove(e, profile.id, profile.name)}
-                      disabled={isBusy}
-                      aria-label={t('settings.favoritesRemove')}
-                      className="flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold shadow-xs transition-transform hover:scale-105 active:scale-95 disabled:opacity-60"
-                      style={{
-                        background: '#FEF2F2',
-                        border: '1px solid #FEE2E2',
-                        color: '#EF4444',
-                      }}
-                    >
-                      <X size={13} strokeWidth={2.5} />
-                      <span>{t('settings.favoritesRemove')}</span>
-                    </button>
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -394,6 +438,7 @@ export function FavoritesView() {
             match_score: selectedProfile.match_score,
             distance_km: selectedProfile.distance_km,
           }}
+          source="favorites"
           onClose={() => setSelectedProfile(null)}
           onConnect={async () => {
             const targetId = selectedProfile.id;

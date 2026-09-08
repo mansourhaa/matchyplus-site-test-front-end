@@ -225,9 +225,10 @@ export function ChatOptionsMenu({ peer, conversationId }: ChatOptionsMenuProps) 
             activity_sector: peer.activity_sector ?? null,
             service_type: peer.service_type ?? null,
             offer_service: Boolean(peer.service_type),
-            rating: 5.0,
+            rating: 0,
             matched: true,
           }}
+          source="chat"
           onClose={() => setShowProfileModal(false)}
         />
       )}

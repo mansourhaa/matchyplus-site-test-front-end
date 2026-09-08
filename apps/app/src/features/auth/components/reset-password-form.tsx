@@ -1,6 +1,7 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import { HeaderBackButton } from '@/components/matchy/header-back-button';
 import { PasswordRequirements } from '@/components/password-requirements';
 import { useAppDispatch } from '@/features/auth/hooks';
 import { confirmPasswordReset, requestPasswordReset } from '@/features/auth/store/auth-slice';
@@ -542,21 +543,10 @@ export function ResetPasswordForm() {
           style={{ borderBottom: '1px solid #F5F5F5' }}
         >
           <div className="flex items-center gap-3">
-            <button
-              type="button"
+            <HeaderBackButton
               onClick={step === 'new_password' ? () => setStep('request') : handleBackToLogin}
-              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-[#F8FAFC]"
-              style={{
-                border: '1px solid #E8E8E8',
-                color: '#667085',
-                fontSize: '12px',
-                fontWeight: 700,
-              }}
-            >
-              <ArrowLeft size={14} />
-              {t('common.back')}
-            </button>
-            <MatchyLogo size="sm" />
+              label={t('common.back')}
+            />
           </div>
         </div>
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-10 py-10">
@@ -571,21 +561,10 @@ export function ResetPasswordForm() {
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           <div className="flex items-center gap-3">
-            <button
-              type="button"
+            <HeaderBackButton
               onClick={step === 'new_password' ? () => setStep('request') : handleBackToLogin}
-              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-[#F8FAFC]"
-              style={{
-                border: '1px solid #E8E8E8',
-                color: '#667085',
-                fontSize: '12px',
-                fontWeight: 700,
-              }}
-            >
-              <ArrowLeft size={14} />
-              {t('common.back')}
-            </button>
-            <MatchyLogo size="sm" />
+              label={t('common.back')}
+            />
           </div>
         </div>
         <div className="flex flex-1 flex-col justify-center px-7 py-8">{formContent}</div>

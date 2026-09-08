@@ -37,6 +37,7 @@ export function PublicProfileView({ userId }: { userId: string }) {
         ...viewedProfile,
         rating: viewedProfile.rating ?? 0,
       }}
+      source="public"
       onClose={() => {
         if (window.history.length > 1) window.history.back();
         else window.location.assign('/home');

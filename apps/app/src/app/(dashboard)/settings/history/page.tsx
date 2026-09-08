@@ -1,5 +1,6 @@
 'use client';
 
+import { AuthenticatedProfileAvatar } from '@/components/matchy/authenticated-profile-image';
 import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { useI18n } from '@/features/i18n/i18n-provider';
@@ -11,7 +12,7 @@ import {
   selectSwipeHistoryLoading,
 } from '@/features/matching/store/matching-slice';
 import type { MatchingProfile, SwipeHistoryItem } from '@/features/matching/types';
-import { Eye, Heart, History, Loader2, Sparkles, Trash2, X } from 'lucide-react';
+import { Eye, Heart, History, Loader2, SkipForward, Sparkles, Trash2, X, Zap } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 type HistoryTab = 'all' | 'viewed' | 'connected' | 'match' | 'left';
@@ -234,6 +235,46 @@ export default function HistoryPage() {
                     item.target.activity_sector ||
                     '';
 
+                  const actionConfig = isMatched
+                    ? {
+                        label: t('activityHistory.actionMatched'),
+                        badgeBg: 'bg-[#FFF8EB]',
+                        icon: <Zap size={10} className="fill-[#D97706] text-[#D97706]" />,
+                        pillClass:
+                          'rounded-full bg-[#FFF8EB] px-2.5 py-0.5 text-[11px] font-bold text-[#D97706]',
+                      }
+                    : isConnected
+                      ? {
+                          label: t('activityHistory.actionConnectionSent'),
+                          badgeBg: 'bg-[#E8F7F3]',
+                          icon: <Heart size={10} className="text-[#2A9177]" />,
+                          pillClass:
+                            'rounded-full bg-[#E8F7F3] px-2.5 py-0.5 text-[11px] font-bold text-[#2A9177]',
+                        }
+                      : isViewed
+                        ? {
+                            label: t('activityHistory.actionViewed'),
+                            badgeBg: 'bg-[#EEF5FF]',
+                            icon: <Eye size={10} className="text-[#2F76BB]" />,
+                            pillClass:
+                              'rounded-full bg-[#EEF5FF] px-2.5 py-0.5 text-[11px] font-bold text-[#2F76BB]',
+                          }
+                        : isSkipped
+                          ? {
+                              label: t('activityHistory.actionSkipped'),
+                              badgeBg: 'bg-[#F1F5F9]',
+                              icon: <SkipForward size={10} className="text-[#64748B]" />,
+                              pillClass:
+                                'rounded-full bg-[#F1F5F9] px-2.5 py-0.5 text-[11px] font-bold text-[#64748B]',
+                            }
+                          : {
+                              label: t('activityHistory.actionLiked'),
+                              badgeBg: 'bg-[#E8F7F3]',
+                              icon: <Heart size={10} className="text-[#2A9177]" />,
+                              pillClass:
+                                'rounded-full bg-[#E8F7F3] px-2.5 py-0.5 text-[11px] font-bold text-[#2A9177]',
+                            };
+
                   return (
                     <div
                       key={item.id}
@@ -243,18 +284,20 @@ export default function HistoryPage() {
                       {/* Left: Avatar + Details */}
                       <div className="flex min-w-0 items-center gap-3">
                         <div className="relative shrink-0">
-                          {item.target.image ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={item.target.image}
-                              alt={profileName}
-                              className="h-12 w-12 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EBF5FB] text-sm font-bold text-[#2F76BB]">
-                              {profileName.charAt(0)}
-                            </div>
-                          )}
+                          <AuthenticatedProfileAvatar
+                            image={item.target.image}
+                            name={profileName}
+                            sizeClassName="h-12 w-12"
+                            roundedClassName="rounded-full"
+                            textClassName="text-sm font-bold text-white"
+                          />
+
+                          {/* Action Icon Badge on Avatar */}
+                          <span
+                            className={`absolute -right-0.5 -bottom-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white shadow-2xs ${actionConfig.badgeBg}`}
+                          >
+                            {actionConfig.icon}
+                          </span>
                         </div>
 
                         <div className="min-w-0 flex-1">
@@ -262,33 +305,13 @@ export default function HistoryPage() {
                             {profileName}
                           </h3>
 
-                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px]">
-                            {isMatched ? (
-                              <span className="font-extrabold text-[#FF8A00]">
-                                {t('activityHistory.actionMatched')}
-                              </span>
-                            ) : isConnected ? (
-                              <span className="font-extrabold text-[#61BCA6]">
-                                {t('activityHistory.actionConnectionSent')}
-                              </span>
-                            ) : isSkipped ? (
-                              <span className="font-extrabold text-[#94A3B8]">
-                                {t('activityHistory.actionSkipped')}
-                              </span>
-                            ) : isViewed ? (
-                              <span className="font-extrabold text-[#2F76BB]">
-                                {t('activityHistory.actionViewed')}
-                              </span>
-                            ) : (
-                              <span className="font-extrabold text-[#2F76BB]">
-                                {t('activityHistory.actionLiked')}
-                              </span>
-                            )}
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                            <span className={actionConfig.pillClass}>{actionConfig.label}</span>
 
                             {role && (
                               <>
-                                <span className="text-[#CBD5E1]">-</span>
-                                <span className="truncate text-[#64748B]">{role}</span>
+                                <span className="text-[#CBD5E1]">·</span>
+                                <span className="truncate text-xs text-[#64748B]">{role}</span>
                               </>
                             )}
                           </div>
@@ -326,6 +349,7 @@ export default function HistoryPage() {
             distance_km: null,
             match_score: 85,
           }}
+          source="history"
           onClose={() => setSelectedProfile(null)}
         />
       )}
