@@ -513,14 +513,18 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
 
           {/* Profile Goals / Service / Bio Card */}
           {(profile.looking_for || profile.offer_service || profile.bio) && (
-            <div className="space-y-2 rounded-2xl border border-[#E8EFF5] bg-white p-3.5 shadow-2xs">
+            <div className="space-y-2 rounded-2xl bg-[#F4F7FB] p-4">
               {profile.looking_for && (
-                <div className="flex items-start gap-2 text-xs leading-relaxed text-[#555]">
+                <div className="flex items-start gap-2 text-xs leading-relaxed text-[#475569]">
                   <span className="mt-0.5 shrink-0 font-bold text-amber-500">🔸</span>
                   <span>{profile.looking_for}</span>
                 </div>
               )}
-              {profile.bio && <p className="text-xs leading-relaxed text-[#666]">{profile.bio}</p>}
+              {profile.bio && (
+                <p className="text-xs leading-relaxed whitespace-pre-line text-[#475569] sm:text-[13px]">
+                  {profile.bio}
+                </p>
+              )}
               {profile.offer_service && (
                 <div className="flex items-center gap-1.5 pt-0.5 text-xs font-bold text-[#61BCA6]">
                   <Check size={14} strokeWidth={2.5} className="text-[#61BCA6]" />
