@@ -499,17 +499,11 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
               </div>
             )}
 
-            {profile.city && (
+            {profile.distance_km != null && (
               <div className="flex items-center gap-1 text-[#61BCA6]">
                 <MapPin size={13} />
-                <span>{profile.city}</span>
+                <span>{t('matching.kmAway', { km: profile.distance_km })}</span>
               </div>
-            )}
-
-            {profile.distance_km != null && (
-              <span className="text-[#61BCA6]">
-                {t('matching.kmAway', { km: profile.distance_km })}
-              </span>
             )}
           </div>
 
