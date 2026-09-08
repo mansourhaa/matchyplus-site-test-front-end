@@ -5,6 +5,8 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import type { DiscoveryFeedSort } from '@/features/matching/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export type SearchFilters = {
   sector: string | null;
@@ -80,7 +82,21 @@ export function SearchFiltersSheet({
   onApply,
   onReset,
 }: SearchFiltersSheetProps) {
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [open]);
 
   const safeDraft: SearchFilters = {
     sector: draft.sector ?? DEFAULT_SEARCH_FILTERS.sector,
@@ -99,56 +115,49 @@ export function SearchFiltersSheet({
     { value: 'price_desc', label: `💰 ${t('search.sortPriceDesc')}` },
   ];
 
-  return (
+  const content = (
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end md:items-center md:justify-center"
-          style={{ background: 'rgba(0,0,0,0.5)' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
+          className="fixed inset-0 z-[100] flex h-dvh h-screen w-screen flex-col overflow-hidden bg-white"
+          style={{ background: '#FFFFFF' }}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 15 }}
+          transition={{ duration: 0.2 }}
+          dir={dir}
         >
-          <motion.div
-            className="flex max-h-[92vh] w-full flex-col rounded-t-3xl bg-white md:max-w-md md:rounded-3xl"
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
+          {/* Top Bar */}
+          <div
+            className="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b bg-white px-5 py-4 sm:px-8"
+            style={{ borderBottom: `1px solid ${matchyBrand.border}`, height: 64 }}
           >
-            {/* Top Bar */}
-            <div
-              className="relative flex shrink-0 items-center justify-between px-5 py-4"
-              style={{ borderBottom: `1px solid ${matchyBrand.border}` }}
-            >
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-[#F0F2F5]"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E8E8E8] bg-white text-[#334155] shadow-2xs transition-colors hover:bg-[#F5F5F5] active:scale-95"
                 aria-label={t('common.close')}
               >
-                <X size={20} color="#1A1A2E" />
+                <X size={18} />
               </button>
-
-              <p
-                className="absolute left-1/2 -translate-x-1/2 text-base font-bold md:text-lg"
-                style={{ color: '#1A1A2E' }}
-              >
+              <p className="text-base font-bold text-[#1A1A2E] sm:text-lg">
                 {t('search.customFilters')}
               </p>
-
-              <button
-                type="button"
-                onClick={onReset}
-                className="text-sm font-semibold text-[#2F76BB] transition-opacity hover:opacity-80"
-              >
-                {t('search.resetFilters')}
-              </button>
             </div>
 
-            {/* Scrollable Filters Content */}
-            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5">
+            <button
+              type="button"
+              onClick={onReset}
+              className="rounded-xl px-3 py-1.5 text-xs font-semibold text-[#2F76BB] transition-colors hover:bg-[#F0F7FF] sm:text-sm"
+            >
+              {t('search.resetFilters')}
+            </button>
+          </div>
+
+          {/* Scrollable Filters Content */}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="mx-auto max-w-2xl space-y-6 px-5 py-6 sm:px-8">
               {/* 1. Secteurs */}
               <div>
                 <p className="mb-3 text-sm font-bold" style={{ color: '#1A1A2E' }}>
@@ -378,12 +387,14 @@ export function SearchFiltersSheet({
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Bottom Button */}
-            <div
-              className="shrink-0 px-5 py-4"
-              style={{ borderTop: `1px solid ${matchyBrand.border}` }}
-            >
+          {/* Bottom Button */}
+          <div
+            className="sticky bottom-0 z-20 shrink-0 border-t bg-white px-5 py-4 shadow-lg sm:px-8"
+            style={{ borderTop: `1px solid ${matchyBrand.border}` }}
+          >
+            <div className="mx-auto max-w-2xl">
               <button
                 type="button"
                 onClick={onApply}
@@ -394,9 +405,15 @@ export function SearchFiltersSheet({
                 <span>{t('search.applyFilters')}</span>
               </button>
             </div>
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
   );
+
+  if (!mounted || typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(content, document.body);
 }
