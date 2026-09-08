@@ -18,7 +18,7 @@ export function LegalDocumentView({ document, isRtl = false }: Props) {
       }}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      <div className="w-full px-4 sm:px-6 md:px-8">
+      <div className="w-full px-4 pt-6 pb-12 sm:px-6 sm:pt-8 md:px-8 md:pt-10">
         {/* Centered Document Header */}
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-extrabold tracking-tight text-[#0F172A] sm:text-3xl">
