@@ -269,11 +269,8 @@ function NotificationRow({ item }: { item: NotificationItem }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className={`inline-flex items-center gap-1.5 ${actionConfig.pillClass}`}>
-            {actionConfig.icon}
-            <span>{title}</span>
-          </span>
+        <div className="flex items-start justify-between gap-2">
+          <div className="text-xs leading-relaxed text-[#1E293B]">{body}</div>
           <span className="shrink-0 text-[11px] text-[#94A3B8]">
             {formatDistanceToNow(new Date(item.created_at), {
               addSuffix: false,
@@ -281,7 +278,12 @@ function NotificationRow({ item }: { item: NotificationItem }) {
             })}
           </span>
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-[#64748B]">{body}</p>
+        <div className="mt-1.5 flex items-center">
+          <span className={`inline-flex items-center gap-1.5 ${actionConfig.pillClass}`}>
+            {actionConfig.icon}
+            <span>{title}</span>
+          </span>
+        </div>
       </div>
 
       {!item.read && (
