@@ -468,7 +468,9 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
             </div>
             {profile.price && (
               <span className="shrink-0 rounded-full bg-[#2F76BB] px-3.5 py-1.5 text-xs font-bold text-white shadow-md">
-                {profile.price} {t('profileDetail.priceUnit')}
+                {/(day|jour|j|يوم)/i.test(profile.price)
+                  ? profile.price
+                  : `${profile.price.replace(/\/(h|hour|hr|heure|ساعة|س)/i, '').trim()} ${t('profileDetail.priceUnit')}`}
               </span>
             )}
           </div>
