@@ -138,7 +138,7 @@ describe('HistoryPage', () => {
     });
   });
 
-  it('filters items dynamically when search query is typed', async () => {
+  it('filters items by category tab', async () => {
     renderHistoryPage();
 
     await waitFor(() => {
@@ -146,22 +146,21 @@ describe('HistoryPage', () => {
       expect(screen.getByText('Alexandre Dumas')).toBeInTheDocument();
     });
 
-    const searchInput = screen.getByPlaceholderText('Rechercher par nom ou rôle…');
-    fireEvent.change(searchInput, { target: { value: 'Sarah' } });
+    fireEvent.click(screen.getByRole('button', { name: /Matchs/ }));
 
     expect(screen.getByText('Sarah Connor')).toBeInTheDocument();
     expect(screen.queryByText('Alexandre Dumas')).not.toBeInTheDocument();
   });
 
-  it('navigates to chat when clicking open chat on a matched item', async () => {
+  it('opens profile detail modal when clicking a history item', async () => {
     renderHistoryPage();
 
     await waitFor(() => {
-      expect(screen.getByText('Ouvrir chat')).toBeInTheDocument();
+      expect(screen.getByText('Sarah Connor')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Ouvrir chat'));
-    expect(pushMock).toHaveBeenCalledWith('/matches?c=conv-123');
+    fireEvent.click(screen.getByText('Sarah Connor'));
+    expect(await screen.findByText('Tech Lead at Matchy')).toBeInTheDocument();
   });
 
   it('renders empty state when no activity is found', async () => {
