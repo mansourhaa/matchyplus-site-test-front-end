@@ -792,9 +792,14 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                       <div className="space-y-4">
                         <div className="flex items-start gap-2.5 rounded-2xl border border-emerald-200/60 bg-emerald-50/80 p-3">
                           <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-600" />
-                          <p className="text-xs leading-relaxed font-medium text-emerald-950">
-                            {t('chat.dialogs.postReportDesc')}
-                          </p>
+                          <div>
+                            <h4 className="text-xs font-bold text-emerald-950">
+                              {t('chat.dialogs.postReportTitle')}
+                            </h4>
+                            <p className="text-xs leading-relaxed font-medium text-emerald-950">
+                              {t('chat.dialogs.postReportDesc')}
+                            </p>
+                          </div>
                         </div>
 
                         <div>

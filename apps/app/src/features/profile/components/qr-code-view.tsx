@@ -221,7 +221,7 @@ export function QrCodeView() {
                 ? 'Copy link'
                 : locale === 'ar'
                   ? 'نسخ الرابط'
-                  : 'Copy link'}
+                  : 'Copier le lien'}
           </span>
         </button>
       </div>
@@ -235,7 +235,7 @@ export function QrCodeView() {
         >
           <Download size={20} className="text-[#2F76BB]" />
           <span className="text-xs font-extrabold text-[#1E293B]">
-            {locale === 'en' ? 'Download' : locale === 'ar' ? 'تحميل' : 'Download'}
+            {locale === 'en' ? 'Download' : locale === 'ar' ? 'تحميل' : 'Télécharger'}
           </span>
         </button>
         <button
@@ -246,7 +246,7 @@ export function QrCodeView() {
         >
           <Share2 size={20} className="text-white" />
           <span className="text-xs font-extrabold text-white">
-            {locale === 'en' ? 'Share' : locale === 'ar' ? 'مشاركة' : 'Share'}
+            {locale === 'en' ? 'Share' : locale === 'ar' ? 'مشاركة' : 'Partager'}
           </span>
         </button>
       </div>

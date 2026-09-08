@@ -255,7 +255,13 @@ export function NotificationsView() {
                 className="inline-flex items-center gap-1 text-xs font-semibold text-[#2F76BB] hover:underline"
               >
                 <CheckCheck size={14} />
-                <span>{t('notificationSettings.markAllRead')}</span>
+                <span>
+                  {locale === 'en'
+                    ? 'Mark all as read'
+                    : locale === 'ar'
+                      ? 'تحديد الكل كمقروء'
+                      : 'Tout marquer comme lu'}
+                </span>
               </button>
             )}
           </div>

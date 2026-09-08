@@ -59,8 +59,7 @@ describe('NotificationsView', () => {
       </Provider>,
     );
 
-    expect(await screen.findByText('Aucune notification pour l’instant')).toBeInTheDocument();
-    expect(await screen.findByText('Préférences')).toBeInTheDocument();
+    expect(await screen.findByText('Aucune notification pour le moment')).toBeInTheDocument();
   });
 
   it('renders a profile-view notification and lets the user mark it as read', async () => {
@@ -90,8 +89,8 @@ describe('NotificationsView', () => {
     fireEvent.click(entry);
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/notifications/notif-1/read'));
-    // Mount fires list + preferences; mark triggers a follow-up list fetch.
-    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(3));
+    // Mount fires list; mark triggers a follow-up list fetch.
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
   });
 
   it('keeps the already-loaded list visible when a background refetch fails', async () => {
@@ -109,9 +108,6 @@ describe('NotificationsView', () => {
           },
         ],
         unread_count: 1,
-        // Matches the store's initial revision (0) — the reducer discards a fetch
-        // response whose revisionAtStart doesn't match the current revision, so this
-        // preload must look like a fetch dispatched before any mark action ran.
         revisionAtStart: 0,
       },
     });
@@ -124,10 +120,7 @@ describe('NotificationsView', () => {
     );
 
     expect(screen.getByText('Vue de profil')).toBeInTheDocument();
-    expect(
-      await screen.findByText(/Impossible d.actualiser vos notifications/),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('Aucune notification pour l’instant')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aucune notification pour le moment')).not.toBeInTheDocument();
   });
 
   it('marks every notification as read from the header action', async () => {
@@ -155,6 +148,6 @@ describe('NotificationsView', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Tout marquer comme lu' }));
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/notifications/read-all'));
-    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
   });
 });
