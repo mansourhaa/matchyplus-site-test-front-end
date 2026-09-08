@@ -15,3 +15,8 @@ export type UploadProfilePhotoBody = {
 export type UploadProfileVideoBody = {
   video?: MultipartFile;
 };
+
+export type SyncUserLocationBody = {
+  latitude: number;
+  longitude: number;
+};

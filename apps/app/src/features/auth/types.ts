@@ -3,6 +3,7 @@ export interface AuthUser {
   email: string | null;
   phone: string | null;
   name: string | null;
+  image?: string | null;
   auth_provider: string;
   email_verified: boolean;
   phone_verified?: boolean;
@@ -14,6 +15,7 @@ export interface AuthUser {
   has_password?: boolean;
   onboarding_completed: boolean;
   role?: string;
+  plan?: string;
 }
 
 // Both session tokens live in HttpOnly cookies the browser attaches automatically —

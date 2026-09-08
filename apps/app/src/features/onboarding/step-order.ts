@@ -1,37 +1,44 @@
 import type { OnboardingStep, ProfileType } from './types';
 
-/** Matchy MVP: identity → interests → location prefs. GPS is requested on Finish (user gesture) then used on /home. */
-const STEP_ORDER: OnboardingStep[] = ['identity', 'interests', 'location'];
+/** Numbered onboarding steps: 1. identity → 2. interests → 3. location prefs. */
+const NUMBERED_STEPS: OnboardingStep[] = ['identity', 'interests', 'location'];
+
+/** Full step navigation sequence including the post-step welcome / rules screen. */
+const FULL_STEP_SEQUENCE: OnboardingStep[] = ['identity', 'interests', 'location', 'welcome'];
 
 export function getStepOrder(_profileType?: ProfileType | null): OnboardingStep[] {
-  return STEP_ORDER;
+  return NUMBERED_STEPS;
+}
+
+export function getTotalSteps(_profileType?: ProfileType | null): number {
+  return NUMBERED_STEPS.length;
 }
 
 export function getStepNumber(step: OnboardingStep, profileType?: ProfileType | null): number {
-  return getStepOrder(profileType).indexOf(step) + 1;
+  const index = NUMBERED_STEPS.indexOf(step);
+  return index >= 0 ? index + 1 : NUMBERED_STEPS.length;
 }
 
 export function getNextStep(
   step: OnboardingStep,
-  profileType?: ProfileType | null,
+  _profileType?: ProfileType | null,
 ): OnboardingStep | null {
-  const order = getStepOrder(profileType);
-  return order[order.indexOf(step) + 1] ?? null;
+  const index = FULL_STEP_SEQUENCE.indexOf(step);
+  return index >= 0 && index < FULL_STEP_SEQUENCE.length - 1 ? FULL_STEP_SEQUENCE[index + 1] : null;
 }
 
 export function getPreviousStep(
   step: OnboardingStep,
-  profileType?: ProfileType | null,
+  _profileType?: ProfileType | null,
 ): OnboardingStep | null {
-  const order = getStepOrder(profileType);
-  const index = order.indexOf(step);
-  return index > 0 ? order[index - 1] : null;
+  const index = FULL_STEP_SEQUENCE.indexOf(step);
+  return index > 0 ? FULL_STEP_SEQUENCE[index - 1] : null;
 }
 
 export function isValidOnboardingStep(
   step: string | null,
-  profileType?: ProfileType | null,
+  _profileType?: ProfileType | null,
 ): step is OnboardingStep {
   if (!step) return false;
-  return getStepOrder(profileType).includes(step as OnboardingStep);
+  return FULL_STEP_SEQUENCE.includes(step as OnboardingStep);
 }

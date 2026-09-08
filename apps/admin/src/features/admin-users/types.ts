@@ -14,6 +14,7 @@ export interface AdminManagedUser {
   city: string | null;
   bio: string | null;
   image: string | null;
+  video: string | null;
   interests: string[];
   languages: string[];
   contact_modes: string[];
@@ -43,6 +44,7 @@ export interface AdminUserFilters {
   search: string;
   plan: 'all' | UserPlan;
   status: 'all' | UserStatus;
+  category: 'all' | string;
 }
 
 export interface AdminUsersState {

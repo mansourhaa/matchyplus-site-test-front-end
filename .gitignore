@@ -11,11 +11,16 @@ node_modules
 !.env.example
 !.env.staging.example
 !.env.production.example
+.env.production
+.env.local
+.env.development
+.env.staging
 
 # Testing
 coverage
 coverage.xml
 .coverage
+test-results
 
 # Turbo
 .turbo

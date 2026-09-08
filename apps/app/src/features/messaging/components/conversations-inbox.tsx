@@ -5,7 +5,7 @@ import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { fetchInbox, selectMessaging } from '@/features/messaging/store/messaging-slice';
-import { Loader2, MessageCircle, RefreshCw } from 'lucide-react';
+import { Loader2, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -26,15 +26,6 @@ export function ConversationsInbox() {
           <h1 className="text-2xl font-extrabold" style={{ color: matchyBrand.textDark }}>
             {t('chat.inboxTitle')}
           </h1>
-          <button
-            type="button"
-            onClick={() => void dispatch(fetchInbox())}
-            className="rounded-full p-2"
-            style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
-            aria-label={t('common.retry')}
-          >
-            <RefreshCw size={16} />
-          </button>
         </div>
 
         {messaging.inboxLoading && messaging.inbox.length === 0 ? (
@@ -42,10 +33,7 @@ export function ConversationsInbox() {
             <Loader2 className="animate-spin" color={matchyBrand.teal} />
           </div>
         ) : messaging.inbox.length === 0 ? (
-          <p
-            className="rounded-2xl bg-white px-4 py-8 text-center text-sm text-[#777]"
-            style={{ border: `1px solid ${matchyBrand.border}` }}
-          >
+          <p className="py-16 text-center text-sm font-medium text-[#64748B]">
             {t('chat.emptyInbox')}
           </p>
         ) : (

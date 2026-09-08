@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { PasswordRequirements } from '@/components/password-requirements';
 import { PhoneInput } from '@/features/auth/components/phone-input';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
@@ -638,18 +639,17 @@ export function IdentityStep({
                     {t('onboarding.identity.videoTitle')}
                   </p>
                   <span
-                    className="rounded-full px-2 py-0.5"
-                    style={{
-                      background: '#E8F0FA',
-                      color: '#2F76BB',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                    }}
+                    className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                    style={{ background: '#EEF5FF', color: '#2F76BB' }}
                   >
-                    {t('onboarding.identity.videoMax')}
+                    {locale === 'en'
+                      ? '20s max'
+                      : locale === 'ar'
+                        ? '20 ثانية كحد أقصى'
+                        : '20s max'}
                   </span>
                 </div>
-                <p style={{ fontSize: '12px', color: '#AAA', marginBottom: '10px' }}>
+                <p style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
                   {t('onboarding.identity.videoDesc')}
                 </p>
 
@@ -933,12 +933,9 @@ export function IdentityStep({
         {!isAuthenticated && (
           <Link
             href="/login"
-            className="mt-3 block w-full rounded-2xl py-3 text-center"
+            className="mt-3.5 block w-full rounded-2xl border border-slate-200 bg-white py-3.5 text-center font-bold text-slate-700 shadow-xs transition-colors hover:bg-slate-50"
             style={{
-              border: '1.5px solid #E0E0E0',
               fontSize: '14px',
-              fontWeight: 600,
-              color: '#555',
             }}
           >
             {t('onboarding.identity.login')}
@@ -1029,9 +1026,7 @@ export function IdentityStep({
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
               style={{
                 background:
-                  otpVerifying || code.trim().length < 4
-                    ? '#AFC4DA'
-                    : 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+                  otpVerifying || code.trim().length < 4 ? '#AFC4DA' : matchyBrand.gradient,
                 fontSize: '15px',
                 fontWeight: 700,
               }}

@@ -59,7 +59,7 @@ describe('LocationStep', () => {
     vi.unstubAllGlobals();
   });
 
-  it('submits the city from a resumed profile on Finish', async () => {
+  it('submits the city from a resumed profile on Continue', async () => {
     const onFinish = vi.fn().mockResolvedValue(true);
     renderStep(
       <LocationStep
@@ -72,7 +72,7 @@ describe('LocationStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton(/Lancer Matchy\+/));
+    fireEvent.click(firstButton(/Continuer/));
     await waitFor(() => {
       expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ city: 'Tunis' }));
     });
@@ -92,7 +92,7 @@ describe('LocationStep', () => {
     );
 
     expect(screen.queryByText('Mes disponibilités')).not.toBeInTheDocument();
-    fireEvent.click(firstButton(/Lancer Matchy\+/));
+    fireEvent.click(firstButton(/Continuer/));
 
     await waitFor(() => {
       expect(onFinish).toHaveBeenCalledWith(
@@ -114,13 +114,13 @@ describe('LocationStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton(/Lancer Matchy\+/));
+    fireEvent.click(firstButton(/Continuer/));
 
     expect(onFinish).not.toHaveBeenCalled();
     expect(await screen.findAllByText('Sélectionnez au moins un jour.')).not.toHaveLength(0);
   });
 
-  it('finishes once a day is selected when offering a service', async () => {
+  it('continues once a day is selected when offering a service', async () => {
     const onFinish = vi.fn().mockResolvedValue(true);
     renderStep(
       <LocationStep
@@ -134,28 +134,21 @@ describe('LocationStep', () => {
     );
 
     fireEvent.click(firstButton('Lun'));
-    fireEvent.click(firstButton(/Lancer Matchy\+/));
+    fireEvent.click(firstButton(/Continuer/));
 
     await waitFor(() => {
       expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ availabilityDays: ['Lun'] }));
     });
   });
 
-  it('starts geolocation from the Finish click before awaiting onFinish', async () => {
+  it('does not trigger browser geolocation popup before or on the welcome page', async () => {
     const getCurrentPosition = vi.fn();
     vi.stubGlobal('navigator', {
       ...navigator,
       geolocation: { getCurrentPosition },
     });
 
-    const onFinish = vi.fn().mockImplementation(
-      () =>
-        new Promise<boolean>((resolve) => {
-          // Geolocation must already have been kicked off while the click gesture is hot.
-          expect(getCurrentPosition).toHaveBeenCalled();
-          resolve(true);
-        }),
-    );
+    const onFinish = vi.fn().mockResolvedValue(true);
 
     renderStep(
       <LocationStep
@@ -168,7 +161,9 @@ describe('LocationStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton(/Lancer Matchy\+/));
+    fireEvent.click(firstButton(/Continuer/));
     await waitFor(() => expect(onFinish).toHaveBeenCalled());
+    // Must NOT invoke browser geolocation prompt when submitting location step towards welcome
+    expect(getCurrentPosition).not.toHaveBeenCalled();
   });
 });

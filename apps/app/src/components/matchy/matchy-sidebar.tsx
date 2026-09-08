@@ -5,7 +5,7 @@ import { MatchyLogo } from '@/components/matchy/matchy-logo';
 import { useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { selectInboxUnreadCount } from '@/features/messaging/store/messaging-slice';
-import { Crown, Home, MessageCircle, Search, User } from 'lucide-react';
+import { Home, MessageCircle, Search, User } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 type NavKey = 'home' | 'search' | 'matches' | 'profile';
@@ -42,25 +42,19 @@ export function MatchySidebar() {
 
   return (
     <aside
-      className="hidden min-h-screen shrink-0 flex-col md:flex"
+      className="sticky top-0 hidden h-dvh h-screen shrink-0 flex-col overflow-y-auto md:flex"
       style={{
         width: 220,
         background: 'white',
         borderRight: `1px solid ${matchyBrand.border}`,
+        zIndex: 30,
       }}
     >
       <div
-        className="flex shrink-0 items-center gap-2 px-5 py-5"
-        style={{ borderBottom: `1px solid ${matchyBrand.border}` }}
+        className="flex h-16 shrink-0 items-center gap-2 px-5"
+        style={{ borderBottom: `1px solid ${matchyBrand.border}`, height: 64 }}
       >
         <MatchyLogo />
-        <span
-          className="ml-1 flex items-center gap-1 rounded-full px-1.5 py-0.5"
-          style={{ fontSize: 10, fontWeight: 700, background: '#F5F5F5', color: matchyBrand.muted }}
-        >
-          <Crown size={9} />
-          {t('nav.planFree')}
-        </span>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">

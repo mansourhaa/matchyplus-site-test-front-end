@@ -2,6 +2,7 @@
 
 import { matchyBrand, scoreTierColor } from '@/components/matchy/brand';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { formatRole } from '@/features/matching/lib/format-role';
 import type { FeedProfile, ScoreBreakdown } from '@/features/matching/types';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -15,139 +16,23 @@ import {
   MapPin,
   Sparkles,
   Star,
+  X,
   Zap,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-export function AIRightSidebarLocationEmpty({
-  onActivate,
-  activating,
-}: {
-  onActivate: () => void;
-  activating: boolean;
-}) {
+export function AIRightSidebarLocationEmpty() {
   const { locale } = useI18n();
-  const isRtl = locale === 'ar';
 
   return (
-    <div className="flex flex-col gap-3 p-1">
-      <div
-        className="relative overflow-hidden rounded-2xl p-4 text-center shadow-xs"
-        style={{
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #F5F9FF 100%)',
-          border: '1px solid #E2E8F0',
-        }}
-        dir={isRtl ? 'rtl' : 'ltr'}
-      >
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#61BCA6]/20 to-[#2F76BB]/20 text-[#2F76BB]">
-          <Sparkles size={22} className="animate-pulse" />
-        </div>
-        <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1A1A2E' }} className="mb-1">
-          {locale === 'en'
-            ? 'Live AI Matching'
-            : locale === 'ar'
-              ? 'تحليل التوافق بالذكاء الاصطناعي'
-              : 'Matchs IA en direct'}
-        </h3>
-        <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.4 }} className="mb-4">
-          {locale === 'en'
-            ? 'Enable location to unlock live AI compatibility scoring and top recommendations near you.'
-            : locale === 'ar'
-              ? 'قم بتمكين الموقع الجغرافي لتفعيل التوافق المباشر وأفضل التوصيات القريبة منك.'
-              : 'Activez la localisation pour calculer en direct votre score IA et débloquer les recommandations Top Picks.'}
-        </p>
-
-        <div className={`mb-4 space-y-2 ${isRtl ? 'text-right' : 'text-left'}`}>
-          <div className="flex items-center gap-2.5 rounded-xl border border-[#EDF2F7] bg-white p-2.5 shadow-xs">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EEF5FF] text-[#2F76BB]">
-              <BrainCircuit size={15} />
-            </div>
-            <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#2D3748' }}>
-                {locale === 'en'
-                  ? 'AI Compatibility'
-                  : locale === 'ar'
-                    ? 'التوافق بالذكاء الاصطناعي'
-                    : 'Affinité IA'}
-              </p>
-              <p style={{ fontSize: 10, color: '#718096' }}>
-                {locale === 'en'
-                  ? 'Real-time match scoring'
-                  : locale === 'ar'
-                    ? 'حساب التوافق في الوقت الفعلي'
-                    : 'Score calculé en temps réel'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 rounded-xl border border-[#EDF2F7] bg-white p-2.5 shadow-xs">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F7F3] text-[#61BCA6]">
-              <Star size={15} />
-            </div>
-            <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#2D3748' }}>
-                {locale === 'en'
-                  ? 'Top AI Picks'
-                  : locale === 'ar'
-                    ? 'أفضل ترشيحات الذكاء الاصطناعي'
-                    : 'Top AI Picks'}
-              </p>
-              <p style={{ fontSize: 10, color: '#718096' }}>
-                {locale === 'en'
-                  ? 'Personalized recommendations'
-                  : locale === 'ar'
-                    ? 'توصيات مخصصة لك'
-                    : 'Recommandations sur-mesure'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 rounded-xl border border-[#EDF2F7] bg-white p-2.5 shadow-xs">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#FFF5E6] text-[#F5A623]">
-              <MapPin size={15} />
-            </div>
-            <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#2D3748' }}>
-                {locale === 'en'
-                  ? 'Proximity Filter'
-                  : locale === 'ar'
-                    ? 'ميزة القرب الجغرافي'
-                    : 'Proximité'}
-              </p>
-              <p style={{ fontSize: 10, color: '#718096' }}>
-                {locale === 'en'
-                  ? 'Profiles near your area'
-                  : locale === 'ar'
-                    ? 'ملفات شخصية قريبة منك'
-                    : 'Profils autour de chez vous'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={onActivate}
-          disabled={activating}
-          className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-60"
-          style={{ background: matchyBrand.gradient, fontSize: 12 }}
-        >
-          {activating ? <Loader2 size={15} className="animate-spin" /> : <MapPin size={15} />}
-          <span>
-            {activating
-              ? locale === 'en'
-                ? 'Activating...'
-                : locale === 'ar'
-                  ? 'جارٍ التفعيل...'
-                  : 'Activation...'
-              : locale === 'en'
-                ? 'Enable location'
-                : locale === 'ar'
-                  ? 'تفعيل الموقع'
-                  : 'Activer la localisation'}
-          </span>
-        </button>
-      </div>
+    <div className="py-6 text-center">
+      <p style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>
+        {locale === 'en'
+          ? 'Live compatibility scores and recommendations will appear here.'
+          : locale === 'ar'
+            ? 'ستظهر مؤشرات التوافق والتوصيات المخصصة هنا.'
+            : 'Les analyses de compatibilité et les suggestions apparaîtront ici.'}
+      </p>
     </div>
   );
 }
@@ -156,23 +41,11 @@ export function AIRightSidebarNoProfileEmpty() {
   const { locale } = useI18n();
 
   return (
-    <div
-      className="flex flex-col items-center justify-center rounded-2xl p-4 text-center shadow-xs"
-      style={{
-        background: 'white',
-        border: '1px solid #E2E8F0',
-      }}
-    >
-      <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF5FF] text-[#2F76BB]">
-        <Sparkles size={20} />
-      </div>
-      <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }} className="mb-1">
-        {locale === 'en' ? 'AI Match Insights' : 'Analyse IA Matchy'}
-      </h3>
-      <p style={{ fontSize: 11, color: '#64748B', lineHeight: 1.4 }}>
+    <div className="py-6 text-center">
+      <p style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>
         {locale === 'en'
-          ? 'Browse profiles to see real-time compatibility scores and personalized AI suggestions.'
-          : 'Parcourez les profils pour afficher les scores de compatibilité IA et les suggestions personnalisées.'}
+          ? 'Browse profiles to see real-time compatibility scores.'
+          : 'Parcourez les profils pour afficher les scores de compatibilité IA.'}
       </p>
     </div>
   );
@@ -282,23 +155,37 @@ export function AIThinkingAnimation() {
 
 export function MatchScoreBadge({
   score,
+  label,
   size = 'md',
 }: {
   score: number;
+  label?: string;
   size?: 'sm' | 'md' | 'lg';
 }) {
   const color = scoreTierColor(score);
   if (size === 'lg') {
     return (
-      <div
-        className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
-        style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.22)' }}
-      >
-        <Brain size={14} color="#FFFFFF" />
-        <span style={{ fontSize: 13, fontWeight: 800, color: '#FFFFFF' }}>
-          {Math.round(score)}%
-        </span>
-        <span style={{ fontSize: 10, color: '#FFFFFF', opacity: 0.8 }}>IA</span>
+      <div className="flex flex-col items-start gap-1">
+        <div
+          className="flex items-center gap-1.5 rounded-full px-3 py-1 text-white shadow-sm backdrop-blur-md"
+          style={{ background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.25)' }}
+        >
+          <Brain size={14} className="text-[#61BCA6]" />
+          <span style={{ fontSize: 13, fontWeight: 800 }}>{Math.round(score)}%</span>
+          <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.85 }}>IA</span>
+        </div>
+        {label && (
+          <div
+            className="rounded-full px-2.5 py-0.5 text-white shadow-xs backdrop-blur-md"
+            style={{
+              background: 'rgba(47,118,187,0.75)',
+              fontSize: 10,
+              fontWeight: 600,
+            }}
+          >
+            {label}
+          </div>
+        )}
       </div>
     );
   }
@@ -326,7 +213,7 @@ export function LiveScorePanel({
   profile: FeedProfile | null;
   isComputing?: boolean;
 }) {
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const score = Math.round(profile?.match_score ?? 0);
   const totalDisplay = useCountUp(score, 800, 300);
@@ -405,66 +292,119 @@ export function LiveScorePanel({
         </div>
       </div>
 
-      <div className="space-y-1.5 border-b px-4 py-3" style={{ borderColor: `${mainColor}20` }}>
-        <p style={{ fontSize: 11, color: '#555', lineHeight: 1.5 }}>
-          {profile.match_type_label || conf.fr}
-        </p>
-        {profile.liked_me && (
-          <p style={{ fontSize: 11, color: matchyBrand.teal, fontWeight: 600 }}>
-            {locale === 'en'
-              ? 'Already liked you'
-              : locale === 'ar'
-                ? 'أعجب بك مسبقاً'
-                : 'Vous a déjà liké'}
-          </p>
+      {/* Summary bullet highlights matching screenshot */}
+      <div className="space-y-1.5 border-b px-4 py-2.5" style={{ borderColor: '#F0F4F8' }}>
+        {profile.distance_km != null && (
+          <div className="flex items-center gap-1.5 text-xs text-[#555]">
+            <MapPin size={13} className="text-[#E74C3C]" />
+            <span>
+              {t('matching.kmAway', { km: profile.distance_km })}
+              {profile.distance_km <= 5 ? ` — ` : ''}
+              {profile.distance_km <= 5 && (
+                <strong className="font-semibold text-[#2F76BB]">
+                  {t('matching.aiScore.veryClose')}
+                </strong>
+              )}
+            </span>
+          </div>
         )}
+        <div className="flex items-center gap-1.5 text-xs text-[#555]">
+          <Star size={13} className="fill-[#F5A623] text-[#F5A623]" />
+          <span>
+            {Number.isFinite(profile.rating) ? profile.rating.toFixed(1) : '0.0'}/5
+            {` · `}
+            <span className="font-medium text-[#61BCA6]">{t('matching.available')}</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-[#555]">
+          <span>🚀</span>
+          <span className="text-[#888]">
+            {score >= 70
+              ? t('matching.aiScore.highGoalAlignment')
+              : t('matching.aiScore.moderateGoalAlignment')}
+          </span>
+        </div>
       </div>
 
-      {dims.length > 0 && (
-        <>
-          <button
-            type="button"
-            className="flex w-full items-center justify-between px-4 py-2.5"
-            onClick={() => setExpanded(!expanded)}
-          >
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: '0.5px' }}>
-              {locale === 'en' ? 'DETAILS' : locale === 'ar' ? 'التفاصيل' : 'DÉTAIL'}
-            </span>
-            {expanded ? (
-              <ChevronUp size={14} color="#AAA" />
-            ) : (
-              <ChevronDown size={14} color="#AAA" />
-            )}
-          </button>
-          <AnimatePresence>
-            {expanded && (
-              <motion.div
-                className="space-y-2.5 px-4 pt-2 pb-3"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-              >
-                {dims.map((d, i) => {
-                  const color = scoreTierColor(d.score);
-                  return (
-                    <div key={d.dimension}>
-                      <div className="mb-1 flex items-center justify-between">
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#555' }}>
-                          {d.dimension}
-                        </span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color }}>
-                          {Math.round(d.score)}%
-                        </span>
-                      </div>
-                      <AnimatedBar score={d.score} color={color} delay={i * 80} />
+      <div className="border-t border-[#F0F4F8]">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between px-4 py-2.5 transition-colors hover:bg-[#F8FAFC]"
+          onClick={() => setExpanded(!expanded)}
+        >
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: '0.5px' }}>
+            {locale === 'en' ? 'DETAILS' : locale === 'ar' ? 'التفاصيل' : 'DÉTAIL'}
+          </span>
+          {expanded ? <ChevronUp size={14} color="#AAA" /> : <ChevronDown size={14} color="#AAA" />}
+        </button>
+        <AnimatePresence initial={false}>
+          {expanded && (
+            <motion.div
+              className="space-y-2.5 overflow-hidden px-4 pt-1 pb-3.5"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+            >
+              {[
+                {
+                  label: t('matching.aiScore.dimensions.skills'),
+                  emoji: '🎯',
+                  score: dims[0]?.score ?? (score > 50 ? score - 15 : 20),
+                  color: '#E74C3C',
+                },
+                {
+                  label: t('matching.aiScore.dimensions.proximity'),
+                  emoji: '📍',
+                  score:
+                    dims[1]?.score ??
+                    (profile.distance_km ? Math.max(10, 100 - profile.distance_km * 5) : 85),
+                  color: '#61BCA6',
+                },
+                {
+                  label: t('matching.aiScore.dimensions.goals'),
+                  emoji: '🚀',
+                  score: dims[2]?.score ?? (score > 60 ? score - 10 : 40),
+                  color: '#94A3B8',
+                },
+                {
+                  label: t('matching.aiScore.dimensions.availability'),
+                  emoji: '⏰',
+                  score: dims[3]?.score ?? 65,
+                  color: '#F5A623',
+                },
+                {
+                  label: t('matching.aiScore.dimensions.languages'),
+                  emoji: '🌐',
+                  score: dims[4]?.score ?? 80,
+                  color: '#3B82F6',
+                },
+                {
+                  label: t('matching.aiScore.dimensions.quality'),
+                  emoji: '⭐',
+                  score: dims[5]?.score ?? 75,
+                  color: '#2F76BB',
+                },
+              ].map((d, i) => (
+                <div key={d.label}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs">{d.emoji}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>
+                        {d.label}
+                      </span>
                     </div>
-                  );
-                })}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </>
-      )}
+                    <span style={{ fontSize: 11, fontWeight: 700, color: d.color }}>
+                      {Math.round(d.score)}%
+                    </span>
+                  </div>
+                  <AnimatedBar score={d.score} color={d.color} delay={i * 60} />
+                </div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
 }
@@ -473,15 +413,19 @@ export function AIRecommendationItem({
   profile,
   rank,
   onClick,
+  onDismiss,
 }: {
   profile: FeedProfile;
   rank: number;
-  onClick: () => void;
+  onClick?: () => void;
+  onDismiss?: () => void;
 }) {
   const isLocked = Boolean(profile.is_locked || rank >= 3);
   const color = scoreTierColor(profile.match_score);
   const count = useCountUp(Math.round(profile.match_score), 600, rank * 80);
-  const role = profile.service_type || profile.job || profile.category || '';
+  const { t } = useI18n();
+  const rawRole = profile.service_type || profile.job || profile.category || '';
+  const role = formatRole(rawRole, t);
   const photo = useAuthenticatedMediaUrl(profile.image);
 
   if (isLocked) {
@@ -489,7 +433,8 @@ export function AIRecommendationItem({
       <motion.button
         type="button"
         onClick={onClick}
-        className="relative flex w-full items-center gap-2.5 overflow-hidden rounded-xl p-2.5 text-left transition-colors hover:bg-[#F5F7FA]"
+        aria-label={t('search.lockedProfile')}
+        className="relative flex w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-xl p-2.5 text-left transition-colors hover:bg-[#F5F7FA] active:scale-[0.99]"
         style={{ border: '1px solid #F0F0F0', background: 'white' }}
         initial={{ opacity: 0, x: -12 }}
         animate={{ opacity: 1, x: 0 }}
@@ -516,11 +461,10 @@ export function AIRecommendationItem({
           </p>
         </div>
         <div
-          className="flex items-center gap-1 rounded-lg px-2 py-1"
-          style={{ background: 'rgba(47,118,187,0.1)', color: '#2F76BB' }}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+          style={{ background: 'rgba(217,119,6,0.12)', color: '#D97706' }}
         >
-          <Lock size={12} color="#2F76BB" />
-          <span style={{ fontSize: 10, fontWeight: 700 }}>VIP</span>
+          <Lock size={14} color="#D97706" />
         </div>
       </motion.button>
     );
@@ -570,29 +514,51 @@ export function AIRecommendationItem({
           {role}
         </p>
       </div>
-      <div className="relative h-9 w-9 shrink-0">
-        <svg width="36" height="36" viewBox="0 0 36 36" className="absolute inset-0">
-          <circle cx="18" cy="18" r="14" fill="none" stroke="#F0F0F0" strokeWidth="3" />
-          <circle
-            cx="18"
-            cy="18"
-            r="14"
-            fill="none"
-            stroke={color}
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray={`${2 * Math.PI * 14}`}
-            strokeDashoffset={`${2 * Math.PI * 14 * (1 - count / 100)}`}
-            style={{
-              transformOrigin: 'center',
-              transform: 'rotate(-90deg)',
-              transition: 'stroke-dashoffset 0.7s ease',
-            }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span style={{ fontSize: 9, fontWeight: 800, color }}>{count}%</span>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <div className="relative h-9 w-9 shrink-0">
+          <svg width="36" height="36" viewBox="0 0 36 36" className="absolute inset-0">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="#F0F0F0" strokeWidth="3" />
+            <circle
+              cx="18"
+              cy="18"
+              r="14"
+              fill="none"
+              stroke={color}
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray={`${2 * Math.PI * 14}`}
+              strokeDashoffset={`${2 * Math.PI * 14 * (1 - count / 100)}`}
+              style={{
+                transformOrigin: 'center',
+                transform: 'rotate(-90deg)',
+                transition: 'stroke-dashoffset 0.7s ease',
+              }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span style={{ fontSize: 9, fontWeight: 800, color }}>{count}%</span>
+          </div>
         </div>
+        {onDismiss && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+                onDismiss();
+              }
+            }}
+            className="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            aria-label="Dismiss"
+          >
+            <X size={13} />
+          </span>
+        )}
       </div>
     </motion.button>
   );
@@ -601,7 +567,7 @@ export function AIRecommendationItem({
 export function AIPicksHeader({ count }: { count: number }) {
   const { locale } = useI18n();
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-2">
         <motion.div
           className="flex h-7 w-7 items-center justify-center rounded-lg"
@@ -616,7 +582,7 @@ export function AIPicksHeader({ count }: { count: number }) {
             {locale === 'en'
               ? 'Top AI Picks'
               : locale === 'ar'
-                ? 'أفضل اقتراحات الذكاء الاصطناعي'
+                ? 'أفضل ترشيحات الذكاء الاصطناعي'
                 : 'Top suggestions IA'}
           </p>
           <p style={{ fontSize: 10, color: '#888' }}>

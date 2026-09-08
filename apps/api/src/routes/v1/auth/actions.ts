@@ -158,8 +158,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   ) {
     reply.setCookie(MEMBER_ACCESS_COOKIE, tokens.accessToken, memberAccessCookieOptions());
     reply.setCookie(MEMBER_REFRESH_COOKIE, tokens.refreshToken, memberRefreshCookieOptions());
-    // Never leave an admin session sticky when a member session is established (AUTH-01).
-    clearAdminSessionCookies(reply);
   }
 
   function clearMemberSessionCookies(reply: import('fastify').FastifyReply) {
@@ -173,8 +171,6 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   ) {
     reply.setCookie(ADMIN_SESSION_COOKIE, tokens.accessToken, adminSessionCookieOptions());
     reply.setCookie(ADMIN_REFRESH_COOKIE, tokens.refreshToken, adminRefreshCookieOptions());
-    // Admin login must not leave a member session usable on shared cookie domain.
-    clearMemberSessionCookies(reply);
   }
 
   function clearAdminSessionCookies(reply: import('fastify').FastifyReply) {
@@ -402,8 +398,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const presented = readRefreshToken(request);
         if (!presented.token) {
-          // Logged-out browsers hit this after authcheck 401 — return 401 without
-          // throwing so the global error handler does not log a full stack as ERROR.
+          clearMemberSessionCookies(reply);
           return reply.code(401).send({
             status: 401,
             code: 'invalid_refresh_token',
@@ -425,6 +420,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           ) {
             data = await tokenService.refreshAccessToken(cookieToken);
           } else {
+            clearMemberSessionCookies(reply);
             throw err;
           }
         }
@@ -432,6 +428,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         setMemberSessionCookies(reply, data);
         return reply.code(200).send(memberRefreshResponse(request, data));
       } catch (err) {
+        clearMemberSessionCookies(reply);
         throw mapError(err as Error, request);
       }
     },
@@ -630,7 +627,11 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       oauthLinkCookieOptions(),
     );
 
-    const uri = await oauth2.generateAuthorizationUri(request, reply);
+    const baseUri = await oauth2.generateAuthorizationUri(request, reply);
+    const uri =
+      provider === 'google'
+        ? `${baseUri}${baseUri.includes('?') ? '&' : '?'}prompt=select_account`
+        : baseUri;
     return reply.redirect(uri);
   }
 

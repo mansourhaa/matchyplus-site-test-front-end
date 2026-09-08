@@ -12,6 +12,7 @@ function baseUser(overrides: Record<string, unknown> = {}) {
     category: null,
     city: 'Tunis',
     interests: ['Mobile'],
+    languages: ['fr', 'ar'],
     goals: [],
     looking_for: [],
     activity_sector: null,
@@ -120,11 +121,60 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
       context: 'swipe',
     });
 
-    const [{ where }] = prisma.user.findMany.mock.calls[0];
+    const firstCall = prisma.user.findMany.mock.calls[0];
+    const where = firstCall?.[0]?.where;
     expect(where).toMatchObject({ onboarding_completed_at: { not: null } });
   });
 
-  it('filters by serviceTypes and maxDistanceKm', async () => {
+  it('excludes candidates without registered location', async () => {
+    const prisma = createMockPrisma([
+      candidate('with_loc', {
+        location: {
+          latitude: 36.805,
+          longitude: 10.185,
+          location_enabled: true,
+          city: 'Tunis',
+          country: 'TN',
+        },
+      }),
+      candidate('no_loc', {
+        location: null,
+        gps_latitude: null,
+        gps_longitude: null,
+      }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      context: 'swipe',
+    });
+
+    expect(result.profiles.map((p) => p.id)).toEqual(['with_loc']);
+  });
+
+  it('excludes candidates with no shared languages', async () => {
+    const prisma = createMockPrisma([
+      candidate('shared_fr', {
+        languages: ['fr', 'en'],
+      }),
+      candidate('no_shared', {
+        languages: ['de', 'it'],
+      }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      context: 'swipe',
+    });
+
+    expect(result.profiles.map((p) => p.id)).toEqual(['shared_fr']);
+  });
+
+  it('filters by serviceTypes and 25km radius', async () => {
     const prisma = createMockPrisma([
       candidate('near', {
         service_type: 'Restauration / Service',
@@ -163,7 +213,6 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     const result = await service.getSwipeFeed('me', {
       latitude: 36.8,
       longitude: 10.18,
-      maxDistanceKm: 20,
       serviceTypes: 'Restauration / Service',
       context: 'swipe',
     });
@@ -226,5 +275,101 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(page2.profiles[0]?.is_locked).toBe(false);
     expect(page2.profiles[1]?.is_locked).toBe(true);
     expect(page2.profiles[1]?.id).toBe('locked-3');
+  });
+
+  it('computes 6-dimension compatibility breakdown', async () => {
+    const prisma = createMockPrisma([
+      candidate('test_cand', {
+        interests: ['Mobile', 'React'],
+        languages: ['fr', 'ar', 'en'],
+        availability_days: ['lun', 'mar', 'mer'],
+        rating: 4.8,
+        reviews: 12,
+      }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      context: 'swipe',
+    });
+
+    expect(result.profiles).toHaveLength(1);
+    const profile = result.profiles[0]!;
+    expect(profile.compatibility).toHaveLength(6);
+    expect(profile.compatibility.map((d) => d.dimension)).toEqual([
+      'skills',
+      'proximity',
+      'goals',
+      'availability',
+      'languages',
+      'quality',
+    ]);
+    expect(profile.match_score).toBeGreaterThanOrEqual(40);
+    expect(profile.match_score).toBeLessThanOrEqual(100);
+  });
+
+  it('filters by sector, minPrice, maxPrice, and availableOnly', async () => {
+    const prisma = createMockPrisma([
+      candidate('1', {
+        activity_sector: 'Services & missions',
+        price: '20 DT',
+        availability_days: ['Lun', 'Mar'],
+      }),
+      candidate('2', {
+        activity_sector: 'Services & missions',
+        price: '50 DT',
+        availability_days: ['Mer'],
+      }),
+      candidate('3', {
+        activity_sector: 'Informatique / Tech',
+        price: '15 DT',
+        availability_days: [],
+      }),
+      candidate('4', {
+        activity_sector: 'Services & missions',
+        price: '10 DT',
+        availability_days: ['Jeu'],
+      }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      sector: 'Services & missions',
+      minPrice: 15,
+      maxPrice: 30,
+      availableOnly: true,
+      context: 'swipe',
+    });
+
+    expect(result.profiles.map((p) => p.id)).toEqual(['1']);
+  });
+
+  it('sorts by price_asc and price_desc', async () => {
+    const prisma = createMockPrisma([
+      candidate('1', { price: '50 DT' }),
+      candidate('2', { price: '20 DT' }),
+      candidate('3', { price: '35 DT' }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const ascResult = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      sort: 'price_asc',
+      context: 'swipe',
+    });
+    expect(ascResult.profiles.map((p) => p.id)).toEqual(['2', '3', '1']);
+
+    const descResult = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      sort: 'price_desc',
+      context: 'swipe',
+    });
+    expect(descResult.profiles.map((p) => p.id)).toEqual(['1', '3', '2']);
   });
 });

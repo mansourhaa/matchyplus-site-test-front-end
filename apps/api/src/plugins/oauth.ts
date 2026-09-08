@@ -50,7 +50,6 @@ const OAUTH_STATE_COOKIE = {
 // v1 handler in routes/v1/auth (`/api/v1/auth/oauth/<provider>/callback`).
 async function oauthPlugin(fastify: FastifyInstance) {
   if (config.googleClientId && config.googleClientSecret && config.apiBaseUrl) {
-    console.log(`[oauth] Google callback url → ${config.googleRedirectUri}`);
     await fastify.register(fastifyOauth2, {
       name: 'oauth2Google',
       scope: OAUTH_SCOPE,
@@ -64,16 +63,18 @@ async function oauthPlugin(fastify: FastifyInstance) {
       },
       startRedirectPath: '/api/v1/auth/oauth/google',
       callbackUri: config.googleRedirectUri,
+      generateAuthorizationUriExtraParams: () => ({
+        prompt: 'select_account',
+      }),
       cookie: OAUTH_STATE_COOKIE,
       redirectStateCookieName: 'oauth2-google-state',
       verifierCookieName: 'oauth2-google-verifier',
-    });
+    } as any);
   } else {
     fastify.log.warn('Google OAuth disabled — credentials or API_BASE_URL not configured');
   }
 
   if (config.linkedinClientId && config.linkedinClientSecret && config.apiBaseUrl) {
-    console.log(`[oauth] LinkedIn callback url → ${config.linkedinRedirectUri}`);
     await fastify.register(fastifyOauth2, {
       name: 'oauth2LinkedIn',
       scope: OAUTH_SCOPE,

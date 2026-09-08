@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocationProvider, useLocationGate } from './location-context';
 
 vi.mock('@/lib/api', () => ({
-  api: { get: vi.fn() },
+  api: { get: vi.fn(), post: vi.fn() },
 }));
 
 vi.mock('@/lib/toast', () => ({
@@ -17,6 +17,9 @@ vi.mock('@/lib/toast', () => ({
 describe('LocationProvider', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    // Best-effort location sync — most tests here don't care about it, so give it a
+    // benign default rather than letting it throw and get swallowed by unrelated catches.
+    vi.mocked(api.post).mockResolvedValue({ data: { city: null } });
   });
 
   afterEach(() => {
@@ -78,6 +81,66 @@ describe('LocationProvider', () => {
     expect(toast.message).toHaveBeenCalledWith(
       'Using approximate location from your network because precise GPS is unavailable.',
     );
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/users/me/location', {
+        latitude: 36.8065,
+        longitude: 10.1815,
+      }),
+    );
+  });
+
+  it('syncs coordinates to the backend after a successful precise GPS capture', async () => {
+    const getCurrentPosition = vi.fn((success: PositionCallback) =>
+      success({
+        coords: { latitude: 36.8065, longitude: 10.1815 },
+      } as GeolocationPosition),
+    );
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <LocationProvider>{children}</LocationProvider>
+    );
+    const { result } = renderHook(() => useLocationGate(), { wrapper });
+
+    await act(async () => {
+      await result.current.requestBrowserLocation();
+    });
+
+    await waitFor(() => expect(result.current.locationSynced).toBe(true));
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/users/me/location', {
+        latitude: 36.8065,
+        longitude: 10.1815,
+      }),
+    );
+  });
+
+  it('does not disrupt the location grant when the backend sync fails', async () => {
+    vi.mocked(api.post).mockRejectedValue(new Error('network down'));
+    const getCurrentPosition = vi.fn((success: PositionCallback) =>
+      success({
+        coords: { latitude: 36.8065, longitude: 10.1815 },
+      } as GeolocationPosition),
+    );
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <LocationProvider>{children}</LocationProvider>
+    );
+    const { result } = renderHook(() => useLocationGate(), { wrapper });
+
+    await act(async () => {
+      await result.current.requestBrowserLocation();
+    });
+
+    expect(result.current.locationSynced).toBe(true);
+    expect(result.current.latitude).toBe(36.8065);
   });
 
   it('keeps location required when GPS and IP fallback both fail', async () => {

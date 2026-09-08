@@ -1,6 +1,6 @@
 export const matchyBrand = {
-  blue: '#2F76BB',
-  teal: '#61BCA6',
+  blue: '#3179BF',
+  teal: '#48BBA0',
   bg: '#F5F7FA',
   activeNav: '#EEF5FF',
   softBlue: '#E8F0FA',
@@ -14,8 +14,8 @@ export const matchyBrand = {
   badge: '#E24E59',
   cardShadow: '#DDE7F4',
   orange: '#F5A623',
-  gradient: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
-  gradient135: 'linear-gradient(135deg, #61BCA6, #2F76BB)',
+  gradient: 'linear-gradient(90deg, #48BBA0, #3179BF)',
+  gradient135: 'linear-gradient(135deg, #48BBA0, #3179BF)',
 } as const;
 
 export function scoreTierColor(score: number) {

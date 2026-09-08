@@ -5,8 +5,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import profileReducer, {
   deleteProfilePhoto,
   deleteProfileVideo,
+  fetchBlockedUsers,
   fetchPublicProfile,
   rateProfile,
+  unblockProfile,
   uploadProfilePhoto,
   uploadProfileVideo,
 } from './profile-slice';
@@ -147,5 +149,50 @@ describe('profile-slice', () => {
       reviews: 3,
       viewer_has_rated: true,
     });
+  });
+
+  it('fetchBlockedUsers fetches list from GET /profiles/blocked', async () => {
+    const blockedList = [
+      {
+        id: 'user-3',
+        name: 'Blocked User',
+        image: null,
+        job: null,
+        city: null,
+        activity_sector: null,
+        service_type: null,
+      },
+    ];
+    vi.mocked(api.get).mockResolvedValue({ data: blockedList });
+
+    const store = buildStore();
+    await store.dispatch(fetchBlockedUsers());
+
+    expect(api.get).toHaveBeenCalledWith('/profiles/blocked');
+    expect(store.getState().profile.blockedUsers).toEqual(blockedList);
+  });
+
+  it('unblockProfile calls DELETE /profiles/:id/block and removes user from state', async () => {
+    const blockedList = [
+      {
+        id: 'user-3',
+        name: 'Blocked User',
+        image: null,
+        job: null,
+        city: null,
+        activity_sector: null,
+        service_type: null,
+      },
+    ];
+    vi.mocked(api.get).mockResolvedValue({ data: blockedList });
+    vi.mocked(api.delete).mockResolvedValue({ data: { success: true } });
+
+    const store = buildStore();
+    await store.dispatch(fetchBlockedUsers());
+    expect(store.getState().profile.blockedUsers).toHaveLength(1);
+
+    await store.dispatch(unblockProfile('user-3'));
+    expect(api.delete).toHaveBeenCalledWith('/profiles/user-3/block');
+    expect(store.getState().profile.blockedUsers).toHaveLength(0);
   });
 });

@@ -104,19 +104,13 @@ describe('LoginForm — phone step', () => {
     expect(api.post).not.toHaveBeenCalledWith('/auth/otp/verify', expect.anything());
   });
 
-  it('renders visible (explicit text color) inputs in the forgot-password mini-flow', async () => {
-    vi.mocked(api.post).mockResolvedValue({ data: { message: 'reset_code_sent' } });
-
+  it('navigates to /reset-password with prefilled phone params when forgot password is clicked', () => {
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
     fireEvent.click(firstButton('Mot de passe oublié ?'));
 
-    const codeInput = await findFirstPlaceholder('123456');
-    const newPasswordInput = firstPlaceholder('Nouveau mot de passe');
-
-    expect(codeInput).toHaveClass('text-[#353535]');
-    expect(newPasswordInput).toHaveClass('text-[#353535]');
+    expect(pushMock).toHaveBeenCalledWith('/reset-password?country=TN&national=12345678');
   });
 
   function apiErrorWithCode(code: string) {
@@ -245,10 +239,14 @@ describe('LoginForm — OAuth start URLs', () => {
   });
 });
 
-describe('LoginForm — Créer un compte', () => {
+describe('LoginForm — Back button', () => {
   beforeEach(() => {
     window.localStorage.setItem('matchy_locale', 'fr');
     searchParamsRef.current = new URLSearchParams();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, href: '' },
+    });
   });
 
   afterEach(() => {
@@ -256,11 +254,20 @@ describe('LoginForm — Créer un compte', () => {
     window.localStorage.removeItem('matchy_locale');
   });
 
-  it('goes to the onboarding wizard, where the identity step also collects phone + password + OTP for a new visitor', () => {
+  it('navigates to landing page when clicking the back button on main login screen', () => {
     renderWithAuthStore(<LoginForm />);
 
-    fireEvent.click(firstButton('Créer un compte'));
+    fireEvent.click(firstButton('Retour'));
 
-    expect(pushMock).toHaveBeenCalledWith('/onboarding');
+    expect(window.location.href).toBe('http://localhost:3002/?lang=fr');
+  });
+
+  it('navigates back to /login when clicking the back button on phone step', () => {
+    searchParamsRef.current = new URLSearchParams('step=phone');
+    renderWithAuthStore(<LoginForm />);
+
+    fireEvent.click(firstButton('Retour'));
+
+    expect(pushMock).toHaveBeenCalledWith('/login');
   });
 });

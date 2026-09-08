@@ -49,6 +49,7 @@ const matchingProfile = {
     id: { type: 'string' },
     name: { type: 'string' },
     image: { type: 'string', nullable: true },
+    video: { type: 'string', nullable: true },
     bio: { type: 'string', nullable: true },
     job: { type: 'string', nullable: true },
     category: { type: 'string', nullable: true },
@@ -66,6 +67,7 @@ const feedProfile = {
     id: { type: 'string' },
     name: { type: 'string' },
     image: { type: 'string', nullable: true },
+    video: { type: 'string', nullable: true },
     bio: { type: 'string', nullable: true },
     job: { type: 'string', nullable: true },
     category: { type: 'string', nullable: true },
@@ -74,6 +76,9 @@ const feedProfile = {
     goals: { type: 'array', items: { type: 'string' } },
     activity_sector: { type: 'string', nullable: true },
     service_type: { type: 'string', nullable: true },
+    price: { type: 'string', nullable: true },
+    availability_days: { type: 'array', items: { type: 'string' } },
+    contact_modes: { type: 'array', items: { type: 'string' } },
     rating: { type: 'number' },
     distance_km: { type: 'number', nullable: true },
     match_score: { type: 'number' },
@@ -165,9 +170,16 @@ export const swipeFeedQuerySchema = {
       q: { type: 'string', maxLength: 120 },
       maxDistanceKm: { type: 'number', minimum: 1, maximum: 200 },
       serviceTypes: { type: 'string', maxLength: 500 },
+      sector: { type: 'string', maxLength: 100 },
+      minPrice: { type: 'number', minimum: 0 },
+      maxPrice: { type: 'number', minimum: 0 },
+      availableOnly: { type: 'boolean' },
       profileType: { type: 'string', enum: ['INDIVIDUAL', 'PROVIDER'] },
       minRating: { type: 'number', minimum: 0, maximum: 5 },
-      sort: { type: 'string', enum: ['match', 'distance', 'rating'] },
+      sort: {
+        type: 'string',
+        enum: ['match', 'distance', 'rating', 'price_asc', 'price_desc'],
+      },
     },
   },
   response: {
@@ -354,6 +366,60 @@ export const unmatchSchema = {
       type: 'object',
       properties: {
         removed_user_id: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+/** GET /swipe/history */
+export const listSwipeHistorySchema = {
+  tags: ['swipe'],
+  summary: 'List swipe and interaction history',
+  description:
+    'List historical swipes (likes, passes, matches) with target profiles and overall summary statistics. Requires JWT.',
+  security: [{ http: [] }],
+  querystring: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      direction: { type: 'string', enum: ['all', 'right', 'left', 'match'] },
+      limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+      offset: { type: 'integer', minimum: 0, default: 0 },
+      q: { type: 'string' },
+    },
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              direction: { type: 'string' },
+              swiped_at: { type: 'string' },
+              is_matched: { type: 'boolean' },
+              conversation_id: { type: 'string', nullable: true },
+              target: matchingProfile,
+            },
+          },
+        },
+        total: { type: 'integer' },
+        has_more: { type: 'boolean' },
+        stats: {
+          type: 'object',
+          properties: {
+            total_swipes: { type: 'integer' },
+            likes: { type: 'integer' },
+            passes: { type: 'integer' },
+            matches: { type: 'integer' },
+            match_rate: { type: 'number' },
+          },
+        },
       },
     },
     ...errorResponses,

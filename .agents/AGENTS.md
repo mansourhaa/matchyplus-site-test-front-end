@@ -12,6 +12,11 @@ Central agent rules for **Matchy+ / Full Stack SaaS Boilerplate** monorepo.
 - Do not add AI co-author trailers (`Co-authored-by: ...` for AI agents).
 - Write all code, commits, documentation, and reviews as if authored solely by the human developer.
 
+### Git & Branching Policy
+
+- **Never Force Push**: Never run `git push --force` or `git push --force-with-lease` on shared/integration branches.
+- **Base Branches on `dev`**: All feature branches and pull requests **must always be branched from and target `dev`** (`baseRefName: "dev"`). Never create branches or open PRs against `main` unless preparing an explicit production release.
+
 ### Workspace & Build Conventions
 
 - **Monorepo Structure**: Turborepo + `pnpm` workspaces (`apps/app`, `apps/api`, `apps/admin`, `apps/landing`, `apps/ai`, `packages/database`, `packages/types`, `packages/ui`, `packages/ai-contracts`).
@@ -112,6 +117,22 @@ async (coords: DiscoveryFeedQuery | undefined) => {
   const response = await api.get<SwipeFeedResponse>('/discovery/swipe-feed', { params: coords });
 }
 ```
+
+### Next.js 15 (App Router) & React 19 Best Practices
+
+- **Server-First Architecture**:
+  - Default to **React Server Components (RSC)**. Keep data fetching, auth verification, and heavy computation on the server.
+  - Never use deprecated Pages Router patterns (`getServerSideProps`, `getStaticProps`, `getInitialProps`).
+- **Client Component Directives (`'use client'`)**:
+  - Only add `'use client'` to components that use browser APIs, event listeners (`onClick`, `onChange`), or React hooks (`useState`, `useEffect`, `useRef`, `useSyncExternalStore`, Redux hooks).
+  - `'use client'` must always be the **very first line** of the file before any imports.
+  - Push `'use client'` down the component tree to leaves (e.g. interactive buttons, inputs, modals) rather than wrapping entire route layouts or server shells.
+- **Route Layouts & Navigation**:
+  - Use `next/navigation` (`useRouter`, `useSearchParams`, `usePathname`, `redirect`) instead of legacy `next/router`.
+  - Wrap any client component using `useSearchParams()` in a `<Suspense>` boundary to prevent de-opting parent routes to client-side rendering.
+  - Use `next/link` for internal navigations and `next/image` with explicit width/height or fill for optimized images.
+- **Error & Loading Boundaries**:
+  - Co-locate `loading.tsx` and `error.tsx` (marked `'use client'`) with `page.tsx` for optimal streaming UX and graceful failure isolation.
 
 ### Error Handling & State Rules
 

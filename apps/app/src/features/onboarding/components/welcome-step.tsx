@@ -1,16 +1,26 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { OnboardingStepLayout } from '@/features/onboarding/components/onboarding-step-layout';
-import { Check, Loader2, Shield } from 'lucide-react';
+import { Check, Flag, Handshake, IdCard, Loader2, Lock, Shield } from 'lucide-react';
 import { useState } from 'react';
 
 type WelcomeStepProps = {
+  stepNumber?: number;
+  totalSteps?: number;
   loading: boolean;
   onAccept: () => Promise<boolean>;
+  onBack?: () => void;
 };
 
-export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
+export function WelcomeStep({
+  stepNumber = 4,
+  totalSteps = 4,
+  loading,
+  onAccept,
+  onBack,
+}: WelcomeStepProps) {
   const { t } = useI18n();
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,30 +29,34 @@ export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
     {
       title: t('onboarding.welcome.rule1Title'),
       desc: t('onboarding.welcome.rule1Desc'),
-      icon: '🪪',
+      icon: <IdCard size={20} className="text-[#2F76BB]" />,
       color: '#2F76BB',
-      bg: '#EEF5FF',
+      bg: '#F0F6FF',
+      border: '#DCEBFA',
     },
     {
       title: t('onboarding.welcome.rule2Title'),
       desc: t('onboarding.welcome.rule2Desc'),
-      icon: '🔒',
-      color: '#61BCA6',
-      bg: '#E8F7F3',
+      icon: <Lock size={18} className="text-[#4EAD96]" />,
+      color: '#4EAD96',
+      bg: '#EAF7F3',
+      border: '#D4EFE8',
     },
     {
       title: t('onboarding.welcome.rule3Title'),
       desc: t('onboarding.welcome.rule3Desc'),
-      icon: '🤝',
-      color: '#F5A623',
+      icon: <Handshake size={20} className="text-[#E59824]" />,
+      color: '#E59824',
       bg: '#FFF8EB',
+      border: '#FCECD2',
     },
     {
       title: t('onboarding.welcome.rule4Title'),
       desc: t('onboarding.welcome.rule4Desc'),
-      icon: '🚩',
-      color: '#E74C3C',
+      icon: <Flag size={18} className="text-[#E75B5B]" />,
+      color: '#E75B5B',
       bg: '#FFF0EE',
+      border: '#FCDCD7',
     },
   ] as const;
 
@@ -59,43 +73,43 @@ export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
 
   return (
     <OnboardingStepLayout
-      step={0}
-      totalSteps={0}
+      step={stepNumber}
+      totalSteps={totalSteps}
       stepLabel={t('onboarding.welcome.title')}
+      onBack={onBack}
+      backLabel={t('common.back')}
       hideProgress
     >
       <div className="mx-auto w-full max-w-md">
         <div
-          className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl"
-          style={{ background: '#EEF5FF' }}
+          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl shadow-xs"
+          style={{ background: '#EEF5FF', border: '1px solid #DCEBFA' }}
         >
-          <Shield size={24} color="#2F76BB" />
+          <Shield size={22} color="#2F76BB" strokeWidth={2.2} />
         </div>
-        <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1A1A2E' }}>
-          {t('onboarding.welcome.title')} 🎉
+        <h1 className="flex items-center justify-center gap-2 text-center text-2xl font-extrabold text-[#1A1A2E] md:text-3xl">
+          <span>{t('onboarding.welcome.title')}</span>
+          <span className="text-2xl">🎉</span>
         </h1>
-        <p style={{ fontSize: '14px', color: '#888', marginTop: '8px', lineHeight: 1.6 }}>
+        <p className="mt-2 text-center text-sm leading-relaxed text-[#718096]">
           {t('onboarding.welcome.rulesDesc')}
         </p>
 
-        <div className="mt-8 mb-8 space-y-4">
+        <div className="mt-6 mb-8 space-y-3.5">
           {RULES.map((rule) => (
             <div
               key={rule.title}
-              className="flex gap-4 rounded-2xl p-4"
-              style={{ background: rule.bg, border: `1px solid ${rule.color}20` }}
+              className="flex items-center gap-4 rounded-2xl p-4 transition-all"
+              style={{ background: rule.bg, border: `1px solid ${rule.border}` }}
             >
-              <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white"
-                style={{ fontSize: '20px' }}
-              >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-xs">
                 {rule.icon}
               </div>
-              <div>
-                <p style={{ fontSize: '14px', fontWeight: 700, color: rule.color }}>{rule.title}</p>
-                <p style={{ fontSize: '12px', color: '#555', lineHeight: 1.5, marginTop: '2px' }}>
-                  {rule.desc}
+              <div className="flex-1">
+                <p className="text-[14px] font-bold" style={{ color: rule.color }}>
+                  {rule.title}
                 </p>
+                <p className="mt-0.5 text-[12px] leading-normal text-[#4A5568]">{rule.desc}</p>
               </div>
             </div>
           ))}
@@ -105,20 +119,18 @@ export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
           type="button"
           onClick={() => void handleAccept()}
           disabled={accepting || loading}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-white"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 font-bold text-white shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-70"
           style={{
-            background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+            background: matchyBrand.gradient,
             fontSize: '15px',
-            fontWeight: 700,
-            opacity: accepting || loading ? 0.75 : 1,
           }}
         >
           {accepting || loading ? (
             <Loader2 size={18} className="animate-spin" />
           ) : (
-            <Check size={18} />
+            <Check size={18} strokeWidth={2.5} />
           )}
-          {t('onboarding.welcome.acceptRules')}
+          <span>{t('onboarding.welcome.acceptRules')}</span>
         </button>
 
         {error && (
@@ -127,7 +139,7 @@ export function WelcomeStep({ loading, onAccept }: WelcomeStepProps) {
           </p>
         )}
 
-        <p className="mt-4 text-center" style={{ fontSize: '12px', color: '#BBB' }}>
+        <p className="mt-3 text-center text-xs leading-relaxed font-normal text-[#888]">
           {t('onboarding.welcome.acceptDisclaimer')}
         </p>
       </div>

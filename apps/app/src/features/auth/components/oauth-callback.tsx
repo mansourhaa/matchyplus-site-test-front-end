@@ -1,5 +1,6 @@
 'use client';
 
+import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch } from '@/features/auth/hooks';
 import { exchangeOAuthCode } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
@@ -103,7 +104,7 @@ export function OAuthCallback() {
             href="/login"
             className="rounded-2xl px-5 py-2.5 text-white"
             style={{
-              background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+              background: matchyBrand.gradient,
               fontSize: '14px',
               fontWeight: 700,
             }}

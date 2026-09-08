@@ -1,16 +1,10 @@
 'use client';
 
-import { PasswordRequirements } from '@/components/password-requirements';
+import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import {
-  confirmPasswordReset,
-  loginPhone,
-  requestPasswordReset,
-  selectAuth,
-} from '@/features/auth/store/auth-slice';
+import { loginPhone, selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { landingPath } from '@/lib/landing';
-import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { ArrowLeft, ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
@@ -18,7 +12,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { AuthLayout } from './auth-layout';
-import { MatchyLogo } from './matchy-logo';
 import { PhoneInput } from './phone-input';
 
 function LinkedInIcon() {
@@ -89,7 +82,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const {
     loading,
     error: authError,
@@ -107,19 +100,12 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Phone login is always phone + password — OTP is never a login mechanism itself,
-  // only proof of phone ownership for signup, phone-link, or password reset (see
-  // doc/features/authentication.md).
-  const [resetMode, setResetMode] = useState(false);
-  const [resetCode, setResetCode] = useState('');
-  const [newResetPassword, setNewResetPassword] = useState('');
-  const [resetRequestLoading, setResetRequestLoading] = useState(false);
-  const [resetSubmitLoading, setResetSubmitLoading] = useState(false);
-  const [resetInfo, setResetInfo] = useState<string | null>(null);
-
   const country = getPhoneCountry(countryIso);
   const phone = composeE164Phone(countryIso, nationalNumber);
-  const error = localError || authError;
+  const reasonParam = searchParams.get('reason');
+  const sessionExpiredNotice =
+    reasonParam === 'session_expired' ? t('common.errors.unauthorized') : null;
+  const error = localError || authError || sessionExpiredNotice;
 
   // Cap cold start: proxy may bounce to /login before Preferences hydrate + mirror
   // cookie sync. Once authcheck confirms a session, leave /login for the app.
@@ -135,8 +121,9 @@ export function LoginForm() {
   const handleBackToLogin = () => {
     router.push('/login');
     setLocalError(null);
-    setResetMode(false);
-    setResetInfo(null);
+  };
+  const handleBackToLanding = () => {
+    window.location.href = landingPath('/', locale);
   };
 
   const goToPostAuthDestination = (onboardingCompleted: boolean) => {
@@ -159,57 +146,6 @@ export function LoginForm() {
   const handleSocialAuth = (provider: 'google' | 'linkedin') => {
     setLocalError(null);
     window.location.href = getOAuthRedirectUrl(provider);
-  };
-
-  const handleRequestReset = async () => {
-    if (nationalNumber.length < country.nationalLength) {
-      setLocalError(t('auth.loginForm.invalidPhoneWithLength', { length: country.nationalLength }));
-      return;
-    }
-
-    setLocalError(null);
-    setResetInfo(null);
-    setResetRequestLoading(true);
-    try {
-      await dispatch(requestPasswordReset({ phone })).unwrap();
-      // The API always returns success here regardless of whether this phone has a
-      // password-based account (anti-enumeration) — the copy must stay conditional
-      // ("if an account exists") rather than promising an SMS that may not be sent.
-      setResetInfo(t('auth.loginForm.resetSmsSent'));
-      setResetMode(true);
-    } catch {
-      setLocalError(t('auth.loginForm.resetSendFailed'));
-    } finally {
-      setResetRequestLoading(false);
-    }
-  };
-
-  const handleConfirmReset = async () => {
-    if (
-      nationalNumber.length < country.nationalLength ||
-      !resetCode.trim() ||
-      !isPasswordPolicySatisfied(newResetPassword)
-    ) {
-      setLocalError(t('auth.loginForm.invalidResetForm', { length: country.nationalLength }));
-      return;
-    }
-
-    setLocalError(null);
-    setResetSubmitLoading(true);
-    try {
-      await dispatch(
-        confirmPasswordReset({ phone, code: resetCode, newPassword: newResetPassword }),
-      ).unwrap();
-      setPassword(newResetPassword);
-      setNewResetPassword('');
-      setResetCode('');
-      setResetMode(false);
-      setResetInfo(t('auth.loginForm.resetSuccess'));
-    } catch {
-      setLocalError(t('auth.loginForm.resetFailed'));
-    } finally {
-      setResetSubmitLoading(false);
-    }
   };
 
   const formContent = (
@@ -321,7 +257,7 @@ export function LoginForm() {
               onClick={() => router.push('/onboarding')}
               className="w-full rounded-2xl py-3.5 text-white"
               style={{
-                background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+                background: matchyBrand.gradient,
                 fontSize: '14px',
                 fontWeight: 700,
               }}
@@ -372,74 +308,24 @@ export function LoginForm() {
             </div>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-4 text-right">
             <button
               type="button"
-              onClick={handleRequestReset}
-              disabled={resetRequestLoading}
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (countryIso) params.set('country', countryIso);
+                if (nationalNumber) params.set('national', nationalNumber);
+                router.push(`/reset-password?${params.toString()}`);
+              }}
               style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
             >
-              {resetRequestLoading ? t('auth.loginForm.sendingCode') : t('auth.forgotPassword')}
+              {t('auth.forgotPassword')}
             </button>
           </div>
-
-          {resetMode && (
-            <div
-              className="mb-4 space-y-3 rounded-2xl p-3"
-              style={{ background: '#F7FBFF', border: '1px solid #DCEAF8' }}
-            >
-              <div>
-                <label style={{ fontSize: '12px', color: '#888', fontWeight: 600 }}>
-                  {t('auth.loginForm.resetCodeLabel')}
-                </label>
-                <input
-                  type="text"
-                  value={resetCode}
-                  onChange={(event) =>
-                    setResetCode(event.target.value.replace(/\D/g, '').slice(0, 6))
-                  }
-                  className="mt-1 w-full rounded-xl px-4 py-2.5 text-[#353535] outline-none"
-                  style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
-                  placeholder="123456"
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', color: '#888', fontWeight: 600 }}>
-                  {t('auth.loginForm.newPasswordLabel')}
-                </label>
-                <input
-                  type="password"
-                  value={newResetPassword}
-                  onChange={(event) => setNewResetPassword(event.target.value)}
-                  className="mt-1 w-full rounded-xl px-4 py-2.5 text-[#353535] outline-none"
-                  style={{ border: '1.5px solid #CFE0F2', background: 'white', fontSize: '14px' }}
-                  placeholder={t('auth.loginForm.newPasswordLabel')}
-                />
-                <PasswordRequirements password={newResetPassword} />
-              </div>
-              <button
-                type="button"
-                onClick={handleConfirmReset}
-                disabled={resetSubmitLoading}
-                className="w-full rounded-xl py-2.5 text-white"
-                style={{ background: '#2F76BB', fontSize: '13px', fontWeight: 700 }}
-              >
-                {resetSubmitLoading
-                  ? t('auth.loginForm.resettingPassword')
-                  : t('auth.loginForm.resetPasswordSubmit')}
-              </button>
-            </div>
-          )}
 
           {error && (
             <p className="mb-3 text-center" style={{ fontSize: '12px', color: '#E24E59' }}>
               {error}
-            </p>
-          )}
-
-          {resetInfo && (
-            <p className="mb-3 text-center" style={{ fontSize: '12px', color: '#2F76BB' }}>
-              {resetInfo}
             </p>
           )}
 
@@ -452,7 +338,7 @@ export function LoginForm() {
             style={{
               background:
                 nationalNumber.length >= country.nationalLength && password.length >= 6 && !loading
-                  ? 'linear-gradient(90deg, #61BCA6, #2F76BB)'
+                  ? matchyBrand.gradient
                   : '#D5D5D5',
               fontSize: '14px',
               fontWeight: 700,
@@ -470,11 +356,21 @@ export function LoginForm() {
         style={{ fontSize: '11px', color: '#BBBBBB', lineHeight: 1.6 }}
       >
         {t('auth.loginForm.acceptTermsPrefix')}{' '}
-        <a href={landingPath('/terms-of-service')} className="text-[#2F76BB] hover:underline">
+        <a
+          href="/terms-of-service"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#2F76BB] hover:underline"
+        >
           {t('legal.termsOfService')}
         </a>{' '}
         {t('auth.loginForm.acceptTermsMiddle')}{' '}
-        <a href={landingPath('/privacy-policy')} className="text-[#2F76BB] hover:underline">
+        <a
+          href="/privacy-policy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#2F76BB] hover:underline"
+        >
           {t('legal.privacyPolicy')}
         </a>
       </p>
@@ -494,23 +390,21 @@ export function LoginForm() {
           style={{ borderBottom: '1px solid #F5F5F5' }}
         >
           <div className="flex items-center gap-2">
-            {localStep === 'phone' && (
-              <button
-                type="button"
-                onClick={handleBackToLogin}
-                className="flex items-center gap-1 rounded-lg px-2 py-1"
-                style={{
-                  border: '1px solid #E8E8E8',
-                  color: '#667085',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                }}
-              >
-                <ArrowLeft size={14} />
-                {t('legal.back')}
-              </button>
-            )}
-            <MatchyLogo size="sm" />
+            <button
+              type="button"
+              onClick={localStep === 'phone' ? handleBackToLogin : handleBackToLanding}
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-[#F5F5F5]"
+              style={{
+                border: '1px solid #E8E8E8',
+                color: '#334155',
+                fontSize: '13px',
+                fontWeight: 700,
+              }}
+              aria-label={t('common.back')}
+            >
+              <ArrowLeft size={16} />
+              <span>{t('common.back')}</span>
+            </button>
           </div>
         </div>
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-10 py-10">
@@ -525,23 +419,21 @@ export function LoginForm() {
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           <div className="flex items-center gap-2">
-            {localStep === 'phone' && (
-              <button
-                type="button"
-                onClick={handleBackToLogin}
-                className="flex items-center gap-1 rounded-lg px-2 py-1"
-                style={{
-                  border: '1px solid #E8E8E8',
-                  color: '#667085',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                }}
-              >
-                <ArrowLeft size={14} />
-                {t('legal.back')}
-              </button>
-            )}
-            <MatchyLogo size="sm" />
+            <button
+              type="button"
+              onClick={localStep === 'phone' ? handleBackToLogin : handleBackToLanding}
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-[#F5F5F5]"
+              style={{
+                border: '1px solid #E8E8E8',
+                color: '#334155',
+                fontSize: '13px',
+                fontWeight: 700,
+              }}
+              aria-label={t('common.back')}
+            >
+              <ArrowLeft size={16} />
+              <span>{t('common.back')}</span>
+            </button>
           </div>
         </div>
         <div className="flex flex-1 flex-col justify-center px-7 py-8">{formContent}</div>

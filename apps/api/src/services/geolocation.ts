@@ -41,6 +41,54 @@ function asNullableString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function cleanGovernorateName(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  let cleaned = raw.trim();
+  if (!cleaned) return null;
+
+  // French prefixes: "Gouvernorat de Tunis", "Gouvernorat de l'Ariana", "Gouvernorat d'Ariana", "Gouvernorat Sfax"
+  cleaned = cleaned.replace(/^Gouvernorat\s+(?:de\s+l[’']|de\s+|d[’']|du\s+)?/i, '').trim();
+  // Arabic prefixes: "ولاية تونس"
+  cleaned = cleaned.replace(/^ولاية\s+/u, '').trim();
+
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+function resolveCityAndRegion(
+  candidateCity: string | null | undefined,
+  rawState: string | null | undefined,
+  rawRegion: string | null | undefined,
+  rawCountry: string | null | undefined,
+): { city: string; region: string | null; country: string | null } | null {
+  const country = asNullableString(rawCountry);
+  const cleanedState = cleanGovernorateName(rawState) ?? asNullableString(rawState);
+  const cleanedRegion = cleanGovernorateName(rawRegion) ?? asNullableString(rawRegion);
+  const stateOrRegion = cleanedState ?? cleanedRegion;
+
+  let city = asNullableString(candidateCity);
+  if (city) {
+    city = cleanGovernorateName(city) ?? city;
+  }
+
+  // If city is the country name (e.g. "Tunisia", "Tunisie"), prioritize the governorate / state / region
+  if (city && country && city.toLowerCase() === country.toLowerCase()) {
+    city = stateOrRegion ?? city;
+  }
+
+  // If no city found, fallback to governorate / state
+  if (!city) {
+    city = stateOrRegion ?? country;
+  }
+
+  if (!city) return null;
+
+  return {
+    city,
+    region: rawState ?? rawRegion ?? stateOrRegion,
+    country,
+  };
+}
+
 /**
  * HTTPS-only IP geolocation providers (cleartext HTTP providers are intentionally omitted).
  * Order = preferred failover sequence.
@@ -53,11 +101,17 @@ const IP_PROVIDERS: IpProvider[] = [
       if (d.success === false) return null;
       const coords = parseLatLon(d.latitude, d.longitude);
       if (!coords) return null;
+      const loc = resolveCityAndRegion(
+        asNullableString(d.city),
+        asNullableString(d.region),
+        asNullableString(d.region),
+        asNullableString(d.country),
+      );
       return {
         ...coords,
-        city: asNullableString(d.city),
-        region: asNullableString(d.region),
-        country: asNullableString(d.country),
+        city: loc?.city ?? asNullableString(d.city),
+        region: loc?.region ?? asNullableString(d.region),
+        country: loc?.country ?? asNullableString(d.country),
       };
     },
   },
@@ -68,11 +122,17 @@ const IP_PROVIDERS: IpProvider[] = [
       if (typeof d.error === 'boolean' && d.error) return null;
       const coords = parseLatLon(d.latitude, d.longitude);
       if (!coords) return null;
+      const loc = resolveCityAndRegion(
+        asNullableString(d.city),
+        asNullableString(d.region),
+        asNullableString(d.region),
+        asNullableString(d.country_name) ?? asNullableString(d.country),
+      );
       return {
         ...coords,
-        city: asNullableString(d.city),
-        region: asNullableString(d.region),
-        country: asNullableString(d.country_name) ?? asNullableString(d.country),
+        city: loc?.city ?? asNullableString(d.city),
+        region: loc?.region ?? asNullableString(d.region),
+        country: loc?.country ?? asNullableString(d.country_name) ?? asNullableString(d.country),
       };
     },
   },
@@ -82,11 +142,17 @@ const IP_PROVIDERS: IpProvider[] = [
     parse: (d) => {
       const coords = parseLatLon(d.latitude, d.longitude);
       if (!coords) return null;
+      const loc = resolveCityAndRegion(
+        asNullableString(d.cityName) ?? asNullableString(d.city),
+        asNullableString(d.regionName) ?? asNullableString(d.region),
+        asNullableString(d.regionName) ?? asNullableString(d.region),
+        asNullableString(d.countryName) ?? asNullableString(d.country),
+      );
       return {
         ...coords,
-        city: asNullableString(d.cityName) ?? asNullableString(d.city),
-        region: asNullableString(d.regionName) ?? asNullableString(d.region),
-        country: asNullableString(d.countryName) ?? asNullableString(d.country),
+        city: loc?.city ?? asNullableString(d.cityName) ?? asNullableString(d.city),
+        region: loc?.region ?? asNullableString(d.regionName) ?? asNullableString(d.region),
+        country: loc?.country ?? asNullableString(d.countryName) ?? asNullableString(d.country),
       };
     },
   },
@@ -101,21 +167,31 @@ const REVERSE_PROVIDERS: ReverseProvider[] = [
     parse: (d) => {
       const address = d.address as Record<string, unknown> | undefined;
       if (!address || typeof address !== 'object') return null;
-      const city =
+      const rawState = asNullableString(address.state) ?? asNullableString(address.state_district);
+      const rawRegion = asNullableString(address.region) ?? asNullableString(address.county);
+      const rawCountry = asNullableString(address.country);
+
+      const candidateCity =
         asNullableString(address.city) ??
         asNullableString(address.town) ??
+        asNullableString(address.municipality) ??
         asNullableString(address.village) ??
+        asNullableString(address.suburb) ??
         asNullableString(address.county) ??
-        asNullableString(address.state);
-      if (!city) return null;
-      const region = asNullableString(address.state) ?? asNullableString(address.region);
-      const country = asNullableString(address.country);
+        rawState;
+
+      const loc = resolveCityAndRegion(candidateCity, rawState, rawRegion, rawCountry);
+      if (!loc) return null;
+
+      const region = rawState ?? loc.region;
       return {
-        city,
+        city: loc.city,
         region,
-        country,
+        country: loc.country,
         formattedAddress:
-          asNullableString(d.display_name) ?? formatAddressParts(city, region, country) ?? city,
+          asNullableString(d.display_name) ??
+          formatAddressParts(loc.city, region, loc.country) ??
+          loc.city,
       };
     },
   },
@@ -124,18 +200,20 @@ const REVERSE_PROVIDERS: ReverseProvider[] = [
     url: (lat, lon) =>
       `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(String(lat))}&longitude=${encodeURIComponent(String(lon))}&localityLanguage=en`,
     parse: (d) => {
-      const city =
-        asNullableString(d.city) ??
-        asNullableString(d.locality) ??
-        asNullableString(d.principalSubdivision);
-      const region = asNullableString(d.principalSubdivision);
-      const country = asNullableString(d.countryName);
-      if (!city) return null;
+      const rawState = asNullableString(d.principalSubdivision);
+      const rawLocality = asNullableString(d.locality);
+      const rawCountry = asNullableString(d.countryName);
+      const candidateCity = asNullableString(d.city) ?? rawLocality ?? rawState;
+
+      const loc = resolveCityAndRegion(candidateCity, rawState, rawLocality, rawCountry);
+      if (!loc) return null;
+
+      const region = rawState ?? loc.region;
       return {
-        city,
+        city: loc.city,
         region,
-        country,
-        formattedAddress: formatAddressParts(city, region, country) ?? city,
+        country: loc.country,
+        formattedAddress: formatAddressParts(loc.city, region, loc.country) ?? loc.city,
       };
     },
   },

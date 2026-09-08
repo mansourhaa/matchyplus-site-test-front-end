@@ -1,3 +1,4 @@
+import favoritesReducer from '@/features/favorites/store/favorites-slice';
 import identityVerificationReducer from '@/features/identity-verification/store/identity-verification-slice';
 import matchingReducer from '@/features/matching/store/matching-slice';
 import messagingReducer from '@/features/messaging/store/messaging-slice';
@@ -6,9 +7,9 @@ import onboardingReducer from '@/features/onboarding/store/onboarding-slice';
 import profileReducer from '@/features/profile/store/profile-slice';
 import { combineReducers } from '@reduxjs/toolkit';
 import { persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
 
 import authReducer from './auth-slice';
+import storage from './storage';
 
 // Nested (rather than root-level) persistence for `auth` so `sessionChecked` can be
 // blacklisted specifically — it must always start `false` again on the next page load,
@@ -28,6 +29,7 @@ const rootReducer = combineReducers({
   profile: profileReducer,
   notifications: notificationsReducer,
   identityVerification: identityVerificationReducer,
+  favorites: favoritesReducer,
 });
 
 export default rootReducer;

@@ -103,4 +103,30 @@ describe('VideoSettingsView', () => {
 
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/users/me/profile/video'));
   });
+
+  it('toggles playback preference switches correctly', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: baseProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <VideoSettingsView />
+      </Provider>,
+    );
+
+    await waitFor(() => expect(api.get).toHaveBeenCalled());
+
+    const switches = screen.getAllByRole('switch');
+    expect(switches.length).toBe(2);
+
+    // Initial state: autoPlay is false by default
+    expect(switches[0]).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(switches[0]);
+    expect(switches[0]).toHaveAttribute('aria-checked', 'true');
+
+    // WiFi only is false by default
+    expect(switches[1]).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(switches[1]);
+    expect(switches[1]).toHaveAttribute('aria-checked', 'true');
+  });
 });

@@ -5,22 +5,16 @@ import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-di
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
 import {
-  fetchNotificationPreferences,
   fetchNotifications,
   markAllNotificationsRead,
   markNotificationRead,
   selectNotifications,
-  updateNotificationPreferences,
 } from '@/features/notifications/store/notifications-slice';
-import type {
-  NotificationItem,
-  NotificationPreferences,
-  UpdateNotificationPreferencesBody,
-} from '@/features/notifications/types';
+import type { NotificationItem } from '@/features/notifications/types';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { formatDistanceToNow } from 'date-fns';
 import { arSA, enUS, fr } from 'date-fns/locale';
-import { Bell, Eye, Heart, Loader2, MessageCircle } from 'lucide-react';
+import { Bell, CheckCheck, Eye, Heart, Loader2, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -34,9 +28,15 @@ const DATE_LOCALES: Record<Locale, typeof fr> = {
   ar: arSA,
 };
 
-function getPushCopy(item: NotificationItem, locale: Locale): { title: string; body: string } {
+function getPushCopy(
+  item: NotificationItem,
+  locale: Locale,
+  isFree = true,
+): { title: string; body: string } {
   switch (item.type) {
-    case 'PROFILE_VIEW':
+    case 'PROFILE_VIEW': {
+      const rawName = item.data.viewerName || '';
+      const displayName = isFree ? rawName.trim().split(/\s+/)[0] || rawName : rawName;
       return {
         title:
           locale === 'en'
@@ -46,11 +46,12 @@ function getPushCopy(item: NotificationItem, locale: Locale): { title: string; b
               : 'Vue de profil',
         body:
           locale === 'en'
-            ? `Someone named "${item.data.viewerName}" viewed your profile.`
+            ? `Someone named "${displayName}" viewed your profile.`
             : locale === 'ar'
-              ? `قام شخص باسم "${item.data.viewerName}" بزيارة ملفك الشخصي.`
-              : `Quelqu'un nommé "${item.data.viewerName}" a consulté votre profil.`,
+              ? `قام شخص باسم "${displayName}" بزيارة ملفك الشخصي.`
+              : `Quelqu'un nommé "${displayName}" a consulté votre profil.`,
       };
+    }
     case 'MATCH':
       return {
         title: locale === 'en' ? 'New Match!' : locale === 'ar' ? 'مطابقة جديدة!' : 'Nouveau match',
@@ -62,7 +63,9 @@ function getPushCopy(item: NotificationItem, locale: Locale): { title: string; b
               ? 'إنها مطابقة! افتح التوافقات لبدء المحادثة.'
               : 'Nouveau match ! Ouvrez vos matches pour continuer.'),
       };
-    case 'MATCH_REQUEST':
+    case 'MATCH_REQUEST': {
+      const rawName = item.data.actor_first_name || '';
+      const displayName = isFree ? rawName.trim().split(/\s+/)[0] || rawName : rawName;
       return {
         title:
           item.data.title ||
@@ -70,11 +73,12 @@ function getPushCopy(item: NotificationItem, locale: Locale): { title: string; b
         body:
           item.data.body ||
           (locale === 'en'
-            ? `${item.data.actor_first_name} sent you a match request.`
+            ? `${displayName} sent you a match request.`
             : locale === 'ar'
-              ? `أرسل لك ${item.data.actor_first_name} طلب مطابقة.`
-              : `${item.data.actor_first_name} vous a envoyé une demande de match.`),
+              ? `أرسل لك ${displayName} طلب مطابقة.`
+              : `${displayName} vous a envoyé une demande de match.`),
       };
+    }
     case 'MESSAGE':
       return {
         title:
@@ -99,12 +103,12 @@ function avatarSrc(item: NotificationItem): string | null {
 
 function TypeIcon({ item }: { item: NotificationItem }) {
   if (item.type === 'MESSAGE') {
-    return <MessageCircle size={17} color={MESSAGE_TINT} />;
+    return <MessageCircle size={15} color={MESSAGE_TINT} />;
   }
   if (item.type === 'MATCH' || item.type === 'MATCH_REQUEST') {
-    return <Heart size={17} color={MATCH_TINT} />;
+    return <Heart size={15} color={MATCH_TINT} />;
   }
-  return <Eye size={17} color={PROFILE_VIEW_TINT} />;
+  return <Eye size={15} color={PROFILE_VIEW_TINT} />;
 }
 
 function iconBg(item: NotificationItem): string {
@@ -117,8 +121,14 @@ function NotificationRow({ item }: { item: NotificationItem }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { locale } = useI18n();
+  const authUser = useAppSelector((state) => state.auth?.user);
+  const isFree = !authUser?.plan || authUser.plan.toUpperCase() === 'FREE';
+  const shouldBlurImage =
+    isFree &&
+    (item.type === 'PROFILE_VIEW' || item.type === 'MATCH' || item.type === 'MATCH_REQUEST');
+
   const avatar = useAuthenticatedMediaUrl(avatarSrc(item));
-  const { title, body } = getPushCopy(item, locale);
+  const { title, body } = getPushCopy(item, locale, isFree);
   const isRtl = locale === 'ar';
 
   const handleClick = async () => {
@@ -142,46 +152,51 @@ function NotificationRow({ item }: { item: NotificationItem }) {
     <button
       type="button"
       onClick={() => void handleClick()}
-      className={`flex w-full items-start gap-3 rounded-2xl bg-white p-3 shadow-sm ${isRtl ? 'text-right' : 'text-left'}`}
-      style={{ border: `1px solid ${item.read ? matchyBrand.border : matchyBrand.blue}` }}
+      className={`flex w-full items-start gap-3 p-3.5 transition-colors hover:bg-slate-50 ${
+        !item.read ? 'bg-[#F4F9FF]' : 'bg-white'
+      } ${isRtl ? 'text-right' : 'text-left'}`}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       {avatar.url ? (
         <div
-          className="h-10 w-10 shrink-0 overflow-hidden rounded-full"
+          className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-xs"
           style={{ border: '1px solid #DCE7F2' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={avatar.url}
             alt=""
-            className="h-full w-full object-cover"
-            style={{ filter: item.type === 'PROFILE_VIEW' ? 'blur(3px)' : undefined }}
+            className={`h-full w-full object-cover ${shouldBlurImage ? 'scale-125' : ''}`}
+            style={{ filter: shouldBlurImage ? 'blur(5px)' : undefined }}
           />
         </div>
       ) : (
         <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-xs"
           style={{ background: iconBg(item) }}
         >
           <TypeIcon item={item} />
         </div>
       )}
+
       <div className="min-w-0 flex-1">
-        <p
-          className="text-sm"
-          style={{ color: matchyBrand.textDark, fontWeight: item.read ? 500 : 700 }}
-        >
-          {title}
-        </p>
-        <p className="mt-0.5 text-xs text-[#777]">{body}</p>
-        <p className="mt-1 text-xs text-[#999]">
-          {formatDistanceToNow(new Date(item.created_at), {
-            addSuffix: true,
-            locale: DATE_LOCALES[locale] || fr,
-          })}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p
+            className="truncate text-xs font-extrabold"
+            style={{ color: item.read ? '#334155' : '#0F172A' }}
+          >
+            {title}
+          </p>
+          <span className="shrink-0 text-[11px] text-[#94A3B8]">
+            {formatDistanceToNow(new Date(item.created_at), {
+              addSuffix: false,
+              locale: DATE_LOCALES[locale] || fr,
+            })}
+          </span>
+        </div>
+        <p className="mt-0.5 text-xs leading-relaxed text-[#64748B]">{body}</p>
       </div>
+
       {!item.read && (
         <span
           className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
@@ -192,120 +207,15 @@ function NotificationRow({ item }: { item: NotificationItem }) {
   );
 }
 
-const PREF_LABELS: Record<keyof NotificationPreferences, { en: string; fr: string; ar: string }> = {
-  all_enabled: {
-    en: 'All notifications',
-    fr: 'Toutes les notifications',
-    ar: 'جميع الإشعارات',
-  },
-  matches: {
-    en: 'Matches & requests',
-    fr: 'Matches et demandes',
-    ar: 'المطابقات والطلبات',
-  },
-  messages: {
-    en: 'Messages',
-    fr: 'Messages',
-    ar: 'الرسائل',
-  },
-  views: {
-    en: 'Profile views',
-    fr: 'Vues de profil',
-    ar: 'زيارات الملف الشخصي',
-  },
-  email: {
-    en: 'Emails',
-    fr: 'Emails',
-    ar: 'البريد الإلكتروني',
-  },
-};
-
-const PREF_KEYS: (keyof NotificationPreferences)[] = [
-  'all_enabled',
-  'matches',
-  'messages',
-  'views',
-  'email',
-];
-
-function PreferencesSection() {
-  const dispatch = useAppDispatch();
-  const { locale } = useI18n();
-  const isRtl = locale === 'ar';
-  const { preferences, preferencesLoading, preferencesError } = useAppSelector(selectNotifications);
-
-  const toggle = (key: keyof NotificationPreferences, value: boolean) => {
-    const body: UpdateNotificationPreferencesBody = { [key]: value };
-    void dispatch(updateNotificationPreferences(body));
-  };
-
-  return (
-    <div
-      className="space-y-3 rounded-2xl bg-white p-4 shadow-xs"
-      style={{ border: `1px solid ${matchyBrand.border}` }}
-      dir={isRtl ? 'rtl' : 'ltr'}
-    >
-      <p className="text-sm font-bold" style={{ color: matchyBrand.textDark }}>
-        {locale === 'en' ? 'Preferences' : locale === 'ar' ? 'التفضيلات' : 'Préférences'}
-      </p>
-      {preferencesLoading && !preferences ? (
-        <p className="text-xs text-[#777]">
-          {locale === 'en'
-            ? 'Loading preferences...'
-            : locale === 'ar'
-              ? 'جارٍ تحميل التفضيلات...'
-              : 'Chargement des préférences…'}
-        </p>
-      ) : preferencesError && !preferences ? (
-        <p className="text-xs text-[#E24E59]">
-          {locale === 'en'
-            ? 'Unable to load preferences.'
-            : locale === 'ar'
-              ? 'تعذر تحميل التفضيلات.'
-              : 'Impossible de charger les préférences.'}
-        </p>
-      ) : preferences ? (
-        <ul className="space-y-3">
-          {PREF_KEYS.map((key) => (
-            <li key={key} className="flex items-center justify-between gap-3">
-              <span className="text-sm" style={{ color: matchyBrand.textDark }}>
-                {PREF_LABELS[key][locale] || PREF_LABELS[key].fr}
-              </span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={preferences[key]}
-                onClick={() => toggle(key, !preferences[key])}
-                className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-                style={{
-                  background: preferences[key] ? matchyBrand.blue : '#D0D5DD',
-                }}
-                dir="ltr"
-              >
-                <span
-                  className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform"
-                  style={{
-                    transform: preferences[key] ? 'translateX(20px)' : 'translateX(0)',
-                  }}
-                />
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </div>
-  );
-}
-
 export function NotificationsView() {
   const dispatch = useAppDispatch();
-  const { locale } = useI18n();
-  const isRtl = locale === 'ar';
+  const router = useRouter();
+  const { t, locale, dir } = useI18n();
+  const isRtl = dir === 'rtl';
   const { items, unreadCount, loading, error } = useAppSelector(selectNotifications);
 
   useEffect(() => {
     void dispatch(fetchNotifications());
-    void dispatch(fetchNotificationPreferences());
   }, [dispatch]);
 
   const handleMarkAllRead = async () => {
@@ -315,93 +225,86 @@ export function NotificationsView() {
     }
   };
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/home');
+    }
+  };
+
   return (
-    <div
-      className="h-full overflow-y-auto"
-      style={{ background: matchyBrand.bg }}
-      dir={isRtl ? 'rtl' : 'ltr'}
-    >
-      <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-4 md:px-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold" style={{ color: matchyBrand.textDark }}>
-            {locale === 'en' ? 'Notifications' : locale === 'ar' ? 'الإشعارات' : 'Notifications'}
-          </h1>
-          {unreadCount > 0 && (
-            <button
-              type="button"
-              onClick={() => void handleMarkAllRead()}
-              className="text-xs font-bold"
-              style={{ color: matchyBrand.blue }}
-            >
+    <div className="min-h-full bg-[#F5F7FA]" dir={dir}>
+      {/* Main Container */}
+      <main className="mx-auto w-full max-w-2xl px-4 py-6 md:px-8">
+        {/* Latest Notifications Card */}
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
+          {/* Card Title Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
+            <h2 className="text-xs font-bold text-[#1A1A2E]">
               {locale === 'en'
-                ? 'Mark all as read'
+                ? 'Latest notifications'
                 : locale === 'ar'
-                  ? 'تحديد الكل كمقروء'
-                  : 'Tout marquer comme lu'}
-            </button>
+                  ? 'أحدث الإشعارات'
+                  : 'Dernières notifications'}
+            </h2>
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={() => void handleMarkAllRead()}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[#2F76BB] hover:underline"
+              >
+                <CheckCheck size={14} />
+                <span>{t('notificationSettings.markAllRead')}</span>
+              </button>
+            )}
+          </div>
+
+          {/* Card Body */}
+          {loading && items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-2.5 py-14 text-[#64748B]">
+              <Loader2 className="h-7 w-7 animate-spin text-[#2F76BB]" />
+              <p className="text-xs font-medium">{t('common.loading') || 'Loading...'}</p>
+            </div>
+          ) : error && items.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-xs font-bold text-[#E24E59]">
+                {locale === 'en'
+                  ? 'Unable to load notifications.'
+                  : locale === 'ar'
+                    ? 'تعذر تحميل الإشعارات.'
+                    : 'Impossible de charger vos notifications.'}
+              </p>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#EBF5FB]">
+                <Bell size={24} className="text-[#2F76BB]" />
+              </div>
+              <h3 className="text-base font-extrabold text-[#1E293B]">
+                {locale === 'en'
+                  ? 'No notifications yet'
+                  : locale === 'ar'
+                    ? 'لا توجد إشعارات بعد'
+                    : 'Aucune notification pour le moment'}
+              </h3>
+              <p className="mt-1 text-xs font-medium text-[#94A3B8]">
+                {locale === 'en'
+                  ? 'New matches, profile views, and messages will appear here'
+                  : locale === 'ar'
+                    ? 'ستظهر التطابقات الجديدة وزيارات الملف والرسائل هنا'
+                    : 'Vos nouveaux matchs, vues de profil et messages apparaîtront ici'}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {items.map((item) => (
+                <NotificationRow key={item.id} item={item} />
+              ))}
+            </div>
           )}
         </div>
-
-        <PreferencesSection />
-
-        {loading && items.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-[#777]">
-            <Loader2 className="h-8 w-8 animate-spin text-[#61BCA6]" />
-            <p>
-              {locale === 'en' ? 'Loading...' : locale === 'ar' ? 'جارٍ التحميل...' : 'Chargement…'}
-            </p>
-          </div>
-        ) : error && items.length === 0 ? (
-          <p className="rounded-2xl bg-white px-4 py-8 text-center text-sm text-[#E24E59]">
-            {locale === 'en'
-              ? 'Unable to load your notifications.'
-              : locale === 'ar'
-                ? 'تعذر تحميل الإشعارات الخاصة بك.'
-                : 'Impossible de charger vos notifications.'}
-          </p>
-        ) : items.length === 0 ? (
-          <div
-            className="rounded-3xl bg-white px-5 py-12 text-center shadow-xs"
-            style={{ border: `1px solid ${matchyBrand.border}` }}
-          >
-            <div
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
-              style={{ background: matchyBrand.softBlue }}
-            >
-              <Bell size={28} color={matchyBrand.blue} />
-            </div>
-            <p className="font-bold" style={{ color: matchyBrand.textDark }}>
-              {locale === 'en'
-                ? 'No notifications yet'
-                : locale === 'ar'
-                  ? 'لا توجد إشعارات حالياً'
-                  : 'Aucune notification pour l’instant'}
-            </p>
-            <p className="mt-2 text-sm text-[#777]">
-              {locale === 'en'
-                ? 'You will be notified here as soon as something happens.'
-                : locale === 'ar'
-                  ? 'ستتلقى إشعاراً هنا بمجرد حدوث أي نشاط.'
-                  : 'Vous serez prévenu ici dès qu’il se passe quelque chose.'}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {error && (
-              <p className="rounded-xl bg-[#FFF0F0] px-4 py-2 text-center text-xs text-[#E24E59]">
-                {locale === 'en'
-                  ? 'Unable to refresh notifications. Displaying cached list.'
-                  : locale === 'ar'
-                    ? 'تعذر تحديث الإشعارات. يتم عرض القائمة المحفوظة.'
-                    : 'Impossible d’actualiser vos notifications. Affichage de la dernière liste connue.'}
-              </p>
-            )}
-            {items.map((item) => (
-              <NotificationRow key={item.id} item={item} />
-            ))}
-          </div>
-        )}
-      </div>
+      </main>
     </div>
   );
 }

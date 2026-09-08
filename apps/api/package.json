@@ -6,11 +6,11 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "dotenv -e ../../.env.development -- tsx watch src/index.ts",
-    "stage": "dotenv -e ../../.env.staging -- tsx watch src/index.ts",
+    "dev": "dotenv -q -e ../../.env.development -- tsx watch src/index.ts",
+    "stage": "dotenv -q -e ../../.env.staging -- tsx watch src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "start": "dotenv -e ../../.env.production -- node dist/index.js",
+    "start": "dotenv -q -e ../../.env.production -- node dist/index.js",
     "clean": "rm -rf .turbo node_modules dist"
   },
   "keywords": [],

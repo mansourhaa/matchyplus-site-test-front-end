@@ -26,6 +26,7 @@ const baseUser = {
   role: 'USER',
   bio: null,
   image: null,
+  video: null,
   interests: [],
   languages: [],
   contact_modes: [],
@@ -140,7 +141,9 @@ const ANALYTICS = {
   ],
   topCities: [{ city: 'Tunis', users: 2 }],
   revenueByPlan: [{ plan: 'Premium', users: 1, monthlyRevenue: 9.9 }],
+  planTrends: { FREE: 4.2, PREMIUM: 9.8, PREMIUM_PLUS: 15.3 },
   totalMatches: 97,
+  matchesThisMonth: 15,
   estimatedMonthlyRevenue: 9.9,
 };
 
@@ -200,9 +203,10 @@ function mockApi() {
   }) as never);
 }
 
-function renderPanel() {
+function renderPanel(preloadedState?: Partial<ReturnType<typeof rootReducer>>) {
   const store = configureStore({
     reducer: rootReducer,
+    preloadedState,
     middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
   });
   return {
@@ -244,13 +248,13 @@ describe('AdminPanel', () => {
     renderPanel();
 
     expect(await screen.findByText('Utilisateurs total')).toBeInTheDocument();
-    expect(screen.getByText('Matches cumulés')).toBeInTheDocument();
+    expect(screen.getByText('Matches ce mois')).toBeInTheDocument();
     expect(screen.getByText('Revenus estimés (DT)')).toBeInTheDocument();
     expect(screen.getByText('Taux conversion')).toBeInTheDocument();
 
     // Conversion is (premium + premium+) / total = 1/3 → 33%, derived not hardcoded.
     expect(screen.getByText('33%')).toBeInTheDocument();
-    expect(screen.getByText('97')).toBeInTheDocument();
+    expect(screen.getByText('15')).toBeInTheDocument();
   });
 
   it('renders the évolution and forfaits panels on the dashboard', async () => {
@@ -266,6 +270,51 @@ describe('AdminPanel', () => {
     // Positive user growth and a negative conversion trend, both from the analytics payload.
     expect(await screen.findByText('14.3%')).toBeInTheDocument();
     expect(screen.getByText('12.5%')).toBeInTheDocument();
+  });
+
+  it('shows a LIVE badge next to Derniers inscrits', async () => {
+    renderPanel();
+
+    const heading = await screen.findByText('Derniers inscrits');
+    expect(heading).toBeInTheDocument();
+    const section = heading.closest('div');
+    expect(within(section!).getByText('LIVE')).toBeInTheDocument();
+  });
+
+  describe('header', () => {
+    it('shows the pending-report count on the notification bell and navigates to Signalements', async () => {
+      renderPanel();
+
+      const bell = await screen.findByRole('button', { name: 'Notifications' });
+      // Two of the three seeded reports are PENDING (rep1, rep2 against Riadh T.).
+      expect(within(bell).getByText('2')).toBeInTheDocument();
+
+      fireEvent.click(bell);
+      expect(await screen.findByText('Riadh T.')).toBeInTheDocument();
+    });
+
+    it('shows how long the admin has been connected since a fresh login this session', async () => {
+      const loginAt = new Date(Date.now() - 5 * 60_000).toISOString();
+      renderPanel({
+        adminAuth: {
+          admin: { id: 'a1', name: 'admin', email: 'admin@matchy.plus', role: 'SUPER_ADMIN' },
+          loginAt,
+          loading: false,
+          error: null,
+          passwordChangeLoading: false,
+          passwordChangeError: null,
+        },
+      });
+
+      expect(await screen.findByText('Connecté depuis 5min')).toBeInTheDocument();
+    });
+
+    it('hides the connected-since pill when the session was restored, not freshly logged in', async () => {
+      renderPanel();
+
+      await screen.findByText('Utilisateurs total');
+      expect(screen.queryByText(/Connecté depuis/)).not.toBeInTheDocument();
+    });
   });
 
   it('lists users with their plan and status in the table', async () => {
@@ -442,9 +491,9 @@ describe('AdminPanel', () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
 
       // The first plan is selected by default; switch to Premium and edit its price.
-      fireEvent.click(await screen.findByText('Premium'));
+      fireEvent.click(await screen.findByRole('button', { name: 'Sélectionner Premium' }));
       fireEvent.change(screen.getByLabelText('Prix (DT / mois)'), { target: { value: '14.5' } });
-      fireEvent.click(screen.getByRole('button', { name: /Enregistrer le forfait/ }));
+      fireEvent.click(screen.getByRole('button', { name: /Sauvegarder/ }));
 
       await waitFor(() =>
         expect(put).toHaveBeenCalledWith(
@@ -471,7 +520,7 @@ describe('AdminPanel', () => {
     it('adds and removes plan features', async () => {
       renderPanel();
       fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
-      fireEvent.click(await screen.findByText('Premium'));
+      fireEvent.click(await screen.findByRole('button', { name: 'Sélectionner Premium' }));
       fireEvent.click(screen.getByRole('button', { name: 'Fonctionnalités' }));
 
       fireEvent.change(screen.getByLabelText('Nouvelle fonctionnalité'), {
@@ -488,7 +537,7 @@ describe('AdminPanel', () => {
     it('reverts local edits when cancelled', async () => {
       renderPanel();
       fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
-      fireEvent.click(await screen.findByText('Premium'));
+      fireEvent.click(await screen.findByRole('button', { name: 'Sélectionner Premium' }));
 
       const price = screen.getByLabelText('Prix (DT / mois)');
       fireEvent.change(price, { target: { value: '99' } });
@@ -496,6 +545,60 @@ describe('AdminPanel', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /Annuler/ }));
       expect(screen.getByLabelText('Prix (DT / mois)')).toHaveValue(9.9);
+    });
+
+    it('shows real subscriber counts, revenue and trend on each plan card', async () => {
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
+
+      // Gratuit: 2 subscribers (STATS.freeUsers) × 0 DT/mois = 0 DT, +4.2% trend.
+      const gratuitCard = await screen.findByRole('group', { name: 'Statistiques Gratuit' });
+      expect(within(gratuitCard).getByText('2')).toBeInTheDocument();
+      const gratuitRevenueRow = within(gratuitCard).getByText('Revenus').closest('div');
+      expect(gratuitRevenueRow).toHaveTextContent('0.00 DT');
+      expect(gratuitRevenueRow).toHaveTextContent('4.2%');
+
+      // Premium: 1 subscriber (STATS.premiumUsers) × 9.9 DT/mois = 9.90 DT, +9.8% trend.
+      // (Coincidentally the same figure as the plan's own price, hence checking the
+      // Revenus row specifically rather than the ambiguous "9.90 DT" string alone.)
+      const premiumCard = screen.getByRole('group', { name: 'Statistiques Premium' });
+      expect(within(premiumCard).getByText('1')).toBeInTheDocument();
+      const premiumRevenueRow = within(premiumCard).getByText('Revenus').closest('div');
+      expect(premiumRevenueRow).toHaveTextContent('9.90 DT');
+      expect(premiumRevenueRow).toHaveTextContent('9.8%');
+    });
+
+    it('shows the sync banner and lets Réinitialiser discard a draft edit', async () => {
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
+
+      expect(await screen.findByText('Synchronisation active')).toBeInTheDocument();
+
+      const reinit = screen.getByRole('button', { name: /Réinitialiser/ });
+      expect(reinit).toBeDisabled();
+
+      fireEvent.change(screen.getByLabelText('Prix (DT / mois)'), { target: { value: '5' } });
+      expect(reinit).toBeEnabled();
+
+      fireEvent.click(reinit);
+      expect(screen.getByLabelText('Prix (DT / mois)')).toHaveValue(0);
+    });
+
+    it('toggles Forfait actif from within the Général tab', async () => {
+      const put = vi
+        .spyOn(adminApi, 'put')
+        .mockResolvedValue({ data: { plan: { ...PLANS[0], is_active: false } } } as never);
+
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Gestion Forfaits' }));
+      // Gratuit is selected by default.
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Désactiver Gratuit (forfait actif)' }),
+      );
+
+      await waitFor(() =>
+        expect(put).toHaveBeenCalledWith('/admin/plans/FREE', { is_active: false }),
+      );
     });
   });
 

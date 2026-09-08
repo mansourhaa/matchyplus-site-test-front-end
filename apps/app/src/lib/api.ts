@@ -25,30 +25,40 @@ export function getApiErrorCode(error: unknown): string | undefined {
 let refreshPromise: Promise<void> | null = null;
 
 export async function refreshSession(): Promise<void> {
-  const native = isNativeMobileClient();
-  const refreshToken = native ? mobileTokenStorage.getRefresh() : null;
-  const mobileHeaders = native ? await getMobileAuthHeaders() : {};
-
-  // Web: cookie-only refresh — still send `{}` so Fastify does not reject an empty
-  // application/json body (FST_ERR_CTP_EMPTY_JSON_BODY → 400). Cap: body refreshToken
-  // + mobile client label/secret so the API returns rotated JWTs.
-  const response = await axios.post(
-    `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-    native && refreshToken ? { refreshToken } : {},
-    {
-      withCredentials: true,
-      headers: {
-        ...mobileHeaders,
-        ...(native && refreshToken
-          ? { Authorization: `Bearer ${mobileTokenStorage.getAccess()}` }
-          : {}),
-      },
-    },
-  );
-
-  if (native) {
-    captureMobileTokensFromBody(response.data);
+  if (refreshPromise) {
+    return refreshPromise;
   }
+
+  refreshPromise = (async () => {
+    const native = isNativeMobileClient();
+    const refreshToken = native ? mobileTokenStorage.getRefresh() : null;
+    const mobileHeaders = native ? await getMobileAuthHeaders() : {};
+
+    // Web: cookie-only refresh — still send `{}` so Fastify does not reject an empty
+    // application/json body (FST_ERR_CTP_EMPTY_JSON_BODY → 400). Cap: body refreshToken
+    // + mobile client label/secret so the API returns rotated JWTs.
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+      native && refreshToken ? { refreshToken } : {},
+      {
+        withCredentials: true,
+        headers: {
+          ...mobileHeaders,
+          ...(native && refreshToken
+            ? { Authorization: `Bearer ${mobileTokenStorage.getAccess()}` }
+            : {}),
+        },
+      },
+    );
+
+    if (native) {
+      captureMobileTokensFromBody(response.data);
+    }
+  })().finally(() => {
+    refreshPromise = null;
+  });
+
+  return refreshPromise;
 }
 
 api.interceptors.request.use(async (config) => {

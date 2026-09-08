@@ -1,6 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { formatRole } from '@/features/matching/lib/format-role';
 import {
   GOAL_CATEGORIES,
   INTERESTS_SUGGESTIONS,
@@ -149,6 +150,8 @@ export function InterestsStep({
       step={stepNumber}
       totalSteps={totalSteps}
       stepLabel={t('onboarding.interests.title')}
+      onBack={onBack}
+      backLabel={t('common.back')}
     >
       <div className="mx-auto w-full max-w-2xl">
         <StepProgress step={stepNumber} total={totalSteps} />
@@ -268,16 +271,13 @@ export function InterestsStep({
                     aria-checked={offerService}
                     dir="ltr"
                     onClick={() => setOfferService(!offerService)}
-                    className="relative shrink-0"
-                    style={{ width: '48px', height: '28px' }}
+                    className="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none"
+                    style={{ background: offerService ? '#2F76BB' : '#E0E0E0' }}
                   >
-                    <div
-                      className="absolute inset-0 rounded-full transition-colors"
-                      style={{ background: offerService ? '#2F76BB' : '#E0E0E0' }}
-                    />
-                    <div
-                      className="absolute top-1 left-0 h-6 w-6 rounded-full bg-white shadow transition-transform"
-                      style={{ transform: offerService ? 'translateX(22px)' : 'translateX(2px)' }}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
+                      style={{ transform: offerService ? 'translateX(20px)' : 'translateX(0px)' }}
                     />
                   </button>
                 </div>
@@ -301,7 +301,8 @@ export function InterestsStep({
                           }}
                         >
                           <span>
-                            {serviceType || t('onboarding.interests.serviceTypePlaceholder')}
+                            {formatRole(serviceType, t) ||
+                              t('onboarding.interests.serviceTypePlaceholder')}
                           </span>
                           <ChevronDown size={16} color="#888" />
                         </button>
@@ -329,7 +330,7 @@ export function InterestsStep({
                                   setShowServiceDropdown(false);
                                 }}
                               >
-                                {type}
+                                {formatRole(type, t)}
                               </button>
                             ))}
                           </div>
@@ -372,39 +373,68 @@ export function InterestsStep({
             description={t('onboarding.interests.goalsDesc')}
           >
             <div className="space-y-5">
-              {GOAL_CATEGORIES.map((category) => (
-                <div key={category.label}>
-                  <div className="mb-2 flex items-center gap-2">
-                    <span style={{ fontSize: '18px' }}>{category.emoji}</span>
-                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#555' }}>
-                      {category.label}
-                    </p>
+              {GOAL_CATEGORIES.map((category) => {
+                const groupKey =
+                  category.label === 'Trouver du travail'
+                    ? 'work'
+                    : category.label === 'Services & missions'
+                      ? 'services'
+                      : null;
+                const categoryLabel = groupKey
+                  ? t(`onboarding.interests.goalsGroups.${groupKey}`)
+                  : category.label;
+
+                return (
+                  <div key={category.label}>
+                    <div className="mb-2 flex items-center gap-2">
+                      <span style={{ fontSize: '18px' }}>{category.emoji}</span>
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#555' }}>
+                        {categoryLabel}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {category.options.map((option) => {
+                        const isSelected = selectedGoals.includes(option);
+                        const goalKeyMap: Record<string, string> = {
+                          "Recruter quelqu'un": 'recruit',
+                          'Trouver un job': 'findJob',
+                          'Proposer mes services': 'offerServices',
+                          'Travailler comme prestataire': 'workAsProvider',
+                          'Demander un service': 'requestService',
+                          'Trouver un prestataire': 'findProvider',
+                          'Rencontrer des personnes près de moi': 'meetNearby',
+                          'Trouver des missions': 'findMissions',
+                          'Découvrir des idées et opportunités': 'discoverOpportunities',
+                          'Service à domicile': 'homeService',
+                        };
+                        const goalKey = goalKeyMap[option];
+                        const optionLabel = goalKey
+                          ? t(`onboarding.interests.goalsOptions.${goalKey}`)
+                          : option;
+
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => toggleGoal(option)}
+                            className="rounded-full px-3 py-1.5 transition-all"
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: isSelected ? 700 : 400,
+                              background: isSelected ? '#2F76BB' : 'white',
+                              color: isSelected ? 'white' : '#666',
+                              border: isSelected ? 'none' : '1.5px solid #E0E0E0',
+                            }}
+                          >
+                            {isSelected && <Check size={11} className="mr-1 inline" />}
+                            {optionLabel}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {category.options.map((option) => {
-                      const isSelected = selectedGoals.includes(option);
-                      return (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => toggleGoal(option)}
-                          className="rounded-full px-3 py-1.5 transition-all"
-                          style={{
-                            fontSize: '12px',
-                            fontWeight: isSelected ? 700 : 400,
-                            background: isSelected ? '#2F76BB' : 'white',
-                            color: isSelected ? 'white' : '#666',
-                            border: isSelected ? 'none' : '1.5px solid #E0E0E0',
-                          }}
-                        >
-                          {isSelected && <Check size={11} className="mr-1 inline" />}
-                          {option}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </StepCard>
         </div>

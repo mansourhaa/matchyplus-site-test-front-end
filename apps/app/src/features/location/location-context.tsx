@@ -19,6 +19,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -80,22 +81,38 @@ async function getCurrentCoords(): Promise<{ latitude: number; longitude: number
     };
   }
 
-  if (!navigator.geolocation) {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
     throw Object.assign(new Error('unsupported'), { code: 0 });
   }
 
-  const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: GEOLOCATION_TIMEOUT,
-      maximumAge: GEOLOCATION_MAX_AGE,
+  const getPosition = (enableHighAccuracy: boolean, timeout: number) =>
+    new Promise<GeolocationPosition>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy,
+        timeout,
+        maximumAge: GEOLOCATION_MAX_AGE,
+      });
     });
-  });
 
-  return {
-    latitude: position.coords.latitude,
-    longitude: position.coords.longitude,
-  };
+  try {
+    const position = await getPosition(true, 5000);
+    return {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+    };
+  } catch (error: unknown) {
+    const code = error && typeof error === 'object' && 'code' in error ? Number(error.code) : null;
+    if (code === 1) {
+      // Permission explicitly denied by user, do not retry
+      throw error;
+    }
+    // Timeout or position unavailable: retry with standard accuracy (Wi-Fi / IP)
+    const fallbackPosition = await getPosition(false, 10000);
+    return {
+      latitude: fallbackPosition.coords.latitude,
+      longitude: fallbackPosition.coords.longitude,
+    };
+  }
 }
 
 export function LocationProvider({ children }: { children: ReactNode }) {
@@ -106,6 +123,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [activating, setActivating] = useState(false);
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
+  const lastSyncedCoordsRef = useRef<{ latitude: number; longitude: number } | null>(null);
 
   const clearLocation = useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -119,6 +137,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setLatitude(null);
     setLongitude(null);
     setLocationSynced(false);
+    lastSyncedCoordsRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -127,17 +146,19 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     let permissionStatus: PermissionStatus | null = null;
 
     const handlePermissionChange = () => {
-      if (permissionStatus?.state === 'denied' || permissionStatus?.state === 'prompt') {
+      if (permissionStatus?.state === 'denied') {
         clearLocation();
-        if (permissionStatus.state === 'denied') {
-          setPermissionDenied(true);
-          setAccessMessage(
-            'Location permission is disabled or denied. Please enable location to continue.',
-          );
-        } else {
-          setPermissionDenied(false);
-          setAccessMessage(null);
-        }
+        setPermissionDenied(true);
+        setAccessMessage(
+          'Location permission is disabled or denied. Please enable location to continue.',
+        );
+      } else if (permissionStatus?.state === 'prompt') {
+        clearLocation();
+        setPermissionDenied(false);
+        setAccessMessage(null);
+      } else if (permissionStatus?.state === 'granted') {
+        setPermissionDenied(false);
+        setAccessMessage(null);
       }
     };
 
@@ -145,8 +166,15 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       .query({ name: 'geolocation' })
       .then((status) => {
         permissionStatus = status;
-        if (status.state === 'denied' || status.state === 'prompt') {
+        if (status.state === 'denied') {
           handlePermissionChange();
+        } else if (status.state === 'prompt') {
+          clearLocation();
+          setPermissionDenied(false);
+          setAccessMessage(null);
+        } else if (status.state === 'granted') {
+          setPermissionDenied(false);
+          setAccessMessage(null);
         }
         status.addEventListener('change', handlePermissionChange);
       })
@@ -165,6 +193,20 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setLocationSynced(true);
     setPermissionDenied(false);
     storeCoords(next);
+
+    // Skip redundant network requests if coordinates have not changed
+    if (
+      lastSyncedCoordsRef.current?.latitude === next.latitude &&
+      lastSyncedCoordsRef.current?.longitude === next.longitude
+    ) {
+      return;
+    }
+    lastSyncedCoordsRef.current = next;
+
+    // Best-effort: keeps the profile's city connected to where the member actually is.
+    void api.post('/users/me/location', next).catch((error) => {
+      handleError(error, 'syncUserLocation');
+    });
   }, []);
 
   const requestIpFallback = useCallback(async () => {
@@ -296,31 +338,43 @@ export function useLocationContext() {
 export const useLocationGate = useLocationContext;
 
 /**
- * If Permissions API reports geolocation already granted, capture coords without the
- * overlay button. Does nothing when state is still "prompt" (needs a user gesture —
- * onboarding Finish or the overlay CTA).
+ * Captures coordinates automatically. When permission is already "granted", gets position
+ * silently. When permission is "prompt" (undecided), invokes the browser's native location
+ * prompt automatically on mount. Does nothing when permission is explicitly "denied".
  */
 export function useAutoCaptureGrantedLocation() {
-  const { locationSynced, activating, requestBrowserLocation } = useLocationContext();
+  const { locationSynced, permissionDenied, activating, requestBrowserLocation } =
+    useLocationContext();
 
   useEffect(() => {
-    if (locationSynced || activating) return;
-    if (typeof navigator === 'undefined' || !navigator.permissions?.query) return;
+    if (activating || permissionDenied) return;
 
-    let cancelled = false;
-    void navigator.permissions
-      .query({ name: 'geolocation' })
-      .then((status) => {
-        if (!cancelled && status.state === 'granted') {
-          void requestBrowserLocation();
-        }
-      })
-      .catch((error) => {
-        handleError(error, 'useAutoCaptureGrantedLocation');
-      });
+    if (typeof navigator === 'undefined') return;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [activating, locationSynced, requestBrowserLocation]);
+    // If Permissions API is available, check state
+    if (navigator.permissions?.query) {
+      let cancelled = false;
+      void navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((status) => {
+          if (!cancelled) {
+            if (status.state === 'granted' || (!locationSynced && status.state === 'prompt')) {
+              void requestBrowserLocation();
+            }
+          }
+        })
+        .catch((error) => {
+          handleError(error, 'useAutoCaptureGrantedLocation');
+          if (!locationSynced) {
+            void requestBrowserLocation();
+          }
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    } else if (!locationSynced) {
+      void requestBrowserLocation();
+    }
+  }, [locationSynced, activating, permissionDenied, requestBrowserLocation]);
 }

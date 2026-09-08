@@ -7,6 +7,7 @@ import {
   PROFILE_VIDEO_MAX_BYTES,
 } from '../constants.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { parseLatLon } from '../utils/geo-coords.js';
 import { badRequest, forbidden, notFound } from '../utils/http-errors.js';
 import { orderedUserPair } from '../utils/match-pair.js';
 import {
@@ -18,6 +19,7 @@ import {
   saveMediaFile,
 } from '../utils/media-storage.js';
 import { validateUploadedFile } from '../utils/media-validation.js';
+import { GeolocationService } from './geolocation.js';
 
 const PUBLIC_PROFILE_SELECT = {
   id: true,
@@ -64,9 +66,11 @@ function toPublicProfileResult(
 
 export class ProfileService {
   prisma: PrismaClient;
+  geolocation: GeolocationService;
 
-  constructor(options: AbstractServiceOptions) {
+  constructor(options: AbstractServiceOptions & { geolocation?: GeolocationService }) {
     this.prisma = options.prisma;
+    this.geolocation = options.geolocation ?? new GeolocationService();
   }
 
   private async assertNotBlocked(a: string, b: string): Promise<void> {
@@ -114,9 +118,6 @@ export class ProfileService {
 
       const result = toPublicProfileResult(user);
       const matched = viewerId !== targetUserId && (await this.hasMatch(viewerId, targetUserId));
-      if (result.video && !(viewerId === targetUserId || matched)) {
-        result.video = null;
-      }
 
       // Told to the client for the same reason as `matched`: reopening a profile the
       // viewer already rated should show that state immediately, not the rating picker
@@ -171,28 +172,16 @@ export class ProfileService {
   }
 
   /**
-   * Owner, an active match, or an existing conversation (post-unmatch history) may
-   * stream the profile video — matching legacy canAccessProfileVideo.
+   * Any authenticated active member who is not blocked by the owner may stream
+   * the profile presentation video across discovery and profile details.
    */
   async canAccessVideo(viewerId: string, ownerId: string): Promise<boolean> {
     try {
       if (viewerId === ownerId) return true;
-      if (await this.hasMatch(viewerId, ownerId)) return true;
-
-      // Post-unmatch: allow video if a conversation thread still exists for history.
-      const pair = orderedUserPair(viewerId, ownerId);
-      const conversation = await this.prisma.conversation.findUnique({
-        where: {
-          user_low_id_user_high_id: {
-            user_low_id: pair.userLowId,
-            user_high_id: pair.userHighId,
-          },
-        },
-        select: { id: true },
-      });
-      return Boolean(conversation);
-    } catch (err) {
-      throw err;
+      await this.assertNotBlocked(viewerId, ownerId);
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -299,6 +288,63 @@ export class ProfileService {
         await deleteMediaFile(VIDEOS_DIR, filenameFromStoredPath(existing.video));
       }
       return { video: null };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Saves the member's real coordinates and, when reverse geocoding succeeds, updates their
+   * `city` from them — the only path that keeps `city` connected to where the member actually
+   * is, since onboarding only ever collects it as an optional, one-off free-text field.
+   * Reverse-geocode failures are not fatal: coordinates are still saved, `city` is just left
+   * untouched rather than overwritten with a bad value.
+   */
+  async syncLocation(
+    userId: string,
+    latitude: number,
+    longitude: number,
+  ): Promise<{ city: string | null }> {
+    try {
+      const coords = parseLatLon(latitude, longitude);
+      if (!coords) {
+        throw badRequest('invalid latitude or longitude', 'invalid_coordinates');
+      }
+
+      const reverse = await this.geolocation.reverseGeocode(coords.lat, coords.lon);
+      const city = reverse.success && reverse.city !== 'Unknown Location' ? reverse.city : null;
+      const country = reverse.success ? reverse.country : null;
+
+      await Promise.all([
+        this.prisma.user.update({
+          where: { id: userId },
+          data: {
+            gps_latitude: coords.lat,
+            gps_longitude: coords.lon,
+            ...(city ? { city } : {}),
+          },
+        }),
+        this.prisma.userLocation.upsert({
+          where: { user_id: userId },
+          create: {
+            user_id: userId,
+            latitude: coords.lat,
+            longitude: coords.lon,
+            location_enabled: true,
+            city,
+            country,
+          },
+          update: {
+            latitude: coords.lat,
+            longitude: coords.lon,
+            location_enabled: true,
+            ...(city ? { city } : {}),
+            ...(country ? { country } : {}),
+          },
+        }),
+      ]);
+
+      return { city };
     } catch (err) {
       throw err;
     }

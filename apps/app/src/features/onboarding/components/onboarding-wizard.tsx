@@ -31,6 +31,7 @@ import { useEffect, useRef, useState } from 'react';
 import { IdentityStep } from './identity-step';
 import { InterestsStep } from './interests-step';
 import { LocationStep } from './location-step';
+import { WelcomeStep } from './welcome-step';
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -165,7 +166,17 @@ export function OnboardingWizard() {
           stepNumber={stepNumber}
           totalSteps={totalSteps}
           loading={loading}
-          onFinish={finishOnboarding}
+          onNext={goToNextStep}
+          onBack={goBack}
+        />
+      );
+    case 'welcome':
+      return (
+        <WelcomeStep
+          stepNumber={stepNumber}
+          totalSteps={totalSteps}
+          loading={loading}
+          onAccept={() => finishOnboarding({})}
           onBack={goBack}
         />
       );

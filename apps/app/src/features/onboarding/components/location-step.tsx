@@ -2,7 +2,6 @@
 
 import { FlagIcon } from '@/components/matchy/flag-icon';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { useLocationGate } from '@/features/location/location-context';
 import {
   CONTACT_OPTIONS,
   DAYS,
@@ -19,7 +18,6 @@ import {
   MessageCircle,
   Moon,
   Phone,
-  Rocket,
   Smile,
   Sun,
   Sunset,
@@ -79,7 +77,14 @@ type LocationStepProps = {
   stepNumber: number;
   totalSteps: number;
   loading: boolean;
-  onFinish: (patch: {
+  onNext?: (patch: {
+    city?: string;
+    availabilityDays: string[];
+    availabilityHours: string[];
+    contactModes: string[];
+    languages: string[];
+  }) => Promise<boolean>;
+  onFinish?: (patch: {
     city?: string;
     availabilityDays: string[];
     availabilityHours: string[];
@@ -94,11 +99,11 @@ export function LocationStep({
   stepNumber,
   totalSteps,
   loading,
+  onNext,
   onFinish,
   onBack,
 }: LocationStepProps) {
   const { t } = useI18n();
-  const { requestBrowserLocation } = useLocationGate();
   const [city, setCity] = useState(profile?.city ?? '');
   const [availabilityDays, setAvailabilityDays] = useState<string[]>(
     profile?.availability_days ?? [],
@@ -152,19 +157,18 @@ export function LocationStep({
 
     setError(null);
     setFinishing(true);
-    // Start the browser/native geolocation prompt from this click (user gesture) before
-    // any awaits — same pattern as legacy Bienvenue Accept. Fire-and-forget so finish
-    // APIs are not blocked; LocationProvider persists coords across /home.
-    void requestBrowserLocation();
 
-    const finished = await onFinish({
+    const submitHandler = onNext ?? onFinish;
+    if (!submitHandler) return;
+
+    const success = await submitHandler({
       city: city || undefined,
       availabilityDays,
       availabilityHours,
       contactModes,
       languages,
     });
-    if (!finished) {
+    if (!success) {
       setFinishing(false);
       setError(t('onboarding.location.errorSubmit'));
     }
@@ -364,9 +368,11 @@ export function LocationStep({
           onBack={onBack}
           onContinue={() => void submit()}
           continueLabel={
-            busy ? t('onboarding.location.syncing') : t('onboarding.location.ctaFinish')
+            busy
+              ? t('onboarding.location.syncing')
+              : t('onboarding.location.ctaContinue') || t('common.continue') || 'Continuer'
           }
-          continueIcon={<Rocket size={18} />}
+          continueIcon={<Check size={18} />}
           disabled={busy}
           loading={busy}
         />
@@ -378,7 +384,9 @@ export function LocationStep({
           className="mt-3 block w-full text-center disabled:opacity-50"
           style={{ fontSize: '14px', color: '#BBB' }}
         >
-          {t('onboarding.location.skipAndLaunch')}
+          {t('onboarding.location.skipAndContinue') ||
+            t('onboarding.location.skipAndLaunch') ||
+            'Passer'}
         </button>
       </div>
     </OnboardingStepLayout>

@@ -131,6 +131,7 @@ const onboardingSlice = createSlice({
 });
 
 export const { patchOnboardingProfile } = onboardingSlice.actions;
-export const selectOnboarding = (state: { onboarding: OnboardingState }) => state.onboarding;
+export const selectOnboarding = (state: { onboarding?: OnboardingState }) =>
+  state.onboarding ?? initialState;
 
 export default onboardingSlice.reducer;

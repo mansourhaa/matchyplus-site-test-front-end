@@ -1,5 +1,6 @@
 'use client';
 
+import { AuthenticatedProfileAvatar } from '@/components/matchy/authenticated-profile-image';
 import { matchyBrand } from '@/components/matchy/brand';
 import { FlagIcon } from '@/components/matchy/flag-icon';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
@@ -28,6 +29,7 @@ import {
   Star,
   User,
   Video,
+  Wallet,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -50,6 +52,7 @@ type SettingsItem = {
   onClick?: () => void;
   badge?: string;
   badgeFlag?: ReactNode;
+  disabled?: boolean;
 };
 
 export function SettingsView() {
@@ -58,7 +61,7 @@ export function SettingsView() {
   const dispatch = useAppDispatch();
   const auth = useAppSelector(selectAuth);
   const { profile } = useAppSelector(selectOnboarding);
-  const photo = useAuthenticatedMediaUrl(profile?.image);
+  const photo = useAuthenticatedMediaUrl(profile?.image ?? auth.user?.image);
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -113,7 +116,7 @@ export function SettingsView() {
         {
           label: t('settings.notifications'),
           icon: Bell,
-          path: '/notifications',
+          path: '/settings/notifications',
           color: '#E74C3C',
           bg: '#FDEAEA',
         },
@@ -140,8 +143,8 @@ export function SettingsView() {
           label: t('settings.favorites'),
           icon: Star,
           path: '/settings/favorites',
-          color: matchyBrand.blue,
-          bg: matchyBrand.softBlue,
+          color: '#F5A623',
+          bg: '#FFF8EB',
         },
         {
           label: t('settings.qrCode'),
@@ -161,7 +164,15 @@ export function SettingsView() {
           path: '/settings/plans',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
-          badge: t('nav.planFree'),
+        },
+        {
+          label: t('settings.wallet'),
+          icon: Wallet,
+          path: null,
+          color: '#F5A623',
+          bg: '#FFF8EB',
+          disabled: true,
+          badge: t('settings.comingSoon'),
         },
       ],
     },
@@ -171,14 +182,14 @@ export function SettingsView() {
         {
           label: t('settings.privacyPolicy'),
           icon: FileText,
-          path: '/privacy-policy',
+          path: '/settings/privacy-policy',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
         },
         {
           label: t('settings.terms'),
           icon: FileText,
-          path: '/terms-of-service',
+          path: '/settings/terms-of-service',
           color: matchyBrand.muted,
           bg: '#F5F5F5',
         },
@@ -204,20 +215,13 @@ export function SettingsView() {
           style={{ border: `1px solid ${matchyBrand.border}` }}
         >
           <div className="flex items-center gap-3">
-            <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full text-xl font-bold text-white"
-              style={{
-                border: `2px solid ${matchyBrand.muted}`,
-                background: matchyBrand.gradient135,
-              }}
-            >
-              {photo.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={photo.url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initial
-              )}
-            </div>
+            <AuthenticatedProfileAvatar
+              image={profile?.image ?? auth.user?.image}
+              name={displayName}
+              sizeClassName="h-14 w-14"
+              roundedClassName="rounded-full"
+              textClassName="text-xl font-bold text-white"
+            />
             <div className="min-w-0 flex-1">
               <p className="truncate text-base font-extrabold" style={{ color: matchyBrand.text }}>
                 {displayName}
@@ -225,14 +229,6 @@ export function SettingsView() {
               <p className="truncate text-xs" style={{ color: matchyBrand.muted }}>
                 {email}
               </p>
-              <div
-                className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-                style={{ background: '#F5F5F5', border: '1px solid #E0E0E0' }}
-              >
-                <span style={{ fontSize: 11, fontWeight: 700, color: matchyBrand.muted }}>
-                  {t('nav.planFree')}
-                </span>
-              </div>
             </div>
             <button
               type="button"
@@ -278,12 +274,16 @@ export function SettingsView() {
                   <button
                     key={item.label}
                     type="button"
-                    className="flex w-full items-center gap-3 px-4 py-3.5 transition-colors hover:bg-[#F9FAFC]"
+                    disabled={item.disabled}
+                    className={`flex w-full items-center gap-3 px-4 py-3.5 transition-colors ${
+                      item.disabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-[#F9FAFC]'
+                    }`}
                     style={{
                       borderBottom:
                         i < group.items.length - 1 ? `1px solid ${matchyBrand.border}` : 'none',
                     }}
                     onClick={() => {
+                      if (item.disabled) return;
                       if (item.onClick) {
                         item.onClick();
                         return;
@@ -309,8 +309,11 @@ export function SettingsView() {
                     </span>
                     {item.badge && (
                       <span
-                        className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold"
-                        style={{ background: matchyBrand.softBlue, color: matchyBrand.blue }}
+                        className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                        style={{
+                          background: item.disabled ? '#F1F5F9' : matchyBrand.softBlue,
+                          color: item.disabled ? '#64748B' : matchyBrand.blue,
+                        }}
                       >
                         {item.badgeFlag}
                         <span>{item.badge}</span>

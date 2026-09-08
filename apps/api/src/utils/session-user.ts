@@ -3,6 +3,7 @@ type SessionUserSource = {
   email: string | null;
   phone: string | null;
   name: string;
+  image?: string | null;
   auth_provider: string;
   email_verified: boolean;
   phone_verified?: boolean;
@@ -18,6 +19,7 @@ export type MemberSessionUser = {
   email: string | null;
   phone: string | null;
   name: string;
+  image: string | null;
   auth_provider: string;
   email_verified: boolean;
   phone_verified: boolean;
@@ -40,6 +42,7 @@ export function toMemberSessionUser(user: SessionUserSource): MemberSessionUser 
     email: user.email,
     phone: user.phone,
     name: user.name,
+    image: user.image ?? null,
     auth_provider: user.auth_provider,
     email_verified: user.email_verified,
     phone_verified: Boolean(user.phone_verified),

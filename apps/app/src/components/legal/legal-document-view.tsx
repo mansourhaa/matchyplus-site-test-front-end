@@ -1,4 +1,8 @@
+'use client';
+
+import { matchyBrand } from '@/components/matchy/brand';
 import type { LegalDocument } from '@/lib/legal/types';
+import { CheckCircle2 } from 'lucide-react';
 
 type Props = {
   document: LegalDocument;
@@ -8,35 +12,46 @@ type Props = {
 export function LegalDocumentView({ document, isRtl = false }: Props) {
   return (
     <div
-      className="min-h-full overflow-y-auto"
+      className="w-full"
       style={{
-        background: '#F5F7FA',
         fontFamily: isRtl ? 'var(--font-cairo), sans-serif' : 'var(--font-baloo), sans-serif',
       }}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      <div className="mx-auto max-w-3xl px-4 py-6 md:px-8">
-        <div className="mb-6 text-center">
-          <h1 className="mb-2 text-2xl font-bold text-[#1A1A2E]">{document.heading}</h1>
-          <p className="text-sm text-[#888]">{document.subheading}</p>
+      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        {/* Centered Document Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#0F172A] sm:text-3xl">
+            {document.heading}
+          </h1>
+          <p className="mt-2 text-xs font-medium text-[#64748B] sm:text-sm">
+            {document.subheading}
+          </p>
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow-sm" style={{ border: '1px solid #E5E7EB' }}>
-          {document.sections.map((section, sIdx) => (
-            <div
-              key={section.title}
-              className={sIdx === 0 ? '' : 'mt-6 border-t border-[#F0F0F0] pt-6'}
-            >
-              <h2 className="mb-2 text-base font-bold text-[#2F76BB]">{section.title}</h2>
-              <p className="text-sm leading-relaxed whitespace-pre-line text-[#555]">
+        {/* Legal Document Main Card */}
+        <div
+          className="space-y-8 rounded-3xl bg-white p-6 shadow-xs sm:p-10"
+          style={{ border: `1px solid ${matchyBrand.border}` }}
+        >
+          {document.sections.map((section) => (
+            <section key={section.title} className="space-y-3">
+              <h2 className="text-base font-bold text-[#2F76BB] sm:text-lg">{section.title}</h2>
+              <div className="text-sm leading-relaxed font-normal whitespace-pre-line text-[#334155] sm:text-[15px]">
                 {section.content}
-              </p>
-            </div>
+              </div>
+            </section>
           ))}
-        </div>
 
-        <div className="mt-6 rounded-xl bg-blue-50 p-4" style={{ border: '1px solid #D4E1EE' }}>
-          <p className="text-center text-xs text-[#555]">{document.footer}</p>
+          {/* Footer Contact Banner inside card */}
+          {document.footer && (
+            <div className="border-t border-[#F1F5F9] pt-6">
+              <div className="flex items-center gap-2.5 text-xs font-medium text-[#2F76BB] sm:text-sm">
+                <CheckCircle2 size={18} className="shrink-0 text-[#61BCA6]" />
+                <p className="leading-relaxed">{document.footer}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

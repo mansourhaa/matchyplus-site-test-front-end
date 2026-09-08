@@ -18,6 +18,7 @@ export type MatchingProfile = {
   id: string;
   name: string;
   image: string | null;
+  video?: string | null;
   bio: string | null;
   job: string | null;
   category: string | null;
@@ -25,6 +26,10 @@ export type MatchingProfile = {
   interests: string[];
   activity_sector: string | null;
   service_type: string | null;
+  price?: string | null;
+  availability_days?: string[];
+  contact_modes?: string[];
+  verified?: boolean;
   rating: number;
 };
 
@@ -69,7 +74,7 @@ export type SwipeResult = {
   quota: SwipeQuota;
 };
 
-export type DiscoveryFeedSort = 'match' | 'distance' | 'rating';
+export type DiscoveryFeedSort = 'match' | 'distance' | 'rating' | 'price_asc' | 'price_desc';
 
 export type DiscoveryFeedQuery = {
   latitude?: number;
@@ -80,6 +85,10 @@ export type DiscoveryFeedQuery = {
   q?: string;
   maxDistanceKm?: number;
   serviceTypes?: string;
+  sector?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  availableOnly?: boolean;
   profileType?: 'INDIVIDUAL' | 'PROVIDER';
   minRating?: number;
   sort?: DiscoveryFeedSort;
@@ -130,6 +139,32 @@ export type PushToastItem = {
   viewerImage: string | null;
 };
 
+export type SwipeHistoryFilter = 'all' | 'right' | 'left' | 'match';
+
+export type SwipeHistoryItem = {
+  id: string;
+  direction: 'LEFT' | 'RIGHT' | 'SUPERLIKE';
+  swiped_at: string;
+  is_matched: boolean;
+  conversation_id: string | null;
+  target: MatchingProfile;
+};
+
+export type SwipeHistoryStats = {
+  total_swipes: number;
+  likes: number;
+  passes: number;
+  matches: number;
+  match_rate: number;
+};
+
+export type SwipeHistoryResponse = {
+  items: SwipeHistoryItem[];
+  stats: SwipeHistoryStats;
+  total: number;
+  has_more: boolean;
+};
+
 export type MatchingState = {
   feed: FeedProfile[];
   feedLoading: boolean;
@@ -147,4 +182,9 @@ export type MatchingState = {
   withdrawLoadingId: string | null;
   celebrationProfile: FeedProfile | MatchingProfile | null;
   showQuotaModal: boolean;
+  history: SwipeHistoryItem[];
+  historyStats: SwipeHistoryStats | null;
+  historyLoading: boolean;
+  historyError: string | null;
+  historyFilter: SwipeHistoryFilter;
 };
