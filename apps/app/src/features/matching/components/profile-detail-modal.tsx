@@ -18,7 +18,9 @@ import {
   rateProfile,
   reportProfile,
 } from '@/features/profile/store/profile-slice';
+import type { PublicProfile } from '@/features/profile/types';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
+import { api } from '@/lib/api';
 import { canStreamOrAutoPlay, useVideoSettings } from '@/lib/video-settings';
 import {
   ArrowLeft,
@@ -81,8 +83,12 @@ export type ProfileDetailData = {
   viewer_has_rated?: boolean;
 };
 
+export type ProfileDetailSource =
+  'discovery' | 'search' | 'favorites' | 'history' | 'matches' | 'chat' | 'public';
+
 type Props = {
   profile: ProfileDetailData;
+  source?: ProfileDetailSource;
   onClose: () => void;
   onConnect?: () => void;
   onPass?: () => void;
@@ -109,15 +115,118 @@ const CONTACT_MODE_TEXT_KEY: Record<string, string> = {
 
 type ReportReason = 'INAPPROPRIATE' | 'SPAM' | 'FAKE' | 'HARASSMENT' | 'OTHER';
 
-export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }: Props) {
+export function ProfileDetailModal({ profile, source, onClose, onConnect, onPass, busy }: Props) {
   const { t, locale, dir } = useI18n();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(selectAuth);
-  const photo = useAuthenticatedMediaUrl(profile.image);
-  const video = useAuthenticatedMediaUrl(profile.video, { stream: true });
+
+  const [enrichedData, setEnrichedData] = useState<{
+    id: string;
+    data: Partial<ProfileDetailData>;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!profile.id) return;
+    let active = true;
+    try {
+      const req = api.get<PublicProfile>(`/profiles/${profile.id}`);
+      if (req && typeof req.then === 'function') {
+        req
+          .then((res) => {
+            if (!active || !res?.data) return;
+            const p = res.data;
+            setEnrichedData({
+              id: profile.id,
+              data: {
+                name: p.name,
+                image: p.image,
+                video: p.video,
+                bio: p.bio,
+                job: p.job,
+                city: p.city,
+                interests: p.interests,
+                activity_sector: p.activity_sector,
+                service_type: p.service_type,
+                profile_type: p.profile_type,
+                offer_service: p.offer_service,
+                looking_for: p.looking_for,
+                experience: p.experience,
+                rating: p.rating ?? 0,
+                reviews: p.reviews,
+                languages: p.languages,
+                contact_modes: p.contact_modes,
+                price: p.price,
+                availability_days: p.availability_days,
+                availability_hours: p.availability_hours,
+                matched: p.matched,
+                viewer_has_rated: p.viewer_has_rated,
+              },
+            });
+          })
+          .catch(() => {
+            // Keep existing data on network error
+          });
+      }
+    } catch {
+      // Ignore synchronous mock/setup error
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [profile.id]);
+
+  const currentProfile: ProfileDetailData = useMemo(() => {
+    if (enrichedData && enrichedData.id === profile.id) {
+      const e = enrichedData.data;
+      return {
+        ...profile,
+        name: e.name || profile.name,
+        image: e.image ?? profile.image,
+        video: e.video ?? profile.video,
+        bio: e.bio ?? profile.bio,
+        job: e.job ?? profile.job,
+        category: profile.category,
+        city: e.city ?? profile.city,
+        interests: e.interests && e.interests.length > 0 ? e.interests : profile.interests,
+        activity_sector: e.activity_sector ?? profile.activity_sector,
+        service_type: e.service_type ?? profile.service_type,
+        profile_type: e.profile_type ?? profile.profile_type,
+        offer_service: e.offer_service ?? profile.offer_service,
+        looking_for: e.looking_for ?? profile.looking_for,
+        experience: e.experience ?? profile.experience,
+        rating: e.rating !== undefined && e.rating > 0 ? e.rating : profile.rating,
+        reviews: e.reviews ?? profile.reviews,
+        languages: e.languages && e.languages.length > 0 ? e.languages : profile.languages,
+        contact_modes:
+          e.contact_modes && e.contact_modes.length > 0 ? e.contact_modes : profile.contact_modes,
+        price: e.price ?? profile.price,
+        availability_days:
+          e.availability_days && e.availability_days.length > 0
+            ? e.availability_days
+            : profile.availability_days,
+        availability_hours:
+          e.availability_hours && e.availability_hours.length > 0
+            ? e.availability_hours
+            : profile.availability_hours,
+        matched: e.matched ?? profile.matched,
+        viewer_has_rated: e.viewer_has_rated ?? profile.viewer_has_rated,
+        distance_km: profile.distance_km ?? e.distance_km,
+        match_score: profile.match_score ?? e.match_score,
+      };
+    }
+    return profile;
+  }, [profile, enrichedData]);
+
+  const photo = useAuthenticatedMediaUrl(currentProfile.image);
+  const video = useAuthenticatedMediaUrl(currentProfile.video, { stream: true });
   const title =
-    profile.service_type || profile.job || profile.activity_sector || profile.category || '';
+    currentProfile.service_type ||
+    currentProfile.job ||
+    currentProfile.activity_sector ||
+    currentProfile.category ||
+    '';
   const notifiedProfileId = useRef<string | null>(null);
 
   const profileTypeLabel: Record<'INDIVIDUAL' | 'PROVIDER', string> = {
@@ -126,21 +235,31 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
   };
 
   useEffect(() => {
-    if (!user || user.id === profile.id) return;
-    if (notifiedProfileId.current === profile.id) return;
-    notifiedProfileId.current = profile.id;
-    void dispatch(notifyProfileView(profile.id));
-  }, [dispatch, user, profile.id]);
+    if (!user || user.id === currentProfile.id) return;
+    if (notifiedProfileId.current === currentProfile.id) return;
+    notifiedProfileId.current = currentProfile.id;
+    void dispatch(notifyProfileView(currentProfile.id));
+  }, [dispatch, user, currentProfile.id]);
 
   const matching = useAppSelector(selectMatching);
   const isMatchedInStore = useMemo(() => {
-    return Boolean(profile.id && matching?.matches?.some((m) => m.matched_user_id === profile.id));
-  }, [profile.id, matching?.matches]);
-  const isMatched = Boolean(profile.matched || isMatchedInStore);
+    return Boolean(
+      currentProfile.id && matching?.matches?.some((m) => m.matched_user_id === currentProfile.id),
+    );
+  }, [currentProfile.id, matching?.matches]);
+  const isMatched = Boolean(currentProfile.matched || isMatchedInStore);
+
+  // Rating adapted based on from where the card is opened:
+  // - Discovery, Search, and Favorites: only read-only aggregate rating display (no rating box)
+  // - Matches, Chat, History (when matched), Public (when matched): interactive rating enabled
+  const isRatingAllowedForSource =
+    source !== 'discovery' && source !== 'search' && source !== 'favorites';
+  const canRateProfile = Boolean(isMatched && isRatingAllowedForSource);
+
   const { settings: videoSettings } = useVideoSettings();
   const shouldAutoPlay = canStreamOrAutoPlay(videoSettings);
   const { favoriteIds, actionLoading: favActionLoading } = useAppSelector(selectFavorites);
-  const isFavorited = Boolean(profile.id && favoriteIds.includes(profile.id));
+  const isFavorited = Boolean(currentProfile.id && favoriteIds.includes(currentProfile.id));
 
   // 3-Dots Menu & Modals State
   const [menuOpen, setMenuOpen] = useState(false);
@@ -174,40 +293,40 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
   const [selectedRating, setSelectedRating] = useState(0);
   const [isSavingRating, setIsSavingRating] = useState(false);
   const [ratingOutcome, setRatingOutcome] = useState<'saved' | 'already_rated' | 'error' | null>(
-    profile.viewer_has_rated ? 'already_rated' : null,
+    currentProfile.viewer_has_rated ? 'already_rated' : null,
   );
   const [showSavedBanner, setShowSavedBanner] = useState(false);
-  const [ratedProfileId, setRatedProfileId] = useState(profile.id);
-  const [syncedViewerHasRated, setSyncedViewerHasRated] = useState(profile.viewer_has_rated);
+  const [ratedProfileId, setRatedProfileId] = useState(currentProfile.id);
+  const [syncedViewerHasRated, setSyncedViewerHasRated] = useState(currentProfile.viewer_has_rated);
 
-  const displayedProfileIdRef = useRef(profile.id);
+  const displayedProfileIdRef = useRef(currentProfile.id);
   const savedBannerTimeoutRef = useRef<number | null>(null);
   useLayoutEffect(() => {
-    displayedProfileIdRef.current = profile.id;
+    displayedProfileIdRef.current = currentProfile.id;
     return () => {
       if (savedBannerTimeoutRef.current !== null) {
         window.clearTimeout(savedBannerTimeoutRef.current);
         savedBannerTimeoutRef.current = null;
       }
     };
-  }, [profile.id]);
+  }, [currentProfile.id]);
 
-  if (ratedProfileId !== profile.id) {
-    setRatedProfileId(profile.id);
-    setSyncedViewerHasRated(profile.viewer_has_rated);
+  if (ratedProfileId !== currentProfile.id) {
+    setRatedProfileId(currentProfile.id);
+    setSyncedViewerHasRated(currentProfile.viewer_has_rated);
     setSelectedRating(0);
     setIsSavingRating(false);
-    setRatingOutcome(profile.viewer_has_rated ? 'already_rated' : null);
+    setRatingOutcome(currentProfile.viewer_has_rated ? 'already_rated' : null);
     setShowSavedBanner(false);
     setReportAccordionOpen(false);
     setShowUnmatchModal(false);
     setShowBlockModal(false);
     setSelectedReason('INAPPROPRIATE');
     setReportDetails('');
-  } else if (profile.viewer_has_rated !== syncedViewerHasRated) {
-    setSyncedViewerHasRated(profile.viewer_has_rated);
+  } else if (currentProfile.viewer_has_rated !== syncedViewerHasRated) {
+    setSyncedViewerHasRated(currentProfile.viewer_has_rated);
     if (
-      profile.viewer_has_rated &&
+      currentProfile.viewer_has_rated &&
       ratingOutcome !== 'saved' &&
       ratingOutcome !== 'already_rated'
     ) {
@@ -216,9 +335,9 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
   }
 
   const handleSubmitRating = async () => {
-    if (!isMatched || isSavingRating || selectedRating < 1) return;
+    if (!canRateProfile || isSavingRating || selectedRating < 1) return;
 
-    const targetProfileId = profile.id;
+    const targetProfileId = currentProfile.id;
     setIsSavingRating(true);
     const resultAction = await dispatch(
       rateProfile({ userId: targetProfileId, value: selectedRating }),
@@ -228,6 +347,17 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
       if (rateProfile.fulfilled.match(resultAction)) {
         setRatingOutcome('saved');
         setShowSavedBanner(true);
+        if (resultAction.payload) {
+          setEnrichedData((prev) => ({
+            id: targetProfileId,
+            data: {
+              ...(prev?.id === targetProfileId ? prev.data : {}),
+              rating: resultAction.payload.rating,
+              reviews: resultAction.payload.reviews,
+              viewer_has_rated: true,
+            },
+          }));
+        }
         if (savedBannerTimeoutRef.current !== null) {
           window.clearTimeout(savedBannerTimeoutRef.current);
         }
@@ -249,10 +379,10 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
   };
 
   const handleUnmatch = async () => {
-    if (!profile.id || unmatchLoading) return;
+    if (!currentProfile.id || unmatchLoading) return;
     setUnmatchLoading(true);
     try {
-      await dispatch(unmatchUser(profile.id)).unwrap();
+      await dispatch(unmatchUser(currentProfile.id)).unwrap();
       setShowUnmatchModal(false);
       onClose();
       router.push('/matches');
@@ -264,10 +394,10 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
   };
 
   const handleBlock = async () => {
-    if (!profile.id || blockLoading) return;
+    if (!currentProfile.id || blockLoading) return;
     setBlockLoading(true);
     try {
-      await dispatch(blockUser(profile.id)).unwrap();
+      await dispatch(blockUser(currentProfile.id)).unwrap();
       setShowBlockModal(false);
       setReportAccordionOpen(false);
       onClose();
@@ -281,19 +411,19 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
 
   const handleReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile.id || reportLoading) return;
+    if (!currentProfile.id || reportLoading) return;
     setReportLoading(true);
     try {
       await dispatch(
         reportProfile({
-          userId: profile.id,
+          userId: currentProfile.id,
           reason: selectedReason,
           details: reportDetails.trim() || undefined,
         }),
       ).unwrap();
 
       if (alsoBlock) {
-        await dispatch(blockUser(profile.id)).unwrap();
+        await dispatch(blockUser(currentProfile.id)).unwrap();
         setReportAccordionOpen(false);
         onClose();
         router.push('/matches');
@@ -323,16 +453,26 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
       <article
         className="flex h-[92dvh] max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-auto sm:max-h-[88vh] sm:max-w-lg sm:rounded-3xl"
         onClick={(event) => event.stopPropagation()}
-        aria-label={t('profileDetail.profileAlt', { name: profile.name })}
+        aria-label={t('profileDetail.profileAlt', { name: currentProfile.name })}
       >
         {/* Pinned Top Photo Banner Header */}
         <div className="relative h-[42vh] w-full shrink-0 overflow-hidden bg-[#1A1A2E] md:h-[50vh]">
-          {photo.url ? (
+          {video.url ? (
+            <video
+              src={video.url}
+              autoPlay={shouldAutoPlay}
+              muted
+              loop
+              playsInline
+              controls
+              className="h-full w-full object-cover"
+            />
+          ) : photo.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photo.url} alt="" className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full items-center justify-center text-7xl font-bold text-white/40">
-              {profile.name.slice(0, 1)}
+              {currentProfile.name.slice(0, 1)}
             </div>
           )}
 
@@ -355,19 +495,23 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
               type="button"
               onClick={async (e) => {
                 e.stopPropagation();
-                if (!profile.id) return;
+                if (!currentProfile.id) return;
                 try {
-                  const res = await dispatch(toggleFavorite(profile.id)).unwrap();
+                  const res = await dispatch(toggleFavorite(currentProfile.id)).unwrap();
                   if (res.favorited) {
-                    toast.success(t('profileDetail.addedToFavorites', { name: profile.name }));
+                    toast.success(
+                      t('profileDetail.addedToFavorites', { name: currentProfile.name }),
+                    );
                   } else {
-                    toast.success(t('profileDetail.removedFromFavorites', { name: profile.name }));
+                    toast.success(
+                      t('profileDetail.removedFromFavorites', { name: currentProfile.name }),
+                    );
                   }
                 } catch {
                   toast.error(t('common.errorOccurred') || 'Error');
                 }
               }}
-              disabled={Boolean(profile.id && favActionLoading[profile.id])}
+              disabled={Boolean(currentProfile.id && favActionLoading[currentProfile.id])}
               aria-label={
                 isFavorited
                   ? t('profileDetail.removeFromFavorites')
@@ -458,7 +602,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
           <div className="pointer-events-none absolute right-4 bottom-3.5 left-4 z-10 flex items-end justify-between gap-2">
             <div className="min-w-0 pr-2">
               <h1 className="truncate text-xl font-extrabold text-white drop-shadow-sm sm:text-2xl">
-                {profile.name}
+                {currentProfile.name}
               </h1>
               {title && (
                 <p className="mt-0.5 truncate text-xs font-medium text-white/90 drop-shadow-xs">
@@ -466,11 +610,11 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                 </p>
               )}
             </div>
-            {profile.price && (
+            {currentProfile.price && (
               <span className="shrink-0 rounded-full bg-[#2F76BB] px-3.5 py-1.5 text-xs font-bold text-white shadow-md">
-                {/(day|jour|j|يوم)/i.test(profile.price)
-                  ? profile.price
-                  : `${profile.price.replace(/\/(h|hour|hr|heure|ساعة|س)/i, '').trim()} ${t('profileDetail.priceUnit')}`}
+                {/(day|jour|j|يوم)/i.test(currentProfile.price)
+                  ? currentProfile.price
+                  : `${currentProfile.price.replace(/\/(h|hour|hr|heure|ساعة|س)/i, '').trim()} ${t('profileDetail.priceUnit')}`}
               </span>
             )}
           </div>
@@ -483,45 +627,45 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
             <div className="flex items-center gap-1.5">
               <Star size={14} className="text-[#F5A623]" fill="#F5A623" />
               <span className="font-bold text-[#1A1A2E]">
-                {Number.isFinite(profile.rating) ? profile.rating.toFixed(1) : '0.0'}{' '}
-                {profile.reviews
-                  ? t('profileDetail.reviewsCount', { count: profile.reviews })
+                {Number.isFinite(currentProfile.rating) ? currentProfile.rating.toFixed(1) : '0.0'}{' '}
+                {currentProfile.reviews
+                  ? t('profileDetail.reviewsCount', { count: currentProfile.reviews })
                   : `(0 ${locale === 'fr' ? 'avis' : locale === 'ar' ? 'تقييم' : 'reviews'})`}
               </span>
             </div>
 
-            {profile.experience && (
+            {currentProfile.experience && (
               <div className="flex items-center gap-1.5 text-[#555]">
                 <Award size={14} color="#2F76BB" />
                 <span>
-                  {profile.experience} {t('profileDetail.expSuffix')}
+                  {currentProfile.experience} {t('profileDetail.expSuffix')}
                 </span>
               </div>
             )}
 
-            {profile.distance_km != null && (
+            {currentProfile.distance_km != null && (
               <div className="flex items-center gap-1 text-[#61BCA6]">
                 <MapPin size={13} />
-                <span>{t('matching.kmAway', { km: profile.distance_km })}</span>
+                <span>{t('matching.kmAway', { km: currentProfile.distance_km })}</span>
               </div>
             )}
           </div>
 
           {/* Profile Goals / Service / Bio Card */}
-          {(profile.looking_for || profile.offer_service || profile.bio) && (
+          {(currentProfile.looking_for || currentProfile.offer_service || currentProfile.bio) && (
             <div className="space-y-2 rounded-2xl bg-[#F4F7FB] p-4">
-              {profile.looking_for && (
+              {currentProfile.looking_for && (
                 <div className="flex items-start gap-2 text-xs leading-relaxed text-[#475569]">
                   <span className="mt-0.5 shrink-0 font-bold text-amber-500">🔸</span>
-                  <span>{profile.looking_for}</span>
+                  <span>{currentProfile.looking_for}</span>
                 </div>
               )}
-              {profile.bio && (
+              {currentProfile.bio && (
                 <p className="text-xs leading-relaxed whitespace-pre-line text-[#475569] sm:text-[13px]">
-                  {profile.bio}
+                  {currentProfile.bio}
                 </p>
               )}
-              {profile.offer_service && (
+              {currentProfile.offer_service && (
                 <div className="flex items-center gap-1.5 pt-0.5 text-xs font-bold text-[#61BCA6]">
                   <Check size={14} strokeWidth={2.5} className="text-[#61BCA6]" />
                   <span>{t('profileDetail.offersService')}</span>
@@ -530,8 +674,8 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
             </div>
           )}
 
-          {/* Rating Section for Mutual Matches */}
-          {isMatched && ratingOutcome !== 'saved' && ratingOutcome !== 'already_rated' && (
+          {/* Rating Section for Mutual Matches (Adapted based on where the card is opened) */}
+          {canRateProfile && ratingOutcome !== 'saved' && ratingOutcome !== 'already_rated' && (
             <div
               className="rounded-2xl p-3"
               style={{ background: '#F5F7FA', border: '1px solid #E0E8F0' }}
@@ -583,7 +727,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
             </div>
           )}
 
-          {isMatched && ratingOutcome === 'saved' && showSavedBanner && (
+          {canRateProfile && ratingOutcome === 'saved' && showSavedBanner && (
             <div
               className="rounded-2xl p-3"
               style={{ background: '#F5F7FA', border: '1px solid #DCEAD9' }}
@@ -597,7 +741,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
             </div>
           )}
 
-          {isMatched && ratingOutcome === 'already_rated' && (
+          {canRateProfile && ratingOutcome === 'already_rated' && (
             <div
               className="rounded-2xl p-3"
               style={{ background: '#F5F7FA', border: '1px solid #E0E8F0' }}
@@ -609,13 +753,13 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
           )}
 
           {/* Centres d'intérêts */}
-          {profile.interests && profile.interests.length > 0 && (
+          {currentProfile.interests && currentProfile.interests.length > 0 && (
             <section>
               <h2 className="mb-2 text-sm font-bold text-[#353535]">
                 {t('profileDetail.interests')}
               </h2>
               <div className="flex flex-wrap gap-2">
-                {profile.interests.map((tag) => (
+                {currentProfile.interests.map((tag) => (
                   <span
                     key={tag}
                     className="rounded-full bg-[#EEF5FF] px-3.5 py-1.5 text-xs font-semibold text-[#2F76BB]"
@@ -628,13 +772,13 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
           )}
 
           {/* Modes de contact préférés */}
-          {profile.contact_modes && profile.contact_modes.length > 0 && (
+          {currentProfile.contact_modes && currentProfile.contact_modes.length > 0 && (
             <section>
               <p className="mb-2.5 text-sm font-bold text-[#353535]">
                 {t('profileDetail.preferredContactModes')}
               </p>
               <div className="space-y-2">
-                {profile.contact_modes
+                {currentProfile.contact_modes
                   .filter((mode) => CONTACT_MODE_ICONS[mode])
                   .map((mode) => {
                     const cfg = CONTACT_MODE_ICONS[mode];
@@ -676,13 +820,13 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
           )}
 
           {/* Langues parlées */}
-          {profile.languages && profile.languages.length > 0 && (
+          {currentProfile.languages && currentProfile.languages.length > 0 && (
             <section>
               <h2 className="mb-2 text-sm font-bold text-[#353535]">
                 {t('profileDetail.languages')}
               </h2>
               <div className="flex flex-wrap gap-2">
-                {profile.languages.map((lang) => (
+                {currentProfile.languages.map((lang) => (
                   <span
                     key={lang}
                     className="rounded-full border border-[#DCE8F8] bg-[#EEF5FF] px-3.5 py-1 text-xs font-bold text-[#2F76BB]"
@@ -695,14 +839,14 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
           )}
 
           {/* Disponibilités */}
-          {(Boolean(profile.availability_days?.length) ||
-            Boolean(profile.availability_hours?.length)) && (
+          {(Boolean(currentProfile.availability_days?.length) ||
+            Boolean(currentProfile.availability_hours?.length)) && (
             <section>
               <h2 className="mb-2 text-sm font-bold text-[#353535]">
                 {t('profileDetail.availableDays') || 'Disponibilités'}
               </h2>
               <div className="flex flex-wrap gap-2">
-                {profile.availability_days?.map((day) => (
+                {currentProfile.availability_days?.map((day) => (
                   <span
                     key={day}
                     className="rounded-xl bg-[#E8F7F3] px-3 py-1.5 text-xs font-semibold text-[#2A9177]"
@@ -710,7 +854,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                     {day}
                   </span>
                 ))}
-                {profile.availability_hours?.map((hour) => (
+                {currentProfile.availability_hours?.map((hour) => (
                   <span
                     key={hour}
                     className="rounded-xl border border-amber-200/60 bg-[#FFF9E6] px-3 py-1.5 text-xs font-semibold text-[#D97706]"
@@ -723,7 +867,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
           )}
 
           {/* Extra Profile Information Card */}
-          {(profile.activity_sector || profile.profile_type) && (
+          {(currentProfile.activity_sector || currentProfile.profile_type) && (
             <div className="overflow-hidden rounded-2xl" style={{ border: '1px solid #E8EFF5' }}>
               <div
                 className="px-4 py-2.5"
@@ -734,17 +878,19 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                 </p>
               </div>
               <div className="space-y-2.5 bg-white px-4 py-3">
-                {profile.activity_sector && (
+                {currentProfile.activity_sector && (
                   <div className="flex items-center gap-2.5">
                     <Globe size={14} color="#9B59B6" />
-                    <span className="text-[13px] text-[#555]">{profile.activity_sector}</span>
+                    <span className="text-[13px] text-[#555]">
+                      {currentProfile.activity_sector}
+                    </span>
                   </div>
                 )}
-                {profile.profile_type && (
+                {currentProfile.profile_type && (
                   <div className="flex items-center gap-2.5">
                     <User size={14} color="#888" />
                     <span className="text-[13px] text-[#555]">
-                      {profileTypeLabel[profile.profile_type]}
+                      {profileTypeLabel[currentProfile.profile_type]}
                     </span>
                   </div>
                 )}
@@ -812,7 +958,9 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                             <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5">
                               <div className="min-w-0">
                                 <p className="text-xs font-bold text-[#1E293B]">
-                                  {t('chat.dialogs.blockActionTitle', { name: profile.name })}
+                                  {t('chat.dialogs.blockActionTitle', {
+                                    name: currentProfile.name,
+                                  })}
                                 </p>
                                 <p className="mt-0.5 text-[11px] leading-snug text-[#64748B]">
                                   {t('chat.dialogs.blockActionDesc')}
@@ -837,7 +985,9 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                               <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5">
                                 <div className="min-w-0">
                                   <p className="text-xs font-bold text-[#1E293B]">
-                                    {t('chat.dialogs.unmatchActionTitle', { name: profile.name })}
+                                    {t('chat.dialogs.unmatchActionTitle', {
+                                      name: currentProfile.name,
+                                    })}
                                   </p>
                                   <p className="mt-0.5 text-[11px] leading-snug text-[#64748B]">
                                     {t('chat.dialogs.unmatchActionDesc')}
@@ -943,7 +1093,7 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
                           />
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-rose-950">
-                              {t('chat.dialogs.alsoBlockOption', { name: profile.name })}
+                              {t('chat.dialogs.alsoBlockOption', { name: currentProfile.name })}
                             </p>
                             <p className="mt-0.5 text-[11px] leading-snug text-rose-800/80">
                               {t('chat.dialogs.alsoBlockDesc')}
@@ -982,10 +1132,10 @@ export function ProfileDetailModal({ profile, onClose, onConnect, onPass, busy }
           </div>
 
           {/* Quick Chat Link for Mutual Matches */}
-          {isMatched && (
+          {isMatched && source !== 'chat' && (
             <div className="pt-1">
               <a
-                href={`/matches?target=${profile.id}`}
+                href={`/matches?target=${currentProfile.id}`}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white shadow-xs transition-transform hover:scale-[1.01]"
                 style={{ background: matchyBrand.gradient }}
               >

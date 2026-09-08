@@ -353,6 +353,7 @@ export default function HistoryPage() {
             distance_km: null,
             match_score: 85,
           }}
+          source="history"
           onClose={() => setSelectedProfile(null)}
         />
       )}

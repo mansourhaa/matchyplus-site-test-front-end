@@ -438,6 +438,7 @@ export function FavoritesView() {
             match_score: selectedProfile.match_score,
             distance_km: selectedProfile.distance_km,
           }}
+          source="favorites"
           onClose={() => setSelectedProfile(null)}
           onConnect={async () => {
             const targetId = selectedProfile.id;

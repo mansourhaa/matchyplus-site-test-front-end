@@ -76,11 +76,16 @@ const profile: ProfileDetailData = {
 function renderModal(
   store: ReturnType<typeof buildStore>,
   overrides: Partial<ProfileDetailData> = {},
+  source?: import('./profile-detail-modal').ProfileDetailSource,
 ) {
   return render(
     <Provider store={store}>
       <I18nProvider>
-        <ProfileDetailModal profile={{ ...profile, ...overrides }} onClose={() => {}} />
+        <ProfileDetailModal
+          profile={{ ...profile, ...overrides }}
+          source={source}
+          onClose={() => {}}
+        />
       </I18nProvider>
     </Provider>,
   );
@@ -92,11 +97,41 @@ describe('ProfileDetailModal — rating', () => {
     vi.useRealTimers();
   });
 
-  it('shows the rating picker for a matched profile', () => {
+  it('shows the rating picker for a matched profile when source allows rating', () => {
     renderModal(buildStore(), { matched: true });
 
     expect(screen.getByText('Noter ce profil')).toBeInTheDocument();
     expect(screen.getByText('Choisissez une note')).toBeInTheDocument();
+  });
+
+  it('does not show the rating picker when source is discovery even if matched', () => {
+    renderModal(buildStore(), { matched: true }, 'discovery');
+
+    expect(screen.queryByText('Noter ce profil')).not.toBeInTheDocument();
+  });
+
+  it('does not show the rating picker when source is search even if matched', () => {
+    renderModal(buildStore(), { matched: true }, 'search');
+
+    expect(screen.queryByText('Noter ce profil')).not.toBeInTheDocument();
+  });
+
+  it('does not show the rating picker when source is favorites even if matched', () => {
+    renderModal(buildStore(), { matched: true }, 'favorites');
+
+    expect(screen.queryByText('Noter ce profil')).not.toBeInTheDocument();
+  });
+
+  it('shows the rating picker when source is matches for a matched profile', () => {
+    renderModal(buildStore(), { matched: true }, 'matches');
+
+    expect(screen.getByText('Noter ce profil')).toBeInTheDocument();
+  });
+
+  it('shows the rating picker when source is chat for a matched profile', () => {
+    renderModal(buildStore(), { matched: true }, 'chat');
+
+    expect(screen.getByText('Noter ce profil')).toBeInTheDocument();
   });
 
   it('does not show the rating picker for a profile that is not matched', () => {
@@ -451,5 +486,54 @@ describe('ProfileDetailModal — profile view notification', () => {
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/profiles/user-2/view'));
     expect(api.post).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ProfileDetailModal — auto-enrichment', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('auto-enriches profile with full server details when opened with partial data', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        id: 'user-2',
+        name: 'Jane Doe',
+        job: 'Électricien',
+        bio: 'Expert électricien certifié avec 10 ans de pratique.',
+        image: null,
+        video: null,
+        city: 'Tunis',
+        interests: ['Électricité', 'Rénovation'],
+        languages: ['Français', 'Arabe'],
+        contact_modes: ['video', 'call'],
+        availability_days: ['Lundi', 'Mardi'],
+        availability_hours: ['09:00 - 18:00'],
+        offer_service: true,
+        service_type: 'Électricien',
+        price: '120 DT',
+        profile_type: 'PROVIDER',
+        experience: '5',
+        activity_sector: 'Bâtiment',
+        looking_for: 'Cherche des chantiers',
+        selected_goals: [],
+        rating: 4.8,
+        reviews: 9,
+        matched: false,
+        viewer_has_rated: false,
+      },
+    });
+
+    renderModal(buildStore(), { id: 'user-2' }, 'discovery');
+
+    await waitFor(() => expect(api.get).toHaveBeenCalledWith('/profiles/user-2'));
+
+    expect(
+      await screen.findByText('Expert électricien certifié avec 10 ans de pratique.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Cherche des chantiers')).toBeInTheDocument();
+    expect(screen.getByText('Français')).toBeInTheDocument();
+    expect(screen.getByText('Arabe')).toBeInTheDocument();
+    expect(screen.getByText('5 exp.')).toBeInTheDocument();
   });
 });

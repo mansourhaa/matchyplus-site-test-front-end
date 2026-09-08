@@ -795,6 +795,7 @@ export function DiscoverView() {
       {detailOpen && detailProfile && (
         <ProfileDetailModal
           profile={detailProfile}
+          source="discovery"
           busy={matching.swipeLoading}
           onClose={() => {
             setDetailOpen(false);
