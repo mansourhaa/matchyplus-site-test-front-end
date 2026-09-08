@@ -85,7 +85,9 @@ describe('NotificationsView', () => {
     );
 
     await screen.findByText('Vue de profil');
-    const entry = await screen.findByText('Quelqu\'un nommé "Jane" a consulté votre profil.');
+    expect(screen.getByText(/Quelqu'un nommé/)).toBeInTheDocument();
+    const entry = await screen.findByText('Jane');
+    expect(entry.tagName).toBe('STRONG');
     fireEvent.click(entry);
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/notifications/notif-1/read'));

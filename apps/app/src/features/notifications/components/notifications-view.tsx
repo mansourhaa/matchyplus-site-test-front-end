@@ -32,7 +32,7 @@ function getPushCopy(
   item: NotificationItem,
   locale: Locale,
   isFree = true,
-): { title: string; body: string } {
+): { title: string; body: React.ReactNode } {
   switch (item.type) {
     case 'PROFILE_VIEW': {
       const rawName = item.data.viewerName || '';
@@ -44,12 +44,31 @@ function getPushCopy(
             : locale === 'ar'
               ? 'زيارة للملف الشخصي'
               : 'Vue de profil',
-        body:
-          locale === 'en'
-            ? `Someone named "${displayName}" viewed your profile.`
-            : locale === 'ar'
-              ? `قام شخص باسم "${displayName}" بزيارة ملفك الشخصي.`
-              : `Quelqu'un nommé "${displayName}" a consulté votre profil.`,
+        body: displayName ? (
+          locale === 'en' ? (
+            <>
+              Someone named <strong className="font-bold text-[#0F172A]">{displayName}</strong>{' '}
+              viewed your profile.
+            </>
+          ) : locale === 'ar' ? (
+            <>
+              قام شخص باسم <strong className="font-bold text-[#0F172A]">{displayName}</strong>{' '}
+              بزيارة ملفك الشخصي.
+            </>
+          ) : (
+            <>
+              Quelqu&apos;un nommé{' '}
+              <strong className="font-bold text-[#0F172A]">{displayName}</strong> a consulté votre
+              profil.
+            </>
+          )
+        ) : locale === 'en' ? (
+          'Someone viewed your profile.'
+        ) : locale === 'ar' ? (
+          'قام شخص بزيارة ملفك الشخصي.'
+        ) : (
+          "Quelqu'un a consulté votre profil."
+        ),
       };
     }
     case 'MATCH':
@@ -70,20 +89,43 @@ function getPushCopy(
         title:
           item.data.title ||
           (locale === 'en' ? 'Match request' : locale === 'ar' ? 'طلب مطابقة' : 'Demande de match'),
-        body:
+        body: displayName ? (
+          locale === 'en' ? (
+            <>
+              <strong className="font-bold text-[#0F172A]">{displayName}</strong> sent you a match
+              request.
+            </>
+          ) : locale === 'ar' ? (
+            <>
+              أرسل لك <strong className="font-bold text-[#0F172A]">{displayName}</strong> طلب
+              مطابقة.
+            </>
+          ) : (
+            <>
+              <strong className="font-bold text-[#0F172A]">{displayName}</strong> vous a envoyé une
+              demande de match.
+            </>
+          )
+        ) : (
           item.data.body ||
           (locale === 'en'
-            ? `${displayName} sent you a match request.`
+            ? 'Someone sent you a match request.'
             : locale === 'ar'
-              ? `أرسل لك ${displayName} طلب مطابقة.`
-              : `${displayName} vous a envoyé une demande de match.`),
+              ? 'أرسل لك شخص طلب مطابقة.'
+              : 'Quelqu’un vous a envoyé une demande de match.')
+        ),
       };
     }
     case 'MESSAGE':
       return {
         title:
           locale === 'en' ? 'New Message' : locale === 'ar' ? 'رسالة جديدة' : 'Nouveau message',
-        body: `${item.data.sender_name}: ${item.data.preview}`,
+        body: (
+          <>
+            <strong className="font-bold text-[#0F172A]">{item.data.sender_name}</strong>:{' '}
+            {item.data.preview}
+          </>
+        ),
       };
   }
 }
