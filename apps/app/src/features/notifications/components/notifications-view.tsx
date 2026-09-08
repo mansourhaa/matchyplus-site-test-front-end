@@ -14,13 +14,9 @@ import type { NotificationItem } from '@/features/notifications/types';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { formatDistanceToNow } from 'date-fns';
 import { arSA, enUS, fr } from 'date-fns/locale';
-import { Bell, CheckCheck, Eye, Heart, Loader2, MessageCircle } from 'lucide-react';
+import { Bell, CheckCheck, Eye, Heart, Loader2, MessageCircle, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-
-const PROFILE_VIEW_TINT = '#9B59B6';
-const MATCH_TINT = '#E24E59';
-const MESSAGE_TINT = '#2F76BB';
 
 const DATE_LOCALES: Record<Locale, typeof fr> = {
   en: enUS,
@@ -143,20 +139,53 @@ function avatarSrc(item: NotificationItem): string | null {
   }
 }
 
-function TypeIcon({ item }: { item: NotificationItem }) {
-  if (item.type === 'MESSAGE') {
-    return <MessageCircle size={15} color={MESSAGE_TINT} />;
+function getNotificationActionConfig(item: NotificationItem) {
+  switch (item.type) {
+    case 'MATCH':
+      return {
+        badgeBg: 'bg-[#FFF8EB]',
+        avatarBg: '#FFF8EB',
+        icon: <Zap size={10} className="fill-[#D97706] text-[#D97706]" />,
+        avatarIcon: <Zap size={18} className="fill-[#D97706] text-[#D97706]" />,
+        pillClass: 'rounded-full bg-[#FFF8EB] px-2.5 py-0.5 text-[11px] font-bold text-[#D97706]',
+      };
+    case 'MATCH_REQUEST':
+      return {
+        badgeBg: 'bg-[#E8F7F3]',
+        avatarBg: '#E8F7F3',
+        icon: <Heart size={10} className="fill-[#2A9177] text-[#2A9177]" />,
+        avatarIcon: <Heart size={18} className="fill-[#2A9177] text-[#2A9177]" />,
+        pillClass: 'rounded-full bg-[#E8F7F3] px-2.5 py-0.5 text-[11px] font-bold text-[#2A9177]',
+      };
+    case 'PROFILE_VIEW':
+      return {
+        badgeBg: 'bg-[#EEF5FF]',
+        avatarBg: '#EEF5FF',
+        icon: <Eye size={10} className="text-[#2F76BB]" />,
+        avatarIcon: <Eye size={18} className="text-[#2F76BB]" />,
+        pillClass: 'rounded-full bg-[#EEF5FF] px-2.5 py-0.5 text-[11px] font-bold text-[#2F76BB]',
+      };
+    case 'MESSAGE':
+      return {
+        badgeBg: 'bg-[#EBF5FB]',
+        avatarBg: '#EBF5FB',
+        icon: <MessageCircle size={10} className="text-[#2F76BB]" />,
+        avatarIcon: <MessageCircle size={18} className="text-[#2F76BB]" />,
+        pillClass: 'rounded-full bg-[#EBF5FB] px-2.5 py-0.5 text-[11px] font-bold text-[#2F76BB]',
+      };
   }
-  if (item.type === 'MATCH' || item.type === 'MATCH_REQUEST') {
-    return <Heart size={15} color={MATCH_TINT} />;
-  }
-  return <Eye size={15} color={PROFILE_VIEW_TINT} />;
 }
 
-function iconBg(item: NotificationItem): string {
-  if (item.type === 'MESSAGE') return `${MESSAGE_TINT}1A`;
-  if (item.type === 'MATCH' || item.type === 'MATCH_REQUEST') return `${MATCH_TINT}1A`;
-  return `${PROFILE_VIEW_TINT}1A`;
+function getActorInitial(item: NotificationItem): string {
+  const name =
+    item.type === 'PROFILE_VIEW'
+      ? item.data.viewerName
+      : item.type === 'MATCH'
+        ? item.data.actor_name
+        : item.type === 'MATCH_REQUEST'
+          ? item.data.actor_first_name
+          : item.data.sender_name;
+  return name?.trim().charAt(0)?.toUpperCase() || '';
 }
 
 function NotificationRow({ item }: { item: NotificationItem }) {
@@ -172,6 +201,8 @@ function NotificationRow({ item }: { item: NotificationItem }) {
   const avatar = useAuthenticatedMediaUrl(avatarSrc(item));
   const { title, body } = getPushCopy(item, locale, isFree);
   const isRtl = locale === 'ar';
+  const actionConfig = getNotificationActionConfig(item);
+  const initial = getActorInitial(item);
 
   const handleClick = async () => {
     if (!item.read) {
@@ -199,36 +230,50 @@ function NotificationRow({ item }: { item: NotificationItem }) {
       } ${isRtl ? 'text-right' : 'text-left'}`}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      {avatar.url ? (
-        <div
-          className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-xs"
-          style={{ border: '1px solid #DCE7F2' }}
+      <div className="relative shrink-0">
+        {avatar.url ? (
+          <div
+            className="relative h-10 w-10 overflow-hidden rounded-full shadow-xs"
+            style={{ border: '1px solid #DCE7F2' }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={avatar.url}
+              alt=""
+              className={`h-full w-full object-cover ${shouldBlurImage ? 'scale-125' : ''}`}
+              style={{ filter: shouldBlurImage ? 'blur(5px)' : undefined }}
+            />
+          </div>
+        ) : initial ? (
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EBF5FB] text-sm font-bold text-[#2F76BB] shadow-xs"
+            style={{ border: '1px solid #DCE7F2' }}
+          >
+            {initial}
+          </div>
+        ) : (
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-full shadow-xs"
+            style={{ background: actionConfig.avatarBg }}
+          >
+            {actionConfig.avatarIcon}
+          </div>
+        )}
+
+        {/* Action Icon Badge on Avatar */}
+        <span
+          className={`absolute -right-0.5 -bottom-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white shadow-2xs ${actionConfig.badgeBg}`}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={avatar.url}
-            alt=""
-            className={`h-full w-full object-cover ${shouldBlurImage ? 'scale-125' : ''}`}
-            style={{ filter: shouldBlurImage ? 'blur(5px)' : undefined }}
-          />
-        </div>
-      ) : (
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-xs"
-          style={{ background: iconBg(item) }}
-        >
-          <TypeIcon item={item} />
-        </div>
-      )}
+          {actionConfig.icon}
+        </span>
+      </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <p
-            className="truncate text-xs font-extrabold"
-            style={{ color: item.read ? '#334155' : '#0F172A' }}
-          >
-            {title}
-          </p>
+          <span className={`inline-flex items-center gap-1.5 ${actionConfig.pillClass}`}>
+            {actionConfig.icon}
+            <span>{title}</span>
+          </span>
           <span className="shrink-0 text-[11px] text-[#94A3B8]">
             {formatDistanceToNow(new Date(item.created_at), {
               addSuffix: false,
@@ -236,7 +281,7 @@ function NotificationRow({ item }: { item: NotificationItem }) {
             })}
           </span>
         </div>
-        <p className="mt-0.5 text-xs leading-relaxed text-[#64748B]">{body}</p>
+        <p className="mt-1 text-xs leading-relaxed text-[#64748B]">{body}</p>
       </div>
 
       {!item.read && (
