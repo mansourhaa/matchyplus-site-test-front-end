@@ -5,8 +5,10 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import type { DiscoveryFeedSort } from '@/features/matching/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+
+const emptySubscribe = () => () => {};
 
 export type SearchFilters = {
   sector: string | null;
@@ -83,11 +85,11 @@ export function SearchFiltersSheet({
   onReset,
 }: SearchFiltersSheetProps) {
   const { t, dir } = useI18n();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
   useEffect(() => {
     if (!open) return;

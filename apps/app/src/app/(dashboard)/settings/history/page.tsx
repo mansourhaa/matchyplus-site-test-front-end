@@ -1,5 +1,6 @@
 'use client';
 
+import { AuthenticatedProfileAvatar } from '@/components/matchy/authenticated-profile-image';
 import { matchyBrand } from '@/components/matchy/brand';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { useI18n } from '@/features/i18n/i18n-provider';
@@ -283,18 +284,13 @@ export default function HistoryPage() {
                       {/* Left: Avatar + Details */}
                       <div className="flex min-w-0 items-center gap-3">
                         <div className="relative shrink-0">
-                          {item.target.image ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={item.target.image}
-                              alt={profileName}
-                              className="h-12 w-12 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EBF5FB] text-sm font-bold text-[#2F76BB]">
-                              {profileName.charAt(0)}
-                            </div>
-                          )}
+                          <AuthenticatedProfileAvatar
+                            image={item.target.image}
+                            name={profileName}
+                            sizeClassName="h-12 w-12"
+                            roundedClassName="rounded-full"
+                            textClassName="text-sm font-bold text-white"
+                          />
 
                           {/* Action Icon Badge on Avatar */}
                           <span
