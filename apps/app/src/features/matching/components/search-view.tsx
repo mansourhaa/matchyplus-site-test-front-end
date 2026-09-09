@@ -18,7 +18,7 @@ import {
   countActiveSearchFilters,
 } from '@/features/matching/components/search-filters-sheet';
 import { SwipeLimitModal } from '@/features/matching/components/swipe-limit-modal';
-import { formatRole } from '@/features/matching/lib/format-role';
+import { formatInterest, formatRole } from '@/features/matching/lib/format-role';
 import {
   closeQuotaModal,
   fetchMatchState,
@@ -119,7 +119,7 @@ function SearchProfileCard({
                   border: '1px solid #D6E8FA',
                 }}
               >
-                {tag}
+                {formatInterest(tag, t)}
               </span>
             ))}
           </div>
@@ -328,7 +328,14 @@ export function SearchView() {
         sort: filters.sort,
       };
       if (debouncedQuery) params.q = debouncedQuery;
-      if (filters.sector) params.sector = filters.sector;
+      if (filters.sectors && filters.sectors.length > 0) {
+        params.sectors = filters.sectors.join(',');
+      } else if (filters.sector) {
+        params.sector = filters.sector;
+      }
+      if (filters.interests && filters.interests.length > 0) {
+        params.interests = filters.interests.join(',');
+      }
       if (filters.maxDistanceKm) params.maxDistanceKm = filters.maxDistanceKm;
       if (filters.minRating > 0) params.minRating = filters.minRating;
       if (filters.minPrice > 5) params.minPrice = filters.minPrice;

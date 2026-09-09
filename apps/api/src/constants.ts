@@ -30,7 +30,7 @@ export const ROLE_RANK: Record<Role, number> = {
 };
 
 /** Discovery radius in meters (env override: DISCOVERY_RADIUS_M). */
-export const DISCOVERY_RADIUS_M = Number(process.env.DISCOVERY_RADIUS_M || 25_000);
+export const DISCOVERY_RADIUS_M = Number(process.env.DISCOVERY_RADIUS_M || 100_000);
 
 /** Default swipe-feed page size (env override: DISCOVERY_PAGE_SIZE). */
 export const DISCOVERY_PAGE_SIZE = Number(process.env.DISCOVERY_PAGE_SIZE || 20);

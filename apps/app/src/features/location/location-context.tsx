@@ -340,14 +340,21 @@ export const useLocationGate = useLocationContext;
 /**
  * Captures coordinates automatically. When permission is already "granted", gets position
  * silently. When permission is "prompt" (undecided), invokes the browser's native location
- * prompt automatically on mount. Does nothing when permission is explicitly "denied".
+ * prompt automatically on mount. Does nothing when permission is explicitly "denied" or
+ * when location is already synced.
  */
-export function useAutoCaptureGrantedLocation() {
+export function useAutoCaptureGrantedLocation(enabled = true) {
   const { locationSynced, permissionDenied, activating, requestBrowserLocation } =
     useLocationContext();
+  const hasTriggeredRef = useRef(false);
 
   useEffect(() => {
-    if (activating || permissionDenied) return;
+    if (locationSynced) {
+      hasTriggeredRef.current = false;
+      return;
+    }
+
+    if (!enabled || activating || permissionDenied || hasTriggeredRef.current) return;
 
     if (typeof navigator === 'undefined') return;
 
@@ -357,15 +364,17 @@ export function useAutoCaptureGrantedLocation() {
       void navigator.permissions
         .query({ name: 'geolocation' })
         .then((status) => {
-          if (!cancelled) {
+          if (!cancelled && !hasTriggeredRef.current) {
             if (status.state === 'granted' || (!locationSynced && status.state === 'prompt')) {
+              hasTriggeredRef.current = true;
               void requestBrowserLocation();
             }
           }
         })
         .catch((error) => {
           handleError(error, 'useAutoCaptureGrantedLocation');
-          if (!locationSynced) {
+          if (!cancelled && !hasTriggeredRef.current && !locationSynced) {
+            hasTriggeredRef.current = true;
             void requestBrowserLocation();
           }
         });
@@ -373,8 +382,9 @@ export function useAutoCaptureGrantedLocation() {
       return () => {
         cancelled = true;
       };
-    } else if (!locationSynced) {
+    } else if (!hasTriggeredRef.current && !locationSynced) {
+      hasTriggeredRef.current = true;
       void requestBrowserLocation();
     }
-  }, [locationSynced, activating, permissionDenied, requestBrowserLocation]);
+  }, [enabled, locationSynced, activating, permissionDenied, requestBrowserLocation]);
 }

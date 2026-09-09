@@ -47,7 +47,11 @@ export class DiscoveryService {
           ? Math.min(200, Math.max(1, maxDistanceKm)) * 1000
           : DISCOVERY_RADIUS_M;
       const serviceTypes = parseServiceTypes(query.serviceTypes);
-      const sectorQuery = query.sector?.trim().toLowerCase() ?? '';
+      const sectors = [
+        ...parseServiceTypes(query.sectors),
+        ...(query.sector ? [query.sector.trim().toLowerCase()] : []),
+      ];
+      const interests = parseServiceTypes(query.interests);
       const needle = query.q?.trim().toLowerCase() ?? '';
       const minRatingRaw = asFiniteNumber(query.minRating);
       const minRating = minRatingRaw != null ? Math.min(5, Math.max(0, minRatingRaw)) : null;
@@ -127,7 +131,8 @@ export class DiscoveryService {
       for (const candidate of candidates) {
         if (minRating != null && candidate.rating < minRating) continue;
         if (serviceTypes.length > 0 && !matchesServiceTypes(candidate, serviceTypes)) continue;
-        if (sectorQuery && !matchesSector(candidate, sectorQuery)) continue;
+        if (sectors.length > 0 && !matchesSectors(candidate, sectors)) continue;
+        if (interests.length > 0 && !matchesInterests(candidate, interests)) continue;
         if (
           availableOnly &&
           (!candidate.availability_days || candidate.availability_days.length === 0)
@@ -306,7 +311,82 @@ function matchesServiceTypes(candidate: FeedUser, serviceTypes: string[]): boole
   return serviceTypes.some((wanted) => labels.some((label) => label.includes(wanted)));
 }
 
-function matchesSector(candidate: FeedUser, needle: string): boolean {
+const INTEREST_SYNONYMS: Record<string, string[]> = {
+  bricolage: ['bricolage', 'أشغال يدوية', 'أعمال يدوية', 'diy', 'handyman'],
+  jardinage: ['jardinage', 'بستنة', 'حدائق', 'gardening'],
+  enfants: ['enfants', 'رعاية أطفال', 'أطفال', 'childcare', 'garderie'],
+  ménage: ['ménage', 'menage', 'أعمال منزلية', 'تنظيف', 'housekeeping', 'cleaning'],
+  cuisine: ['cuisine', 'طبخ', 'مأكولات', 'cooking', 'culinaire'],
+  informatique: ['informatique', 'معلوماتية', 'إعلام آلي', 'it', 'tech', 'computing'],
+  traduction: ['traduction', 'ترجمة', 'translation'],
+  graphisme: ['graphisme', 'تصميم جرافيك', 'تصميم', 'graphic design'],
+  marketing: ['marketing', 'تسويق'],
+  comptabilité: ['comptabilité', 'comptabilite', 'محاسبة', 'accounting'],
+  transport: ['transport', 'نقل', 'توصيل'],
+  déménagement: ['déménagement', 'demenagement', 'نقل أثاث', 'moving', 'رحيل'],
+  plomberie: ['plomberie', 'سباكة', 'ترصيص', 'plumbing'],
+  électricité: ['électricité', 'electricite', 'كهرباء', 'electricity'],
+  peinture: ['peinture', 'دهانة', 'طلاء', 'painting'],
+};
+
+const SECTOR_SYNONYMS: Record<string, string[]> = {
+  'services & missions': ['services & missions', 'خدمات ومهمات', 'services', 'missions'],
+  'informatique / tech': [
+    'informatique / tech',
+    'informatique',
+    'tech',
+    'تكنولوجيا المعلومات',
+    'معلوماتية',
+  ],
+  'service à domicile': [
+    'service à domicile',
+    'service a domicile',
+    'خدمات منزلية',
+    'home service',
+  ],
+  'chauffeur / transport': [
+    'chauffeur / transport',
+    'chauffeur',
+    'transport',
+    'سائق / نقل',
+    'driver / transport',
+  ],
+  'aide ménagère': ['aide ménagère', 'aide menagere', 'مساعدة منزلية', 'housekeeper'],
+  'restauration / hôtellerie': [
+    'restauration / hôtellerie',
+    'restauration / hotellerie',
+    'restauration',
+    'hôtellerie',
+    'مطاعم / فندقة',
+    'catering',
+  ],
+  'marketing / communication': [
+    'marketing / communication',
+    'تسويق / اتصال',
+    'marketing',
+    'communication',
+  ],
+  'btp / artisanat': ['btp / artisanat', 'بناء / حرف يدوية', 'btp', 'artisanat', 'construction'],
+};
+
+function expandSynonyms(terms: string[], synonymMap: Record<string, string[]>): string[] {
+  const result = new Set<string>();
+  for (const term of terms) {
+    const lower = term.toLowerCase().trim();
+    result.add(lower);
+    for (const [key, syns] of Object.entries(synonymMap)) {
+      if (
+        key === lower ||
+        syns.some((s) => s.toLowerCase() === lower || lower.includes(s.toLowerCase()))
+      ) {
+        for (const s of syns) result.add(s.toLowerCase());
+      }
+    }
+  }
+  return [...result];
+}
+
+function matchesSectors(candidate: FeedUser, sectors: string[]): boolean {
   const hay = [
     candidate.activity_sector,
     candidate.sector,
@@ -316,7 +396,15 @@ function matchesSector(candidate: FeedUser, needle: string): boolean {
   ]
     .filter(Boolean)
     .map((value) => value!.toLowerCase());
-  return hay.some((h) => h.includes(needle));
+  const expanded = expandSynonyms(sectors, SECTOR_SYNONYMS);
+  return expanded.some((wanted) => hay.some((h) => h.includes(wanted)));
+}
+
+function matchesInterests(candidate: FeedUser, interests: string[]): boolean {
+  if (!candidate.interests || candidate.interests.length === 0) return false;
+  const hay = candidate.interests.map((value) => value.toLowerCase());
+  const expanded = expandSynonyms(interests, INTEREST_SYNONYMS);
+  return expanded.some((wanted) => hay.some((h) => h.includes(wanted)));
 }
 
 export function parsePriceNumber(raw?: string | null): number | null {

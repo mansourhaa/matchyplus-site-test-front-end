@@ -7,6 +7,10 @@ import {
   DAYS,
   LANGUAGE_OPTIONS,
   TIME_SLOTS,
+  getContactOptionLabel,
+  getDayLabel,
+  getLanguageOptionLabel,
+  getTimeSlotLabel,
 } from '@/features/onboarding/constants';
 import { locationStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile } from '@/features/onboarding/types';
@@ -103,7 +107,7 @@ export function LocationStep({
   onFinish,
   onBack,
 }: LocationStepProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [city, setCity] = useState(profile?.city ?? '');
   const [availabilityDays, setAvailabilityDays] = useState<string[]>(
     profile?.availability_days ?? [],
@@ -139,20 +143,22 @@ export function LocationStep({
     setList(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   };
 
-  const submit = async () => {
+  const submit = async (skip = false) => {
     if (finishing || loading) return;
 
-    const parsed = locationStepSchema.safeParse({
-      city,
-      offerService,
-      availabilityDays,
-      availabilityHours,
-      contactModes,
-      languages,
-    });
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? t('onboarding.location.errorDays'));
-      return;
+    if (!skip) {
+      const parsed = locationStepSchema.safeParse({
+        city,
+        offerService,
+        availabilityDays,
+        availabilityHours,
+        contactModes,
+        languages,
+      });
+      if (!parsed.success) {
+        setError(parsed.error.issues[0]?.message ?? t('onboarding.location.errorDays'));
+        return;
+      }
     }
 
     setError(null);
@@ -207,12 +213,14 @@ export function LocationStep({
                 <div className="mb-4 grid grid-cols-7 gap-1">
                   {DAYS.map((day) => {
                     const selected = availabilityDays.includes(day.short);
+                    const dayLabel = getDayLabel(day.short, locale);
                     return (
                       <button
                         key={day.short}
                         type="button"
                         onClick={() => toggle(availabilityDays, setAvailabilityDays, day.short)}
                         className="flex aspect-square flex-col items-center justify-center rounded-xl transition-all"
+                        title={dayLabel.long}
                         style={{
                           background: selected
                             ? 'linear-gradient(135deg, #61BCA6, #2F76BB)'
@@ -223,7 +231,7 @@ export function LocationStep({
                           color: selected ? 'white' : '#888',
                         }}
                       >
-                        {day.short}
+                        {dayLabel.short}
                       </button>
                     );
                   })}
@@ -231,6 +239,7 @@ export function LocationStep({
                 <div className="grid grid-cols-2 gap-2">
                   {TIME_SLOTS.map((slot) => {
                     const selected = availabilityHours.includes(slot.value);
+                    const slotInfo = getTimeSlotLabel(slot.value, locale);
                     return (
                       <button
                         key={slot.value}
@@ -245,7 +254,7 @@ export function LocationStep({
                         <span style={{ color: selected ? '#2A9177' : '#AAA' }}>
                           {TIME_ICONS[slot.value]}
                         </span>
-                        <div className="text-left">
+                        <div className={locale === 'ar' ? 'text-right' : 'text-left'}>
                           <p
                             style={{
                               fontSize: '12px',
@@ -253,9 +262,9 @@ export function LocationStep({
                               color: selected ? '#2A9177' : '#555',
                             }}
                           >
-                            {slot.label}
+                            {slotInfo.label}
                           </p>
-                          <p style={{ fontSize: '10px', color: '#AAA' }}>{slot.hint}</p>
+                          <p style={{ fontSize: '10px', color: '#AAA' }}>{slotInfo.hint}</p>
                         </div>
                       </button>
                     );
@@ -275,6 +284,7 @@ export function LocationStep({
               <div className="space-y-2">
                 {CONTACT_OPTIONS.map((option) => {
                   const selected = contactModes.includes(option.value);
+                  const label = getContactOptionLabel(option.value, locale);
                   return (
                     <button
                       key={option.value}
@@ -299,14 +309,14 @@ export function LocationStep({
                         </span>
                       </div>
                       <span
-                        className="flex-1 text-left"
+                        className={`flex-1 ${locale === 'ar' ? 'text-right' : 'text-left'}`}
                         style={{
                           fontSize: '13px',
                           fontWeight: selected ? 700 : 400,
                           color: selected ? '#2A9177' : '#555',
                         }}
                       >
-                        {option.label}
+                        {label}
                       </span>
                       <div
                         className="flex h-5 w-5 shrink-0 items-center justify-center rounded"
@@ -331,6 +341,7 @@ export function LocationStep({
               <div className="flex flex-wrap gap-2">
                 {LANGUAGE_OPTIONS.map((option) => {
                   const selected = languages.includes(option.value);
+                  const label = getLanguageOptionLabel(option.value, locale);
                   return (
                     <button
                       key={option.value}
@@ -348,7 +359,7 @@ export function LocationStep({
                       }}
                     >
                       <LangFlag langKey={option.value} size={18} />
-                      <span>{option.label}</span>
+                      <span>{label}</span>
                       {selected && <Check size={11} color="white" />}
                     </button>
                   );
@@ -379,7 +390,7 @@ export function LocationStep({
 
         <button
           type="button"
-          onClick={() => void submit()}
+          onClick={() => void submit(true)}
           disabled={busy}
           className="mt-3 block w-full text-center disabled:opacity-50"
           style={{ fontSize: '14px', color: '#BBB' }}
