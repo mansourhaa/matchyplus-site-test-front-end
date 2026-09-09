@@ -306,6 +306,11 @@ const authSlice = createSlice({
       state.user = { ...state.user, onboarding_completed: true };
       persistAuthUser(state.user);
     },
+    updateAuthUser: (state, action: PayloadAction<Partial<AuthUser>>) => {
+      if (!state.user) return;
+      state.user = { ...state.user, ...action.payload };
+      persistAuthUser(state.user);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -406,14 +411,46 @@ const authSlice = createSlice({
       .addCase(exchangeOAuthCode.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'OAuth sign-in failed';
-      });
+      })
+      .addMatcher(
+        (action): action is PayloadAction<{ name?: string | null; image?: string | null }> =>
+          action.type === 'onboarding/updateProfile/fulfilled',
+        (state, action) => {
+          if (!state.user) return;
+          let changed = false;
+          if (action.payload.name !== undefined && state.user.name !== action.payload.name) {
+            state.user.name = action.payload.name;
+            changed = true;
+          }
+          if (action.payload.image !== undefined && state.user.image !== action.payload.image) {
+            state.user.image = action.payload.image;
+            changed = true;
+          }
+          if (changed) persistAuthUser(state.user);
+        },
+      )
+      .addMatcher(
+        (action): action is PayloadAction<{ image?: string | null }> =>
+          action.type === 'profile/uploadPhoto/fulfilled',
+        (state, action) => {
+          if (!state.user) return;
+          if (action.payload.image !== undefined && state.user.image !== action.payload.image) {
+            state.user.image = action.payload.image;
+            persistAuthUser(state.user);
+          }
+        },
+      );
   },
 });
 
-export const { resetAuthState, acknowledgeAnonymousBootstrap, markOnboardingCompleted } =
-  authSlice.actions;
+export const {
+  resetAuthState,
+  acknowledgeAnonymousBootstrap,
+  markOnboardingCompleted,
+  updateAuthUser,
+} = authSlice.actions;
 
-export const selectAuthState = (state: RootState) => state.auth;
+export const selectAuthState = (state: { auth?: AuthState }) => state.auth ?? initialState;
 
 export const selectAuth = createSelector([selectAuthState], (auth) => ({
   ...auth,

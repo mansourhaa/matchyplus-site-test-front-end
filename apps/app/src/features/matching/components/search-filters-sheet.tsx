@@ -2,7 +2,9 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { formatInterest, formatRole } from '@/features/matching/lib/format-role';
 import type { DiscoveryFeedSort } from '@/features/matching/types';
+import { INTERESTS_SUGGESTIONS } from '@/features/onboarding/constants';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
 import { useEffect, useSyncExternalStore } from 'react';
@@ -11,7 +13,9 @@ import { createPortal } from 'react-dom';
 const emptySubscribe = () => () => {};
 
 export type SearchFilters = {
-  sector: string | null;
+  sector?: string | null;
+  sectors: string[];
+  interests: string[];
   maxDistanceKm: number;
   minRating: number;
   minPrice: number;
@@ -22,7 +26,9 @@ export type SearchFilters = {
 
 export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   sector: null,
-  maxDistanceKm: 25,
+  sectors: [],
+  interests: [],
+  maxDistanceKm: 100,
   minRating: 0,
   minPrice: 5,
   maxPrice: null,
@@ -51,7 +57,9 @@ const RATING_OPTIONS = [
 
 export function countActiveSearchFilters(filters: SearchFilters): number {
   let count = 0;
-  if (filters.sector) count += 1;
+  const hasSectors = (filters.sectors && filters.sectors.length > 0) || Boolean(filters.sector);
+  if (hasSectors) count += 1;
+  if (filters.interests && filters.interests.length > 0) count += 1;
   if (filters.maxDistanceKm !== DEFAULT_SEARCH_FILTERS.maxDistanceKm) count += 1;
   if (filters.minRating > 0) count += 1;
   if (filters.minPrice > DEFAULT_SEARCH_FILTERS.minPrice || filters.maxPrice !== null) count += 1;
@@ -100,8 +108,11 @@ export function SearchFiltersSheet({
     };
   }, [open]);
 
+  const sectors = draft.sectors ?? (draft.sector ? [draft.sector] : []);
   const safeDraft: SearchFilters = {
-    sector: draft.sector ?? DEFAULT_SEARCH_FILTERS.sector,
+    sector: draft.sector ?? sectors[0] ?? null,
+    sectors,
+    interests: draft.interests ?? [],
     maxDistanceKm: draft.maxDistanceKm ?? DEFAULT_SEARCH_FILTERS.maxDistanceKm,
     minRating: draft.minRating ?? DEFAULT_SEARCH_FILTERS.minRating,
     minPrice: draft.minPrice ?? DEFAULT_SEARCH_FILTERS.minPrice,
@@ -162,42 +173,116 @@ export function SearchFiltersSheet({
             <div className="mx-auto max-w-2xl space-y-6 px-5 py-6 sm:px-8">
               {/* 1. Secteurs */}
               <div>
-                <p className="mb-3 text-sm font-bold" style={{ color: '#1A1A2E' }}>
-                  {t('search.sectors')}
-                </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-bold" style={{ color: '#1A1A2E' }}>
+                    {t('search.sectors')}
+                  </p>
+                  {safeDraft.sectors.length > 0 && (
+                    <span className="rounded-xl bg-[#EBF3FA] px-2.5 py-0.5 text-xs font-bold text-[#2F76BB]">
+                      {safeDraft.sectors.length}
+                    </span>
+                  )}
+                </div>
+                <div className="flex w-full flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => onChange({ ...safeDraft, sector: null })}
-                    className="rounded-2xl px-4 py-2 text-xs font-semibold transition-all"
+                    onClick={() =>
+                      onChange({
+                        ...safeDraft,
+                        sectors: [],
+                        sector: null,
+                      })
+                    }
+                    className="inline-flex items-center rounded-2xl px-3.5 py-2 text-xs font-semibold transition-all"
                     style={{
-                      backgroundColor: safeDraft.sector === null ? '#2F76BB' : '#F5F7FA',
-                      color: safeDraft.sector === null ? '#FFFFFF' : '#374151',
-                      border: safeDraft.sector === null ? '1px solid #2F76BB' : '1px solid #E5E7EB',
+                      backgroundColor: safeDraft.sectors.length === 0 ? '#2F76BB' : '#F5F7FA',
+                      color: safeDraft.sectors.length === 0 ? '#FFFFFF' : '#374151',
+                      border:
+                        safeDraft.sectors.length === 0 ? '1px solid #2F76BB' : '1px solid #E5E7EB',
                     }}
                   >
                     {t('search.all')}
                   </button>
                   {SECTOR_PILLS.map((sec) => {
-                    const isSelected = safeDraft.sector === sec;
+                    const isSelected = safeDraft.sectors.includes(sec);
                     return (
                       <button
                         key={sec}
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
+                          const nextSectors = isSelected
+                            ? safeDraft.sectors.filter((s) => s !== sec)
+                            : [...safeDraft.sectors, sec];
                           onChange({
                             ...safeDraft,
-                            sector: isSelected ? null : sec,
-                          })
-                        }
-                        className="rounded-2xl px-4 py-2 text-xs font-semibold transition-all"
+                            sectors: nextSectors,
+                            sector: nextSectors[0] ?? null,
+                          });
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-2xl px-3.5 py-2 text-xs font-semibold transition-all"
                         style={{
                           backgroundColor: isSelected ? '#2F76BB' : '#F5F7FA',
                           color: isSelected ? '#FFFFFF' : '#374151',
                           border: isSelected ? '1px solid #2F76BB' : '1px solid #E5E7EB',
                         }}
                       >
-                        {sec}
+                        {isSelected && <Check size={13} className="shrink-0" />}
+                        <span>{formatRole(sec, t)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Centres d'intérêt */}
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-bold" style={{ color: '#1A1A2E' }}>
+                    {t('search.interests')}
+                  </p>
+                  {safeDraft.interests.length > 0 && (
+                    <span className="rounded-xl bg-[#EBF3FA] px-2.5 py-0.5 text-xs font-bold text-[#2F76BB]">
+                      {safeDraft.interests.length}
+                    </span>
+                  )}
+                </div>
+                <div className="flex w-full flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onChange({ ...safeDraft, interests: [] })}
+                    className="inline-flex items-center rounded-2xl px-3.5 py-2 text-xs font-semibold transition-all"
+                    style={{
+                      backgroundColor: safeDraft.interests.length === 0 ? '#2F76BB' : '#F5F7FA',
+                      color: safeDraft.interests.length === 0 ? '#FFFFFF' : '#374151',
+                      border:
+                        safeDraft.interests.length === 0
+                          ? '1px solid #2F76BB'
+                          : '1px solid #E5E7EB',
+                    }}
+                  >
+                    {t('search.all')}
+                  </button>
+                  {INTERESTS_SUGGESTIONS.map((interest) => {
+                    const isSelected = safeDraft.interests.includes(interest);
+                    return (
+                      <button
+                        key={interest}
+                        type="button"
+                        onClick={() => {
+                          const nextInterests = isSelected
+                            ? safeDraft.interests.filter((i) => i !== interest)
+                            : [...safeDraft.interests, interest];
+                          onChange({ ...safeDraft, interests: nextInterests });
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-2xl px-3.5 py-2 text-xs font-semibold transition-all"
+                        style={{
+                          backgroundColor: isSelected ? '#2F76BB' : '#F5F7FA',
+                          color: isSelected ? '#FFFFFF' : '#374151',
+                          border: isSelected ? '1px solid #2F76BB' : '1px solid #E5E7EB',
+                        }}
+                      >
+                        {isSelected && <Check size={13} className="shrink-0" />}
+                        <span>{formatInterest(interest, t)}</span>
                       </button>
                     );
                   })}
@@ -215,12 +300,12 @@ export function SearchFiltersSheet({
                   </span>
                 </div>
                 {(() => {
-                  const distPercent = ((safeDraft.maxDistanceKm - 1) / (25 - 1)) * 100;
+                  const distPercent = ((safeDraft.maxDistanceKm - 1) / (100 - 1)) * 100;
                   return (
                     <input
                       type="range"
                       min={1}
-                      max={25}
+                      max={100}
                       step={1}
                       value={safeDraft.maxDistanceKm}
                       onChange={(e) =>
@@ -235,7 +320,7 @@ export function SearchFiltersSheet({
                 })()}
                 <div className="mt-1.5 flex justify-between text-xs text-[#9CA3AF]">
                   <span>1 km</span>
-                  <span>25 km</span>
+                  <span>100 km</span>
                 </div>
               </div>
 
@@ -344,17 +429,18 @@ export function SearchFiltersSheet({
                   type="button"
                   role="switch"
                   aria-checked={safeDraft.availableOnly}
+                  dir="ltr"
                   onClick={() =>
                     onChange({ ...safeDraft, availableOnly: !safeDraft.availableOnly })
                   }
-                  className="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none"
+                  className="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none"
                   style={{
                     backgroundColor: safeDraft.availableOnly ? '#2F76BB' : '#E5E7EB',
                   }}
                 >
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none mt-0.5 ml-0.5 inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
+                    className="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
                     style={{
                       transform: safeDraft.availableOnly ? 'translateX(20px)' : 'translateX(0px)',
                     }}

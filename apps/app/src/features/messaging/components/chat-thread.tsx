@@ -483,7 +483,7 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
 
         {messaging.messagesLoading && messaging.messages.length === 0 ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin" color={matchyBrand.teal} />
+            <Loader2 className="animate-spin" color={matchyBrand.blue} />
           </div>
         ) : messaging.messagesError && messaging.messages.length === 0 ? (
           <div className="space-y-3 py-12 text-center">
@@ -492,7 +492,7 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
               type="button"
               onClick={() => void dispatch(fetchMessages({ conversationId }))}
               className="rounded-2xl px-4 py-2 text-sm font-bold text-white"
-              style={{ background: matchyBrand.gradient }}
+              style={{ background: matchyBrand.blue }}
             >
               {t('common.retry')}
             </button>
@@ -517,7 +517,7 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
                 <div
                   className="max-w-[80%] rounded-2xl px-3 py-2 text-left text-sm"
                   style={{
-                    background: mine ? matchyBrand.teal : 'white',
+                    background: mine ? matchyBrand.blue : 'white',
                     color: mine ? 'white' : matchyBrand.textDark,
                     border: mine ? 'none' : `1px solid ${matchyBrand.border}`,
                   }}
@@ -533,8 +533,8 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
                     <span className="inline-flex items-center gap-0.5">
                       <Heart
                         size={10}
-                        fill={message.liked_by_me ? matchyBrand.teal : 'transparent'}
-                        color={matchyBrand.teal}
+                        fill={message.liked_by_me ? matchyBrand.blue : 'transparent'}
+                        color={matchyBrand.blue}
                       />
                       {message.like_count}
                     </span>
@@ -582,7 +582,7 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
                 {[6, 12, 18, 10, 16, 8, 14, 10, 15, 7].map((h, idx) => (
                   <span
                     key={idx}
-                    className="w-0.5 rounded-full bg-[#61BCA6]"
+                    className="w-0.5 rounded-full bg-[#2F76BB]"
                     style={{ height: `${h}px` }}
                   />
                 ))}
@@ -603,7 +603,7 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
               <button
                 type="button"
                 onClick={stopRecording}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] text-white shadow-xs transition-all hover:brightness-105 active:scale-95"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#2F76BB] text-white shadow-xs transition-all hover:brightness-105 active:scale-95"
                 aria-label={t('chat.sendVoiceNote')}
               >
                 <Send size={15} />
@@ -645,7 +645,7 @@ export function ChatThread({ conversationId }: ChatThreadProps) {
               disabled={!canSend || messaging.sendLoading || !draft.trim()}
               onClick={() => void onSend()}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white transition-opacity hover:opacity-95 active:scale-95 disabled:opacity-50"
-              style={{ background: matchyBrand.gradient }}
+              style={{ background: matchyBrand.blue }}
               aria-label={t('chat.send')}
             >
               {messaging.sendLoading ? (

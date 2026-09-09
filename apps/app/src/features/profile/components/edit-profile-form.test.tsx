@@ -1,3 +1,5 @@
+import authReducer from '@/features/auth/store/auth-slice';
+import type { AuthUser } from '@/features/auth/types';
 import onboardingReducer from '@/features/onboarding/store/onboarding-slice';
 import profileReducer from '@/features/profile/store/profile-slice';
 import { api } from '@/lib/api';
@@ -21,8 +23,29 @@ vi.mock('@/lib/api', async (importOriginal) => {
   };
 });
 
-function buildStore() {
-  return configureStore({ reducer: { onboarding: onboardingReducer, profile: profileReducer } });
+function buildStore(authOverrides: Partial<AuthUser> = {}) {
+  return configureStore({
+    reducer: { onboarding: onboardingReducer, profile: profileReducer, auth: authReducer },
+    preloadedState: {
+      auth: {
+        status: 'authenticated' as const,
+        loading: false,
+        error: null,
+        user: {
+          id: 'user-1',
+          email: 'jane@example.com',
+          phone: '+21650000000',
+          name: 'Jane Doe',
+          auth_provider: 'phone',
+          email_verified: true,
+          onboarding_completed: true,
+          ...authOverrides,
+        },
+        sessionChecked: true,
+        sessionGeneration: 1,
+      },
+    },
+  });
 }
 
 const fetchedProfile = {
@@ -112,9 +135,8 @@ describe('EditProfileForm', () => {
     );
     const jobInput = screen.getByDisplayValue('Électricien');
     fireEvent.change(jobInput, { target: { value: 'Plombier' } });
-    fireEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: 'Enregistrer' }),
-    );
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Valider' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     expect(await screen.findByText('✓ Profil mis à jour')).toBeInTheDocument();
     expect(api.patch).toHaveBeenCalledWith(
@@ -144,9 +166,8 @@ describe('EditProfileForm', () => {
     fireEvent.change(within(screen.getByRole('dialog')).getByRole('textbox'), {
       target: { value: 'Nouvelle biographie' },
     });
-    fireEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: 'Enregistrer' }),
-    );
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Valider' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     expect(await screen.findByText('✓ Profil mis à jour')).toBeInTheDocument();
     expect(api.patch).toHaveBeenCalledWith(
@@ -180,7 +201,8 @@ describe('EditProfileForm', () => {
     fireEvent.change(within(dialog).getByLabelText('Prix (DT/jour)'), {
       target: { value: '20' },
     });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Valider' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     expect(await screen.findByText('✓ Profil mis à jour')).toBeInTheDocument();
     expect(api.patch).toHaveBeenCalledWith(
@@ -208,7 +230,8 @@ describe('EditProfileForm', () => {
     );
     const dialog = screen.getByRole('dialog');
     fireEvent.click(within(dialog).getByText('Lundi'));
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Valider' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     expect(await screen.findByText('✓ Profil mis à jour')).toBeInTheDocument();
     expect(api.patch).toHaveBeenCalledWith(
@@ -285,16 +308,10 @@ describe('EditProfileForm', () => {
     fireEvent.change(screen.getByDisplayValue('Électricien'), {
       target: { value: 'Plombier' },
     });
-    fireEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: 'Enregistrer' }),
-    );
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Valider' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
-    // The failure is surfaced both inside the still-open sheet and on the page banner —
-    // querying within the dialog proves it's visible where the user is actually looking,
-    // not just hidden behind the modal.
-    expect(
-      await within(screen.getByRole('dialog')).findByText('Échec de la sauvegarde. Réessayez.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Échec de la sauvegarde. Réessayez.')).toBeInTheDocument();
     expect(screen.queryByText('✓ Profil mis à jour')).not.toBeInTheDocument();
   });
 
@@ -321,7 +338,7 @@ describe('EditProfileForm', () => {
     await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
   });
 
-  it('asks for confirmation before removing the photo, and does nothing on cancel', async () => {
+  it('does not allow deleting the profile photo, only updating it', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
     const store = buildStore();
 
@@ -331,35 +348,37 @@ describe('EditProfileForm', () => {
       </Provider>,
     );
 
-    fireEvent.click(await screen.findByText('Supprimer la photo'));
-
-    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
-
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
-    expect(api.delete).not.toHaveBeenCalled();
+    await screen.findByText('Jane Doe');
+    expect(screen.queryByText('Supprimer la photo')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Changer la photo de profil' })).toBeInTheDocument();
   });
 
-  it('removes the current photo once confirmed', async () => {
+  it('only renders the verified badge when user.verified is true', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
-    vi.mocked(api.delete).mockResolvedValue({ data: { image: null } });
-    const store = buildStore();
 
-    render(
-      <Provider store={store}>
+    // Unverified user
+    const unverifiedStore = buildStore({ verified: false });
+    const { unmount } = render(
+      <Provider store={unverifiedStore}>
         <EditProfileForm />
       </Provider>,
     );
+    await screen.findByText('Jane Doe');
+    expect(screen.queryByLabelText('Profil vérifié')).not.toBeInTheDocument();
+    unmount();
 
-    fireEvent.click(await screen.findByText('Supprimer la photo'));
-    fireEvent.click(
-      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Supprimer' }),
+    // Verified user
+    const verifiedStore = buildStore({ verified: true });
+    render(
+      <Provider store={verifiedStore}>
+        <EditProfileForm />
+      </Provider>,
     );
-
-    await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/users/me/profile/photo'));
+    await screen.findByText('Jane Doe');
+    expect(screen.getByLabelText('Profil vérifié')).toBeInTheDocument();
   });
 
-  it('persists a new professional experience via PATCH instead of only local state', async () => {
+  it('applies a new professional experience and persists via batch save', async () => {
     const savedProfile = {
       ...fetchedProfile,
       experiences: [
@@ -391,9 +410,12 @@ describe('EditProfileForm', () => {
     fireEvent.change(screen.getByLabelText('Intitulé du poste *'), {
       target: { value: 'Chef de chantier' },
     });
-    fireEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: 'Enregistrer' }),
-    );
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Valider' }));
+
+    expect(await screen.findByText('Chef de chantier')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     await waitFor(() =>
       expect(api.patch).toHaveBeenCalledWith(
@@ -403,13 +425,11 @@ describe('EditProfileForm', () => {
         }),
       ),
     );
-    expect(await screen.findByText('Chef de chantier')).toBeInTheDocument();
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(await screen.findByText('✓ Profil mis à jour')).toBeInTheDocument();
   });
 
-  it('shows a failure message inside the experience editor when persisting fails, and keeps it open', async () => {
+  it('shows a validation failure message inside the identity sheet and keeps it open when name is cleared', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
-    vi.mocked(api.patch).mockRejectedValue(new Error('Network Error'));
     const store = buildStore();
 
     render(
@@ -418,22 +438,19 @@ describe('EditProfileForm', () => {
       </Provider>,
     );
 
-    const heading = await screen.findByRole('heading', { name: 'Expériences professionnelles' });
     fireEvent.click(
-      within(heading.closest('section') as HTMLElement).getByRole('button', { name: 'Ajouter' }),
+      await screen.findByRole('button', { name: 'Modifier le nom et la profession' }),
     );
-    fireEvent.change(screen.getByLabelText('Intitulé du poste *'), {
-      target: { value: 'Chef de chantier' },
-    });
-    fireEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: 'Enregistrer' }),
-    );
+    const firstNameInput = screen.getByDisplayValue('Jane');
+    const lastNameInput = screen.getByDisplayValue('Doe');
+    fireEvent.change(firstNameInput, { target: { value: '' } });
+    fireEvent.change(lastNameInput, { target: { value: '' } });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Valider' }));
 
     expect(
-      await within(screen.getByRole('dialog')).findByText('Échec de la sauvegarde. Réessayez.'),
+      await within(screen.getByRole('dialog')).findByText('Le nom est obligatoire.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText("Aucune expérience pour l'instant")).toBeInTheDocument();
   });
 
   it('returns a removed interest to the suggestions list inside the sheet', async () => {
@@ -528,5 +545,58 @@ describe('EditProfileForm', () => {
         expect.objectContaining({ job: 'Électricien' }),
       ),
     );
+  });
+
+  it('calculates 100% completion for PROVIDER profile when all provider fields are set', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        ...fetchedProfile,
+        profile_type: 'PROVIDER',
+        job: null,
+        sector: null,
+        offer_service: false,
+      },
+    });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    expect(await screen.findByText('Complété à 100%')).toBeInTheDocument();
+  });
+
+  it('blocks saving experience when end date precedes start date', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: fetchedProfile });
+    const store = buildStore();
+
+    render(
+      <Provider store={store}>
+        <EditProfileForm />
+      </Provider>,
+    );
+
+    const expSection = (await screen.findByText('Expériences professionnelles')).closest(
+      'section',
+    )!;
+    fireEvent.click(within(expSection).getByRole('button', { name: 'Ajouter' }));
+    const titleInput = screen.getByLabelText(/Intitulé du poste/);
+    fireEvent.change(titleInput, { target: { value: 'Ingénieur' } });
+
+    const startInput = screen.getByLabelText('Début');
+    const endInput = screen.getByLabelText('Fin');
+    fireEvent.change(startInput, { target: { value: '2024-05' } });
+    fireEvent.change(endInput, { target: { value: '2023-01' } });
+
+    expect(
+      screen.getByText('La date de fin doit être postérieure à la date de début.'),
+    ).toBeInTheDocument();
+
+    const saveBtn = within(screen.getByRole('dialog')).getByRole('button', {
+      name: 'Valider',
+    });
+    expect(saveBtn).toBeDisabled();
   });
 });

@@ -114,6 +114,7 @@ export function TagEditor({
   values,
   suggestions,
   maxItems,
+  maxTagLength,
   onChange,
   onClose,
   onSave,
@@ -123,6 +124,7 @@ export function TagEditor({
   values: string[];
   suggestions: string[];
   maxItems?: number;
+  maxTagLength?: number;
   onChange: (values: string[]) => void;
   onClose: () => void;
   onSave: (values: string[]) => Promise<boolean>;
@@ -133,8 +135,11 @@ export function TagEditor({
   const [input, setInput] = useState('');
 
   const add = (raw: string) => {
-    const value = raw.trim();
+    let value = raw.trim();
     if (!value) return;
+    if (maxTagLength && value.length > maxTagLength) {
+      value = value.slice(0, maxTagLength).trim();
+    }
     setDraft((prev) => {
       if (prev.some((entry) => sameTag(entry, value))) return prev;
       if (maxItems && prev.length >= maxItems) return prev;
@@ -156,6 +161,7 @@ export function TagEditor({
       <div className="mb-3 flex gap-2">
         <input
           value={input}
+          maxLength={maxTagLength}
           onChange={(event) => setInput(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
@@ -339,15 +345,15 @@ function SheetSave({ onClick }: { onClick: () => void | Promise<void> }) {
     >
       {saving
         ? locale === 'en'
-          ? 'Saving...'
+          ? 'Applying...'
           : locale === 'ar'
-            ? 'جارٍ الحفظ...'
-            : 'Enregistrement…'
+            ? 'جارٍ التأكيد...'
+            : 'Validation…'
         : locale === 'en'
-          ? 'Save'
+          ? 'Apply'
           : locale === 'ar'
-            ? 'حفظ'
-            : 'Enregistrer'}
+            ? 'تأكيد'
+            : 'Valider'}
     </button>
   );
 }
@@ -510,6 +516,8 @@ function ExperienceEditor({
 }) {
   const { locale } = useI18n();
   const [draft, setDraft] = useState(value);
+  const invalidDateRange =
+    !draft.current && Boolean(draft.startDate && draft.endDate && draft.startDate > draft.endDate);
   return (
     <EditSheet
       title={
@@ -584,25 +592,34 @@ function ExperienceEditor({
             ? 'الوظيفة الحالية'
             : 'Poste actuel'}
       </label>
+      {invalidDateRange && (
+        <p className="mb-3 text-xs text-[#E24E59]" role="alert">
+          {locale === 'en'
+            ? 'The end date must be after the start date.'
+            : locale === 'ar'
+              ? 'يجب أن يكون تاريخ النهاية بعد تاريخ البداية.'
+              : 'La date de fin doit être postérieure à la date de début.'}
+        </p>
+      )}
       <div className="flex gap-2">
         {onDelete && <DeleteButton onClick={onDelete} disabled={saving} />}
         <button
           type="button"
-          disabled={!draft.title.trim() || saving}
+          disabled={!draft.title.trim() || saving || invalidDateRange}
           onClick={() => onSave({ ...draft, title: draft.title.trim() })}
           className="flex-1 rounded-xl bg-[#2F76BB] py-3 text-sm font-bold text-white disabled:bg-[#DDD]"
         >
           {saving
             ? locale === 'en'
-              ? 'Saving...'
+              ? 'Applying...'
               : locale === 'ar'
-                ? 'جارٍ الحفظ...'
-                : 'Enregistrement…'
+                ? 'جارٍ التأكيد...'
+                : 'Validation…'
             : locale === 'en'
-              ? 'Save'
+              ? 'Apply'
               : locale === 'ar'
-                ? 'حفظ'
-                : 'Enregistrer'}
+                ? 'تأكيد'
+                : 'Valider'}
         </button>
       </div>
     </EditSheet>
@@ -774,6 +791,9 @@ function EducationEditor({
 }) {
   const { locale } = useI18n();
   const [draft, setDraft] = useState(value);
+  const invalidDateRange = Boolean(
+    draft.startDate && draft.endDate && draft.startDate > draft.endDate,
+  );
   return (
     <>
       <EditorInput
@@ -824,25 +844,34 @@ function EducationEditor({
         value={draft.result}
         onChange={(result) => setDraft({ ...draft, result })}
       />
+      {invalidDateRange && (
+        <p className="mb-3 text-xs text-[#E24E59]" role="alert">
+          {locale === 'en'
+            ? 'The end date must be after the start date.'
+            : locale === 'ar'
+              ? 'يجب أن يكون تاريخ النهاية بعد تاريخ البداية.'
+              : 'La date de fin doit être postérieure à la date de début.'}
+        </p>
+      )}
       <div className="flex gap-2">
         {onDelete && <DeleteButton onClick={onDelete} disabled={saving} />}
         <button
           type="button"
-          disabled={!draft.school.trim() || saving}
+          disabled={!draft.school.trim() || saving || invalidDateRange}
           onClick={() => onSave({ ...draft, school: draft.school.trim() })}
           className="flex-1 rounded-xl bg-[#61BCA6] py-3 text-sm font-bold text-white disabled:bg-[#DDD]"
         >
           {saving
             ? locale === 'en'
-              ? 'Saving...'
+              ? 'Applying...'
               : locale === 'ar'
-                ? 'جارٍ الحفظ...'
-                : 'Enregistrement…'
+                ? 'جارٍ التأكيد...'
+                : 'Validation…'
             : locale === 'en'
-              ? 'Save'
+              ? 'Apply'
               : locale === 'ar'
-                ? 'حفظ'
-                : 'Enregistrer'}
+                ? 'تأكيد'
+                : 'Valider'}
         </button>
       </div>
     </>

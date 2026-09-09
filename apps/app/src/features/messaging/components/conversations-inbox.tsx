@@ -30,7 +30,7 @@ export function ConversationsInbox() {
 
         {messaging.inboxLoading && messaging.inbox.length === 0 ? (
           <div className="flex justify-center py-16">
-            <Loader2 className="animate-spin" color={matchyBrand.teal} />
+            <Loader2 className="animate-spin" color={matchyBrand.blue} />
           </div>
         ) : messaging.inbox.length === 0 ? (
           <p className="py-16 text-center text-sm font-medium text-[#64748B]">
@@ -67,7 +67,7 @@ export function ConversationsInbox() {
                       {row.unread_count > 0 && (
                         <span
                           className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
-                          style={{ background: matchyBrand.teal }}
+                          style={{ background: matchyBrand.blue }}
                         >
                           {row.unread_count}
                         </span>
@@ -75,7 +75,7 @@ export function ConversationsInbox() {
                     </div>
                     <p className="truncate text-xs text-[#777]">{preview}</p>
                   </div>
-                  <MessageCircle size={16} color={matchyBrand.teal} />
+                  <MessageCircle size={16} color={matchyBrand.blue} />
                 </button>
               );
             })}

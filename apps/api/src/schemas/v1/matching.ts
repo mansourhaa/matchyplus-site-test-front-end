@@ -171,6 +171,8 @@ export const swipeFeedQuerySchema = {
       maxDistanceKm: { type: 'number', minimum: 1, maximum: 200 },
       serviceTypes: { type: 'string', maxLength: 500 },
       sector: { type: 'string', maxLength: 100 },
+      sectors: { type: 'string', maxLength: 500 },
+      interests: { type: 'string', maxLength: 500 },
       minPrice: { type: 'number', minimum: 0 },
       maxPrice: { type: 'number', minimum: 0 },
       availableOnly: { type: 'boolean' },

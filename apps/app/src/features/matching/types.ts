@@ -86,6 +86,8 @@ export type DiscoveryFeedQuery = {
   maxDistanceKm?: number;
   serviceTypes?: string;
   sector?: string;
+  sectors?: string;
+  interests?: string;
   minPrice?: number;
   maxPrice?: number;
   availableOnly?: boolean;

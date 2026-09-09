@@ -66,6 +66,55 @@ export const DAYS = [
   { short: 'Dim', long: 'Dimanche' },
 ];
 
+export const DAY_TRANSLATIONS: Record<
+  string,
+  Record<'en' | 'fr' | 'ar', { short: string; long: string }>
+> = {
+  Lun: {
+    en: { short: 'Mon', long: 'Monday' },
+    fr: { short: 'Lun', long: 'Lundi' },
+    ar: { short: 'إثن', long: 'الإثنين' },
+  },
+  Mar: {
+    en: { short: 'Tue', long: 'Tuesday' },
+    fr: { short: 'Mar', long: 'Mardi' },
+    ar: { short: 'ثلا', long: 'الثلاثاء' },
+  },
+  Mer: {
+    en: { short: 'Wed', long: 'Wednesday' },
+    fr: { short: 'Mer', long: 'Mercredi' },
+    ar: { short: 'أرب', long: 'الأربعاء' },
+  },
+  Jeu: {
+    en: { short: 'Thu', long: 'Thursday' },
+    fr: { short: 'Jeu', long: 'Jeudi' },
+    ar: { short: 'خمي', long: 'الخميس' },
+  },
+  Ven: {
+    en: { short: 'Fri', long: 'Friday' },
+    fr: { short: 'Ven', long: 'Vendredi' },
+    ar: { short: 'جمع', long: 'الجمعة' },
+  },
+  Sam: {
+    en: { short: 'Sat', long: 'Saturday' },
+    fr: { short: 'Sam', long: 'Samedi' },
+    ar: { short: 'سبت', long: 'السبت' },
+  },
+  Dim: {
+    en: { short: 'Sun', long: 'Sunday' },
+    fr: { short: 'Dim', long: 'Dimanche' },
+    ar: { short: 'أحد', long: 'الأحد' },
+  },
+};
+
+export function getDayLabel(
+  dayShort: string,
+  locale: string = 'fr',
+): { short: string; long: string } {
+  const loc = (locale === 'en' || locale === 'ar' ? locale : 'fr') as 'en' | 'fr' | 'ar';
+  return DAY_TRANSLATIONS[dayShort]?.[loc] ?? { short: dayShort, long: dayShort };
+}
+
 export const TIME_SLOTS = [
   { value: 'morning', label: 'Matin', hint: '6h – 12h' },
   { value: 'afternoon', label: 'Après-midi', hint: '12h – 18h' },
@@ -73,11 +122,68 @@ export const TIME_SLOTS = [
   { value: 'flexible', label: 'Flexible', hint: 'Selon dispo' },
 ];
 
+export const TIME_SLOT_TRANSLATIONS: Record<
+  string,
+  Record<'en' | 'fr' | 'ar', { label: string; hint: string }>
+> = {
+  morning: {
+    en: { label: 'Morning', hint: '6am – 12pm' },
+    fr: { label: 'Matin', hint: '6h – 12h' },
+    ar: { label: 'صباحًا', hint: '6ص – 12م' },
+  },
+  afternoon: {
+    en: { label: 'Afternoon', hint: '12pm – 6pm' },
+    fr: { label: 'Après-midi', hint: '12h – 18h' },
+    ar: { label: 'بعد الظهر', hint: '12م – 6م' },
+  },
+  evening: {
+    en: { label: 'Evening', hint: '6pm – 10pm' },
+    fr: { label: 'Soir', hint: '18h – 22h' },
+    ar: { label: 'مساءً', hint: '6م – 10م' },
+  },
+  flexible: {
+    en: { label: 'Flexible', hint: 'As available' },
+    fr: { label: 'Flexible', hint: 'Selon dispo' },
+    ar: { label: 'مرن', hint: 'حسب التوفر' },
+  },
+};
+
+export function getTimeSlotLabel(
+  slotValue: string,
+  locale: string = 'fr',
+): { label: string; hint: string } {
+  const loc = (locale === 'en' || locale === 'ar' ? locale : 'fr') as 'en' | 'fr' | 'ar';
+  return TIME_SLOT_TRANSLATIONS[slotValue]?.[loc] ?? { label: slotValue, hint: '' };
+}
+
 export const CONTACT_OPTIONS = [
   { value: 'phone', label: 'Appel téléphonique' },
   { value: 'whatsapp', label: 'WhatsApp / Chat' },
   { value: 'person', label: 'Rendez-vous présentiel' },
 ];
+
+export const CONTACT_OPTION_TRANSLATIONS: Record<string, Record<'en' | 'fr' | 'ar', string>> = {
+  phone: {
+    en: 'Phone call',
+    fr: 'Appel téléphonique',
+    ar: 'اتصال هاتفي',
+  },
+  whatsapp: {
+    en: 'WhatsApp / Chat',
+    fr: 'WhatsApp / Chat',
+    ar: 'واتساب / دردشة',
+  },
+  person: {
+    en: 'In-person meeting',
+    fr: 'Rendez-vous présentiel',
+    ar: 'لقاء شخصي / حضوري',
+  },
+};
+
+export function getContactOptionLabel(value: string, locale: string = 'fr'): string {
+  const loc = (locale === 'en' || locale === 'ar' ? locale : 'fr') as 'en' | 'fr' | 'ar';
+  return CONTACT_OPTION_TRANSLATIONS[value]?.[loc] ?? value;
+}
 
 export const LANGUAGE_OPTIONS = [
   { value: 'ar', label: 'Arabe', flag: '🇹🇳' },
@@ -88,6 +194,49 @@ export const LANGUAGE_OPTIONS = [
   { value: 'es', label: 'Espagnol', flag: '🇪🇸' },
   { value: 'it', label: 'Italien', flag: '🇮🇹' },
 ];
+
+export const LANGUAGE_OPTION_TRANSLATIONS: Record<string, Record<'en' | 'fr' | 'ar', string>> = {
+  ar: {
+    en: 'Arabic',
+    fr: 'Arabe',
+    ar: 'العربية',
+  },
+  'ar-dialect': {
+    en: 'Dialectal Arabic',
+    fr: 'Arabe dialectal',
+    ar: 'العربية الدارجة',
+  },
+  fr: {
+    en: 'French',
+    fr: 'Français',
+    ar: 'الفرنسية',
+  },
+  en: {
+    en: 'English',
+    fr: 'Anglais',
+    ar: 'الإنجليزية',
+  },
+  de: {
+    en: 'German',
+    fr: 'Allemand',
+    ar: 'الألمانية',
+  },
+  es: {
+    en: 'Spanish',
+    fr: 'Espagnol',
+    ar: 'الإسبانية',
+  },
+  it: {
+    en: 'Italian',
+    fr: 'Italien',
+    ar: 'الإيطالية',
+  },
+};
+
+export function getLanguageOptionLabel(value: string, locale: string = 'fr'): string {
+  const loc = (locale === 'en' || locale === 'ar' ? locale : 'fr') as 'en' | 'fr' | 'ar';
+  return LANGUAGE_OPTION_TRANSLATIONS[value]?.[loc] ?? value;
+}
 
 export const MAX_INTERESTS = 5;
 
