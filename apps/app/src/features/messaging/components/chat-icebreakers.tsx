@@ -30,9 +30,9 @@ export function ChatIcebreakers({ peer, onSelect, disabled = false }: ChatIcebre
       dir={dir}
       className="mx-auto flex w-full max-w-lg flex-col items-center justify-center px-4 py-6 text-center"
     >
-      {/* Peer Avatar with Teal Ring */}
+      {/* Peer Avatar with Blue Ring */}
       <div className="relative mb-4 flex items-center justify-center">
-        <div className="rounded-full p-1 shadow-sm" style={{ border: '3px solid #61BCA6' }}>
+        <div className="rounded-full p-1 shadow-sm" style={{ border: '3px solid #2F76BB' }}>
           <AuthenticatedProfileAvatar
             image={peer?.image}
             name={peer?.name || 'Matchy'}

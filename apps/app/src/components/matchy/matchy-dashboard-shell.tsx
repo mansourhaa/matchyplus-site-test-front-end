@@ -23,13 +23,14 @@ const PRIMARY_PATHS = new Set(['/home', '/matches', '/settings']);
 
 function DashboardChrome({ children }: { children: ReactNode }) {
   useProactiveRefresh();
-  useAutoCaptureGrantedLocation();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { t } = useI18n();
   const isPrimary = PRIMARY_PATHS.has(pathname);
+  const isMatchingRoute = pathname === '/home';
+  useAutoCaptureGrantedLocation(isMatchingRoute);
   const { locationRequired, activating, accessMessage, requestBrowserLocation } = useLocationGate();
 
   // `user` is null until fetchCurrentUser resolves (see useBootstrapSession) — only
@@ -128,7 +129,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
         {children}
       </MatchyAppShell>
 
-      {locationRequired && (
+      {isMatchingRoute && locationRequired && (
         <LocationRequiredOverlay
           message={accessMessage}
           onActivate={() => void requestBrowserLocation()}

@@ -114,10 +114,11 @@ describe('locationStepSchema', () => {
     expect(locationStepSchema.safeParse({ offerService: false }).success).toBe(true);
   });
 
-  it('requires at least one availability day when offering a service', () => {
-    expect(locationStepSchema.safeParse({ offerService: true }).success).toBe(false);
+  it('does not require availability even when offering a service', () => {
+    expect(locationStepSchema.safeParse({ offerService: true }).success).toBe(true);
     expect(
       locationStepSchema.safeParse({ offerService: true, availabilityDays: ['Lun'] }).success,
     ).toBe(true);
+    expect(locationStepSchema.safeParse({}).success).toBe(true);
   });
 });

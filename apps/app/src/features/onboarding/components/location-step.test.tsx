@@ -101,7 +101,7 @@ describe('LocationStep', () => {
     });
   });
 
-  it('requires at least one availability day when offering a service', async () => {
+  it('does not require availability days even when offering a service', async () => {
     const onFinish = vi.fn().mockResolvedValue(true);
     renderStep(
       <LocationStep
@@ -116,8 +116,11 @@ describe('LocationStep', () => {
 
     fireEvent.click(firstButton(/Continuer/));
 
-    expect(onFinish).not.toHaveBeenCalled();
-    expect(await screen.findAllByText('Sélectionnez au moins un jour.')).not.toHaveLength(0);
+    await waitFor(() => {
+      expect(onFinish).toHaveBeenCalledWith(
+        expect.objectContaining({ availabilityDays: [], availabilityHours: [] }),
+      );
+    });
   });
 
   it('continues once a day is selected when offering a service', async () => {

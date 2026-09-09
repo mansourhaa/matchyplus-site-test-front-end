@@ -259,7 +259,7 @@ export function skillsScore(me: ScoringProfile, cand: ScoringProfile): number {
 }
 
 /** 2. Proximité géographique (22%): Exponential decay curve */
-export function proximityScore(distKm: number | null, radiusKm = 25): number {
+export function proximityScore(distKm: number | null, radiusKm = 100): number {
   if (distKm == null) return 50;
   if (distKm <= 0.5) return 99;
   const distRatio = Math.min(1, distKm / Math.max(1, radiusKm));
@@ -369,7 +369,7 @@ export function computeMatchScore(
 ): MatchScoreResult {
   const goals = goalsScore(me, cand);
   const skills = skillsScore(me, cand);
-  const proximity = proximityScore(distKm, options?.radiusKm ?? 25);
+  const proximity = proximityScore(distKm, options?.radiusKm ?? 100);
   const availability = availabilityScore(me, cand);
   const languages = languageScore(me, cand);
   const quality = qualityScore(cand);

@@ -5,14 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MatchyDashboardShell } from './matchy-dashboard-shell';
 
-const { pushMock, replaceMock } = vi.hoisted(() => ({
+const { pushMock, replaceMock, pathnameMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   replaceMock: vi.fn(),
+  pathnameMock: vi.fn().mockReturnValue('/home'),
 }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock, replace: replaceMock }),
-  usePathname: () => '/home',
+  usePathname: () => pathnameMock(),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -133,5 +134,22 @@ describe('MatchyDashboardShell — onboarding guard & location gate', () => {
 
     expect(screen.queryByText('Dashboard content')).not.toBeInTheDocument();
     expect(assignMock).toHaveBeenCalledWith('/login?reason=session_expired');
+  });
+
+  it('does not render LocationRequiredOverlay on non-matching routes like /edit-profile even when location is not granted', () => {
+    pathnameMock.mockReturnValue('/edit-profile');
+    window.localStorage.removeItem(LOCATION_GRANTED_KEY);
+    window.localStorage.removeItem(LOCATION_COORDS_KEY);
+
+    renderWithAuthStore(
+      <MatchyDashboardShell>{<div>Profile edit content</div>}</MatchyDashboardShell>,
+      {
+        status: 'authenticated',
+        user: onboardedUser,
+      },
+    );
+
+    expect(screen.getByText('Profile edit content')).toBeInTheDocument();
+    expect(screen.queryByText('Localisation requise')).not.toBeInTheDocument();
   });
 });

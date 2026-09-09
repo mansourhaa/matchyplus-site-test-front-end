@@ -35,19 +35,14 @@ export const interestsStepSchema = z
     path: ['price'],
   });
 
-export const locationStepSchema = z
-  .object({
-    city: z.string().trim().optional(),
-    offerService: z.boolean(),
-    availabilityDays: z.array(z.string()).optional(),
-    availabilityHours: z.array(z.string()).optional(),
-    contactModes: z.array(z.string()).optional(),
-    languages: z.array(z.string()).optional(),
-  })
-  .refine((data) => !data.offerService || (data.availabilityDays?.length ?? 0) > 0, {
-    message: 'Sélectionnez au moins un jour.',
-    path: ['availabilityDays'],
-  });
+export const locationStepSchema = z.object({
+  city: z.string().trim().optional(),
+  offerService: z.boolean().optional(),
+  availabilityDays: z.array(z.string()).optional(),
+  availabilityHours: z.array(z.string()).optional(),
+  contactModes: z.array(z.string()).optional(),
+  languages: z.array(z.string()).optional(),
+});
 
 export type IdentityStepSchema = z.infer<typeof identityStepSchema>;
 export type InterestsStepSchema = z.infer<typeof interestsStepSchema>;

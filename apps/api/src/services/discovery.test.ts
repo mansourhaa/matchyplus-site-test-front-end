@@ -174,7 +174,7 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(result.profiles.map((p) => p.id)).toEqual(['shared_fr']);
   });
 
-  it('filters by serviceTypes and 25km radius', async () => {
+  it('filters by serviceTypes and default 100km radius', async () => {
     const prisma = createMockPrisma([
       candidate('near', {
         service_type: 'Restauration / Service',
@@ -415,5 +415,41 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
       context: 'swipe',
     });
     expect(descResult.profiles.map((p) => p.id)).toEqual(['1', '3', '2']);
+  });
+
+  it('filters by multiple sectors and interests', async () => {
+    const prisma = createMockPrisma([
+      candidate('1', {
+        activity_sector: 'Informatique / Tech',
+        interests: ['Informatique', 'Graphisme'],
+      }),
+      candidate('2', {
+        activity_sector: 'BTP / Artisanat',
+        interests: ['Bricolage', 'Plomberie'],
+      }),
+      candidate('3', {
+        activity_sector: 'Aide ménagère',
+        interests: ['Ménage', 'Cuisine'],
+      }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    // Matching either Informatique or Aide ménagère
+    const sectorFiltered = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      sectors: 'Informatique / Tech, Aide ménagère',
+      context: 'swipe',
+    });
+    expect(sectorFiltered.profiles.map((p) => p.id).sort()).toEqual(['1', '3']);
+
+    // Matching Plomberie interest
+    const interestFiltered = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      interests: 'Plomberie',
+      context: 'swipe',
+    });
+    expect(interestFiltered.profiles.map((p) => p.id)).toEqual(['2']);
   });
 });

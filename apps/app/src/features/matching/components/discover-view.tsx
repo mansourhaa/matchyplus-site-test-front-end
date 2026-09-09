@@ -2,6 +2,7 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
+import { VerifiedShield } from '@/components/matchy/verified-shield';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import {
   fetchFavoriteIds,
@@ -48,7 +49,6 @@ import { useVideoSettings } from '@/lib/video-settings';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
 import {
   AlertTriangle,
-  BadgeCheck,
   Bell,
   Bookmark,
   Check,
@@ -498,9 +498,10 @@ export function DiscoverView() {
                             >
                               <span>{top.name}</span>
                               {top.verified && (
-                                <BadgeCheck
+                                <VerifiedShield
                                   size={20}
-                                  className="shrink-0 fill-[#3B82F6] text-[#3B82F6] text-white"
+                                  color="#48bba0"
+                                  className="shrink-0 drop-shadow-sm"
                                   aria-label="Verified user"
                                 />
                               )}

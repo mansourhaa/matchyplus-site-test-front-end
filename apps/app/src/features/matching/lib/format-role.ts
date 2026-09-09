@@ -73,3 +73,46 @@ export function formatRole(role: string | null | undefined, t: (key: string) => 
 
   return normalized;
 }
+
+/**
+ * Maps standard/suggestion interest tags to localized strings.
+ * Database entries are usually in French ('Bricolage', 'Jardinage', etc.).
+ * This helper returns the localized label according to the active language.
+ */
+export function formatInterest(
+  interest: string | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (!interest || !interest.trim()) return '';
+
+  const normalized = interest.trim();
+  const interestKeyMap: Record<string, string> = {
+    Bricolage: t('matching.interestsList.bricolage'),
+    Jardinage: t('matching.interestsList.jardinage'),
+    Enfants: t('matching.interestsList.enfants'),
+    Ménage: t('matching.interestsList.menage'),
+    Menage: t('matching.interestsList.menage'),
+    Cuisine: t('matching.interestsList.cuisine'),
+    Informatique: t('matching.interestsList.informatique'),
+    Traduction: t('matching.interestsList.traduction'),
+    Graphisme: t('matching.interestsList.graphisme'),
+    Marketing: t('matching.interestsList.marketing'),
+    Comptabilité: t('matching.interestsList.comptabilite'),
+    Comptabilite: t('matching.interestsList.comptabilite'),
+    Transport: t('matching.interestsList.transport'),
+    Déménagement: t('matching.interestsList.demenagement'),
+    Demenagement: t('matching.interestsList.demenagement'),
+    Plomberie: t('matching.interestsList.plomberie'),
+    Électricité: t('matching.interestsList.electricite'),
+    Electricité: t('matching.interestsList.electricite'),
+    Electricite: t('matching.interestsList.electricite'),
+    Peinture: t('matching.interestsList.peinture'),
+  };
+
+  const translated = interestKeyMap[normalized];
+  if (translated && !translated.startsWith('matching.interestsList.')) {
+    return translated;
+  }
+
+  return normalized;
+}

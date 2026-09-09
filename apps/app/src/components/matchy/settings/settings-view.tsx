@@ -69,7 +69,7 @@ export function SettingsView() {
     void dispatch(fetchOnboardingProfile());
   }, [dispatch]);
 
-  const displayName = auth.user?.name || auth.user?.email || 'Matchy';
+  const displayName = profile?.name || auth.user?.name || auth.user?.email || 'Matchy';
   const email = auth.user?.email || '';
   const initial = displayName.slice(0, 1).toUpperCase();
 

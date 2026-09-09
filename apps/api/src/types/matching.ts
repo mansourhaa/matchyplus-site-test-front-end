@@ -76,6 +76,8 @@ export type DiscoveryFeedQuery = {
   /** Comma-separated service type / job labels. */
   serviceTypes?: string;
   sector?: string;
+  sectors?: string;
+  interests?: string;
   minPrice?: number;
   maxPrice?: number;
   availableOnly?: boolean;

@@ -1,7 +1,9 @@
 'use client';
 
+import { VerifiedShield } from '@/components/matchy/verified-shield';
 import { VideoJSPlayer } from '@/components/video-js-player';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
+import { selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import {
   CONTACT_OPTIONS,
@@ -15,6 +17,10 @@ import {
   SECTOR_OPTIONS,
   SERVICE_TYPES,
   TIME_SLOTS,
+  getContactOptionLabel,
+  getDayLabel,
+  getLanguageOptionLabel,
+  getTimeSlotLabel,
 } from '@/features/onboarding/constants';
 import {
   fetchOnboardingProfile,
@@ -38,7 +44,6 @@ import {
 } from '@/features/profile/components/profile-edit-sections';
 import { humanizeMediaError } from '@/features/profile/media-errors';
 import {
-  deleteProfilePhoto,
   deleteProfileVideo,
   selectProfile,
   uploadProfilePhoto,
@@ -119,6 +124,7 @@ export function EditProfileForm() {
   const dispatch = useAppDispatch();
   const { locale } = useI18n();
   const isRtl = locale === 'ar';
+  const { user } = useAppSelector(selectAuth);
   const { profile, loading, error: profileError } = useAppSelector(selectOnboarding);
   const { mediaUploading, mediaError } = useAppSelector(selectProfile);
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -145,7 +151,7 @@ export function EditProfileForm() {
   const [showVideoPreview, setShowVideoPreview] = useState(false);
   const [videoPlaybackError, setVideoPlaybackError] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<'photo' | 'video' | null>(null);
+  const [confirmDeleteVideo, setConfirmDeleteVideo] = useState(false);
   const hydrated = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const serverPhoto = profile?.image ?? null;
@@ -196,24 +202,22 @@ export function EditProfileForm() {
 
   const imageUrl = localPhoto || photo.url;
   const videoFilename = serverVideo?.split('/').pop() || serverVideo;
-  const isIndividual = profile?.profile_type === 'INDIVIDUAL';
+  const isIndividual = (profile?.profile_type ?? 'INDIVIDUAL') === 'INDIVIDUAL';
   const completion = useMemo(() => {
-    const values = [
-      name,
-      job,
-      bio,
-      interests.length,
-      goals.length,
-      serverPhoto,
-      sector,
-      !offerService || (serviceType && price),
-      !isIndividual || (experience && education),
-    ];
+    const values = isIndividual
+      ? [
+          name,
+          job,
+          bio,
+          interests.length,
+          goals.length,
+          serverPhoto,
+          !offerService || (serviceType && price),
+        ]
+      : [name, bio, interests.length, goals.length, serverPhoto];
     return Math.round((values.filter(Boolean).length / values.length) * 100);
   }, [
     bio,
-    education,
-    experience,
     goals.length,
     interests.length,
     isIndividual,
@@ -221,7 +225,6 @@ export function EditProfileForm() {
     name,
     offerService,
     price,
-    sector,
     serverPhoto,
     serviceType,
   ]);
@@ -257,18 +260,8 @@ export function EditProfileForm() {
     }
   };
 
-  const removePhoto = async () => {
-    setConfirmDelete(null);
-    const result = await dispatch(deleteProfilePhoto());
-    if (deleteProfilePhoto.fulfilled.match(result)) {
-      setLocalPhoto(null);
-      dispatch(patchOnboardingProfile({ image: null }));
-      dispatch(fetchOnboardingProfile());
-    }
-  };
-
   const removeVideo = async () => {
-    setConfirmDelete(null);
+    setConfirmDeleteVideo(false);
     setError(null);
     const result = await dispatch(deleteProfileVideo());
     if (deleteProfileVideo.fulfilled.match(result)) {
@@ -277,6 +270,80 @@ export function EditProfileForm() {
       dispatch(patchOnboardingProfile({ video: null }));
       await dispatch(fetchOnboardingProfile());
     }
+  };
+
+  const applySheetDraft = (overrides?: ProfileSaveOverrides): Promise<boolean> => {
+    if (!overrides) {
+      setSheet(null);
+      setError(null);
+      return Promise.resolve(true);
+    }
+    if (overrides.name !== undefined && !overrides.name.trim()) {
+      setError(
+        locale === 'en'
+          ? 'Name is required.'
+          : locale === 'ar'
+            ? 'الاسم مطلوب.'
+            : 'Le nom est obligatoire.',
+      );
+      return Promise.resolve(false);
+    }
+    if (overrides.interests !== undefined && !overrides.interests.length) {
+      setError(
+        locale === 'en'
+          ? 'Add at least one interest.'
+          : locale === 'ar'
+            ? 'أضف اهتمامًا واحدًا على الأقل.'
+            : 'Ajoutez au moins un intérêt.',
+      );
+      return Promise.resolve(false);
+    }
+    if (overrides.goals !== undefined && !overrides.goals.length) {
+      setError(
+        locale === 'en'
+          ? 'Add at least one goal.'
+          : locale === 'ar'
+            ? 'أضف هدفًا واحدًا على الأقل.'
+            : 'Ajoutez au moins un objectif.',
+      );
+      return Promise.resolve(false);
+    }
+    if (
+      (overrides.serviceType !== undefined || overrides.price !== undefined) &&
+      offerService &&
+      (!overrides.serviceType || !overrides.price?.trim())
+    ) {
+      setError(
+        locale === 'en'
+          ? 'The service type and price are required.'
+          : locale === 'ar'
+            ? 'نوع الخدمة وسعرها مطلوبان.'
+            : 'Le type et le prix du service sont obligatoires.',
+      );
+      return Promise.resolve(false);
+    }
+
+    if (overrides.name !== undefined) setName(overrides.name);
+    if (overrides.job !== undefined) setJob(overrides.job);
+    if (overrides.bio !== undefined) setBio(overrides.bio);
+    if (overrides.interests !== undefined) setInterests(overrides.interests);
+    if (overrides.goals !== undefined) setGoals(overrides.goals);
+    if (overrides.contactModes !== undefined) setContactModes(overrides.contactModes);
+    if (overrides.experience !== undefined) setExperience(overrides.experience);
+    if (overrides.sector !== undefined) setSector(overrides.sector);
+    if (overrides.education !== undefined) setEducation(overrides.education);
+    if (overrides.experiences !== undefined) setExperiences(overrides.experiences);
+    if (overrides.educations !== undefined) setEducations(overrides.educations);
+    if (overrides.serviceType !== undefined) setServiceType(overrides.serviceType);
+    if (overrides.price !== undefined) setPrice(overrides.price);
+    if (overrides.languages !== undefined) setLanguages(overrides.languages);
+    if (overrides.availabilityDays !== undefined) setAvailabilityDays(overrides.availabilityDays);
+    if (overrides.availabilityHours !== undefined)
+      setAvailabilityHours(overrides.availabilityHours);
+
+    setError(null);
+    setSheet(null);
+    return Promise.resolve(true);
   };
 
   const save = async (overrides: ProfileSaveOverrides = {}): Promise<boolean> => {
@@ -330,8 +397,8 @@ export function EditProfileForm() {
       return false;
     }
     if (
-      touches('serviceType', 'price') &&
       draft.offerService &&
+      (draft.serviceType || draft.price.trim()) &&
       (!draft.serviceType || !draft.price.trim())
     ) {
       setError(
@@ -340,20 +407,6 @@ export function EditProfileForm() {
           : locale === 'ar'
             ? 'نوع الخدمة وسعرها مطلوبان.'
             : 'Le type et le prix du service sont obligatoires.',
-      );
-      return false;
-    }
-    if (
-      touches('availabilityDays', 'availabilityHours') &&
-      draft.offerService &&
-      !draft.availabilityDays.length
-    ) {
-      setError(
-        locale === 'en'
-          ? 'Select at least one available day.'
-          : locale === 'ar'
-            ? 'اختر يومًا واحدًا على الأقل من أيام التوفر.'
-            : 'Sélectionnez au moins un jour de disponibilité.',
       );
       return false;
     }
@@ -450,14 +503,30 @@ export function EditProfileForm() {
       await dispatch(updateOnboardingProfile(patch)).unwrap();
       setSaved(true);
       return true;
-    } catch {
-      setError(
+    } catch (err) {
+      const code = err instanceof Error ? err.message : '';
+      let message =
         locale === 'en'
           ? 'Save failed. Try again.'
           : locale === 'ar'
             ? 'فشل الحفظ. حاول مرة أخرى.'
-            : 'Échec de la sauvegarde. Réessayez.',
-      );
+            : 'Échec de la sauvegarde. Réessayez.';
+      if (code === 'foreign_photo_path') {
+        message =
+          locale === 'en'
+            ? 'Invalid photo reference.'
+            : locale === 'ar'
+              ? 'مرجع الصورة غير صالح.'
+              : 'Référence de photo non valide.';
+      } else if (code.includes('Network') || code === 'network_error') {
+        message =
+          locale === 'en'
+            ? 'Network error. Check your connection.'
+            : locale === 'ar'
+              ? 'خطأ في الشبكة. تحقق من اتصالك.'
+              : 'Erreur réseau. Vérifiez votre connexion.';
+      }
+      setError(message);
       return false;
     } finally {
       setSaving(false);
@@ -565,21 +634,6 @@ export function EditProfileForm() {
               disabled={mediaUploading}
             />
           </div>
-          {imageUrl && (
-            <button
-              type="button"
-              onClick={() => setConfirmDelete('photo')}
-              disabled={mediaUploading}
-              className="mb-2 flex items-center gap-1 text-[11px] font-semibold text-[#E24E59] disabled:opacity-50"
-            >
-              <Trash2 size={11} />{' '}
-              {locale === 'en'
-                ? 'Remove photo'
-                : locale === 'ar'
-                  ? 'حذف الصورة'
-                  : 'Supprimer la photo'}
-            </button>
-          )}
           <span
             className="mb-2 rounded-full border px-3 py-1 text-[11px] font-bold"
             style={{
@@ -613,18 +667,20 @@ export function EditProfileForm() {
             <h1 className="text-lg font-extrabold text-[#353535]">
               {name || (locale === 'en' ? 'Your name' : locale === 'ar' ? 'اسمك' : 'Votre nom')}
             </h1>
-            <span
-              className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2F76BB]"
-              aria-label={
-                locale === 'en'
-                  ? 'Verified profile'
-                  : locale === 'ar'
-                    ? 'ملف موثّق'
-                    : 'Profil vérifié'
-              }
-            >
-              <Check size={11} color="white" />
-            </span>
+            {user?.verified && (
+              <span
+                className="flex shrink-0 items-center justify-center"
+                aria-label={
+                  locale === 'en'
+                    ? 'Verified profile'
+                    : locale === 'ar'
+                      ? 'ملف موثّق'
+                      : 'Profil vérifié'
+                }
+              >
+                <VerifiedShield size={20} color="#48bba0" />
+              </span>
+            )}
             <button
               type="button"
               onClick={() => setSheet('identity')}
@@ -653,13 +709,15 @@ export function EditProfileForm() {
             <Star size={12} color="#F5A623" fill="#F5A623" />
             {profile?.rating ? profile.rating.toFixed(1) : '—'}
           </div>
-          {photo.error && (
-            <p className="mt-2 text-xs text-[#E24E59]">
-              {locale === 'en'
-                ? 'Photo unavailable.'
-                : locale === 'ar'
-                  ? 'الصورة غير متاحة.'
-                  : 'Photo inaccessible.'}
+          {(photo.error || mediaError) && (
+            <p className="mt-2 text-xs text-[#E24E59]" role="alert">
+              {photo.error
+                ? locale === 'en'
+                  ? 'Photo unavailable.'
+                  : locale === 'ar'
+                    ? 'الصورة غير متاحة.'
+                    : 'Photo inaccessible.'
+                : humanizeMediaError(mediaError)}
             </p>
           )}
         </div>
@@ -725,20 +783,7 @@ export function EditProfileForm() {
                   ? { Icon: MessageCircle, color: '#25D366', background: '#E8F9F0' }
                   : { Icon: Coffee, color: '#61BCA6', background: '#E8F7F3' };
             const ContactIcon = visual.Icon;
-            const label =
-              option.value === 'phone'
-                ? locale === 'en'
-                  ? 'Phone call'
-                  : locale === 'ar'
-                    ? 'مكالمة هاتفية'
-                    : 'Appel téléphonique'
-                : option.value === 'whatsapp'
-                  ? 'WhatsApp / Chat'
-                  : locale === 'en'
-                    ? 'In-person'
-                    : locale === 'ar'
-                      ? 'لقاء حضوري'
-                      : 'Rendez-vous présentiel';
+            const label = getContactOptionLabel(option.value, locale);
             return (
               <div
                 key={option.value}
@@ -869,12 +914,18 @@ export function EditProfileForm() {
           <ExperienceSection
             values={experiences}
             onChange={setExperiences}
-            onSave={(values) => save({ experiences: values })}
+            onSave={(values) => {
+              setExperiences(values);
+              return Promise.resolve(true);
+            }}
           />
           <EducationSection
             values={educations}
             onChange={setEducations}
-            onSave={(values) => save({ educations: values })}
+            onSave={(values) => {
+              setEducations(values);
+              return Promise.resolve(true);
+            }}
           />
         </>
       )}
@@ -888,12 +939,10 @@ export function EditProfileForm() {
               : 'Langues parlées'
         }
         values={languages.map((value) => {
-          const option = LANGUAGE_OPTIONS.find((entry) => entry.value === value);
-          if (!option) return value;
           return (
             <span key={value} className="inline-flex items-center gap-1.5 align-middle">
               <ProfileLanguageFlag locale={value} />
-              <span>{option.label}</span>
+              <span>{getLanguageOptionLabel(value, locale)}</span>
             </span>
           );
         })}
@@ -923,7 +972,7 @@ export function EditProfileForm() {
                     key={day}
                     className="rounded-lg bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] px-2.5 py-1 text-[11px] font-bold text-white"
                   >
-                    {day}
+                    {getDayLabel(day, locale).long}
                   </span>
                 ))}
               </div>
@@ -933,7 +982,7 @@ export function EditProfileForm() {
                     key={hour}
                     className="rounded-lg bg-[#E8F7F3] px-2.5 py-1 text-[11px] font-semibold text-[#2A9177]"
                   >
-                    {TIME_SLOTS.find((slot) => slot.value === hour)?.label ?? hour}
+                    {getTimeSlotLabel(hour, locale).label}
                   </span>
                 ))}
               </div>
@@ -992,7 +1041,7 @@ export function EditProfileForm() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setConfirmDelete('video')}
+                  onClick={() => setConfirmDeleteVideo(true)}
                   disabled={mediaUploading}
                   className="flex h-7 w-7 items-center justify-center rounded-lg bg-white disabled:opacity-40"
                   aria-label={
@@ -1132,13 +1181,13 @@ export function EditProfileForm() {
         setAvailabilityDays={setAvailabilityDays}
         availabilityHours={availabilityHours}
         setAvailabilityHours={setAvailabilityHours}
-        persist={save}
+        persist={applySheetDraft}
       />
 
-      {confirmDelete && (
+      {confirmDeleteVideo && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4"
-          onMouseDown={() => setConfirmDelete(null)}
+          onMouseDown={() => setConfirmDeleteVideo(false)}
           role="presentation"
         >
           <div
@@ -1153,42 +1202,30 @@ export function EditProfileForm() {
               <Trash2 size={20} color="#E24E59" />
             </div>
             <h2 id="confirm-delete-title" className="mt-4 text-base font-extrabold text-[#1A1A2E]">
-              {confirmDelete === 'photo'
-                ? locale === 'en'
-                  ? 'Delete photo?'
-                  : locale === 'ar'
-                    ? 'حذف الصورة؟'
-                    : 'Supprimer la photo ?'
-                : locale === 'en'
-                  ? 'Delete video?'
-                  : locale === 'ar'
-                    ? 'حذف الفيديو؟'
-                    : 'Supprimer la vidéo ?'}
+              {locale === 'en'
+                ? 'Delete video?'
+                : locale === 'ar'
+                  ? 'حذف الفيديو؟'
+                  : 'Supprimer la vidéo ?'}
             </h2>
             <p className="mt-2 text-xs leading-relaxed text-[#777]">
-              {confirmDelete === 'photo'
-                ? locale === 'en'
-                  ? 'Are you sure you want to delete your profile photo? This action cannot be undone.'
-                  : locale === 'ar'
-                    ? 'هل أنت متأكد من رغبتك في حذف صورة ملفك الشخصي؟ لا يمكن التراجع عن هذا الإجراء.'
-                    : 'Êtes-vous sûr de vouloir supprimer votre photo de profil ? Cette action est irréversible.'
-                : locale === 'en'
-                  ? 'Are you sure you want to delete your presentation video? This action cannot be undone.'
-                  : locale === 'ar'
-                    ? 'هل أنت متأكد من رغبتك في حذف فيديو العرض التقديمي؟ لا يمكن التراجع عن هذا الإجراء.'
-                    : 'Êtes-vous sûr de vouloir supprimer votre vidéo de présentation ? Cette action est irréversible.'}
+              {locale === 'en'
+                ? 'Are you sure you want to delete your presentation video? This action cannot be undone.'
+                : locale === 'ar'
+                  ? 'هل أنت متأكد من رغبتك في حذف فيديو العرض التقديمي؟ لا يمكن التراجع عن هذا الإجراء.'
+                  : 'Êtes-vous sûr de vouloir supprimer votre vidéo de présentation ? Cette action est irréversible.'}
             </p>
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
-                onClick={() => setConfirmDelete(null)}
+                onClick={() => setConfirmDeleteVideo(false)}
                 className="flex-1 rounded-2xl border border-[#E0E0E0] py-3 text-xs font-bold text-[#1A1A2E]"
               >
                 {locale === 'en' ? 'Cancel' : locale === 'ar' ? 'إلغاء' : 'Annuler'}
               </button>
               <button
                 type="button"
-                onClick={() => void (confirmDelete === 'photo' ? removePhoto() : removeVideo())}
+                onClick={() => void removeVideo()}
                 className="flex-1 rounded-2xl bg-[#E24E59] py-3 text-xs font-extrabold text-white"
               >
                 {locale === 'en' ? 'Delete' : locale === 'ar' ? 'حذف' : 'Supprimer'}
@@ -1372,6 +1409,7 @@ function ProfileSheets(props: SheetProps) {
         values={props.interests}
         suggestions={INTERESTS_SUGGESTIONS}
         maxItems={MAX_INTERESTS}
+        maxTagLength={60}
         onChange={props.setInterests}
         onClose={props.close}
         onSave={(values) => props.persist({ interests: values })}
@@ -1384,6 +1422,7 @@ function ProfileSheets(props: SheetProps) {
         title={locale === 'en' ? 'Goals' : locale === 'ar' ? 'الأهداف' : 'Objectifs'}
         values={props.goals}
         suggestions={GOAL_CATEGORIES.flatMap((category) => category.options)}
+        maxTagLength={100}
         onChange={props.setGoals}
         onClose={props.close}
         onSave={(values) => props.persist({ goals: values })}
@@ -1400,7 +1439,10 @@ function ProfileSheets(props: SheetProps) {
               ? 'تفضيلات التواصل'
               : 'Préférences de contact'
         }
-        values={CONTACT_OPTIONS.map(({ value, label }) => ({ value, label }))}
+        values={CONTACT_OPTIONS.map(({ value }) => ({
+          value,
+          label: getContactOptionLabel(value, locale),
+        }))}
         selected={props.contactModes}
         multiple
         onChange={props.setContactModes}
@@ -1463,7 +1505,10 @@ function ProfileSheets(props: SheetProps) {
               ? 'اللغات المحكية'
               : 'Langues parlées'
         }
-        values={LANGUAGE_OPTIONS.map(({ value, label }) => ({ value, label }))}
+        values={LANGUAGE_OPTIONS.map(({ value }) => ({
+          value,
+          label: getLanguageOptionLabel(value, locale),
+        }))}
         selected={props.languages}
         multiple
         onChange={props.setLanguages}
@@ -1575,12 +1620,25 @@ function AvailabilitySheet(props: SheetProps) {
       error={props.error}
     >
       <ChoiceGrid
-        values={DAYS.map((day) => ({ value: day.short, label: day.long }))}
+        values={DAYS.map((day) => ({
+          value: day.short,
+          label: getDayLabel(day.short, locale).long,
+        }))}
         selected={days}
         onChange={setDays}
       />
       <div className="mt-5">
-        <ChoiceGrid values={TIME_SLOTS} selected={hours} onChange={setHours} />
+        <ChoiceGrid
+          values={TIME_SLOTS.map((slot) => {
+            const slotInfo = getTimeSlotLabel(slot.value, locale);
+            return {
+              value: slot.value,
+              label: `${slotInfo.label} (${slotInfo.hint})`,
+            };
+          })}
+          selected={hours}
+          onChange={setHours}
+        />
       </div>
       <SheetButton
         onClick={async () => {
@@ -1665,7 +1723,7 @@ function SheetButton({ onClick }: { onClick: () => void | Promise<void> }) {
       onClick={onClick}
       className="mt-4 w-full rounded-xl bg-[#2F76BB] py-3 text-sm font-bold text-white"
     >
-      {locale === 'en' ? 'Save' : locale === 'ar' ? 'حفظ' : 'Enregistrer'}
+      {locale === 'en' ? 'Apply' : locale === 'ar' ? 'تأكيد' : 'Valider'}
     </button>
   );
 }

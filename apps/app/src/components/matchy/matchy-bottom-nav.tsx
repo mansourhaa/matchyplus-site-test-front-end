@@ -28,7 +28,7 @@ export function MatchyBottomNav() {
   const { profile, loading: profileLoading } = useAppSelector(selectOnboarding);
   // Unread messages only — not total match count (that never cleared after reading).
   const matchBadge = useAppSelector(selectInboxUnreadCount);
-  const displayName = auth.user?.name || auth.user?.email || 'User';
+  const displayName = profile?.name || auth.user?.name || auth.user?.email || 'User';
 
   useEffect(() => {
     if (auth.status === 'authenticated' && !profile && !profileLoading) {
