@@ -21,6 +21,11 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   title: 'Matchy+',
   description: 'Connect with trusted professionals near you',
+  verification: {
+    other: {
+      'facebook-domain-verification': '1lefuisof4lovb2474uzwtubsyta8g',
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
