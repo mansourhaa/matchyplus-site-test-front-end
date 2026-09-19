@@ -107,8 +107,8 @@ const data: Record<
     sendAnother: 'Submit another application',
   },
   ar: {
-    eyebrow: 'محفظة ماتشي والشركاء',
-    title: 'كن شريكًا مع ماتشي بلس',
+    eyebrow: 'Matchy Wallet والشركاء',
+    title: 'كن شريكًا مع Matchy+',
     subtitle: 'انضم إلى الشبكة الإفريقية الرائدة للمهنيين وطوّر قاعدة عملائك المحلية بكل سهولة.',
     badge: 'برنامج الشركاء المعتمدين',
     pitchTitle: 'انطلق بنشاطك المهني إلى مستويات جديدة',

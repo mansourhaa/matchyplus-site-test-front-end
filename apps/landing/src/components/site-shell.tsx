@@ -55,7 +55,8 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
-  const { locale, setLocale, t } = useI18n();
+  const { locale, setLocale, t, dir } = useI18n();
+  const isRtl = dir === 'rtl';
   const pathname = usePathname();
   const isHome = pathname === '/';
 
@@ -99,7 +100,7 @@ export function Header() {
               />
             </button>
             {langOpen && (
-              <div className="absolute top-[calc(100%+0.5rem)] right-0 z-50 w-32 overflow-hidden rounded-xl border border-neutral-100 bg-white py-1 shadow-xl">
+              <div className="absolute top-[calc(100%+0.5rem)] z-50 w-32 overflow-hidden rounded-xl border border-neutral-100 bg-white py-1 shadow-xl ltr:right-0 rtl:left-0">
                 {(['fr', 'en', 'ar'] as Locale[]).map((item) => {
                   const active = locale === item;
                   return (
@@ -121,7 +122,7 @@ export function Header() {
             )}
           </div>
           <Link className="nav-cta" href={APP_LOGIN_URL}>
-            {t('landing.cta')} <ArrowUpRight size={15} />
+            {t('landing.cta')} <ArrowUpRight size={15} className="rtl:-scale-x-1" />
           </Link>
         </nav>
         <button
@@ -133,7 +134,7 @@ export function Header() {
         </button>
       </div>
       {open && (
-        <div className="mobile-menu">
+        <div className="mobile-menu rtl:text-right">
           <Link href="/#services" onClick={() => setOpen(false)}>
             {t('landing.services')}
           </Link>

@@ -58,7 +58,7 @@ const data: Record<
       'Your request will be processed by our team within 30 days in accordance with our privacy policy.',
   },
   ar: {
-    eyebrow: 'الخصوصية ماتشي بلس',
+    eyebrow: 'الخصوصية Matchy+',
     title: 'حذف الحساب',
     subtitle: 'وفقًا لسياسات الخصوصية وحماية بياناتك الشخصية بالكامل.',
     warningTitle: 'إجراء نهائي لا يمكن التراجع عنه',

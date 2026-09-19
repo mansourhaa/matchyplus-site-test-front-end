@@ -246,7 +246,7 @@ export const messages: Record<Locale, MessageTree> = {
       terms: 'شروط الخدمة',
       cta: 'سجّل مجانًا',
 
-      eyebrow: 'ماتشي بلس',
+      eyebrow: 'Matchy+',
       hero: 'المنصة الإفريقية للخدمات المحلية',
       intro: 'اعثر على الخدمة المناسبة بالقرب منك. طوّر نشاطك. نمّ شبكتك المحلية.',
       title: 'طريقة جديدة للعثور على الخدمات وتقديمها',
@@ -292,7 +292,7 @@ export const messages: Record<Locale, MessageTree> = {
         ['3', 'تواصل', 'ابدأ المحادثة في ثوانٍ ودع الباقي للمنصة.'],
       ],
 
-      downloadTitle: 'التقِ بمهنيين ملهمين على ماتشي',
+      downloadTitle: 'التقِ بمهنيين ملهمين على Matchy+',
       downloadBody:
         'انضم إلى Matchy+ وساهم في بناء أكبر منصة إفريقية للخدمات المحلية المعتمدة على الموقع.',
       learnMore: 'اعرف أكثر',
@@ -305,8 +305,8 @@ export const messages: Record<Locale, MessageTree> = {
       designedFor: 'مصمم لربط المواهب المحلية.',
       allRights: '© 2026 Matchy+. كل الحقوق محفوظة.',
 
-      partnerPitch: 'محفظة ماتشي',
-      partnerTitle: 'كن شريكًا مع ماتشي بلس',
+      partnerPitch: 'Matchy Wallet',
+      partnerTitle: 'كن شريكًا مع Matchy+',
       partnerSubtitle: 'اعرض نشاطك على عملاء يبحثون عن مهاراتك وخدماتك.',
       partnerBenefits: ['ظهور محلي', 'عملاء مستهدفون', 'شبكة إفريقية'],
       formName: 'اسمك',
@@ -315,7 +315,7 @@ export const messages: Record<Locale, MessageTree> = {
       formJoin: 'انضم إلى الشبكة',
 
       faqTitle: 'الأسئلة الشائعة',
-      faqSubtitle: 'كل ما تحتاج معرفته عن ماتشي بلس.',
+      faqSubtitle: 'كل ما تحتاج معرفته عن Matchy+.',
 
       deleteTitle: 'حذف حسابي',
       deleteSubtitle: 'نأسف لرؤيتك تغادر. لطلب حذف حسابك وبياناتك، املأ هذا النموذج.',
