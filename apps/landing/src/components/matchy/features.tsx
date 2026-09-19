@@ -25,7 +25,9 @@ function Feature({
       className={align === 'right' ? 'text-center lg:text-left' : 'text-center lg:text-right'}
     >
       <div
-        className={`flex flex-col ${align === 'right' ? 'items-center lg:items-start' : 'items-center lg:items-end'}`}
+        className={`flex flex-col ${
+          align === 'right' ? 'items-center lg:items-start' : 'items-center lg:items-end'
+        }`}
       >
         <span className="bg-brand-teal shadow-brand-teal/30 grid h-14 w-14 place-items-center rounded-full text-white shadow-lg">
           <Icon className="h-6 w-6" />
@@ -79,7 +81,10 @@ export function Features() {
         </p>
       </Reveal>
 
-      <div className="mt-16 grid grid-cols-1 items-center gap-12 lg:grid-cols-3 lg:gap-8 xl:gap-12">
+      <div
+        className="mt-16 grid grid-cols-1 items-center gap-12 lg:grid-cols-3 lg:gap-8 xl:gap-12"
+        dir="ltr"
+      >
         <div className="order-2 flex flex-col gap-10 sm:gap-12 lg:order-1">
           {left.map((f, i) => (
             <Feature key={f.title} {...f} align="left" delay={i * 0.1} />

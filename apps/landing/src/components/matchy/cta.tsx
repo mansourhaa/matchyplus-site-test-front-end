@@ -7,7 +7,8 @@ import Link from 'next/link';
 import { Parallax, Reveal } from './motion';
 
 export function Cta() {
-  const { locale, t } = useI18n();
+  const { locale, t, dir } = useI18n();
+  const isRtl = dir === 'rtl';
 
   const ctaBtnText =
     locale === 'ar' ? 'اعرف أكثر' : locale === 'en' ? 'Learn More' : 'En Savoir Plus';
@@ -32,13 +33,13 @@ export function Cta() {
         </Parallax>
 
         <Reveal
-          direction="left"
-          className="text-center text-white md:col-span-7 md:pl-4 md:text-left lg:col-span-7 lg:pl-6"
+          direction={isRtl ? 'right' : 'left'}
+          className="text-center text-white md:col-span-7 lg:col-span-7 ltr:md:pl-4 ltr:md:text-left ltr:lg:pl-6 rtl:md:pr-4 rtl:md:text-right rtl:lg:pr-6"
         >
           <h2 className="text-2xl leading-tight font-bold text-balance sm:text-3xl md:text-3xl lg:text-[2.6rem]">
             {t('landing.downloadTitle')}
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-pretty text-white/90 md:mx-0 md:text-base">
+          <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-pretty text-white/90 md:text-base ltr:md:mr-auto ltr:md:ml-0 rtl:md:mr-0 rtl:md:ml-auto">
             {t('landing.downloadBody')}
           </p>
           <div className="mt-7 sm:mt-8">

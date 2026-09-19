@@ -22,7 +22,7 @@ const data: Record<
     back: 'Back to Home',
   },
   ar: {
-    eyebrow: 'تطبيق ماتشي بلس',
+    eyebrow: 'تطبيق Matchy+',
     title: 'قريباً جداً',
     desc: 'تطبيق الهاتف المحمول الخاص بنا قيد التطوير حاليًا وسيكون متاحًا قريبًا على Google Play و App Store.',
     back: 'العودة للرئيسية',
