@@ -94,7 +94,7 @@ describe('MatchyDashboardShell — onboarding guard & location gate', () => {
     expect(screen.getByText('Localisation requise')).toBeInTheDocument();
   });
 
-  it('redirects to /onboarding instead of rendering when onboarding is incomplete', () => {
+  it('redirects to /inscription instead of rendering when onboarding is incomplete', () => {
     renderWithAuthStore(
       <MatchyDashboardShell>{<div>Dashboard content</div>}</MatchyDashboardShell>,
       {
@@ -104,7 +104,7 @@ describe('MatchyDashboardShell — onboarding guard & location gate', () => {
     );
 
     expect(screen.queryByText('Dashboard content')).not.toBeInTheDocument();
-    expect(replaceMock).toHaveBeenCalledWith('/onboarding');
+    expect(replaceMock).toHaveBeenCalledWith('/inscription');
   });
 
   it('does not redirect or paint dashboard while the bootstrap authcheck has not settled yet', () => {
@@ -122,7 +122,7 @@ describe('MatchyDashboardShell — onboarding guard & location gate', () => {
     expect(assignMock).not.toHaveBeenCalled();
   });
 
-  it('hard-navigates to /login once the session is known to be unauthenticated', () => {
+  it('hard-navigates to /connexion once the session is known to be unauthenticated', () => {
     renderWithAuthStore(
       <MatchyDashboardShell>{<div>Dashboard content</div>}</MatchyDashboardShell>,
       {
@@ -133,7 +133,7 @@ describe('MatchyDashboardShell — onboarding guard & location gate', () => {
     );
 
     expect(screen.queryByText('Dashboard content')).not.toBeInTheDocument();
-    expect(assignMock).toHaveBeenCalledWith('/login?reason=session_expired');
+    expect(assignMock).toHaveBeenCalledWith('/connexion?reason=session_expired');
   });
 
   it('does not render LocationRequiredOverlay on non-matching routes like /edit-profile even when location is not granted', () => {

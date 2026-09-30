@@ -94,7 +94,7 @@ describe('PrivacyPage — delete account', () => {
     expect(api.delete).not.toHaveBeenCalled();
   });
 
-  it('deletes the account and redirects to /login once confirmed in the dialog', async () => {
+  it('deletes the account and redirects to /connexion once confirmed in the dialog', async () => {
     vi.mocked(api.delete).mockResolvedValue({ data: { message: 'ok' } });
     renderPrivacyPage();
 
@@ -107,7 +107,7 @@ describe('PrivacyPage — delete account', () => {
       }),
     );
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
-    await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/login'));
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/connexion'));
     expect(toast.success).toHaveBeenCalled();
   });
 

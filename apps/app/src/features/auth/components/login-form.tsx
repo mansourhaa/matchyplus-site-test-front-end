@@ -109,8 +109,8 @@ export function LoginForm() {
     reasonParam === 'session_expired' ? t('common.errors.unauthorized') : null;
   const error = localError || authError || sessionExpiredNotice;
 
-  // Cap cold start: proxy may bounce to /login before Preferences hydrate + mirror
-  // cookie sync. Once authcheck confirms a session, leave /login for the app.
+  // Cap cold start: proxy may bounce to /connexion before Preferences hydrate + mirror
+  // cookie sync. Once authcheck confirms a session, leave /connexion for the app.
   useEffect(() => {
     if (!sessionChecked || !isAuthenticated || !user) return;
     router.replace(resolvePostAuthDestination(searchParams.get('next'), user.onboarding_completed));
@@ -118,10 +118,10 @@ export function LoginForm() {
   }, [sessionChecked, isAuthenticated, user, router, searchParams]);
 
   const goToPhoneStep = () => {
-    router.push('/login?step=phone');
+    router.push('/connexion?step=phone');
   };
   const handleBackToLogin = () => {
-    router.push('/login');
+    router.push('/connexion');
     setLocalError(null);
   };
   const handleBackToLanding = () => {
@@ -256,7 +256,9 @@ export function LoginForm() {
 
           <div className="mt-2">
             <button
-              onClick={() => router.push('/onboarding')}
+              onClick={() =>
+                router.push(resolvePostAuthDestination(searchParams.get('next'), false))
+              }
               className="w-full rounded-2xl py-3.5 text-white"
               style={{
                 background: matchyBrand.gradient,

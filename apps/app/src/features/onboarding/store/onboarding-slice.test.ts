@@ -126,7 +126,7 @@ describe('onboarding-slice', () => {
 
     it('does not clear the profile on a stale fetchCurrentUser rejection, since that would race a signup in progress', async () => {
       // The bootstrap authcheck can still be in flight when a fresh visitor finishes
-      // phone signup on /onboarding — a late (correctly stale) rejection must not wipe
+      // phone signup on /register — a late (correctly stale) rejection must not wipe
       // the profile that signup just started building. See sessionGeneration in
       // auth-slice.ts, which already prevents that same response from clearing the
       // session itself.

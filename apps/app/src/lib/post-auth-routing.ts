@@ -1,13 +1,17 @@
 const DEFAULT_POST_AUTH_ROUTE = '/home';
-const ONBOARDING_ROUTE = '/onboarding';
+const REGISTER_ROUTE = '/inscription';
 
 // Routes that must never be treated as a valid post-auth destination — bouncing back
 // into one of these would loop the user through the auth flow again.
-// /register still exists as a live route (it only redirects to /onboarding — see
-// app/(auth)/register/page.tsx) — kept disallowed here so `next=/register` can't force
-// a pointless auth-flow -> /register -> /onboarding bounce instead of going straight to
-// the real destination.
-const DISALLOWED_PREFIXES = ['/login', '/register', '/oauth-callback', '/api', '/onboarding'];
+const DISALLOWED_PREFIXES = [
+  '/connexion',
+  '/login',
+  '/inscription',
+  '/register',
+  '/oauth-callback',
+  '/api',
+  '/onboarding',
+];
 
 function sanitizeNext(nextParam?: string | null): string | null {
   if (!nextParam) return null;
@@ -24,8 +28,8 @@ function sanitizeNext(nextParam?: string | null): string | null {
 /**
  * Where to send the user right after login/OTP-verify/register/OAuth. A safe `next`
  * param is honored once the profile is complete; an incomplete profile always goes to
- * onboarding first — a crafted `next` link can never be used to skip it — carrying the
- * original safe `next` (if any) through as onboarding's own post-completion destination.
+ * registration first — a crafted `next` link can never be used to skip it — carrying the
+ * original safe `next` (if any) through as registration's own post-completion destination.
  */
 export function resolvePostAuthDestination(
   nextParam: string | null | undefined,
@@ -34,7 +38,7 @@ export function resolvePostAuthDestination(
   const safeNext = sanitizeNext(nextParam);
 
   if (!onboardingCompleted) {
-    return safeNext ? `${ONBOARDING_ROUTE}?next=${encodeURIComponent(safeNext)}` : ONBOARDING_ROUTE;
+    return safeNext ? `${REGISTER_ROUTE}?next=${encodeURIComponent(safeNext)}` : REGISTER_ROUTE;
   }
 
   return safeNext ?? DEFAULT_POST_AUTH_ROUTE;

@@ -20,7 +20,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     } else {
-      router.push('/login');
+      router.push('/connexion');
     }
   };
 

@@ -73,7 +73,7 @@ export function OnboardingWizard() {
   const buildStepUrl = (target: OnboardingStep) => {
     const query = new URLSearchParams({ step: target });
     if (nextParam) query.set('next', nextParam);
-    return `/onboarding?${query.toString()}`;
+    return `/inscription?${query.toString()}`;
   };
 
   // Bounce invalid ?step= (e.g. old experience/education/location/welcome bookmarks) to identity.

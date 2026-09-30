@@ -20,17 +20,30 @@ export function proxy(request: NextRequest) {
   const usableSession = hasUsableAccessTokenCookie(token);
   const { pathname } = request.nextUrl;
 
-  // /oauth-callback, /onboarding, /register — see NEUTRAL_ROUTES in route-auth.ts.
+  // Legacy auth routes redirect to canonical French route names.
+  if (pathname === '/login') {
+    const redirectUrl = new URL('/connexion', request.url);
+    redirectUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (pathname === '/register' || pathname === '/onboarding') {
+    const redirectUrl = new URL('/inscription', request.url);
+    redirectUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // /oauth-callback, /inscription — see NEUTRAL_ROUTES in route-auth.ts.
   if (isNeutralRoute(pathname)) {
     return NextResponse.next();
   }
 
   const isPublicRoute = isPublicAuthRoute(pathname);
 
-  // Deny-by-default: no usable session → /login for every protected path
+  // Deny-by-default: no usable session → /connexion for every protected path
   // (includes all of app/(dashboard)/**).
   if (!usableSession && requiresAuthentication(pathname)) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL('/connexion', request.url));
   }
 
   // /home is the right bounce target even for a user with incomplete onboarding: the
@@ -38,7 +51,7 @@ export function proxy(request: NextRequest) {
   // TokenService.signAccessToken) so the edge can't know onboarding status without either
   // decoding+DB-querying here or embedding a completeness claim that would go stale until
   // the next refresh. MatchyDashboardShell (which wraps /home) already client-side-bounces
-  // an incomplete profile to /onboarding, so this is a one-hop redirect, not a bypass.
+  // an incomplete profile to /inscription, so this is a one-hop redirect, not a bypass.
   if (usableSession && isPublicRoute) {
     return NextResponse.redirect(new URL('/home', request.url));
   }
