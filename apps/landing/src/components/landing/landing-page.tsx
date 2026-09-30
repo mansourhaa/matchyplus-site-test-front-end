@@ -28,7 +28,7 @@ export default function LandingPage() {
   const { locale, setLocale, t, dir } = useI18n();
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
-  const goOnboarding = () => goToApp('/onboarding');
+  const goRegister = () => goToApp('/inscription');
 
   const handleLanguageChange = (lang: Locale) => {
     setLocale(lang);
@@ -92,7 +92,7 @@ export default function LandingPage() {
               )}
             </div>
             <Button
-              onClick={() => goToApp('/login')}
+              onClick={() => goToApp('/connexion')}
               className="bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] hover:opacity-90"
             >
               {t('landing.getStarted')}
@@ -120,7 +120,7 @@ export default function LandingPage() {
               <div className="flex flex-col justify-center gap-4 pt-4 sm:flex-row lg:justify-start">
                 <Button
                   size="lg"
-                  onClick={goOnboarding}
+                  onClick={goRegister}
                   className="bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] px-8 text-lg hover:opacity-90"
                 >
                   {t('landing.findProfessional')}
@@ -129,7 +129,7 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={goOnboarding}
+                  onClick={goRegister}
                   className="border-2 border-[#2F76BB] px-8 text-lg text-[#2F76BB] hover:bg-[#2F76BB] hover:text-white"
                 >
                   {t('landing.joinAsProfessional')}
@@ -397,7 +397,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               variant="secondary"
-              onClick={goOnboarding}
+              onClick={goRegister}
               className="bg-white px-10 py-6 text-lg font-bold text-[#2F76BB] shadow-xl hover:bg-gray-100"
             >
               {t('landing.joinToday')}
@@ -419,7 +419,7 @@ export default function LandingPage() {
           safety: t('landing.safety'),
           allRights: t('landing.allRights'),
         }}
-        onJoin={goOnboarding}
+        onJoin={goRegister}
       />
     </div>
   );

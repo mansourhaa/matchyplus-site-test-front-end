@@ -225,7 +225,7 @@ describe('OnboardingWizard', () => {
     // The successful save clears the sticky guard and advances exactly like a normal
     // (already-authenticated) save would — the guard only ever blocks the brief
     // in-flight window, never navigation after a real success.
-    expect(pushMock).toHaveBeenCalledWith('/onboarding?step=interests');
+    expect(pushMock).toHaveBeenCalledWith('/inscription?step=interests');
   });
 
   it('does not honor a deep-linked step for a persisted-but-unvalidated session, and does not fetch its profile', () => {

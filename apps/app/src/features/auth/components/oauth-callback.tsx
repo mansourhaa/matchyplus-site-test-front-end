@@ -101,7 +101,7 @@ export function OAuthCallback() {
             {error}
           </p>
           <Link
-            href="/login"
+            href="/connexion"
             className="rounded-2xl px-5 py-2.5 text-white"
             style={{
               background: matchyBrand.gradient,

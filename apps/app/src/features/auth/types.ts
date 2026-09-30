@@ -41,7 +41,7 @@ export interface AuthState {
   // Bumped every time the session identity actually changes (applySession/clearSession).
   // fetchCurrentUser captures this when it starts; the bootstrap authcheck fires on every
   // page load and can still be in flight when a fresh visitor finishes phone signup on
-  // /onboarding — if it settles after that, its result no longer reflects the current
+  // /inscription — if it settles after that, its result no longer reflects the current
   // session and must be discarded rather than clearing (or overwriting) the session that
   // was established since.
   sessionGeneration: number;

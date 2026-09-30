@@ -56,7 +56,7 @@ export const completeOnboarding = createAsyncThunk('onboarding/complete', async 
   }
 });
 
-// /onboarding is reachable by an anonymous visitor now (identity also collects
+// /inscription is reachable by an anonymous visitor now (identity also collects
 // credentials for a fresh phone signup) — without this, a completed profile left over
 // from a *previous* session (soft logout via client navigation, no full page reload)
 // could bounce a new anonymous signup straight off identity, or pre-fill its fields.

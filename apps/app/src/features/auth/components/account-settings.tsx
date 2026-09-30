@@ -184,7 +184,7 @@ export function ChangePasswordSection() {
       setSuccess(true);
       // Backend revoked the session (force logout) — redirect to login shortly.
       window.setTimeout(() => {
-        window.location.href = '/login';
+        window.location.href = '/connexion';
       }, 1500);
     } catch {
       setError(
@@ -714,7 +714,7 @@ export function DeleteAccountSection() {
           otpCode: hasPassword ? undefined : otpCode || undefined,
         }),
       ).unwrap();
-      router.push('/login');
+      router.push('/connexion');
     } catch {
       setError(
         hasPassword

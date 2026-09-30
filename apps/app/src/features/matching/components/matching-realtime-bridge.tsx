@@ -10,8 +10,8 @@ import { useMatchingRealtime } from '../hooks/use-matching-realtime';
 import { RealtimePushToastStack } from './realtime-push-toast-stack';
 
 /**
- * Mounted once at the app root (ClientProvider wraps every route, including /login and
- * an unauthenticated /onboarding), so the socket itself must gate on session state —
+ * Mounted once at the app root (ClientProvider wraps every route, including /connexion and
+ * an unauthenticated /inscription), so the socket itself must gate on session state —
  * without this, a logged-out visitor would open /realtime, fail auth, and reconnect
  * every ~3s for as long as they sit on a public page.
  *

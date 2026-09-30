@@ -25,14 +25,13 @@ describe('route-auth', () => {
     vi.useRealTimers();
   });
 
-  it('treats login as public and oauth/onboarding/register as neutral', () => {
-    expect(isPublicAuthRoute('/login')).toBe(true);
-    expect(isPublicAuthRoute('/login/extra')).toBe(true);
-    expect(isNeutralRoute('/onboarding')).toBe(true);
+  it('treats connexion as public and oauth/inscription as neutral', () => {
+    expect(isPublicAuthRoute('/connexion')).toBe(true);
+    expect(isPublicAuthRoute('/connexion/extra')).toBe(true);
     expect(isNeutralRoute('/oauth-callback')).toBe(true);
-    expect(isNeutralRoute('/register')).toBe(true);
-    expect(requiresAuthentication('/login')).toBe(false);
-    expect(requiresAuthentication('/onboarding')).toBe(false);
+    expect(isNeutralRoute('/inscription')).toBe(true);
+    expect(requiresAuthentication('/connexion')).toBe(false);
+    expect(requiresAuthentication('/inscription')).toBe(false);
   });
 
   it('requires auth for every known (dashboard) path prefix', () => {
@@ -50,11 +49,10 @@ describe('route-auth', () => {
     expect(requiresAuthentication('/profile/xyz')).toBe(true);
   });
 
-  it('skips bootstrap authcheck on login, oauth-callback, and register only', () => {
-    expect(skipsBootstrapAuthCheck('/login')).toBe(true);
+  it('skips bootstrap authcheck on connexion and oauth-callback only', () => {
+    expect(skipsBootstrapAuthCheck('/connexion')).toBe(true);
     expect(skipsBootstrapAuthCheck('/oauth-callback')).toBe(true);
-    expect(skipsBootstrapAuthCheck('/register')).toBe(true);
-    expect(skipsBootstrapAuthCheck('/onboarding')).toBe(false);
+    expect(skipsBootstrapAuthCheck('/inscription')).toBe(false);
     expect(skipsBootstrapAuthCheck('/home')).toBe(false);
     expect(skipsBootstrapAuthCheck('/settings/account')).toBe(false);
   });

@@ -144,7 +144,7 @@ describe('ResetPasswordForm', () => {
 
     // Clicking CTA navigates to login
     fireEvent.click(firstButton('Se connecter avec le nouveau mot de passe'));
-    expect(pushMock).toHaveBeenCalledWith('/login?step=phone');
+    expect(pushMock).toHaveBeenCalledWith('/connexion?step=phone');
   });
 
   it('allows resending the code on step 2 with cooldown timer', async () => {
