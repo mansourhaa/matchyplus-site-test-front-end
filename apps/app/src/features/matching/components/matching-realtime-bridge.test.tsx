@@ -72,7 +72,7 @@ describe('MatchingRealtimeBridge', () => {
     renderBridge({ status: 'unauthenticated', user: null });
 
     // Mounted at the app root (ClientProvider), reachable on /login and an unauthenticated
-    // /onboarding — the socket itself must stay closed there instead of failing auth and
+    // /register — the socket itself must stay closed there instead of failing auth and
     // reconnecting every ~3s.
     expect(WebSocketSpy).not.toHaveBeenCalled();
   });

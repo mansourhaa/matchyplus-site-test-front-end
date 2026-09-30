@@ -9,13 +9,13 @@ import { redirect } from 'next/navigation';
  * Cookie presence/expiry is checked here so RSC never serves dashboard HTML
  * without a usable session — even if the edge proxy is skipped. Signature
  * validity is confirmed by the API via AuthBootstrap → fetchCurrentUser; the
- * client shell then hard-navigates to /login if that settles unauthenticated.
+ * client shell then hard-navigates to /connexion if that settles unauthenticated.
  */
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const jar = await cookies();
   const token = jar.get(AUTH_COOKIE)?.value;
   if (!hasUsableAccessTokenCookie(token)) {
-    redirect('/login');
+    redirect('/connexion');
   }
 
   return <MatchyDashboardShell>{children}</MatchyDashboardShell>;

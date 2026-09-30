@@ -262,12 +262,12 @@ describe('LoginForm — Back button', () => {
     expect(window.location.href).toBe('http://localhost:3002/?lang=fr');
   });
 
-  it('navigates back to /login when clicking the back button on phone step', () => {
+  it('navigates back to /connexion when clicking the back button on phone step', () => {
     searchParamsRef.current = new URLSearchParams('step=phone');
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.click(firstButton('Retour'));
 
-    expect(pushMock).toHaveBeenCalledWith('/login');
+    expect(pushMock).toHaveBeenCalledWith('/connexion');
   });
 });

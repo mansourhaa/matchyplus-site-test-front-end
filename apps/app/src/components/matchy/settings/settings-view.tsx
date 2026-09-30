@@ -200,9 +200,9 @@ export function SettingsView() {
   const handleLogout = async () => {
     setShowLogoutModal(false);
     // Await cookie clear from POST /auth/logout before leaving — otherwise proxy.ts
-    // still sees access_token on /login and immediately redirects back to /home.
+    // still sees access_token on /connexion and immediately redirects back to /home.
     await dispatch(logout());
-    window.location.assign('/login');
+    window.location.assign('/connexion');
   };
 
   return (

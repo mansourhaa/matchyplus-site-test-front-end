@@ -96,7 +96,7 @@ export function ResetPasswordForm() {
   }, [resendCooldown]);
 
   const handleBackToLogin = () => {
-    router.push('/login?step=phone');
+    router.push('/connexion?step=phone');
   };
 
   const handleRequestCode = async (isResend = false) => {
@@ -285,7 +285,7 @@ export function ResetPasswordForm() {
               {t('auth.resetPassword.noAccountPrompt')}{' '}
               <button
                 type="button"
-                onClick={() => router.push('/onboarding')}
+                onClick={() => router.push('/inscription')}
                 className="font-bold text-[#2F76BB] hover:underline"
               >
                 {t('auth.resetPassword.createAccountLink')}

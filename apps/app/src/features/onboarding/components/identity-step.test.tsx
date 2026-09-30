@@ -208,11 +208,11 @@ describe('IdentityStep', () => {
   });
 
   // Regression: an authenticated (e.g. Google OAuth) visitor mid-onboarding has no
-  // /login to go back to — proxy.ts bounces an authenticated visit to /login straight
+  // /connexion to go back to — proxy.ts bounces an authenticated visit to /connexion straight
   // to /home, and MatchyDashboardShell bounces an incomplete profile from /home right
-  // back to /onboarding. Offering either link here trapped the user in that loop, only
+  // back to /inscription. Offering either link here trapped the user in that loop, only
   // escapable by clearing cookies.
-  it('does not offer a /login escape hatch to an already-authenticated visitor', () => {
+  it('does not offer a /connexion escape hatch to an already-authenticated visitor', () => {
     renderWithAuthStore(
       <IdentityStep
         profile={null}
@@ -482,7 +482,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     expect(firstButton('Enregistrer et continuer')).toBeInTheDocument();
   });
 
-  it('still offers the /login escape hatch to a genuinely unauthenticated, not-yet-registered visitor', () => {
+  it('still offers the /connexion escape hatch to a genuinely unauthenticated, not-yet-registered visitor', () => {
     renderWithAuthStore(
       <IdentityStep
         profile={unauthenticatedProfileWithPhoto}

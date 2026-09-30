@@ -149,8 +149,8 @@ export const confirmPasswordReset = createAsyncThunk(
 );
 
 // useBootstrapSession fires this once per document load on routes that need a session
-// probe (skipped on /login, /oauth-callback, /register unless Cap has Preferences
-// tokens). On /onboarding the request can still be in flight when a fresh visitor
+// probe (skipped on /connexion, /oauth-callback unless Cap has Preferences
+// tokens). On /inscription the request can still be in flight when a fresh visitor
 // finishes phone signup. Captures the generation at dispatch time and carries it
 // through both outcomes (rejectWithValue, since action.error.message can't carry
 // extra data) so a late response can be recognized as stale and discarded instead of
@@ -289,7 +289,7 @@ const authSlice = createSlice({
      * Public-route bootstrap: no `/auth/authcheck` call. Clears any stale
      * redux-persist "authenticated" snapshot and marks the session checked so
      * login/oauth UI is not blocked waiting on an API probe that cannot succeed
-     * usefully here (proxy already bounced usable cookies away from /login).
+     * usefully here (proxy already bounced usable cookies away from /connexion).
      */
     acknowledgeAnonymousBootstrap: (state) => {
       clearSession(state);

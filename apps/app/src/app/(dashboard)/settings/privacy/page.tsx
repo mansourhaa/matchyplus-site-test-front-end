@@ -108,7 +108,7 @@ export default function PrivacyPage() {
             ? 'تم حذف الحساب بنجاح.'
             : 'Compte supprimé avec succès.',
       );
-      router.push('/login');
+      router.push('/connexion');
     } catch {
       toast.error(
         locale === 'en'

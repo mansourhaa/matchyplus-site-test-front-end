@@ -61,7 +61,7 @@ function registerForegroundListeners() {
 /**
  * Resolves the session against the backend once per document load on routes that
  * need it. HttpOnly cookies are not readable from JS, so "authenticated" is only
- * known by asking the API — except on public auth surfaces (`/login`,
+ * known by asking the API — except on public auth surfaces (`/connexion`,
  * `/oauth-callback`, …) where a probe is useless noise (and Cap cold-start with
  * Preferences tokens still probes).
  *

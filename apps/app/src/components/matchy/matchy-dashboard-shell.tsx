@@ -40,7 +40,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   // Also fail closed when the session check settled as unauthenticated (expired cookie
   // still present for proxy.ts, or logout left Redux cleared while a soft-nav bounced
   // back to /home). Hard-navigate so proxy sees a document request without racing
-  // router.replace('/login') against a still-present access_token cookie.
+  // router.replace('/connexion') against a still-present access_token cookie.
   const { user, isAuthenticated, sessionChecked } = useAppSelector(selectAuth);
   const { profile, loading: profileLoading } = useAppSelector(selectOnboarding);
   const needsLogin = sessionChecked && !isAuthenticated;
@@ -57,11 +57,11 @@ function DashboardChrome({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (needsLogin) {
-      window.location.assign('/login?reason=session_expired');
+      window.location.assign('/connexion?reason=session_expired');
       return;
     }
     if (needsOnboarding) {
-      router.replace('/onboarding');
+      router.replace('/inscription');
     }
   }, [needsLogin, needsOnboarding, router]);
 

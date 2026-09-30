@@ -186,7 +186,7 @@ describe('auth-slice', () => {
 
     it('does not clear a session established by registerPhone while this bootstrap check was still in flight', async () => {
       // useBootstrapSession fires fetchCurrentUser on every page load, unconditionally,
-      // before it's known whether a cookie even exists — on /onboarding, a fresh visitor
+      // before it's known whether a cookie even exists — on /register, a fresh visitor
       // can finish phone signup (registerPhone) before that request resolves. A late 401
       // correctly reflects the pre-signup state, but must not clear the session signup
       // just established.

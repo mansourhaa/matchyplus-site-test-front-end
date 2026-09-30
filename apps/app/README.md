@@ -39,7 +39,7 @@ The frontend talks **only** to Fastify. It never calls Redis or the Flask AI ser
 
 ## Directory structure
 
-```
+```text
 src/
   app/
     (auth)/              Public routes — login, register
@@ -99,9 +99,9 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 
 | Group | Path | Access |
 | --- | --- | --- |
-| Auth | `/login`, `/register` | Public (`/register` → `/onboarding`) |
+| Auth | `/connexion`, `/inscription` | `/connexion`: Public (guest-only), `/inscription`: Auth-neutral registration & profile wizard |
 | Dashboard | `/home` (canonical), `/matches`, `/settings/*`, … | Protected (cookie) |
-| Root | `/onboarding`, `/oauth-callback` | Auth-neutral |
+| Root | `/oauth-callback` | Auth-neutral |
 | Legal | Hosted on landing (`NEXT_PUBLIC_LANDING_URL`) | `/privacy-policy`, `/terms-of-service` |
 
 ## Conventions

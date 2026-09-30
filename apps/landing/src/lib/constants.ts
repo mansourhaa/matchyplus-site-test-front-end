@@ -7,4 +7,4 @@ export const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:300
   '',
 );
 
-export const APP_LOGIN_URL = `${APP_URL}/login`;
+export const APP_LOGIN_URL = `${APP_URL}/connexion`;

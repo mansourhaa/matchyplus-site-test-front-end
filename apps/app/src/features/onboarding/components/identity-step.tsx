@@ -518,13 +518,13 @@ export function IdentityStep({
       step={stepNumber}
       totalSteps={totalSteps}
       stepLabel={t('onboarding.identity.title')}
-      // An authenticated (e.g. Google OAuth) visitor has no /login to go back to —
+      // An authenticated (e.g. Google OAuth) visitor has no /connexion to go back to —
       // they already have a session and onboarding is mandatory before /home, so
-      // /login would immediately bounce them right back here (see proxy.ts's
-      // authenticated-visits-/login → /home redirect, and MatchyDashboardShell's
-      // incomplete-profile → /onboarding redirect). Only offer this for a fresh,
-      // not-yet-authenticated phone signup, where /login is a real "cancel".
-      onBack={isAuthenticated ? undefined : () => router.push('/login')}
+      // /connexion would immediately bounce them right back here (see proxy.ts's
+      // authenticated-visits-/connexion → /home redirect, and MatchyDashboardShell's
+      // incomplete-profile → /inscription redirect). Only offer this for a fresh,
+      // not-yet-authenticated phone signup, where /connexion is a real "cancel".
+      onBack={isAuthenticated ? undefined : () => router.push('/connexion')}
       backLabel={t('common.back')}
     >
       <div className="mx-auto w-full max-w-2xl">
@@ -929,10 +929,10 @@ export function IdentityStep({
         />
 
         {/* Same reasoning as onBack above: an already-authenticated visitor has no
-            /login to go back to — it would only bounce them right back here. */}
+            /connexion to go back to — it would only bounce them right back here. */}
         {!isAuthenticated && (
           <Link
-            href="/login"
+            href="/connexion"
             className="mt-3.5 block w-full rounded-2xl border border-slate-200 bg-white py-3.5 text-center font-bold text-slate-700 shadow-xs transition-colors hover:bg-slate-50"
             style={{
               fontSize: '14px',

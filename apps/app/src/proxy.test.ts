@@ -55,15 +55,15 @@ describe('proxy auth gate', () => {
     for (const path of paths) {
       const res = proxy(request(path));
       expect(res.status).toBe(307);
-      expect(location(res)).toBe('https://app.test/login');
+      expect(location(res)).toBe('https://app.test/connexion');
     }
   });
 
   it('rejects expired or malformed cookies on protected paths', () => {
     const now = Math.floor(Date.now() / 1000);
-    expect(location(proxy(request('/home', makeJwt({ exp: now - 120 }))))).toContain('/login');
-    expect(location(proxy(request('/home', 'garbage')))).toContain('/login');
-    expect(location(proxy(request('/home', '')))).toContain('/login');
+    expect(location(proxy(request('/home', makeJwt({ exp: now - 120 }))))).toContain('/connexion');
+    expect(location(proxy(request('/home', 'garbage')))).toContain('/connexion');
+    expect(location(proxy(request('/home', '')))).toContain('/connexion');
   });
 
   it('allows a usable session through to (dashboard) routes', () => {
@@ -73,24 +73,39 @@ describe('proxy auth gate', () => {
     expect(res.status).toBe(200);
   });
 
+  it('redirects legacy /login to /connexion', () => {
+    const res = proxy(request('/login'));
+    expect(res.status).toBe(307);
+    expect(location(res)).toBe('https://app.test/connexion');
+  });
+
+  it('redirects legacy /register and /onboarding to /inscription', () => {
+    const resRegister = proxy(request('/register'));
+    expect(resRegister.status).toBe(307);
+    expect(location(resRegister)).toBe('https://app.test/inscription');
+
+    const resOnboarding = proxy(request('/onboarding'));
+    expect(resOnboarding.status).toBe(307);
+    expect(location(resOnboarding)).toBe('https://app.test/inscription');
+  });
+
   it('keeps neutral routes open without a session', () => {
-    expect(proxy(request('/onboarding')).status).toBe(200);
     expect(proxy(request('/oauth-callback')).status).toBe(200);
-    expect(proxy(request('/register')).status).toBe(200);
+    expect(proxy(request('/inscription')).status).toBe(200);
     expect(proxy(request('/reset-password')).status).toBe(200);
     expect(proxy(request('/privacy-policy')).status).toBe(200);
     expect(proxy(request('/terms-of-service')).status).toBe(200);
   });
 
-  it('sends authenticated visitors away from /login', () => {
+  it('sends authenticated visitors away from /connexion', () => {
     const now = Math.floor(Date.now() / 1000);
     const token = makeJwt({ exp: now + 3600 });
-    expect(location(proxy(request('/login', token)))).toContain('/home');
+    expect(location(proxy(request('/connexion', token)))).toContain('/home');
   });
 
-  it('does not treat an expired cookie as authenticated on /login', () => {
+  it('does not treat an expired cookie as authenticated on /connexion', () => {
     const now = Math.floor(Date.now() / 1000);
-    const res = proxy(request('/login', makeJwt({ exp: now - 60 })));
+    const res = proxy(request('/connexion', makeJwt({ exp: now - 60 })));
     expect(res.status).toBe(200);
   });
 });
