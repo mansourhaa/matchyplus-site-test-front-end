@@ -1,8 +1,9 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { APP_LOGIN_URL } from '@/lib/constants';
+import { APP_LOGIN_URL, APP_REGISTER_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
+import { LogIn } from 'lucide-react';
 import Link from 'next/link';
 
 export function Hero() {
@@ -47,12 +48,23 @@ export function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
+            className="mx-auto mt-8 flex max-w-sm flex-col items-stretch justify-center gap-3 sm:mx-0 sm:max-w-none sm:flex-row sm:items-center sm:gap-4 ltr:md:justify-start rtl:md:justify-start"
           >
             <Link
-              href={APP_LOGIN_URL}
-              className="text-brand-blue mt-8 inline-block rounded-lg bg-white px-7 py-3.5 text-sm font-semibold shadow-lg transition-transform hover:scale-[1.03]"
+              href={APP_REGISTER_URL}
+              className="text-brand-blue inline-flex w-full items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-bold shadow-xl shadow-black/10 transition-all hover:scale-[1.03] hover:shadow-2xl active:scale-[0.98] sm:w-auto sm:text-base"
             >
               {t('landing.cta')}
+            </Link>
+            <Link
+              href={APP_LOGIN_URL}
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/50 bg-white/15 px-6.5 py-3.5 text-sm font-semibold text-white shadow-md backdrop-blur-md transition-all hover:scale-[1.03] hover:border-white/80 hover:bg-white/25 active:scale-[0.98] sm:w-auto sm:text-base"
+            >
+              <LogIn
+                size={17}
+                className="opacity-90 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-1 rtl:group-hover:-translate-x-0.5"
+              />
+              <span>{t('landing.login')}</span>
             </Link>
           </motion.div>
         </div>
