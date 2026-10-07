@@ -20,6 +20,7 @@ export const messages: Record<Locale, MessageTree> = {
       privacyPolicy: 'Politique de confidentialité',
       terms: "Conditions d'utilisation",
       cta: "S'inscrire gratuitement",
+      login: 'Connexion',
 
       eyebrow: 'Matchy Plus',
       hero: 'La plateforme panafricaine des services locaux',
@@ -138,6 +139,7 @@ export const messages: Record<Locale, MessageTree> = {
       privacyPolicy: 'Privacy policy',
       terms: 'Terms of service',
       cta: 'Join for free',
+      login: 'Sign in',
 
       eyebrow: 'Matchy Plus',
       hero: 'The pan-African platform for local services',
@@ -245,6 +247,7 @@ export const messages: Record<Locale, MessageTree> = {
       privacyPolicy: 'سياسة الخصوصية',
       terms: 'شروط الخدمة',
       cta: 'سجّل مجانًا',
+      login: 'تسجيل الدخول',
 
       eyebrow: 'Matchy+',
       hero: 'المنصة الإفريقية للخدمات المحلية',

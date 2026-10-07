@@ -2,7 +2,7 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
-import { APP_LOGIN_URL } from '@/lib/constants';
+import { APP_REGISTER_URL } from '@/lib/constants';
 import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -121,7 +121,7 @@ export function Header() {
               </div>
             )}
           </div>
-          <Link className="nav-cta" href={APP_LOGIN_URL}>
+          <Link className="nav-cta" href={APP_REGISTER_URL}>
             {t('landing.cta')} <ArrowUpRight size={15} className="rtl:-scale-x-1" />
           </Link>
         </nav>
@@ -153,6 +153,17 @@ export function Header() {
           <Link href="/devenir-partenaire" onClick={() => setOpen(false)}>
             {t('landing.partner')}
           </Link>
+          <div className="mt-2 border-t border-white/20 pt-4">
+            <Link
+              href={APP_REGISTER_URL}
+              onClick={() => setOpen(false)}
+              className="nav-cta !text-brand-blue flex w-full items-center justify-center gap-1.5 !rounded-full !bg-white py-3 text-center text-sm font-bold shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.98]"
+              style={{ color: 'var(--brand-blue)' }}
+            >
+              <span>{t('landing.cta')}</span>
+              <ArrowUpRight size={16} className="rtl:-scale-x-1" />
+            </Link>
+          </div>
           <div className="mobile-langs">
             {languageOptions.map((option) => (
               <button
