@@ -30,8 +30,8 @@ describe('proxy locale routing', () => {
   });
 
   it('follows the browser language, then the remembered choice over it', () => {
-    expect(location(proxy(request('/faq/', { 'accept-language': 'ar-TN,ar;q=0.9' })))).toBe(
-      '/ar/faq/',
+    expect(location(proxy(request('/contact/', { 'accept-language': 'ar-TN,ar;q=0.9' })))).toBe(
+      '/ar/contact/',
     );
     const remembered = proxy(
       request('/faq/', { 'accept-language': 'ar', cookie: 'matchy_locale=en' }),
@@ -49,5 +49,19 @@ describe('proxy locale routing', () => {
     const res = proxy(request('/?lang=de'));
     expect(res.status).toBe(307);
     expect(location(res)).toBe('/fr/');
+  });
+
+  it('serves translated slugs from the route folder', () => {
+    const res = proxy(request('/en/about-us/'));
+    expect(res.headers.get('x-middleware-rewrite')).toBe('https://matchyplus.com/en/a-propos/');
+    const ar = proxy(request('/ar/%D9%85%D9%86-%D9%86%D8%AD%D9%86/'));
+    expect(ar.headers.get('x-middleware-rewrite')).toBe('https://matchyplus.com/ar/a-propos/');
+  });
+
+  it('moves a slug used in the wrong language to the right one', () => {
+    const res = proxy(request('/en/a-propos/'));
+    expect(res.status).toBe(308);
+    expect(location(res)).toBe('/en/about-us/');
+    expect(location(proxy(request('/fr/about-us/')))).toBe('/fr/a-propos/');
   });
 });

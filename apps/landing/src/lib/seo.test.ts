@@ -2,7 +2,7 @@ import sitemap from '@/app/sitemap';
 import { SUPPORTED_LOCALES } from '@/features/i18n/messages';
 import { describe, expect, it } from 'vitest';
 
-import { PAGES, type PageKey, homeJsonLd, pageMetadata } from './seo';
+import { PAGES, type PageKey, faqJsonLd, homeJsonLd, pageMetadata, servicesJsonLd } from './seo';
 
 describe('home page metadata', () => {
   it('uses the reference copy of each language', () => {
@@ -61,8 +61,8 @@ describe('sitemap', () => {
   it('lists each indexable page once per language on the public domain', () => {
     const urls = entries.map((entry) => entry.url);
     expect(new Set(urls).size).toBe(urls.length);
-    expect(urls).toHaveLength(6 * SUPPORTED_LOCALES.length);
-    expect(urls).toContain('https://matchyplus.com/ar/faq/');
+    expect(urls).toHaveLength(8 * SUPPORTED_LOCALES.length);
+    expect(urls).toContain(`https://matchyplus.com${encodeURI('/ar/الأسئلة-الشائعة/')}`);
     expect(urls.every((url) => url.startsWith('https://matchyplus.com/'))).toBe(true);
   });
 
@@ -76,7 +76,7 @@ describe('sitemap', () => {
     const faq = entries.find((entry) => entry.url === 'https://matchyplus.com/fr/faq/');
     expect(faq?.alternates?.languages).toMatchObject({
       en: 'https://matchyplus.com/en/faq/',
-      ar: 'https://matchyplus.com/ar/faq/',
+      ar: `https://matchyplus.com${encodeURI('/ar/الأسئلة-الشائعة/')}`,
     });
   });
 });
@@ -87,5 +87,25 @@ describe('structured data', () => {
     expect(graph.map((node) => node['@type'])).toEqual(['Organization', 'WebSite']);
     expect(graph[1]).toMatchObject({ url: 'https://matchyplus.com/ar/', inLanguage: 'ar' });
     expect(JSON.stringify(graph)).not.toMatch(/Rating|Review/);
+  });
+});
+
+describe('FAQ structured data', () => {
+  it('lists every question shown on the page', () => {
+    const data = faqJsonLd('fr');
+    expect(data['@type']).toBe('FAQPage');
+    expect(data.mainEntity).toHaveLength(20);
+    expect(data.mainEntity[0]).toMatchObject({
+      '@type': 'Question',
+      name: 'Qu’est-ce que Matchy+ ?',
+    });
+  });
+});
+
+describe('Services structured data', () => {
+  it('lists the categories without presenting Matchy+ as their provider', () => {
+    const graph = servicesJsonLd('en')['@graph'];
+    expect(graph.map((node) => node['@type'])).toEqual(['CollectionPage', 'ItemList', 'FAQPage']);
+    expect(JSON.stringify(graph)).not.toContain('"Service"');
   });
 });

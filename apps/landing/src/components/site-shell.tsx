@@ -83,8 +83,8 @@ export function Header() {
           <Logo />
         </Link>
         <nav className="desktop-nav" aria-label="Main navigation">
-          <Link href={localizePath(locale, '/#services')}>{t('landing.services')}</Link>
-          <Link href={localizePath(locale, '/#explore')}>{t('landing.about')}</Link>
+          <Link href={localizePath(locale, '/services')}>{t('landing.services')}</Link>
+          <Link href={localizePath(locale, '/a-propos')}>{t('landing.about')}</Link>
           <Link href={localizePath(locale, '/#how')}>{t('landing.how')}</Link>
           <Link href={localizePath(locale, '/contact')}>{t('landing.contact')}</Link>
           <div ref={langRef} className="language-picker-custom relative">
@@ -136,10 +136,10 @@ export function Header() {
       </div>
       {open && (
         <div className="mobile-menu rtl:text-right">
-          <Link href={localizePath(locale, '/#services')} onClick={() => setOpen(false)}>
+          <Link href={localizePath(locale, '/services')} onClick={() => setOpen(false)}>
             {t('landing.services')}
           </Link>
-          <Link href={localizePath(locale, '/#explore')} onClick={() => setOpen(false)}>
+          <Link href={localizePath(locale, '/a-propos')} onClick={() => setOpen(false)}>
             {t('landing.about')}
           </Link>
           <Link href={localizePath(locale, '/#how')} onClick={() => setOpen(false)}>
@@ -199,8 +199,8 @@ export function Footer() {
         </div>
         <div>
           <h3>{locale === 'ar' ? 'اكتشف' : locale === 'en' ? 'Discover' : 'Découvrir'}</h3>
-          <Link href={localizePath(locale, '/#services')}>{t('landing.services')}</Link>
-          <Link href={localizePath(locale, '/#explore')}>{t('landing.explore')}</Link>
+          <Link href={localizePath(locale, '/services')}>{t('landing.services')}</Link>
+          <Link href={localizePath(locale, '/a-propos')}>{t('landing.about')}</Link>
           <Link href={localizePath(locale, '/#how')}>{t('landing.how')}</Link>
         </div>
         <div>

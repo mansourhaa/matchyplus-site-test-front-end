@@ -12,25 +12,54 @@ export function localeDir(locale: Locale): 'ltr' | 'rtl' {
 }
 
 /**
- * Prefixes a path with its locale, ending in the slash `trailingSlash: true` serves pages on:
- * `/` → `/fr/`, `/faq` → `/fr/faq/`, `/#how` → `/fr/#how`.
+ * Pages whose URL slug is translated, keyed by their route folder under `app/[lang]/`.
+ * The proxy rewrites each translated slug to that folder.
+ */
+const LOCALIZED_SLUGS: Record<string, Record<Locale, string>> = {
+  '/a-propos': { fr: '/a-propos', en: '/about-us', ar: '/من-نحن' },
+  '/faq': { fr: '/faq', en: '/faq', ar: '/الأسئلة-الشائعة' },
+  '/services': { fr: '/services', en: '/services', ar: '/الخدمات' },
+};
+
+/** Route folder of a path, whatever language its slug is in: `/about-us` → `/a-propos`. */
+export function routePath(path: string): string {
+  for (const [route, slugs] of Object.entries(LOCALIZED_SLUGS)) {
+    if (Object.values(slugs).includes(path)) return route;
+  }
+  return path;
+}
+
+/**
+ * Prefixes a path with its locale and translates its slug, ending in the slash
+ * `trailingSlash: true` serves pages on: `/` → `/fr/`, `/faq` → `/fr/faq/`, `/#how` → `/fr/#how`,
+ * `/a-propos` → `/en/about-us/`.
  */
 export function localizePath(locale: Locale, path = '/'): string {
   const hashIndex = path.indexOf('#');
   const pathname = hashIndex === -1 ? path : path.slice(0, hashIndex);
   const hash = hashIndex === -1 ? '' : path.slice(hashIndex);
-  const segments = pathname.replace(/^\/+|\/+$/g, '');
+  const route = routePath(`/${pathname.replace(/^\/+|\/+$/g, '')}`);
+  const segments = (LOCALIZED_SLUGS[route]?.[locale] ?? route).slice(1);
   return `/${locale}/${segments ? `${segments}/` : ''}${hash}`;
 }
 
 /** Splits `/en/faq/` into `{ locale: 'en', path: '/faq' }`; `locale` is null on a locale-less path. */
 export function splitLocale(pathname: string): { locale: Locale | null; path: string } {
-  const [, first, ...rest] = pathname.split('/');
+  const [, first, ...rest] = safeDecode(pathname).split('/');
   if (!isLocale(first)) return { locale: null, path: pathname };
   return { locale: first, path: `/${rest.join('/')}`.replace(/\/+$/, '') || '/' };
 }
 
-/** The same page in another language: `/fr/faq/` → `/en/faq/`. */
+/** Request pathnames arrive percent-encoded (`/ar/%D9%85…`); slugs are compared decoded. */
+function safeDecode(pathname: string): string {
+  try {
+    return decodeURIComponent(pathname);
+  } catch {
+    return pathname;
+  }
+}
+
+/** The same page in another language: `/fr/faq/` → `/en/faq/`, `/fr/a-propos/` → `/en/about-us/`. */
 export function switchLocalePath(pathname: string, locale: Locale): string {
   return localizePath(locale, splitLocale(pathname).path);
 }

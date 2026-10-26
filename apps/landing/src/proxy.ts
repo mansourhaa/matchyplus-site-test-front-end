@@ -4,6 +4,7 @@ import {
   isLocale,
   localizePath,
   negotiateLocale,
+  routePath,
   splitLocale,
 } from '@/features/i18n/routing';
 import { type NextRequest, NextResponse } from 'next/server';
@@ -11,14 +12,30 @@ import { type NextRequest, NextResponse } from 'next/server';
 /**
  * Every page lives under `/fr/`, `/en/` or `/ar/`, so each language has its own indexable URL.
  * Locale-less URLs (`/`, the pre-i18n `/faq`, member-app links carrying `?lang=`) are redirected
- * to their localized equivalent.
+ * to their localized equivalent, and translated slugs are mapped to their route folder.
  */
 export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
-  if (splitLocale(pathname).locale) return NextResponse.next();
-
   // A plain URL keeps the trailing slash exactly as localizePath builds it.
   const url = new URL(request.url);
+
+  const { locale: pathLocale, path } = splitLocale(pathname);
+  if (pathLocale) {
+    const route = routePath(path);
+    const canonical = localizePath(pathLocale, route);
+    // A slug from another language (`/en/a-propos/`) moves to this language's slug.
+    if (`/${pathLocale}${path === '/' ? '' : path}/` !== canonical) {
+      url.pathname = canonical;
+      return NextResponse.redirect(url, 308);
+    }
+    // A translated slug (`/en/about-us/`) is served by its route folder (`[lang]/a-propos`).
+    if (route !== path) {
+      url.pathname = `/${pathLocale}${route}/`;
+      return NextResponse.rewrite(url);
+    }
+    return NextResponse.next();
+  }
+
   const requested = searchParams.get('lang');
   url.searchParams.delete('lang');
 

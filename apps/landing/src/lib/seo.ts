@@ -1,3 +1,6 @@
+import { ABOUT_CONTENT } from '@/components/about/content';
+import { FAQ_CONTENT } from '@/components/faq/content';
+import { SERVICES_CONTENT } from '@/components/services/content';
 import { DEFAULT_LOCALE, type Locale, SUPPORTED_LOCALES } from '@/features/i18n/messages';
 import { isLocale, localizePath } from '@/features/i18n/routing';
 import type { Metadata, MetadataRoute } from 'next';
@@ -54,6 +57,8 @@ type PageSeo = {
 
 export type PageKey =
   | 'home'
+  | 'a-propos'
+  | 'services'
   | 'devenir-partenaire'
   | 'contact'
   | 'faq'
@@ -61,6 +66,45 @@ export type PageKey =
   | 'privacy-policy'
   | 'suppression-compte'
   | 'coming-soon';
+
+/** The À propos copy ships with its page content in `locales/<lang>/about.json`. */
+function aboutCopy(): Record<Locale, PageCopy> {
+  const copy = {} as Record<Locale, PageCopy>;
+  for (const locale of SUPPORTED_LOCALES) {
+    const { seo } = ABOUT_CONTENT[locale];
+    copy[locale] = {
+      title: seo.title,
+      description: seo.description,
+      ogTitle: seo.openGraphTitle,
+      ogDescription: seo.openGraphDescription,
+    };
+  }
+  return copy;
+}
+
+/** The FAQ copy ships with its questions in `locales/<lang>/faq.json`. */
+function faqCopy(): Record<Locale, PageCopy> {
+  const copy = {} as Record<Locale, PageCopy>;
+  for (const locale of SUPPORTED_LOCALES) {
+    copy[locale] = { ...FAQ_CONTENT[locale].seo };
+  }
+  return copy;
+}
+
+/** The Services copy ships with its page content in `locales/<lang>/services.json`. */
+function servicesCopy(): Record<Locale, PageCopy> {
+  const copy = {} as Record<Locale, PageCopy>;
+  for (const locale of SUPPORTED_LOCALES) {
+    const { seo } = SERVICES_CONTENT[locale];
+    copy[locale] = {
+      title: seo.title,
+      description: seo.description,
+      ogTitle: seo.openGraphTitle,
+      ogDescription: seo.openGraphDescription,
+    };
+  }
+  return copy;
+}
 
 export const PAGES: Record<PageKey, PageSeo> = {
   home: {
@@ -92,6 +136,18 @@ export const PAGES: Record<PageKey, PageSeo> = {
         ogDescription: 'اكتشف المهنيين المتاحين من حولك وتواصل بسهولة مع الملف المناسب لاحتياجاتك.',
       },
     },
+  },
+  services: {
+    path: '/services',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+    copy: servicesCopy(),
+  },
+  'a-propos': {
+    path: '/a-propos',
+    changeFrequency: 'monthly',
+    priority: 0.8,
+    copy: aboutCopy(),
   },
   'devenir-partenaire': {
     path: '/devenir-partenaire',
@@ -141,23 +197,7 @@ export const PAGES: Record<PageKey, PageSeo> = {
     path: '/faq',
     changeFrequency: 'monthly',
     priority: 0.6,
-    copy: {
-      fr: {
-        title: 'Questions fréquentes',
-        description:
-          'Réponses aux questions fréquentes sur Matchy+ : fonctionnement, recherche d’un professionnel près de chez vous, gratuité, Matchy Wallet et protection des données.',
-      },
-      en: {
-        title: 'Frequently asked questions',
-        description:
-          'Answers to common questions about Matchy+: how it works, finding a professional near you, free access, Matchy Wallet and data protection.',
-      },
-      ar: {
-        title: 'الأسئلة الشائعة',
-        description:
-          'إجابات عن الأسئلة الشائعة حول Matchy+: طريقة العمل، العثور على مهني بالقرب منك، المجانية، Matchy Wallet وحماية البيانات.',
-      },
-    },
+    copy: faqCopy(),
   },
   'terms-of-service': {
     path: '/terms-of-service',
@@ -245,8 +285,9 @@ export const PAGES: Record<PageKey, PageSeo> = {
   },
 };
 
+/** Absolute URL, percent-encoding non-ASCII slugs (`/ar/من-نحن/`) as sitemaps require. */
 export function absoluteUrl(path: string): string {
-  return `${SITE_URL}${path}`;
+  return `${SITE_URL}${encodeURI(path)}`;
 }
 
 /** hreflang map for one page: every translation plus `x-default` on the default locale. */
@@ -300,12 +341,13 @@ export function pageMetadata(locale: Locale, key: PageKey): Metadata {
   const page = PAGES[key];
   const copy = page.copy[locale];
   const url = absoluteUrl(localizePath(locale, page.path));
-  const ogTitle = copy.ogTitle ?? `${copy.title} | ${SITE_NAME}`;
+  const hasBrand = copy.title.includes(SITE_NAME);
+  const ogTitle = copy.ogTitle ?? (hasBrand ? copy.title : `${copy.title} | ${SITE_NAME}`);
   const ogDescription = copy.ogDescription ?? copy.description;
 
   return {
-    // The home title already carries the brand, so it skips the `%s | Matchy+` template.
-    title: key === 'home' ? { absolute: copy.title } : copy.title,
+    // Titles that already carry the brand (home, À propos) skip the `%s | Matchy+` template.
+    title: hasBrand ? { absolute: copy.title } : copy.title,
     description: copy.description,
     alternates: {
       canonical: url,
@@ -338,6 +380,92 @@ export function localizedMetadata(key: PageKey) {
   return async ({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> => {
     const { lang } = await params;
     return isLocale(lang) ? pageMetadata(lang, key) : {};
+  };
+}
+
+/** AboutPage structured data, pointing at the Organization and WebSite the home page defines. */
+export function aboutJsonLd(locale: Locale) {
+  const { seo } = ABOUT_CONTENT[locale];
+  const pageUrl = absoluteUrl(localizePath(locale, PAGES['a-propos'].path));
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    '@id': `${pageUrl}#webpage`,
+    url: pageUrl,
+    name: seo.title,
+    description: seo.description,
+    inLanguage: locale,
+    isPartOf: { '@id': `${absoluteUrl(localizePath(locale, '/'))}#website` },
+    about: { '@id': `${SITE_URL}/#organization` },
+  };
+}
+
+/**
+ * Services listing and its FAQ. Each category is listed by name only: no `Service` objects, since
+ * Matchy+ connects people with providers rather than delivering these services itself.
+ */
+export function servicesJsonLd(locale: Locale) {
+  const content = SERVICES_CONTENT[locale];
+  const pageUrl = absoluteUrl(localizePath(locale, PAGES.services.path));
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${pageUrl}#webpage`,
+        url: pageUrl,
+        name: content.seo.title,
+        description: content.seo.description,
+        inLanguage: locale,
+        isPartOf: { '@id': `${absoluteUrl(localizePath(locale, '/'))}#website` },
+        about: { '@id': `${SITE_URL}/#organization` },
+        mainEntity: { '@id': `${pageUrl}#services` },
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${pageUrl}#services`,
+        name: content.popular.title,
+        numberOfItems: content.popular.services.length,
+        itemListElement: content.popular.services.map((service, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: service.name,
+        })),
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${pageUrl}#faq`,
+        inLanguage: locale,
+        mainEntity: content.faq.items.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: { '@type': 'Answer', text: item.answer },
+        })),
+      },
+    ],
+  };
+}
+
+/** FAQPage structured data built from the questions the page displays. */
+export function faqJsonLd(locale: Locale) {
+  const content = FAQ_CONTENT[locale];
+  const pageUrl = absoluteUrl(localizePath(locale, PAGES.faq.path));
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `${pageUrl}#webpage`,
+    url: pageUrl,
+    name: content.hero.title,
+    description: content.seo.description,
+    inLanguage: locale,
+    isPartOf: { '@id': `${absoluteUrl(localizePath(locale, '/'))}#website` },
+    mainEntity: content.categories.flatMap((category) =>
+      category.items.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: { '@type': 'Answer', text: item.answer },
+      })),
+    ),
   };
 }
 
