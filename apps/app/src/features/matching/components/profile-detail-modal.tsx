@@ -11,6 +11,7 @@ import {
   fetchMatchState,
   selectMatching,
   unmatchUser,
+  withdrawPending,
 } from '@/features/matching/store/matching-slice';
 import type { FeedProfile } from '@/features/matching/types';
 import {
@@ -80,6 +81,8 @@ export type ProfileDetailData = {
   availability_days?: string[];
   availability_hours?: string[];
   matched?: boolean;
+  pending?: boolean;
+  relationship_status?: string | null;
   viewer_has_rated?: boolean;
 };
 
@@ -92,6 +95,7 @@ type Props = {
   onClose: () => void;
   onConnect?: () => void;
   onPass?: () => void;
+  onWithdraw?: () => void;
   busy?: boolean;
 };
 
@@ -115,7 +119,15 @@ const CONTACT_MODE_TEXT_KEY: Record<string, string> = {
 
 type ReportReason = 'INAPPROPRIATE' | 'SPAM' | 'FAKE' | 'HARASSMENT' | 'OTHER';
 
-export function ProfileDetailModal({ profile, source, onClose, onConnect, onPass, busy }: Props) {
+export function ProfileDetailModal({
+  profile,
+  source,
+  onClose,
+  onConnect,
+  onPass,
+  onWithdraw,
+  busy,
+}: Props) {
   const { t, locale, dir } = useI18n();
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -244,10 +256,66 @@ export function ProfileDetailModal({ profile, source, onClose, onConnect, onPass
   const matching = useAppSelector(selectMatching);
   const isMatchedInStore = useMemo(() => {
     return Boolean(
-      currentProfile.id && matching?.matches?.some((m) => m.matched_user_id === currentProfile.id),
+      currentProfile.id &&
+      matching?.matches?.some(
+        (m) => m.matched_user_id === currentProfile.id || m.profile?.id === currentProfile.id,
+      ),
     );
   }, [currentProfile.id, matching?.matches]);
   const isMatched = Boolean(currentProfile.matched || isMatchedInStore);
+
+  const isPendingInStore = useMemo(() => {
+    return Boolean(
+      currentProfile.id &&
+      matching?.pending?.some(
+        (p) =>
+          p.profile?.id === currentProfile.id ||
+          (p as unknown as { target_user_id?: string }).target_user_id === currentProfile.id,
+      ),
+    );
+  }, [currentProfile.id, matching?.pending]);
+
+  const [localPending, setLocalPending] = useState<boolean | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
+
+  const isPending =
+    localPending ??
+    Boolean(
+      currentProfile.pending ||
+      currentProfile.relationship_status === 'pending_sent' ||
+      currentProfile.relationship_status === 'PENDING' ||
+      isPendingInStore,
+    );
+
+  const handleWithdraw = async () => {
+    if (!currentProfile.id || withdrawing) return;
+    setWithdrawing(true);
+    try {
+      if (onWithdraw) {
+        onWithdraw();
+      } else {
+        await dispatch(withdrawPending(currentProfile.id)).unwrap();
+      }
+      setLocalPending(false);
+      toast.success(
+        locale === 'en'
+          ? 'Connection request cancelled'
+          : locale === 'ar'
+            ? 'تم إلغاء طلب الاتصال'
+            : 'Demande de connexion annulée',
+      );
+    } catch {
+      toast.error(
+        locale === 'en'
+          ? 'Could not cancel request'
+          : locale === 'ar'
+            ? 'تعذر إلغاء الطلب'
+            : 'Impossible d’annuler la demande',
+      );
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   // Rating adapted based on from where the card is opened:
   // - Discovery, Search, and Favorites: only read-only aggregate rating display (no rating box)
@@ -1147,33 +1215,102 @@ export function ProfileDetailModal({ profile, source, onClose, onConnect, onPass
         </div>
 
         {/* Pinned Bottom Pass / Connect Actions */}
-        {(onPass || onConnect) && (
+        {(onPass || onConnect || isPending || isMatched) && (
           <div
             className="flex shrink-0 items-center gap-3 bg-white p-4"
             style={{ borderTop: '1px solid #F0F2F5' }}
           >
-            {onPass && (
+            {isMatched ? (
               <button
                 type="button"
-                disabled={busy}
-                onClick={onPass}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[#E2E8F0] py-3 font-bold text-[#475569] transition-colors hover:bg-[#F8FAFC] active:scale-[0.98] disabled:opacity-60"
+                onClick={() => {
+                  onClose();
+                  router.push('/matches');
+                }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition-all hover:brightness-105 active:scale-[0.98]"
               >
-                <X size={18} className="text-[#64748B]" strokeWidth={2.5} />
-                <span>{busy ? t('matching.swiping') : t('matching.pass')}</span>
+                <MessageCircle size={18} strokeWidth={2.5} className="text-white" />
+                <span>
+                  {locale === 'en'
+                    ? 'Send message'
+                    : locale === 'ar'
+                      ? 'إرسال رسالة'
+                      : 'Envoyer un message'}
+                </span>
               </button>
-            )}
+            ) : isPending ? (
+              <>
+                <div
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold"
+                  style={{
+                    background: '#FFFDF0',
+                    color: '#F59E0B',
+                    border: '1.5px solid #F59E0B',
+                  }}
+                >
+                  <Clock size={16} color="#F59E0B" />
+                  <span>
+                    {locale === 'en'
+                      ? 'Request pending'
+                      : locale === 'ar'
+                        ? 'الطلب في الانتظار'
+                        : 'Demande en attente'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  disabled={busy || withdrawing}
+                  onClick={handleWithdraw}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 font-bold transition-all hover:bg-rose-50 active:scale-[0.98] disabled:opacity-60"
+                  style={{
+                    background: '#FFF1F2',
+                    border: '1px solid #FECDD3',
+                    color: '#E11D48',
+                  }}
+                >
+                  {withdrawing ? (
+                    <Loader2 size={16} className="animate-spin text-[#E11D48]" />
+                  ) : (
+                    <X size={16} strokeWidth={2.5} className="text-[#E11D48]" />
+                  )}
+                  <span>
+                    {locale === 'en'
+                      ? 'Cancel request'
+                      : locale === 'ar'
+                        ? 'إلغاء الطلب'
+                        : 'Annuler la demande'}
+                  </span>
+                </button>
+              </>
+            ) : (
+              <>
+                {onPass && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={onPass}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[#E2E8F0] py-3 font-bold text-[#475569] transition-colors hover:bg-[#F8FAFC] active:scale-[0.98] disabled:opacity-60"
+                  >
+                    <X size={18} className="text-[#64748B]" strokeWidth={2.5} />
+                    <span>{busy ? t('matching.swiping') : t('matching.pass')}</span>
+                  </button>
+                )}
 
-            {onConnect && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={onConnect}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
-              >
-                <Check size={18} strokeWidth={2.5} className="text-white" />
-                <span>{busy ? t('matching.swiping') : t('matching.connect')}</span>
-              </button>
+                {onConnect && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      setLocalPending(true);
+                      onConnect();
+                    }}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
+                  >
+                    <Check size={18} strokeWidth={2.5} className="text-white" />
+                    <span>{busy ? t('matching.swiping') : t('matching.connect')}</span>
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}

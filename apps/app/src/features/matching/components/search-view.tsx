@@ -619,7 +619,11 @@ export function SearchView() {
 
       {detailProfile && !detailProfile.is_locked && (
         <ProfileDetailModal
-          profile={detailProfile}
+          profile={{
+            ...detailProfile,
+            pending: getProfileConnectionStatus(detailProfile.id) === 'pending',
+            matched: getProfileConnectionStatus(detailProfile.id) === 'matched',
+          }}
           source="search"
           busy={matching.swipeLoading}
           onClose={() => setDetailProfile(null)}
@@ -630,8 +634,11 @@ export function SearchView() {
           }}
           onConnect={() => {
             const profile = detailProfile;
-            setDetailProfile(null);
             void handleConnect(profile);
+          }}
+          onWithdraw={() => {
+            const profile = detailProfile;
+            void handleRemove(profile);
           }}
         />
       )}
