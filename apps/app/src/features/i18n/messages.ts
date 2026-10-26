@@ -9,6 +9,36 @@ export type MessageTree = { [key: string]: string | MessageTree };
 export const messages: Record<Locale, MessageTree> = {
   en: {
     onboarding: {
+      intro: {
+        skip: 'Skip',
+        next: 'Next',
+        start: 'Get started',
+        back: 'Back',
+        slide1Badge: 'Smart Matching',
+        slide1Title: 'Smart Location-Based Matching',
+        slide1Desc:
+          'Connect with complementary and relevant profiles around you thanks to our AI-powered matchmaking algorithm.',
+        slide1Point1: 'Multi-criteria matching by sector, goals, and availability',
+        slide1Point2: 'Real-time geographic distance calculation',
+        slide2Badge: 'Security & Trust',
+        slide2Title: 'Facial Verification & Profile Security',
+        slide2Desc:
+          'Verified and authentic profiles with AI biometric facial verification for interactions with complete peace of mind.',
+        slide2Point1: 'Official verified badge upon biometric validation',
+        slide2Point2: 'Anti-fraud and identity spoofing prevention',
+        slide3Badge: 'Direct Communication',
+        slide3Title: 'Instant Messaging, Audio & Video',
+        slide3Desc:
+          'Communicate smoothly with your matches through real-time chat, crystal-clear voice calls, and HD video.',
+        slide3Point1: 'Real-time instant messaging and read receipts',
+        slide3Point2: 'Integrated voice and HD video calling in one click',
+        slide4Badge: 'Local Opportunities',
+        slide4Title: 'Nearby Verified Providers & Opportunities',
+        slide4Desc:
+          'Discover trusted service providers, freelance opportunities, and top talents right in your neighborhood.',
+        slide4Point1: 'Search by skills, profession, and pricing',
+        slide4Point2: 'Proximity radius and geo-filtered discovery feed',
+      },
       identity: {
         title: 'Who are you?',
         desc: 'Tell us a bit about yourself so we can personalize your experience.',
@@ -952,6 +982,36 @@ export const messages: Record<Locale, MessageTree> = {
   },
   fr: {
     onboarding: {
+      intro: {
+        skip: 'Passer',
+        next: 'Suivant',
+        start: 'Commencer',
+        back: 'Retour',
+        slide1Badge: 'Matching Intelligent',
+        slide1Title: 'Matching Intelligent Géolocalisé',
+        slide1Desc:
+          'Connectez-vous avec des profils complémentaires et pertinents autour de vous grâce à notre algorithme intelligent.',
+        slide1Point1: 'Algorithme multicritères (secteur, compétences, disponibilité)',
+        slide1Point2: 'Calcul précis de la proximité kilométrique en direct',
+        slide2Badge: 'Sécurité & Confiance',
+        slide2Title: 'Vérification Faciale & Sécurité des Profils',
+        slide2Desc:
+          'Des profils certifiés et authentiques grâce à la vérification faciale biométrique par IA pour des échanges en toute confiance.',
+        slide2Point1: 'Badge officiel de profil vérifié après validation par IA',
+        slide2Point2: 'Protection contre les faux profils et l’usurpation d’identité',
+        slide3Badge: 'Communication Directe',
+        slide3Title: 'Messagerie Directe, Appels & Visio',
+        slide3Desc:
+          'Échangez instantanément avec vos matchs via messagerie intégrée, appels audio clairs et visio en temps réel.',
+        slide3Point1: 'Messagerie instantanée réactive avec statuts de lecture',
+        slide3Point2: 'Appels vocaux et visioconférence en un seul clic',
+        slide4Badge: 'Opportunités Locales',
+        slide4Title: 'Opportunités & Prestataires Vérifiés à Proximité',
+        slide4Desc:
+          'Trouvez rapidement les meilleurs prestataires vérifiés, opportunités et talents recommandés près de chez vous.',
+        slide4Point1: 'Recherche affinée par compétences, secteur et budget',
+        slide4Point2: 'Filtres de distance et géolocalisation sur le flux découverte',
+      },
       identity: {
         title: 'Qui êtes-vous ?',
         desc: 'Dites-nous en plus sur vous pour personnaliser votre expérience.',
@@ -1918,6 +1978,35 @@ export const messages: Record<Locale, MessageTree> = {
   },
   ar: {
     onboarding: {
+      intro: {
+        skip: 'تخطي',
+        next: 'التالي',
+        start: 'ابدأ الآن',
+        back: 'رجوع',
+        slide1Badge: 'مطابقة ذكية',
+        slide1Title: 'مطابقة ذكية حسب الموقع الجغرافي',
+        slide1Desc:
+          'تواصل مع ملفات شخصية متوافقة ومناسبة بالقرب منك بفضل خوارزمية المطابقة الذكية المدعومة بالذكاء الاصطناعي.',
+        slide1Point1: 'مطابقة متعددة المعايير حسب القطاع، الأهداف، والتوفر',
+        slide1Point2: 'حساب دقيق للمسافة الجغرافية بالكيلومترات في الوقت الفعلي',
+        slide2Badge: 'أمان وموثوقية',
+        slide2Title: 'التحقق من الوجه وأمان الملفات الشخصية',
+        slide2Desc:
+          'ملفات شخصية موثقة وحقيقية بفضل تقنية التحقق البيومتري بالذكاء الاصطناعي لتبادل آمن وموثوق.',
+        slide2Point1: 'شارة توثيق رسمية بعد اعتماد الوجه بالذكاء الاصطناعي',
+        slide2Point2: 'حماية معززة ضد الحسابات المزيفة وانتحال الهوية',
+        slide3Badge: 'تواصل مباشر',
+        slide3Title: 'مراسلة فورية، مكالمات صوت وفيديو',
+        slide3Desc:
+          'تواصل فوراً وبسلاسة مع شركائك عبر الرسائل الفورية، المكالمات الصوتية ومكالمات الفيديو عالية الدقة.',
+        slide3Point1: 'مراسلة فورية مشفرة ومؤشرات قراءة في الوقت الفعلي',
+        slide3Point2: 'مكالمات صوت وفيديو مدمجة بنقرة واحدة',
+        slide4Badge: 'فرص محلية',
+        slide4Title: 'فرص ومقدمو خدمات موثوقون بالقرب منك',
+        slide4Desc: 'اكتشف بسرعة أفضل مقدمي الخدمات المعتمدين، المواهب، والفرص المهنية في منطقتك.',
+        slide4Point1: 'بحث دقيق بالمهارات، نوع المهنة، والأسعار المقدرة',
+        slide4Point2: 'فلترة حسب نصف القطر الجغرافي وخلاصة الاستكشاف',
+      },
       identity: {
         title: 'من أنت؟',
         desc: 'أخبرنا عن نفسك لتخصيص تجربتك.',

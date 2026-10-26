@@ -139,10 +139,12 @@ function renderWizard(
 describe('OnboardingWizard', () => {
   beforeEach(() => {
     window.localStorage.setItem('matchy_locale', 'fr');
+    window.localStorage.setItem('matchy_onboarding_intro_seen', 'true');
   });
 
   afterEach(() => {
     window.localStorage.removeItem('matchy_locale');
+    window.localStorage.removeItem('matchy_onboarding_intro_seen');
     vi.clearAllMocks();
     searchParamsRef.current = new URLSearchParams();
     registeredCallbackRef.current = undefined;
@@ -326,5 +328,33 @@ describe('OnboardingWizard', () => {
     );
 
     expect(replaceMock).toHaveBeenCalledWith('/home');
+  });
+
+  it('renders onboarding presentation for first-time visitors before identity', () => {
+    window.localStorage.removeItem('matchy_onboarding_intro_seen');
+    searchParamsRef.current = new URLSearchParams();
+
+    renderWizard({ status: 'unauthenticated', user: null });
+
+    expect(
+      screen.getByRole('region', { name: /Matching Intelligent Géolocalisé/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('onboarding-intro-skip')).toBeInTheDocument();
+    expect(screen.queryByText('Votre identité (stub)')).not.toBeInTheDocument();
+  });
+
+  it('transitions from presentation to identity when skip is clicked', () => {
+    window.localStorage.removeItem('matchy_onboarding_intro_seen');
+    searchParamsRef.current = new URLSearchParams();
+
+    renderWizard({ status: 'unauthenticated', user: null });
+
+    const skipButton = screen.getByTestId('onboarding-intro-skip');
+    act(() => {
+      skipButton.click();
+    });
+
+    expect(window.localStorage.getItem('matchy_onboarding_intro_seen')).toBe('true');
+    expect(screen.getByText('Votre identité (stub)')).toBeInTheDocument();
   });
 });
