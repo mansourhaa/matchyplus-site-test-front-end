@@ -34,6 +34,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
         data-gabster-widget=""
         src="https://widget.gabster.ai/loader?cbid=6ad89dd9d8227d15b7ec3813"
         data-embed-type="widget"
+        strategy="lazyOnload"
       />
     </PageFrame>
   );
