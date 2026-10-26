@@ -851,6 +851,8 @@ export const messages: Record<Locale, MessageTree> = {
     layout: {
       stepOf: 'Step {step} of {total}',
       stepProgress: '{progress}%',
+      haveAccount: 'Already have an account?',
+      signIn: 'Sign in',
       professionalMatching: 'Professional',
       geoLocalized: 'Geo-localized',
       matching: 'matching',
@@ -1812,6 +1814,8 @@ export const messages: Record<Locale, MessageTree> = {
     layout: {
       stepOf: 'Étape {step} sur {total}',
       stepProgress: '{progress}%',
+      haveAccount: 'Vous avez déjà un compte ?',
+      signIn: 'Se connecter',
       professionalMatching: 'La mise en relation',
       geoLocalized: 'géolocalisée',
       matching: 'professionnelle',
@@ -2753,6 +2757,8 @@ export const messages: Record<Locale, MessageTree> = {
     layout: {
       stepOf: 'الخطوة {step} من {total}',
       stepProgress: '{progress}%',
+      haveAccount: 'لديك حساب بالفعل؟',
+      signIn: 'تسجيل الدخول',
       professionalMatching: 'الربط المهني',
       geoLocalized: 'الموقع الجغرافي',
       matching: 'المهني',

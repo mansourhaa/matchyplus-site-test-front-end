@@ -207,12 +207,8 @@ describe('IdentityStep', () => {
     });
   });
 
-  // Regression: an authenticated (e.g. Google OAuth) visitor mid-onboarding has no
-  // /connexion to go back to — proxy.ts bounces an authenticated visit to /connexion straight
-  // to /home, and MatchyDashboardShell bounces an incomplete profile from /home right
-  // back to /inscription. Offering either link here trapped the user in that loop, only
-  // escapable by clearing cookies.
-  it('does not offer a /connexion escape hatch to an already-authenticated visitor', () => {
+  // INS-001: Retour and Se connecter link are consistently available on Step 1
+  it('offers Retour navigation and Se connecter link on Step 1', () => {
     renderWithAuthStore(
       <IdentityStep
         profile={null}
@@ -225,8 +221,8 @@ describe('IdentityStep', () => {
       oauthAuthState,
     );
 
-    expect(screen.queryAllByText('Retour')).toHaveLength(0);
-    expect(screen.queryAllByText('Connexion')).toHaveLength(0);
+    expect(screen.queryAllByText('Retour').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText(/Se connecter/).length).toBeGreaterThan(0);
   });
 
   it('does not require profession for a Looking for (PROVIDER) profile', async () => {

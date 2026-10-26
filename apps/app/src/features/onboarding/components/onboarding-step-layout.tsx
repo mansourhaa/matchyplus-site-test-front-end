@@ -3,8 +3,10 @@
 import { matchyBrand } from '@/components/matchy/brand';
 import { HeaderBackButton } from '@/components/matchy/header-back-button';
 import { AuthLayout } from '@/features/auth/components/auth-layout';
+import { MatchyLogo } from '@/features/auth/components/matchy-logo';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { Check, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { LangPickerLight } from './lang-picker-light';
@@ -177,20 +179,24 @@ export function OnboardingStepLayout({
       hideVideoFeature
       showPanelLangPicker={false}
     >
-      {/* Desktop — Header: Back button left, language right */}
+      {/* Desktop — Header: Back button + Logo left, Login link + language right */}
       <div className="hidden h-full flex-col bg-[#FAFBFC] md:flex">
         <div
           className="flex items-center justify-between bg-white px-10 py-5"
           style={{ borderBottom: '1px solid #F0F0F0' }}
         >
-          <div className="flex items-center">
-            {onBack ? (
-              <HeaderBackButton onClick={onBack} label={resolvedBackLabel} />
-            ) : (
-              <div className="h-8" />
-            )}
-          </div>
           <div className="flex items-center gap-3">
+            {onBack ? <HeaderBackButton onClick={onBack} label={resolvedBackLabel} /> : null}
+            <MatchyLogo size="sm" />
+          </div>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/connexion"
+              className="text-xs font-semibold text-[#2F76BB] hover:underline sm:text-sm"
+            >
+              <span>{t('layout.haveAccount')} </span>
+              <span className="font-bold underline">{t('layout.signIn')}</span>
+            </Link>
             {onSkip && skipLabel && (
               <button
                 type="button"
@@ -208,15 +214,21 @@ export function OnboardingStepLayout({
         </div>
       </div>
 
-      {/* Mobile — Header: Back button left, language right */}
+      {/* Mobile — Header: Back button + Logo left, Login link + language right */}
       <div className="overflow-y-auto bg-white md:hidden" style={{ minHeight: '100dvh' }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
-          {onBack ? (
-            <HeaderBackButton onClick={onBack} label={resolvedBackLabel} />
-          ) : (
-            <div className="h-8" />
-          )}
           <div className="flex items-center gap-2">
+            {onBack ? <HeaderBackButton onClick={onBack} label={resolvedBackLabel} /> : null}
+            <MatchyLogo size="sm" />
+          </div>
+          <div className="flex items-center gap-2.5">
+            <Link
+              href="/connexion"
+              className="text-xs font-bold whitespace-nowrap text-[#2F76BB] hover:underline"
+            >
+              <span className="hidden sm:inline">{t('layout.haveAccount')} </span>
+              {t('layout.signIn')}
+            </Link>
             {onSkip && skipLabel && (
               <button
                 type="button"
