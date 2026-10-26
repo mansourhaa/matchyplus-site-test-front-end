@@ -524,7 +524,7 @@ export function IdentityStep({
       // authenticated-visits-/connexion → /home redirect, and MatchyDashboardShell's
       // incomplete-profile → /inscription redirect). Only offer this for a fresh,
       // not-yet-authenticated phone signup, where /connexion is a real "cancel".
-      onBack={isAuthenticated ? undefined : () => router.push('/connexion')}
+      onBack={isAuthenticated ? undefined : () => router.push('/connexion?switch=true')}
       backLabel={t('common.back')}
     >
       <div className="mx-auto w-full max-w-2xl">
@@ -932,7 +932,7 @@ export function IdentityStep({
             /connexion to go back to — it would only bounce them right back here. */}
         {!isAuthenticated && (
           <Link
-            href="/connexion"
+            href="/connexion?switch=true"
             className="mt-3.5 block w-full rounded-2xl border border-slate-200 bg-white py-3.5 text-center font-bold text-slate-700 shadow-xs transition-colors hover:bg-slate-50"
             style={{
               fontSize: '14px',

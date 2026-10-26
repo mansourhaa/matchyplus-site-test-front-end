@@ -270,4 +270,23 @@ describe('LoginForm — Back button', () => {
 
     expect(pushMock).toHaveBeenCalledWith('/connexion');
   });
+
+  it('does not bounce to /inscription when session is incomplete and renders notice banner', () => {
+    searchParamsRef.current = new URLSearchParams();
+    renderWithAuthStore(<LoginForm />, {
+      status: 'authenticated',
+      user: {
+        ...phoneUser,
+        onboarding_completed: false,
+      },
+      sessionChecked: true,
+    });
+
+    expect(replaceMock).not.toHaveBeenCalledWith('/inscription');
+    expect(
+      screen.getAllByText(
+        'Une inscription est en cours avec cette session. Vous pouvez vous connecter à un autre compte ci-dessous, ou reprendre votre inscription.',
+      )[0],
+    ).toBeInTheDocument();
+  });
 });

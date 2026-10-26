@@ -110,11 +110,15 @@ export function LoginForm() {
   const error = localError || authError || sessionExpiredNotice;
 
   // Cap cold start: proxy may bounce to /connexion before Preferences hydrate + mirror
-  // cookie sync. Once authcheck confirms a session, leave /connexion for the app.
+  // cookie sync. Once authcheck confirms a session, leave /connexion for the app,
+  // EXCEPT when onboarding is incomplete or user requested switch=true (AUTH-001:
+  // an unfinished onboarding must not trap /connexion in a redirect bounce to /inscription).
   useEffect(() => {
     if (!sessionChecked || !isAuthenticated || !user) return;
-    router.replace(resolvePostAuthDestination(searchParams.get('next'), user.onboarding_completed));
-    router.refresh();
+    if (user.onboarding_completed && searchParams.get('switch') !== 'true') {
+      router.replace(resolvePostAuthDestination(searchParams.get('next'), true));
+      router.refresh();
+    }
   }, [sessionChecked, isAuthenticated, user, router, searchParams]);
 
   const goToPhoneStep = () => {
@@ -164,6 +168,20 @@ export function LoginForm() {
             : t('auth.loginForm.phoneStepDesc')}
         </p>
       </div>
+
+      {isAuthenticated && user && !user.onboarding_completed && (
+        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 shadow-xs">
+          <p className="font-semibold">{t('auth.loginForm.incompleteOnboardingNotice')}</p>
+          <div className="mt-2 flex items-center justify-between">
+            <Link
+              href="/inscription"
+              className="font-bold text-[#2F76BB] underline hover:text-[#255e96]"
+            >
+              {t('auth.loginForm.resumeOnboarding')}
+            </Link>
+          </div>
+        </div>
+      )}
 
       {localStep === 'login' ? (
         <div className="space-y-4">

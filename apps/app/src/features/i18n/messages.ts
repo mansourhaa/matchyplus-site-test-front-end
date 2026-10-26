@@ -750,6 +750,9 @@ export const messages: Record<Locale, MessageTree> = {
         welcomeDesc:
           "Sign in to stay up to date with what's happening in your professional network.",
         phoneStepDesc: 'Enter your phone number and password to continue.',
+        incompleteOnboardingNotice:
+          'A registration is already in progress with this session. You can sign in to a different account below, or resume your registration.',
+        resumeOnboarding: 'Resume registration →',
         signInDivider: 'Sign in',
         phoneNumberOption: 'Phone number',
         continueWithLinkedIn: 'Continue with LinkedIn',
@@ -1704,6 +1707,9 @@ export const messages: Record<Locale, MessageTree> = {
         welcomeDesc:
           'Identifiez-vous pour rester au courant de ce qui se passe dans votre sphère professionnelle.',
         phoneStepDesc: 'Entrez votre numéro de téléphone et votre mot de passe pour continuer.',
+        incompleteOnboardingNotice:
+          'Une inscription est en cours avec cette session. Vous pouvez vous connecter à un autre compte ci-dessous, ou reprendre votre inscription.',
+        resumeOnboarding: 'Reprendre l’inscription →',
         signInDivider: 'Connectez-vous',
         phoneNumberOption: 'Numéro de téléphone',
         continueWithLinkedIn: 'Continuer avec LinkedIn',
@@ -2652,6 +2658,9 @@ export const messages: Record<Locale, MessageTree> = {
         phoneStepTitle: 'تسجيل الدخول بالهاتف',
         welcomeDesc: 'سجّل الدخول لتبقى على اطلاع بما يحدث في محيطك المهني.',
         phoneStepDesc: 'أدخل رقم هاتفك وكلمة المرور للمتابعة.',
+        incompleteOnboardingNotice:
+          'هناك عملية تسجيل قيد التقدم لهذه الجلسة. يمكنك تسجيل الدخول إلى حساب آخر أدناه، أو استئناف التسجيل.',
+        resumeOnboarding: 'استئناف التسجيل ←',
         signInDivider: 'تسجيل الدخول',
         phoneNumberOption: 'رقم الهاتف',
         continueWithLinkedIn: 'المتابعة مع LinkedIn',
