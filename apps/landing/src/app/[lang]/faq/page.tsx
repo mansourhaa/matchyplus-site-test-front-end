@@ -3,6 +3,7 @@
 import { PageFrame } from '@/components/site-shell';
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { localizePath } from '@/features/i18n/routing';
 import { ChevronDown, HelpCircle, MessageCircle, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -197,12 +198,12 @@ export default function FAQ() {
                   <MessageCircle className="h-5 w-5" />
                 </span>
                 <div>
-                  <h4 className="text-brand-navy text-sm font-bold">{t.moreQuestions}</h4>
+                  <h3 className="text-brand-navy text-sm font-bold">{t.moreQuestions}</h3>
                   <p className="text-muted-foreground mt-0.5 text-xs">{t.supportAvailability}</p>
                 </div>
               </div>
               <Link
-                href="/contact"
+                href={localizePath(locale, '/contact')}
                 className="bg-brand-blue hover:bg-brand-blue/90 inline-flex shrink-0 items-center justify-center rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-md transition-transform hover:scale-[1.02]"
               >
                 {t.contactUs}

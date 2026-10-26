@@ -1,5 +1,3 @@
-'use client';
-
 import { Cta } from '@/components/matchy/cta';
 import { Explore } from '@/components/matchy/explore';
 import { Features } from '@/components/matchy/features';
@@ -7,11 +5,23 @@ import { Hero } from '@/components/matchy/hero';
 import { Security } from '@/components/matchy/security';
 import { Steps } from '@/components/matchy/steps';
 import { PageFrame } from '@/components/site-shell';
+import { isLocale } from '@/features/i18n/routing';
+import { homeJsonLd, localizedMetadata } from '@/lib/seo';
+import { notFound } from 'next/navigation';
 import Script from 'next/script';
 
-export default function Page() {
+export const generateMetadata = localizedMetadata('home');
+
+export default async function Page({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  if (!isLocale(lang)) notFound();
+
   return (
     <PageFrame>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd(lang)) }}
+      />
       <main className="bg-background overflow-x-hidden">
         <Hero />
         <Features />

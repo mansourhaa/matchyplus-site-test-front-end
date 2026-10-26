@@ -2,7 +2,6 @@ export type Locale = 'en' | 'fr' | 'ar';
 
 export const SUPPORTED_LOCALES: Locale[] = ['en', 'fr', 'ar'];
 export const DEFAULT_LOCALE: Locale = 'fr';
-export const LOCALE_STORAGE_KEY = 'matchy_locale';
 
 export type MessageTree = { [key: string]: string | string[] | string[][] | MessageTree };
 
@@ -11,6 +10,7 @@ export const messages: Record<Locale, MessageTree> = {
     landing: {
       services: 'Services',
       explore: 'Explorer',
+      about: 'À propos',
       how: 'Utilisation',
       download: 'Télécharger',
       faq: 'FAQ',
@@ -23,7 +23,7 @@ export const messages: Record<Locale, MessageTree> = {
       login: 'Connexion',
 
       eyebrow: 'Matchy Plus',
-      hero: 'Touvez le bon professionnel, près de chez vous',
+      hero: 'Trouvez le bon professionnel, près de chez vous',
       intro:
         'Besoin d’un service fiable ? Découvrez des professionnels disponibles autour de vous, trouvez le profil qui correspond à votre besoin et entrez facilement en contact.',
       title: 'Trouvez plus facilement le service dont vous avez besoin',
@@ -131,12 +131,24 @@ export const messages: Record<Locale, MessageTree> = {
       contactMessage: 'Votre message',
       contactSend: 'Envoyer le message',
       contactLocation: 'Tunis, Tunisie',
+
+      heroImageAlt:
+        'Écran de l’application Matchy+ montrant le profil d’une professionnelle de la garde d’enfants disponible à proximité',
+      featuresImageAlt:
+        'Profil d’un plombier dans l’application Matchy+ avec sa note, sa distance, ses compétences et ses modes de contact',
+      walletImageAlt:
+        'Écran Matchy Wallet affichant le solde et les actions pour booster un profil',
+      exploreImageAlt:
+        'Carte de l’Afrique illustrant des professionnels locaux (chauffeur, nounou, électricien, plombier, jardinier) reliés à l’application Matchy+',
+      ctaImageAlt:
+        'Collage de travailleurs et de professionnels africains formant la carte de l’Afrique',
     },
   },
   en: {
     landing: {
       services: 'Services',
       explore: 'Explore',
+      about: 'About Us',
       how: 'How it works',
       download: 'Download',
       faq: 'FAQ',
@@ -254,12 +266,22 @@ export const messages: Record<Locale, MessageTree> = {
       contactMessage: 'Your message',
       contactSend: 'Send message',
       contactLocation: 'Tunis, Tunisia',
+
+      heroImageAlt:
+        'Matchy+ app screen showing the profile of a childcare professional available nearby',
+      featuresImageAlt:
+        'Plumber’s profile in the Matchy+ app with rating, distance, skills and contact options',
+      walletImageAlt: 'Matchy Wallet screen showing the balance and actions to boost a profile',
+      exploreImageAlt:
+        'Map of Africa showing local professionals (driver, nanny, electrician, plumber, gardener) connected to the Matchy+ app',
+      ctaImageAlt: 'Collage of African workers and professionals forming the map of Africa',
     },
   },
   ar: {
     landing: {
       services: 'الخدمات',
       explore: 'استكشف',
+      about: 'من نحن',
       how: 'طريقة الاستخدام',
       download: 'تحميل',
       faq: 'الأسئلة الشائعة',
@@ -272,7 +294,7 @@ export const messages: Record<Locale, MessageTree> = {
       login: 'تسجيل الدخول',
 
       eyebrow: 'Matchy+',
-      hero: ' اعثر على المهني المناسب بالقرب منك',
+      hero: 'اعثر على المهني المناسب بالقرب منك',
       intro:
         ' هل تحتاج إلى خدمة موثوقة؟ اكتشف المهنيين المتاحين من حولك، واعثر على الملف الذي يناسب احتياجاتك، وتواصل بسهولة.',
       title: ' اعثر بسهولة أكبر على الخدمة التي تحتاجها',
@@ -368,6 +390,13 @@ export const messages: Record<Locale, MessageTree> = {
       contactMessage: 'رسالتك',
       contactSend: 'إرسال الرسالة',
       contactLocation: 'تونس، تونس',
+
+      heroImageAlt: 'شاشة تطبيق Matchy+ تعرض ملف مهنية في رعاية الأطفال متاحة بالقرب منك',
+      featuresImageAlt: 'ملف سبّاك في تطبيق Matchy+ يعرض تقييمه والمسافة ومهاراته وطرق التواصل معه',
+      walletImageAlt: 'شاشة Matchy Wallet تعرض الرصيد وخيارات تعزيز الملف',
+      exploreImageAlt:
+        'خريطة إفريقيا تُظهر مهنيين محليين (سائق، مربية أطفال، كهربائي، سبّاك، بستاني) متصلين بتطبيق Matchy+',
+      ctaImageAlt: 'صورة مجمّعة لعمال ومهنيين أفارقة تشكّل خريطة إفريقيا',
     },
   },
 };

@@ -2,6 +2,7 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
+import { localizePath } from '@/features/i18n/routing';
 import { APP_REGISTER_URL } from '@/lib/constants';
 import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
@@ -78,14 +79,14 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="header-inner container">
-        <Link href="/" className="brand" aria-label="Matchy Plus home">
+        <Link href={localizePath(locale, '/')} className="brand" aria-label="Matchy Plus home">
           <Logo />
         </Link>
         <nav className="desktop-nav" aria-label="Main navigation">
-          <Link href="/#services">{t('landing.services')}</Link>
-          <Link href="/#explore">{t('landing.explore')}</Link>
-          <Link href="/#how">{t('landing.how')}</Link>
-          <Link href="/contact">{t('landing.contact')}</Link>
+          <Link href={localizePath(locale, '/#services')}>{t('landing.services')}</Link>
+          <Link href={localizePath(locale, '/#explore')}>{t('landing.about')}</Link>
+          <Link href={localizePath(locale, '/#how')}>{t('landing.how')}</Link>
+          <Link href={localizePath(locale, '/contact')}>{t('landing.contact')}</Link>
           <div ref={langRef} className="language-picker-custom relative">
             <button
               type="button"
@@ -135,22 +136,22 @@ export function Header() {
       </div>
       {open && (
         <div className="mobile-menu rtl:text-right">
-          <Link href="/#services" onClick={() => setOpen(false)}>
+          <Link href={localizePath(locale, '/#services')} onClick={() => setOpen(false)}>
             {t('landing.services')}
           </Link>
-          <Link href="/#explore" onClick={() => setOpen(false)}>
-            {t('landing.explore')}
+          <Link href={localizePath(locale, '/#explore')} onClick={() => setOpen(false)}>
+            {t('landing.about')}
           </Link>
-          <Link href="/#how" onClick={() => setOpen(false)}>
+          <Link href={localizePath(locale, '/#how')} onClick={() => setOpen(false)}>
             {t('landing.how')}
           </Link>
-          <Link href="/faq" onClick={() => setOpen(false)}>
+          <Link href={localizePath(locale, '/faq')} onClick={() => setOpen(false)}>
             {t('landing.faq')}
           </Link>
-          <Link href="/contact" onClick={() => setOpen(false)}>
+          <Link href={localizePath(locale, '/contact')} onClick={() => setOpen(false)}>
             {t('landing.contact')}
           </Link>
-          <Link href="/devenir-partenaire" onClick={() => setOpen(false)}>
+          <Link href={localizePath(locale, '/devenir-partenaire')} onClick={() => setOpen(false)}>
             {t('landing.partner')}
           </Link>
           <div className="mt-2 border-t border-white/20 pt-4">
@@ -191,29 +192,29 @@ export function Footer() {
     <footer className="site-footer">
       <div className="footer-grid container">
         <div>
-          <Link href="/" className="brand footer-brand">
+          <Link href={localizePath(locale, '/')} className="brand footer-brand">
             <Logo footer />
           </Link>
           <p>{t('landing.panAfrican')}</p>
         </div>
         <div>
           <h3>{locale === 'ar' ? 'اكتشف' : locale === 'en' ? 'Discover' : 'Découvrir'}</h3>
-          <Link href="/#services">{t('landing.services')}</Link>
-          <Link href="/#explore">{t('landing.explore')}</Link>
-          <Link href="/#how">{t('landing.how')}</Link>
+          <Link href={localizePath(locale, '/#services')}>{t('landing.services')}</Link>
+          <Link href={localizePath(locale, '/#explore')}>{t('landing.explore')}</Link>
+          <Link href={localizePath(locale, '/#how')}>{t('landing.how')}</Link>
         </div>
         <div>
           <h3>
             {locale === 'ar' ? 'روابط مفيدة' : locale === 'en' ? 'Useful links' : 'Liens utiles'}
           </h3>
-          <Link href="/faq">{t('landing.faq')}</Link>
-          <Link href="/contact">{t('landing.contact')}</Link>
-          <Link href="/devenir-partenaire">{t('landing.partner')}</Link>
+          <Link href={localizePath(locale, '/faq')}>{t('landing.faq')}</Link>
+          <Link href={localizePath(locale, '/contact')}>{t('landing.contact')}</Link>
+          <Link href={localizePath(locale, '/devenir-partenaire')}>{t('landing.partner')}</Link>
         </div>
         <div>
           <h3>{locale === 'ar' ? 'معلومات قانونية' : locale === 'en' ? 'Legal' : 'Légal'}</h3>
-          <Link href="/privacy-policy">{t('landing.privacyPolicy')}</Link>
-          <Link href="/terms-of-service">{t('landing.terms')}</Link>
+          <Link href={localizePath(locale, '/privacy-policy')}>{t('landing.privacyPolicy')}</Link>
+          <Link href={localizePath(locale, '/terms-of-service')}>{t('landing.terms')}</Link>
         </div>
       </div>
       <div className="footer-bottom container">

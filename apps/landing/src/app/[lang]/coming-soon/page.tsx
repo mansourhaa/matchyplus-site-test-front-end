@@ -2,6 +2,7 @@
 
 import { PageFrame } from '@/components/site-shell';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { localizePath } from '@/features/i18n/routing';
 import { Smartphone } from 'lucide-react';
 import Link from 'next/link';
 
@@ -44,7 +45,7 @@ export default function ComingSoon() {
           <h1 className="mt-2">{t.title}</h1>
           <p className="lead mx-auto mt-4 max-w-md">{t.desc}</p>
           <div className="mt-8">
-            <Link href="/" className="button button-primary">
+            <Link href={localizePath(locale, '/')} className="button button-primary">
               {t.back}
             </Link>
           </div>

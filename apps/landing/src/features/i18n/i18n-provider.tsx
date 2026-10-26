@@ -2,22 +2,14 @@
 
 import {
   DEFAULT_LOCALE,
-  LOCALE_STORAGE_KEY,
   Locale,
-  SUPPORTED_LOCALES,
   formatMessage,
   getMessage,
   messages,
 } from '@/features/i18n/messages';
-import {
-  type ReactNode,
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useSyncExternalStore,
-} from 'react';
+import { LOCALE_COOKIE, localeDir, switchLocalePath } from '@/features/i18n/routing';
+import { usePathname, useRouter } from 'next/navigation';
+import { type ReactNode, createContext, useCallback, useContext, useMemo } from 'react';
 
 type I18nContextValue = {
   locale: Locale;
@@ -28,49 +20,24 @@ type I18nContextValue = {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-const localeListeners = new Set<() => void>();
+/**
+ * `locale` comes from the URL (`/fr/`, `/en/`, `/ar/`), so the server renders each page in its
+ * own language. Switching language navigates to the same page under the other prefix.
+ */
+export function I18nProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
 
-function emitLocaleChange() {
-  for (const listener of localeListeners) {
-    listener();
-  }
-}
-
-function subscribeLocale(onStoreChange: () => void) {
-  localeListeners.add(onStoreChange);
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === LOCALE_STORAGE_KEY || event.key === null) {
-      onStoreChange();
-    }
-  };
-  window.addEventListener('storage', onStorage);
-  return () => {
-    localeListeners.delete(onStoreChange);
-    window.removeEventListener('storage', onStorage);
-  };
-}
-
-function readStoredLocale(): Locale {
-  if (typeof window === 'undefined') return DEFAULT_LOCALE;
-  const raw = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-  if (raw && SUPPORTED_LOCALES.includes(raw as Locale)) return raw as Locale;
-  const browserLang = window.navigator.language.split('-')[0];
-  if (SUPPORTED_LOCALES.includes(browserLang as Locale)) return browserLang as Locale;
-  return DEFAULT_LOCALE;
-}
-
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const locale = useSyncExternalStore(subscribeLocale, readStoredLocale, () => DEFAULT_LOCALE);
-
-  useEffect(() => {
-    document.documentElement.lang = locale;
-    document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
-  }, [locale]);
-
-  const setLocale = useCallback((next: Locale) => {
-    window.localStorage.setItem(LOCALE_STORAGE_KEY, next);
-    emitLocaleChange();
-  }, []);
+  const setLocale = useCallback(
+    (next: Locale) => {
+      document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
+      // scroll: false keeps the reader where they were, as the in-place switch used to.
+      router.push(`${switchLocalePath(pathname, next)}${window.location.hash}`, {
+        scroll: false,
+      });
+    },
+    [pathname, router],
+  );
 
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>): any => {
@@ -89,7 +56,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       locale,
       setLocale,
       t,
-      dir: locale === 'ar' ? ('rtl' as const) : ('ltr' as const),
+      dir: localeDir(locale),
     }),
     [locale, setLocale, t],
   );

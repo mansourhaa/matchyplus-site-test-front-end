@@ -213,7 +213,7 @@ export default function Partner() {
                         <CheckCircle2 className="h-5 w-5" />
                       </span>
                       <div>
-                        <h4 className="text-brand-navy text-sm font-bold">{b.title}</h4>
+                        <h3 className="text-brand-navy text-sm font-bold">{b.title}</h3>
                         <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
                           {b.desc}
                         </p>
