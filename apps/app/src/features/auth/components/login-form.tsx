@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { loginPhone, selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { landingPath } from '@/lib/landing';
+import { isNativeMobileClient } from '@/lib/native';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
@@ -145,9 +146,22 @@ export function LoginForm() {
     }
   };
 
-  const handleSocialAuth = (provider: 'google' | 'linkedin') => {
+  const handleSocialAuth = async (provider: 'google' | 'linkedin') => {
     setLocalError(null);
-    window.location.href = getOAuthRedirectUrl(provider);
+    const url = getOAuthRedirectUrl(provider);
+
+    if (isNativeMobileClient()) {
+      try {
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url: `${url}?platform=mobile`, windowName: '_system' });
+        return;
+      } catch {
+        window.location.href = `${url}?platform=mobile`;
+        return;
+      }
+    }
+
+    window.location.href = url;
   };
 
   const formContent = (

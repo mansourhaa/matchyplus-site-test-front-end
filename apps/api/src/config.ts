@@ -132,6 +132,7 @@ export const config = {
     process.env.LINKEDIN_REDIRECT_URI ??
     `${process.env.API_BASE_URL ?? 'http://localhost:8000'}/api/v1/auth/oauth/linkedin/callback`,
   oauthExchangeCodeTtlSeconds: parseInt(process.env.OAUTH_EXCHANGE_CODE_TTL_SECONDS ?? '60', 10),
+  mobileAppScheme: process.env.MOBILE_APP_SCHEME ?? 'matchy',
 
   /**
    * Rate limiting (global)

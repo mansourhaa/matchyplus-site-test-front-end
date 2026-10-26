@@ -47,8 +47,26 @@ const OAUTH_STATE_COOKIE = {
 // simply won't exist) instead of the API refusing to boot.
 //
 // callbackUri must match the provider console Authorized redirect URI and the
-// v1 handler in routes/v1/auth (`/api/v1/auth/oauth/<provider>/callback`).
 async function oauthPlugin(fastify: FastifyInstance) {
+  fastify.addHook('onRequest', async (request, reply) => {
+    const isStartRoute =
+      request.url.startsWith('/api/v1/auth/oauth/') && !request.url.includes('/callback');
+
+    if (isStartRoute) {
+      const query = request.query as { platform?: string } | undefined;
+      if (query?.platform === 'mobile') {
+        reply.setCookie('oauth-platform', 'mobile', {
+          path: '/',
+          httpOnly: true,
+          sameSite: 'lax',
+          maxAge: 300,
+        });
+      } else {
+        reply.clearCookie('oauth-platform', { path: '/' });
+      }
+    }
+  });
+
   if (config.googleClientId && config.googleClientSecret && config.apiBaseUrl) {
     await fastify.register(fastifyOauth2, {
       name: 'oauth2Google',
