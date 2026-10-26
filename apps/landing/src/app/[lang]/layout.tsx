@@ -1,3 +1,4 @@
+import { Analytics } from '@/components/analytics';
 import { I18nProvider } from '@/features/i18n/i18n-provider';
 import { SUPPORTED_LOCALES } from '@/features/i18n/messages';
 import { isLocale, localeDir } from '@/features/i18n/routing';
@@ -47,6 +48,7 @@ export default async function RootLayout({
     <html lang={lang} dir={localeDir(lang)}>
       <body className={`${baloo.variable} ${cairo.variable} ${baloo.className}`}>
         <I18nProvider locale={lang}>{children}</I18nProvider>
+        <Analytics />
       </body>
     </html>
   );
