@@ -57,6 +57,7 @@ import {
   Lock,
   MapPin,
   Play,
+  SlidersHorizontal,
   Star,
   ThumbsDown,
   Volume2,
@@ -75,9 +76,9 @@ export function DiscoverView() {
   const { settings: videoSettings } = useVideoSettings();
   const matching = useAppSelector(selectMatching);
   const { unreadCount } = useAppSelector(selectNotifications);
-  const { favoriteIds, actionLoading: favLoading } = useAppSelector(selectFavorites);
+  const { favoriteIds = [], actionLoading: favLoading } = useAppSelector(selectFavorites);
   const top = useAppSelector(selectTopFeedProfile);
-  const isTopFavorited = Boolean(top?.id && favoriteIds.includes(top.id));
+  const isTopFavorited = Boolean(top?.id && favoriteIds?.includes(top.id));
   const topPhoto = useAuthenticatedMediaUrl(top?.image);
   const topVideo = useAuthenticatedMediaUrl(top?.video, { stream: true });
   const cardVideoRef = useRef<HTMLVideoElement>(null);
@@ -123,6 +124,29 @@ export function DiscoverView() {
   const [quotaModalReason, setQuotaModalReason] = useState<'limit' | 'status' | 'locked_profile'>(
     'limit',
   );
+  const [maxDistanceKm, setMaxDistanceKm] = useState<number | null>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem('matchy_discovery_radius_km');
+      if (stored) {
+        const parsed = Number(stored);
+        if (Number.isFinite(parsed) && parsed > 0 && parsed <= 200) return parsed;
+      }
+    }
+    return null;
+  });
+  const [distancePopoverOpen, setDistancePopoverOpen] = useState(false);
+  const distancePopoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!distancePopoverOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (distancePopoverRef.current && !distancePopoverRef.current.contains(e.target as Node)) {
+        setDistancePopoverOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [distancePopoverOpen]);
 
   useEffect(() => {
     void dispatch(fetchNotifications());
@@ -139,9 +163,32 @@ export function DiscoverView() {
     }
     // Re-fetch when location changes or when feedLoaded is reset (e.g. after withdraw/unmatch).
     if (!matching.feedLoaded) {
-      void dispatch(fetchSwipeFeed({ latitude, longitude }));
+      void dispatch(
+        fetchSwipeFeed({
+          latitude,
+          longitude,
+          maxDistanceKm: maxDistanceKm ?? undefined,
+        }),
+      );
     }
-  }, [dispatch, locationSynced, latitude, longitude, matching.feedLoaded]);
+  }, [dispatch, locationSynced, latitude, longitude, matching.feedLoaded, maxDistanceKm]);
+
+  const handleSelectDistance = (dist: number | null) => {
+    setMaxDistanceKm(dist);
+    if (typeof window !== 'undefined') {
+      if (dist != null) window.localStorage.setItem('matchy_discovery_radius_km', String(dist));
+      else window.localStorage.removeItem('matchy_discovery_radius_km');
+    }
+    if (locationSynced && latitude != null && longitude != null) {
+      void dispatch(
+        fetchSwipeFeed({
+          latitude,
+          longitude,
+          maxDistanceKm: dist ?? undefined,
+        }),
+      );
+    }
+  };
 
   const quota = matching.quota;
   const freeRemaining = quota?.remaining;
@@ -228,9 +275,133 @@ export function DiscoverView() {
           className={
             top
               ? 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8'
-              : 'flex min-h-0 flex-1 flex-col overflow-hidden'
+              : 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8'
           }
         >
+          {/* Distance radius quick control bar */}
+          {!locationRequired && (
+            <div
+              ref={distancePopoverRef}
+              className="relative mx-auto mb-2 flex w-full max-w-[440px] shrink-0 items-center justify-between gap-2 py-1"
+            >
+              {/* Presets row */}
+              <div
+                role="group"
+                aria-label={t('search.maxDistance')}
+                className="no-scrollbar flex flex-1 items-center gap-1.5 overflow-x-auto"
+              >
+                <button
+                  type="button"
+                  data-testid="distance-preset-all"
+                  onClick={() => handleSelectDistance(null)}
+                  className="shrink-0 rounded-full px-3 py-1 text-xs font-bold shadow-2xs transition-all"
+                  style={{
+                    backgroundColor: maxDistanceKm === null ? matchyBrand.blue : '#FFFFFF',
+                    color: maxDistanceKm === null ? '#FFFFFF' : '#475569',
+                    border:
+                      maxDistanceKm === null
+                        ? `1px solid ${matchyBrand.blue}`
+                        : '1px solid #E2E8F0',
+                  }}
+                >
+                  {locale === 'ar' ? 'الكل' : locale === 'en' ? 'All' : 'Tout'}
+                </button>
+
+                {[5, 10, 25, 50, 100].map((preset) => {
+                  const isSelected = maxDistanceKm === preset;
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      data-testid={`distance-preset-${preset}`}
+                      onClick={() => handleSelectDistance(isSelected ? null : preset)}
+                      className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300"
+                      style={{
+                        backgroundColor: isSelected ? matchyBrand.blue : '#FFFFFF',
+                        color: isSelected ? '#FFFFFF' : '#475569',
+                        border: isSelected ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
+                      }}
+                    >
+                      {preset} km
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Custom slider toggle button */}
+              <button
+                type="button"
+                data-testid="distance-slider-toggle"
+                onClick={() => setDistancePopoverOpen((open) => !open)}
+                aria-expanded={distancePopoverOpen}
+                title={t('search.maxDistance')}
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-2xs transition hover:bg-slate-50"
+              >
+                <SlidersHorizontal size={13} className="text-[#2F76BB]" />
+                <span>
+                  {maxDistanceKm != null
+                    ? `${maxDistanceKm} km`
+                    : locale === 'ar'
+                      ? 'مخصص'
+                      : 'Rayon'}
+                </span>
+              </button>
+
+              {/* Slider popover menu */}
+              {distancePopoverOpen && (
+                <div
+                  data-testid="distance-slider-popover"
+                  className="absolute top-9 right-0 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-300/40"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700">
+                      {t('search.maxDistance')}
+                    </span>
+                    <span className="text-xs font-extrabold text-[#2F76BB]">
+                      {maxDistanceKm ?? 50} km
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    step="1"
+                    value={maxDistanceKm ?? 50}
+                    data-testid="distance-range-slider"
+                    onChange={(e) => handleSelectDistance(Number(e.target.value))}
+                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-[#2F76BB]"
+                  />
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
+                    <span>1 km</span>
+                    <span>50 km</span>
+                    <span>100 km</span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5">
+                    <button
+                      type="button"
+                      data-testid="distance-reset-button"
+                      onClick={() => handleSelectDistance(null)}
+                      className="text-xs font-medium text-slate-500 hover:text-slate-800"
+                    >
+                      {locale === 'ar'
+                        ? 'إعادة تعيين'
+                        : locale === 'en'
+                          ? 'Reset'
+                          : 'Réinitialiser'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDistancePopoverOpen(false)}
+                      className="rounded-lg bg-[#2F76BB] px-3 py-1 text-xs font-bold text-white shadow-xs hover:bg-[#2563A0]"
+                    >
+                      {locale === 'ar' ? 'تم' : locale === 'en' ? 'Done' : 'Appliquer'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             {showHomeFeedLoader ? (
               <div className="flex h-full flex-col items-center justify-center px-6 text-center">
@@ -562,7 +733,11 @@ export function DiscoverView() {
                       void dispatch(
                         fetchSwipeFeed(
                           latitude != null && longitude != null
-                            ? { latitude, longitude }
+                            ? {
+                                latitude,
+                                longitude,
+                                maxDistanceKm: maxDistanceKm ?? undefined,
+                              }
                             : undefined,
                         ),
                       )
