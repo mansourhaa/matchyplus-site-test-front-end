@@ -3,9 +3,10 @@
 import Script from 'next/script';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 
-const COOKIEYES_SRC = 'https://cdn-cookieyes.com/client_data/c39d81b860a22c01a72f23f6/script.js';
-const GA_MEASUREMENT_ID = 'G-R7FNSWEW2C';
-const CLARITY_PROJECT_ID = 'yz4yxwayvv';
+// Public build-time values (see .env.example): a missing one leaves its script unloaded.
+const COOKIEYES_SRC = process.env.NEXT_PUBLIC_COOKIEYES_SRC;
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const CLARITY_PROJECT_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
 // The CookieYes account is registered for the public site only: on localhost or staging its
 // script throws "website URL has changed", and their traffic would skew the statistics anyway.
 const PRODUCTION_HOSTNAMES = ['matchyplus.com', 'www.matchyplus.com'];
@@ -57,7 +58,7 @@ export function Analytics() {
 
   useEffect(() => {
     if (analytics === null) return;
-    window[`ga-disable-${GA_MEASUREMENT_ID}`] = !analytics;
+    if (GA_MEASUREMENT_ID) window[`ga-disable-${GA_MEASUREMENT_ID}`] = !analytics;
     // consent(false) only erases Clarity's cookies; stop() also ends the cookieless recording.
     // Neither tool restarts cleanly in-page (Clarity's start() re-runs its init and warns CL001),
     // so a consent given again after a withdrawal takes effect on the next page load.
@@ -73,8 +74,8 @@ export function Analytics() {
 
   return (
     <>
-      <Script id="cookieyes" src={COOKIEYES_SRC} />
-      {analytics !== null && (
+      {COOKIEYES_SRC && <Script id="cookieyes" src={COOKIEYES_SRC} />}
+      {analytics !== null && GA_MEASUREMENT_ID && (
         <>
           <Script
             id="ga4"
@@ -86,15 +87,17 @@ function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', '${GA_MEASUREMENT_ID}');`}
           </Script>
-          <Script id="clarity-init">
-            {`(function(c,l,a,r,i,t,y){
+        </>
+      )}
+      {analytics !== null && CLARITY_PROJECT_ID && (
+        <Script id="clarity-init">
+          {`(function(c,l,a,r,i,t,y){
 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
 t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
 y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 })(window, document, "clarity", "script", "${CLARITY_PROJECT_ID}");
 clarity("consent");`}
-          </Script>
-        </>
+        </Script>
       )}
     </>
   );
