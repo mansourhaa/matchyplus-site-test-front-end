@@ -951,4 +951,96 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     ).not.toHaveLength(0);
     expect(onNext).not.toHaveBeenCalled();
   });
+
+  describe('INS-002: Role change and draft reset', () => {
+    it('shows confirmation dialog before changing role if role-specific data exists', async () => {
+      renderWithAuthStore(
+        <IdentityStep
+          profile={{
+            ...unauthenticatedProfileWithPhoto,
+            profile_type: 'INDIVIDUAL',
+            experience: '1-3 ans',
+          }}
+          stepNumber={1}
+          totalSteps={3}
+          loading={false}
+          isAuthenticated={true}
+          onNext={vi.fn()}
+        />,
+        oauthAuthState,
+      );
+
+      // Click "Je cherche" (PROVIDER)
+      const providerBtn = firstButton('Je cherche');
+      fireEvent.click(providerBtn);
+
+      // Confirmation modal should appear
+      expect(await screen.findByText('Changer de profil ?')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Changer de profil réinitialisera les informations spécifiques à ce rôle (vidéo de présentation, expérience). Vos informations personnelles seront conservées.',
+        ),
+      ).toBeInTheDocument();
+
+      // If cancelled, modal closes
+      fireEvent.click(firstButton('Annuler'));
+      expect(screen.queryByText('Changer de profil ?')).not.toBeInTheDocument();
+
+      // Click again and confirm
+      fireEvent.click(providerBtn);
+      fireEvent.click(firstButton('Confirmer le changement'));
+      expect(screen.queryByText('Changer de profil ?')).not.toBeInTheDocument();
+    });
+
+    it('switches role immediately without confirmation if no role-specific data was entered', () => {
+      renderWithAuthStore(
+        <IdentityStep
+          profile={{
+            ...unauthenticatedProfileWithPhoto,
+            profile_type: 'INDIVIDUAL',
+            experience: '',
+            video: null,
+          }}
+          stepNumber={1}
+          totalSteps={3}
+          loading={false}
+          isAuthenticated={true}
+          onNext={vi.fn()}
+        />,
+        oauthAuthState,
+      );
+
+      // Click "Je cherche" (PROVIDER)
+      fireEvent.click(firstButton('Je cherche'));
+      // No confirmation modal
+      expect(screen.queryByText('Changer de profil ?')).not.toBeInTheDocument();
+    });
+
+    it('allows restarting the registration from scratch with confirmation', async () => {
+      renderWithAuthStore(
+        <IdentityStep
+          profile={unauthenticatedProfileWithPhoto}
+          stepNumber={1}
+          totalSteps={3}
+          loading={false}
+          isAuthenticated={false}
+          onNext={vi.fn()}
+        />,
+        unauthenticatedState,
+      );
+
+      fillIdentityAndCredentials();
+      expect(firstPlaceholder('Votre prénom')).toHaveValue('Jane');
+
+      // Click "Recommencer de zéro"
+      const restartTriggers = screen.getAllByRole('button', { name: /Recommencer/i });
+      fireEvent.click(restartTriggers[0]);
+      expect(await screen.findByText('Recommencer l’inscription ?')).toBeInTheDocument();
+
+      // Confirm restart in modal
+      fireEvent.click(firstButton('Confirmer et recommencer'));
+      expect(screen.queryByText('Recommencer l’inscription ?')).not.toBeInTheDocument();
+      expect(firstPlaceholder('Votre prénom')).toHaveValue('');
+    });
+  });
 });
