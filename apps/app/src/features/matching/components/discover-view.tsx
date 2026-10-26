@@ -26,6 +26,7 @@ import {
 } from '@/features/matching/components/live-ai-score';
 import { MatchCelebrationModal } from '@/features/matching/components/match-celebration-modal';
 import { ProfileDetailModal } from '@/features/matching/components/profile-detail-modal';
+import { SECTOR_PILLS } from '@/features/matching/components/search-filters-sheet';
 import { SwipeLimitModal } from '@/features/matching/components/swipe-limit-modal';
 import { formatRole } from '@/features/matching/lib/format-role';
 import {
@@ -75,9 +76,9 @@ export function DiscoverView() {
   const { settings: videoSettings } = useVideoSettings();
   const matching = useAppSelector(selectMatching);
   const { unreadCount } = useAppSelector(selectNotifications);
-  const { favoriteIds, actionLoading: favLoading } = useAppSelector(selectFavorites);
+  const { favoriteIds = [], actionLoading: favLoading } = useAppSelector(selectFavorites);
   const top = useAppSelector(selectTopFeedProfile);
-  const isTopFavorited = Boolean(top?.id && favoriteIds.includes(top.id));
+  const isTopFavorited = Boolean(top?.id && favoriteIds?.includes(top.id));
   const topPhoto = useAuthenticatedMediaUrl(top?.image);
   const topVideo = useAuthenticatedMediaUrl(top?.video, { stream: true });
   const cardVideoRef = useRef<HTMLVideoElement>(null);
@@ -123,6 +124,7 @@ export function DiscoverView() {
   const [quotaModalReason, setQuotaModalReason] = useState<'limit' | 'status' | 'locked_profile'>(
     'limit',
   );
+  const [selectedSector, setSelectedSector] = useState<string | null>(null);
 
   useEffect(() => {
     void dispatch(fetchNotifications());
@@ -139,9 +141,28 @@ export function DiscoverView() {
     }
     // Re-fetch when location changes or when feedLoaded is reset (e.g. after withdraw/unmatch).
     if (!matching.feedLoaded) {
-      void dispatch(fetchSwipeFeed({ latitude, longitude }));
+      void dispatch(
+        fetchSwipeFeed({
+          latitude,
+          longitude,
+          sector: selectedSector ?? undefined,
+        }),
+      );
     }
-  }, [dispatch, locationSynced, latitude, longitude, matching.feedLoaded]);
+  }, [dispatch, locationSynced, latitude, longitude, matching.feedLoaded, selectedSector]);
+
+  const handleSelectSector = (sector: string | null) => {
+    setSelectedSector(sector);
+    if (locationSynced && latitude != null && longitude != null) {
+      void dispatch(
+        fetchSwipeFeed({
+          latitude,
+          longitude,
+          sector: sector ?? undefined,
+        }),
+      );
+    }
+  };
 
   const quota = matching.quota;
   const freeRemaining = quota?.remaining;
@@ -228,9 +249,56 @@ export function DiscoverView() {
           className={
             top
               ? 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8'
-              : 'flex min-h-0 flex-1 flex-col overflow-hidden'
+              : 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8'
           }
         >
+          {/* Sector quick-filter bar */}
+          {!locationRequired && (
+            <div
+              role="tablist"
+              aria-label="Secteurs d'activité"
+              className="no-scrollbar mx-auto mb-2 flex w-full max-w-[440px] shrink-0 items-center gap-1.5 overflow-x-auto py-1"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={selectedSector === null}
+                data-testid="sector-pill-all"
+                onClick={() => handleSelectSector(null)}
+                className="shrink-0 rounded-full px-3 py-1 text-xs font-bold shadow-2xs transition-all"
+                style={{
+                  backgroundColor: selectedSector === null ? matchyBrand.blue : '#FFFFFF',
+                  color: selectedSector === null ? '#FFFFFF' : '#475569',
+                  border:
+                    selectedSector === null ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
+                }}
+              >
+                {locale === 'ar' ? 'الكل' : locale === 'en' ? 'All' : 'Tous'}
+              </button>
+              {SECTOR_PILLS.map((sector) => {
+                const isSelected = selectedSector === sector;
+                return (
+                  <button
+                    key={sector}
+                    type="button"
+                    role="tab"
+                    aria-selected={isSelected}
+                    data-testid={`sector-pill-${sector}`}
+                    onClick={() => handleSelectSector(isSelected ? null : sector)}
+                    className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300"
+                    style={{
+                      backgroundColor: isSelected ? matchyBrand.blue : '#FFFFFF',
+                      color: isSelected ? '#FFFFFF' : '#475569',
+                      border: isSelected ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
+                    }}
+                  >
+                    {formatRole(sector, t)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             {showHomeFeedLoader ? (
               <div className="flex h-full flex-col items-center justify-center px-6 text-center">
@@ -562,7 +630,11 @@ export function DiscoverView() {
                       void dispatch(
                         fetchSwipeFeed(
                           latitude != null && longitude != null
-                            ? { latitude, longitude }
+                            ? {
+                                latitude,
+                                longitude,
+                                sector: selectedSector ?? undefined,
+                              }
                             : undefined,
                         ),
                       )

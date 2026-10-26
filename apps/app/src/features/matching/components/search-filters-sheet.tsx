@@ -36,7 +36,7 @@ export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   sort: 'distance',
 };
 
-const SECTOR_PILLS = [
+export const SECTOR_PILLS = [
   'Services & missions',
   'Informatique / Tech',
   'Service à domicile',
