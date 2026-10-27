@@ -925,8 +925,6 @@ export function IdentityStep({
         )}
 
         <StepCtaRow
-          onBack={handleBack}
-          backLabel={t('common.back')}
           onContinue={handleNext}
           continueLabel={
             isAuthenticated

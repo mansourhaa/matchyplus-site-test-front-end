@@ -178,14 +178,6 @@ export function InterestsStep({
           style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}
         >
           <span>{t('onboarding.interests.desc')}</span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-matchy.svg"
-            alt="Matchy+"
-            height={16}
-            style={{ height: 16, width: 'auto', display: 'inline-block' }}
-          />
-          <span>.</span>
         </p>
 
         <div className="space-y-8 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">

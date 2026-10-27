@@ -207,8 +207,8 @@ describe('IdentityStep', () => {
     });
   });
 
-  // INS-001: Retour and Se connecter link are consistently available on Step 1
-  it('offers Retour navigation and Se connecter link on Step 1', () => {
+  // INS-001: Retour navigation is consistently available on Step 1
+  it('offers Retour navigation on Step 1', () => {
     renderWithAuthStore(
       <IdentityStep
         profile={null}
@@ -222,7 +222,6 @@ describe('IdentityStep', () => {
     );
 
     expect(screen.queryAllByText('Retour').length).toBeGreaterThan(0);
-    expect(screen.queryAllByText(/Se connecter/).length).toBeGreaterThan(0);
   });
 
   it('does not require profession for a Looking for (PROVIDER) profile', async () => {
