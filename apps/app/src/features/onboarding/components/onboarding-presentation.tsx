@@ -1,8 +1,8 @@
 'use client';
 
+import { MatchyLogo, MatchyLogoWhite } from '@/features/auth/components/matchy-logo';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import type { Locale } from '@/features/i18n/messages';
-import { ChevronLeft, ChevronRight, Globe, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -22,68 +22,6 @@ type SlideConfig = {
   cardBg: string;
   graphic: ReactNode;
 };
-
-const LANG_DETAILS: Record<Locale, { country: string; label: string }> = {
-  en: { country: 'GB', label: 'EN' },
-  fr: { country: 'FR', label: 'FR' },
-  ar: { country: 'TN', label: 'AR' },
-};
-
-function PanelLangPicker() {
-  const { locale, setLocale } = useI18n();
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [open]);
-
-  const current = LANG_DETAILS[locale] ?? { country: 'GB', label: 'EN' };
-
-  return (
-    <div className="relative z-50" ref={containerRef}>
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        aria-label="Select language"
-        className="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-xs transition hover:bg-white/20"
-      >
-        <Globe size={14} className="text-white/80" />
-        <span>
-          {current.country} {current.label}
-        </span>
-      </button>
-
-      {open && (
-        <div className="absolute top-9 right-0 w-32 overflow-hidden rounded-xl border border-slate-100 bg-white p-1 text-slate-800 shadow-xl">
-          {(['en', 'fr', 'ar'] as const).map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => {
-                setLocale(l);
-                setOpen(false);
-              }}
-              className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
-                locale === l ? 'bg-blue-50 font-bold text-blue-600' : 'hover:bg-slate-50'
-              }`}
-            >
-              <span>{l === 'en' ? 'English' : l === 'fr' ? 'Français' : 'العربية'}</span>
-              <span className="text-[10px] text-slate-400 uppercase">{l}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function MatchingGraphic() {
   return (
@@ -483,8 +421,8 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
 
         {/* Panel Header */}
         <div className="relative z-10 flex items-center justify-between">
-          <span className="text-2xl font-black tracking-tight text-white">Matchy+</span>
-          <PanelLangPicker />
+          <MatchyLogoWhite size="md" />
+          <LangPickerLight />
         </div>
 
         {/* Panel Content (Mirrors the active slide) */}
@@ -548,7 +486,7 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
       <main className="relative flex flex-1 flex-col justify-between overflow-y-auto bg-white p-6 sm:p-10 md:p-12">
         {/* Mobile Header (Brand + Lang + Skip) */}
         <header className="flex items-center justify-between pb-4 md:hidden">
-          <span className="text-xl font-black text-[#2F76BB]">Matchy+</span>
+          <MatchyLogo size="md" />
           <div className="flex items-center gap-2">
             <LangPickerLight />
             <button
