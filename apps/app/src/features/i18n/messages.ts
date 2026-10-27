@@ -9,26 +9,6 @@ export type MessageTree = { [key: string]: string | MessageTree };
 export const messages: Record<Locale, MessageTree> = {
   en: {
     onboarding: {
-      intro: {
-        skip: 'Skip',
-        next: 'Next',
-        start: 'Sign in',
-        signIn: 'Sign in',
-        back: 'Back',
-        stepIndicator: 'STEP {step} / {total}',
-        discoverTitle: 'Discover Matchy+',
-        slide1Badge: 'Matching',
-        slide1Title: 'Match around you',
-        slide1Desc:
-          'Find the right provider or collaborator by swiping, like Tinder but for professionals.',
-        slide2Badge: 'Explore',
-        slide2Title: 'Discover Matchy Explore',
-        slide2Desc:
-          'Personalized recommendations based on your profile and professional activities.',
-        slide3Badge: 'Career',
-        slide3Title: 'Find jobs matched for you',
-        slide3Desc: 'New professional opportunities await you. Connect now.',
-      },
       identity: {
         title: 'Let’s get to know you',
         desc: 'This information will help us personalize your profile and recommendations.',
@@ -974,27 +954,6 @@ export const messages: Record<Locale, MessageTree> = {
   },
   fr: {
     onboarding: {
-      intro: {
-        skip: 'Passer',
-        next: 'Suivant',
-        start: 'Commencer',
-        signIn: "S'inscrire",
-        back: 'Retour',
-        stepIndicator: 'ÉTAPE {step} / {total}',
-        discoverTitle: 'Découvrez Matchy+',
-        slide1Badge: 'Matching',
-        slide1Title: 'Matcher autour de vous',
-        slide1Desc:
-          'Trouvez le bon prestataire ou collaborateur en swipant, comme Tinder mais pour le professionnel.',
-        slide2Badge: 'Explorer',
-        slide2Title: 'Découvrez Matchy Explore',
-        slide2Desc:
-          'Des recommandations personnalisées selon votre profil et vos activités professionnelles.',
-        slide3Badge: 'Carrière',
-        slide3Title: 'Trouvez des missions taillées pour vous',
-        slide3Desc:
-          'De nouvelles opportunités professionnelles vous attendent. Connectez-vous dès maintenant.',
-      },
       identity: {
         title: 'Commençons par faire connaissance',
         desc: 'Ces informations nous aideront à personnaliser votre profil et vos recommandations.',
@@ -1965,24 +1924,6 @@ export const messages: Record<Locale, MessageTree> = {
   },
   ar: {
     onboarding: {
-      intro: {
-        skip: 'تخطي',
-        next: 'التالي',
-        start: 'ابدأ الآن',
-        signIn: 'ابدأ الآن',
-        back: 'رجوع',
-        stepIndicator: 'خطوة {step} / {total}',
-        discoverTitle: 'اكتشف Matchy+',
-        slide1Badge: 'مطابقة',
-        slide1Title: 'طابق حولك',
-        slide1Desc: 'اعثر على المزود أو الشريك المناسب بالسحب، مثل تيندر ولكن للمحترفين.',
-        slide2Badge: 'استكشف',
-        slide2Title: 'اكتشف Matchy Explore',
-        slide2Desc: 'توصيات مخصصة حسب ملفك الشخصي وأنشطتك المهنية.',
-        slide3Badge: 'وظائف',
-        slide3Title: 'اعثر على فرص مناسبة لك',
-        slide3Desc: 'فرص مهنية جديدة في انتظارك. تواصل الآن.',
-      },
       identity: {
         title: 'لنتعرّف عليك',
         desc: 'ستساعدنا هذه المعلومات على تخصيص ملفك والتوصيات المقدمة لك.',
