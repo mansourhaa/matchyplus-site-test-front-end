@@ -28,7 +28,7 @@ export default function LandingPage() {
   const { locale, setLocale, t, dir } = useI18n();
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
-  const goRegister = () => goToApp('/inscription');
+  const goRegister = () => goToApp('/onboarding');
 
   const handleLanguageChange = (lang: Locale) => {
     setLocale(lang);
