@@ -189,9 +189,11 @@ export function DiscoverView() {
     if (isSearchOpen) {
       const timer = setTimeout(() => searchInputRef.current?.focus(), 50);
       return () => clearTimeout(timer);
-    } else {
-      setSearchQuery('');
     }
+    const timer = setTimeout(() => {
+      setSearchQuery('');
+    }, 0);
+    return () => clearTimeout(timer);
   }, [isSearchOpen]);
 
   useEffect(() => {
