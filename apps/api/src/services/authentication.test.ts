@@ -44,6 +44,9 @@ describe('AuthenticationService', () => {
       email: 'user@example.com',
       phone: null,
       name: 'user@example.com',
+      // nosemgrep: generic.secrets.security.detected-bcrypt-hash.detected-bcrypt-hash
+      // Not a hash. A deliberately malformed string, used to prove the
+      // comparison fails; the text in the middle says so.
       password: '$2a$10$invalidhashvaluexxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     });
 
