@@ -12,6 +12,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: siteConfig.name,
   description: siteConfig.description,
+  robots: { index: false, follow: false },
   icons: {
     icon: '/icon.svg',
     shortcut: '/icon.svg',

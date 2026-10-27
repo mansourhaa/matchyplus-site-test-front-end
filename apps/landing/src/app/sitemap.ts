@@ -1,44 +1,20 @@
+import { SUPPORTED_LOCALES } from '@/features/i18n/messages';
+import { localizePath } from '@/features/i18n/routing';
+import { PAGES, absoluteUrl, languageAlternates } from '@/lib/seo';
 import type { MetadataRoute } from 'next';
 
-const BASE_URL = process.env.LANDING_URL || 'https://matchyplus.com';
-
+/** Every indexable page in every language, each entry listing its translations (hreflang). */
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    {
-      url: BASE_URL,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 1.0,
-    },
-    {
-      url: `${BASE_URL}/devenir-partenaire`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/contact`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${BASE_URL}/faq`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    },
-    {
-      url: `${BASE_URL}/terms-of-service`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: `${BASE_URL}/privacy-policy`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-  ];
+  const lastModified = new Date();
+  return Object.values(PAGES)
+    .filter((page) => !page.noindex)
+    .flatMap((page) =>
+      SUPPORTED_LOCALES.map((locale) => ({
+        url: absoluteUrl(localizePath(locale, page.path)),
+        lastModified,
+        changeFrequency: page.changeFrequency,
+        priority: page.priority,
+        alternates: { languages: languageAlternates(page.path) },
+      })),
+    );
 }

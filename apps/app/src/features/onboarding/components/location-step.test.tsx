@@ -72,7 +72,7 @@ describe('LocationStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton(/Continuer/));
+    fireEvent.click(firstButton(/Terminer mon inscription/));
     await waitFor(() => {
       expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ city: 'Tunis' }));
     });
@@ -92,7 +92,7 @@ describe('LocationStep', () => {
     );
 
     expect(screen.queryByText('Mes disponibilités')).not.toBeInTheDocument();
-    fireEvent.click(firstButton(/Continuer/));
+    fireEvent.click(firstButton(/Terminer mon inscription/));
 
     await waitFor(() => {
       expect(onFinish).toHaveBeenCalledWith(
@@ -114,7 +114,7 @@ describe('LocationStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton(/Continuer/));
+    fireEvent.click(firstButton(/Terminer mon inscription/));
 
     await waitFor(() => {
       expect(onFinish).toHaveBeenCalledWith(
@@ -137,7 +137,7 @@ describe('LocationStep', () => {
     );
 
     fireEvent.click(firstButton('Lun'));
-    fireEvent.click(firstButton(/Continuer/));
+    fireEvent.click(firstButton(/Terminer mon inscription/));
 
     await waitFor(() => {
       expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ availabilityDays: ['Lun'] }));
@@ -164,7 +164,7 @@ describe('LocationStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton(/Continuer/));
+    fireEvent.click(firstButton(/Terminer mon inscription/));
     await waitFor(() => expect(onFinish).toHaveBeenCalled());
     // Must NOT invoke browser geolocation prompt when submitting location step towards welcome
     expect(getCurrentPosition).not.toHaveBeenCalled();
