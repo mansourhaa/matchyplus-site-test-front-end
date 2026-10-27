@@ -3,7 +3,7 @@
 import { matchyBrand } from '@/components/matchy/brand';
 import { HeaderBackButton } from '@/components/matchy/header-back-button';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { loginPhone, selectAuth } from '@/features/auth/store/auth-slice';
+import { loginPhone, logout, selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { landingPath } from '@/lib/landing';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
@@ -122,11 +122,25 @@ export function LoginForm() {
   }, [sessionChecked, isAuthenticated, user, router, searchParams]);
 
   const goToPhoneStep = () => {
-    router.push('/connexion?step=phone');
+    const params = new URLSearchParams();
+    params.set('step', 'phone');
+    if (searchParams.get('switch') === 'true' || (isAuthenticated && !user?.onboarding_completed)) {
+      params.set('switch', 'true');
+    }
+    router.push(`/connexion?${params.toString()}`);
   };
   const handleBackToLogin = () => {
-    router.push('/connexion');
+    const params = new URLSearchParams();
+    if (searchParams.get('switch') === 'true' || (isAuthenticated && !user?.onboarding_completed)) {
+      params.set('switch', 'true');
+    }
+    const query = params.toString();
+    router.push(query ? `/connexion?${query}` : '/connexion');
     setLocalError(null);
+  };
+  const handleDisconnectAndSwitch = async () => {
+    await dispatch(logout());
+    router.push('/connexion');
   };
   const handleBackToLanding = () => {
     window.location.href = landingPath('/', locale);
@@ -172,13 +186,21 @@ export function LoginForm() {
       {isAuthenticated && user && !user.onboarding_completed && (
         <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 shadow-xs">
           <p className="font-semibold">{t('auth.loginForm.incompleteOnboardingNotice')}</p>
-          <div className="mt-2 flex items-center justify-between">
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             <Link
               href="/inscription"
               className="font-bold text-[#2F76BB] underline hover:text-[#255e96]"
             >
               {t('auth.loginForm.resumeOnboarding')}
             </Link>
+            <span className="text-amber-400">·</span>
+            <button
+              type="button"
+              onClick={handleDisconnectAndSwitch}
+              className="cursor-pointer font-bold text-amber-800 underline hover:text-amber-950"
+            >
+              {t('auth.loginForm.switchAccountOrLogout')}
+            </button>
           </div>
         </div>
       )}

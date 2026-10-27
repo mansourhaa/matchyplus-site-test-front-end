@@ -288,5 +288,12 @@ describe('LoginForm — Back button', () => {
         'Une inscription est en cours avec cette session. Vous pouvez vous connecter à un autre compte ci-dessous, ou reprendre votre inscription.',
       )[0],
     ).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Reprendre l’inscription/i })[0]).toHaveAttribute(
+      'href',
+      '/inscription',
+    );
+    expect(
+      screen.getAllByRole('button', { name: /Changer de compte \/ Se déconnecter/i })[0],
+    ).toBeInTheDocument();
   });
 });

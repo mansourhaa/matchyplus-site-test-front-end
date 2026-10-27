@@ -753,6 +753,7 @@ export const messages: Record<Locale, MessageTree> = {
         incompleteOnboardingNotice:
           'A registration is already in progress with this session. You can sign in to a different account below, or resume your registration.',
         resumeOnboarding: 'Resume registration →',
+        switchAccountOrLogout: 'Switch account / Log out',
         signInDivider: 'Sign in',
         phoneNumberOption: 'Phone number',
         continueWithLinkedIn: 'Continue with LinkedIn',
@@ -1710,6 +1711,7 @@ export const messages: Record<Locale, MessageTree> = {
         incompleteOnboardingNotice:
           'Une inscription est en cours avec cette session. Vous pouvez vous connecter à un autre compte ci-dessous, ou reprendre votre inscription.',
         resumeOnboarding: 'Reprendre l’inscription →',
+        switchAccountOrLogout: 'Changer de compte / Se déconnecter',
         signInDivider: 'Connectez-vous',
         phoneNumberOption: 'Numéro de téléphone',
         continueWithLinkedIn: 'Continuer avec LinkedIn',
@@ -2661,6 +2663,7 @@ export const messages: Record<Locale, MessageTree> = {
         incompleteOnboardingNotice:
           'هناك عملية تسجيل قيد التقدم لهذه الجلسة. يمكنك تسجيل الدخول إلى حساب آخر أدناه، أو استئناف التسجيل.',
         resumeOnboarding: 'استئناف التسجيل ←',
+        switchAccountOrLogout: 'تبديل الحساب / تسجيل الخروج',
         signInDivider: 'تسجيل الدخول',
         phoneNumberOption: 'رقم الهاتف',
         continueWithLinkedIn: 'المتابعة مع LinkedIn',
