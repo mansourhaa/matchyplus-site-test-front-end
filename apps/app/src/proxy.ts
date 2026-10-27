@@ -27,9 +27,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (pathname === '/register') {
-    const hasSeenIntro = request.cookies.get('matchy_intro_seen')?.value === '1';
-    const redirectUrl = new URL(hasSeenIntro ? '/inscription' : '/onboarding', request.url);
+  if (pathname === '/register' || pathname === '/onboarding') {
+    const redirectUrl = new URL('/inscription', request.url);
     redirectUrl.search = request.nextUrl.search;
     return NextResponse.redirect(redirectUrl);
   }

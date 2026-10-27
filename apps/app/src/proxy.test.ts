@@ -79,16 +79,19 @@ describe('proxy auth gate', () => {
     expect(location(res)).toBe('https://app.test/connexion');
   });
 
-  it('redirects legacy /register to /onboarding for first-time visitors', () => {
+  it('redirects legacy /register and /onboarding to /inscription', () => {
     const resRegister = proxy(request('/register'));
     expect(resRegister.status).toBe(307);
-    expect(location(resRegister)).toBe('https://app.test/onboarding');
+    expect(location(resRegister)).toBe('https://app.test/inscription');
+
+    const resOnboarding = proxy(request('/onboarding'));
+    expect(resOnboarding.status).toBe(307);
+    expect(location(resOnboarding)).toBe('https://app.test/inscription');
   });
 
-  it('keeps neutral routes open without a session, including /onboarding', () => {
+  it('keeps neutral routes open without a session', () => {
     expect(proxy(request('/oauth-callback')).status).toBe(200);
     expect(proxy(request('/inscription')).status).toBe(200);
-    expect(proxy(request('/onboarding')).status).toBe(200);
     expect(proxy(request('/reset-password')).status).toBe(200);
     expect(proxy(request('/privacy-policy')).status).toBe(200);
     expect(proxy(request('/terms-of-service')).status).toBe(200);

@@ -139,12 +139,10 @@ function renderWizard(
 describe('OnboardingWizard', () => {
   beforeEach(() => {
     window.localStorage.setItem('matchy_locale', 'fr');
-    window.localStorage.setItem('matchy_onboarding_intro_seen', 'true');
   });
 
   afterEach(() => {
     window.localStorage.removeItem('matchy_locale');
-    window.localStorage.removeItem('matchy_onboarding_intro_seen');
     vi.clearAllMocks();
     searchParamsRef.current = new URLSearchParams();
     registeredCallbackRef.current = undefined;
@@ -332,23 +330,5 @@ describe('OnboardingWizard', () => {
     );
 
     expect(replaceMock).toHaveBeenCalledWith('/home');
-  });
-
-  it('redirects first-time unauthenticated visitors to /onboarding', () => {
-    window.localStorage.removeItem('matchy_onboarding_intro_seen');
-    searchParamsRef.current = new URLSearchParams();
-
-    renderWizard({ status: 'unauthenticated', user: null });
-
-    expect(replaceMock).toHaveBeenCalledWith('/onboarding');
-  });
-
-  it('preserves next parameter when redirecting to /onboarding', () => {
-    window.localStorage.removeItem('matchy_onboarding_intro_seen');
-    searchParamsRef.current = new URLSearchParams('next=%2Fprofile');
-
-    renderWizard({ status: 'unauthenticated', user: null });
-
-    expect(replaceMock).toHaveBeenCalledWith('/onboarding?next=%2Fprofile');
   });
 });

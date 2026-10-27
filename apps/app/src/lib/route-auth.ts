@@ -13,7 +13,6 @@ export const PUBLIC_AUTH_ROUTES = ['/connexion'] as const;
 export const NEUTRAL_ROUTES = [
   '/oauth-callback',
   '/inscription',
-  '/onboarding',
   '/reset-password',
   '/privacy-policy',
   '/terms-of-service',
