@@ -365,8 +365,37 @@ pipeline {
             fi
           }
 
+          # For endpoints that redirect by design. The landing root answers 307
+          # to the default locale since the multilingual routing landed, so
+          # asserting a literal 200 on "/" fails against a perfectly healthy
+          # site: matchy-main-28 deployed correctly, this test condemned it, and
+          # the rollback banner fired for a release that needed no rollback.
+          #
+          # Following the redirect also tests more than the old check did, since
+          # it proves the locale page actually renders rather than merely that a
+          # redirect exists. The final URL is verified to still be on the
+          # expected host, so a redirect that leaves the site, or loops away
+          # from it, still fails.
+          check_final() { # url, expected-code, expected-host, label
+            OUT=$(curl -sL -o /dev/null \
+              -w '%{http_code} %{num_redirects} %{url_effective}' --max-time 20 "$1")
+            CODE=${OUT%% *}; REST=${OUT#* }; HOPS=${REST%% *}; EFFECTIVE=${REST#* }
+            case "$EFFECTIVE" in
+              "https://$3"|"https://$3/"*) ON_HOST=yes ;;
+              *)                           ON_HOST=no  ;;
+            esac
+            if [ "$CODE" = "$2" ] && [ "$ON_HOST" = yes ]; then
+              printf '  %-52s %s after %s hop(s) -> %s\\n' "$4" "$CODE" "$HOPS" "$EFFECTIVE"
+            else
+              printf '  %-52s %s after %s hop(s) -> %s (expected %s on %s)\\n' \
+                "$4" "$CODE" "$HOPS" "$EFFECTIVE" "$2" "$3"; FAILED=1
+            fi
+          }
+
+          # The API health endpoint stays a strict, direct check: it has no
+          # reason to redirect, and if it starts to, that is worth failing on.
           check "https://${PROD_API_HOST}/api/v1/health" 200 "api health"
-          check "https://${PROD_LANDING_HOST}/"          200 "landing"
+          check_final "https://${PROD_LANDING_HOST}/" 200 "${PROD_LANDING_HOST}" "landing"
 
           echo "  --- api health payload ---"
           curl -s --max-time 20 "https://${PROD_API_HOST}/api/v1/health" | head -c 200; echo
