@@ -452,4 +452,22 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     });
     expect(interestFiltered.profiles.map((p) => p.id)).toEqual(['2']);
   });
+
+  it('retrieves distinct active sectors from database profiles', async () => {
+    const prisma = {
+      user: {
+        findMany: vi.fn().mockResolvedValue([
+          { activity_sector: 'Transport', category: null, service_type: 'Chauffeur' },
+          { activity_sector: 'Transport', category: 'Transport', service_type: null },
+          { activity_sector: 'Informatique / Tech', category: 'Tech', service_type: 'Dev' },
+        ]),
+      },
+    };
+    const service = new DiscoveryService({ prisma: prisma as never });
+    const res = await service.getSectors();
+
+    expect(res.sectors).toContain('Transport');
+    expect(res.sectors).toContain('Chauffeur');
+    expect(res.sectors).toContain('Informatique / Tech');
+  });
 });

@@ -36,6 +36,7 @@ import {
   closeQuotaModal,
   fetchMatchState,
   fetchQuota,
+  fetchSectors,
   fetchSwipeFeed,
   selectMatching,
   selectTopFeedProfile,
@@ -53,11 +54,13 @@ import {
   Bell,
   Bookmark,
   Check,
+  ChevronDown,
   Heart,
   Loader2,
   Lock,
   MapPin,
   Play,
+  Search,
   Star,
   ThumbsDown,
   Volume2,
@@ -70,6 +73,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export const BASE_SECTOR_VALUES = [
+  'Informatique / Tech',
+  'BTP / Artisanat',
   'Transport',
   'Ménage',
   'Freelance',
@@ -78,8 +83,6 @@ export const BASE_SECTOR_VALUES = [
   'Garde enfants',
   'Plomberie',
   'Électricité',
-  'Informatique / Tech',
-  'BTP / Artisanat',
 ];
 
 function formatSectorLabel(sector: string, t: (key: string) => string): string {
@@ -151,11 +154,51 @@ export function DiscoverView() {
     'limit',
   );
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        searchDropdownRef.current &&
+        !searchDropdownRef.current.contains(e.target as Node) &&
+        searchButtonRef.current &&
+        !searchButtonRef.current.contains(e.target as Node)
+      ) {
+        setIsSearchOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSearchOpen]);
+
+  useEffect(() => {
+    if (isSearchOpen) {
+      const timer = setTimeout(() => searchInputRef.current?.focus(), 50);
+      return () => clearTimeout(timer);
+    } else {
+      setSearchQuery('');
+    }
+  }, [isSearchOpen]);
 
   useEffect(() => {
     void dispatch(fetchNotifications());
     void dispatch(fetchQuota());
     void dispatch(fetchFavoriteIds());
+    void dispatch(fetchSectors());
   }, [dispatch]);
 
   useAutoCaptureGrantedLocation();
@@ -264,29 +307,53 @@ export function DiscoverView() {
     const seen = new Set<string>();
     const result: string[] = [];
 
-    for (const s of BASE_SECTOR_VALUES) {
-      const lower = s.toLowerCase().trim();
+    const add = (val?: string | null) => {
+      if (!val || typeof val !== 'string') return;
+      const trimmed = val.trim();
+      if (!trimmed) return;
+      const lower = trimmed.toLowerCase();
       if (!seen.has(lower)) {
         seen.add(lower);
-        result.push(s);
+        result.push(trimmed);
       }
+    };
+
+    // 1. Base sector values (ensures primary sectors are always present)
+    for (const s of BASE_SECTOR_VALUES) {
+      add(s);
     }
 
+    // 2. Dynamic sectors fetched from database via /v1/discovery/sectors
+    const dbSectors = matching.sectors ?? [];
+    for (const s of dbSectors) {
+      add(s);
+    }
+
+    // 3. Dynamic sectors extracted from available feed profiles
     const feedList = matching.feed ?? [];
     for (const p of feedList) {
-      const val = p.category || p.activity_sector;
-      if (val && typeof val === 'string' && val.trim()) {
-        const trimmed = val.trim();
-        const lower = trimmed.toLowerCase();
-        if (!seen.has(lower)) {
-          seen.add(lower);
-          result.push(trimmed);
-        }
-      }
+      add(p.category);
+      add(p.activity_sector);
+      add(p.service_type);
+      add(p.job);
     }
 
     return result;
-  }, [matching.feed]);
+  }, [matching.sectors, matching.feed]);
+
+  const visibleSectors = useMemo(() => dynamicSectors.slice(0, 7), [dynamicSectors]);
+  const otherSectors = useMemo(() => dynamicSectors.slice(7), [dynamicSectors]);
+
+  const filteredDropdownSectors = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return otherSectors;
+    return dynamicSectors.filter((sector) => {
+      const label = formatSectorLabel(sector, t).toLowerCase();
+      return label.includes(q) || sector.toLowerCase().includes(q);
+    });
+  }, [searchQuery, otherSectors, dynamicSectors, t]);
+
+  const isSearchActive = Boolean(selectedSector && !visibleSectors.includes(selectedSector));
 
   const showHomeFeedLoader = locationSynced && (matching.feedLoading || !matching.feedLoaded);
 
@@ -297,58 +364,250 @@ export function DiscoverView() {
       className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
       style={{ background: matchyBrand.bg }}
     >
-      {/* Sector quick-filter bar — full width, no icons, dynamic */}
-      {!locationRequired && (
-        <div className="w-full shrink-0 border-b border-slate-200/70 bg-white px-4 py-2.5 shadow-2xs md:px-8">
-          <div
-            role="tablist"
-            aria-label="Secteurs d'activité"
-            className="no-scrollbar flex w-full items-center gap-2 overflow-x-auto scroll-smooth py-0.5"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={selectedSector === null}
-              data-testid="sector-pill-all"
-              onClick={() => handleSelectSector(null)}
-              className="shrink-0 cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold shadow-2xs transition-all active:scale-95"
-              style={{
-                backgroundColor: selectedSector === null ? matchyBrand.blue : '#FFFFFF',
-                color: selectedSector === null ? '#FFFFFF' : '#475569',
-                border:
-                  selectedSector === null ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
-              }}
-            >
-              {locale === 'ar' ? 'الكل' : locale === 'en' ? 'All' : 'Tout'}
-            </button>
-            {dynamicSectors.map((sector) => {
-              const isSelected = selectedSector === sector;
-              return (
-                <button
-                  key={sector}
-                  type="button"
-                  role="tab"
-                  aria-selected={isSelected}
-                  data-testid={`sector-pill-${sector}`}
-                  onClick={() => handleSelectSector(isSelected ? null : sector)}
-                  className="shrink-0 cursor-pointer rounded-full px-4 py-1.5 text-xs font-medium shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 active:scale-95"
-                  style={{
-                    backgroundColor: isSelected ? matchyBrand.blue : '#FFFFFF',
-                    color: isSelected ? '#FFFFFF' : '#475569',
-                    border: isSelected ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
-                  }}
-                >
-                  {formatSectorLabel(sector, t)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
         {/* Main swipe column */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-3 pb-2 md:px-8">
+          {/* Sector quick-filter bar — transparent bg, blended into home page, ends at start of right sidebar */}
+          {!locationRequired && (
+            <div className="relative z-30 mb-2 flex w-full items-center gap-2 bg-transparent">
+              {/* Left controls: Tout and Search toggle (with unclipped dropdown) */}
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedSector === null}
+                  data-testid="sector-pill-all"
+                  onClick={() => handleSelectSector(null)}
+                  className="shrink-0 cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold shadow-2xs transition-all active:scale-95"
+                  style={{
+                    backgroundColor: selectedSector === null ? matchyBrand.blue : '#FFFFFF',
+                    color: selectedSector === null ? '#FFFFFF' : '#475569',
+                    border:
+                      selectedSector === null
+                        ? `1px solid ${matchyBrand.blue}`
+                        : '1px solid #E2E8F0',
+                  }}
+                >
+                  {locale === 'ar' ? 'الكل' : locale === 'en' ? 'All' : 'Tout'}
+                </button>
+
+                {/* Search trigger labeled "Secteur" pill with chevron next to 'Tout' */}
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    ref={searchButtonRef}
+                    data-testid="sector-search-toggle"
+                    onClick={() => setIsSearchOpen((prev) => !prev)}
+                    aria-expanded={isSearchOpen}
+                    aria-label={
+                      locale === 'ar'
+                        ? 'تصفية حسب القطاع'
+                        : locale === 'en'
+                          ? 'Filter by sector'
+                          : 'Filtrer par secteur'
+                    }
+                    className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95"
+                    style={{
+                      backgroundColor:
+                        isSearchActive || isSearchOpen ? 'rgba(47, 118, 187, 0.1)' : '#FFFFFF',
+                      color: isSearchActive || isSearchOpen ? matchyBrand.blue : '#475569',
+                      borderColor: isSearchActive || isSearchOpen ? matchyBrand.blue : '#E2E8F0',
+                    }}
+                  >
+                    <Search size={12} strokeWidth={2} />
+                    <span>
+                      {locale === 'ar' ? 'القطاع' : locale === 'en' ? 'Sector' : 'Secteur'}
+                    </span>
+                    <ChevronDown
+                      size={13}
+                      className={`transition-transform duration-200 ${
+                        isSearchOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Dropdown Menu with Search Input — anchored directly beneath trigger, unclipped */}
+                  <div
+                    ref={searchDropdownRef}
+                    data-testid="sector-search-dropdown"
+                    className={`absolute top-full left-0 z-50 mt-2 w-72 max-w-[340px] rounded-2xl border border-slate-200/90 bg-white p-3 shadow-2xl transition-all duration-150 sm:w-80 ${
+                      isSearchOpen
+                        ? 'pointer-events-auto visible translate-y-0 opacity-100'
+                        : 'pointer-events-none invisible -translate-y-1 opacity-0'
+                    }`}
+                  >
+                    {/* Sticky search input inside dropdown */}
+                    <div className="sticky top-0 z-10 bg-white pb-2">
+                      <div className="relative">
+                        <Search
+                          size={14}
+                          className="absolute top-1/2 left-2.5 -translate-y-1/2 text-slate-400"
+                        />
+                        <input
+                          ref={searchInputRef}
+                          type="text"
+                          data-testid="sector-search-input"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder={
+                            locale === 'ar'
+                              ? 'ابحث عن قطاع...'
+                              : locale === 'en'
+                                ? 'Search a sector...'
+                                : 'Rechercher un secteur...'
+                          }
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pr-7 pl-8 text-xs text-slate-800 placeholder-slate-400 focus:border-[#2F76BB] focus:bg-white focus:outline-hidden"
+                        />
+                        {searchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setSearchQuery('')}
+                            className="absolute top-1/2 right-2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Header: SECTEURS + Reset */}
+                    <div className="flex items-center justify-between px-1 pt-0.5 pb-1.5 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                      <span>
+                        {locale === 'ar' ? 'القطاعات' : locale === 'en' ? 'Sectors' : 'Secteurs'}
+                      </span>
+                      {selectedSector && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleSelectSector(null);
+                            setIsSearchOpen(false);
+                          }}
+                          className="cursor-pointer text-xs font-semibold text-[#2F76BB] hover:underline"
+                        >
+                          {locale === 'ar' ? 'إعادة ضبط' : locale === 'en' ? 'Clear' : 'Effacer'}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Sectors list */}
+                    <div className="no-scrollbar max-h-60 space-y-1 overflow-y-auto py-0.5">
+                      {filteredDropdownSectors.length === 0 ? (
+                        <div className="px-3 py-3 text-center text-xs text-slate-400">
+                          {locale === 'ar'
+                            ? 'لا توجد نتائج'
+                            : locale === 'en'
+                              ? 'No sectors found'
+                              : 'Aucun secteur trouvé'}
+                        </div>
+                      ) : (
+                        filteredDropdownSectors.map((sector) => {
+                          const isSelected = selectedSector === sector;
+                          return (
+                            <button
+                              key={sector}
+                              type="button"
+                              role="tab"
+                              aria-selected={isSelected}
+                              data-testid={`sector-pill-${sector}`}
+                              onClick={() => {
+                                handleSelectSector(isSelected ? null : sector);
+                                setIsSearchOpen(false);
+                              }}
+                              className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-slate-50"
+                              style={{
+                                backgroundColor: isSelected
+                                  ? 'rgba(47, 118, 187, 0.08)'
+                                  : 'transparent',
+                                color: isSelected ? matchyBrand.blue : '#334155',
+                                fontWeight: isSelected ? 600 : 500,
+                              }}
+                            >
+                              <span>{formatSectorLabel(sector, t)}</span>
+                              {isSelected && <Check size={13} className="text-[#2F76BB]" />}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* If selected sector is from dropdown, display active pill with quick dismiss right next to search */}
+                {isSearchActive && selectedSector && (
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={true}
+                    onClick={() => handleSelectSector(null)}
+                    className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold shadow-xs transition-all active:scale-95"
+                    style={{
+                      backgroundColor: matchyBrand.blue,
+                      color: '#FFFFFF',
+                      border: `1px solid ${matchyBrand.blue}`,
+                    }}
+                    title={formatSectorLabel(selectedSector, t)}
+                  >
+                    <span>{formatSectorLabel(selectedSector, t)}</span>
+                    <X size={12} className="opacity-80 hover:opacity-100" />
+                  </button>
+                )}
+              </div>
+
+              {/* Dynamic sector pills (7 options) — in their own horizontal scroll container */}
+              <div
+                role="tablist"
+                aria-label="Secteurs d'activité"
+                className="no-scrollbar flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1"
+              >
+                {visibleSectors.map((sector) => {
+                  const isSelected = selectedSector === sector;
+                  return (
+                    <button
+                      key={sector}
+                      type="button"
+                      role="tab"
+                      aria-selected={isSelected}
+                      data-testid={`sector-pill-${sector}`}
+                      onClick={() => handleSelectSector(isSelected ? null : sector)}
+                      className="shrink-0 cursor-pointer rounded-full px-4 py-1.5 text-xs font-medium shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 active:scale-95"
+                      style={{
+                        backgroundColor: isSelected ? matchyBrand.blue : '#FFFFFF',
+                        color: isSelected ? '#FFFFFF' : '#475569',
+                        border: isSelected ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
+                      }}
+                    >
+                      {formatSectorLabel(sector, t)}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active filter count / reset feedback if filter selected */}
+              {selectedSector && (
+                <div className="hidden shrink-0 items-center gap-2 sm:flex">
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                    {matching.feed.length}{' '}
+                    {locale === 'ar'
+                      ? 'ملف'
+                      : locale === 'en'
+                        ? matching.feed.length === 1
+                          ? 'profile'
+                          : 'profiles'
+                        : matching.feed.length === 1
+                          ? 'profil'
+                          : 'profils'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectSector(null)}
+                    className="cursor-pointer text-xs font-medium text-slate-500 hover:text-slate-800 hover:underline"
+                  >
+                    {locale === 'ar' ? 'إلغاء' : locale === 'en' ? 'Reset' : 'Effacer'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             {showHomeFeedLoader ? (
               <div className="flex h-full flex-col items-center justify-center px-6 text-center">

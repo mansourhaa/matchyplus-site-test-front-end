@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 
 import {
   discoveryQuotaSchema,
+  discoverySectorsSchema,
   postSwipeSchema,
   swipeFeedQuerySchema,
 } from '../../../schemas/v1/matching.js';
@@ -28,6 +29,15 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
       }
     },
   );
+
+  fastify.get('/sectors', { schema: discoverySectorsSchema }, async (request, reply) => {
+    try {
+      const data = await discovery.getSectors();
+      return reply.code(200).send(data);
+    } catch (err) {
+      throw err;
+    }
+  });
 
   fastify.get('/quota', { schema: discoveryQuotaSchema }, async (request, reply) => {
     try {

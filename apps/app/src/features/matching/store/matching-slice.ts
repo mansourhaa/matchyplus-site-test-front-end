@@ -12,6 +12,7 @@ import { createSelector } from 'reselect';
 
 import type {
   DiscoveryFeedQuery,
+  DiscoverySectorsResponse,
   MatchStateResponse,
   MatchingState,
   SwipeFeedResponse,
@@ -45,6 +46,7 @@ const initialState: MatchingState = {
   historyLoading: false,
   historyError: null,
   historyFilter: 'all',
+  sectors: [],
 };
 
 function resetForNewSession(state: MatchingState) {
@@ -79,6 +81,18 @@ export const fetchSwipeFeed = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(apiErrorKey(error, 'matching.errors.feed'));
+    }
+  },
+);
+
+export const fetchSectors = createAsyncThunk(
+  'matching/fetchSectors',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get<DiscoverySectorsResponse>('/discovery/sectors');
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(apiErrorKey(error, 'matching.errors.sectors'));
     }
   },
 );
@@ -206,6 +220,9 @@ const matchingSlice = createSlice({
       .addCase(fetchSwipeFeed.rejected, (state, action) => {
         state.feedLoading = false;
         state.feedError = String(action.payload || action.error.message);
+      })
+      .addCase(fetchSectors.fulfilled, (state, action) => {
+        state.sectors = action.payload.sectors ?? [];
       })
       .addCase(fetchQuota.pending, (state) => {
         state.quotaLoading = true;

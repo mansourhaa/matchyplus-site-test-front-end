@@ -92,6 +92,13 @@ function renderDiscoverView() {
         },
       });
     }
+    if (url === '/discovery/sectors') {
+      return Promise.resolve({
+        data: {
+          sectors: ['Informatique / Tech', 'BTP / Artisanat', 'Transport', 'Plomberie'],
+        },
+      });
+    }
     if (url === '/favorites/ids') return Promise.resolve({ data: { favorite_ids: [] } });
     if (url === '/notifications')
       return Promise.resolve({ data: { notifications: [], unreadCount: 0 } });
@@ -134,6 +141,10 @@ describe('DiscoverView — Sector Filter (HOME-001)', () => {
 
     expect(screen.getByTestId('sector-pill-Informatique / Tech')).toBeInTheDocument();
     expect(screen.getByTestId('sector-pill-BTP / Artisanat')).toBeInTheDocument();
+
+    const sectorToggle = screen.getByTestId('sector-search-toggle');
+    expect(sectorToggle).toBeInTheDocument();
+    expect(sectorToggle).toHaveTextContent('Secteur');
   });
 
   it('filters swipe feed when a sector pill is clicked', async () => {
@@ -174,6 +185,37 @@ describe('DiscoverView — Sector Filter (HOME-001)', () => {
     await waitFor(() => {
       expect(allPill).toHaveAttribute('aria-selected', 'true');
       expect(techPill).toHaveAttribute('aria-selected', 'false');
+    });
+  });
+
+  it('opens sector dropdown when clicking the Secteur pill trigger and allows searching', async () => {
+    renderDiscoverView();
+
+    const sectorToggle = await screen.findByTestId('sector-search-toggle');
+    fireEvent.click(sectorToggle);
+
+    const dropdown = screen.getByTestId('sector-search-dropdown');
+    expect(dropdown).toBeInTheDocument();
+
+    const searchInput = screen.getByTestId('sector-search-input');
+    expect(searchInput).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: 'Plomb' } });
+
+    const plomberieOption = await screen.findByTestId('sector-pill-Plomberie');
+    expect(plomberieOption).toBeInTheDocument();
+
+    fireEvent.click(plomberieOption);
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith(
+        '/discovery/swipe-feed',
+        expect.objectContaining({
+          params: expect.objectContaining({
+            sector: 'Plomberie',
+          }),
+        }),
+      );
     });
   });
 });
