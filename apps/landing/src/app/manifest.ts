@@ -1,11 +1,11 @@
+import { PAGES } from '@/lib/seo';
 import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Matchy+ | Networking Professionnel',
+    name: PAGES.home.copy.fr.title,
     short_name: 'Matchy+',
-    description:
-      'Connectez-vous avec des professionnels vérifiés et développez vos opportunités d’affaires.',
+    description: PAGES.home.copy.fr.description,
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

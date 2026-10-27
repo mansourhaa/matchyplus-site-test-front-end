@@ -4,6 +4,7 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_LOGIN_URL, APP_REGISTER_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import { LogIn } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export function Hero() {
@@ -80,9 +81,12 @@ export function Hero() {
             transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
             className="relative flex justify-center drop-shadow-2xl"
           >
-            <img
+            <Image
               src="/showcase/hero-phone.png"
-              alt="Matchy+ Profil Découverte"
+              alt={t('landing.heroImageAlt')}
+              width={323}
+              height={639}
+              preload
               className="h-auto max-h-[480px] w-auto max-w-[280px] object-contain sm:max-w-[320px] md:max-h-[520px] md:max-w-[320px] lg:max-h-[580px] lg:max-w-[360px]"
             />
           </motion.div>

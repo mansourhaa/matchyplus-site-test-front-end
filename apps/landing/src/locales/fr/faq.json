@@ -1,0 +1,147 @@
+{
+  "seo": {
+    "title": "FAQ Matchy+ | Inscription, services et professionnels",
+    "description": "Consultez la FAQ Matchy+ : inscription, recherche de professionnels, services locaux, profil, Matchy Wallet, confidentialité et assistance."
+  },
+  "hero": {
+    "title": "Questions fréquentes sur Matchy+",
+    "introduction": "Vous souhaitez trouver un professionnel, proposer vos services ou mieux comprendre Matchy+ ? Retrouvez les réponses essentielles sur l’inscription, les services, les profils, la mise en relation et la confidentialité."
+  },
+  "search": {
+    "label": "Rechercher une question…",
+    "placeholder": "Rechercher une question…",
+    "noResults": "Aucune question ne correspond à votre recherche."
+  },
+  "categories": [
+    {
+      "id": "category-1",
+      "title": "Découvrir Matchy+",
+      "items": [
+        {
+          "id": "c1-q1",
+          "question": "Qu’est-ce que Matchy+ ?",
+          "answer": "Matchy+ est une plateforme de mise en relation qui aide les particuliers et les entreprises à découvrir des professionnels, artisans, indépendants et prestataires selon leurs besoins et leur localisation. Les professionnels peuvent créer un profil, présenter leurs services et développer leur visibilité."
+        },
+        {
+          "id": "c1-q2",
+          "question": "À qui s’adresse Matchy+ ?",
+          "answer": "Matchy+ s’adresse aux particuliers qui recherchent un service, aux professionnels qui proposent leurs compétences, aux indépendants, aux personnes à la recherche de missions et aux entreprises qui recherchent des prestataires."
+        },
+        {
+          "id": "c1-q3",
+          "question": "Quels services puis-je trouver ?",
+          "answer": "Vous pouvez rechercher différents services locaux, notamment la plomberie, l’électricité, le transport, le ménage, la garde d’enfants, le jardinage et le bricolage. Les catégories évoluent avec l’arrivée de nouveaux professionnels."
+        },
+        {
+          "id": "c1-q4",
+          "question": "Matchy+ est-elle disponible dans toute la Tunisie ?",
+          "answer": "La disponibilité dépend des professionnels inscrits et de leur zone d’intervention. Indiquez votre ville pour découvrir les profils et services disponibles près de chez vous."
+        }
+      ]
+    },
+    {
+      "id": "category-2",
+      "title": "Trouver un professionnel",
+      "items": [
+        {
+          "id": "c2-q1",
+          "question": "Comment trouver un professionnel près de chez moi ?",
+          "answer": "Sélectionnez le service recherché et indiquez votre localisation. Matchy+ vous présente des profils correspondant à votre besoin et à votre zone. Consultez les informations disponibles, puis contactez le professionnel de votre choix."
+        },
+        {
+          "id": "c2-q2",
+          "question": "Comment fonctionnent les recommandations ?",
+          "answer": "Matchy+ utilise le service recherché, votre localisation et les informations de votre profil pour suggérer des profils pertinents. Ces recommandations facilitent la recherche, mais vous restez libre de comparer et de choisir."
+        },
+        {
+          "id": "c2-q3",
+          "question": "Comment choisir le bon professionnel ?",
+          "answer": "Consultez la présentation, les services, l’expérience et la zone d’intervention. Avant toute mission, précisez le besoin, demandez les justificatifs utiles et convenez du tarif, du délai et des conditions."
+        },
+        {
+          "id": "c2-q4",
+          "question": "Comment contacter un professionnel ?",
+          "answer": "Selon les préférences activées, vous pouvez utiliser la messagerie de la plateforme, WhatsApp ou le téléphone. Respectez toujours les préférences de contact et la confidentialité de chaque utilisateur."
+        },
+        {
+          "id": "c2-q5",
+          "question": "Matchy+ fixe-t-elle le prix des prestations ?",
+          "answer": "Non. Les tarifs et les conditions sont convenus directement entre le client et le professionnel. Clarifiez le prix, les frais éventuels, le mode de paiement, le délai et les conditions d’annulation avant la prestation."
+        }
+      ]
+    },
+    {
+      "id": "category-3",
+      "title": "Proposer ses services",
+      "items": [
+        {
+          "id": "c3-q1",
+          "question": "Comment proposer mes services ?",
+          "answer": "Créez un compte, choisissez « Je propose mes services », puis complétez votre métier, votre expérience, votre zone d’intervention, vos langues, vos moyens de contact et la description de votre activité."
+        },
+        {
+          "id": "c3-q2",
+          "question": "Puis-je proposer plusieurs services ?",
+          "answer": "Oui, dans la limite prévue par votre profil ou votre formule. Ajoutez uniquement les services que vous pouvez réellement réaliser afin de recevoir des demandes pertinentes."
+        },
+        {
+          "id": "c3-q3",
+          "question": "Comment rendre mon profil plus attractif ?",
+          "answer": "Ajoutez une photo claire, un titre précis, une description concrète, votre expérience, votre zone d’intervention et vos disponibilités. Une courte vidéo facultative peut également présenter votre activité."
+        },
+        {
+          "id": "c3-q4",
+          "question": "La vidéo de présentation est-elle obligatoire ?",
+          "answer": "Non. La vidéo est facultative et peut être ajoutée ou modifiée plus tard."
+        },
+        {
+          "id": "c3-q5",
+          "question": "Puis-je rechercher un service et proposer mes services ?",
+          "answer": "Oui. Un même compte peut servir à rechercher un professionnel et à présenter vos propres compétences, selon les options disponibles dans votre profil."
+        }
+      ]
+    },
+    {
+      "id": "category-4",
+      "title": "Compte, Wallet et sécurité",
+      "items": [
+        {
+          "id": "c4-q1",
+          "question": "L’inscription est-elle gratuite ?",
+          "answer": "La création du compte et les fonctionnalités essentielles peuvent être gratuites. Des options Premium ou de visibilité peuvent être proposées. Le prix et les conditions doivent être affichés avant tout achat."
+        },
+        {
+          "id": "c4-q2",
+          "question": "Qu’est-ce que Matchy Wallet ?",
+          "answer": "Matchy Wallet est le portefeuille numérique de Matchy+. Il permet d’utiliser des crédits pour certaines fonctionnalités, comme la mise en avant d’un profil ou d’un service, selon les offres actives."
+        },
+        {
+          "id": "c4-q3",
+          "question": "Les professionnels sont-ils vérifiés ?",
+          "answer": "Matchy+ peut demander certaines informations lors de la création d’un compte. La présence d’un profil ne valide pas systématiquement toutes les compétences ou qualifications déclarées. Avant une mission, demandez les informations et justificatifs nécessaires."
+        },
+        {
+          "id": "c4-q4",
+          "question": "Mes données personnelles sont-elles protégées ?",
+          "answer": "Matchy+ utilise les informations nécessaires au fonctionnement des comptes, aux recommandations et à la sécurité. Consultez la politique de confidentialité pour connaître les données collectées, leur utilisation, leur conservation et vos droits."
+        },
+        {
+          "id": "c4-q5",
+          "question": "Comment signaler un profil ou un comportement inapproprié ?",
+          "answer": "Utilisez la fonction de signalement disponible dans le profil ou la conversation, ou contactez l’assistance en précisant le motif et les informations utiles."
+        },
+        {
+          "id": "c4-q6",
+          "question": "Comment contacter l’assistance ?",
+          "answer": "Utilisez le formulaire de contact et indiquez le compte concerné, le sujet, une description claire et, si nécessaire, des captures d’écran. L’équipe examinera votre demande dans les meilleurs délais."
+        }
+      ]
+    }
+  ],
+  "contact": {
+    "title": "Vous avez encore une question ?",
+    "description": "Notre équipe vous aide à utiliser Matchy+, gérer votre profil ou résoudre un problème.",
+    "label": "Contacter notre équipe",
+    "href": "/contact"
+  }
+}

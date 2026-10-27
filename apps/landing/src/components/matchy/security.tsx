@@ -33,7 +33,7 @@ export function Security() {
           <div className="relative flex justify-center drop-shadow-2xl">
             <Image
               src="/showcase/wallet-phone.png"
-              alt="Matchy Wallet"
+              alt={t('landing.walletImageAlt')}
               width={323}
               height={639}
               className="h-auto max-h-[480px] w-auto max-w-[280px] object-contain sm:max-w-[320px] md:max-h-[520px] md:max-w-[340px] lg:max-h-[560px] lg:max-w-[350px]"

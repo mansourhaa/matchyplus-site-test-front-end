@@ -75,7 +75,7 @@ describe('InterestsStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton('Trouver un job'));
+    fireEvent.click(firstButton('Trouver un emploi'));
     fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
@@ -136,7 +136,7 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un job'));
+    fireEvent.click(firstButton('Trouver un emploi'));
     fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
@@ -161,7 +161,7 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un job'));
+    fireEvent.click(firstButton('Trouver un emploi'));
     selectServiceType('Chauffeur / Transport');
     fireEvent.click(continueButton());
 
@@ -185,7 +185,7 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un job'));
+    fireEvent.click(firstButton('Trouver un emploi'));
     // New INDIVIDUAL steps default offer-service on — turn it off for this case.
     fireEvent.click(screen.getAllByRole('switch')[0]);
     fireEvent.click(continueButton());
@@ -213,7 +213,7 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un job'));
+    fireEvent.click(firstButton('Trouver un emploi'));
     selectServiceType('Chauffeur / Transport');
     fireEvent.change(firstPlaceholder('Montant'), { target: { value: '50' } });
     fireEvent.click(continueButton());
