@@ -141,3 +141,7 @@ export type SwipeHistoryResponse = {
   has_more: boolean;
   stats: SwipeHistoryStats;
 };
+
+export type DiscoverySectorsResponse = {
+  sectors: string[];
+};

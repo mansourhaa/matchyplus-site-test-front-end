@@ -3,12 +3,22 @@
 import { matchyBrand } from '@/components/matchy/brand';
 import { HeaderBackButton } from '@/components/matchy/header-back-button';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { loginPhone, selectAuth } from '@/features/auth/store/auth-slice';
+import { loginPhone, logout, selectAuth } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { landingPath } from '@/lib/landing';
+import { isNativeMobileClient } from '@/lib/native';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
-import { ChevronRight, Eye, EyeOff, Loader2, Lock, Phone } from 'lucide-react';
+import {
+  ChevronRight,
+  Clock,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Phone,
+  User as UserIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -101,6 +111,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const country = getPhoneCountry(countryIso);
   const phone = composeE164Phone(countryIso, nationalNumber);
@@ -109,23 +120,74 @@ export function LoginForm() {
     reasonParam === 'session_expired' ? t('common.errors.unauthorized') : null;
   const error = localError || authError || sessionExpiredNotice;
 
+  const hasIncompleteCookie =
+    typeof document !== 'undefined' && document.cookie.includes('matchy_onboarding_incomplete=1');
+
   // Cap cold start: proxy may bounce to /connexion before Preferences hydrate + mirror
-  // cookie sync. Once authcheck confirms a session, leave /connexion for the app.
+  // cookie sync. Once authcheck confirms a session, leave /connexion for the app,
+  // EXCEPT when onboarding is incomplete or user requested switch=true (AUTH-001:
+  // an unfinished onboarding must not trap /connexion in a redirect bounce to /inscription).
   useEffect(() => {
     if (!sessionChecked || !isAuthenticated || !user) return;
-    router.replace(resolvePostAuthDestination(searchParams.get('next'), user.onboarding_completed));
-    router.refresh();
+    if (user.onboarding_completed && searchParams.get('switch') !== 'true') {
+      router.replace(resolvePostAuthDestination(searchParams.get('next'), true));
+      router.refresh();
+    }
   }, [sessionChecked, isAuthenticated, user, router, searchParams]);
 
   const goToPhoneStep = () => {
-    router.push('/connexion?step=phone');
+    const params = new URLSearchParams();
+    params.set('step', 'phone');
+    if (
+      searchParams.get('switch') === 'true' ||
+      hasIncompleteCookie ||
+      (isAuthenticated && !user?.onboarding_completed)
+    ) {
+      params.set('switch', 'true');
+    }
+    router.push(`/connexion?${params.toString()}`);
   };
   const handleBackToLogin = () => {
-    router.push('/connexion');
+    const params = new URLSearchParams();
+    if (
+      searchParams.get('switch') === 'true' ||
+      hasIncompleteCookie ||
+      (isAuthenticated && !user?.onboarding_completed)
+    ) {
+      params.set('switch', 'true');
+    }
+    const query = params.toString();
+    router.push(query ? `/connexion?${query}` : '/connexion');
     setLocalError(null);
+  };
+  const handleDisconnectAndSwitch = async () => {
+    setIsLoggingOut(true);
+    try {
+      await dispatch(logout());
+      router.push('/connexion');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
   const handleBackToLanding = () => {
     window.location.href = landingPath('/', locale);
+  };
+
+  const isIncompleteOnboardingSession = Boolean(
+    ((isAuthenticated && user && !user.onboarding_completed) ||
+      (!sessionChecked && hasIncompleteCookie) ||
+      (user && !user.onboarding_completed)) &&
+    searchParams.get('switch') !== 'true',
+  );
+
+  const handleHeaderBack = () => {
+    if (localStep === 'phone') {
+      handleBackToLogin();
+    } else if (isIncompleteOnboardingSession) {
+      router.push('/inscription');
+    } else {
+      handleBackToLanding();
+    }
   };
 
   const goToPostAuthDestination = (onboardingCompleted: boolean) => {
@@ -145,12 +207,110 @@ export function LoginForm() {
     }
   };
 
-  const handleSocialAuth = (provider: 'google' | 'linkedin') => {
+  const handleSocialAuth = async (provider: 'google' | 'linkedin') => {
     setLocalError(null);
-    window.location.href = getOAuthRedirectUrl(provider);
+    const url = getOAuthRedirectUrl(provider);
+
+    if (isNativeMobileClient()) {
+      try {
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url: `${url}?platform=mobile`, windowName: '_system' });
+        return;
+      } catch {
+        window.location.href = `${url}?platform=mobile`;
+        return;
+      }
+    }
+
+    window.location.href = url;
   };
 
-  const formContent = (
+  const incompleteOnboardingContent = (
+    <div className="mx-auto w-full max-w-sm">
+      <div className="mb-6 flex flex-col items-center text-center">
+        <div
+          className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl shadow-xs"
+          style={{ background: 'linear-gradient(135deg, #EBF4FF 0%, #D8ECFF 100%)' }}
+        >
+          <Clock size={30} className="text-[#2F76BB]" />
+        </div>
+        <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A2E' }}>
+          {t('auth.loginForm.incompleteOnboardingTitle')}
+        </h1>
+        <p style={{ fontSize: '14px', color: '#666', lineHeight: 1.5, marginTop: '8px' }}>
+          {t('auth.loginForm.incompleteOnboardingDesc')}
+        </p>
+      </div>
+
+      <div className="mb-6 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-700 shadow-xs">
+            <UserIcon size={18} />
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-bold text-slate-900">
+              {user?.phone || user?.email || t('auth.loginForm.currentAccount')}
+            </p>
+            <p className="text-xs text-slate-500">
+              {t('auth.loginForm.incompleteOnboardingSessionTag')}
+            </p>
+          </div>
+        </div>
+        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+          {t('auth.loginForm.pendingBadge')}
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => router.push('/inscription')}
+          disabled={isLoggingOut}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white transition-opacity hover:opacity-95 disabled:opacity-60"
+          style={{
+            background: matchyBrand.gradient,
+            fontSize: '15px',
+            fontWeight: 700,
+          }}
+        >
+          {t('auth.loginForm.resumeRegistrationBtn')}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleDisconnectAndSwitch}
+          disabled={isLoggingOut}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3.5 text-slate-700 shadow-xs transition-colors hover:bg-slate-50 disabled:opacity-60"
+          style={{
+            fontSize: '14px',
+            fontWeight: 700,
+          }}
+        >
+          {isLoggingOut && <Loader2 size={16} className="animate-spin" />}
+          {t('auth.loginForm.switchOrLogoutBtn')}
+        </button>
+      </div>
+
+      <div className="mt-6 text-center">
+        <button
+          type="button"
+          disabled={isLoggingOut}
+          onClick={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set('switch', 'true');
+            router.push(`/connexion?${params.toString()}`);
+          }}
+          className="cursor-pointer text-xs font-semibold text-[#2F76BB] underline hover:text-[#255e96]"
+        >
+          {t('auth.loginForm.signInOtherAccountLink')}
+        </button>
+      </div>
+    </div>
+  );
+
+  const formContent = isIncompleteOnboardingSession ? (
+    incompleteOnboardingContent
+  ) : (
     <div className="mx-auto w-full max-w-sm">
       <div className="mb-8">
         <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1A1A2E' }}>
@@ -384,10 +544,7 @@ export function LoginForm() {
           style={{ borderBottom: '1px solid #F5F5F5' }}
         >
           <div className="flex items-center gap-2">
-            <HeaderBackButton
-              onClick={localStep === 'phone' ? handleBackToLogin : handleBackToLanding}
-              label={t('common.back')}
-            />
+            <HeaderBackButton onClick={handleHeaderBack} label={t('common.back')} />
           </div>
         </div>
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-10 py-10">
@@ -402,10 +559,7 @@ export function LoginForm() {
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           <div className="flex items-center gap-2">
-            <HeaderBackButton
-              onClick={localStep === 'phone' ? handleBackToLogin : handleBackToLanding}
-              label={t('common.back')}
-            />
+            <HeaderBackButton onClick={handleHeaderBack} label={t('common.back')} />
           </div>
         </div>
         <div className="flex flex-1 flex-col justify-center px-7 py-8">{formContent}</div>

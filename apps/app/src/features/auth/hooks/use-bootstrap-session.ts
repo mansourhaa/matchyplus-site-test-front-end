@@ -7,7 +7,7 @@ import {
 } from '@/lib/mobile-tokens';
 import { isNativeMobileClient } from '@/lib/native';
 import { skipsBootstrapAuthCheck } from '@/lib/route-auth';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { acknowledgeAnonymousBootstrap, fetchCurrentUser } from '../store/auth-slice';
@@ -58,6 +58,52 @@ function registerForegroundListeners() {
   });
 }
 
+let deepLinksRegistered = false;
+
+export function resetDeepLinkListenerForTests() {
+  deepLinksRegistered = false;
+}
+
+function registerDeepLinkListener(router: ReturnType<typeof useRouter>) {
+  if (deepLinksRegistered || typeof window === 'undefined' || !isNativeMobileClient()) return;
+  deepLinksRegistered = true;
+
+  void (async () => {
+    try {
+      const { App } = await import('@capacitor/app');
+      const { Browser } = await import('@capacitor/browser');
+
+      await App.addListener('appUrlOpen', async ({ url }) => {
+        try {
+          await Browser.close().catch(() => {});
+        } catch {
+          // ignore
+        }
+
+        if (!url) return;
+
+        try {
+          const parsed = new URL(url);
+          const path = parsed.host
+            ? `/${parsed.host}${parsed.pathname === '/' ? '' : parsed.pathname}${parsed.search}`
+            : `${parsed.pathname}${parsed.search}`;
+
+          router.push(path);
+          router.refresh();
+        } catch {
+          const match = url.match(/^[a-zA-Z0-9._-]+:\/\/(.+)$/);
+          if (match && match[1]) {
+            router.push(`/${match[1]}`);
+            router.refresh();
+          }
+        }
+      });
+    } catch {
+      // plugin not available or running in non-native environment
+    }
+  })();
+}
+
 /**
  * Resolves the session against the backend once per document load on routes that
  * need it. HttpOnly cookies are not readable from JS, so "authenticated" is only
@@ -72,10 +118,12 @@ function registerForegroundListeners() {
 export function useBootstrapSession() {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     // Wire up foreground restore listeners once, on first mount.
     registerForegroundListeners();
+    registerDeepLinkListener(router);
 
     if (bootstrapStarted) return;
     bootstrapStarted = true;
@@ -85,12 +133,23 @@ export function useBootstrapSession() {
       syncMirroredAccessCookieFromStorage();
 
       const capHasToken = isNativeMobileClient() && Boolean(mobileTokenStorage.getAccess());
-      if (skipsBootstrapAuthCheck(pathname) && !capHasToken) {
+      const hasIncompleteCookie =
+        typeof document !== 'undefined' &&
+        document.cookie.includes('matchy_onboarding_incomplete=1');
+      const isSwitchingAccount =
+        typeof window !== 'undefined' && window.location.search.includes('switch=true');
+
+      if (
+        skipsBootstrapAuthCheck(pathname) &&
+        !capHasToken &&
+        !hasIncompleteCookie &&
+        !isSwitchingAccount
+      ) {
         dispatch(acknowledgeAnonymousBootstrap());
         return;
       }
 
       dispatch(fetchCurrentUser());
     })();
-  }, [dispatch, pathname]);
+  }, [dispatch, pathname, router]);
 }

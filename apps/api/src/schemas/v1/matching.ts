@@ -212,6 +212,28 @@ export const swipeFeedQuerySchema = {
   },
 };
 
+/** GET /discovery/sectors */
+export const discoverySectorsSchema = {
+  tags: ['discovery'],
+  summary: 'List distinct sectors from database profiles',
+  description:
+    'Returns unique active sectors, categories, and service types from profiles in the database.',
+  security: [{ http: [] }],
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        sectors: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
 /** GET /discovery/quota */
 export const discoveryQuotaSchema = {
   tags: ['discovery'],

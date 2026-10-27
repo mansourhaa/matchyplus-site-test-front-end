@@ -294,7 +294,7 @@ export function LiveScorePanel({
 
       {/* Summary bullet highlights matching screenshot */}
       <div className="space-y-1.5 border-b px-4 py-2.5" style={{ borderColor: '#F0F4F8' }}>
-        {profile.distance_km != null && (
+        {profile.distance_km != null && Number.isFinite(profile.distance_km) && (
           <div className="flex items-center gap-1.5 text-xs text-[#555]">
             <MapPin size={13} className="text-[#E74C3C]" />
             <span>
@@ -348,45 +348,67 @@ export function LiveScorePanel({
             >
               {[
                 {
-                  label: t('matching.aiScore.dimensions.skills'),
-                  emoji: '🎯',
-                  score: dims[0]?.score ?? (score > 50 ? score - 15 : 20),
+                  key: 'sector',
+                  label: t('matching.aiScore.dimensions.sector'),
+                  emoji: '🏢',
+                  score:
+                    dims.find((d) => d.dimension?.toLowerCase() === 'sector')?.score ??
+                    (score > 50 ? score - 5 : 40),
                   color: '#E74C3C',
                 },
                 {
-                  label: t('matching.aiScore.dimensions.proximity'),
-                  emoji: '📍',
+                  key: 'roles',
+                  label: t('matching.aiScore.dimensions.roles'),
+                  emoji: '🤝',
                   score:
-                    dims[1]?.score ??
-                    (profile.distance_km ? Math.max(10, 100 - profile.distance_km * 5) : 85),
+                    dims.find((d) => d.dimension?.toLowerCase() === 'roles')?.score ??
+                    (score > 60 ? 70 : 45),
                   color: '#61BCA6',
                 },
                 {
+                  key: 'goals',
                   label: t('matching.aiScore.dimensions.goals'),
                   emoji: '🚀',
-                  score: dims[2]?.score ?? (score > 60 ? score - 10 : 40),
+                  score:
+                    dims.find((d) => d.dimension?.toLowerCase() === 'goals')?.score ??
+                    (score > 60 ? score - 10 : 40),
                   color: '#94A3B8',
                 },
                 {
+                  key: 'proximity',
+                  label: t('matching.aiScore.dimensions.proximity'),
+                  emoji: '📍',
+                  score:
+                    dims.find((d) => d.dimension?.toLowerCase() === 'proximity')?.score ??
+                    (profile.distance_km != null && Number.isFinite(profile.distance_km)
+                      ? Math.max(10, Math.min(100, Math.round(100 - profile.distance_km * 5)))
+                      : 50),
+                  color: '#2F76BB',
+                },
+                {
+                  key: 'availability',
                   label: t('matching.aiScore.dimensions.availability'),
                   emoji: '⏰',
-                  score: dims[3]?.score ?? 65,
+                  score:
+                    dims.find((d) => d.dimension?.toLowerCase() === 'availability')?.score ?? 65,
                   color: '#F5A623',
                 },
                 {
-                  label: t('matching.aiScore.dimensions.languages'),
-                  emoji: '🌐',
-                  score: dims[4]?.score ?? 80,
-                  color: '#3B82F6',
-                },
-                {
+                  key: 'quality',
                   label: t('matching.aiScore.dimensions.quality'),
                   emoji: '⭐',
-                  score: dims[5]?.score ?? 75,
-                  color: '#2F76BB',
+                  score: dims.find((d) => d.dimension?.toLowerCase() === 'quality')?.score ?? 75,
+                  color: '#EAB308',
+                },
+                {
+                  key: 'budget',
+                  label: t('matching.aiScore.dimensions.budget'),
+                  emoji: '💳',
+                  score: dims.find((d) => d.dimension?.toLowerCase() === 'budget')?.score ?? 60,
+                  color: '#8B5CF6',
                 },
               ].map((d, i) => (
-                <div key={d.label}>
+                <div key={d.key}>
                   <div className="mb-1 flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs">{d.emoji}</span>
