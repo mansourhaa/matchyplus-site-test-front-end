@@ -1,5 +1,6 @@
 import authReducer from '@/features/auth/store/auth-slice';
 import { I18nProvider } from '@/features/i18n/i18n-provider';
+import matchingReducer from '@/features/matching/store/matching-slice';
 import profileReducer from '@/features/profile/store/profile-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
@@ -27,16 +28,13 @@ vi.mock('@/lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api')>();
   return {
     ...actual,
-    api: { get: vi.fn(), post: vi.fn() },
+    api: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
   };
 });
 
-// `viewerId` seeds the auth slice ProfileDetailModal reads to decide whether to fire the
-// profile-view notification (see the notify-tests below) — null (the default) keeps every
-// other describe block's tests unaffected, since the notify effect no-ops without a user.
 function buildStore(viewerId: string | null = null) {
   return configureStore({
-    reducer: { profile: profileReducer, auth: authReducer },
+    reducer: { profile: profileReducer, auth: authReducer, matching: matchingReducer },
     preloadedState: {
       auth: {
         status: viewerId ? ('authenticated' as const) : ('unknown' as const),
@@ -77,6 +75,7 @@ function renderModal(
   store: ReturnType<typeof buildStore>,
   overrides: Partial<ProfileDetailData> = {},
   source?: import('./profile-detail-modal').ProfileDetailSource,
+  extraProps: { onConnect?: () => void; onPass?: () => void; onWithdraw?: () => void } = {},
 ) {
   return render(
     <Provider store={store}>
@@ -85,6 +84,7 @@ function renderModal(
           profile={{ ...profile, ...overrides }}
           source={source}
           onClose={() => {}}
+          {...extraProps}
         />
       </I18nProvider>
     </Provider>,
@@ -535,5 +535,44 @@ describe('ProfileDetailModal — auto-enrichment', () => {
     expect(screen.getByText('Français')).toBeInTheDocument();
     expect(screen.getByText('Arabe')).toBeInTheDocument();
     expect(screen.getByText('5 exp.')).toBeInTheDocument();
+  });
+
+  describe('ProfileDetailModal — connection status (MAT-001)', () => {
+    it('shows pending status and cancel request button when profile is pending', () => {
+      renderModal(buildStore(), { id: 'user-pending', pending: true }, 'search', {
+        onConnect: vi.fn(),
+        onPass: vi.fn(),
+      });
+
+      expect(screen.getByText('Demande en attente')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Annuler la demande/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Connecter/i })).not.toBeInTheDocument();
+    });
+
+    it('cancels pending request and reverts to connect button when clicking cancel', async () => {
+      vi.mocked(api.delete).mockResolvedValue({ data: { success: true } });
+      const onWithdraw = vi.fn();
+
+      renderModal(buildStore(), { id: 'user-pending', pending: true }, 'search', {
+        onConnect: vi.fn(),
+        onPass: vi.fn(),
+        onWithdraw,
+      });
+
+      const cancelBtn = screen.getByRole('button', { name: /Annuler la demande/i });
+      fireEvent.click(cancelBtn);
+
+      expect(onWithdraw).toHaveBeenCalled();
+    });
+
+    it('shows send message button when profile is already matched', () => {
+      renderModal(buildStore(), { id: 'user-matched', matched: true }, 'search', {
+        onConnect: vi.fn(),
+        onPass: vi.fn(),
+      });
+
+      expect(screen.getByRole('button', { name: /Envoyer un message/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Connecter/i })).not.toBeInTheDocument();
+    });
   });
 });

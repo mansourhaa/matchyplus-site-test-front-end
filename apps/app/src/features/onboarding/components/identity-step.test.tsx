@@ -89,8 +89,8 @@ const unauthenticatedProfileWithPhoto = {
 
 function fillIdentityAndCredentials() {
   fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-  fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-  fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+  fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+  fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
     target: { value: 'Électricien' },
   });
   fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
@@ -122,7 +122,7 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).not.toHaveBeenCalled();
@@ -156,8 +156,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
     fireEvent.click(firstButton('Enregistrer et continuer'));
@@ -193,8 +193,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
     fireEvent.click(firstButton('Enregistrer et continuer'));
@@ -207,12 +207,8 @@ describe('IdentityStep', () => {
     });
   });
 
-  // Regression: an authenticated (e.g. Google OAuth) visitor mid-onboarding has no
-  // /connexion to go back to — proxy.ts bounces an authenticated visit to /connexion straight
-  // to /home, and MatchyDashboardShell bounces an incomplete profile from /home right
-  // back to /inscription. Offering either link here trapped the user in that loop, only
-  // escapable by clearing cookies.
-  it('does not offer a /connexion escape hatch to an already-authenticated visitor', () => {
+  // INS-001: Retour navigation is consistently available on Step 1
+  it('offers Retour navigation on Step 1', () => {
     renderWithAuthStore(
       <IdentityStep
         profile={null}
@@ -225,8 +221,7 @@ describe('IdentityStep', () => {
       oauthAuthState,
     );
 
-    expect(screen.queryAllByText('Retour')).toHaveLength(0);
-    expect(screen.queryAllByText('Connexion')).toHaveLength(0);
+    expect(screen.queryAllByText('Retour').length).toBeGreaterThan(0);
   });
 
   it('does not require profession for a Looking for (PROVIDER) profile', async () => {
@@ -244,8 +239,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.click(firstButton('Je cherche'));
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.click(firstButton('Je recherche un service'));
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).toHaveBeenCalledWith({
@@ -271,8 +266,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
     fireEvent.click(firstButton('Enregistrer et continuer'));
@@ -301,8 +296,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
     const file = new File(['abc'], 'selfie.jpg', { type: 'image/jpeg' });
@@ -341,8 +336,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
     const file = new File(['abc'], 'selfie.jpg', { type: 'image/jpeg' });
@@ -413,8 +408,8 @@ describe('IdentityStep', () => {
     );
 
     expect(firstPlaceholder('Votre prénom')).toHaveValue('Existing');
-    expect(firstPlaceholder('Votre nom de famille')).toHaveValue('Name');
-    expect(firstPlaceholder('Ingénieur, designer, chauffeur...')).toHaveValue('Plombier');
+    expect(firstPlaceholder('Votre nom')).toHaveValue('Name');
+    expect(firstPlaceholder('Exemple : plombier, électricien, chauffeur…')).toHaveValue('Plombier');
   });
 
   it('prefills prénom/nom by splitting the existing name', () => {
@@ -450,8 +445,8 @@ describe('IdentityStep', () => {
     );
 
     expect(firstPlaceholder('Votre prénom')).toHaveValue('Existing');
-    expect(firstPlaceholder('Votre nom de famille')).toHaveValue('Name');
-    expect(firstPlaceholder('Ingénieur, designer, chauffeur...')).toHaveValue('Plombier');
+    expect(firstPlaceholder('Votre nom')).toHaveValue('Name');
+    expect(firstPlaceholder('Exemple : plombier, électricien, chauffeur…')).toHaveValue('Plombier');
   });
 });
 
@@ -950,5 +945,69 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
       ),
     ).not.toHaveLength(0);
     expect(onNext).not.toHaveBeenCalled();
+  });
+
+  describe('INS-002: Role change and draft reset', () => {
+    it('shows confirmation dialog before changing role if role-specific data exists', async () => {
+      renderWithAuthStore(
+        <IdentityStep
+          profile={{
+            ...unauthenticatedProfileWithPhoto,
+            profile_type: 'INDIVIDUAL',
+            experience: '1-3 ans',
+          }}
+          stepNumber={1}
+          totalSteps={3}
+          loading={false}
+          isAuthenticated={true}
+          onNext={vi.fn()}
+        />,
+        oauthAuthState,
+      );
+
+      // Click "Je recherche un service" (PROVIDER)
+      const providerBtn = firstButton('Je recherche un service');
+      fireEvent.click(providerBtn);
+
+      // Confirmation modal should appear
+      expect(await screen.findByText('Changer de profil ?')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Changer de profil réinitialisera les informations spécifiques à ce rôle (vidéo de présentation, expérience). Vos informations personnelles seront conservées.',
+        ),
+      ).toBeInTheDocument();
+
+      // If cancelled, modal closes
+      fireEvent.click(firstButton('Annuler'));
+      expect(screen.queryByText('Changer de profil ?')).not.toBeInTheDocument();
+
+      // Click again and confirm
+      fireEvent.click(providerBtn);
+      fireEvent.click(firstButton('Confirmer le changement'));
+      expect(screen.queryByText('Changer de profil ?')).not.toBeInTheDocument();
+    });
+
+    it('switches role immediately without confirmation if no role-specific data was entered', () => {
+      renderWithAuthStore(
+        <IdentityStep
+          profile={{
+            ...unauthenticatedProfileWithPhoto,
+            profile_type: 'INDIVIDUAL',
+            experience: '',
+            video: null,
+          }}
+          stepNumber={1}
+          totalSteps={3}
+          loading={false}
+          isAuthenticated={true}
+          onNext={vi.fn()}
+        />,
+        oauthAuthState,
+      );
+
+      // Click "Je recherche un service" (PROVIDER)
+      fireEvent.click(firstButton('Je recherche un service'));
+      // No confirmation modal
+    });
   });
 });

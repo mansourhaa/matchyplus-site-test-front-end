@@ -28,6 +28,7 @@ type InterestsStepProps = {
     price?: string;
   }) => Promise<boolean>;
   onBack: () => void;
+  onSaveDraft?: (patch: Partial<OnboardingProfile>) => void;
 };
 
 export function InterestsStep({
@@ -37,6 +38,7 @@ export function InterestsStep({
   loading,
   onNext,
   onBack,
+  onSaveDraft,
 }: InterestsStepProps) {
   const { t } = useI18n();
   const isIndividual = (profile?.profile_type ?? 'INDIVIDUAL') === 'INDIVIDUAL';
@@ -145,12 +147,24 @@ export function InterestsStep({
     ),
   ].slice(0, 4);
 
+  const handleBack = () => {
+    const effectiveOfferService = isIndividual && offerService;
+    onSaveDraft?.({
+      interests,
+      selected_goals: selectedGoals,
+      offer_service: effectiveOfferService,
+      service_type: effectiveOfferService ? serviceType : undefined,
+      price: effectiveOfferService ? price : undefined,
+    });
+    onBack();
+  };
+
   return (
     <OnboardingStepLayout
       step={stepNumber}
       totalSteps={totalSteps}
       stepLabel={t('onboarding.interests.title')}
-      onBack={onBack}
+      onBack={handleBack}
       backLabel={t('common.back')}
     >
       <div className="mx-auto w-full max-w-2xl">
@@ -164,14 +178,6 @@ export function InterestsStep({
           style={{ fontSize: '14px', color: '#888', marginBottom: '28px' }}
         >
           <span>{t('onboarding.interests.desc')}</span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-matchy.svg"
-            alt="Matchy+"
-            height={16}
-            style={{ height: 16, width: 'auto', display: 'inline-block' }}
-          />
-          <span>.</span>
         </p>
 
         <div className="space-y-8 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
@@ -446,7 +452,7 @@ export function InterestsStep({
         )}
 
         <StepCtaRow
-          onBack={onBack}
+          onBack={handleBack}
           onContinue={handleNext}
           continueLabel={
             loading

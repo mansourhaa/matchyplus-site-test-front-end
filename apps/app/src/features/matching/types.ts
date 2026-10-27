@@ -105,6 +105,10 @@ export type SwipeFeedResponse = {
   quota: SwipeQuota;
 };
 
+export type DiscoverySectorsResponse = {
+  sectors: string[];
+};
+
 export type MatchStateResponse = {
   matches: MatchRow[];
   pending: PendingRow[];
@@ -172,6 +176,7 @@ export type MatchingState = {
   feedLoading: boolean;
   feedError: string | null;
   feedLoaded: boolean;
+  currentFeedRequestId?: string;
   matches: MatchRow[];
   pending: PendingRow[];
   matchesLoading: boolean;
@@ -189,4 +194,5 @@ export type MatchingState = {
   historyLoading: boolean;
   historyError: string | null;
   historyFilter: SwipeHistoryFilter;
+  sectors?: string[];
 };

@@ -1,6 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
+import Image from 'next/image';
 
 import { Parallax, Reveal } from './motion';
 
@@ -42,9 +43,11 @@ export function Explore() {
           className="relative z-10 flex justify-center md:col-span-6 lg:col-span-7"
         >
           <div className="relative flex w-full justify-center drop-shadow-2xl">
-            <img
+            <Image
               src="/showcase/explore-map.png"
-              alt="Matchy Explore Carte Panafricaine des Talents"
+              alt={t('landing.exploreImageAlt')}
+              width={736}
+              height={560}
               className="h-auto max-h-[460px] w-full max-w-[480px] object-contain sm:max-w-[540px] md:max-h-[500px] md:max-w-[500px] lg:max-h-[580px] lg:max-w-[700px]"
             />
           </div>

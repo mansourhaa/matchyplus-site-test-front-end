@@ -18,6 +18,7 @@ import {
   DiscoverEmptyFeed,
   DiscoverEmptyPicks,
 } from '@/features/matching/components/discover-empty-feed';
+import { DiscoverFiltersSheet } from '@/features/matching/components/discover-filters-sheet';
 import {
   AIPicksHeader,
   AIRecommendationItem,
@@ -26,7 +27,15 @@ import {
 } from '@/features/matching/components/live-ai-score';
 import { MatchCelebrationModal } from '@/features/matching/components/match-celebration-modal';
 import { ProfileDetailModal } from '@/features/matching/components/profile-detail-modal';
+import { SECTOR_PILLS } from '@/features/matching/components/search-filters-sheet';
 import { SwipeLimitModal } from '@/features/matching/components/swipe-limit-modal';
+import {
+  DEFAULT_DISCOVER_FILTERS,
+  type DiscoverFeedFilters,
+  MAX_DISTANCE_KM,
+  readStoredDiscoverFilters,
+  storeDiscoverFilters,
+} from '@/features/matching/lib/distance-filter';
 import { formatRole } from '@/features/matching/lib/format-role';
 import {
   clearCelebration,
@@ -35,6 +44,7 @@ import {
   closeQuotaModal,
   fetchMatchState,
   fetchQuota,
+  fetchSectors,
   fetchSwipeFeed,
   selectMatching,
   selectTopFeedProfile,
@@ -49,25 +59,116 @@ import { useVideoSettings } from '@/lib/video-settings';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
 import {
   AlertTriangle,
+  Baby,
   Bell,
   Bookmark,
+  Briefcase,
   Check,
+  ChevronDown,
+  Flower2,
+  Hammer,
   Heart,
+  Laptop,
+  Layers,
   Loader2,
   Lock,
   MapPin,
   Play,
+  Search,
   SlidersHorizontal,
+  Sparkles,
   Star,
   ThumbsDown,
+  Truck,
+  Utensils,
   Volume2,
   VolumeX,
+  Wrench,
   X,
   Zap,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
+
+const emptySubscribe = () => () => {};
+
+export const BASE_SECTOR_VALUES = [
+  'Informatique / Tech',
+  'BTP / Artisanat',
+  'Transport',
+  'Ménage',
+  'Freelance',
+  'Cuisine',
+  'Jardinage',
+  'Garde enfants',
+  'Plomberie',
+  'Électricité',
+];
+
+export function getSectorIcon(sector: string | null) {
+  if (!sector) return <Layers size={14} className="shrink-0" />;
+  const s = sector.trim().toLowerCase();
+  if (s.includes('tech') || s.includes('informatique'))
+    return <Laptop size={14} className="shrink-0" />;
+  if (s.includes('btp') || s.includes('artisanat'))
+    return <Hammer size={14} className="shrink-0" />;
+  if (s.includes('transport') || s.includes('chauffeur'))
+    return <Truck size={14} className="shrink-0" />;
+  if (s.includes('ménage') || s.includes('menage'))
+    return <Sparkles size={14} className="shrink-0" />;
+  if (s.includes('freelance')) return <Briefcase size={14} className="shrink-0" />;
+  if (s.includes('cuisine') || s.includes('restauration'))
+    return <Utensils size={14} className="shrink-0" />;
+  if (s.includes('jardinage')) return <Flower2 size={14} className="shrink-0" />;
+  if (s.includes('garde') || s.includes('enfant')) return <Baby size={14} className="shrink-0" />;
+  if (s.includes('plomberie')) return <Wrench size={14} className="shrink-0" />;
+  if (s.includes('électricité') || s.includes('electricite'))
+    return <Zap size={14} className="shrink-0" />;
+  return <Briefcase size={14} className="shrink-0" />;
+}
+
+export function DiscoverCardSkeleton() {
+  return (
+    <div
+      data-testid="discover-card-skeleton"
+      className="absolute flex animate-pulse flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 shadow-xl"
+      style={{
+        width: 'min(92%, 440px)',
+        height: 'min(90%, 560px)',
+        zIndex: 1,
+      }}
+    >
+      <div className="h-60 w-full rounded-2xl bg-slate-200/80" />
+      <div className="space-y-3 pt-3">
+        <div className="h-6 w-3/4 rounded-md bg-slate-200" />
+        <div className="h-4 w-1/2 rounded-md bg-slate-200" />
+        <div className="flex gap-2 pt-2">
+          <div className="h-7 w-20 rounded-full bg-slate-200" />
+          <div className="h-7 w-28 rounded-full bg-slate-200" />
+        </div>
+      </div>
+      <div className="flex justify-center gap-6 pt-2">
+        <div className="h-14 w-14 rounded-full bg-slate-200" />
+        <div className="h-14 w-14 rounded-full bg-slate-200" />
+      </div>
+    </div>
+  );
+}
+
+function formatSectorLabel(sector: string, t: (key: string) => string): string {
+  const s = sector.trim().toLowerCase();
+  if (s === 'transport') return t('matching.categories.transport');
+  if (s === 'ménage' || s === 'menage') return t('matching.categories.cleaning');
+  if (s === 'freelance') return t('matching.categories.freelance');
+  if (s === 'cuisine') return t('matching.categories.cooking');
+  if (s === 'jardinage') return t('matching.categories.gardening');
+  if (s === 'garde enfants' || s === "garde d'enfants") return t('matching.categories.childcare');
+  if (s === 'plomberie') return t('matching.interestsList.plomberie');
+  if (s === 'électricité' || s === 'electricite') return t('matching.interestsList.electricite');
+  return formatRole(sector, t) || sector;
+}
 
 export function DiscoverView() {
   const { t, locale } = useI18n();
@@ -124,34 +225,125 @@ export function DiscoverView() {
   const [quotaModalReason, setQuotaModalReason] = useState<'limit' | 'status' | 'locked_profile'>(
     'limit',
   );
-  const [maxDistanceKm, setMaxDistanceKm] = useState<number | null>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = window.localStorage.getItem('matchy_discovery_radius_km');
-      if (stored) {
-        const parsed = Number(stored);
-        if (Number.isFinite(parsed) && parsed > 0 && parsed <= 200) return parsed;
-      }
-    }
-    return null;
+  const searchParams = useSearchParams();
+
+  const [selectedSector, setSelectedSector] = useState<string | null>(() => {
+    const urlSecteur = searchParams?.get('secteur');
+    return urlSecteur ?? null;
   });
-  const [distancePopoverOpen, setDistancePopoverOpen] = useState(false);
-  const distancePopoverRef = useRef<HTMLDivElement>(null);
+
+  const [filters, setFilters] = useState<DiscoverFeedFilters>(() => {
+    const stored = readStoredDiscoverFilters();
+    const urlKm = searchParams?.get('km');
+
+    const distanceKm = urlKm && /^\d+$/.test(urlKm) ? Number(urlKm) : stored.distanceKm;
+
+    return { distanceKm };
+  });
+
+  const [isFiltersSheetOpen, setIsFiltersSheetOpen] = useState(false);
+  const swipedUserIdsRef = useRef<Set<string>>(new Set());
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+  const [dropdownCoords, setDropdownCoords] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
-    if (!distancePopoverOpen) return;
+    if (!isSearchOpen) return;
+    const updatePosition = () => {
+      if (!searchButtonRef.current) return;
+      const rect = searchButtonRef.current.getBoundingClientRect();
+      const dropdownWidth = Math.min(
+        340,
+        typeof window !== 'undefined' ? window.innerWidth - 32 : 320,
+      );
+      let left = rect.left;
+      if (typeof window !== 'undefined' && left + dropdownWidth > window.innerWidth - 16) {
+        left = Math.max(16, window.innerWidth - dropdownWidth - 16);
+      }
+      setDropdownCoords({
+        top: rect.bottom ? rect.bottom + 8 : 100,
+        left: rect.left ? Math.max(16, left) : 16,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isSearchOpen]);
+
+  const syncUrlAndStorage = (sector: string | null, currentFilters: DiscoverFeedFilters) => {
+    storeDiscoverFilters(currentFilters);
+    if (typeof window === 'undefined') return;
+    try {
+      const url = new URL(window.location.href);
+      if (sector) url.searchParams.set('secteur', sector);
+      else url.searchParams.delete('secteur');
+
+      if (currentFilters.distanceKm !== null && currentFilters.distanceKm < MAX_DISTANCE_KM) {
+        url.searchParams.set('km', String(currentFilters.distanceKm));
+      } else {
+        url.searchParams.delete('km');
+      }
+
+      window.history.replaceState(null, '', url.pathname + (url.search ? url.search : ''));
+    } catch {
+      // URL or history state guard
+    }
+  };
+
+  useEffect(() => {
+    if (!isSearchOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (distancePopoverRef.current && !distancePopoverRef.current.contains(e.target as Node)) {
-        setDistancePopoverOpen(false);
+      if (
+        searchDropdownRef.current &&
+        !searchDropdownRef.current.contains(e.target as Node) &&
+        searchButtonRef.current &&
+        !searchButtonRef.current.contains(e.target as Node)
+      ) {
+        setIsSearchOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [distancePopoverOpen]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSearchOpen]);
+
+  useEffect(() => {
+    if (isSearchOpen) {
+      const timer = setTimeout(() => searchInputRef.current?.focus(), 50);
+      return () => clearTimeout(timer);
+    }
+    const timer = setTimeout(() => {
+      setSearchQuery('');
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [isSearchOpen]);
 
   useEffect(() => {
     void dispatch(fetchNotifications());
     void dispatch(fetchQuota());
     void dispatch(fetchFavoriteIds());
+    void dispatch(fetchSectors());
   }, [dispatch]);
 
   useAutoCaptureGrantedLocation();
@@ -167,24 +359,54 @@ export function DiscoverView() {
         fetchSwipeFeed({
           latitude,
           longitude,
-          maxDistanceKm: maxDistanceKm ?? undefined,
+          sector: selectedSector ?? undefined,
+          maxDistanceKm: filters.distanceKm ?? undefined,
         }),
       );
     }
-  }, [dispatch, locationSynced, latitude, longitude, matching.feedLoaded, maxDistanceKm]);
+  }, [dispatch, locationSynced, latitude, longitude, matching.feedLoaded, selectedSector, filters]);
 
-  const handleSelectDistance = (dist: number | null) => {
-    setMaxDistanceKm(dist);
-    if (typeof window !== 'undefined') {
-      if (dist != null) window.localStorage.setItem('matchy_discovery_radius_km', String(dist));
-      else window.localStorage.removeItem('matchy_discovery_radius_km');
-    }
+  const handleSelectSector = (sector: string | null) => {
+    setSelectedSector(sector);
+    syncUrlAndStorage(sector, filters);
     if (locationSynced && latitude != null && longitude != null) {
       void dispatch(
         fetchSwipeFeed({
           latitude,
           longitude,
-          maxDistanceKm: dist ?? undefined,
+          sector: sector ?? undefined,
+          maxDistanceKm: filters.distanceKm ?? undefined,
+        }),
+      );
+    }
+  };
+
+  const handleUpdateFilters = (nextFilters: DiscoverFeedFilters) => {
+    setFilters(nextFilters);
+    syncUrlAndStorage(selectedSector, nextFilters);
+    if (locationSynced && latitude != null && longitude != null) {
+      void dispatch(
+        fetchSwipeFeed({
+          latitude,
+          longitude,
+          sector: selectedSector ?? undefined,
+          maxDistanceKm: nextFilters.distanceKm ?? undefined,
+        }),
+      );
+    }
+  };
+
+  const handleResetAllFilters = () => {
+    setSelectedSector(null);
+    setFilters(DEFAULT_DISCOVER_FILTERS);
+    syncUrlAndStorage(null, DEFAULT_DISCOVER_FILTERS);
+    if (locationSynced && latitude != null && longitude != null) {
+      void dispatch(
+        fetchSwipeFeed({
+          latitude,
+          longitude,
+          sector: undefined,
+          maxDistanceKm: undefined,
         }),
       );
     }
@@ -202,6 +424,7 @@ export function DiscoverView() {
 
   const onPass = async () => {
     if (!top || matching.swipeLoading) return;
+    swipedUserIdsRef.current.add(top.id);
     setSwipeDirection('left');
     try {
       await dispatch(swipeProfile({ targetUserId: top.id, direction: 'left', profile: top }));
@@ -219,6 +442,7 @@ export function DiscoverView() {
       setForceQuotaModal(true);
       return;
     }
+    swipedUserIdsRef.current.add(top.id);
     setSwipeDirection('right');
     try {
       const result = await dispatch(
@@ -260,6 +484,74 @@ export function DiscoverView() {
     }
   };
 
+  const dynamicSectors = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+
+    const add = (val?: string | null) => {
+      if (!val || typeof val !== 'string') return;
+      const trimmed = val.trim();
+      if (!trimmed) return;
+      const lower = trimmed.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        result.push(trimmed);
+      }
+    };
+
+    // 1. Base sector values (ensures primary sectors are always present)
+    for (const s of BASE_SECTOR_VALUES) {
+      add(s);
+    }
+
+    // 2. Dynamic sectors fetched from database via /v1/discovery/sectors
+    const dbSectors = matching.sectors ?? [];
+    for (const s of dbSectors) {
+      add(s);
+    }
+
+    // 3. Dynamic sectors extracted from available feed profiles
+    const feedList = matching.feed ?? [];
+    for (const p of feedList) {
+      add(p.category);
+      add(p.activity_sector);
+      add(p.service_type);
+      add(p.job);
+    }
+
+    return result;
+  }, [matching.sectors, matching.feed]);
+
+  const visibleSectors = useMemo(() => dynamicSectors.slice(0, 7), [dynamicSectors]);
+  const otherSectors = useMemo(() => dynamicSectors.slice(7), [dynamicSectors]);
+
+  const filteredDropdownSectors = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return otherSectors;
+    return dynamicSectors.filter((sector) => {
+      const label = formatSectorLabel(sector, t).toLowerCase();
+      return label.includes(q) || sector.toLowerCase().includes(q);
+    });
+  }, [searchQuery, otherSectors, dynamicSectors, t]);
+
+  const isSearchActive = Boolean(selectedSector && !visibleSectors.includes(selectedSector));
+
+  const activeNonSectorFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.distanceKm !== null && filters.distanceKm < MAX_DISTANCE_KM) count += 1;
+    return count;
+  }, [filters]);
+
+  const hasAnyActiveFilter = Boolean(selectedSector || activeNonSectorFilterCount > 0);
+
+  const resultCount = matching.feed.length;
+  const resultCountLabel =
+    locale === 'ar'
+      ? `${resultCount} ملف`
+      : locale === 'en'
+        ? `${resultCount} ${resultCount === 1 ? 'professional' : 'professionals'}`
+        : `${resultCount} ${resultCount === 1 ? 'professionnel' : 'professionnels'}`;
+
   const showHomeFeedLoader = locationSynced && (matching.feedLoading || !matching.feedLoaded);
 
   const title = locale === 'fr' ? 'Accueil' : locale === 'ar' ? 'الرئيسية' : t('nav.home');
@@ -271,154 +563,198 @@ export function DiscoverView() {
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
         {/* Main swipe column */}
-        <div
-          className={
-            top
-              ? 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8'
-              : 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8'
-          }
-        >
-          {/* Distance radius quick control bar */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-3 pb-2 md:px-8">
           {!locationRequired && (
-            <div
-              ref={distancePopoverRef}
-              className="relative mx-auto mb-2 flex w-full max-w-[440px] shrink-0 items-center justify-between gap-2 py-1"
-            >
-              {/* Presets row */}
-              <div
-                role="group"
-                aria-label={t('search.maxDistance')}
-                className="no-scrollbar flex flex-1 items-center gap-1.5 overflow-x-auto"
-              >
+            <div className="relative z-30 mb-6 flex flex-col gap-2.5">
+              {/* Top row: Category chips (horizontal scroll with right edge fade) + Filtres trigger button */}
+              <div className="flex w-full items-center gap-2">
+                {/* Scrollable single row of category chips */}
+                <div className="relative flex min-w-0 flex-1 items-center">
+                  <div
+                    role="tablist"
+                    aria-label="Secteurs d'activité"
+                    className="no-scrollbar flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1 pr-10"
+                  >
+                    {/* 'Tout' pill */}
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={selectedSector === null}
+                      data-testid="sector-pill-all"
+                      onClick={() => handleSelectSector(null)}
+                      className="flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-2xs transition-all active:scale-95"
+                      style={{
+                        backgroundColor: selectedSector === null ? matchyBrand.blue : '#FFFFFF',
+                        color: selectedSector === null ? '#FFFFFF' : '#475569',
+                        border:
+                          selectedSector === null
+                            ? `1px solid ${matchyBrand.blue}`
+                            : '1px solid #E2E8F0',
+                      }}
+                    >
+                      <Layers size={14} className="shrink-0" />
+                      <span>{locale === 'ar' ? 'الكل' : locale === 'en' ? 'All' : 'Tout'}</span>
+                    </button>
+
+                    {/* Sector search dropdown trigger pill */}
+                    <button
+                      type="button"
+                      ref={searchButtonRef}
+                      data-testid="sector-search-toggle"
+                      onClick={() => setIsSearchOpen((prev) => !prev)}
+                      aria-expanded={isSearchOpen}
+                      aria-label={
+                        locale === 'ar'
+                          ? 'تصفية حسب القطاع'
+                          : locale === 'en'
+                            ? 'Filter by sector'
+                            : 'Filtrer par secteur'
+                      }
+                      className="flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95"
+                      style={{
+                        backgroundColor:
+                          isSearchActive || isSearchOpen ? 'rgba(47, 118, 187, 0.1)' : '#FFFFFF',
+                        color: isSearchActive || isSearchOpen ? matchyBrand.blue : '#475569',
+                        borderColor: isSearchActive || isSearchOpen ? matchyBrand.blue : '#E2E8F0',
+                      }}
+                    >
+                      <Search size={13} strokeWidth={2} />
+                      <span>
+                        {locale === 'ar' ? 'القطاع' : locale === 'en' ? 'Sector' : 'Secteur'}
+                      </span>
+                      <ChevronDown
+                        size={13}
+                        className={`transition-transform duration-200 ${
+                          isSearchOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+
+                    {/* Visible sector pills with icons and >=40px touch height */}
+                    {visibleSectors.map((sector) => {
+                      const isSelected = selectedSector === sector;
+                      return (
+                        <button
+                          key={sector}
+                          type="button"
+                          role="tab"
+                          aria-selected={isSelected}
+                          data-testid={`sector-pill-${sector}`}
+                          onClick={() => handleSelectSector(isSelected ? null : sector)}
+                          className="flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95"
+                          style={{
+                            backgroundColor: isSelected ? matchyBrand.blue : '#FFFFFF',
+                            color: isSelected ? '#FFFFFF' : '#475569',
+                            border: isSelected
+                              ? `1px solid ${matchyBrand.blue}`
+                              : '1px solid #E2E8F0',
+                          }}
+                        >
+                          {getSectorIcon(sector)}
+                          <span>{formatSectorLabel(sector, t)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Fade on right edge so users see there is more content */}
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-l from-[#F8FAFC] to-transparent"
+                  />
+                </div>
+
+                {/* "Filtres" panel trigger button with active badge */}
                 <button
                   type="button"
-                  data-testid="distance-preset-all"
-                  onClick={() => handleSelectDistance(null)}
-                  className="shrink-0 rounded-full px-3 py-1 text-xs font-bold shadow-2xs transition-all"
+                  data-testid="discover-filters-trigger-btn"
+                  onClick={() => setIsFiltersSheetOpen(true)}
+                  aria-label="Filtres"
+                  className="flex min-h-[40px] shrink-0 cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95"
                   style={{
-                    backgroundColor: maxDistanceKm === null ? matchyBrand.blue : '#FFFFFF',
-                    color: maxDistanceKm === null ? '#FFFFFF' : '#475569',
+                    backgroundColor:
+                      activeNonSectorFilterCount > 0 ? `${matchyBrand.blue}15` : '#FFFFFF',
+                    color: activeNonSectorFilterCount > 0 ? matchyBrand.blue : '#475569',
                     border:
-                      maxDistanceKm === null
-                        ? `1px solid ${matchyBrand.blue}`
+                      activeNonSectorFilterCount > 0
+                        ? `1.5px solid ${matchyBrand.blue}`
                         : '1px solid #E2E8F0',
                   }}
                 >
-                  {locale === 'ar' ? 'الكل' : locale === 'en' ? 'All' : 'Tout'}
-                </button>
-
-                {[5, 10, 25, 50, 100].map((preset) => {
-                  const isSelected = maxDistanceKm === preset;
-                  return (
-                    <button
-                      key={preset}
-                      type="button"
-                      data-testid={`distance-preset-${preset}`}
-                      onClick={() => handleSelectDistance(isSelected ? null : preset)}
-                      className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300"
-                      style={{
-                        backgroundColor: isSelected ? matchyBrand.blue : '#FFFFFF',
-                        color: isSelected ? '#FFFFFF' : '#475569',
-                        border: isSelected ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
-                      }}
+                  <SlidersHorizontal size={15} className="shrink-0" />
+                  <span>{locale === 'fr' ? 'Filtres' : 'Filters'}</span>
+                  {activeNonSectorFilterCount > 0 && (
+                    <span
+                      data-testid="discover-filters-count-badge"
+                      className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold text-white"
+                      style={{ backgroundColor: matchyBrand.blue }}
                     >
-                      {preset} km
-                    </button>
-                  );
-                })}
+                      {activeNonSectorFilterCount}
+                    </span>
+                  )}
+                </button>
               </div>
 
-              {/* Custom slider toggle button */}
-              <button
-                type="button"
-                data-testid="distance-slider-toggle"
-                onClick={() => setDistancePopoverOpen((open) => !open)}
-                aria-expanded={distancePopoverOpen}
-                title={t('search.maxDistance')}
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-2xs transition hover:bg-slate-50"
-              >
-                <SlidersHorizontal size={13} className="text-[#2F76BB]" />
-                <span>
-                  {maxDistanceKm != null
-                    ? `${maxDistanceKm} km`
-                    : locale === 'ar'
-                      ? 'مخصص'
-                      : 'Rayon'}
-                </span>
-              </button>
-
-              {/* Slider popover menu */}
-              {distancePopoverOpen && (
+              {/* Second row: Active filters removable chips row + result count + Reset link */}
+              {(hasAnyActiveFilter || resultCount > 0) && (
                 <div
-                  data-testid="distance-slider-popover"
-                  className="absolute top-9 right-0 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-300/40"
+                  data-testid="discover-active-filters-bar"
+                  className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs"
                 >
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">
-                      {t('search.maxDistance')}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {/* Live result count */}
+                    <span
+                      data-testid="discover-live-count"
+                      className="rounded-full bg-slate-100 px-2.5 py-1 text-[12px] font-semibold text-slate-600"
+                    >
+                      {resultCountLabel}
                     </span>
-                    <span className="text-xs font-extrabold text-[#2F76BB]">
-                      {maxDistanceKm ?? 50} km
-                    </span>
+
+                    {/* Active removable chips */}
+                    {selectedSector && (
+                      <button
+                        type="button"
+                        data-testid="active-chip-sector"
+                        onClick={() => handleSelectSector(null)}
+                        className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                      >
+                        {getSectorIcon(selectedSector)}
+                        <span>{formatSectorLabel(selectedSector, t)}</span>
+                        <X size={12} className="text-slate-400 hover:text-slate-600" />
+                      </button>
+                    )}
+
+                    {filters.distanceKm !== null && filters.distanceKm < MAX_DISTANCE_KM && (
+                      <button
+                        type="button"
+                        data-testid="active-chip-distance"
+                        onClick={() => handleUpdateFilters({ ...filters, distanceKm: null })}
+                        className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                      >
+                        <MapPin size={12} className="text-[#2F76BB]" />
+                        <span>≤ {filters.distanceKm} km</span>
+                        <X size={12} className="text-slate-400 hover:text-slate-600" />
+                      </button>
+                    )}
                   </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="100"
-                    step="1"
-                    value={maxDistanceKm ?? 50}
-                    data-testid="distance-range-slider"
-                    onChange={(e) => handleSelectDistance(Number(e.target.value))}
-                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-[#2F76BB]"
-                  />
-                  <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
-                    <span>1 km</span>
-                    <span>50 km</span>
-                    <span>100 km</span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5">
+
+                  {hasAnyActiveFilter && (
                     <button
                       type="button"
-                      data-testid="distance-reset-button"
-                      onClick={() => handleSelectDistance(null)}
-                      className="text-xs font-medium text-slate-500 hover:text-slate-800"
+                      data-testid="discover-reset-all-btn"
+                      onClick={handleResetAllFilters}
+                      className="cursor-pointer text-xs font-semibold text-slate-500 transition-colors hover:text-[#2F76BB] hover:underline"
                     >
-                      {locale === 'ar'
-                        ? 'إعادة تعيين'
-                        : locale === 'en'
-                          ? 'Reset'
-                          : 'Réinitialiser'}
+                      {locale === 'fr' ? 'Réinitialiser' : 'Reset'}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setDistancePopoverOpen(false)}
-                      className="rounded-lg bg-[#2F76BB] px-3 py-1 text-xs font-bold text-white shadow-xs hover:bg-[#2563A0]"
-                    >
-                      {locale === 'ar' ? 'تم' : locale === 'en' ? 'Done' : 'Appliquer'}
-                    </button>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
           )}
-
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             {showHomeFeedLoader ? (
-              <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-                <div
-                  className="mx-auto mb-3 animate-spin"
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    border: '3px solid #D9E6F5',
-                    borderTopColor: '#2F76BB',
-                  }}
-                />
-                <p className="mt-2 text-[#888]" style={{ fontSize: 14 }}>
-                  {t('matching.loadingProfiles')}
-                </p>
-              </div>
+              <DiscoverCardSkeleton />
             ) : locationRequired ? null : (
               <>
                 {top && (
@@ -685,11 +1021,12 @@ export function DiscoverView() {
                             </p>
                           </div>
                         </div>
-                        {(top.distance_km != null || top.city) && (
+                        {((top.distance_km != null && Number.isFinite(top.distance_km)) ||
+                          top.city) && (
                           <div className="mb-2 flex items-center gap-1">
                             <MapPin size={12} color="#61BCA6" />
                             <span className="text-white opacity-75" style={{ fontSize: 12 }}>
-                              {top.distance_km != null
+                              {top.distance_km != null && Number.isFinite(top.distance_km)
                                 ? t('matching.kmAway', { km: top.distance_km })
                                 : top.city}
                             </span>
@@ -729,6 +1066,7 @@ export function DiscoverView() {
                   <DiscoverEmptyFeed
                     errorKey={matching.feedError}
                     refreshing={matching.feedLoading}
+                    hasActiveFilters={hasAnyActiveFilter}
                     onRefresh={() =>
                       void dispatch(
                         fetchSwipeFeed(
@@ -736,12 +1074,15 @@ export function DiscoverView() {
                             ? {
                                 latitude,
                                 longitude,
-                                maxDistanceKm: maxDistanceKm ?? undefined,
+                                sector: selectedSector ?? undefined,
+                                maxDistanceKm: filters.distanceKm ?? undefined,
                               }
                             : undefined,
                         ),
                       )
                     }
+                    onExpandRadius={() => handleUpdateFilters({ ...filters, distanceKm: null })}
+                    onResetFilters={handleResetAllFilters}
                   />
                 )}
               </>
@@ -1011,6 +1352,123 @@ export function DiscoverView() {
           }}
         />
       )}
+
+      <DiscoverFiltersSheet
+        open={isFiltersSheetOpen}
+        filters={filters}
+        resultCount={matching.feed.length}
+        onClose={() => setIsFiltersSheetOpen(false)}
+        onChange={handleUpdateFilters}
+        onReset={() => handleUpdateFilters(DEFAULT_DISCOVER_FILTERS)}
+      />
+
+      {mounted &&
+        isSearchOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={searchDropdownRef}
+            data-testid="sector-search-dropdown"
+            style={{
+              position: 'fixed',
+              top: dropdownCoords?.top ?? 100,
+              left: dropdownCoords?.left ?? 16,
+              zIndex: 90,
+            }}
+            className="w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200/90 bg-white p-3 shadow-2xl transition-all duration-150 sm:w-80"
+          >
+            <div className="sticky top-0 z-10 bg-white pb-2">
+              <div className="relative">
+                <Search
+                  size={14}
+                  className="absolute top-1/2 left-2.5 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  data-testid="sector-search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={
+                    locale === 'ar'
+                      ? 'ابحث عن قطاع...'
+                      : locale === 'en'
+                        ? 'Search a sector...'
+                        : 'Rechercher un secteur...'
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pr-7 pl-8 text-xs text-slate-800 placeholder-slate-400 focus:border-[#2F76BB] focus:bg-white focus:outline-hidden"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute top-1/2 right-2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between px-1 pt-0.5 pb-1.5 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+              <span>{locale === 'ar' ? 'القطاعات' : locale === 'en' ? 'Sectors' : 'Secteurs'}</span>
+              {selectedSector && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSelectSector(null);
+                    setIsSearchOpen(false);
+                  }}
+                  className="cursor-pointer text-xs font-semibold text-[#2F76BB] hover:underline"
+                >
+                  {locale === 'ar' ? 'إعادة ضبط' : locale === 'en' ? 'Clear' : 'Effacer'}
+                </button>
+              )}
+            </div>
+
+            <div className="no-scrollbar max-h-72 space-y-1 overflow-y-auto py-0.5">
+              {filteredDropdownSectors.length === 0 ? (
+                <div className="px-3 py-3 text-center text-xs text-slate-400">
+                  {locale === 'ar'
+                    ? 'لا توجد نتائج'
+                    : locale === 'en'
+                      ? 'No sectors found'
+                      : 'Aucun secteur trouvé'}
+                </div>
+              ) : (
+                filteredDropdownSectors.map((sector) => {
+                  const isSelected = selectedSector === sector;
+                  return (
+                    <button
+                      key={sector}
+                      type="button"
+                      role="tab"
+                      aria-selected={isSelected}
+                      data-testid={`sector-pill-${sector}`}
+                      onClick={() => {
+                        handleSelectSector(isSelected ? null : sector);
+                        setIsSearchOpen(false);
+                      }}
+                      className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-slate-50"
+                      style={{
+                        backgroundColor: isSelected ? 'rgba(47, 118, 187, 0.08)' : 'transparent',
+                        color: isSelected ? matchyBrand.blue : '#334155',
+                        fontWeight: isSelected ? 600 : 500,
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        {getSectorIcon(sector)}
+                        <span>{formatSectorLabel(sector, t)}</span>
+                      </div>
+                      {isSelected && <Check size={13} className="text-[#2F76BB]" />}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

@@ -4,15 +4,18 @@ import matchingReducer from '@/features/matching/store/matching-slice';
 import notificationsReducer from '@/features/notifications/store/notifications-slice';
 import { api } from '@/lib/api';
 import { configureStore } from '@reduxjs/toolkit';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DiscoverView } from './discover-view';
 
 const pushMock = vi.fn();
+let mockSearchParams = new URLSearchParams();
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock }),
+  useSearchParams: () => mockSearchParams,
 }));
 
 vi.mock('@/features/location/location-context', async (importOriginal) => {
@@ -63,12 +66,12 @@ const mockFeedProfile = {
   liked_me: false,
 };
 
-function renderDiscoverView() {
+function renderDiscoverView(initialProfiles = [mockFeedProfile]) {
   vi.mocked(api.get).mockImplementation((url: string) => {
     if (url === '/discovery/swipe-feed') {
       return Promise.resolve({
         data: {
-          profiles: [mockFeedProfile],
+          profiles: initialProfiles,
           quota: {
             plan: 'FREE',
             unlimited: false,
@@ -89,6 +92,13 @@ function renderDiscoverView() {
           limit: 20,
           remaining: 20,
           resets_at: 'midnight_utc',
+        },
+      });
+    }
+    if (url === '/discovery/sectors') {
+      return Promise.resolve({
+        data: {
+          sectors: ['Informatique / Tech', 'BTP / Artisanat', 'Transport', 'Plomberie'],
         },
       });
     }
@@ -115,9 +125,10 @@ function renderDiscoverView() {
   );
 }
 
-describe('DiscoverView — Distance Radius Control (HOME-002)', () => {
+describe('DiscoverView — Upgraded Filter System', () => {
   beforeEach(() => {
     window.localStorage.setItem('matchy_locale', 'fr');
+    mockSearchParams = new URLSearchParams();
   });
 
   afterEach(() => {
@@ -125,86 +136,257 @@ describe('DiscoverView — Distance Radius Control (HOME-002)', () => {
     vi.clearAllMocks();
   });
 
-  it('renders distance presets and custom slider toggle button', async () => {
-    renderDiscoverView();
+  describe('1. Structure & Category Chips', () => {
+    it('renders single row of category chips with "Tout" selected and icons', async () => {
+      renderDiscoverView();
 
-    const allPreset = await screen.findByTestId('distance-preset-all');
-    expect(allPreset).toBeInTheDocument();
-    expect(screen.getByTestId('distance-preset-5')).toBeInTheDocument();
-    expect(screen.getByTestId('distance-preset-10')).toBeInTheDocument();
-    expect(screen.getByTestId('distance-preset-25')).toBeInTheDocument();
-    expect(screen.getByTestId('distance-preset-50')).toBeInTheDocument();
-    expect(screen.getByTestId('distance-preset-100')).toBeInTheDocument();
-    expect(screen.getByTestId('distance-slider-toggle')).toBeInTheDocument();
-  });
+      const allPill = await screen.findByTestId('sector-pill-all');
+      expect(allPill).toBeInTheDocument();
+      expect(allPill).toHaveAttribute('aria-selected', 'true');
 
-  it('filters swipe feed when a distance preset is selected', async () => {
-    renderDiscoverView();
+      const techPill = screen.getByTestId('sector-pill-Informatique / Tech');
+      expect(techPill).toBeInTheDocument();
+      expect(techPill).toHaveAttribute('aria-selected', 'false');
 
-    const preset25 = await screen.findByTestId('distance-preset-25');
-    fireEvent.click(preset25);
+      const sectorToggle = screen.getByTestId('sector-search-toggle');
+      expect(sectorToggle).toBeInTheDocument();
+      expect(sectorToggle).toHaveTextContent('Secteur');
 
-    await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith(
-        '/discovery/swipe-feed',
-        expect.objectContaining({
-          params: expect.objectContaining({
-            maxDistanceKm: 25,
-          }),
-        }),
-      );
+      const filtresBtn = screen.getByTestId('discover-filters-trigger-btn');
+      expect(filtresBtn).toBeInTheDocument();
+      expect(filtresBtn).toHaveTextContent('Filtres');
     });
 
-    expect(window.localStorage.getItem('matchy_discovery_radius_km')).toBe('25');
-  });
+    it('filters swipe feed when a sector chip is clicked and displays active chip', async () => {
+      renderDiscoverView();
 
-  it('opens slider popover and allows custom radius adjustment', async () => {
-    renderDiscoverView();
+      const techPill = await screen.findByTestId('sector-pill-Informatique / Tech');
+      fireEvent.click(techPill);
 
-    const toggle = await screen.findByTestId('distance-slider-toggle');
-    fireEvent.click(toggle);
-
-    const slider = await screen.findByTestId('distance-range-slider');
-    expect(slider).toBeInTheDocument();
-
-    fireEvent.change(slider, { target: { value: '15' } });
-
-    await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith(
-        '/discovery/swipe-feed',
-        expect.objectContaining({
-          params: expect.objectContaining({
-            maxDistanceKm: 15,
+      await waitFor(() => {
+        expect(api.get).toHaveBeenCalledWith(
+          '/discovery/swipe-feed',
+          expect.objectContaining({
+            params: expect.objectContaining({
+              sector: 'Informatique / Tech',
+            }),
           }),
-        }),
-      );
+        );
+      });
+
+      expect(techPill).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByTestId('sector-pill-all')).toHaveAttribute('aria-selected', 'false');
+
+      // Removable chip displayed under the bar
+      const activeSectorChip = screen.getByTestId('active-chip-sector');
+      expect(activeSectorChip).toBeInTheDocument();
+      expect(activeSectorChip).toHaveTextContent('Informatique / Tech');
     });
 
-    expect(window.localStorage.getItem('matchy_discovery_radius_km')).toBe('15');
-  });
+    it('resets sector when clicking active removable chip or clicking "Tout"', async () => {
+      renderDiscoverView();
 
-  it('resets distance radius filter when clicking reset button', async () => {
-    renderDiscoverView();
+      const techPill = await screen.findByTestId('sector-pill-Informatique / Tech');
+      fireEvent.click(techPill);
 
-    // Select 50km first
-    fireEvent.click(await screen.findByTestId('distance-preset-50'));
+      await waitFor(() => {
+        expect(techPill).toHaveAttribute('aria-selected', 'true');
+      });
 
-    // Open popover and click reset
-    fireEvent.click(screen.getByTestId('distance-slider-toggle'));
-    const resetBtn = await screen.findByTestId('distance-reset-button');
-    fireEvent.click(resetBtn);
+      const activeSectorChip = screen.getByTestId('active-chip-sector');
+      fireEvent.click(activeSectorChip);
 
-    await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith(
-        '/discovery/swipe-feed',
-        expect.objectContaining({
-          params: expect.not.objectContaining({
-            maxDistanceKm: 50,
+      await waitFor(() => {
+        expect(api.get).toHaveBeenCalledWith(
+          '/discovery/swipe-feed',
+          expect.objectContaining({
+            params: expect.objectContaining({
+              sector: undefined,
+            }),
           }),
-        }),
-      );
+        );
+      });
+
+      expect(screen.getByTestId('sector-pill-all')).toHaveAttribute('aria-selected', 'true');
+      expect(techPill).toHaveAttribute('aria-selected', 'false');
     });
 
-    expect(window.localStorage.getItem('matchy_discovery_radius_km')).toBeNull();
+    it('opens portaled sector search dropdown and selects a sector from dropdown', async () => {
+      renderDiscoverView();
+
+      const sectorToggle = screen.getByTestId('sector-search-toggle');
+      fireEvent.click(sectorToggle);
+
+      const dropdown = screen.getByTestId('sector-search-dropdown');
+      expect(dropdown).toBeInTheDocument();
+
+      const searchInput = screen.getByTestId('sector-search-input');
+      expect(searchInput).toBeInTheDocument();
+
+      const plomberieBtn = within(dropdown).getByTestId('sector-pill-Plomberie');
+      fireEvent.click(plomberieBtn);
+
+      await waitFor(() => {
+        expect(api.get).toHaveBeenCalledWith(
+          '/discovery/swipe-feed',
+          expect.objectContaining({
+            params: expect.objectContaining({
+              sector: 'Plomberie',
+            }),
+          }),
+        );
+      });
+
+      // Dropdown closes after selection
+      expect(screen.queryByTestId('sector-search-dropdown')).not.toBeInTheDocument();
+      expect(screen.getByTestId('active-chip-sector')).toBeInTheDocument();
+    });
+  });
+
+  describe('2. Unified Filtres Panel & Badge', () => {
+    it('opens Filtres sheet when trigger button is clicked', async () => {
+      renderDiscoverView();
+
+      const filtresBtn = await screen.findByTestId('discover-filters-trigger-btn');
+      fireEvent.click(filtresBtn);
+
+      const sheet = screen.getByTestId('discover-filters-sheet');
+      expect(sheet).toBeInTheDocument();
+      expect(within(sheet).getByText('Rayon de distance')).toBeInTheDocument();
+      expect(within(sheet).queryByText('Disponible uniquement')).not.toBeInTheDocument();
+      expect(within(sheet).queryByText('Note minimale')).not.toBeInTheDocument();
+      expect(within(sheet).queryByText('Trier par')).not.toBeInTheDocument();
+    });
+
+    it('adjusting distance slider updates feed query and displays active badge on button', async () => {
+      renderDiscoverView();
+
+      const filtresBtn = await screen.findByTestId('discover-filters-trigger-btn');
+      fireEvent.click(filtresBtn);
+
+      const sheet = screen.getByTestId('discover-filters-sheet');
+      const slider = within(sheet).getByTestId('discover-filter-distance-slider');
+      fireEvent.change(slider, { target: { value: '25' } });
+
+      await waitFor(() => {
+        expect(api.get).toHaveBeenCalledWith(
+          '/discovery/swipe-feed',
+          expect.objectContaining({
+            params: expect.objectContaining({
+              maxDistanceKm: 25,
+            }),
+          }),
+        );
+      });
+
+      // Badge on Filtres button displays '1'
+      const badge = screen.getByTestId('discover-filters-count-badge');
+      expect(badge).toHaveTextContent('1');
+
+      // Removable distance chip under bar
+      const activeDistanceChip = screen.getByTestId('active-chip-distance');
+      expect(activeDistanceChip).toHaveTextContent('≤ 25 km');
+    });
+
+    it('clicking quick preset chip in sheet updates feed query', async () => {
+      renderDiscoverView();
+
+      const filtresBtn = await screen.findByTestId('discover-filters-trigger-btn');
+      fireEvent.click(filtresBtn);
+
+      const sheet = screen.getByTestId('discover-filters-sheet');
+      const chip50 = within(sheet).getByTestId('discover-filter-distance-chip-50');
+      fireEvent.click(chip50);
+
+      await waitFor(() => {
+        expect(api.get).toHaveBeenCalledWith(
+          '/discovery/swipe-feed',
+          expect.objectContaining({
+            params: expect.objectContaining({
+              maxDistanceKm: 50,
+            }),
+          }),
+        );
+      });
+
+      const badge = screen.getByTestId('discover-filters-count-badge');
+      expect(badge).toHaveTextContent('1');
+      expect(screen.getByTestId('active-chip-distance')).toHaveTextContent('≤ 50 km');
+    });
+  });
+
+  describe('3. Active State & Reset', () => {
+    it('displays live count "1 professionnel" and resets all filters when clicking Réinitialiser', async () => {
+      renderDiscoverView();
+
+      // Set tech sector
+      const techPill = await screen.findByTestId('sector-pill-Informatique / Tech');
+      fireEvent.click(techPill);
+
+      const liveCount = await screen.findByTestId('discover-live-count');
+      expect(liveCount).toHaveTextContent('1 professionnel');
+
+      const resetAllBtn = screen.getByTestId('discover-reset-all-btn');
+      fireEvent.click(resetAllBtn);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sector-pill-all')).toHaveAttribute('aria-selected', 'true');
+      });
+    });
+  });
+
+  describe('4. Persistence & URL synchronization', () => {
+    it('restores stored distance radius on initial render', async () => {
+      window.localStorage.setItem(
+        'matchy_discover_filters',
+        JSON.stringify({
+          distanceKm: 25,
+        }),
+      );
+
+      renderDiscoverView();
+
+      await waitFor(() => {
+        expect(api.get).toHaveBeenCalledWith(
+          '/discovery/swipe-feed',
+          expect.objectContaining({
+            params: expect.objectContaining({
+              maxDistanceKm: 25,
+            }),
+          }),
+        );
+      });
+
+      expect(screen.getByTestId('discover-filters-count-badge')).toHaveTextContent('1');
+    });
+  });
+
+  describe('5. Empty State & Expansion', () => {
+    it('displays friendly empty state with one-tap radius expansion button when no profiles match', async () => {
+      window.localStorage.setItem('matchy_discover_filters', JSON.stringify({ distanceKm: 10 }));
+
+      renderDiscoverView([]);
+
+      const emptyFeed = await screen.findByTestId('discover-empty-feed');
+      expect(emptyFeed).toBeInTheDocument();
+      expect(
+        within(emptyFeed).getByText("Aucun résultat. Essayez d'augmenter le rayon"),
+      ).toBeInTheDocument();
+
+      const expandBtn = screen.getByTestId('empty-state-expand-radius-btn');
+      expect(expandBtn).toBeInTheDocument();
+      fireEvent.click(expandBtn);
+
+      await waitFor(() => {
+        expect(api.get).toHaveBeenCalledWith(
+          '/discovery/swipe-feed',
+          expect.objectContaining({
+            params: expect.objectContaining({
+              maxDistanceKm: undefined,
+            }),
+          }),
+        );
+      });
+    });
   });
 });

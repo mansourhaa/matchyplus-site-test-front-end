@@ -2,6 +2,7 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_REGISTER_URL } from '@/lib/constants';
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { Parallax, Reveal } from './motion';
@@ -24,9 +25,11 @@ export function Cta() {
           className="relative z-10 -mt-28 flex justify-center sm:-mt-36 md:col-span-5 md:-mt-40 lg:col-span-5 lg:-mt-52"
         >
           <div className="relative flex w-full justify-center drop-shadow-2xl">
-            <img
+            <Image
               src="/showcase/cta-africa-people.png"
-              alt="Professionnels inspirants d'Afrique"
+              alt={t('landing.ctaImageAlt')}
+              width={641}
+              height={794}
               className="h-auto max-h-[460px] w-full max-w-[340px] object-contain sm:max-w-[400px] md:max-h-[500px] md:max-w-[420px] lg:max-h-[580px] lg:max-w-[500px]"
             />
           </div>

@@ -79,19 +79,16 @@ describe('proxy auth gate', () => {
     expect(location(res)).toBe('https://app.test/connexion');
   });
 
-  it('redirects legacy /register and /onboarding to /inscription', () => {
+  it('redirects legacy /register to /onboarding for first-time visitors', () => {
     const resRegister = proxy(request('/register'));
     expect(resRegister.status).toBe(307);
-    expect(location(resRegister)).toBe('https://app.test/inscription');
-
-    const resOnboarding = proxy(request('/onboarding'));
-    expect(resOnboarding.status).toBe(307);
-    expect(location(resOnboarding)).toBe('https://app.test/inscription');
+    expect(location(resRegister)).toBe('https://app.test/onboarding');
   });
 
-  it('keeps neutral routes open without a session', () => {
+  it('keeps neutral routes open without a session, including /onboarding', () => {
     expect(proxy(request('/oauth-callback')).status).toBe(200);
     expect(proxy(request('/inscription')).status).toBe(200);
+    expect(proxy(request('/onboarding')).status).toBe(200);
     expect(proxy(request('/reset-password')).status).toBe(200);
     expect(proxy(request('/privacy-policy')).status).toBe(200);
     expect(proxy(request('/terms-of-service')).status).toBe(200);
@@ -106,6 +103,23 @@ describe('proxy auth gate', () => {
   it('does not treat an expired cookie as authenticated on /connexion', () => {
     const now = Math.floor(Date.now() / 1000);
     const res = proxy(request('/connexion', makeJwt({ exp: now - 60 })));
+    expect(res.status).toBe(200);
+  });
+
+  it('allows access to /connexion when switch=true is specified even if a session exists', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const token = makeJwt({ exp: now + 3600 });
+    const res = proxy(request('/connexion?switch=true', token));
+    expect(res.status).toBe(200);
+  });
+
+  it('allows access to /connexion when onboarding is incomplete via cookie', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const token = makeJwt({ exp: now + 3600 });
+    const headers = new Headers();
+    headers.set('cookie', `${AUTH_COOKIE}=${token}; matchy_onboarding_incomplete=1`);
+    const req = new NextRequest(new URL('/connexion', 'https://app.test'), { headers });
+    const res = proxy(req);
     expect(res.status).toBe(200);
   });
 });

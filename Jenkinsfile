@@ -133,6 +133,29 @@ pipeline {
     // bundle - so a wrong value here means rebuilding, not editing a ConfigMap.
     FRONTEND_APP_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://app.matchyplus.com' : 'https://app.staging.matchyplus.com'}"
     FRONTEND_LANDING_URL = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://matchyplus.com' : 'https://staging.matchyplus.com'}"
+
+    // Analytics identifiers for the landing bundle, also inlined at build time.
+    //
+    // Empty on every branch but main, and that is not a placeholder: the
+    // Analytics component returns nothing unless the browser is on
+    // matchyplus.com, and the CookieYes account is registered for that domain
+    // only, so a staging build carrying these would load a banner that errors
+    // and would mix staging traffic into the production statistics.
+    //
+    // They are public identifiers, not credentials. They sit here rather than
+    // in Jenkins credentials because they are already committed in
+    // .env.example, and because a value that must match the live site is
+    // easier to review in the pipeline than in a hidden setting.
+    //
+    // Read them below as `env.X ?: ''`, never as a bare `${X}`. Jenkins does
+    // not inject an environment entry whose value is the empty string, so on
+    // every branch but main these three do not exist at all and a bare
+    // reference throws MissingPropertyException. That broke staging #16 while
+    // main built fine, which is the confusing shape this note exists to
+    // prevent repeating.
+    ANALYTICS_COOKIEYES_SRC = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'https://cdn-cookieyes.com/client_data/c39d81b860a22c01a72f23f6/script.js' : ''}"
+    ANALYTICS_GA_MEASUREMENT_ID = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'G-R7FNSWEW2C' : ''}"
+    ANALYTICS_CLARITY_PROJECT_ID = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst('^origin/', '') == 'main' ? 'yz4yxwayvv' : ''}"
   }
 
   stages {
@@ -526,7 +549,11 @@ pipeline {
     // inlines NEXT_PUBLIC_* into the client bundle at build time, so a runtime
     // env var on the Deployment would be ignored and the browser would call
     // the Dockerfile's localhost:8000 default instead of the staging API.
-    // landing reads no NEXT_PUBLIC_* vars, and ai is a python service.
+    //
+    // landing takes NEXT_PUBLIC_APP_URL and the three analytics identifiers.
+    // This comment previously said landing read none, which is how it shipped
+    // with a Connexion button pointing at localhost; do not shorten it back.
+    // ai is a python service and takes no build arguments.
     stage('Build images') {
       options { timeout(time: 40, unit: 'MINUTES') }
       steps {
@@ -534,7 +561,7 @@ pipeline {
           docker build --pull -t ${REGISTRY_REPO}:api-${IMAGE_TAG} -f apps/api/Dockerfile .
           docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} --build-arg NEXT_PUBLIC_LANDING_URL=${FRONTEND_LANDING_URL} -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
           docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
-          docker build --pull --build-arg NEXT_PUBLIC_APP_URL=${FRONTEND_APP_URL} -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_APP_URL=${FRONTEND_APP_URL} --build-arg NEXT_PUBLIC_COOKIEYES_SRC=${env.ANALYTICS_COOKIEYES_SRC ?: ''} --build-arg NEXT_PUBLIC_GA_MEASUREMENT_ID=${env.ANALYTICS_GA_MEASUREMENT_ID ?: ''} --build-arg NEXT_PUBLIC_CLARITY_PROJECT_ID=${env.ANALYTICS_CLARITY_PROJECT_ID ?: ''} -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
           docker build --pull -t ${REGISTRY_REPO}:ai-${IMAGE_TAG} -f apps/ai/Dockerfile apps/ai
         """
         sh 'mkdir -p reports/stages && touch reports/stages/build'
