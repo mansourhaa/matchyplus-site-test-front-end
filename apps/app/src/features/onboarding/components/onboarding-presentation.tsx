@@ -2,7 +2,7 @@
 
 import { MatchyLogo, MatchyLogoWhite } from '@/features/auth/components/matchy-logo';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -482,112 +482,114 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
       </aside>
 
       {/* Right Canvas (Mobile + Desktop Centerpiece) */}
-      <main className="relative flex flex-1 flex-col justify-between overflow-y-auto bg-white p-6 sm:p-10 md:p-12">
-        {/* Floating Top-Right Language Switcher (matches login and inscription) */}
-        <div className="absolute end-4 top-4 z-20 md:end-6 md:top-6">
-          <LangPickerLight />
-        </div>
-
-        {/* Mobile Header (Brand + Skip) */}
-        <header className="flex items-center justify-between pe-14 pb-4 md:hidden">
-          <MatchyLogo size="md" />
-          <button
-            type="button"
-            onClick={onComplete}
-            data-testid="onboarding-intro-skip-mobile"
-            className="rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100"
-          >
-            {t('onboarding.intro.skip')}
-          </button>
-        </header>
-
-        {/* Desktop Content Header */}
-        <div className="hidden items-center justify-between pe-14 pb-4 md:flex">
-          <span className="text-xs font-semibold text-slate-400">
+      <main className="relative flex flex-1 flex-col overflow-hidden bg-white">
+        {/* Desktop Header */}
+        <header
+          className="hidden items-center justify-between bg-white px-8 py-5 md:flex lg:px-10"
+          style={{ borderBottom: '1px solid #F0F0F0' }}
+        >
+          <span className="text-xs font-semibold tracking-wide text-slate-400">
             {t('onboarding.intro.discoverTitle')}
           </span>
-          <div className="flex items-center gap-1.5">
-            {SLIDES.map((_, idx) => (
-              <span
-                key={idx}
-                className={`transition-all duration-300 ${
-                  idx === currentSlide
-                    ? 'h-1.5 w-6 rounded-full bg-[#2F76BB]'
-                    : 'h-1.5 w-1.5 rounded-full bg-slate-300'
-                }`}
-              />
-            ))}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5" aria-hidden="true">
+              {SLIDES.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={`transition-all duration-300 ${
+                    idx === currentSlide
+                      ? 'h-1.5 w-6 rounded-full bg-[#2F76BB]'
+                      : 'h-1.5 w-1.5 rounded-full bg-slate-300'
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="h-4 w-px bg-slate-200" />
+            <LangPickerLight />
           </div>
-        </div>
+        </header>
 
-        {/* Center Presentation Section */}
-        <div className="mx-auto my-auto flex w-full max-w-xl flex-col items-center py-4 text-center sm:py-6">
-          {/* Badge Pill */}
-          <span
-            className="mb-5 inline-flex items-center rounded-full px-4 py-1.5 text-xs font-bold tracking-wide"
-            style={{
-              backgroundColor: activeSlide.badgeBg,
-              color: activeSlide.badgeColor,
-            }}
-          >
-            {t(activeSlide.badgeKey)}
-          </span>
-
-          {/* Illustration Container */}
-          <div
-            className="mb-6 flex aspect-[16/11] w-full max-w-lg items-center justify-center rounded-3xl border border-slate-100/60 p-6 shadow-2xs transition-all duration-300"
-            style={{ backgroundColor: activeSlide.cardBg }}
-          >
-            {activeSlide.graphic}
-          </div>
-
-          {/* Heading */}
-          <h1 className="mb-3 text-2xl font-extrabold tracking-tight text-[#1A1A2E] sm:text-3xl">
-            {t(activeSlide.titleKey)}
-          </h1>
-
-          {/* Subtitle */}
-          <p className="max-w-md text-sm leading-relaxed text-slate-500 sm:text-base">
-            {t(activeSlide.descKey)}
-          </p>
-        </div>
-
-        {/* Bottom Action Row */}
-        <footer className="mx-auto flex w-full max-w-xl items-center gap-3 pt-6">
-          {currentSlide > 0 && (
+        {/* Mobile Header (Brand + Skip + Lang) */}
+        <header
+          className="flex items-center justify-between bg-white px-5 pt-5 pb-3 md:hidden"
+          style={{ borderBottom: '1px solid #F0F0F0' }}
+        >
+          <MatchyLogo size="md" />
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={handlePrev}
-              aria-label={t('onboarding.intro.back')}
-              data-testid="onboarding-intro-prev"
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:bg-slate-50 active:scale-95"
+              onClick={onComplete}
+              data-testid="onboarding-intro-skip-mobile"
+              className="text-xs font-bold text-[#2F76BB] hover:underline"
             >
-              <ChevronLeft size={22} />
+              {t('onboarding.intro.skip')}
             </button>
-          )}
+            <LangPickerLight />
+          </div>
+        </header>
 
-          <button
-            type="button"
-            onClick={handleNext}
-            data-testid="onboarding-intro-next"
-            className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl px-8 text-base font-bold text-white shadow-md transition hover:opacity-95 active:scale-[0.99]"
-            style={{
-              background: 'linear-gradient(90deg, #48BBA0 0%, #2F76BB 100%)',
-            }}
-          >
-            <span>{isLast ? t('onboarding.intro.signIn') : t('onboarding.intro.next')}</span>
-            <ChevronRight size={18} />
-          </button>
-        </footer>
+        {/* Scrollable Centerpiece */}
+        <div className="flex flex-1 flex-col justify-between overflow-y-auto px-6 py-6 sm:px-10 sm:py-8">
+          {/* Center Presentation Section */}
+          <div className="mx-auto my-auto flex w-full max-w-xl flex-col items-center py-4 text-center sm:py-6">
+            {/* Badge Pill */}
+            <span
+              className="mb-5 inline-flex items-center rounded-full px-4 py-1.5 text-xs font-bold tracking-wide"
+              style={{
+                backgroundColor: activeSlide.badgeBg,
+                color: activeSlide.badgeColor,
+              }}
+            >
+              {t(activeSlide.badgeKey)}
+            </span>
 
-        {/* Floating Help Button */}
-        <button
-          type="button"
-          aria-label="Help"
-          className="fixed right-6 bottom-6 hidden h-9 w-9 items-center justify-center rounded-full bg-[#1E293B] text-white shadow-lg transition hover:bg-slate-800 sm:flex"
-        >
-          <HelpCircle size={16} />
-        </button>
+            {/* Illustration Container */}
+            <div
+              className="mb-6 flex aspect-[16/11] w-full max-w-lg items-center justify-center rounded-3xl border border-slate-100/60 p-6 shadow-2xs transition-all duration-300"
+              style={{ backgroundColor: activeSlide.cardBg }}
+            >
+              {activeSlide.graphic}
+            </div>
+
+            {/* Heading */}
+            <h1 className="mb-3 text-2xl font-extrabold tracking-tight text-[#1A1A2E] sm:text-3xl">
+              {t(activeSlide.titleKey)}
+            </h1>
+
+            {/* Subtitle */}
+            <p className="max-w-md text-sm leading-relaxed text-slate-500 sm:text-base">
+              {t(activeSlide.descKey)}
+            </p>
+          </div>
+
+          {/* Bottom Action Row */}
+          <footer className="mx-auto flex w-full max-w-xl items-center gap-3 pt-6">
+            {currentSlide > 0 && (
+              <button
+                type="button"
+                onClick={handlePrev}
+                aria-label={t('onboarding.intro.back')}
+                data-testid="onboarding-intro-prev"
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:bg-slate-50 active:scale-95"
+              >
+                <ChevronLeft size={22} />
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleNext}
+              data-testid="onboarding-intro-next"
+              className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl px-8 text-base font-bold text-white shadow-md transition hover:opacity-95 active:scale-[0.99]"
+              style={{
+                background: 'linear-gradient(90deg, #48BBA0 0%, #2F76BB 100%)',
+              }}
+            >
+              <span>{isLast ? t('onboarding.intro.signIn') : t('onboarding.intro.next')}</span>
+              <ChevronRight size={18} />
+            </button>
+          </footer>
+        </div>
       </main>
     </div>
   );
