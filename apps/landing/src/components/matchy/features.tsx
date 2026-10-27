@@ -2,6 +2,7 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { BriefcaseBusiness, Sparkles, UsersRound, WalletCards } from 'lucide-react';
+import Image from 'next/image';
 
 import { Parallax, Reveal } from './motion';
 
@@ -93,9 +94,11 @@ export function Features() {
 
         <Parallax speed={20} className="order-1 flex justify-center lg:order-2">
           <div className="relative flex justify-center drop-shadow-2xl">
-            <img
+            <Image
               src="/showcase/features-phone.png"
-              alt="Matchy+ Profil Professionnel et Services"
+              alt={t('landing.featuresImageAlt')}
+              width={323}
+              height={639}
               className="h-auto max-h-[480px] w-auto max-w-[280px] object-contain sm:max-w-[320px] md:max-h-[520px] md:max-w-[340px] lg:max-h-[560px] lg:max-w-[350px]"
             />
           </div>

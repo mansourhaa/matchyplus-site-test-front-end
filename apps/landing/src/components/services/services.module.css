@@ -1,0 +1,155 @@
+.page {
+  color: #101a36;
+  line-height: 1.65;
+}
+.body {
+  max-width: 1180px;
+  margin: auto;
+  padding: 24px 20px 72px;
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.actions a,
+.band > a {
+  display: inline-block;
+  padding: 11px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 800;
+}
+.primary {
+  background: #2368b5;
+  color: #fff;
+}
+.secondary {
+  background: #fff;
+  color: #2368b5;
+  border: 1px solid #dde6f1;
+}
+.block {
+  margin: 52px 0;
+}
+.sectionHead {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto 26px;
+}
+/* Tailwind's preflight resets heading weights, margins and list bullets this page relied on. */
+.sectionHead h2,
+.band h2,
+.final h2 {
+  margin-bottom: 10px;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.sectionHead p,
+.card p {
+  color: #667085;
+}
+.grid,
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+.card,
+.step {
+  background: #fff;
+  border: 1px solid #dde6f1;
+  border-radius: 17px;
+  padding: 20px;
+}
+.card h3,
+.step h3 {
+  margin-bottom: 6px;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+}
+.card p {
+  flex: 1;
+}
+.card ul {
+  margin: 12px 0;
+  padding-inline-start: 20px;
+  list-style: disc;
+}
+.card a {
+  color: #2368b5;
+  font-weight: 800;
+}
+.band {
+  display: grid;
+  grid-template-columns: 1.4fr auto;
+  gap: 20px;
+  align-items: center;
+  background: #eafbf7;
+  border-radius: 22px;
+  padding: 30px;
+}
+.cities {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.city {
+  background: #fff;
+  border: 1px solid #dde6f1;
+  border-radius: 999px;
+  padding: 9px 15px;
+}
+.faq details {
+  background: #fff;
+  border: 1px solid #dde6f1;
+  border-radius: 13px;
+  padding: 16px 18px;
+  margin: 10px 0;
+}
+.faq summary {
+  font-weight: 800;
+  cursor: pointer;
+}
+.faq details p {
+  margin: 10px 0 0;
+}
+.final {
+  text-align: center;
+  background: linear-gradient(135deg, #2368b5, #42b9a7);
+  color: #fff;
+  border-radius: 24px;
+  padding: 38px;
+}
+.final p {
+  margin: 0 0 24px;
+}
+/* CSS Modules only accept local selectors, so focus styles are scoped to the page. */
+.page a:focus-visible,
+.page summary:focus-visible {
+  outline: 3px solid #42b9a7;
+  outline-offset: 3px;
+}
+@media (max-width: 950px) {
+  .grid,
+  .steps {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 650px) {
+  .grid,
+  .steps,
+  .band {
+    grid-template-columns: 1fr;
+  }
+  .body {
+    padding: 14px 12px 50px;
+  }
+}
