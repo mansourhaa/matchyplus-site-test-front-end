@@ -8,10 +8,7 @@ import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/s
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { EXPERIENCE_OPTIONS } from '@/features/onboarding/constants';
 import { identityStepSchema } from '@/features/onboarding/schemas';
-import {
-  patchOnboardingProfile,
-  resetOnboardingDraft,
-} from '@/features/onboarding/store/onboarding-slice';
+import { patchOnboardingProfile } from '@/features/onboarding/store/onboarding-slice';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
 import { humanizeMediaError } from '@/features/profile/media-errors';
 import {
@@ -31,7 +28,6 @@ import {
   EyeOff,
   Loader2,
   Lock,
-  RotateCcw,
   ShieldCheck,
   Video,
   X,
@@ -181,7 +177,6 @@ export function IdentityStep({
     profile?.profile_type ?? 'INDIVIDUAL',
   );
   const [pendingProfileType, setPendingProfileType] = useState<ProfileType | null>(null);
-  const [showResetModal, setShowResetModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [requiredTouched, setRequiredTouched] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -432,31 +427,6 @@ export function IdentityStep({
       dispatch(patchOnboardingProfile({ profile_type: 'INDIVIDUAL' }));
     }
     setPendingProfileType(null);
-  };
-
-  const handleConfirmReset = () => {
-    setFirstName('');
-    setLastName('');
-    setJob('');
-    setBio('');
-    setExperience('');
-    setImage('');
-    clearLocalPhotoPreview();
-    pendingPhotoRef.current = null;
-    setHasPendingPhoto(false);
-    clearLocalVideo();
-    setProfileType('INDIVIDUAL');
-    setPassword('');
-    setNationalNumber('');
-    setError(null);
-    setRequiredTouched(false);
-    dispatch(resetOnboardingDraft());
-    setShowResetModal(false);
-    router.push('/inscription?step=identity');
-  };
-
-  const handleQuit = () => {
-    router.push('/');
   };
 
   const identityPatch = () => ({
@@ -991,24 +961,6 @@ export function IdentityStep({
           loading={loading || otpSending || isUploadingVideo}
         />
 
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => setShowResetModal(true)}
-            className="cursor-pointer text-slate-500 underline transition-colors hover:text-slate-700"
-          >
-            {t('onboarding.identity.restartBtn')}
-          </button>
-          <span className="text-slate-300">·</span>
-          <button
-            type="button"
-            onClick={handleQuit}
-            className="cursor-pointer text-slate-500 underline transition-colors hover:text-slate-700"
-          >
-            {t('onboarding.identity.quitBtn')}
-          </button>
-        </div>
-
         {/* Same reasoning as onBack above: an already-authenticated visitor has no
             /connexion to go back to — it would only bounce them right back here. */}
         {!isAuthenticated && (
@@ -1191,56 +1143,6 @@ export function IdentityStep({
               <button
                 type="button"
                 onClick={() => setPendingProfileType(null)}
-                className="w-full rounded-2xl py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
-              >
-                {t('onboarding.identity.roleChangeCancel')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showResetModal && (
-        <div
-          className="fixed inset-0 z-60 flex items-center justify-center px-4"
-          style={{ background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(2px)' }}
-          onClick={() => setShowResetModal(false)}
-        >
-          <div
-            className="relative w-full max-w-sm rounded-3xl bg-white p-6"
-            style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex flex-col items-center text-center">
-              <div
-                className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
-                style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)' }}
-              >
-                <RotateCcw size={26} color="white" />
-              </div>
-              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#1A1A2E' }}>
-                {t('onboarding.identity.restartTitle')}
-              </h2>
-              <p style={{ fontSize: '13px', color: '#666', marginTop: '8px', lineHeight: '1.4' }}>
-                {t('onboarding.identity.restartWarning')}
-              </p>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleConfirmReset}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-red-600 py-3.5 text-white transition-colors hover:bg-red-700"
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 700,
-                }}
-              >
-                {t('onboarding.identity.restartConfirm')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowResetModal(false)}
                 className="w-full rounded-2xl py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
               >
                 {t('onboarding.identity.roleChangeCancel')}

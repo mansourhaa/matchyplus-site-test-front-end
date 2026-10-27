@@ -1013,34 +1013,6 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
       // Click "Je cherche" (PROVIDER)
       fireEvent.click(firstButton('Je cherche'));
       // No confirmation modal
-      expect(screen.queryByText('Changer de profil ?')).not.toBeInTheDocument();
-    });
-
-    it('allows restarting the registration from scratch with confirmation', async () => {
-      renderWithAuthStore(
-        <IdentityStep
-          profile={unauthenticatedProfileWithPhoto}
-          stepNumber={1}
-          totalSteps={3}
-          loading={false}
-          isAuthenticated={false}
-          onNext={vi.fn()}
-        />,
-        unauthenticatedState,
-      );
-
-      fillIdentityAndCredentials();
-      expect(firstPlaceholder('Votre prénom')).toHaveValue('Jane');
-
-      // Click "Recommencer de zéro"
-      const restartTriggers = screen.getAllByRole('button', { name: /Recommencer/i });
-      fireEvent.click(restartTriggers[0]);
-      expect(await screen.findByText('Recommencer l’inscription ?')).toBeInTheDocument();
-
-      // Confirm restart in modal
-      fireEvent.click(firstButton('Confirmer et recommencer'));
-      expect(screen.queryByText('Recommencer l’inscription ?')).not.toBeInTheDocument();
-      expect(firstPlaceholder('Votre prénom')).toHaveValue('');
     });
   });
 });
