@@ -167,6 +167,29 @@ describe('SearchFiltersSheet', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ availableOnly: true }));
   });
 
+  it('adjusts distance slider up to 250 km', () => {
+    const draft: SearchFilters = { ...DEFAULT_SEARCH_FILTERS };
+    const onChange = vi.fn();
+
+    render(
+      <I18nProvider>
+        <SearchFiltersSheet
+          open={true}
+          draft={draft}
+          onChange={onChange}
+          onClose={vi.fn()}
+          onApply={vi.fn()}
+          onReset={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+
+    const distanceSlider = screen.getByTestId('search-filter-distance-slider');
+    expect(distanceSlider).toHaveAttribute('max', '250');
+    fireEvent.change(distanceSlider, { target: { value: '180' } });
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ maxDistanceKm: 180 }));
+  });
+
   it('counts active search filters correctly', () => {
     expect(countActiveSearchFilters(DEFAULT_SEARCH_FILTERS)).toBe(0);
 

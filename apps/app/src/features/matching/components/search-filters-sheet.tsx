@@ -2,6 +2,7 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { MAX_DISTANCE_KM } from '@/features/matching/lib/distance-filter';
 import { formatInterest, formatRole } from '@/features/matching/lib/format-role';
 import type { DiscoveryFeedSort } from '@/features/matching/types';
 import { INTERESTS_SUGGESTIONS } from '@/features/onboarding/constants';
@@ -28,7 +29,7 @@ export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   sector: null,
   sectors: [],
   interests: [],
-  maxDistanceKm: 100,
+  maxDistanceKm: MAX_DISTANCE_KM,
   minRating: 0,
   minPrice: 5,
   maxPrice: null,
@@ -300,12 +301,13 @@ export function SearchFiltersSheet({
                   </span>
                 </div>
                 {(() => {
-                  const distPercent = ((safeDraft.maxDistanceKm - 1) / (100 - 1)) * 100;
+                  const distPercent = ((safeDraft.maxDistanceKm - 1) / (MAX_DISTANCE_KM - 1)) * 100;
                   return (
                     <input
+                      data-testid="search-filter-distance-slider"
                       type="range"
                       min={1}
-                      max={100}
+                      max={MAX_DISTANCE_KM}
                       step={1}
                       value={safeDraft.maxDistanceKm}
                       onChange={(e) =>
@@ -320,7 +322,7 @@ export function SearchFiltersSheet({
                 })()}
                 <div className="mt-1.5 flex justify-between text-xs text-[#9CA3AF]">
                   <span>1 km</span>
-                  <span>100 km</span>
+                  <span>{MAX_DISTANCE_KM} km</span>
                 </div>
               </div>
 

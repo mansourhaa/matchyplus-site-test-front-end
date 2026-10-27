@@ -176,6 +176,7 @@ export type MatchingState = {
   feedLoading: boolean;
   feedError: string | null;
   feedLoaded: boolean;
+  currentFeedRequestId?: string;
   matches: MatchRow[];
   pending: PendingRow[];
   matchesLoading: boolean;

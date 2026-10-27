@@ -33,8 +33,8 @@ function buildStore(preloadedState?: Record<string, unknown>) {
     reducer: {
       auth: authReducer,
       identityVerification: identityVerificationReducer,
-    },
-    preloadedState: preloadedState as never,
+    } as any,
+    preloadedState: preloadedState as any,
   });
 }
 

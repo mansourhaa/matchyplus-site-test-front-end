@@ -965,8 +965,8 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
         oauthAuthState,
       );
 
-      // Click "Je cherche" (PROVIDER)
-      const providerBtn = firstButton('Je cherche');
+      // Click "Je recherche un service" (PROVIDER)
+      const providerBtn = firstButton('Je recherche un service');
       fireEvent.click(providerBtn);
 
       // Confirmation modal should appear
@@ -1005,8 +1005,8 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
         oauthAuthState,
       );
 
-      // Click "Je cherche" (PROVIDER)
-      fireEvent.click(firstButton('Je cherche'));
+      // Click "Je recherche un service" (PROVIDER)
+      fireEvent.click(firstButton('Je recherche un service'));
       // No confirmation modal
     });
   });

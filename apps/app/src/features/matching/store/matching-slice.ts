@@ -73,13 +73,17 @@ export const fetchSwipeHistory = createAsyncThunk(
 
 export const fetchSwipeFeed = createAsyncThunk(
   'matching/fetchSwipeFeed',
-  async (coords: DiscoveryFeedQuery | undefined, { rejectWithValue }) => {
+  async (coords: DiscoveryFeedQuery | undefined, { rejectWithValue, signal }) => {
     try {
       const response = await api.get<SwipeFeedResponse>('/discovery/swipe-feed', {
         params: coords,
+        signal,
       });
       return response.data;
     } catch (error) {
+      if (signal.aborted || (error as { name?: string })?.name === 'CanceledError') {
+        return rejectWithValue('aborted');
+      }
       return rejectWithValue(apiErrorKey(error, 'matching.errors.feed'));
     }
   },
@@ -207,17 +211,27 @@ const matchingSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchSwipeFeed.pending, (state) => {
+      .addCase(fetchSwipeFeed.pending, (state, action) => {
         state.feedLoading = true;
         state.feedError = null;
+        state.currentFeedRequestId = action.meta.requestId;
       })
       .addCase(fetchSwipeFeed.fulfilled, (state, action) => {
+        if (state.currentFeedRequestId && state.currentFeedRequestId !== action.meta.requestId) {
+          return;
+        }
         state.feedLoading = false;
         state.feedLoaded = true;
         state.feed = action.payload.profiles ?? [];
         state.quota = action.payload.quota ?? state.quota;
       })
       .addCase(fetchSwipeFeed.rejected, (state, action) => {
+        if (state.currentFeedRequestId && state.currentFeedRequestId !== action.meta.requestId) {
+          return;
+        }
+        if (action.meta.aborted || action.payload === 'aborted') {
+          return;
+        }
         state.feedLoading = false;
         state.feedError = String(action.payload || action.error.message);
       })
