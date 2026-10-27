@@ -1,7 +1,9 @@
 'use client';
 
-import { MatchyLogo, MatchyLogoWhite } from '@/features/auth/components/matchy-logo';
+import { HeaderBackButton } from '@/components/matchy/header-back-button';
+import { MatchyLogoWhite } from '@/features/auth/components/matchy-logo';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { landingPath } from '@/lib/landing';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -310,9 +312,13 @@ function CareerGraphic() {
 }
 
 export function OnboardingPresentation({ onComplete }: OnboardingPresentationProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [currentSlide, setCurrentSlide] = useState(0);
   const touchStartX = useRef<number | null>(null);
+
+  const handleBackToLanding = () => {
+    window.location.href = landingPath('/', locale);
+  };
 
   const SLIDES: SlideConfig[] = [
     {
@@ -460,14 +466,14 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
               type="button"
               onClick={onComplete}
               data-testid="onboarding-intro-skip"
-              className="flex h-11 min-w-[92px] items-center justify-center rounded-2xl border border-white/50 bg-white/20 px-5 text-sm font-semibold text-white shadow-xs backdrop-blur-xs transition hover:bg-white/30"
+              className="flex h-11 min-w-[80px] items-center justify-center rounded-2xl border border-white/50 bg-white/20 px-5 text-sm font-semibold text-white shadow-xs backdrop-blur-xs transition hover:bg-white/30"
             >
               {t('onboarding.intro.skip')}
             </button>
             <button
               type="button"
               onClick={handleNext}
-              className="flex h-11 min-w-[185px] items-center justify-center gap-1.5 rounded-2xl bg-white px-8 text-sm font-bold text-[#2F76BB] shadow-md transition hover:bg-white/95"
+              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-white px-6 text-sm font-bold text-[#2F76BB] shadow-md transition hover:bg-white/95"
             >
               <span>{isLast ? t('onboarding.intro.signIn') : t('onboarding.intro.next')}</span>
               <ChevronRight size={16} />
@@ -488,9 +494,9 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
           className="hidden items-center justify-between bg-white px-8 py-5 md:flex lg:px-10"
           style={{ borderBottom: '1px solid #F0F0F0' }}
         >
-          <span className="text-xs font-semibold tracking-wide text-slate-400">
-            {t('onboarding.intro.discoverTitle')}
-          </span>
+          <div className="flex items-center">
+            <HeaderBackButton onClick={handleBackToLanding} label={t('common.back')} />
+          </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5" aria-hidden="true">
               {SLIDES.map((_, idx) => (
@@ -509,12 +515,14 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
           </div>
         </header>
 
-        {/* Mobile Header (Brand + Skip + Lang) */}
+        {/* Mobile Header (Back + Skip + Lang) */}
         <header
           className="flex items-center justify-between bg-white px-5 pt-5 pb-3 md:hidden"
           style={{ borderBottom: '1px solid #F0F0F0' }}
         >
-          <MatchyLogo size="md" />
+          <div className="flex items-center gap-2">
+            <HeaderBackButton onClick={handleBackToLanding} label={t('common.back')} />
+          </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -563,16 +571,16 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
           </div>
 
           {/* Bottom Action Row */}
-          <footer className="mx-auto flex w-full max-w-xl items-center gap-3 pt-6">
+          <footer className="mx-auto flex w-full max-w-lg items-center gap-3 pt-6">
             {currentSlide > 0 && (
               <button
                 type="button"
                 onClick={handlePrev}
                 aria-label={t('onboarding.intro.back')}
                 data-testid="onboarding-intro-prev"
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:bg-slate-50 active:scale-95"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-[#F4F6F9] text-slate-700 shadow-2xs transition hover:bg-slate-100 active:scale-95 sm:h-12 sm:w-12"
               >
-                <ChevronLeft size={22} />
+                <ChevronLeft size={20} />
               </button>
             )}
 
@@ -580,7 +588,7 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
               type="button"
               onClick={handleNext}
               data-testid="onboarding-intro-next"
-              className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl px-8 text-base font-bold text-white shadow-md transition hover:opacity-95 active:scale-[0.99]"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl px-6 text-sm font-bold text-white shadow-md transition hover:opacity-95 active:scale-[0.99] sm:h-12 sm:text-base"
               style={{
                 background: 'linear-gradient(90deg, #48BBA0 0%, #2F76BB 100%)',
               }}

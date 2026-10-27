@@ -92,4 +92,11 @@ describe('OnboardingPresentation', () => {
     });
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matcher autour de vous');
   });
+
+  it('renders the back button to return to the landing page', () => {
+    renderPresentation();
+
+    const backButtons = screen.getAllByRole('button', { name: /retour/i });
+    expect(backButtons.length).toBeGreaterThanOrEqual(1);
+  });
 });
