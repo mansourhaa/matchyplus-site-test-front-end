@@ -571,7 +571,7 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
           </div>
 
           {/* Bottom Action Row */}
-          <footer className="mx-auto flex w-full max-w-lg items-center gap-3 pt-6">
+          <footer className="mx-auto flex w-full max-w-2xl items-center gap-3 pt-6 lg:max-w-3xl">
             {currentSlide > 0 && (
               <button
                 type="button"
