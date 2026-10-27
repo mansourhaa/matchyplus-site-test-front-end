@@ -27,9 +27,22 @@ export async function handleProviderOAuthCallback(
   const linkIntent = parseOAuthLinkIntentValue(linkRaw);
   reply.clearCookie(OAUTH_LINK_COOKIE, clearOAuthLinkCookieOptions());
 
+  const isMobile =
+    request.cookies?.['oauth-platform'] === 'mobile' ||
+    (request.query as { platform?: string } | undefined)?.platform === 'mobile';
+  reply.clearCookie('oauth-platform', { path: '/' });
+
+  const appScheme = config.mobileAppScheme || 'matchy';
+
   const redirectOAuthError = (raw: string | undefined | null) => {
     const code = normalizeOAuthCallbackError(raw);
     request.log.warn({ provider, oauthError: code, raw }, 'oauth callback failed');
+    if (isMobile) {
+      if (linkIntent) {
+        return reply.redirect(`${appScheme}://account-profile?error=${encodeURIComponent(code)}`);
+      }
+      return reply.redirect(`${appScheme}://oauth-callback?error=${encodeURIComponent(code)}`);
+    }
     if (linkIntent) {
       const finalCallbackUrl = `${config.frontendUrl}/account-profile?error=${encodeURIComponent(code)}`;
       return reply.redirect(finalCallbackUrl);
@@ -65,6 +78,11 @@ export async function handleProviderOAuthCallback(
         throw new Error('oauth_link_conflict');
       }
       await oauthAuthService.linkOAuthProvider(linkIntent.userId, provider, profile);
+      if (isMobile) {
+        return reply.redirect(
+          `${appScheme}://account-profile?linked=${encodeURIComponent(provider)}`,
+        );
+      }
       return reply.redirect(
         `${config.frontendUrl}/account-profile?linked=${encodeURIComponent(provider)}`,
       );
@@ -72,6 +90,12 @@ export async function handleProviderOAuthCallback(
 
     const user = await oauthAuthService.findOrCreateOAuthUser(provider, profile);
     const code = await oauthAuthService.createExchangeCode(user.id);
+
+    if (isMobile) {
+      const finalCallbackUrl = `${appScheme}://oauth-callback?code=${code}`;
+      request.log.info({ provider, finalCallbackUrl }, 'oauth callback success → Mobile App');
+      return reply.redirect(finalCallbackUrl);
+    }
 
     const finalCallbackUrl = `${config.frontendUrl}/oauth-callback?code=${code}`;
     request.log.info({ provider, finalCallbackUrl }, 'oauth callback success → SPA');

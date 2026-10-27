@@ -99,7 +99,7 @@ function SearchProfileCard({
               {profile.rating.toFixed(1)}
             </span>
           </div>
-          {profile.distance_km != null && (
+          {profile.distance_km != null && Number.isFinite(profile.distance_km) && (
             <div className="flex items-center gap-0.5">
               <MapPin size={11} color="#61BCA6" />
               <span style={{ fontSize: 11, color: '#AAA' }}>{profile.distance_km} km</span>
@@ -254,7 +254,7 @@ function LockedSearchProfileCard({
               <span style={{ fontSize: 11, color: '#888' }}>
                 ⭐ {profile.rating > 0 ? profile.rating.toFixed(1) : '—'}
               </span>
-              {profile.distance_km != null && (
+              {profile.distance_km != null && Number.isFinite(profile.distance_km) && (
                 <span style={{ fontSize: 11, color: '#AAA' }}>📍 {profile.distance_km} km</span>
               )}
             </div>
@@ -619,7 +619,11 @@ export function SearchView() {
 
       {detailProfile && !detailProfile.is_locked && (
         <ProfileDetailModal
-          profile={detailProfile}
+          profile={{
+            ...detailProfile,
+            pending: getProfileConnectionStatus(detailProfile.id) === 'pending',
+            matched: getProfileConnectionStatus(detailProfile.id) === 'matched',
+          }}
           source="search"
           busy={matching.swipeLoading}
           onClose={() => setDetailProfile(null)}
@@ -630,8 +634,11 @@ export function SearchView() {
           }}
           onConnect={() => {
             const profile = detailProfile;
-            setDetailProfile(null);
             void handleConnect(profile);
+          }}
+          onWithdraw={() => {
+            const profile = detailProfile;
+            void handleRemove(profile);
           }}
         />
       )}

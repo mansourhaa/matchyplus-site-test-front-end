@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-di
 import { fetchCurrentUser, selectAuth } from '@/features/auth/store/auth-slice';
 import type { AuthUser } from '@/features/auth/types';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { isNativeMobileClient } from '@/lib/native';
 import { PHONE_COUNTRIES } from '@/lib/phone-countries';
 import { Check, ChevronRight, Lock, Mail, Phone, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
@@ -246,9 +247,22 @@ export function AccountProfileView() {
               : 'Google et LinkedIn liés'
           : null;
 
-  const onLinkSocial = (which: 'google' | 'linkedin') => {
+  const onLinkSocial = async (which: 'google' | 'linkedin') => {
     const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
-    window.location.href = `${base}/auth/oauth/${which}/link`;
+    const url = `${base}/auth/oauth/${which}/link`;
+
+    if (isNativeMobileClient()) {
+      try {
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url: `${url}?platform=mobile`, windowName: '_system' });
+        return;
+      } catch {
+        window.location.href = `${url}?platform=mobile`;
+        return;
+      }
+    }
+
+    window.location.href = url;
   };
 
   return (

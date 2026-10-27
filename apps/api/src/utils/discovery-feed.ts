@@ -62,6 +62,8 @@ export function toScoringProfile(user: FeedUser): ScoringProfile {
     availability_days: user.availability_days,
     availability_hours: user.availability_hours,
     schedule: user.schedule,
+    contact_modes: user.contact_modes,
+    price: user.price,
     rating: user.rating,
     reviews: user.reviews,
   };

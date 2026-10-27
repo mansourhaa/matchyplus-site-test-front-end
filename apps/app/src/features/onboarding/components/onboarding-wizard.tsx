@@ -16,6 +16,7 @@ import {
 import {
   completeOnboarding,
   fetchOnboardingProfile,
+  patchOnboardingProfile,
   selectOnboarding,
   updateOnboardingProfile,
 } from '@/features/onboarding/store/onboarding-slice';
@@ -157,6 +158,7 @@ export function OnboardingWizard() {
           loading={loading}
           onNext={goToNextStep}
           onBack={goBack}
+          onSaveDraft={(draft) => dispatch(patchOnboardingProfile(draft))}
         />
       );
     case 'location':
@@ -168,6 +170,7 @@ export function OnboardingWizard() {
           loading={loading}
           onNext={goToNextStep}
           onBack={goBack}
+          onSaveDraft={(draft) => dispatch(patchOnboardingProfile(draft))}
         />
       );
     case 'welcome':

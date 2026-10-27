@@ -87,7 +87,7 @@ export const messages: Record<Locale, MessageTree> = {
         ],
       ],
 
-      downloadTitle: 'e professionnel que vous recherchez est peut-être tout près',
+      downloadTitle: 'le professionnel que vous recherchez est peut-être tout près',
       downloadBody:
         'Rejoignez Matchy+ pour trouver facilement des services locaux ou présenter vos compétences à de nouveaux clients.',
       learnMore: 'En Savoir Plus',

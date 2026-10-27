@@ -341,14 +341,15 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
 
     expect(result.profiles).toHaveLength(1);
     const profile = result.profiles[0]!;
-    expect(profile.compatibility).toHaveLength(6);
+    expect(profile.compatibility).toHaveLength(7);
     expect(profile.compatibility.map((d) => d.dimension)).toEqual([
-      'skills',
-      'proximity',
+      'sector',
+      'roles',
       'goals',
+      'proximity',
       'availability',
-      'languages',
       'quality',
+      'budget',
     ]);
     expect(profile.match_score).toBeGreaterThanOrEqual(40);
     expect(profile.match_score).toBeLessThanOrEqual(100);
@@ -451,5 +452,23 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
       context: 'swipe',
     });
     expect(interestFiltered.profiles.map((p) => p.id)).toEqual(['2']);
+  });
+
+  it('retrieves distinct active sectors from database profiles', async () => {
+    const prisma = {
+      user: {
+        findMany: vi.fn().mockResolvedValue([
+          { activity_sector: 'Transport', category: null, service_type: 'Chauffeur' },
+          { activity_sector: 'Transport', category: 'Transport', service_type: null },
+          { activity_sector: 'Informatique / Tech', category: 'Tech', service_type: 'Dev' },
+        ]),
+      },
+    };
+    const service = new DiscoveryService({ prisma: prisma as never });
+    const res = await service.getSectors();
+
+    expect(res.sectors).toContain('Transport');
+    expect(res.sectors).toContain('Chauffeur');
+    expect(res.sectors).toContain('Informatique / Tech');
   });
 });

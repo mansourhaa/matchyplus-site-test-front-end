@@ -211,11 +211,13 @@ export function OnboardingStepLayout({
       {/* Mobile — Header: Back button left, language right */}
       <div className="overflow-y-auto bg-white md:hidden" style={{ minHeight: '100dvh' }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
-          {onBack ? (
-            <HeaderBackButton onClick={onBack} label={resolvedBackLabel} />
-          ) : (
-            <div className="h-8" />
-          )}
+          <div className="flex items-center">
+            {onBack ? (
+              <HeaderBackButton onClick={onBack} label={resolvedBackLabel} />
+            ) : (
+              <div className="h-8" />
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {onSkip && skipLabel && (
               <button

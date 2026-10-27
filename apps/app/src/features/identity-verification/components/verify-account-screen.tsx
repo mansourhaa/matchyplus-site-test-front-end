@@ -29,7 +29,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const POLL_INTERVAL_MS = 2000;
-const MAX_POLL_ATTEMPTS = 15;
+const MAX_POLL_ATTEMPTS = 22; // ~44s polling timeout
 const TERMINAL_STATUSES = new Set(['SUCCEEDED', 'FAILED', 'CANCELLED']);
 
 export function VerifyAccountScreen() {
@@ -51,7 +51,17 @@ export function VerifyAccountScreen() {
   const streamRef = useRef<MediaStream | null>(null);
 
   const alreadyVerified = identityVerified || Boolean(user?.verified);
-  const isProcessing = submitting || (Boolean(job) && !TERMINAL_STATUSES.has(job!.status));
+
+  const noFaceDetected = job?.result?.code === 'no_face_detected';
+
+  const failed =
+    Boolean(error) ||
+    Boolean(timeoutError) ||
+    job?.status === 'FAILED' ||
+    (job?.status === 'SUCCEEDED' && !identityVerified && !user?.verified);
+
+  const isProcessing =
+    !failed && (submitting || (Boolean(job) && !TERMINAL_STATUSES.has(job!.status)));
 
   // Initial fetch of verification state
   useEffect(() => {
@@ -61,15 +71,15 @@ export function VerifyAccountScreen() {
 
   // Polling while verification job is running
   useEffect(() => {
-    if (!job || TERMINAL_STATUSES.has(job.status)) return;
+    if (!job || TERMINAL_STATUSES.has(job.status) || failed) return;
 
     if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
       setTimeoutError(
         locale === 'en'
-          ? 'Verification is taking longer than expected. Please retry in a few moments.'
+          ? 'Verification is taking longer than expected (timed out after 45s). Please retry in a few moments.'
           : locale === 'ar'
-            ? 'يستغرق التحقق وقتاً أطول من المتوقع. يرجى إعادة المحاولة لاحقاً.'
-            : 'La vérification prend plus de temps que prévu. Veuillez réessayer dans quelques instants.',
+            ? 'استغرق التحقق وقتاً أطول من المتوقع (انتهت المهلة بعد 45 ثانية). يرجى إعادة المحاولة.'
+            : 'La vérification a dépassé le délai imparti (45s). Veuillez réessayer dans quelques instants.',
       );
       return;
     }
@@ -80,7 +90,7 @@ export function VerifyAccountScreen() {
     }, POLL_INTERVAL_MS);
 
     return () => window.clearTimeout(timer);
-  }, [job, dispatch, locale]);
+  }, [job, dispatch, locale, failed]);
 
   // Stream cleanup
   const stopStream = useCallback(() => {
@@ -186,13 +196,71 @@ export function VerifyAccountScreen() {
             : 68
       : 68;
 
-  const failed =
-    Boolean(error) ||
-    Boolean(timeoutError) ||
-    job?.status === 'FAILED' ||
-    (job?.status === 'SUCCEEDED' && !identityVerified && !user?.verified);
+  const getErrorTitle = () => {
+    if (timeoutError) {
+      return locale === 'en'
+        ? 'Verification timed out'
+        : locale === 'ar'
+          ? 'انتهت مهلة التحقق'
+          : 'Délai de vérification dépassé';
+    }
+    if (error === 'profile_photo_required') {
+      return locale === 'en'
+        ? 'Profile photo required'
+        : locale === 'ar'
+          ? 'صورة الملف الشخصي مطلوبة'
+          : 'Photo de profil requise';
+    }
+    if (noFaceDetected) {
+      return locale === 'en'
+        ? 'No face detected in capture'
+        : locale === 'ar'
+          ? 'لم يتم التعرف على وجه في الصورة'
+          : 'Aucun visage détecté';
+    }
+    return locale === 'en'
+      ? 'Verification failed'
+      : locale === 'ar'
+        ? 'فشل التحقق من الهوية'
+        : 'Échec de la vérification';
+  };
 
-  const noFaceDetected = job?.result?.code === 'no_face_detected';
+  const getErrorMessage = () => {
+    if (timeoutError) return timeoutError;
+    if (error === 'profile_photo_required') {
+      return locale === 'en'
+        ? 'Please upload a photo to your profile first before verifying your identity.'
+        : locale === 'ar'
+          ? 'يرجى تحميل صورة لملفك الشخصي أولاً قبل بدء التحقق من الهوية.'
+          : "Veuillez d'abord ajouter une photo à votre profil avant de vérifier votre identité.";
+    }
+    if (noFaceDetected) {
+      return locale === 'en'
+        ? 'Please position your face clearly in good lighting and try again.'
+        : locale === 'ar'
+          ? 'يرجى وضع وجهك بوضوح في إضاءة جيدة والمحاولة مرة أخرى.'
+          : 'Veuillez bien centrer votre visage avec un éclairage suffisant et réessayer.';
+    }
+    if (job?.status === 'SUCCEEDED' && !identityVerified && !user?.verified) {
+      return locale === 'en'
+        ? 'Selfie does not match the profile picture. Please try again.'
+        : locale === 'ar'
+          ? 'الصورة الملتقطة لا تطابق صورة الملف الشخصي. يرجى المحاولة مجدداً.'
+          : 'Le selfie ne correspond pas à votre photo de profil. Veuillez réessayer.';
+    }
+    if (error) {
+      return locale === 'en'
+        ? 'A network or server error occurred. Please check your connection and try again.'
+        : locale === 'ar'
+          ? 'حدث خطأ في الشبكة أو الخادم. يرجى التحقق من اتصالك والمحاولة مجدداً.'
+          : 'Une erreur réseau ou serveur est survenue. Veuillez vérifier votre connexion et réessayer.';
+    }
+    return locale === 'en'
+      ? 'Selfie does not match the profile picture. Please try again.'
+      : locale === 'ar'
+        ? 'الصورة الملتقطة لا تطابق صورة الملف الشخصي. يرجى المحاولة مجدداً.'
+        : 'Le selfie ne correspond pas à votre photo de profil. Veuillez réessayer.';
+  };
 
   return (
     <div
@@ -435,38 +503,12 @@ export function VerifyAccountScreen() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 rounded-2xl border border-[#FF6B6B] bg-[#FFF0F0] p-4"
+            className="flex items-center gap-3 rounded-2xl border border-[#FF6B6B] bg-[#FFF0F0] p-4 text-left rtl:text-right"
           >
             <AlertCircle size={20} className="shrink-0 text-[#FF6B6B]" />
             <div>
-              <p className="text-sm font-bold text-[#991B1B]">
-                {noFaceDetected
-                  ? locale === 'en'
-                    ? 'No face detected in capture'
-                    : locale === 'ar'
-                      ? 'لم يتم التعرف على وجه في الصورة'
-                      : 'Aucun visage détecté'
-                  : locale === 'en'
-                    ? 'Verification failed'
-                    : locale === 'ar'
-                      ? 'فشل التحقق من الهوية'
-                      : 'Échec de la vérification'}
-              </p>
-              <p className="text-xs text-[#B91C1C]">
-                {timeoutError ||
-                  error ||
-                  (noFaceDetected
-                    ? locale === 'en'
-                      ? 'Please position your face clearly in good lighting and try again.'
-                      : locale === 'ar'
-                        ? 'يرجى وضع وجهك بوضوح في إضاءة جيدة والمحاولة مرة أخرى.'
-                        : 'Veuillez bien centrer votre visage avec un éclairage suffisant et réessayer.'
-                    : locale === 'en'
-                      ? 'Selfie does not match the profile picture. Please try again.'
-                      : locale === 'ar'
-                        ? 'الصورة الملتقطة لا تطابق صورة الملف الشخصي. يرجى المحاولة مجدداً.'
-                        : 'Le selfie ne correspond pas à votre photo de profil. Veuillez réessayer.')}
-              </p>
+              <p className="text-sm font-bold text-[#991B1B]">{getErrorTitle()}</p>
+              <p className="text-xs text-[#B91C1C]">{getErrorMessage()}</p>
             </div>
           </motion.div>
         )}
@@ -516,7 +558,7 @@ export function VerifyAccountScreen() {
         ) : (
           <button
             type="button"
-            onClick={() => void openCamera()}
+            onClick={failed ? handleRetry : () => void openCamera()}
             disabled={isProcessing}
             className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[15px] font-bold text-white shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
             style={{ background: matchyBrand.gradient }}
