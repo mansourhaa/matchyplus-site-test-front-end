@@ -9,6 +9,26 @@ export type MessageTree = { [key: string]: string | MessageTree };
 export const messages: Record<Locale, MessageTree> = {
   en: {
     onboarding: {
+      intro: {
+        skip: 'Skip',
+        next: 'Next',
+        start: 'Sign in',
+        signIn: 'Sign in',
+        back: 'Back',
+        stepIndicator: 'STEP {step} / {total}',
+        discoverTitle: 'Discover Matchy+',
+        slide1Badge: 'Matching',
+        slide1Title: 'Match around you',
+        slide1Desc:
+          'Find the right provider or collaborator by swiping, like Tinder but for professionals.',
+        slide2Badge: 'Explore',
+        slide2Title: 'Discover Matchy Explore',
+        slide2Desc:
+          'Personalized recommendations based on your profile and professional activities.',
+        slide3Badge: 'Career',
+        slide3Title: 'Find jobs matched for you',
+        slide3Desc: 'New professional opportunities await you. Connect now.',
+      },
       identity: {
         title: 'Let’s get to know you',
         desc: 'This information will help us personalize your profile and recommendations.',
@@ -68,6 +88,11 @@ export const messages: Record<Locale, MessageTree> = {
         saveContinue: 'Save and continue',
         continueVerify: 'Continue and verify by SMS',
         login: 'Login',
+        roleChangeTitle: 'Change profile type?',
+        roleChangeWarning:
+          'Changing your profile type will reset role-specific fields (such as your presentation video and experience). Your personal details will be kept.',
+        roleChangeConfirm: 'Confirm change',
+        roleChangeCancel: 'Cancel',
         errorPhotoRequired: 'Profile photo is required.',
         errorNameRequired: 'First name and last name are required.',
         errorPhoneRequired: 'Phone number is required ({length} digits).',
@@ -967,6 +992,27 @@ export const messages: Record<Locale, MessageTree> = {
   },
   fr: {
     onboarding: {
+      intro: {
+        skip: 'Passer',
+        next: 'Suivant',
+        start: 'Commencer',
+        signIn: "S'inscrire",
+        back: 'Retour',
+        stepIndicator: 'ÉTAPE {step} / {total}',
+        discoverTitle: 'Découvrez Matchy+',
+        slide1Badge: 'Matching',
+        slide1Title: 'Matcher autour de vous',
+        slide1Desc:
+          'Trouvez le bon prestataire ou collaborateur en swipant, comme Tinder mais pour le professionnel.',
+        slide2Badge: 'Explorer',
+        slide2Title: 'Découvrez Matchy Explore',
+        slide2Desc:
+          'Des recommandations personnalisées selon votre profil et vos activités professionnelles.',
+        slide3Badge: 'Carrière',
+        slide3Title: 'Trouvez des missions taillées pour vous',
+        slide3Desc:
+          'De nouvelles opportunités professionnelles vous attendent. Connectez-vous dès maintenant.',
+      },
       identity: {
         title: 'Commençons par faire connaissance',
         desc: 'Ces informations nous aideront à personnaliser votre profil et vos recommandations.',
@@ -1027,6 +1073,11 @@ export const messages: Record<Locale, MessageTree> = {
         saveContinue: 'Enregistrer et continuer',
         continueVerify: 'Continuer et vérifier par SMS',
         login: 'Connexion',
+        roleChangeTitle: 'Changer de profil ?',
+        roleChangeWarning:
+          'Changer de profil réinitialisera les informations spécifiques à ce rôle (vidéo de présentation, expérience). Vos informations personnelles seront conservées.',
+        roleChangeConfirm: 'Confirmer le changement',
+        roleChangeCancel: 'Annuler',
         errorPhotoRequired: 'La photo de profil est obligatoire.',
         errorNameRequired: 'Le prénom et le nom sont obligatoires.',
         errorPhoneRequired: 'Le numéro de téléphone est obligatoire ({length} chiffres).',
@@ -1950,6 +2001,24 @@ export const messages: Record<Locale, MessageTree> = {
   },
   ar: {
     onboarding: {
+      intro: {
+        skip: 'تخطي',
+        next: 'التالي',
+        start: 'ابدأ الآن',
+        signIn: 'ابدأ الآن',
+        back: 'رجوع',
+        stepIndicator: 'خطوة {step} / {total}',
+        discoverTitle: 'اكتشف Matchy+',
+        slide1Badge: 'مطابقة',
+        slide1Title: 'طابق حولك',
+        slide1Desc: 'اعثر على المزود أو الشريك المناسب بالسحب، مثل تيندر ولكن للمحترفين.',
+        slide2Badge: 'استكشف',
+        slide2Title: 'اكتشف Matchy Explore',
+        slide2Desc: 'توصيات مخصصة حسب ملفك الشخصي وأنشطتك المهنية.',
+        slide3Badge: 'وظائف',
+        slide3Title: 'اعثر على فرص مناسبة لك',
+        slide3Desc: 'فرص مهنية جديدة في انتظارك. تواصل الآن.',
+      },
       identity: {
         title: 'لنتعرّف عليك',
         desc: 'ستساعدنا هذه المعلومات على تخصيص ملفك والتوصيات المقدمة لك.',
@@ -2008,6 +2077,11 @@ export const messages: Record<Locale, MessageTree> = {
         saveContinue: 'حفظ ومتابعة',
         continueVerify: 'متابعة والتحقق عبر SMS',
         login: 'تسجيل الدخول',
+        roleChangeTitle: 'تغيير نوع الحساب؟',
+        roleChangeWarning:
+          'سيؤدي تغيير نوع الحساب إلى إعادة تعيين الحقول الخاصة بهذا الدور (مثل فيديو التعريف وسنوات الخبرة). سيتم الاحتفاظ بمعلوماتك الشخصية.',
+        roleChangeConfirm: 'تأكيد التغيير',
+        roleChangeCancel: 'إلغاء',
         errorPhotoRequired: 'صورة الملف الشخصي مطلوبة.',
         errorNameRequired: 'الاسم الأول واسم العائلة مطلوبان.',
         errorPhoneRequired: 'رقم الهاتف مطلوب ({length} أرقام).',

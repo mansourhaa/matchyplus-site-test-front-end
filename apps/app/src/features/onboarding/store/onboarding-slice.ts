@@ -78,6 +78,11 @@ const onboardingSlice = createSlice({
     patchOnboardingProfile: (state, action: PayloadAction<Partial<OnboardingProfile>>) => {
       if (state.profile) Object.assign(state.profile, action.payload);
     },
+    resetOnboardingDraft: (state) => {
+      state.profile = null;
+      state.loading = false;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -130,7 +135,7 @@ const onboardingSlice = createSlice({
   },
 });
 
-export const { patchOnboardingProfile } = onboardingSlice.actions;
+export const { patchOnboardingProfile, resetOnboardingDraft } = onboardingSlice.actions;
 export const selectOnboarding = (state: { onboarding?: OnboardingState }) =>
   state.onboarding ?? initialState;
 
