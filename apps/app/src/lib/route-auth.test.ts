@@ -30,8 +30,10 @@ describe('route-auth', () => {
     expect(isPublicAuthRoute('/connexion/extra')).toBe(true);
     expect(isNeutralRoute('/oauth-callback')).toBe(true);
     expect(isNeutralRoute('/inscription')).toBe(true);
+    expect(isNeutralRoute('/onboarding')).toBe(true);
     expect(requiresAuthentication('/connexion')).toBe(false);
     expect(requiresAuthentication('/inscription')).toBe(false);
+    expect(requiresAuthentication('/onboarding')).toBe(false);
   });
 
   it('requires auth for every known (dashboard) path prefix', () => {

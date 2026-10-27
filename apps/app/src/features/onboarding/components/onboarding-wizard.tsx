@@ -26,12 +26,15 @@ import type {
 } from '@/features/onboarding/types';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
+import { readStoredIntroSeen, setStoredIntroSeen, subscribeIntro } from '../intro-storage';
 import { IdentityStep } from './identity-step';
 import { InterestsStep } from './interests-step';
 import { LocationStep } from './location-step';
 import { WelcomeStep } from './welcome-step';
+
+export { setStoredIntroSeen };
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -41,6 +44,7 @@ export function OnboardingWizard() {
   const { profile, loading } = useAppSelector(selectOnboarding);
 
   const [justRegistered, setJustRegistered] = useState(false);
+  const introSeen = useSyncExternalStore(subscribeIntro, readStoredIntroSeen, () => false);
   // Finish owns navigation — skip the "already completed" bounce while that runs so we
   // don't race router.replace from two places after completeOnboarding.fulfilled.
   const finishingRef = useRef(false);
@@ -50,6 +54,21 @@ export function OnboardingWizard() {
   const order = getStepOrder(profileType);
 
   const requestedStep = searchParams.get('step');
+  const introParam = searchParams.get('intro');
+  const needsIntroRedirect =
+    introParam === 'true' ||
+    (introParam !== 'false' && !hasValidatedSession && !requestedStep && !introSeen);
+
+  useEffect(() => {
+    if (needsIntroRedirect) {
+      const nextParam = searchParams.get('next');
+      const target = nextParam
+        ? `/onboarding?next=${encodeURIComponent(nextParam)}`
+        : '/onboarding';
+      router.replace(target);
+    }
+  }, [needsIntroRedirect, router, searchParams]);
+
   const step: OnboardingStep =
     hasValidatedSession && !justRegistered && isValidOnboardingStep(requestedStep, profileType)
       ? (requestedStep as OnboardingStep)
@@ -134,6 +153,10 @@ export function OnboardingWizard() {
 
   const stepNumber = getStepNumber(step, profileType);
   const totalSteps = order.length;
+
+  if (needsIntroRedirect) {
+    return null;
+  }
 
   switch (step) {
     case 'identity':
