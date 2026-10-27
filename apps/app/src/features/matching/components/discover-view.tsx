@@ -66,8 +66,34 @@ import {
   Zap,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+
+export const BASE_SECTOR_VALUES = [
+  'Transport',
+  'Ménage',
+  'Freelance',
+  'Cuisine',
+  'Jardinage',
+  'Garde enfants',
+  'Plomberie',
+  'Électricité',
+  'Informatique / Tech',
+  'BTP / Artisanat',
+];
+
+function formatSectorLabel(sector: string, t: (key: string) => string): string {
+  const s = sector.trim().toLowerCase();
+  if (s === 'transport') return t('matching.categories.transport');
+  if (s === 'ménage' || s === 'menage') return t('matching.categories.cleaning');
+  if (s === 'freelance') return t('matching.categories.freelance');
+  if (s === 'cuisine') return t('matching.categories.cooking');
+  if (s === 'jardinage') return t('matching.categories.gardening');
+  if (s === 'garde enfants' || s === "garde d'enfants") return t('matching.categories.childcare');
+  if (s === 'plomberie') return t('matching.interestsList.plomberie');
+  if (s === 'électricité' || s === 'electricite') return t('matching.interestsList.electricite');
+  return formatRole(sector, t) || sector;
+}
 
 export function DiscoverView() {
   const { t, locale } = useI18n();
@@ -234,6 +260,34 @@ export function DiscoverView() {
     }
   };
 
+  const dynamicSectors = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+
+    for (const s of BASE_SECTOR_VALUES) {
+      const lower = s.toLowerCase().trim();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        result.push(s);
+      }
+    }
+
+    const feedList = matching.feed ?? [];
+    for (const p of feedList) {
+      const val = p.category || p.activity_sector;
+      if (val && typeof val === 'string' && val.trim()) {
+        const trimmed = val.trim();
+        const lower = trimmed.toLowerCase();
+        if (!seen.has(lower)) {
+          seen.add(lower);
+          result.push(trimmed);
+        }
+      }
+    }
+
+    return result;
+  }, [matching.feed]);
+
   const showHomeFeedLoader = locationSynced && (matching.feedLoading || !matching.feedLoaded);
 
   const title = locale === 'fr' ? 'Accueil' : locale === 'ar' ? 'الرئيسية' : t('nav.home');
@@ -243,62 +297,58 @@ export function DiscoverView() {
       className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
       style={{ background: matchyBrand.bg }}
     >
+      {/* Sector quick-filter bar — full width, no icons, dynamic */}
+      {!locationRequired && (
+        <div className="w-full shrink-0 border-b border-slate-200/70 bg-white px-4 py-2.5 shadow-2xs md:px-8">
+          <div
+            role="tablist"
+            aria-label="Secteurs d'activité"
+            className="no-scrollbar flex w-full items-center gap-2 overflow-x-auto scroll-smooth py-0.5"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={selectedSector === null}
+              data-testid="sector-pill-all"
+              onClick={() => handleSelectSector(null)}
+              className="shrink-0 cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold shadow-2xs transition-all active:scale-95"
+              style={{
+                backgroundColor: selectedSector === null ? matchyBrand.blue : '#FFFFFF',
+                color: selectedSector === null ? '#FFFFFF' : '#475569',
+                border:
+                  selectedSector === null ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
+              }}
+            >
+              {locale === 'ar' ? 'الكل' : locale === 'en' ? 'All' : 'Tout'}
+            </button>
+            {dynamicSectors.map((sector) => {
+              const isSelected = selectedSector === sector;
+              return (
+                <button
+                  key={sector}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  data-testid={`sector-pill-${sector}`}
+                  onClick={() => handleSelectSector(isSelected ? null : sector)}
+                  className="shrink-0 cursor-pointer rounded-full px-4 py-1.5 text-xs font-medium shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 active:scale-95"
+                  style={{
+                    backgroundColor: isSelected ? matchyBrand.blue : '#FFFFFF',
+                    color: isSelected ? '#FFFFFF' : '#475569',
+                    border: isSelected ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
+                  }}
+                >
+                  {formatSectorLabel(sector, t)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
         {/* Main swipe column */}
-        <div
-          className={
-            top
-              ? 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8'
-              : 'flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8'
-          }
-        >
-          {/* Sector quick-filter bar */}
-          {!locationRequired && (
-            <div
-              role="tablist"
-              aria-label="Secteurs d'activité"
-              className="no-scrollbar mx-auto mb-2 flex w-full max-w-[440px] shrink-0 items-center gap-1.5 overflow-x-auto py-1"
-            >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={selectedSector === null}
-                data-testid="sector-pill-all"
-                onClick={() => handleSelectSector(null)}
-                className="shrink-0 rounded-full px-3 py-1 text-xs font-bold shadow-2xs transition-all"
-                style={{
-                  backgroundColor: selectedSector === null ? matchyBrand.blue : '#FFFFFF',
-                  color: selectedSector === null ? '#FFFFFF' : '#475569',
-                  border:
-                    selectedSector === null ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
-                }}
-              >
-                {locale === 'ar' ? 'الكل' : locale === 'en' ? 'All' : 'Tous'}
-              </button>
-              {SECTOR_PILLS.map((sector) => {
-                const isSelected = selectedSector === sector;
-                return (
-                  <button
-                    key={sector}
-                    type="button"
-                    role="tab"
-                    aria-selected={isSelected}
-                    data-testid={`sector-pill-${sector}`}
-                    onClick={() => handleSelectSector(isSelected ? null : sector)}
-                    className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300"
-                    style={{
-                      backgroundColor: isSelected ? matchyBrand.blue : '#FFFFFF',
-                      color: isSelected ? '#FFFFFF' : '#475569',
-                      border: isSelected ? `1px solid ${matchyBrand.blue}` : '1px solid #E2E8F0',
-                    }}
-                  >
-                    {formatRole(sector, t)}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-2 md:px-8">
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             {showHomeFeedLoader ? (
               <div className="flex h-full flex-col items-center justify-center px-6 text-center">
