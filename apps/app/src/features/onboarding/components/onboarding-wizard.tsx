@@ -28,36 +28,13 @@ import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
+import { readStoredIntroSeen, setStoredIntroSeen, subscribeIntro } from '../intro-storage';
 import { IdentityStep } from './identity-step';
 import { InterestsStep } from './interests-step';
 import { LocationStep } from './location-step';
-import { OnboardingPresentation } from './onboarding-presentation';
 import { WelcomeStep } from './welcome-step';
 
-const INTRO_SEEN_KEY = 'matchy_onboarding_intro_seen';
-const introListeners = new Set<() => void>();
-
-function subscribeIntro(callback: () => void) {
-  introListeners.add(callback);
-  return () => {
-    introListeners.delete(callback);
-  };
-}
-
-function readStoredIntroSeen(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.localStorage.getItem(INTRO_SEEN_KEY) === 'true';
-}
-
-export function setStoredIntroSeen(seen: boolean) {
-  if (typeof window === 'undefined') return;
-  if (seen) {
-    window.localStorage.setItem(INTRO_SEEN_KEY, 'true');
-  } else {
-    window.localStorage.removeItem(INTRO_SEEN_KEY);
-  }
-  introListeners.forEach((listener) => listener());
-}
+export { setStoredIntroSeen };
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -78,9 +55,19 @@ export function OnboardingWizard() {
 
   const requestedStep = searchParams.get('step');
   const introParam = searchParams.get('intro');
-  const showIntro =
+  const needsIntroRedirect =
     introParam === 'true' ||
     (introParam !== 'false' && !hasValidatedSession && !requestedStep && !introSeen);
+
+  useEffect(() => {
+    if (needsIntroRedirect) {
+      const nextParam = searchParams.get('next');
+      const target = nextParam
+        ? `/onboarding?next=${encodeURIComponent(nextParam)}`
+        : '/onboarding';
+      router.replace(target);
+    }
+  }, [needsIntroRedirect, router, searchParams]);
 
   const step: OnboardingStep =
     hasValidatedSession && !justRegistered && isValidOnboardingStep(requestedStep, profileType)
@@ -167,17 +154,8 @@ export function OnboardingWizard() {
   const stepNumber = getStepNumber(step, profileType);
   const totalSteps = order.length;
 
-  if (showIntro) {
-    return (
-      <OnboardingPresentation
-        onComplete={() => {
-          setStoredIntroSeen(true);
-          if (introParam === 'true') {
-            router.replace(buildStepUrl(step));
-          }
-        }}
-      />
-    );
+  if (needsIntroRedirect) {
+    return null;
   }
 
   switch (step) {

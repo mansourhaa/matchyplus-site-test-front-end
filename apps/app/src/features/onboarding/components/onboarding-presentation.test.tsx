@@ -25,43 +25,31 @@ describe('OnboardingPresentation', () => {
     );
   }
 
-  it('renders slide 1 (Matching Intelligent) by default', () => {
+  it('renders slide 1 (Matching) by default', () => {
     renderPresentation();
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Matching Intelligent Géolocalisé',
-    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matchez autour de vous');
     expect(screen.getByTestId('onboarding-intro-skip')).toBeInTheDocument();
     expect(screen.getByTestId('onboarding-intro-next')).toBeInTheDocument();
     expect(screen.queryByTestId('onboarding-intro-prev')).not.toBeInTheDocument();
   });
 
-  it('advances through slides when clicking next and shows start button on slide 4', () => {
+  it('advances through slides when clicking next and completes on slide 3', () => {
     renderPresentation();
 
     // Slide 1 -> 2
     fireEvent.click(screen.getByTestId('onboarding-intro-next'));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Vérification Faciale & Sécurité des Profils',
-    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Découvrez Matchy Explore');
     expect(screen.getByTestId('onboarding-intro-prev')).toBeInTheDocument();
 
     // Slide 2 -> 3
     fireEvent.click(screen.getByTestId('onboarding-intro-next'));
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Messagerie Directe, Appels & Visio',
+      'Trouvez des missions taillées pour vous',
     );
 
-    // Slide 3 -> 4
+    // Clicking on slide 3 completes onboarding intro
     fireEvent.click(screen.getByTestId('onboarding-intro-next'));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Opportunités & Prestataires Vérifiés à Proximité',
-    );
-    expect(screen.queryByTestId('onboarding-intro-next')).not.toBeInTheDocument();
-    expect(screen.getByTestId('onboarding-intro-start')).toBeInTheDocument();
-
-    // Clicking start calls onComplete
-    fireEvent.click(screen.getByTestId('onboarding-intro-start'));
     expect(onCompleteMock).toHaveBeenCalledTimes(1);
   });
 
@@ -69,14 +57,10 @@ describe('OnboardingPresentation', () => {
     renderPresentation();
 
     fireEvent.click(screen.getByTestId('onboarding-intro-next'));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Vérification Faciale & Sécurité des Profils',
-    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Découvrez Matchy Explore');
 
     fireEvent.click(screen.getByTestId('onboarding-intro-prev'));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Matching Intelligent Géolocalisé',
-    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matchez autour de vous');
   });
 
   it('jumps directly to a slide when clicking a carousel dot', () => {
@@ -84,7 +68,7 @@ describe('OnboardingPresentation', () => {
 
     fireEvent.click(screen.getByTestId('onboarding-dot-2'));
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Messagerie Directe, Appels & Visio',
+      'Trouvez des missions taillées pour vous',
     );
   });
 
@@ -101,15 +85,11 @@ describe('OnboardingPresentation', () => {
     act(() => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
     });
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Vérification Faciale & Sécurité des Profils',
-    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Découvrez Matchy Explore');
 
     act(() => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
     });
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Matching Intelligent Géolocalisé',
-    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matchez autour de vous');
   });
 });

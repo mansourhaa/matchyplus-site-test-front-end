@@ -135,10 +135,12 @@ function renderRegisterPage(
 describe('InscriptionPage (/inscription)', () => {
   beforeEach(() => {
     window.localStorage.setItem('matchy_locale', 'fr');
+    window.localStorage.setItem('matchy_onboarding_intro_seen', 'true');
   });
 
   afterEach(() => {
     window.localStorage.removeItem('matchy_locale');
+    window.localStorage.removeItem('matchy_onboarding_intro_seen');
     vi.clearAllMocks();
     searchParamsRef.current = new URLSearchParams();
     registeredCallbackRef.current = undefined;
@@ -147,13 +149,20 @@ describe('InscriptionPage (/inscription)', () => {
     profilePropRef.current = undefined;
   });
 
-  it('renders the registration wizard directly', () => {
+  it('renders the registration wizard directly for visitors who completed intro', () => {
     renderRegisterPage({ status: 'unauthenticated', user: null });
 
     expect(screen.getByTestId('identity-step')).toBeInTheDocument();
   });
 
-  it('allows unauthenticated users to start registration from /inscription', () => {
+  it('redirects first-time unauthenticated visitors from /inscription to /onboarding', () => {
+    window.localStorage.removeItem('matchy_onboarding_intro_seen');
+    renderRegisterPage({ status: 'unauthenticated', user: null });
+
+    expect(replaceMock).toHaveBeenCalledWith('/onboarding');
+  });
+
+  it('allows unauthenticated users to start registration from /inscription once intro is completed', () => {
     renderRegisterPage({ status: 'unauthenticated', user: null });
 
     expect(isAuthenticatedPropRef.current).toBe(false);
@@ -211,7 +220,7 @@ describe('InscriptionPage (/inscription)', () => {
     });
   });
 
-  it('never redirects users from /inscription to /onboarding', () => {
+  it('does not redirect users away from /inscription once intro is completed', () => {
     renderRegisterPage({ status: 'unauthenticated', user: null });
 
     expect(replaceMock).not.toHaveBeenCalledWith(expect.stringContaining('/onboarding'));

@@ -330,31 +330,21 @@ describe('OnboardingWizard', () => {
     expect(replaceMock).toHaveBeenCalledWith('/home');
   });
 
-  it('renders onboarding presentation for first-time visitors before identity', () => {
+  it('redirects first-time unauthenticated visitors to /onboarding', () => {
     window.localStorage.removeItem('matchy_onboarding_intro_seen');
     searchParamsRef.current = new URLSearchParams();
 
     renderWizard({ status: 'unauthenticated', user: null });
 
-    expect(
-      screen.getByRole('region', { name: /Matching Intelligent Géolocalisé/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByTestId('onboarding-intro-skip')).toBeInTheDocument();
-    expect(screen.queryByText('Votre identité (stub)')).not.toBeInTheDocument();
+    expect(replaceMock).toHaveBeenCalledWith('/onboarding');
   });
 
-  it('transitions from presentation to identity when skip is clicked', () => {
+  it('preserves next parameter when redirecting to /onboarding', () => {
     window.localStorage.removeItem('matchy_onboarding_intro_seen');
-    searchParamsRef.current = new URLSearchParams();
+    searchParamsRef.current = new URLSearchParams('next=%2Fprofile');
 
     renderWizard({ status: 'unauthenticated', user: null });
 
-    const skipButton = screen.getByTestId('onboarding-intro-skip');
-    act(() => {
-      skipButton.click();
-    });
-
-    expect(window.localStorage.getItem('matchy_onboarding_intro_seen')).toBe('true');
-    expect(screen.getByText('Votre identité (stub)')).toBeInTheDocument();
+    expect(replaceMock).toHaveBeenCalledWith('/onboarding?next=%2Fprofile');
   });
 });
