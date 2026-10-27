@@ -1,0 +1,98 @@
+.page {
+  padding-bottom: 72px;
+  color: #101a36;
+  line-height: 1.65;
+}
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.actions a {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 11px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.secondary {
+  border: 1px solid #dde6f1;
+  background: #fff;
+  color: #2368b5;
+}
+.content {
+  max-width: 850px;
+  margin: 48px auto;
+  padding: 0 20px;
+}
+.textSection,
+.content > section {
+  margin: 40px 0;
+}
+/* Tailwind's preflight resets heading weights and margins this page relied on. */
+.content h2 {
+  margin-bottom: 10px;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.values {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin: 24px 0;
+}
+.card {
+  padding: 20px;
+  border: 1px solid #dde6f1;
+  border-radius: 16px;
+  background: #fff;
+}
+.card h3 {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+.faq details {
+  margin: 10px 0;
+  padding: 16px 18px;
+  border: 1px solid #dde6f1;
+  border-radius: 13px;
+  background: #fff;
+}
+.faq summary {
+  font-weight: 800;
+  cursor: pointer;
+}
+.faq summary:focus-visible,
+.actions a:focus-visible {
+  outline: 3px solid #42b9a7;
+  outline-offset: 3px;
+}
+.finalCta {
+  padding: 38px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #2368b5, #42b9a7);
+  color: #fff;
+  text-align: center;
+}
+.finalCta p {
+  margin: 0 0 24px;
+}
+.faq details p {
+  margin: 10px 0 0;
+}
+@media (max-width: 800px) {
+  .values {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .values {
+    grid-template-columns: 1fr;
+  }
+  .content {
+    padding: 0 12px;
+  }
+}

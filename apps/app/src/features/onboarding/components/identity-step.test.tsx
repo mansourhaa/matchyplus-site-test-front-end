@@ -89,8 +89,8 @@ const unauthenticatedProfileWithPhoto = {
 
 function fillIdentityAndCredentials() {
   fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-  fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-  fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+  fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+  fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
     target: { value: 'Électricien' },
   });
   fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
@@ -122,7 +122,7 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).not.toHaveBeenCalled();
@@ -156,8 +156,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
     fireEvent.click(firstButton('Enregistrer et continuer'));
@@ -193,8 +193,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
     fireEvent.click(firstButton('Enregistrer et continuer'));
@@ -239,8 +239,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.click(firstButton('Je cherche'));
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.click(firstButton('Je recherche un service'));
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).toHaveBeenCalledWith({
@@ -266,8 +266,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
     fireEvent.click(firstButton('Enregistrer et continuer'));
@@ -296,8 +296,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
     const file = new File(['abc'], 'selfie.jpg', { type: 'image/jpeg' });
@@ -336,8 +336,8 @@ describe('IdentityStep', () => {
     );
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
-    fireEvent.change(firstPlaceholder('Votre nom de famille'), { target: { value: 'Doe' } });
-    fireEvent.change(firstPlaceholder('Ingénieur, designer, chauffeur...'), {
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
     const file = new File(['abc'], 'selfie.jpg', { type: 'image/jpeg' });
@@ -408,8 +408,8 @@ describe('IdentityStep', () => {
     );
 
     expect(firstPlaceholder('Votre prénom')).toHaveValue('Existing');
-    expect(firstPlaceholder('Votre nom de famille')).toHaveValue('Name');
-    expect(firstPlaceholder('Ingénieur, designer, chauffeur...')).toHaveValue('Plombier');
+    expect(firstPlaceholder('Votre nom')).toHaveValue('Name');
+    expect(firstPlaceholder('Exemple : plombier, électricien, chauffeur…')).toHaveValue('Plombier');
   });
 
   it('prefills prénom/nom by splitting the existing name', () => {
@@ -445,8 +445,8 @@ describe('IdentityStep', () => {
     );
 
     expect(firstPlaceholder('Votre prénom')).toHaveValue('Existing');
-    expect(firstPlaceholder('Votre nom de famille')).toHaveValue('Name');
-    expect(firstPlaceholder('Ingénieur, designer, chauffeur...')).toHaveValue('Plombier');
+    expect(firstPlaceholder('Votre nom')).toHaveValue('Name');
+    expect(firstPlaceholder('Exemple : plombier, électricien, chauffeur…')).toHaveValue('Plombier');
   });
 });
 

@@ -1,0 +1,129 @@
+{
+  "seo": {
+    "title": "À propos de Matchy+ | Services locaux et professionnels",
+    "description": "Découvrez Matchy+, la plateforme qui facilite la mise en relation entre particuliers, entreprises et professionnels locaux selon leurs besoins et leur localisation.",
+    "openGraphTitle": "À propos de Matchy+ | Connecter les besoins aux talents locaux",
+    "openGraphDescription": "Découvrez la mission de Matchy+ : faciliter l’accès aux services locaux et créer davantage d’opportunités pour les professionnels."
+  },
+  "hero": {
+    "eyebrow": "À propos de Matchy+",
+    "title": "Rapprocher les besoins locaux des bonnes compétences",
+    "text": "Matchy+ aide les particuliers et les entreprises à découvrir des professionnels près de chez eux, tout en donnant aux talents locaux plus de visibilité et d’opportunités.",
+    "actions": [
+      {
+        "label": "Trouver un professionnel",
+        "href": "https://app.matchyplus.com/inscription"
+      },
+      {
+        "label": "Proposer mes services",
+        "href": "https://app.matchyplus.com/inscription"
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Notre mission",
+      "text": "Simplifier la recherche d’un professionnel et aider chaque compétence locale à être mieux visible. Matchy+ réunit particuliers, entreprises, artisans, indépendants et prestataires au sein d’une expérience accessible, géolocalisée et adaptée aux besoins locaux."
+    },
+    {
+      "id": "section-2",
+      "title": "Pourquoi Matchy+ existe",
+      "text": "Trouver une personne disponible et adaptée à un besoin peut prendre du temps. De leur côté, de nombreux professionnels possèdent un véritable savoir-faire, mais manquent de visibilité et d’accès à de nouveaux clients. Matchy+ rapproche ces deux réalités sur une même plateforme."
+    },
+    {
+      "id": "section-3",
+      "title": "Ce que Matchy+ permet",
+      "text": "Pour les utilisateurs : rechercher un service, découvrir des profils selon le besoin et la localisation, puis entrer directement en contact. Pour les professionnels : présenter leurs compétences, définir leur zone d’intervention, développer leur visibilité et accéder à de nouvelles opportunités."
+    },
+    {
+      "id": "section-4",
+      "title": "Une mise en relation plus pertinente",
+      "text": "La géolocalisation et les recommandations personnalisées aident à présenter des profils susceptibles de correspondre au besoin exprimé. Ces recommandations facilitent la recherche, mais chaque utilisateur reste libre de consulter, comparer et choisir."
+    },
+    {
+      "id": "section-5",
+      "title": "Des services utiles au quotidien",
+      "text": "Matchy+ peut faciliter la recherche de professionnels dans des domaines comme la plomberie, l’électricité, le transport, le ménage, la garde d’enfants, le jardinage, le bricolage et d’autres services locaux. La disponibilité varie selon les profils inscrits et leur zone d’intervention."
+    },
+    {
+      "id": "section-6",
+      "title": "Une plateforme pensée pour les professionnels",
+      "text": "Chaque professionnel peut valoriser son activité avec un profil clair, ses services, son expérience, sa localisation et ses préférences de contact. Matchy Explore facilite la découverte de profils et Matchy Wallet peut donner accès à des options de visibilité supplémentaires selon les offres actives."
+    },
+    {
+      "id": "section-7",
+      "title": "Notre vision",
+      "text": "Construire une plateforme panafricaine utile, accessible et ancrée dans les réalités locales. Matchy+ veut contribuer à rendre les compétences plus visibles, les services plus accessibles et les opportunités économiques plus proches des communautés."
+    },
+    {
+      "id": "section-8",
+      "title": "Confiance et responsabilité",
+      "text": "Matchy+ facilite la découverte et le premier contact. Avant toute prestation, les utilisateurs sont invités à vérifier les informations utiles, préciser le besoin et convenir clairement du tarif, du délai et des conditions. La présence d’un profil ne constitue pas automatiquement une validation de toutes les compétences déclarées."
+    }
+  ],
+  "principles": {
+    "title": "Les principes qui nous guident",
+    "items": [
+      {
+        "id": "value-1",
+        "title": "Proximité",
+        "text": "Mettre en avant les besoins, les talents et les opportunités autour de chaque utilisateur."
+      },
+      {
+        "id": "value-2",
+        "title": "Accessibilité",
+        "text": "Proposer une expérience simple, compréhensible et adaptée à différents profils."
+      },
+      {
+        "id": "value-3",
+        "title": "Utilité",
+        "text": "Concevoir des fonctionnalités qui répondent à des besoins concrets du quotidien."
+      },
+      {
+        "id": "value-4",
+        "title": "Opportunité",
+        "text": "Aider les professionnels à rendre leurs compétences visibles et à développer leur activité."
+      }
+    ]
+  },
+  "faq": {
+    "title": "À savoir sur Matchy+",
+    "items": [
+      {
+        "id": "q1",
+        "question": "Qu’est-ce que Matchy+ ?",
+        "answer": "Matchy+ est une plateforme de mise en relation entre particuliers, entreprises et professionnels locaux selon les services recherchés et la localisation."
+      },
+      {
+        "id": "q2",
+        "question": "À qui s’adresse Matchy+ ?",
+        "answer": "Matchy+ s’adresse aux personnes qui recherchent un service, aux professionnels qui proposent leurs compétences et aux entreprises qui recherchent des prestataires."
+      },
+      {
+        "id": "q3",
+        "question": "Comment Matchy+ aide les professionnels ?",
+        "answer": "Les professionnels peuvent créer un profil, présenter leurs services, indiquer leur zone d’intervention et accéder à des outils de visibilité selon les fonctionnalités disponibles."
+      },
+      {
+        "id": "q4",
+        "question": "Dans quelles régions Matchy+ est-elle disponible ?",
+        "answer": "La disponibilité dépend des professionnels inscrits et de leur zone d’intervention. La plateforme vise un développement progressif en Tunisie et sur d’autres marchés africains."
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "Rejoindre Matchy+",
+    "text": "Que vous recherchiez un professionnel ou souhaitiez développer votre activité, Matchy+ vous aide à créer une connexion locale plus simple, plus rapide et plus pertinente.",
+    "actions": [
+      {
+        "label": "Trouver un professionnel",
+        "href": "https://app.matchyplus.com/inscription"
+      },
+      {
+        "label": "Proposer mes services",
+        "href": "https://app.matchyplus.com/inscription"
+      }
+    ]
+  }
+}

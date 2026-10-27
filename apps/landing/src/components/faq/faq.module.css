@@ -1,0 +1,122 @@
+/* CSS Modules only accept local selectors, so the palette lives on .page instead of :root. */
+.page {
+  --faq-blue: #2368b5;
+  --faq-teal: #42b9a7;
+  --faq-ink: #101a36;
+  --faq-muted: #667085;
+  --faq-line: #dfe7f1;
+  --faq-bg: #f7f9fc;
+  color: var(--faq-ink);
+  line-height: 1.6;
+}
+.body {
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 32px 20px 72px;
+}
+.search {
+  max-width: 680px;
+  margin: 0 auto 12px;
+}
+.search label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+.search input {
+  width: 100%;
+  padding: 15px 18px;
+  border: 1px solid var(--faq-line);
+  border-radius: 14px;
+  background: #fff;
+  font: inherit;
+}
+.search input:focus-visible,
+.trigger:focus-visible,
+.cta a:focus-visible {
+  outline: 3px solid var(--faq-teal);
+  outline-offset: 3px;
+}
+.status {
+  min-height: 1.6em;
+  max-width: 680px;
+  margin: 0 auto;
+  color: var(--faq-muted);
+}
+.category {
+  margin: 34px 0;
+}
+/* Tailwind's preflight resets heading weights and margins this page relied on. */
+.category h2 {
+  margin-bottom: 12px;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+.item {
+  margin: 10px 0;
+  overflow: hidden;
+  border: 1px solid var(--faq-line);
+  border-radius: 14px;
+  background: #fff;
+}
+.item h3 {
+  margin: 0;
+}
+.trigger {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 0;
+  background: #fff;
+  color: var(--faq-ink);
+  text-align: start;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.icon {
+  color: var(--faq-blue);
+  font-size: 1.3rem;
+}
+.answer {
+  padding: 0 20px 20px;
+  color: #344054;
+}
+.answer p {
+  margin: 0;
+}
+.cta {
+  margin-top: 44px;
+  padding: 30px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--faq-blue), var(--faq-teal));
+  color: #fff;
+  text-align: center;
+}
+.cta h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.cta p {
+  margin: 8px 0 0;
+}
+.cta a {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--faq-blue);
+  font-weight: 800;
+  text-decoration: none;
+}
+@media (max-width: 600px) {
+  .body {
+    padding: 18px 14px 50px;
+  }
+  .trigger {
+    padding: 16px;
+  }
+}

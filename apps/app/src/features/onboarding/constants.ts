@@ -166,17 +166,17 @@ export const CONTACT_OPTION_TRANSLATIONS: Record<string, Record<'en' | 'fr' | 'a
   phone: {
     en: 'Phone call',
     fr: 'Appel téléphonique',
-    ar: 'اتصال هاتفي',
+    ar: 'مكالمة هاتفية',
   },
   whatsapp: {
-    en: 'WhatsApp / Chat',
-    fr: 'WhatsApp / Chat',
-    ar: 'واتساب / دردشة',
+    en: 'WhatsApp or messaging',
+    fr: 'WhatsApp ou messagerie',
+    ar: 'WhatsApp أو المراسلة',
   },
   person: {
     en: 'In-person meeting',
-    fr: 'Rendez-vous présentiel',
-    ar: 'لقاء شخصي / حضوري',
+    fr: 'Rendez-vous en personne',
+    ar: 'لقاء مباشر',
   },
 };
 
@@ -202,9 +202,9 @@ export const LANGUAGE_OPTION_TRANSLATIONS: Record<string, Record<'en' | 'fr' | '
     ar: 'العربية',
   },
   'ar-dialect': {
-    en: 'Dialectal Arabic',
-    fr: 'Arabe dialectal',
-    ar: 'العربية الدارجة',
+    en: 'Tunisian Arabic',
+    fr: 'Arabe tunisien',
+    ar: 'العربية التونسية',
   },
   fr: {
     en: 'French',

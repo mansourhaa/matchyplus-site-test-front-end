@@ -1,0 +1,195 @@
+{
+  "seo": {
+    "title": "Local services in Tunisia | Find a professional | Matchy+",
+    "description": "Find a plumber, electrician, driver, babysitter, housekeeper or another professional near you with Matchy+.",
+    "openGraphTitle": "Matchy+ Services | Find a professional near you",
+    "openGraphDescription": "Explore available local services and connect with the professional who matches your needs."
+  },
+  "hero": {
+    "eyebrow": "Matchy+ Services",
+    "title": "Find the service you need",
+    "text": "Discover the service categories available on Matchy+. Sign up or log in to the application to receive recommendations powered by intelligent matching and geolocation.",
+    "actions": [
+      {
+        "label": "Open the application",
+        "href": "https://app.matchyplus.com/inscription"
+      },
+      {
+        "label": "Log in",
+        "href": "https://app.matchyplus.com/connexion"
+      }
+    ]
+  },
+  "popular": {
+    "title": "Popular services near you",
+    "text": "Explore the most searched categories on Matchy+ and discover professionals available in your area.",
+    "services": [
+      {
+        "id": "service-1",
+        "name": "Plumber",
+        "description": "Leaks, blocked pipes, sanitary installations or repairs: discover plumbers available near you.",
+        "features": ["Leak repair", "Unblocking", "Sanitary installation"],
+        "action": {
+          "label": "Find a plumber",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-2",
+        "name": "Electrician",
+        "description": "Installation, diagnosis, maintenance or repairs: find an electrician for your needs.",
+        "features": ["Electrical installation", "Repairs", "Maintenance"],
+        "action": {
+          "label": "Find an electrician",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-3",
+        "name": "Driver",
+        "description": "Find a driver for a one-time trip, a professional assignment or regular transport needs.",
+        "features": ["One-time trip", "Professional assignment", "Regular transport"],
+        "action": {
+          "label": "Find a driver",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-4",
+        "name": "Babysitter and childcare",
+        "description": "Discover childcare profiles based on your city, schedule and family needs.",
+        "features": ["In-home childcare", "Occasional childcare", "Accompaniment"],
+        "action": {
+          "label": "Find a babysitter",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-5",
+        "name": "Housekeeper",
+        "description": "Find people offering home cleaning, housekeeping and maintenance services.",
+        "features": ["Home cleaning", "Deep cleaning", "Regular maintenance"],
+        "action": {
+          "label": "Find a housekeeper",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-6",
+        "name": "Gardener",
+        "description": "Discover professionals for garden care, pruning and outdoor maintenance.",
+        "features": ["Garden care", "Pruning", "Outdoor work"],
+        "action": {
+          "label": "Find a gardener",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-7",
+        "name": "Handyman and repairs",
+        "description": "Find help for small jobs, assembly, installations and everyday repairs.",
+        "features": ["Assembly", "Small repairs", "Installation"],
+        "action": {
+          "label": "Find a professional",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-8",
+        "name": "Fitness coach",
+        "description": "Discover coaches for individual training and support adapted to your goals.",
+        "features": ["Personal training", "Fitness", "Coaching"],
+        "action": {
+          "label": "Find a fitness coach",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "How do you find a professional with Matchy+?",
+    "steps": [
+      {
+        "id": "step-1",
+        "title": "1. Create your account",
+        "text": "Sign up or log in to your Matchy+ space."
+      },
+      {
+        "id": "step-2",
+        "title": "2. Describe your needs",
+        "text": "Enter your goals, preferences and location."
+      },
+      {
+        "id": "step-3",
+        "title": "3. Receive recommendations",
+        "text": "Intelligent matching and geolocation suggest relevant profiles."
+      },
+      {
+        "id": "step-4",
+        "title": "4. Connect directly",
+        "text": "Review the suggested profiles and contact the person you choose."
+      }
+    ]
+  },
+  "professionalCta": {
+    "title": "Offer a service? Make your activity more visible",
+    "text": "Create a professional profile, showcase your skills, define your service area and be discovered by people looking for your services.",
+    "action": {
+      "label": "Offer my services",
+      "href": "https://app.matchyplus.com/inscription"
+    }
+  },
+  "clarity": {
+    "title": "Choose with greater clarity",
+    "text": "Matchy+ supports discovery and initial contact. Before any service, review the profile, clarify your needs, request useful documents and agree on price, timeframe and conditions."
+  },
+  "cities": {
+    "title": "Explore services by city",
+    "text": "Availability depends on registered professionals and their service areas. Start with cities where profiles are genuinely available.",
+    "items": ["Tunis", "Ariana", "Sousse", "Monastir", "Sfax"]
+  },
+  "faq": {
+    "title": "Frequently asked questions about services",
+    "items": [
+      {
+        "id": "q1",
+        "question": "How do I find a professional near me?",
+        "answer": "Choose the service you need and enter your city. Matchy+ displays available profiles based on your needs and location."
+      },
+      {
+        "id": "q2",
+        "question": "Can I contact a professional directly?",
+        "answer": "Yes. Depending on the profile’s enabled preferences, you may use messaging, WhatsApp or phone."
+      },
+      {
+        "id": "q3",
+        "question": "Does Matchy+ set service prices?",
+        "answer": "No. The customer and professional agree directly on price, timeframe, payment method and service conditions."
+      },
+      {
+        "id": "q4",
+        "question": "Can I offer several services?",
+        "answer": "Yes, within the limit of your profile or plan. Add only services you can genuinely provide."
+      },
+      {
+        "id": "q5",
+        "question": "Are all professionals verified?",
+        "answer": "The presence of a profile does not mean every declared skill or qualification has been verified. Request useful information and documents before any service."
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "The right professional may be closer than you think",
+    "text": "Search for a local service or create your profile to showcase your skills to new customers.",
+    "actions": [
+      {
+        "label": "Open the application",
+        "href": "https://app.matchyplus.com/inscription"
+      },
+      {
+        "label": "Offer my services",
+        "href": "https://app.matchyplus.com/inscription"
+      }
+    ]
+  }
+}
