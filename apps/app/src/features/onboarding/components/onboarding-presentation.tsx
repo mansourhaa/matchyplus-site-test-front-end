@@ -422,7 +422,6 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
         {/* Panel Header */}
         <div className="relative z-10 flex items-center justify-between">
           <MatchyLogoWhite size="md" />
-          <LangPickerLight />
         </div>
 
         {/* Panel Content (Mirrors the active slide) */}
@@ -484,24 +483,26 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
 
       {/* Right Canvas (Mobile + Desktop Centerpiece) */}
       <main className="relative flex flex-1 flex-col justify-between overflow-y-auto bg-white p-6 sm:p-10 md:p-12">
-        {/* Mobile Header (Brand + Lang + Skip) */}
-        <header className="flex items-center justify-between pb-4 md:hidden">
+        {/* Floating Top-Right Language Switcher (matches login and inscription) */}
+        <div className="absolute end-4 top-4 z-20 md:end-6 md:top-6">
+          <LangPickerLight />
+        </div>
+
+        {/* Mobile Header (Brand + Skip) */}
+        <header className="flex items-center justify-between pe-14 pb-4 md:hidden">
           <MatchyLogo size="md" />
-          <div className="flex items-center gap-2">
-            <LangPickerLight />
-            <button
-              type="button"
-              onClick={onComplete}
-              data-testid="onboarding-intro-skip-mobile"
-              className="rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100"
-            >
-              {t('onboarding.intro.skip')}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onComplete}
+            data-testid="onboarding-intro-skip-mobile"
+            className="rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100"
+          >
+            {t('onboarding.intro.skip')}
+          </button>
         </header>
 
         {/* Desktop Content Header */}
-        <div className="hidden items-center justify-between pb-4 md:flex">
+        <div className="hidden items-center justify-between pe-14 pb-4 md:flex">
           <span className="text-xs font-semibold text-slate-400">
             {t('onboarding.intro.discoverTitle')}
           </span>
