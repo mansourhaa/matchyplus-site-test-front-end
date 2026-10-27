@@ -253,6 +253,15 @@ export const logout = createAsyncThunk('auth/logout', async () => {
     .catch(() => undefined);
 });
 
+function syncOnboardingCookie(completed: boolean) {
+  if (typeof document === 'undefined') return;
+  if (completed) {
+    document.cookie = 'matchy_onboarding_incomplete=; path=/; max-age=0; SameSite=Lax';
+  } else {
+    document.cookie = 'matchy_onboarding_incomplete=1; path=/; max-age=2592000; SameSite=Lax';
+  }
+}
+
 function applySession(state: AuthState, user: AuthUser) {
   state.status = 'authenticated';
   state.user = user;
@@ -264,6 +273,7 @@ function applySession(state: AuthState, user: AuthUser) {
   state.sessionChecked = true;
   state.sessionGeneration += 1;
   persistAuthUser(user);
+  syncOnboardingCookie(user.onboarding_completed);
 }
 
 function clearSession(state: AuthState) {
@@ -271,6 +281,7 @@ function clearSession(state: AuthState) {
   state.user = null;
   state.sessionGeneration += 1;
   clearAuthSession();
+  syncOnboardingCookie(true);
 }
 
 const authSlice = createSlice({
@@ -305,6 +316,7 @@ const authSlice = createSlice({
       if (!state.user) return;
       state.user = { ...state.user, onboarding_completed: true };
       persistAuthUser(state.user);
+      syncOnboardingCookie(true);
     },
     updateAuthUser: (state, action: PayloadAction<Partial<AuthUser>>) => {
       if (!state.user) return;

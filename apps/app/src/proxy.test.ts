@@ -105,4 +105,21 @@ describe('proxy auth gate', () => {
     const res = proxy(request('/connexion', makeJwt({ exp: now - 60 })));
     expect(res.status).toBe(200);
   });
+
+  it('allows access to /connexion when switch=true is specified even if a session exists', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const token = makeJwt({ exp: now + 3600 });
+    const res = proxy(request('/connexion?switch=true', token));
+    expect(res.status).toBe(200);
+  });
+
+  it('allows access to /connexion when onboarding is incomplete via cookie', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const token = makeJwt({ exp: now + 3600 });
+    const headers = new Headers();
+    headers.set('cookie', `${AUTH_COOKIE}=${token}; matchy_onboarding_incomplete=1`);
+    const req = new NextRequest(new URL('/connexion', 'https://app.test'), { headers });
+    const res = proxy(req);
+    expect(res.status).toBe(200);
+  });
 });

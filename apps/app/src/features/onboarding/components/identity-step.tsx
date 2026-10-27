@@ -556,7 +556,7 @@ export function IdentityStep({
         experience: profileType === 'INDIVIDUAL' && experience ? experience : undefined,
       }),
     );
-    router.push('/connexion');
+    router.push('/connexion?switch=true');
   };
 
   const stepContent = (
@@ -972,7 +972,7 @@ export function IdentityStep({
             /connexion to go back to — it would only bounce them right back here. */}
         {!isAuthenticated && (
           <Link
-            href="/connexion"
+            href="/connexion?switch=true"
             className="mt-3.5 block w-full rounded-2xl border border-slate-200 bg-white py-3.5 text-center font-bold text-slate-700 shadow-xs transition-colors hover:bg-slate-50"
             style={{
               fontSize: '14px',

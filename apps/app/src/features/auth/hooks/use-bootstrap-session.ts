@@ -85,7 +85,18 @@ export function useBootstrapSession() {
       syncMirroredAccessCookieFromStorage();
 
       const capHasToken = isNativeMobileClient() && Boolean(mobileTokenStorage.getAccess());
-      if (skipsBootstrapAuthCheck(pathname) && !capHasToken) {
+      const hasIncompleteCookie =
+        typeof document !== 'undefined' &&
+        document.cookie.includes('matchy_onboarding_incomplete=1');
+      const isSwitchingAccount =
+        typeof window !== 'undefined' && window.location.search.includes('switch=true');
+
+      if (
+        skipsBootstrapAuthCheck(pathname) &&
+        !capHasToken &&
+        !hasIncompleteCookie &&
+        !isSwitchingAccount
+      ) {
         dispatch(acknowledgeAnonymousBootstrap());
         return;
       }
