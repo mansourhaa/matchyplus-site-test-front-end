@@ -981,9 +981,9 @@ export const messages: Record<Locale, MessageTree> = {
         stepIndicator: 'ÉTAPE {step} / {total}',
         discoverTitle: 'Découvrez Matchy+',
         slide1Badge: 'Matching',
-        slide1Title: 'Matchez autour de vous',
+        slide1Title: 'Matcher autour de vous',
         slide1Desc:
-          'Trouvez le bon prestataire ou collaborateur en swipant, comme Tinder mais pour les pros.',
+          'Trouvez le bon prestataire ou collaborateur en swipant, comme Tinder mais pour le professionnel.',
         slide2Badge: 'Explorer',
         slide2Title: 'Découvrez Matchy Explore',
         slide2Desc:

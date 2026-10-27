@@ -104,7 +104,7 @@ describe('OnboardingPage (/onboarding)', () => {
   it('renders onboarding presentation when intro has not been seen', () => {
     renderPage();
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matchez autour de vous');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matcher autour de vous');
     expect(screen.getByTestId('onboarding-intro-next')).toBeInTheDocument();
   });
 
@@ -132,7 +132,7 @@ describe('OnboardingPage (/onboarding)', () => {
     renderPage();
 
     expect(replaceMock).not.toHaveBeenCalled();
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matchez autour de vous');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matcher autour de vous');
   });
 
   it('redirects authenticated completed users to /home', () => {

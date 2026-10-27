@@ -28,7 +28,7 @@ describe('OnboardingPresentation', () => {
   it('renders slide 1 (Matching) by default', () => {
     renderPresentation();
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matchez autour de vous');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matcher autour de vous');
     expect(screen.getByTestId('onboarding-intro-skip')).toBeInTheDocument();
     expect(screen.getByTestId('onboarding-intro-next')).toBeInTheDocument();
     expect(screen.queryByTestId('onboarding-intro-prev')).not.toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('OnboardingPresentation', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Découvrez Matchy Explore');
 
     fireEvent.click(screen.getByTestId('onboarding-intro-prev'));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matchez autour de vous');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matcher autour de vous');
   });
 
   it('jumps directly to a slide when clicking a carousel dot', () => {
@@ -90,6 +90,6 @@ describe('OnboardingPresentation', () => {
     act(() => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
     });
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matchez autour de vous');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Matcher autour de vous');
   });
 });

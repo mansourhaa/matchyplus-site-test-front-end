@@ -523,14 +523,14 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
               type="button"
               onClick={onComplete}
               data-testid="onboarding-intro-skip"
-              className="rounded-full border border-white/40 bg-white/10 px-5 py-2 text-sm font-semibold text-white backdrop-blur-xs transition hover:bg-white/20"
+              className="flex h-11 min-w-[92px] items-center justify-center rounded-2xl border border-white/50 bg-white/20 px-5 text-sm font-semibold text-white shadow-xs backdrop-blur-xs transition hover:bg-white/30"
             >
               {t('onboarding.intro.skip')}
             </button>
             <button
               type="button"
               onClick={handleNext}
-              className="flex items-center gap-1.5 rounded-full bg-white px-7 py-2 text-sm font-bold text-[#2F76BB] shadow-md transition hover:bg-white/90"
+              className="flex h-11 min-w-[185px] items-center justify-center gap-1.5 rounded-2xl bg-white px-8 text-sm font-bold text-[#2F76BB] shadow-md transition hover:bg-white/95"
             >
               <span>{isLast ? t('onboarding.intro.signIn') : t('onboarding.intro.next')}</span>
               <ChevronRight size={16} />
@@ -582,7 +582,7 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
         </div>
 
         {/* Center Presentation Section */}
-        <div className="mx-auto my-auto flex w-full max-w-md flex-col items-center py-4 text-center sm:py-6">
+        <div className="mx-auto my-auto flex w-full max-w-xl flex-col items-center py-4 text-center sm:py-6">
           {/* Badge Pill */}
           <span
             className="mb-5 inline-flex items-center rounded-full px-4 py-1.5 text-xs font-bold tracking-wide"
@@ -596,7 +596,7 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
 
           {/* Illustration Container */}
           <div
-            className="mb-6 flex aspect-[16/11] w-full items-center justify-center rounded-3xl border border-slate-100/60 p-6 shadow-2xs transition-all duration-300"
+            className="mb-6 flex aspect-[16/11] w-full max-w-lg items-center justify-center rounded-3xl border border-slate-100/60 p-6 shadow-2xs transition-all duration-300"
             style={{ backgroundColor: activeSlide.cardBg }}
           >
             {activeSlide.graphic}
@@ -614,16 +614,16 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
         </div>
 
         {/* Bottom Action Row */}
-        <footer className="mx-auto flex w-full max-w-md items-center gap-3 pt-4">
+        <footer className="mx-auto flex w-full max-w-xl items-center gap-3 pt-6">
           {currentSlide > 0 && (
             <button
               type="button"
               onClick={handlePrev}
               aria-label={t('onboarding.intro.back')}
               data-testid="onboarding-intro-prev"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:bg-slate-50 active:scale-95"
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:bg-slate-50 active:scale-95"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={22} />
             </button>
           )}
 
@@ -631,7 +631,7 @@ export function OnboardingPresentation({ onComplete }: OnboardingPresentationPro
             type="button"
             onClick={handleNext}
             data-testid="onboarding-intro-next"
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-base font-bold text-white shadow-md transition hover:opacity-95 active:scale-[0.99]"
+            className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl px-8 text-base font-bold text-white shadow-md transition hover:opacity-95 active:scale-[0.99]"
             style={{
               background: 'linear-gradient(90deg, #48BBA0 0%, #2F76BB 100%)',
             }}
