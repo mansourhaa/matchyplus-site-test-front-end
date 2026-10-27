@@ -1,7 +1,7 @@
 import { PrismaClient, Role, SwipeDirection, UserStatus } from '@saas-boilerplate/types';
 
 import { DISCOVERY_PAGE_SIZE, DISCOVERY_RADIUS_M } from '../constants.js';
-import { DiscoveryFeedQuery, FeedProfile } from '../types/matching.js';
+import { DiscoveryFeedQuery, DiscoverySectorsResponse, FeedProfile } from '../types/matching.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import {
   FeedUser,
@@ -287,6 +287,73 @@ export class DiscoveryService {
         is_locked: true,
       };
     });
+  }
+
+  async getSectors(): Promise<DiscoverySectorsResponse> {
+    try {
+      const users = await this.prisma.user.findMany({
+        where: {
+          status: UserStatus.ACTIVE,
+          OR: [
+            { activity_sector: { not: null } },
+            { category: { not: null } },
+            { service_type: { not: null } },
+          ],
+        },
+        select: {
+          activity_sector: true,
+          category: true,
+          service_type: true,
+        },
+      });
+
+      const seen = new Set<string>();
+      const sectors: string[] = [];
+
+      const add = (val?: string | null) => {
+        if (!val || typeof val !== 'string') return;
+        const trimmed = val.trim();
+        if (!trimmed) return;
+        const lower = trimmed.toLowerCase();
+        if (!seen.has(lower)) {
+          seen.add(lower);
+          sectors.push(trimmed);
+        }
+      };
+
+      for (const u of users) {
+        add(u.activity_sector);
+        add(u.category);
+        add(u.service_type);
+      }
+
+      const defaultSectors = [
+        'Informatique / Tech',
+        'Transport',
+        'Services & missions',
+        'Service à domicile',
+        'Restauration / Hôtellerie',
+        'BTP / Artisanat',
+        'Aide ménagère',
+        'Santé / Médical',
+        'Marketing / Communication',
+        'Commerce / Vente',
+        'Éducation / Formation',
+        'Cuisine',
+        'Jardinage',
+        'Garde enfants',
+        'Plomberie',
+        'Électricité',
+      ];
+
+      for (const s of defaultSectors) {
+        add(s);
+      }
+
+      return { sectors };
+    } catch (err) {
+      throw err;
+    }
   }
 }
 
