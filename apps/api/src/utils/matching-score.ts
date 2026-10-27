@@ -1,14 +1,16 @@
 /**
- * Scripted 6-Dimension Discovery Matching Engine for Fastify API.
- * Aligned with Matchy+ specification (https://appmatchyplus.figma.site/matching-doc).
+ * Scripted 7-Dimension Discovery Matching Engine for Fastify API.
+ * Aligned with Matchy+ specifications.
  *
  * Dimensions & Weights:
- * - 1. Compétences & Intérêts (28%)
- * - 2. Proximité géographique (22%)
- * - 3. Alignement des objectifs (18%)
- * - 4. Disponibilité partagée (12%)
- * - 5. Langues communes (10%)
- * - 6. Qualité & Réputation (10%)
+ * - 1. Secteur d'activité & Type de service (30%)
+ * - 2. Complémentarité des rôles (INDIVIDUAL <-> PROVIDER) (20%)
+ * - 3. Intérêts partagés & Objectifs mutuels (15%)
+ * - 4. Proximité géographique (15%)
+ * - 5. Disponibilité & Modes de contact (10%)
+ * - 6. Qualité, note & réputation du profil (5%)
+ * - 7. Compatibilité budget / tarif (5%)
+ * Total = 100%
  */
 
 export type MatchIntent =
@@ -41,6 +43,8 @@ export type ScoringProfile = {
   availability_days?: string[] | null;
   availability_hours?: string[] | null;
   schedule?: string | null;
+  contact_modes?: string[] | null;
+  price?: string | null;
   rating?: number | null;
   reviews?: number | null;
 };
@@ -64,12 +68,13 @@ export type MatchScoreResult = {
 };
 
 export const WEIGHTS = {
-  skills: 0.28,
-  proximity: 0.22,
-  goals: 0.18,
-  availability: 0.12,
-  languages: 0.1,
-  quality: 0.1,
+  sector: 0.3,
+  roles: 0.2,
+  goals: 0.15,
+  proximity: 0.15,
+  availability: 0.1,
+  quality: 0.05,
+  budget: 0.05,
 } as const;
 
 /** Small boost when the candidate already liked me (incoming RIGHT). */
@@ -172,7 +177,9 @@ export function extractIntents(profile: ScoringProfile): MatchIntent[] {
   if (intents.length === 0) {
     const type = norm(profile.profile_type);
     intents.push(
-      ['employeur', 'company', 'business', 'pro'].includes(type) ? 'recruit' : 'networking',
+      ['employeur', 'company', 'business', 'pro', 'provider'].includes(type)
+        ? 'recruit'
+        : 'networking',
     );
   }
   return intents;
@@ -232,7 +239,75 @@ function scoreMutualGoals(
   return { pts: 0, matchType: 'none' };
 }
 
-/** 1. Compétences & Intérêts (28%): Jaccard + soft substring matches + sector alignment */
+/** 1. Secteur d'activité & Service (30%): Exact or compatible sector/service alignment */
+export function sectorScore(me: ScoringProfile, cand: ScoringProfile): number {
+  const meSector = norm(sectorLabel(me));
+  const candSector = norm(sectorLabel(cand));
+  if (!meSector || !candSector) return 50;
+
+  const meService = norm(me.service_type || me.job);
+  const candService = norm(cand.service_type || cand.job);
+
+  if (
+    meService &&
+    candService &&
+    (meService === candService ||
+      meService.includes(candService) ||
+      candService.includes(meService))
+  ) {
+    return 100;
+  }
+
+  if (meSector === candSector || meSector.includes(candSector) || candSector.includes(meSector)) {
+    return 90;
+  }
+
+  const meWords = meSector.split(/[\s/,]+/).filter((w) => w.length >= 3);
+  const candWords = candSector.split(/[\s/,]+/).filter((w) => w.length >= 3);
+  const wordMatch = meWords.some((w) => candWords.some((cw) => cw.includes(w) || w.includes(cw)));
+  if (wordMatch) return 75;
+
+  return 20;
+}
+
+/** 2. Complémentarité des rôles (20%): INDIVIDUAL vs PROVIDER */
+export function rolesScore(me: ScoringProfile, cand: ScoringProfile): number {
+  const meType = norm(me.profile_type);
+  const candType = norm(cand.profile_type);
+
+  const isMeIndividual =
+    meType.includes('individual') || meType.includes('particulier') || meType.includes('candidat');
+  const isMeProvider =
+    meType.includes('provider') ||
+    meType.includes('prestataire') ||
+    meType.includes('pro') ||
+    meType.includes('employeur');
+  const isCandIndividual =
+    candType.includes('individual') ||
+    candType.includes('particulier') ||
+    candType.includes('candidat');
+  const isCandProvider =
+    candType.includes('provider') ||
+    candType.includes('prestataire') ||
+    candType.includes('pro') ||
+    candType.includes('employeur');
+
+  if ((isMeIndividual && isCandProvider) || (isMeProvider && isCandIndividual)) {
+    return 100; // Perfect complementary match
+  }
+
+  if (isMeProvider && isCandProvider) {
+    return 65; // Peer / B2B partnership
+  }
+
+  if (isMeIndividual && isCandIndividual) {
+    return 45;
+  }
+
+  return 70; // Default when roles not specified
+}
+
+/** 3. Compétences & Intérêts: Jaccard + soft matches */
 export function skillsScore(me: ScoringProfile, cand: ScoringProfile): number {
   const userTags = interestTokens(me);
   const candTags = interestTokens(cand);
@@ -258,16 +333,7 @@ export function skillsScore(me: ScoringProfile, cand: ScoringProfile): number {
   );
 }
 
-/** 2. Proximité géographique (22%): Exponential decay curve */
-export function proximityScore(distKm: number | null, radiusKm = 100): number {
-  if (distKm == null) return 50;
-  if (distKm <= 0.5) return 99;
-  const distRatio = Math.min(1, distKm / Math.max(1, radiusKm));
-  const decay = Math.pow(Math.max(0, 1 - distRatio), 1.6) * 100;
-  return Math.max(10, Math.min(100, Math.round(decay)));
-}
-
-/** 3. Alignement des objectifs (18%): Goal intent matrix */
+/** 3. Intérêts partagés & Objectifs mutuels (15%) */
 export function goalsScore(
   me: ScoringProfile,
   cand: ScoringProfile,
@@ -277,36 +343,54 @@ export function goalsScore(
   const meSect = sectorLabel(me);
   const candSect = sectorLabel(cand);
   const mutual = scoreMutualGoals(myIntents, candIntents, meSect, candSect);
+  const skills = skillsScore(me, cand);
 
-  let score = 50;
-  if (mutual.pts === 25) score = 100;
-  else if (mutual.pts === 18) score = 90;
-  else if (mutual.pts === 10) score = 75;
-  else score = 45;
+  let baseIntentScore = 50;
+  if (mutual.pts === 25) baseIntentScore = 100;
+  else if (mutual.pts === 18) baseIntentScore = 85;
+  else if (mutual.pts === 10) baseIntentScore = 70;
+  else baseIntentScore = 35;
 
-  return { score, matchType: mutual.matchType };
+  const combined = Math.round(baseIntentScore * 0.5 + skills * 0.5);
+  return { score: Math.max(20, Math.min(100, combined)), matchType: mutual.matchType };
 }
 
-/** 4. Disponibilité partagée (12%): Days overlap + schedule flexibility */
+/** 4. Proximité géographique (15%): Exponential decay curve */
+export function proximityScore(distKm: number | null | undefined, radiusKm = 100): number {
+  if (distKm == null || !Number.isFinite(distKm)) return 50;
+  if (distKm <= 0.5) return 99;
+  const distRatio = Math.min(1, Math.max(0, distKm) / Math.max(1, radiusKm));
+  const decay = Math.pow(Math.max(0, 1 - distRatio), 1.6) * 100;
+  return Math.max(10, Math.min(100, Math.round(decay)));
+}
+
+/** 5. Disponibilité & Modes de contact (10%) */
 export function availabilityScore(me: ScoringProfile, cand: ScoringProfile): number {
   const myDays = me.availability_days ?? [];
   const candDays = cand.availability_days ?? [];
   const candSchedule = String(cand.schedule || '').toLowerCase();
   const isFlexible = /flexible|24h|disponible|plein temps|full-time/i.test(candSchedule);
 
+  let dayScore = 65;
   if (myDays.length > 0 && candDays.length > 0) {
     const dayOverlap = myDays.filter((d) => candDays.includes(d)).length;
-    const dayScore = Math.min(100, (dayOverlap / Math.max(myDays.length, 1)) * 100);
-    const hourScore = isFlexible ? 100 : 70;
-    return Math.round(dayScore * 0.6 + hourScore * 0.4);
+    dayScore = Math.min(100, (dayOverlap / Math.max(myDays.length, 1)) * 100);
+  } else if (isFlexible) {
+    dayScore = 90;
   }
 
-  if (isFlexible) return 90;
-  if (candDays.length > 0 || myDays.length > 0) return 70;
-  return 65;
+  const myModes = me.contact_modes ?? [];
+  const candModes = cand.contact_modes ?? [];
+  let modeScore = 70;
+  if (myModes.length > 0 && candModes.length > 0) {
+    const overlap = myModes.filter((m) => candModes.includes(m)).length;
+    modeScore = overlap > 0 ? 95 : 50;
+  }
+
+  return Math.round(dayScore * 0.6 + modeScore * 0.4);
 }
 
-/** 5. Langues communes (10%): Normalized language overlap + shared bonus */
+/** Common languages evaluation */
 export function languageScore(me: ScoringProfile, cand: ScoringProfile): number {
   const normalize = (langs?: string[] | null) =>
     (langs || []).map((l) => LANG_MAP[norm(l)] ?? norm(l)).filter(Boolean);
@@ -324,7 +408,7 @@ export function languageScore(me: ScoringProfile, cand: ScoringProfile): number 
   return Math.min(100, Math.round(jaccard * 85 + bonus));
 }
 
-/** 6. Qualité & Réputation (10%): Rating + reviews log + completeness */
+/** 6. Qualité & Réputation (5%) */
 export function qualityScore(cand: ScoringProfile): number {
   const rating = cand.rating ?? 0;
   const reviews = cand.reviews ?? 0;
@@ -335,6 +419,24 @@ export function qualityScore(cand: ScoringProfile): number {
 
   const score = ratingScore + reviewBonus + profileCompleteness;
   return Math.max(30, Math.min(100, Math.round(score)));
+}
+
+function parsePriceNumber(price?: string | null): number | null {
+  if (!price) return null;
+  const match = price.replace(/\s+/g, '').match(/\d+(?:[.,]\d+)?/);
+  if (!match) return null;
+  const val = parseFloat(match[0].replace(',', '.'));
+  return Number.isFinite(val) ? val : null;
+}
+
+/** 7. Compatibilité budget / tarif (5%) */
+export function budgetScore(me: ScoringProfile, cand: ScoringProfile): number {
+  const p1 = parsePriceNumber(me.price);
+  const p2 = parsePriceNumber(cand.price);
+  if (p1 == null || p2 == null) return 75; // Neutral when price not specified
+
+  const ratio = Math.min(p1, p2) / Math.max(p1, p2, 1);
+  return Math.max(30, Math.min(100, Math.round(ratio * 100)));
 }
 
 function labelFor(matchType: MatchType): string {
@@ -351,56 +453,88 @@ function groupFor(matchType: MatchType): MatchGroup {
   return 4;
 }
 
-export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+/**
+ * Calculates great-circle distance between two points in km.
+ * Returns null if any coordinate is missing, null, undefined, or NaN.
+ */
+export function haversineKm(
+  lat1: number | null | undefined,
+  lon1: number | null | undefined,
+  lat2: number | null | undefined,
+  lon2: number | null | undefined,
+): number | null {
+  if (
+    lat1 == null ||
+    lon1 == null ||
+    lat2 == null ||
+    lon2 == null ||
+    !Number.isFinite(lat1) ||
+    !Number.isFinite(lon1) ||
+    !Number.isFinite(lat2) ||
+    !Number.isFinite(lon2)
+  ) {
+    return null;
+  }
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const c = 2 * Math.atan2(Math.sqrt(Math.min(1, Math.max(0, a))), Math.sqrt(Math.max(0, 1 - a)));
+  const d = R * c;
+  return Number.isFinite(d) ? Math.round(d * 10) / 10 : null;
 }
 
 export function computeMatchScore(
   me: ScoringProfile,
   cand: ScoringProfile,
-  distKm: number | null,
+  distKm: number | null | undefined,
   options?: { likedMe?: boolean; radiusKm?: number },
 ): MatchScoreResult {
+  const safeDistKm = distKm != null && Number.isFinite(distKm) ? distKm : null;
+
+  const sector = sectorScore(me, cand);
+  const roles = rolesScore(me, cand);
   const goals = goalsScore(me, cand);
-  const skills = skillsScore(me, cand);
-  const proximity = proximityScore(distKm, options?.radiusKm ?? 100);
+  const proximity = proximityScore(safeDistKm, options?.radiusKm ?? 100);
   const availability = availabilityScore(me, cand);
-  const languages = languageScore(me, cand);
   const quality = qualityScore(cand);
+  const budget = budgetScore(me, cand);
 
   const dimensions = [
-    { label: 'skills', score: skills, weight: WEIGHTS.skills },
-    { label: 'proximity', score: proximity, weight: WEIGHTS.proximity },
+    { label: 'sector', score: sector, weight: WEIGHTS.sector },
+    { label: 'roles', score: roles, weight: WEIGHTS.roles },
     { label: 'goals', score: goals.score, weight: WEIGHTS.goals },
+    { label: 'proximity', score: proximity, weight: WEIGHTS.proximity },
     { label: 'availability', score: availability, weight: WEIGHTS.availability },
-    { label: 'languages', score: languages, weight: WEIGHTS.languages },
     { label: 'quality', score: quality, weight: WEIGHTS.quality },
+    { label: 'budget', score: budget, weight: WEIGHTS.budget },
   ];
 
   const rawWeighted = dimensions.reduce((sum, d) => sum + d.score * d.weight, 0);
 
-  // Deterministic seed jitter (±3 pts) to avoid visual ties across re-renders
+  // Deterministic seed jitter (±2 pts) to avoid visual ties across re-renders
   const seed = (cand.id.charCodeAt(0) || 0) + (cand.interests?.length || 0);
-  const jitter = (seed % 7) - 3;
+  const jitter = (seed % 5) - 2;
 
   const reciprocityBoost = options?.likedMe ? RECIPROCITY_BOOST : 0;
-  const clampedBase = Math.min(99, Math.max(40, Math.round(rawWeighted + jitter)));
+  const clampedBase = Math.min(99, Math.max(30, Math.round(rawWeighted + jitter)));
   const finalScore = Math.min(100, clampedBase + reciprocityBoost);
 
   let matchType = goals.matchType;
-  let matchGroup = groupFor(matchType);
-  const myIntents = extractIntents(me);
-  const meSect = sectorLabel(me);
-  const candSect = sectorLabel(cand);
-  const strict = myIntents.some((i) => SECTOR_STRICT.has(i)) && Boolean(norm(meSect));
-  if (strict && !sectorsCompatible(meSect, candSect) && matchType === 'none') {
+  if ((goals.matchType === 'strong' || roles === 100) && sector >= 70) {
+    matchType = 'strong';
+  } else if (goals.matchType === 'domain' || sector >= 75) {
+    matchType = 'domain';
+  } else if (goals.matchType === 'same_intent' || sector >= 50) {
+    matchType = 'same_intent';
+  } else if (sector < 30) {
     matchType = 'none';
+  }
+
+  let matchGroup = groupFor(matchType);
+  if (sector < 30) {
     matchGroup = 4;
   }
 

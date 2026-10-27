@@ -167,7 +167,7 @@ export class DiscoveryService {
           candCoords.latitude,
           candCoords.longitude,
         );
-        if (distKm * 1000 > radiusM) continue;
+        if (distKm != null && distKm * 1000 > radiusM) continue;
 
         const score = computeMatchScore(toScoringProfile(me), toScoringProfile(candidate), distKm, {
           likedMe: likedMe.has(candidate.id),
