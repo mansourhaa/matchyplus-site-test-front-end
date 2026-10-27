@@ -271,7 +271,7 @@ describe('LoginForm — Back button', () => {
     expect(pushMock).toHaveBeenCalledWith('/connexion');
   });
 
-  it('does not bounce to /inscription when session is incomplete and renders notice banner', () => {
+  it('renders dedicated incomplete onboarding view on /connexion without bouncing', () => {
     searchParamsRef.current = new URLSearchParams();
     renderWithAuthStore(<LoginForm />, {
       status: 'authenticated',
@@ -283,17 +283,48 @@ describe('LoginForm — Back button', () => {
     });
 
     expect(replaceMock).not.toHaveBeenCalledWith('/inscription');
+    expect(screen.getAllByText('Inscription en cours')[0]).toBeInTheDocument();
     expect(
-      screen.getAllByText(
-        'Une inscription est en cours avec cette session. Vous pouvez vous connecter à un autre compte ci-dessous, ou reprendre votre inscription.',
-      )[0],
+      screen.getAllByRole('button', { name: /Continuer l’inscription/i })[0],
     ).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /Reprendre l’inscription/i })[0]).toHaveAttribute(
-      'href',
-      '/inscription',
-    );
     expect(
       screen.getAllByRole('button', { name: /Changer de compte \/ Se déconnecter/i })[0],
     ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('button', { name: /Ou se connecter avec un autre compte/i })[0],
+    ).toBeInTheDocument();
+  });
+
+  it('navigates to /inscription when clicking continue registration or header back', () => {
+    searchParamsRef.current = new URLSearchParams();
+    renderWithAuthStore(<LoginForm />, {
+      status: 'authenticated',
+      user: {
+        ...phoneUser,
+        onboarding_completed: false,
+      },
+      sessionChecked: true,
+    });
+
+    fireEvent.click(firstButton(/Continuer l’inscription/i));
+    expect(pushMock).toHaveBeenCalledWith('/inscription');
+
+    fireEvent.click(firstButton('Retour'));
+    expect(pushMock).toHaveBeenCalledWith('/inscription');
+  });
+
+  it('navigates to /connexion?switch=true when clicking signInOtherAccountLink', () => {
+    searchParamsRef.current = new URLSearchParams();
+    renderWithAuthStore(<LoginForm />, {
+      status: 'authenticated',
+      user: {
+        ...phoneUser,
+        onboarding_completed: false,
+      },
+      sessionChecked: true,
+    });
+
+    fireEvent.click(firstButton(/Ou se connecter avec un autre compte/i));
+    expect(pushMock).toHaveBeenCalledWith('/connexion?switch=true');
   });
 });

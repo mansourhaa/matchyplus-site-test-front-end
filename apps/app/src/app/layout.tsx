@@ -23,6 +23,8 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   title: siteConfig.name,
   description: siteConfig.description,
+  // Sign-in, sign-up and member pages stay out of search; the public site is the landing.
+  robots: { index: false, follow: false },
   icons: {
     icon: '/icon.svg',
     shortcut: '/icon.svg',

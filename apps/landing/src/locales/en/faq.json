@@ -1,0 +1,147 @@
+{
+  "seo": {
+    "title": "Matchy+ FAQ | Registration, services and professionals",
+    "description": "Read the Matchy+ FAQ about registration, local professionals, services, profiles, Matchy Wallet, privacy and support."
+  },
+  "hero": {
+    "title": "Frequently asked questions about Matchy+",
+    "introduction": "Looking for a professional, offering services or trying to understand Matchy+? Find clear answers about registration, local services, profiles, connections and privacy."
+  },
+  "search": {
+    "label": "Search for a question…",
+    "placeholder": "Search for a question…",
+    "noResults": "No question matches your search."
+  },
+  "categories": [
+    {
+      "id": "category-1",
+      "title": "Discover Matchy+",
+      "items": [
+        {
+          "id": "c1-q1",
+          "question": "What is Matchy+?",
+          "answer": "Matchy+ is a connection platform that helps individuals and businesses discover professionals, artisans, freelancers and service providers based on their needs and location. Professionals can create a profile, showcase services and increase their visibility."
+        },
+        {
+          "id": "c1-q2",
+          "question": "Who is Matchy+ for?",
+          "answer": "Matchy+ is for individuals looking for services, professionals offering their skills, freelancers, people looking for projects and businesses searching for service providers."
+        },
+        {
+          "id": "c1-q3",
+          "question": "What services can I find?",
+          "answer": "You can search for local services such as plumbing, electrical work, transport, cleaning, childcare, gardening and home repairs. Categories evolve as new professionals join."
+        },
+        {
+          "id": "c1-q4",
+          "question": "Is Matchy+ available throughout Tunisia?",
+          "answer": "Availability depends on registered professionals and their service areas. Select your city to discover profiles and services available near you."
+        }
+      ]
+    },
+    {
+      "id": "category-2",
+      "title": "Find a professional",
+      "items": [
+        {
+          "id": "c2-q1",
+          "question": "How do I find a professional near me?",
+          "answer": "Select the service you need and enter your location. Matchy+ displays profiles relevant to your need and area. Review the available information and contact the professional you choose."
+        },
+        {
+          "id": "c2-q2",
+          "question": "How do recommendations work?",
+          "answer": "Matchy+ uses the requested service, your location and profile information to suggest relevant profiles. Recommendations make searching easier, but you remain free to compare and choose."
+        },
+        {
+          "id": "c2-q3",
+          "question": "How should I choose a professional?",
+          "answer": "Review the profile, services, experience and service area. Before assigning a job, clarify your needs, request useful documents and agree on the price, timeframe and conditions."
+        },
+        {
+          "id": "c2-q4",
+          "question": "How can I contact a professional?",
+          "answer": "Depending on enabled preferences, you may use the platform messaging system, WhatsApp or phone. Always respect each user’s contact preferences and privacy."
+        },
+        {
+          "id": "c2-q5",
+          "question": "Does Matchy+ set service prices?",
+          "answer": "No. Prices and conditions are agreed directly between the customer and the professional. Confirm the price, possible extra costs, payment method, timeframe and cancellation conditions before the service."
+        }
+      ]
+    },
+    {
+      "id": "category-3",
+      "title": "Offer services",
+      "items": [
+        {
+          "id": "c3-q1",
+          "question": "How do I offer my services?",
+          "answer": "Create an account, choose “I offer services”, then complete your profession, experience, service area, languages, contact methods and business description."
+        },
+        {
+          "id": "c3-q2",
+          "question": "Can I offer several services?",
+          "answer": "Yes, within the limit of your profile or plan. Add only services you can genuinely provide so that you receive relevant requests."
+        },
+        {
+          "id": "c3-q3",
+          "question": "How can I make my profile more attractive?",
+          "answer": "Add a clear photo, a precise title, a practical description, your experience, service area and availability. An optional short video can also introduce your work."
+        },
+        {
+          "id": "c3-q4",
+          "question": "Is the introduction video required?",
+          "answer": "No. The video is optional and can be added or updated later."
+        },
+        {
+          "id": "c3-q5",
+          "question": "Can I look for a service and offer my own services?",
+          "answer": "Yes. The same account can be used to find a professional and showcase your own skills, depending on the options available in your profile."
+        }
+      ]
+    },
+    {
+      "id": "category-4",
+      "title": "Account, Wallet and safety",
+      "items": [
+        {
+          "id": "c4-q1",
+          "question": "Is registration free?",
+          "answer": "Account creation and essential features may be free. Premium or visibility options may also be offered. Prices and conditions must be displayed before any purchase."
+        },
+        {
+          "id": "c4-q2",
+          "question": "What is Matchy Wallet?",
+          "answer": "Matchy Wallet is the Matchy+ digital wallet. It lets you use credits for selected features, such as promoting a profile or service, depending on current offers."
+        },
+        {
+          "id": "c4-q3",
+          "question": "Are professionals verified?",
+          "answer": "Matchy+ may request certain information when an account is created. A profile’s presence does not automatically validate every declared skill or qualification. Request the necessary information and documents before assigning a job."
+        },
+        {
+          "id": "c4-q4",
+          "question": "Is my personal data protected?",
+          "answer": "Matchy+ uses information needed to operate accounts, recommendations and security. Read the privacy policy to understand the data collected, how it is used, retention periods and your rights."
+        },
+        {
+          "id": "c4-q5",
+          "question": "How do I report a profile or inappropriate behaviour?",
+          "answer": "Use the reporting option available in the profile or conversation, or contact support with the reason and any useful information."
+        },
+        {
+          "id": "c4-q6",
+          "question": "How do I contact support?",
+          "answer": "Use the contact form and include the relevant account, subject, a clear description and screenshots when needed. The team will review your request as soon as possible."
+        }
+      ]
+    }
+  ],
+  "contact": {
+    "title": "Still have a question?",
+    "description": "Our team can help you use Matchy+, manage your profile or resolve an issue.",
+    "label": "Contact our team",
+    "href": "/contact"
+  }
+}

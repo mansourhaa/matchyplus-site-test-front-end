@@ -1,0 +1,195 @@
+{
+  "seo": {
+    "title": "Services locaux en Tunisie | Trouvez un professionnel | Matchy+",
+    "description": "Trouvez un plombier, électricien, chauffeur, nounou, aide ménagère ou autre professionnel près de chez vous avec Matchy+.",
+    "openGraphTitle": "Services Matchy+ | Trouvez un professionnel près de chez vous",
+    "openGraphDescription": "Explorez les services locaux disponibles et contactez le professionnel adapté à votre besoin."
+  },
+  "hero": {
+    "eyebrow": "Services Matchy+",
+    "title": "Trouvez le service dont vous avez besoin",
+    "text": "Découvrez les catégories de services disponibles sur Matchy+. Inscrivez-vous ou connectez-vous à l’application pour recevoir des recommandations grâce au matching intelligent et à la géolocalisation.",
+    "actions": [
+      {
+        "label": "Accéder à l’application",
+        "href": "https://app.matchyplus.com/inscription"
+      },
+      {
+        "label": "Se connecter",
+        "href": "https://app.matchyplus.com/connexion"
+      }
+    ]
+  },
+  "popular": {
+    "title": "Services populaires près de chez vous",
+    "text": "Explorez les catégories les plus recherchées sur Matchy+ et découvrez les professionnels disponibles dans votre région.",
+    "services": [
+      {
+        "id": "service-1",
+        "name": "Plombier",
+        "description": "Fuite d’eau, débouchage, installation sanitaire ou réparation : découvrez des plombiers disponibles près de chez vous.",
+        "features": ["Réparation de fuites", "Débouchage", "Installation sanitaire"],
+        "action": {
+          "label": "Trouver un plombier",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-2",
+        "name": "Électricien",
+        "description": "Installation, diagnostic, maintenance ou dépannage : trouvez un électricien correspondant à votre besoin.",
+        "features": ["Installation électrique", "Dépannage", "Maintenance"],
+        "action": {
+          "label": "Trouver un électricien",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-3",
+        "name": "Chauffeur",
+        "description": "Recherchez un chauffeur pour un trajet ponctuel, une mission professionnelle ou un besoin régulier.",
+        "features": ["Trajet ponctuel", "Mission professionnelle", "Transport régulier"],
+        "action": {
+          "label": "Trouver un chauffeur",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-4",
+        "name": "Nounou et garde d’enfants",
+        "description": "Découvrez des profils proposant des services de garde d’enfants selon votre ville, vos horaires et vos besoins.",
+        "features": ["Garde à domicile", "Garde ponctuelle", "Accompagnement"],
+        "action": {
+          "label": "Trouver une nounou",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-5",
+        "name": "Aide ménagère",
+        "description": "Trouvez des personnes proposant des services de ménage, de nettoyage et d’entretien à domicile.",
+        "features": ["Ménage à domicile", "Nettoyage", "Entretien régulier"],
+        "action": {
+          "label": "Trouver une aide ménagère",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-6",
+        "name": "Jardinier",
+        "description": "Découvrez des professionnels pour l’entretien des espaces verts, la taille et les travaux de jardinage.",
+        "features": ["Entretien de jardin", "Taille", "Aménagement extérieur"],
+        "action": {
+          "label": "Trouver un jardinier",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-7",
+        "name": "Bricolage et réparations",
+        "description": "Trouvez une personne pour vos petits travaux, montages, installations et réparations du quotidien.",
+        "features": ["Montage", "Petites réparations", "Installation"],
+        "action": {
+          "label": "Trouver un professionnel",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      },
+      {
+        "id": "service-8",
+        "name": "Coach sportif",
+        "description": "Découvrez des coachs pour un accompagnement sportif individuel ou adapté à vos objectifs.",
+        "features": ["Coaching individuel", "Remise en forme", "Accompagnement"],
+        "action": {
+          "label": "Trouver un coach sportif",
+          "href": "https://app.matchyplus.com/inscription"
+        }
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "Comment trouver un professionnel avec Matchy+ ?",
+    "steps": [
+      {
+        "id": "step-1",
+        "title": "1. Créez votre compte",
+        "text": "Inscrivez-vous ou connectez-vous à votre espace Matchy+."
+      },
+      {
+        "id": "step-2",
+        "title": "2. Précisez votre besoin",
+        "text": "Indiquez vos objectifs, vos préférences et votre localisation."
+      },
+      {
+        "id": "step-3",
+        "title": "3. Recevez des recommandations",
+        "text": "Le matching intelligent et la géolocalisation proposent des profils pertinents."
+      },
+      {
+        "id": "step-4",
+        "title": "4. Entrez en contact",
+        "text": "Consultez les profils proposés et échangez avec la personne de votre choix."
+      }
+    ]
+  },
+  "professionalCta": {
+    "title": "Vous proposez un service ? Rendez votre activité plus visible",
+    "text": "Créez un profil professionnel, présentez vos compétences, définissez votre zone d’intervention et soyez découvert par des personnes qui recherchent vos services.",
+    "action": {
+      "label": "Proposer mes services",
+      "href": "https://app.matchyplus.com/inscription"
+    }
+  },
+  "clarity": {
+    "title": "Choisissez avec plus de clarté",
+    "text": "Matchy+ facilite la découverte et le premier contact. Avant toute prestation, consultez les informations du profil, précisez votre besoin, demandez les justificatifs utiles et convenez du tarif, du délai et des conditions."
+  },
+  "cities": {
+    "title": "Explorez les services par ville",
+    "text": "La disponibilité dépend des professionnels inscrits et de leur zone d’intervention. Commencez par les villes où des profils sont réellement disponibles.",
+    "items": ["Tunis", "Ariana", "Sousse", "Monastir", "Sfax"]
+  },
+  "faq": {
+    "title": "Questions fréquentes sur les services",
+    "items": [
+      {
+        "id": "q1",
+        "question": "Comment trouver un professionnel près de chez moi ?",
+        "answer": "Choisissez le service recherché et indiquez votre ville. Matchy+ vous présente les profils disponibles selon votre besoin et votre localisation."
+      },
+      {
+        "id": "q2",
+        "question": "Puis-je contacter directement un professionnel ?",
+        "answer": "Oui, selon les préférences de contact activées sur le profil, vous pouvez utiliser la messagerie, WhatsApp ou le téléphone."
+      },
+      {
+        "id": "q3",
+        "question": "Les prix sont-ils fixés par Matchy+ ?",
+        "answer": "Non. Le client et le professionnel conviennent directement du tarif, du délai, du mode de paiement et des conditions de la prestation."
+      },
+      {
+        "id": "q4",
+        "question": "Puis-je proposer plusieurs services ?",
+        "answer": "Oui, dans la limite prévue par votre profil ou votre formule. Ajoutez uniquement les services que vous pouvez réellement réaliser."
+      },
+      {
+        "id": "q5",
+        "question": "Tous les professionnels sont-ils vérifiés ?",
+        "answer": "La présence d’un profil ne signifie pas que toutes les compétences ou qualifications déclarées ont été vérifiées. Demandez les informations et justificatifs utiles avant toute prestation."
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "Le bon professionnel peut être plus proche que vous ne le pensez",
+    "text": "Recherchez un service local ou créez votre profil pour présenter vos compétences à de nouveaux clients.",
+    "actions": [
+      {
+        "label": "Accéder à l’application",
+        "href": "https://app.matchyplus.com/inscription"
+      },
+      {
+        "label": "Proposer mes services",
+        "href": "https://app.matchyplus.com/inscription"
+      }
+    ]
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "seo": {
+    "title": "About Matchy+ | Local services and professionals",
+    "description": "Discover Matchy+, the platform that connects individuals and businesses with local professionals based on their needs and location.",
+    "openGraphTitle": "About Matchy+ | Connecting local needs with talent",
+    "openGraphDescription": "Discover the Matchy+ mission: make local services easier to access and create more opportunities for professionals."
+  },
+  "hero": {
+    "eyebrow": "About Matchy+",
+    "title": "Connecting local needs with the right skills",
+    "text": "Matchy+ helps individuals and businesses discover professionals nearby while giving local talent greater visibility and access to new opportunities.",
+    "actions": [
+      {
+        "label": "Find a professional",
+        "href": "https://app.matchyplus.com/inscription"
+      },
+      {
+        "label": "Offer my services",
+        "href": "https://app.matchyplus.com/inscription"
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Our mission",
+      "text": "Make it easier to find a professional and help every local skill become more visible. Matchy+ brings individuals, businesses, artisans, freelancers and service providers together through an accessible, location-based experience designed around local needs."
+    },
+    {
+      "id": "section-2",
+      "title": "Why Matchy+ exists",
+      "text": "Finding someone who is available and suited to a specific need can take time. At the same time, many professionals have valuable skills but limited visibility and access to new customers. Matchy+ brings both sides together on one platform."
+    },
+    {
+      "id": "section-3",
+      "title": "What Matchy+ enables",
+      "text": "For users: search for a service, discover profiles based on need and location, and connect directly. For professionals: showcase skills, define a service area, improve visibility and access new opportunities."
+    },
+    {
+      "id": "section-4",
+      "title": "More relevant connections",
+      "text": "Location and personalized recommendations help surface profiles that may match a stated need. Recommendations make discovery easier, but every user remains free to review, compare and choose."
+    },
+    {
+      "id": "section-5",
+      "title": "Useful everyday services",
+      "text": "Matchy+ can support searches for professionals in plumbing, electrical work, transport, cleaning, childcare, gardening, home repairs and other local services. Availability varies depending on registered profiles and service areas."
+    },
+    {
+      "id": "section-6",
+      "title": "A platform designed for professionals",
+      "text": "Professionals can showcase their activity through a clear profile, services, experience, location and contact preferences. Matchy Explore supports profile discovery, while Matchy Wallet may provide additional visibility options depending on active offers."
+    },
+    {
+      "id": "section-7",
+      "title": "Our vision",
+      "text": "Build a useful, accessible pan-African platform grounded in local realities. Matchy+ aims to make skills more visible, services more accessible and economic opportunities closer to communities."
+    },
+    {
+      "id": "section-8",
+      "title": "Trust and responsibility",
+      "text": "Matchy+ supports discovery and initial contact. Before any service, users should check relevant information, clarify the need and agree on the price, timeframe and conditions. The presence of a profile does not automatically validate every declared skill."
+    }
+  ],
+  "principles": {
+    "title": "The principles that guide us",
+    "items": [
+      {
+        "id": "value-1",
+        "title": "Proximity",
+        "text": "Highlight needs, talent and opportunities around each user."
+      },
+      {
+        "id": "value-2",
+        "title": "Accessibility",
+        "text": "Provide a simple, understandable experience for different user profiles."
+      },
+      {
+        "id": "value-3",
+        "title": "Usefulness",
+        "text": "Build features that address practical everyday needs."
+      },
+      {
+        "id": "value-4",
+        "title": "Opportunity",
+        "text": "Help professionals make their skills visible and grow their activity."
+      }
+    ]
+  },
+  "faq": {
+    "title": "What to know about Matchy+",
+    "items": [
+      {
+        "id": "q1",
+        "question": "What is Matchy+?",
+        "answer": "Matchy+ is a platform that connects individuals and businesses with local professionals based on the requested service and location."
+      },
+      {
+        "id": "q2",
+        "question": "Who is Matchy+ for?",
+        "answer": "Matchy+ is for people looking for services, professionals offering their skills and businesses searching for service providers."
+      },
+      {
+        "id": "q3",
+        "question": "How does Matchy+ help professionals?",
+        "answer": "Professionals can create a profile, showcase services, specify their service area and access visibility tools depending on available features."
+      },
+      {
+        "id": "q4",
+        "question": "Where is Matchy+ available?",
+        "answer": "Availability depends on registered professionals and their service areas. The platform aims to expand progressively in Tunisia and other African markets."
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "Join Matchy+",
+    "text": "Whether you are looking for a professional or growing your activity, Matchy+ helps create simpler, faster and more relevant local connections.",
+    "actions": [
+      {
+        "label": "Find a professional",
+        "href": "https://app.matchyplus.com/inscription"
+      },
+      {
+        "label": "Offer my services",
+        "href": "https://app.matchyplus.com/inscription"
+      }
+    ]
+  }
+}

@@ -157,7 +157,7 @@ describe('OnboardingWizard', () => {
     renderWizard({ status: 'unauthenticated', user: null });
 
     expect(screen.getByText('Votre identité (stub)')).toBeInTheDocument();
-    expect(screen.queryByText('Vos objectifs')).not.toBeInTheDocument();
+    expect(screen.queryByText('Que souhaitez-vous faire sur Matchy+ ?')).not.toBeInTheDocument();
     // Fetching a brand-new visitor's profile would just 401 — never attempted.
     expect(api.get).not.toHaveBeenCalled();
   });
@@ -171,7 +171,9 @@ describe('OnboardingWizard', () => {
     // OnboardingStepLayout renders a desktop and a mobile copy of the step content (CSS
     // media queries don't apply in jsdom), plus its own progress-bar label — several
     // matches for this text is expected, same as interests-step.test.tsx's own helpers.
-    expect((await screen.findAllByText('Vos objectifs'))[0]).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('Que souhaitez-vous faire sur Matchy+ ?'))[0],
+    ).toBeInTheDocument();
     await waitFor(() =>
       expect(api.get).toHaveBeenCalledWith('/users/me/profile', expect.anything()),
     );
@@ -204,7 +206,7 @@ describe('OnboardingWizard', () => {
     // isAuthenticated is now true and ?step=interests is present, but the save hasn't
     // resolved yet — identity (OTP modal included) must not be torn down.
     await waitFor(() => expect(screen.getByText('Votre identité (stub)')).toBeInTheDocument());
-    expect(screen.queryByText('Vos objectifs')).not.toBeInTheDocument();
+    expect(screen.queryByText('Que souhaitez-vous faire sur Matchy+ ?')).not.toBeInTheDocument();
   });
 
   it('clears the sticky guard and navigates normally once the post-register save succeeds', async () => {
@@ -238,7 +240,7 @@ describe('OnboardingWizard', () => {
     renderWizard({ status: 'authenticated', sessionChecked: false, user: registeredUser });
 
     expect(screen.getByText('Votre identité (stub)')).toBeInTheDocument();
-    expect(screen.queryByText('Vos objectifs')).not.toBeInTheDocument();
+    expect(screen.queryByText('Que souhaitez-vous faire sur Matchy+ ?')).not.toBeInTheDocument();
     expect(api.get).not.toHaveBeenCalled();
   });
 
@@ -267,7 +269,9 @@ describe('OnboardingWizard', () => {
       });
     });
 
-    expect((await screen.findAllByText('Vos objectifs'))[0]).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('Que souhaitez-vous faire sur Matchy+ ?'))[0],
+    ).toBeInTheDocument();
     await waitFor(() =>
       expect(api.get).toHaveBeenCalledWith('/users/me/profile', expect.anything()),
     );
