@@ -42,6 +42,25 @@ RUN pnpm install
 # so every visitor who clicked Connexion was sent to their own machine.
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+
+# Analytics identifiers, read by apps/landing/src/components/analytics.tsx.
+# Inlined at build time for the same reason as the URL above, so they cannot be
+# supplied by the Deployment or a ConfigMap afterwards.
+#
+# None of the three is a secret: a GA4 measurement id, a Clarity project id and
+# the CookieYes script URL all appear in the page source of any site using them.
+#
+# The empty default is deliberate. The component renders each script only when
+# its value is set, and renders nothing at all unless the browser is on
+# matchyplus.com, so a build without these is a build with no analytics rather
+# than a broken one. That is exactly what staging wants.
+ARG NEXT_PUBLIC_COOKIEYES_SRC=
+ENV NEXT_PUBLIC_COOKIEYES_SRC=${NEXT_PUBLIC_COOKIEYES_SRC}
+ARG NEXT_PUBLIC_GA_MEASUREMENT_ID=
+ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=${NEXT_PUBLIC_GA_MEASUREMENT_ID}
+ARG NEXT_PUBLIC_CLARITY_PROJECT_ID=
+ENV NEXT_PUBLIC_CLARITY_PROJECT_ID=${NEXT_PUBLIC_CLARITY_PROJECT_ID}
+
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm turbo build --filter=@saas-boilerplate/landing
 
