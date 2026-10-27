@@ -99,7 +99,7 @@ function SearchProfileCard({
               {profile.rating.toFixed(1)}
             </span>
           </div>
-          {profile.distance_km != null && (
+          {profile.distance_km != null && Number.isFinite(profile.distance_km) && (
             <div className="flex items-center gap-0.5">
               <MapPin size={11} color="#61BCA6" />
               <span style={{ fontSize: 11, color: '#AAA' }}>{profile.distance_km} km</span>
@@ -254,7 +254,7 @@ function LockedSearchProfileCard({
               <span style={{ fontSize: 11, color: '#888' }}>
                 ⭐ {profile.rating > 0 ? profile.rating.toFixed(1) : '—'}
               </span>
-              {profile.distance_km != null && (
+              {profile.distance_km != null && Number.isFinite(profile.distance_km) && (
                 <span style={{ fontSize: 11, color: '#AAA' }}>📍 {profile.distance_km} km</span>
               )}
             </div>

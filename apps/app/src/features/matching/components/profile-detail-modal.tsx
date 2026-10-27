@@ -643,7 +643,7 @@ export function ProfileDetailModal({ profile, source, onClose, onConnect, onPass
               </div>
             )}
 
-            {currentProfile.distance_km != null && (
+            {currentProfile.distance_km != null && Number.isFinite(currentProfile.distance_km) && (
               <div className="flex items-center gap-1 text-[#61BCA6]">
                 <MapPin size={13} />
                 <span>{t('matching.kmAway', { km: currentProfile.distance_km })}</span>

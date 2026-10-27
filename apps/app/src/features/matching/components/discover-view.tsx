@@ -514,11 +514,12 @@ export function DiscoverView() {
                             </p>
                           </div>
                         </div>
-                        {(top.distance_km != null || top.city) && (
+                        {((top.distance_km != null && Number.isFinite(top.distance_km)) ||
+                          top.city) && (
                           <div className="mb-2 flex items-center gap-1">
                             <MapPin size={12} color="#61BCA6" />
                             <span className="text-white opacity-75" style={{ fontSize: 12 }}>
-                              {top.distance_km != null
+                              {top.distance_km != null && Number.isFinite(top.distance_km)
                                 ? t('matching.kmAway', { km: top.distance_km })
                                 : top.city}
                             </span>
