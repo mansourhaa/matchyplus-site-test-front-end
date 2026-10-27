@@ -513,18 +513,25 @@ export function IdentityStep({
     }
   };
 
+  const handleBack = () => {
+    dispatch(
+      patchOnboardingProfile({
+        name,
+        job: job || undefined,
+        bio: bio || undefined,
+        profile_type: profileType,
+        experience: profileType === 'INDIVIDUAL' && experience ? experience : undefined,
+      }),
+    );
+    router.push('/connexion');
+  };
+
   const stepContent = (
     <OnboardingStepLayout
       step={stepNumber}
       totalSteps={totalSteps}
       stepLabel={t('onboarding.identity.title')}
-      // An authenticated (e.g. Google OAuth) visitor has no /connexion to go back to —
-      // they already have a session and onboarding is mandatory before /home, so
-      // /connexion would immediately bounce them right back here (see proxy.ts's
-      // authenticated-visits-/connexion → /home redirect, and MatchyDashboardShell's
-      // incomplete-profile → /inscription redirect). Only offer this for a fresh,
-      // not-yet-authenticated phone signup, where /connexion is a real "cancel".
-      onBack={isAuthenticated ? undefined : () => router.push('/connexion')}
+      onBack={handleBack}
       backLabel={t('common.back')}
     >
       <div className="mx-auto w-full max-w-2xl">

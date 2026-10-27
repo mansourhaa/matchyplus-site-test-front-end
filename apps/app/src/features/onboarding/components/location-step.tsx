@@ -96,6 +96,7 @@ type LocationStepProps = {
     languages: string[];
   }) => Promise<boolean>;
   onBack: () => void;
+  onSaveDraft?: (patch: Partial<OnboardingProfile>) => void;
 };
 
 export function LocationStep({
@@ -106,6 +107,7 @@ export function LocationStep({
   onNext,
   onFinish,
   onBack,
+  onSaveDraft,
 }: LocationStepProps) {
   const { t, locale } = useI18n();
   const [city, setCity] = useState(profile?.city ?? '');
@@ -182,12 +184,24 @@ export function LocationStep({
 
   const busy = loading || finishing;
 
+  const handleBack = () => {
+    onSaveDraft?.({
+      city: city || undefined,
+      contact_modes: contactModes,
+      availability_days: availabilityDays,
+      availability_hours: availabilityHours,
+      languages,
+    });
+    onBack();
+  };
+
   return (
     <OnboardingStepLayout
       step={stepNumber}
       totalSteps={totalSteps}
       stepLabel={t('onboarding.location.title')}
-      onBack={onBack}
+      onBack={handleBack}
+      backLabel={t('common.back')}
     >
       <div className="mx-auto w-full max-w-2xl">
         <StepProgress step={stepNumber} total={totalSteps} />
@@ -376,7 +390,7 @@ export function LocationStep({
         )}
 
         <StepCtaRow
-          onBack={onBack}
+          onBack={handleBack}
           onContinue={() => void submit()}
           continueLabel={
             busy
