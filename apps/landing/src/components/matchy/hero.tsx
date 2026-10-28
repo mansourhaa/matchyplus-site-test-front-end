@@ -4,8 +4,9 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_LOGIN_URL, APP_REGISTER_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import { LogIn } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
+
+import { PhoneMockup } from './phone-mockup';
 
 export function Hero() {
   const { t } = useI18n();
@@ -19,8 +20,8 @@ export function Hero() {
         aria-hidden="true"
       />
 
-      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pt-32 pb-36 md:grid-cols-2 md:gap-8 md:pt-36 md:pb-48 lg:pt-40 lg:pb-56">
-        <div className="text-center text-white ltr:md:text-left rtl:md:text-right">
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pt-32 pb-36 md:pt-36 md:pb-48 lg:grid-cols-2 lg:gap-16 lg:pt-40 lg:pb-56">
+        <div className="text-center text-white ltr:lg:text-left rtl:lg:text-right">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -41,7 +42,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-pretty text-white/85 sm:text-base ltr:md:mr-auto ltr:md:ml-0 rtl:md:mr-0 rtl:md:ml-auto"
+            className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-pretty text-white/85 sm:text-base ltr:lg:mr-auto ltr:lg:ml-0 rtl:lg:mr-0 rtl:lg:ml-auto"
           >
             {t('landing.intro')}
           </motion.p>
@@ -49,7 +50,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="mx-auto mt-8 flex max-w-sm flex-col items-stretch justify-center gap-3 sm:mx-0 sm:max-w-none sm:flex-row sm:items-center sm:gap-4 ltr:md:justify-start rtl:md:justify-start"
+            className="mx-auto mt-8 flex max-w-sm flex-col items-stretch justify-center gap-3 sm:mx-0 sm:max-w-none sm:flex-row sm:items-center sm:gap-4 ltr:lg:justify-start rtl:lg:justify-start"
           >
             <Link
               href={APP_REGISTER_URL}
@@ -74,21 +75,14 @@ export function Hero() {
           initial={{ opacity: 0, y: 60, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="flex justify-center ltr:md:justify-end rtl:md:justify-start"
+          className="flex justify-center ltr:lg:justify-end rtl:lg:justify-start"
         >
           <motion.div
             animate={{ y: [0, -12, 0] }}
             transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
             className="relative flex justify-center drop-shadow-2xl"
           >
-            <Image
-              src="/showcase/hero-phone.png"
-              alt={t('landing.heroImageAlt')}
-              width={323}
-              height={639}
-              preload
-              className="h-auto max-h-[480px] w-auto max-w-[280px] object-contain sm:max-w-[320px] md:max-h-[520px] md:max-w-[320px] lg:max-h-[580px] lg:max-w-[360px]"
-            />
+            <PhoneMockup src="/showcase/hero-phone.png" alt={t('landing.heroImageAlt')} priority />
           </motion.div>
         </motion.div>
       </div>
