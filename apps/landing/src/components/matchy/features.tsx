@@ -2,9 +2,9 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { BriefcaseBusiness, Sparkles, UsersRound, WalletCards } from 'lucide-react';
-import Image from 'next/image';
 
 import { Parallax, Reveal } from './motion';
+import { PhoneMockup } from './phone-mockup';
 
 function Feature({
   icon: Icon,
@@ -83,7 +83,7 @@ export function Features() {
       </Reveal>
 
       <div
-        className="mt-16 grid grid-cols-1 items-center gap-12 lg:grid-cols-3 lg:gap-8 xl:gap-12"
+        className="mt-16 grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_auto_1fr] lg:gap-12"
         dir="ltr"
       >
         <div className="order-2 flex flex-col gap-10 sm:gap-12 lg:order-1">
@@ -94,13 +94,7 @@ export function Features() {
 
         <Parallax speed={20} className="order-1 flex justify-center lg:order-2">
           <div className="relative flex justify-center drop-shadow-2xl">
-            <Image
-              src="/showcase/features-phone.png"
-              alt={t('landing.featuresImageAlt')}
-              width={323}
-              height={639}
-              className="h-auto max-h-[480px] w-auto max-w-[280px] object-contain sm:max-w-[320px] md:max-h-[520px] md:max-w-[340px] lg:max-h-[560px] lg:max-w-[350px]"
-            />
+            <PhoneMockup src="/showcase/features-phone.png" alt={t('landing.featuresImageAlt')} />
           </div>
         </Parallax>
 
