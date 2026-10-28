@@ -3,7 +3,7 @@
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
 import { localizePath } from '@/features/i18n/routing';
-import { APP_REGISTER_URL } from '@/lib/constants';
+import { APP_REGISTER_URL, SOCIAL_LINKS } from '@/lib/constants';
 import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -40,6 +40,62 @@ const languageOptions = [
   { value: 'en', label: 'English' },
   { value: 'ar', label: 'العربية' },
 ] as const;
+
+// lucide-react dropped its brand icons in v1, so these redraw them inline with the same
+// 24×24 stroke geometry to stay consistent with the other Lucide icons on the site.
+const socialNetworks = [
+  {
+    label: 'Instagram',
+    href: SOCIAL_LINKS.instagram,
+    icon: (
+      <>
+        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+      </>
+    ),
+  },
+  {
+    label: 'Facebook',
+    href: SOCIAL_LINKS.facebook,
+    icon: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />,
+  },
+  {
+    label: 'LinkedIn',
+    href: SOCIAL_LINKS.linkedin,
+    icon: (
+      <>
+        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+        <rect width="4" height="12" x="2" y="9" />
+        <circle cx="4" cy="4" r="2" />
+      </>
+    ),
+  },
+];
+
+function SocialLinks() {
+  return (
+    <div className="footer-social">
+      {socialNetworks.map(({ label, href, icon }) => (
+        <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}>
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            {icon}
+          </svg>
+        </a>
+      ))}
+    </div>
+  );
+}
 
 function Logo({ footer = false }: { footer?: boolean }) {
   return (
@@ -196,6 +252,7 @@ export function Footer() {
             <Logo footer />
           </Link>
           <p>{t('landing.panAfrican')}</p>
+          <SocialLinks />
         </div>
         <div>
           <h3>{locale === 'ar' ? 'اكتشف' : locale === 'en' ? 'Discover' : 'Découvrir'}</h3>
