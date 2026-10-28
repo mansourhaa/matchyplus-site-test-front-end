@@ -7,7 +7,6 @@ import { PhoneMockup } from './phone-mockup';
 
 export function Security() {
   const { t, dir } = useI18n();
-  const bullets = t('landing.walletBullets') as unknown as string[];
   const isRtl = dir === 'rtl';
 
   return (
@@ -50,18 +49,6 @@ export function Security() {
           <p className="text-muted-foreground mt-4 text-sm font-medium md:text-base">
             {t('landing.walletUsage')}
           </p>
-          <ul className="text-muted-foreground mx-auto mt-3 max-w-md space-y-2.5 text-sm md:max-w-none md:text-base ltr:lg:mr-auto ltr:lg:ml-0 rtl:lg:mr-0 rtl:lg:ml-auto">
-            {Array.isArray(bullets) &&
-              bullets.map((bullet, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-start justify-center gap-2.5 ltr:lg:justify-start rtl:lg:justify-start"
-                >
-                  <span className="bg-muted-foreground mt-2 h-1.5 w-1.5 shrink-0 rounded-full" />
-                  <span>{bullet}</span>
-                </li>
-              ))}
-          </ul>
         </Reveal>
       </div>
     </section>
