@@ -3,6 +3,7 @@ import { FAQ_CONTENT } from '@/components/faq/content';
 import { SERVICES_CONTENT } from '@/components/services/content';
 import { DEFAULT_LOCALE, type Locale, SUPPORTED_LOCALES } from '@/features/i18n/messages';
 import { isLocale, localizePath } from '@/features/i18n/routing';
+import { SOCIAL_LINKS } from '@/lib/constants';
 import type { Metadata, MetadataRoute } from 'next';
 
 export const SITE_URL = (process.env.LANDING_URL || 'https://matchyplus.com').replace(/\/+$/, '');
@@ -482,11 +483,7 @@ export function homeJsonLd(locale: Locale) {
         url: SITE_URL,
         logo: absoluteUrl(OG_IMAGE.url),
         email: 'Contact@matchyplus.com',
-        sameAs: [
-          'https://www.facebook.com/matchyplus',
-          'https://www.linkedin.com/company/matchyplus',
-          'https://www.instagram.com/matchyplus',
-        ],
+        sameAs: Object.values(SOCIAL_LINKS),
         contactPoint: {
           '@type': 'ContactPoint',
           email: 'Contact@matchyplus.com',

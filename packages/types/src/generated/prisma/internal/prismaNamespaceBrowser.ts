@@ -140,6 +140,7 @@ export const UserScalarFieldEnum = {
   offer_service: 'offer_service',
   service_type: 'service_type',
   sector: 'sector',
+  industry: 'industry',
   selected_goals: 'selected_goals',
   experiences: 'experiences',
   education_level: 'education_level',

@@ -23,7 +23,8 @@ export const messages: Record<Locale, MessageTree> = {
       login: 'Connexion',
 
       eyebrow: 'Matchy Plus',
-      hero: 'Trouvez le bon professionnel, près de chez vous',
+      hero: 'Trouvez le bon professionnel,',
+      heroLine2: 'près de chez vous',
       intro:
         'Besoin d’un service fiable ? Découvrez des professionnels disponibles autour de vous, trouvez le profil qui correspond à votre besoin et entrez facilement en contact.',
       title: 'Trouvez plus facilement le service dont vous avez besoin',
@@ -49,17 +50,11 @@ export const messages: Record<Locale, MessageTree> = {
       walletSubtitle: 'Plus de visibilité. Plus de contacts. Plus d’opportunités.',
       walletBody:
         'Matchy Wallet est le portefeuille numérique intégré qui permet aux professionnels d’accéder simplement à des fonctionnalités supplémentaires pour développer leur visibilité sur la plateforme.',
-      walletUsage: 'Utilisez vos crédits pour :',
-      walletBullets: [
-        'Booster votre profil',
-        'Remonter dans les résultats de recherche',
-        'Augmenter votre visibilité locale',
-        'Mettre en avant vos services',
-        'Accéder à des fonctionnalités exclusives',
-        'Générer davantage de contacts qualifiés',
-      ],
+      walletUsage:
+        'Utilisez vos crédits pour : booster votre profil, remonter dans les résultats de recherche, augmenter votre visibilité locale, mettre en avant vos services, accéder à des fonctionnalités exclusives et générer davantage de contacts qualifiés.',
 
-      exploreTitle: 'Découvrez les professionnels disponibles autour de vous',
+      exploreTitle: 'Découvrez les professionnels',
+      exploreTitleLine2: 'disponibles autour de vous',
       exploreBody:
         'Matchy Explore vous aide à trouver des artisans, des freelances, des indépendants et des prestataires de services à proximité.',
       exploreUsage:
@@ -87,7 +82,8 @@ export const messages: Record<Locale, MessageTree> = {
         ],
       ],
 
-      downloadTitle: 'le professionnel que vous recherchez est peut-être tout près',
+      downloadTitle: 'le professionnel que vous recherchez',
+      downloadTitleLine2: 'est peut-être tout près',
       downloadBody:
         'Rejoignez Matchy+ pour trouver facilement des services locaux ou présenter vos compétences à de nouveaux clients.',
       learnMore: 'En Savoir Plus',
@@ -161,7 +157,8 @@ export const messages: Record<Locale, MessageTree> = {
       login: 'Sign in',
 
       eyebrow: 'Matchy Plus',
-      hero: 'Find the right professional near you',
+      hero: 'Find the right professional',
+      heroLine2: 'near you',
       intro:
         ' Need a reliable service? Discover professionals available around you, find the profile that matches your needs and connect easily.',
       title: 'Find the service you need more easily',
@@ -186,17 +183,11 @@ export const messages: Record<Locale, MessageTree> = {
       walletSubtitle: 'More visibility. More contacts. More opportunities.',
       walletBody:
         'Matchy Wallet is the integrated digital wallet that gives professionals easy access to additional features designed to increase their visibility on the platform.',
-      walletUsage: 'Use your credits to:',
-      walletBullets: [
-        'Boost your profile',
-        'appear higher in search results',
-        'improve local visibility',
-        'Highlight your services',
-        'Access exclusive features',
-        'Generate more qualified leads',
-      ],
+      walletUsage:
+        'Use your credits to: boost your profile, appear higher in search results, improve your local visibility, highlight your services, access exclusive features and generate more qualified leads.',
 
-      exploreTitle: 'Discover professionals available around you',
+      exploreTitle: 'Discover professionals',
+      exploreTitleLine2: 'available around you',
       exploreBody:
         ' Matchy Explore helps you find nearby artisans, freelancers, independent professionals and local service providers.',
       exploreUsage:
@@ -224,7 +215,8 @@ export const messages: Record<Locale, MessageTree> = {
         ],
       ],
 
-      downloadTitle: ' The professional you need may be closer than you think',
+      downloadTitle: 'The professional you need',
+      downloadTitleLine2: 'may be closer than you think',
       downloadBody:
         'Join Matchy+ to find local services easily or showcase your skills to new customers.',
       learnMore: 'Learn More',
@@ -294,7 +286,8 @@ export const messages: Record<Locale, MessageTree> = {
       login: 'تسجيل الدخول',
 
       eyebrow: 'Matchy+',
-      hero: 'اعثر على المهني المناسب بالقرب منك',
+      hero: 'اعثر على المهني المناسب',
+      heroLine2: 'بالقرب منك',
       intro:
         ' هل تحتاج إلى خدمة موثوقة؟ اكتشف المهنيين المتاحين من حولك، واعثر على الملف الذي يناسب احتياجاتك، وتواصل بسهولة.',
       title: ' اعثر بسهولة أكبر على الخدمة التي تحتاجها',
@@ -317,17 +310,11 @@ export const messages: Record<Locale, MessageTree> = {
       walletSubtitle: ' ظهور أكبر. تواصل أكثر. فرص جديدة.',
       walletBody:
         'Matchy Wallet هي المحفظة الرقمية المدمجة التي تتيح للمهنيين الوصول بسهولة إلى خصائص إضافية تساعدهم على تعزيز ظهورهم داخل المنصة.',
-      walletUsage: 'استخدم رصيدك من أجل:',
-      walletBullets: [
-        'لتعزيز ملفك',
-        'الظهور في مراتب متقدمة ضمن نتائج البحث',
-        'تحسين ظهورك المحلي',
-        'إبراز خدماتك',
-        'الوصول إلى خصائص حصرية',
-        'الحصول على فرص تواصل أكثر جودة',
-      ],
+      walletUsage:
+        'استخدم رصيدك من أجل: تعزيز ملفك، الظهور في مراتب متقدمة ضمن نتائج البحث، تحسين ظهورك المحلي، إبراز خدماتك، الوصول إلى خصائص حصرية والحصول على فرص تواصل أكثر جودة.',
 
-      exploreTitle: ' اكتشف المهنيين المتاحين من حولك',
+      exploreTitle: 'اكتشف المهنيين',
+      exploreTitleLine2: 'المتاحين من حولك',
       exploreBody:
         ' تساعدك Matchy Explore على العثور على الحرفيين والمستقلين والمهنيين ومقدمي الخدمات القريبين منك.',
 
@@ -350,7 +337,8 @@ export const messages: Record<Locale, MessageTree> = {
         ],
       ],
 
-      downloadTitle: '  قد يكون المهني الذي تبحث عنه أقرب مما تتوقع',
+      downloadTitle: 'قد يكون المهني الذي تبحث عنه',
+      downloadTitleLine2: 'أقرب مما تتوقع',
       downloadBody:
         ' انضم إلى Matchy+ للعثور بسهولة على خدمات محلية أو لعرض مهاراتك أمام عملاء جدد.',
       learnMore: 'اعرف أكثر',

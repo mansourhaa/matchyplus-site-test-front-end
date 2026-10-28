@@ -9,8 +9,15 @@ describe('identityStepSchema', () => {
         name: 'Jane Doe',
         job: 'Électricien',
         profileType: 'INDIVIDUAL',
+        industry: 'tech_digital',
       }).success,
     ).toBe(true);
+  });
+
+  it('rejects a missing or unknown industry', () => {
+    const base = { name: 'Jane Doe', job: 'Électricien', profileType: 'PROVIDER' };
+    expect(identityStepSchema.safeParse({ ...base, industry: '' }).success).toBe(false);
+    expect(identityStepSchema.safeParse({ ...base, industry: 'Technologie' }).success).toBe(false);
   });
 
   it('rejects a missing job', () => {

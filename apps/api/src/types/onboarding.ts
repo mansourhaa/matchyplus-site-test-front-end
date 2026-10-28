@@ -1,5 +1,7 @@
 import { User } from '@saas-boilerplate/types';
 
+import { IndustryKey } from '../constants/industries.js';
+
 export type GetOnboardingProfilePayload = {
   userId: string;
 };
@@ -43,6 +45,7 @@ export type UpdateOnboardingProfilePayload = {
   languages?: string[];
   experience?: string;
   sector?: string;
+  industry?: IndustryKey;
   educationLevel?: string;
   experiences?: ProfileExperience[];
   educations?: ProfileEducation[];

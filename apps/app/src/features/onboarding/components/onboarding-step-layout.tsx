@@ -190,12 +190,12 @@ export function OnboardingStepLayout({
               <div className="h-8" />
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-8">
             {onSkip && skipLabel && (
               <button
                 type="button"
                 onClick={onSkip}
-                style={{ fontSize: '13px', fontWeight: 700, color: '#2F76BB' }}
+                style={{ fontSize: '13px', fontWeight: 700, color: '#000000' }}
               >
                 {skipLabel}
               </button>
@@ -218,12 +218,12 @@ export function OnboardingStepLayout({
               <div className="h-8" />
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6">
             {onSkip && skipLabel && (
               <button
                 type="button"
                 onClick={onSkip}
-                style={{ fontSize: '13px', fontWeight: 700, color: '#2F76BB' }}
+                style={{ fontSize: '13px', fontWeight: 700, color: '#000000' }}
               >
                 {skipLabel}
               </button>

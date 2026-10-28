@@ -30,8 +30,9 @@ export function Explore() {
           className="text-center md:col-span-6 lg:col-span-5 ltr:md:text-left rtl:md:text-right"
         >
           <div className="bg-brand-blue mx-auto mb-5 h-1 w-14 rounded-full ltr:md:mr-auto ltr:md:ml-0 rtl:md:mr-0 rtl:md:ml-auto" />
-          <h2 className="text-brand-blue text-2xl font-extrabold text-balance sm:text-3xl md:text-3xl lg:text-[2.2rem] lg:leading-tight">
-            {t('landing.exploreTitle')}
+          <h2 className="text-brand-blue text-2xl font-extrabold text-balance sm:text-3xl md:text-3xl lg:text-[1.9rem] lg:leading-tight">
+            <span className="block lg:whitespace-nowrap">{t('landing.exploreTitle')}</span>
+            <span className="block">{t('landing.exploreTitleLine2')}</span>
           </h2>
           <p className="text-muted-foreground mx-auto mt-4 max-w-lg text-sm leading-relaxed md:text-base ltr:md:mr-auto ltr:md:ml-0 rtl:md:mr-0 rtl:md:ml-auto">
             {t('landing.exploreBody')}

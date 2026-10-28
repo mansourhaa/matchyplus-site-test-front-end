@@ -77,6 +77,7 @@ export type UserMinAggregateOutputType = {
   offer_service: boolean | null;
   service_type: string | null;
   sector: string | null;
+  industry: string | null;
   education_level: string | null;
   onboarding_completed_at: Date | null;
   email_verified: boolean | null;
@@ -127,6 +128,7 @@ export type UserMaxAggregateOutputType = {
   offer_service: boolean | null;
   service_type: string | null;
   sector: string | null;
+  industry: string | null;
   education_level: string | null;
   onboarding_completed_at: Date | null;
   email_verified: boolean | null;
@@ -180,6 +182,7 @@ export type UserCountAggregateOutputType = {
   offer_service: number;
   service_type: number;
   sector: number;
+  industry: number;
   selected_goals: number;
   experiences: number;
   education_level: number;
@@ -259,6 +262,7 @@ export type UserMinAggregateInputType = {
   offer_service?: true;
   service_type?: true;
   sector?: true;
+  industry?: true;
   education_level?: true;
   onboarding_completed_at?: true;
   email_verified?: true;
@@ -309,6 +313,7 @@ export type UserMaxAggregateInputType = {
   offer_service?: true;
   service_type?: true;
   sector?: true;
+  industry?: true;
   education_level?: true;
   onboarding_completed_at?: true;
   email_verified?: true;
@@ -362,6 +367,7 @@ export type UserCountAggregateInputType = {
   offer_service?: true;
   service_type?: true;
   sector?: true;
+  industry?: true;
   selected_goals?: true;
   experiences?: true;
   education_level?: true;
@@ -509,6 +515,7 @@ export type UserGroupByOutputType = {
   offer_service: boolean;
   service_type: string | null;
   sector: string | null;
+  industry: string | null;
   selected_goals: string[];
   experiences: runtime.JsonValue | null;
   education_level: string | null;
@@ -588,6 +595,7 @@ export type UserWhereInput = {
   offer_service?: Prisma.BoolFilter<'User'> | boolean;
   service_type?: Prisma.StringNullableFilter<'User'> | string | null;
   sector?: Prisma.StringNullableFilter<'User'> | string | null;
+  industry?: Prisma.StringNullableFilter<'User'> | string | null;
   selected_goals?: Prisma.StringNullableListFilter<'User'>;
   experiences?: Prisma.JsonNullableFilter<'User'>;
   education_level?: Prisma.StringNullableFilter<'User'> | string | null;
@@ -674,6 +682,7 @@ export type UserOrderByWithRelationInput = {
   offer_service?: Prisma.SortOrder;
   service_type?: Prisma.SortOrderInput | Prisma.SortOrder;
   sector?: Prisma.SortOrderInput | Prisma.SortOrder;
+  industry?: Prisma.SortOrderInput | Prisma.SortOrder;
   selected_goals?: Prisma.SortOrder;
   experiences?: Prisma.SortOrderInput | Prisma.SortOrder;
   education_level?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -763,6 +772,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     offer_service?: Prisma.BoolFilter<'User'> | boolean;
     service_type?: Prisma.StringNullableFilter<'User'> | string | null;
     sector?: Prisma.StringNullableFilter<'User'> | string | null;
+    industry?: Prisma.StringNullableFilter<'User'> | string | null;
     selected_goals?: Prisma.StringNullableListFilter<'User'>;
     experiences?: Prisma.JsonNullableFilter<'User'>;
     education_level?: Prisma.StringNullableFilter<'User'> | string | null;
@@ -849,6 +859,7 @@ export type UserOrderByWithAggregationInput = {
   offer_service?: Prisma.SortOrder;
   service_type?: Prisma.SortOrderInput | Prisma.SortOrder;
   sector?: Prisma.SortOrderInput | Prisma.SortOrder;
+  industry?: Prisma.SortOrderInput | Prisma.SortOrder;
   selected_goals?: Prisma.SortOrder;
   experiences?: Prisma.SortOrderInput | Prisma.SortOrder;
   education_level?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -917,6 +928,7 @@ export type UserScalarWhereWithAggregatesInput = {
   offer_service?: Prisma.BoolWithAggregatesFilter<'User'> | boolean;
   service_type?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   sector?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
+  industry?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
   selected_goals?: Prisma.StringNullableListFilter<'User'>;
   experiences?: Prisma.JsonNullableWithAggregatesFilter<'User'>;
   education_level?: Prisma.StringNullableWithAggregatesFilter<'User'> | string | null;
@@ -977,6 +989,7 @@ export type UserCreateInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -1060,6 +1073,7 @@ export type UserUncheckedCreateInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -1144,6 +1158,7 @@ export type UserUpdateInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1229,6 +1244,7 @@ export type UserUncheckedUpdateInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1313,6 +1329,7 @@ export type UserCreateManyInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -1373,6 +1390,7 @@ export type UserUpdateManyMutationInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1434,6 +1452,7 @@ export type UserUncheckedUpdateManyInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1494,6 +1513,7 @@ export type UserCountOrderByAggregateInput = {
   offer_service?: Prisma.SortOrder;
   service_type?: Prisma.SortOrder;
   sector?: Prisma.SortOrder;
+  industry?: Prisma.SortOrder;
   selected_goals?: Prisma.SortOrder;
   experiences?: Prisma.SortOrder;
   education_level?: Prisma.SortOrder;
@@ -1561,6 +1581,7 @@ export type UserMaxOrderByAggregateInput = {
   offer_service?: Prisma.SortOrder;
   service_type?: Prisma.SortOrder;
   sector?: Prisma.SortOrder;
+  industry?: Prisma.SortOrder;
   education_level?: Prisma.SortOrder;
   onboarding_completed_at?: Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
@@ -1611,6 +1632,7 @@ export type UserMinOrderByAggregateInput = {
   offer_service?: Prisma.SortOrder;
   service_type?: Prisma.SortOrder;
   sector?: Prisma.SortOrder;
+  industry?: Prisma.SortOrder;
   education_level?: Prisma.SortOrder;
   onboarding_completed_at?: Prisma.SortOrder;
   email_verified?: Prisma.SortOrder;
@@ -2404,6 +2426,7 @@ export type UserCreateWithoutRefresh_tokensInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -2486,6 +2509,7 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -2597,6 +2621,7 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2681,6 +2706,7 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2764,6 +2790,7 @@ export type UserCreateWithoutOtp_challengesInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -2846,6 +2873,7 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -2957,6 +2985,7 @@ export type UserUpdateWithoutOtp_challengesInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3041,6 +3070,7 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3124,6 +3154,7 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -3206,6 +3237,7 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -3317,6 +3349,7 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3401,6 +3434,7 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3484,6 +3518,7 @@ export type UserCreateWithoutReports_madeInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -3566,6 +3601,7 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -3656,6 +3692,7 @@ export type UserCreateWithoutReports_receivedInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -3738,6 +3775,7 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -3849,6 +3887,7 @@ export type UserUpdateWithoutReports_madeInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -3933,6 +3972,7 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4037,6 +4077,7 @@ export type UserUpdateWithoutReports_receivedInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4121,6 +4162,7 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4204,6 +4246,7 @@ export type UserCreateWithoutSwipes_madeInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -4286,6 +4329,7 @@ export type UserUncheckedCreateWithoutSwipes_madeInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -4376,6 +4420,7 @@ export type UserCreateWithoutSwipes_receivedInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -4458,6 +4503,7 @@ export type UserUncheckedCreateWithoutSwipes_receivedInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -4569,6 +4615,7 @@ export type UserUpdateWithoutSwipes_madeInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4653,6 +4700,7 @@ export type UserUncheckedUpdateWithoutSwipes_madeInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4757,6 +4805,7 @@ export type UserUpdateWithoutSwipes_receivedInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4841,6 +4890,7 @@ export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -4924,6 +4974,7 @@ export type UserCreateWithoutSwipe_logsInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -5006,6 +5057,7 @@ export type UserUncheckedCreateWithoutSwipe_logsInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -5096,6 +5148,7 @@ export type UserCreateWithoutSwipe_log_targetsInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -5178,6 +5231,7 @@ export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -5289,6 +5343,7 @@ export type UserUpdateWithoutSwipe_logsInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5373,6 +5428,7 @@ export type UserUncheckedUpdateWithoutSwipe_logsInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5477,6 +5533,7 @@ export type UserUpdateWithoutSwipe_log_targetsInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5561,6 +5618,7 @@ export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -5644,6 +5702,7 @@ export type UserCreateWithoutMatches_as_lowInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -5726,6 +5785,7 @@ export type UserUncheckedCreateWithoutMatches_as_lowInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -5816,6 +5876,7 @@ export type UserCreateWithoutMatches_as_highInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -5898,6 +5959,7 @@ export type UserUncheckedCreateWithoutMatches_as_highInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -6009,6 +6071,7 @@ export type UserUpdateWithoutMatches_as_lowInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6093,6 +6156,7 @@ export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6197,6 +6261,7 @@ export type UserUpdateWithoutMatches_as_highInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6281,6 +6346,7 @@ export type UserUncheckedUpdateWithoutMatches_as_highInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6364,6 +6430,7 @@ export type UserCreateWithoutConversations_as_lowInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -6446,6 +6513,7 @@ export type UserUncheckedCreateWithoutConversations_as_lowInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -6536,6 +6604,7 @@ export type UserCreateWithoutConversations_as_highInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -6618,6 +6687,7 @@ export type UserUncheckedCreateWithoutConversations_as_highInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -6729,6 +6799,7 @@ export type UserUpdateWithoutConversations_as_lowInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6813,6 +6884,7 @@ export type UserUncheckedUpdateWithoutConversations_as_lowInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -6917,6 +6989,7 @@ export type UserUpdateWithoutConversations_as_highInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7001,6 +7074,7 @@ export type UserUncheckedUpdateWithoutConversations_as_highInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7084,6 +7158,7 @@ export type UserCreateWithoutMessages_sentInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -7166,6 +7241,7 @@ export type UserUncheckedCreateWithoutMessages_sentInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -7277,6 +7353,7 @@ export type UserUpdateWithoutMessages_sentInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7361,6 +7438,7 @@ export type UserUncheckedUpdateWithoutMessages_sentInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7444,6 +7522,7 @@ export type UserCreateWithoutMessage_likesInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -7526,6 +7605,7 @@ export type UserUncheckedCreateWithoutMessage_likesInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -7637,6 +7717,7 @@ export type UserUpdateWithoutMessage_likesInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7721,6 +7802,7 @@ export type UserUncheckedUpdateWithoutMessage_likesInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -7804,6 +7886,7 @@ export type UserCreateWithoutLocationInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -7886,6 +7969,7 @@ export type UserUncheckedCreateWithoutLocationInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -7997,6 +8081,7 @@ export type UserUpdateWithoutLocationInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -8081,6 +8166,7 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -8164,6 +8250,7 @@ export type UserCreateWithoutBlocks_madeInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -8246,6 +8333,7 @@ export type UserUncheckedCreateWithoutBlocks_madeInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -8336,6 +8424,7 @@ export type UserCreateWithoutBlocks_receivedInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -8418,6 +8507,7 @@ export type UserUncheckedCreateWithoutBlocks_receivedInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -8529,6 +8619,7 @@ export type UserUpdateWithoutBlocks_madeInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -8613,6 +8704,7 @@ export type UserUncheckedUpdateWithoutBlocks_madeInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -8717,6 +8809,7 @@ export type UserUpdateWithoutBlocks_receivedInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -8801,6 +8894,7 @@ export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -8884,6 +8978,7 @@ export type UserCreateWithoutRatings_givenInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -8966,6 +9061,7 @@ export type UserUncheckedCreateWithoutRatings_givenInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -9056,6 +9152,7 @@ export type UserCreateWithoutRatings_receivedInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -9138,6 +9235,7 @@ export type UserUncheckedCreateWithoutRatings_receivedInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -9249,6 +9347,7 @@ export type UserUpdateWithoutRatings_givenInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9333,6 +9432,7 @@ export type UserUncheckedUpdateWithoutRatings_givenInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9437,6 +9537,7 @@ export type UserUpdateWithoutRatings_receivedInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9521,6 +9622,7 @@ export type UserUncheckedUpdateWithoutRatings_receivedInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -9604,6 +9706,7 @@ export type UserCreateWithoutFavorites_givenInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -9686,6 +9789,7 @@ export type UserUncheckedCreateWithoutFavorites_givenInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -9776,6 +9880,7 @@ export type UserCreateWithoutFavorites_receivedInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -9858,6 +9963,7 @@ export type UserUncheckedCreateWithoutFavorites_receivedInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -9969,6 +10075,7 @@ export type UserUpdateWithoutFavorites_givenInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -10053,6 +10160,7 @@ export type UserUncheckedUpdateWithoutFavorites_givenInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -10157,6 +10265,7 @@ export type UserUpdateWithoutFavorites_receivedInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -10241,6 +10350,7 @@ export type UserUncheckedUpdateWithoutFavorites_receivedInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -10324,6 +10434,7 @@ export type UserCreateWithoutNotificationsInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -10406,6 +10517,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -10517,6 +10629,7 @@ export type UserUpdateWithoutNotificationsInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -10601,6 +10714,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -10684,6 +10798,7 @@ export type UserCreateWithoutAiJobsInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -10766,6 +10881,7 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   offer_service?: boolean;
   service_type?: string | null;
   sector?: string | null;
+  industry?: string | null;
   selected_goals?: Prisma.UserCreateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: string | null;
@@ -10877,6 +10993,7 @@ export type UserUpdateWithoutAiJobsInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -10961,6 +11078,7 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   offer_service?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   service_type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   sector?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  industry?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   selected_goals?: Prisma.UserUpdateselected_goalsInput | string[];
   experiences?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
   education_level?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -11324,6 +11442,7 @@ export type UserSelect<
     offer_service?: boolean;
     service_type?: boolean;
     sector?: boolean;
+    industry?: boolean;
     selected_goals?: boolean;
     experiences?: boolean;
     education_level?: boolean;
@@ -11413,6 +11532,7 @@ export type UserSelectCreateManyAndReturn<
     offer_service?: boolean;
     service_type?: boolean;
     sector?: boolean;
+    industry?: boolean;
     selected_goals?: boolean;
     experiences?: boolean;
     education_level?: boolean;
@@ -11477,6 +11597,7 @@ export type UserSelectUpdateManyAndReturn<
     offer_service?: boolean;
     service_type?: boolean;
     sector?: boolean;
+    industry?: boolean;
     selected_goals?: boolean;
     experiences?: boolean;
     education_level?: boolean;
@@ -11538,6 +11659,7 @@ export type UserSelectScalar = {
   offer_service?: boolean;
   service_type?: boolean;
   sector?: boolean;
+  industry?: boolean;
   selected_goals?: boolean;
   experiences?: boolean;
   education_level?: boolean;
@@ -11599,6 +11721,7 @@ export type UserOmit<
   | 'offer_service'
   | 'service_type'
   | 'sector'
+  | 'industry'
   | 'selected_goals'
   | 'experiences'
   | 'education_level'
@@ -11730,6 +11853,11 @@ export type $UserPayload<
       offer_service: boolean;
       service_type: string | null;
       sector: string | null;
+      /**
+       * Stable industry key picked in the identity step (e.g. `tech_digital`), never a label —
+       * apps/api/src/constants/industries.ts lists the keys and their matching keywords.
+       */
+      industry: string | null;
       selected_goals: string[];
       experiences: runtime.JsonValue | null;
       education_level: string | null;
@@ -12606,6 +12734,7 @@ export interface UserFieldRefs {
   readonly offer_service: Prisma.FieldRef<'User', 'Boolean'>;
   readonly service_type: Prisma.FieldRef<'User', 'String'>;
   readonly sector: Prisma.FieldRef<'User', 'String'>;
+  readonly industry: Prisma.FieldRef<'User', 'String'>;
   readonly selected_goals: Prisma.FieldRef<'User', 'String[]'>;
   readonly experiences: Prisma.FieldRef<'User', 'Json'>;
   readonly education_level: Prisma.FieldRef<'User', 'String'>;
