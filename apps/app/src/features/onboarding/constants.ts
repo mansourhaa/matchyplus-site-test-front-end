@@ -265,6 +265,24 @@ export const SECTOR_OPTIONS = [
   'Autre',
 ];
 
+// Stored as-is in `User.industry` and translated via `onboarding.identity.industries.<key>`.
+// Keep in sync with INDUSTRY_KEYS in apps/api/src/constants/industries.ts, which also holds
+// each industry's internal matching keywords.
+export const INDUSTRY_KEYS = [
+  'commerce_retail',
+  'professional_services',
+  'tech_digital',
+  'finance_insurance',
+  'industry_production',
+  'agriculture_food',
+  'health_wellness',
+  'education_training',
+  'transport_logistics',
+  'local_services_trades',
+] as const;
+
+export type IndustryKey = (typeof INDUSTRY_KEYS)[number];
+
 export const EDUCATION_OPTIONS = [
   'Bac',
   'Bac+2 / BTS / DUT',

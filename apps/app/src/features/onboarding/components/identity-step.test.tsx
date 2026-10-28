@@ -29,6 +29,11 @@ function firstButton(name: string | RegExp) {
   return screen.getAllByRole('button', { name })[0];
 }
 
+function pickIndustry(label: string) {
+  fireEvent.click(firstButton('Choisir un secteur d’activité'));
+  fireEvent.click(firstButton(label));
+}
+
 async function findFirstPlaceholder(text: string) {
   const matches = await screen.findAllByPlaceholderText(text);
   return matches[0];
@@ -93,6 +98,7 @@ function fillIdentityAndCredentials() {
   fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
     target: { value: 'Électricien' },
   });
+  pickIndustry('Technologie & Digital');
   fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
 }
 
@@ -160,6 +166,7 @@ describe('IdentityStep', () => {
     fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
+    pickIndustry('Technologie & Digital');
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).not.toHaveBeenCalled();
@@ -197,6 +204,7 @@ describe('IdentityStep', () => {
     fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
+    pickIndustry('Technologie & Digital');
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).toHaveBeenCalledWith({
@@ -204,6 +212,7 @@ describe('IdentityStep', () => {
       job: 'Électricien',
       bio: undefined,
       profileType: 'INDIVIDUAL',
+      industry: 'tech_digital',
     });
   });
 
@@ -224,7 +233,7 @@ describe('IdentityStep', () => {
     expect(screen.queryAllByText('Retour').length).toBeGreaterThan(0);
   });
 
-  it('does not require profession for a Looking for (PROVIDER) profile', async () => {
+  it('blocks submission and shows an error when profession is missing for a Looking for (PROVIDER) profile', async () => {
     const onNext = vi.fn().mockResolvedValue(true);
     renderWithAuthStore(
       <IdentityStep
@@ -243,12 +252,105 @@ describe('IdentityStep', () => {
     fireEvent.click(firstButton('Je recherche un service'));
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
+    expect(onNext).not.toHaveBeenCalled();
+    expect(await screen.findAllByText('La profession est obligatoire.')).not.toHaveLength(0);
+  });
+
+  it('submits a Looking for (PROVIDER) profile once its profession is filled', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={true}
+        onNext={onNext}
+      />,
+      oauthAuthState,
+    );
+
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.click(firstButton('Je recherche un service'));
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
+      target: { value: 'Électricien' },
+    });
+    pickIndustry('Technologie & Digital');
+    fireEvent.click(firstButton('Enregistrer et continuer'));
+
     expect(onNext).toHaveBeenCalledWith({
       name: 'Jane Doe',
-      job: undefined,
+      job: 'Électricien',
       bio: undefined,
       profileType: 'PROVIDER',
+      industry: 'tech_digital',
     });
+  });
+
+  it('blocks submission and shows an error when the industry is missing', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={true}
+        onNext={onNext}
+      />,
+      oauthAuthState,
+    );
+
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
+      target: { value: 'Électricien' },
+    });
+    fireEvent.click(firstButton('Enregistrer et continuer'));
+
+    expect(onNext).not.toHaveBeenCalled();
+    expect(await screen.findAllByText('Le secteur d’activité est obligatoire.')).not.toHaveLength(
+      0,
+    );
+  });
+
+  it('shows the industry in both modes and keeps it when switching between them', () => {
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={true}
+        onNext={vi.fn()}
+      />,
+      oauthAuthState,
+    );
+
+    pickIndustry('Santé & Bien-être');
+    fireEvent.click(firstButton('Je recherche un service'));
+    expect(firstButton('Santé & Bien-être')).toBeInTheDocument();
+    fireEvent.click(firstButton('Je propose mes services'));
+    expect(firstButton('Santé & Bien-être')).toBeInTheDocument();
+  });
+
+  it('never shows the internal matching keywords of an industry', () => {
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={true}
+        onNext={vi.fn()}
+      />,
+      oauthAuthState,
+    );
+
+    fireEvent.click(firstButton('Choisir un secteur d’activité'));
+    expect(firstButton('Services Locaux & Artisanat')).toBeInTheDocument();
+    expect(screen.queryAllByText(/plomberie|BTP|hôtellerie/)).toHaveLength(0);
   });
 
   it('submits prénom, nom, job, and the selected profile type', async () => {
@@ -270,6 +372,7 @@ describe('IdentityStep', () => {
     fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
+    pickIndustry('Technologie & Digital');
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).toHaveBeenCalledWith({
@@ -277,6 +380,7 @@ describe('IdentityStep', () => {
       job: 'Électricien',
       bio: undefined,
       profileType: 'INDIVIDUAL',
+      industry: 'tech_digital',
     });
   });
 
@@ -300,6 +404,7 @@ describe('IdentityStep', () => {
     fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
+    pickIndustry('Technologie & Digital');
     const file = new File(['abc'], 'selfie.jpg', { type: 'image/jpeg' });
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -316,6 +421,7 @@ describe('IdentityStep', () => {
         job: 'Électricien',
         bio: undefined,
         profileType: 'INDIVIDUAL',
+        industry: 'tech_digital',
       }),
     );
   });
@@ -340,6 +446,7 @@ describe('IdentityStep', () => {
     fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
+    pickIndustry('Technologie & Digital');
     const file = new File(['abc'], 'selfie.jpg', { type: 'image/jpeg' });
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -614,6 +721,7 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
         job: 'Électricien',
         bio: undefined,
         profileType: 'INDIVIDUAL',
+        industry: 'tech_digital',
       }),
     );
   });

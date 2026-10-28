@@ -41,6 +41,7 @@ export interface OnboardingProfile {
   languages: string[];
   experience?: string | null;
   sector?: string | null;
+  industry?: string | null;
   education_level?: string | null;
   experiences?: ProfileExperience[] | null;
   educations?: ProfileEducation[] | null;
@@ -67,6 +68,7 @@ export type OnboardingProfilePatch = Partial<{
   languages: string[];
   experience: string;
   sector: string;
+  industry: string;
   educationLevel: string;
   experiences: ProfileExperience[];
   educations: ProfileEducation[];

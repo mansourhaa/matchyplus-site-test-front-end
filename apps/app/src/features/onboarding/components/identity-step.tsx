@@ -6,7 +6,7 @@ import { PhoneInput } from '@/features/auth/components/phone-input';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { EXPERIENCE_OPTIONS } from '@/features/onboarding/constants';
+import { INDUSTRY_KEYS, type IndustryKey } from '@/features/onboarding/constants';
 import { identityStepSchema } from '@/features/onboarding/schemas';
 import { patchOnboardingProfile } from '@/features/onboarding/store/onboarding-slice';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
@@ -59,55 +59,67 @@ function ProfileSilhouette() {
   );
 }
 
-function YearsDropdown({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+// Same markup and behavior as the interests step's "Type de service" dropdown. Only the
+// translated industry name is shown; the matching keywords live in the API.
+function IndustryDropdown({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: IndustryKey) => void;
+}) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const selected = INDUSTRY_KEYS.find((key) => key === value);
   return (
     <div>
-      <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-        {t('onboarding.identity.yearsLabel')}
+      <label style={{ fontSize: '12px', color: '#888' }}>
+        {t('onboarding.identity.industryLabel')}
       </label>
       <div className="relative mt-1">
         <button
           type="button"
-          className="flex w-full items-center justify-between rounded-xl px-4 py-3"
-          style={{
-            border: `2px solid ${value ? '#2F76BB' : '#E0E0E0'}`,
-            background: value ? '#F5F9FF' : '#FAFAFA',
-          }}
           onClick={() => setOpen(!open)}
+          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5"
+          style={{
+            border: '1.5px solid #E0E0E0',
+            background: 'white',
+            fontSize: '13px',
+            color: selected ? '#353535' : '#BBB',
+          }}
         >
-          <span style={{ fontSize: '14px', color: value ? '#353535' : '#BBB' }}>
-            {value || t('onboarding.identity.yearsPlaceholder')}
+          <span>
+            {selected
+              ? t(`onboarding.identity.industries.${selected}`)
+              : t('onboarding.identity.industryPlaceholder')}
           </span>
-          <ChevronDown
-            size={16}
-            color="#888"
-            style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
-          />
+          <ChevronDown size={16} color="#888" />
         </button>
         {open && (
           <div
             className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl bg-white py-1"
-            style={{ border: '1.5px solid #E0E0E0', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
+            style={{
+              border: '1.5px solid #E0E0E0',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+            }}
           >
-            {EXPERIENCE_OPTIONS.map((option) => (
+            {INDUSTRY_KEYS.map((key) => (
               <button
-                key={option}
+                key={key}
                 type="button"
-                className="block w-full px-4 py-2.5 text-left"
+                className="block w-full px-3 py-2 text-start"
                 style={{
-                  fontSize: '14px',
-                  color: value === option ? '#2F76BB' : '#353535',
-                  fontWeight: value === option ? 700 : 400,
-                  background: value === option ? '#F5F9FF' : 'transparent',
+                  fontSize: '13px',
+                  color: value === key ? '#2F76BB' : '#353535',
+                  fontWeight: value === key ? 700 : 400,
+                  background: value === key ? '#F5F9FF' : 'transparent',
                 }}
                 onClick={() => {
-                  onChange(option);
+                  onChange(key);
                   setOpen(false);
                 }}
               >
-                {option}
+                {t(`onboarding.identity.industries.${key}`)}
               </button>
             ))}
           </div>
@@ -140,7 +152,7 @@ type IdentityStepProps = {
     job?: string;
     bio?: string;
     profileType: ProfileType;
-    experience?: string;
+    industry: IndustryKey;
   }) => Promise<boolean>;
 };
 
@@ -171,7 +183,7 @@ export function IdentityStep({
   const [lastName, setLastName] = useState(existingName.lastName);
   const [job, setJob] = useState(profile?.job ?? '');
   const [bio, setBio] = useState(profile?.bio ?? '');
-  const [experience, setExperience] = useState(profile?.experience ?? '');
+  const [industry, setIndustry] = useState(profile?.industry ?? '');
   const [image, setImage] = useState(profile?.image ?? '');
   const [profileType, setProfileType] = useState<ProfileType>(
     profile?.profile_type ?? 'INDIVIDUAL',
@@ -235,7 +247,7 @@ export function IdentityStep({
     setLastName(resumedLastName);
     setJob(profile.job ?? '');
     setBio(profile.bio ?? '');
-    setExperience(profile.experience ?? '');
+    setIndustry(profile.industry ?? '');
     setImage(profile.image ?? '');
     setProfileType(profile.profile_type ?? 'INDIVIDUAL');
     setVideoLabel(profile.video ? t('onboarding.identity.videoPresentationLabel') : null);
@@ -246,7 +258,6 @@ export function IdentityStep({
   const [hasPendingPhoto, setHasPendingPhoto] = useState(false);
   const { user } = useAppSelector(selectAuth);
   const name = `${firstName} ${lastName}`.trim();
-  const isJobRequired = profileType === 'INDIVIDUAL';
   // Only a phone-signup account ever needs a real profile photo — matching the old
   // app's Inscription1 (`requiresPhoto = isPhoneSignupFlow() || Boolean(data.phone)`).
   // An OAuth account already has a provider avatar concept and never collected a phone.
@@ -400,7 +411,6 @@ export function IdentityStep({
   const handleProfileTypeClick = (type: ProfileType) => {
     if (type === profileType) return;
     const hasRoleSpecificData =
-      Boolean(experience) ||
       Boolean(videoLabel) ||
       Boolean(videoUploaded) ||
       Boolean(videoPendingLocal) ||
@@ -417,7 +427,6 @@ export function IdentityStep({
   const applyProfileTypeChange = (type: ProfileType) => {
     setProfileType(type);
     if (type === 'PROVIDER') {
-      setExperience('');
       clearLocalVideo();
       if (isAuthenticated && (videoUploaded || profile?.video)) {
         void dispatch(deleteProfileVideo());
@@ -436,7 +445,8 @@ export function IdentityStep({
     // Photo is persisted via multipart `/users/me/profile/photo`, not this JSON patch
     // (base64 in the body triggered Fastify 413 FST_ERR_CTP_BODY_TOO_LARGE).
     profileType,
-    experience: profileType === 'INDIVIDUAL' && experience ? experience : undefined,
+    // Only ever called after handleNext's identityStepSchema check, which rejects unknown keys.
+    industry: industry as IndustryKey,
   });
 
   const photoPreview = useAuthenticatedMediaUrl(image || null);
@@ -481,10 +491,15 @@ export function IdentityStep({
       return;
     }
 
-    const parsed = identityStepSchema.safeParse({ name, job, bio, profileType });
+    const parsed = identityStepSchema.safeParse({ name, job, bio, profileType, industry });
     if (!parsed.success) {
       setRequiredTouched(true);
-      setError(parsed.error.issues[0]?.message ?? t('onboarding.identity.errorNameRequired'));
+      const issue = parsed.error.issues[0];
+      setError(
+        issue?.path[0] === 'industry'
+          ? t('onboarding.identity.errorIndustryRequired')
+          : (issue?.message ?? t('onboarding.identity.errorNameRequired')),
+      );
       return;
     }
 
@@ -553,7 +568,6 @@ export function IdentityStep({
         job: job || undefined,
         bio: bio || undefined,
         profile_type: profileType,
-        experience: profileType === 'INDIVIDUAL' && experience ? experience : undefined,
       }),
     );
     router.push('/connexion?switch=true');
@@ -648,13 +662,12 @@ export function IdentityStep({
                     key={type}
                     type="button"
                     onClick={() => handleProfileTypeClick(type)}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 transition-all"
+                    className="flex flex-1 items-center justify-center rounded-xl py-2.5 text-center transition-all"
                     style={{
                       background: profileType === type ? '#2F76BB' : 'white',
                       border: `2px solid ${profileType === type ? '#2F76BB' : '#E0E0E0'}`,
                     }}
                   >
-                    {profileType === type && <Check size={14} color="white" />}
                     <span
                       style={{
                         fontSize: '13px',
@@ -881,11 +894,7 @@ export function IdentityStep({
             <div>
               <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
                 {t('onboarding.identity.jobTitle')}
-                {isJobRequired ? (
-                  <span style={{ color: '#61BCA6' }}> *</span>
-                ) : (
-                  <span style={{ color: '#888' }}> {t('onboarding.identity.jobOptional')}</span>
-                )}
+                <span style={{ color: '#61BCA6' }}> *</span>
               </label>
               <div className="mt-1 flex items-center gap-2">
                 <div className="relative flex-1">
@@ -914,11 +923,9 @@ export function IdentityStep({
               </div>
             </div>
 
-            {profileType === 'INDIVIDUAL' && (
-              <div className="mt-4">
-                <YearsDropdown value={experience} onChange={setExperience} />
-              </div>
-            )}
+            <div className="mt-4">
+              <IndustryDropdown value={industry} onChange={setIndustry} />
+            </div>
 
             <div>
               <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>

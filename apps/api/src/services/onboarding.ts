@@ -37,6 +37,7 @@ const PROFILE_SELECT = {
   languages: true,
   experience: true,
   sector: true,
+  industry: true,
   education_level: true,
   experiences: true,
   educations: true,
@@ -105,6 +106,7 @@ export class OnboardingService {
     if (fields.languages !== undefined) data.languages = fields.languages;
     if (fields.experience !== undefined) data.experience = fields.experience;
     if (fields.sector !== undefined) data.sector = fields.sector;
+    if (fields.industry !== undefined) data.industry = fields.industry;
     if (fields.educationLevel !== undefined) data.education_level = fields.educationLevel;
     if (fields.experiences !== undefined) data.experiences = fields.experiences;
     if (fields.educations !== undefined) data.educations = fields.educations;
