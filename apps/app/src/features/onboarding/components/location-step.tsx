@@ -195,6 +195,9 @@ export function LocationStep({
     onBack();
   };
 
+  const skipLabel =
+    t('onboarding.location.skipAndContinue') || t('onboarding.location.skipAndLaunch') || 'Passer';
+
   return (
     <OnboardingStepLayout
       step={stepNumber}
@@ -202,6 +205,8 @@ export function LocationStep({
       stepLabel={t('onboarding.location.title')}
       onBack={handleBack}
       backLabel={t('common.back')}
+      skipLabel={skipLabel}
+      onSkip={() => void submit(true)}
     >
       <div className="mx-auto w-full max-w-2xl">
         <StepProgress step={stepNumber} total={totalSteps} />
@@ -409,9 +414,7 @@ export function LocationStep({
           className="mt-3 block w-full text-center disabled:opacity-50"
           style={{ fontSize: '14px', color: '#BBB' }}
         >
-          {t('onboarding.location.skipAndContinue') ||
-            t('onboarding.location.skipAndLaunch') ||
-            'Passer'}
+          {skipLabel}
         </button>
       </div>
     </OnboardingStepLayout>
