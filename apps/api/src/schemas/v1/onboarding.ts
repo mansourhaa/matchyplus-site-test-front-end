@@ -1,3 +1,5 @@
+import { INDUSTRY_KEYS } from '../../constants/industries.js';
+
 const errorResponses = {
   '4xx': {
     type: 'object',
@@ -78,6 +80,7 @@ const onboardingProfileResponseSchema = {
     languages: { type: 'array', items: { type: 'string' } },
     experience: { type: 'string', nullable: true },
     sector: { type: 'string', nullable: true },
+    industry: { type: 'string', nullable: true },
     education_level: { type: 'string', nullable: true },
     experiences: {
       anyOf: [{ type: 'array', items: profileExperienceSchema }, { type: 'null' }],
@@ -161,6 +164,7 @@ export const updateOnboardingProfileSchema = {
       },
       experience: { type: 'string', maxLength: 60 },
       sector: { type: 'string', maxLength: 120 },
+      industry: { type: 'string', enum: [...INDUSTRY_KEYS] },
       educationLevel: { type: 'string', maxLength: 120 },
       experiences: { type: 'array', items: profileExperienceSchema, maxItems: 25 },
       educations: { type: 'array', items: profileEducationSchema, maxItems: 25 },
