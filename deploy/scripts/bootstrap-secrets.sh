@@ -36,6 +36,8 @@ AI_INTERNAL_TOKEN="${AI_INTERNAL_TOKEN:-}"
 LOG_LEVEL="${LOG_LEVEL:-INFO}"
 
 DISCOVERY_RADIUS_M="${DISCOVERY_RADIUS_M:-100000}"
+MOBILE_CLIENT_SECRET="${MOBILE_CLIENT_SECRET:-}"
+MOBILE_APP_SCHEME="${MOBILE_APP_SCHEME:-matchy}"
 
 kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
 
@@ -53,6 +55,8 @@ kubectl -n "${NAMESPACE}" create secret generic saas-api-env \
   --from-literal=AI_CONSUMER_GROUP="${AI_CONSUMER_GROUP}" \
   --from-literal=AI_CACHE_TTL_SECONDS="${AI_CACHE_TTL_SECONDS}" \
   --from-literal=DISCOVERY_RADIUS_M="${DISCOVERY_RADIUS_M}" \
+  --from-literal=MOBILE_CLIENT_SECRET="${MOBILE_CLIENT_SECRET}" \
+  --from-literal=MOBILE_APP_SCHEME="${MOBILE_APP_SCHEME}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n "${NAMESPACE}" create secret generic saas-ai-env \
