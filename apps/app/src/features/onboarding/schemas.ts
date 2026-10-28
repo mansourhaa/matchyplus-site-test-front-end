@@ -1,19 +1,16 @@
 import { z } from 'zod';
 
-// Profession is only required for "Offering" (INDIVIDUAL) profiles — optional
-// for "Looking for" (PROVIDER), matching the old app's Inscription1.
-export const identityStepSchema = z
-  .object({
-    name: z.string().trim().min(1, 'Le nom est obligatoire.'),
-    job: z.string().trim().optional(),
-    bio: z.string().max(250).optional(),
-    image: z.string().optional(),
-    profileType: z.enum(['INDIVIDUAL', 'PROVIDER']),
-  })
-  .refine((data) => data.profileType !== 'INDIVIDUAL' || Boolean(data.job?.trim()), {
-    message: 'La profession est obligatoire.',
-    path: ['job'],
-  });
+import { INDUSTRY_KEYS } from './constants';
+
+// Profession is required for both "Offering" (INDIVIDUAL) and "Looking for" (PROVIDER) profiles.
+export const identityStepSchema = z.object({
+  name: z.string().trim().min(1, 'Le nom est obligatoire.'),
+  job: z.string().trim().min(1, 'La profession est obligatoire.'),
+  bio: z.string().max(250).optional(),
+  image: z.string().optional(),
+  profileType: z.enum(['INDIVIDUAL', 'PROVIDER']),
+  industry: z.enum(INDUSTRY_KEYS, 'Le secteur d’activité est obligatoire.'),
+});
 
 export const interestsStepSchema = z
   .object({

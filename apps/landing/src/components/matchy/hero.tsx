@@ -33,9 +33,10 @@ export function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-3xl leading-tight font-bold text-balance sm:text-4xl md:text-4xl lg:text-5xl"
+            className="text-3xl leading-tight font-bold text-balance sm:text-4xl md:text-4xl lg:text-[2.6rem]"
           >
-            {t('landing.hero')}
+            <span className="block lg:whitespace-nowrap">{t('landing.hero')}</span>
+            <span className="block">{t('landing.heroLine2')}</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 24 }}

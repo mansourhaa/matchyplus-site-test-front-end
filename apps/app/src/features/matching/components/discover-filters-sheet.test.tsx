@@ -31,7 +31,17 @@ describe('DiscoverFiltersSheet component', () => {
 
     expect(screen.getByTestId('discover-filters-sheet')).toBeInTheDocument();
     expect(screen.getByText('Rayon de distance')).toBeInTheDocument();
-    expect(screen.getByText(`Tout (${MAX_DISTANCE_KM} km)`)).toBeInTheDocument();
+    expect(screen.getByTestId('discover-filter-distance-value')).toHaveTextContent(
+      `${MAX_DISTANCE_KM} km`,
+    );
+
+    // Verify "All" / "Tout" chip is removed and enhanced milestones are present
+    expect(screen.queryByTestId('discover-filter-distance-chip-all')).not.toBeInTheDocument();
+    expect(screen.getByTestId('discover-filter-milestone-min')).toHaveTextContent('1 km');
+    expect(screen.getByTestId('discover-filter-milestone-mid')).toHaveTextContent('125 km');
+    expect(screen.getByTestId('discover-filter-milestone-max')).toHaveTextContent(
+      `${MAX_DISTANCE_KM} km`,
+    );
 
     // Verify rating, availability, and sort are removed
     expect(screen.queryByText('Disponible uniquement')).not.toBeInTheDocument();
@@ -39,6 +49,31 @@ describe('DiscoverFiltersSheet component', () => {
     expect(screen.queryByText('Trier par')).not.toBeInTheDocument();
     expect(screen.getByTestId('discover-filters-apply-btn')).toHaveTextContent(
       'Voir 24 professionnels',
+    );
+  });
+
+  it('triggers onChange when milestone button is clicked', () => {
+    const onChange = vi.fn();
+    render(
+      <I18nProvider>
+        <DiscoverFiltersSheet
+          open={true}
+          filters={DEFAULT_DISCOVER_FILTERS}
+          resultCount={10}
+          onClose={vi.fn()}
+          onChange={onChange}
+          onReset={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+
+    const milestoneMid = screen.getByTestId('discover-filter-milestone-mid');
+    fireEvent.click(milestoneMid);
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        distanceKm: 125,
+      }),
     );
   });
 

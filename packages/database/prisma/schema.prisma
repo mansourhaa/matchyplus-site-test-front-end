@@ -119,6 +119,9 @@ model User {
   offer_service           Boolean      @default(false)
   service_type            String?
   sector                  String?
+  /// Stable industry key picked in the identity step (e.g. `tech_digital`), never a label —
+  /// apps/api/src/constants/industries.ts lists the keys and their matching keywords.
+  industry                String?
   selected_goals          String[]     @default([])
   experiences             Json?
   education_level         String?

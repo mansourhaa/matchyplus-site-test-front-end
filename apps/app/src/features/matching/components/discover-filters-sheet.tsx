@@ -56,13 +56,15 @@ export function DiscoverFiltersSheet({
         : `${resultCount} ${resultCount === 1 ? 'professionnel' : 'professionnels'}`;
 
   const presets = [
-    { label: locale === 'fr' ? 'Tout' : 'All', km: null },
     { label: '10 km', km: 10 },
     { label: '25 km', km: 25 },
     { label: '50 km', km: 50 },
     { label: '100 km', km: 100 },
     ...(MAX_DISTANCE_KM > 100 ? [{ label: `${MAX_DISTANCE_KM} km`, km: MAX_DISTANCE_KM }] : []),
   ];
+
+  const midpointKm = Math.round(MAX_DISTANCE_KM / 2);
+  const distPercent = ((distanceValue - 1) / (MAX_DISTANCE_KM - 1)) * 100;
 
   const sheetContent = (
     <AnimatePresence>
@@ -154,11 +156,7 @@ export function DiscoverFiltersSheet({
                       color: matchyBrand.blue,
                     }}
                   >
-                    {isDistanceUnlimited
-                      ? locale === 'fr'
-                        ? `Tout (${MAX_DISTANCE_KM} km)`
-                        : `Any distance (${MAX_DISTANCE_KM} km)`
-                      : `${distanceValue} km`}
+                    {`${distanceValue} km`}
                   </span>
                 </div>
 
@@ -178,14 +176,41 @@ export function DiscoverFiltersSheet({
                         distanceKm: next >= MAX_DISTANCE_KM ? null : next,
                       });
                     }}
-                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-[#2F76BB]"
-                    style={{ accentColor: matchyBrand.blue }}
+                    className="h-2 w-full cursor-pointer appearance-none rounded-lg accent-[#2F76BB]"
+                    style={{
+                      background: `linear-gradient(to right, #2F76BB 0%, #2F76BB ${distPercent}%, #E2E8F0 ${distPercent}%, #E2E8F0 100%)`,
+                      accentColor: matchyBrand.blue,
+                    }}
                   />
-                  <div className="mt-1 flex justify-between text-[11px] text-slate-400">
-                    <span>1 km</span>
-                    <span>50 km</span>
-                    <span>100 km</span>
-                    <span>{MAX_DISTANCE_KM} km (Illimité)</span>
+                  {/* Enhanced milestones scale */}
+                  <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-400">
+                    <button
+                      type="button"
+                      data-testid="discover-filter-milestone-min"
+                      onClick={() => onChange({ ...filters, distanceKm: 1 })}
+                      className="cursor-pointer transition-colors hover:text-[#2F76BB]"
+                      style={{ color: distanceValue === 1 ? matchyBrand.blue : undefined }}
+                    >
+                      1 km
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="discover-filter-milestone-mid"
+                      onClick={() => onChange({ ...filters, distanceKm: midpointKm })}
+                      className="cursor-pointer text-center transition-colors hover:text-[#2F76BB]"
+                      style={{ color: distanceValue === midpointKm ? matchyBrand.blue : undefined }}
+                    >
+                      {midpointKm} km
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="discover-filter-milestone-max"
+                      onClick={() => onChange({ ...filters, distanceKm: MAX_DISTANCE_KM })}
+                      className="cursor-pointer text-right transition-colors hover:text-[#2F76BB]"
+                      style={{ color: isDistanceUnlimited ? matchyBrand.blue : undefined }}
+                    >
+                      {MAX_DISTANCE_KM} km
+                    </button>
                   </div>
                 </div>
 
@@ -193,13 +218,13 @@ export function DiscoverFiltersSheet({
                 <div className="flex flex-wrap gap-2 pt-1">
                   {presets.map((preset) => {
                     const isSelected =
-                      (preset.km === null && isDistanceUnlimited) ||
-                      (preset.km !== null && filters.distanceKm === preset.km);
+                      filters.distanceKm === preset.km ||
+                      (preset.km === MAX_DISTANCE_KM && isDistanceUnlimited);
                     return (
                       <button
                         key={preset.label}
                         type="button"
-                        data-testid={`discover-filter-distance-chip-${preset.km ?? 'all'}`}
+                        data-testid={`discover-filter-distance-chip-${preset.km}`}
                         onClick={() => onChange({ ...filters, distanceKm: preset.km })}
                         className="cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-all active:scale-95"
                         style={{
