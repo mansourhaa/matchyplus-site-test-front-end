@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "build": "dotenv -q -e ../../.env.production -- next build",
     "start": "dotenv -q -e ../../.env.production -- next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",
@@ -26,6 +27,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@reduxjs/toolkit": "^2.12.0",
+    "@saas-boilerplate/types": "workspace:*",
     "@saas-boilerplate/ui": "workspace:*",
     "axios": "^1.18.1",
     "date-fns": "^4.4.0",

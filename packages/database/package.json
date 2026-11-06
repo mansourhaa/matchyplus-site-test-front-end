@@ -28,7 +28,8 @@
     "db:reset:dev": "dotenv -e ../../.env.development -- prisma migrate reset --force",
     "postinstall": "pnpm run db:generate",
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@faker-js/faker": "^10.5.0",

@@ -20,6 +20,7 @@
     "stage": "dotenv -q -e .env.staging -- turbo run stage",
     "staging": "dotenv -q -e .env.staging -- turbo run stage",
     "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
     "start": "dotenv -q -e .env.production -- turbo run start",
     "prod": "dotenv -q -e .env.production -- turbo run start",
     "lint": "turbo lint",

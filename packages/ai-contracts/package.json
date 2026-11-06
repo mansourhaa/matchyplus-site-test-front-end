@@ -17,7 +17,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf .turbo node_modules dist",
-    "test": "tsx --test src/index.test.ts"
+    "test": "tsx --test src/index.test.ts",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@saas-boilerplate/typescript-config": "workspace:*",
