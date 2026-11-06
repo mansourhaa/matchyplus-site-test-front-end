@@ -79,6 +79,60 @@ export const MATCHING_TESTER = {
   languages: ['fr', 'ar', 'en'],
 };
 
+/**
+ * Account A: Software Engineer interested in Deliveries and Housemaids.
+ * Login: dev.services@matchyplus.tn / passer
+ */
+export const TEST_ACCOUNT_SOFTWARE_SERVICES = {
+  email: 'dev.services@matchyplus.tn',
+  password: 'passer',
+  name: 'Youssef Dev',
+  job: 'Software Engineer',
+  category: 'Technologie & Digital',
+  city: 'Kairouan',
+  bio: 'Ingénieur logiciel full-stack. Je cherche des prestataires fiables pour livraisons express et aide ménagère.',
+  interests: ['livraison', 'chauffeur livreur', 'aide ménagère', 'femme de ménage', 'ménage'],
+  goals: ['demander un service', 'trouver un prestataire'],
+  looking_for: 'cherche livreurs et aide ménagère pour services à domicile',
+  activity_sector: 'tech_digital',
+  service_type: null,
+  offer_service: false,
+  profile_type: ProfileType.INDIVIDUAL,
+  image:
+    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
+  lat: EL_ALAM.lat,
+  lon: EL_ALAM.lon,
+  availability_days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'],
+  languages: ['fr', 'ar', 'en'],
+};
+
+/**
+ * Account B: Client / Business interested in IT Services (Web, Mobile, DevOps).
+ * Login: it.seeker@matchyplus.tn / passer
+ */
+export const TEST_ACCOUNT_IT_SEEKER = {
+  email: 'it.seeker@matchyplus.tn',
+  password: 'passer',
+  name: 'Salma Recruiter',
+  job: 'Responsable Opérations',
+  category: 'Commerce & Retail',
+  city: 'Kairouan',
+  bio: 'Je recherche des développeurs web, experts mobiles et DevOps pour concevoir et maintenir nos solutions digitales.',
+  interests: ['développement web', 'informatique', 'devops', 'mobile', 'react'],
+  goals: ["recruter quelqu'un", 'trouver un prestataire'],
+  looking_for: 'recrutement développeurs freelances IT et devops',
+  activity_sector: 'commerce_retail',
+  service_type: null,
+  offer_service: false,
+  profile_type: ProfileType.INDIVIDUAL,
+  image:
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
+  lat: EL_ALAM.lat,
+  lon: EL_ALAM.lon,
+  availability_days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'],
+  languages: ['fr', 'ar', 'en'],
+};
+
 const PROFILES: MatchingProfileSeed[] = [
   {
     email: 'sara.dev@matchy.seed',
@@ -646,6 +700,45 @@ const PROFILES: MatchingProfileSeed[] = [
     reviews: 14,
     scenarioNotes: 'Job seeker in food & hospitality skipping education and gig offer fields',
   },
+  {
+    // Scenario 11: Housekeeper / Maid offering home cleaning & housekeeping
+    email: 'fatima.maid@matchy.seed',
+    name: 'Fatima Mansour',
+    job: 'Femme de ménage / Aide ménagère',
+    category: 'Services Locaux & Artisanat',
+    city: 'Kairouan',
+    bio: 'Aide ménagère expérimentée pour ménage à domicile, repassage et entretien régulier.',
+    video: null,
+    interests: ['aide ménagère', 'femme de ménage', 'ménage', 'nettoyage'],
+    goals: ['proposer mes services', 'travailler comme prestataire'],
+    looking_for: 'missions de ménage et entretien à domicile',
+    activity_sector: 'Services Locaux & Artisanat',
+    service_type: 'Aide ménagère / Nettoyage',
+    offer_service: true,
+    price: '15 DT / heure',
+    profile_type: ProfileType.INDIVIDUAL,
+    image:
+      'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
+    lat: 35.88,
+    lon: 10.08,
+    availability_days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+    languages: ['ar', 'fr'],
+    contact_modes: ['call', 'whatsapp'],
+    experiences: [
+      {
+        id: 'exp-maid',
+        title: 'Aide ménagère à domicile',
+        company: 'Particuliers',
+        startDate: '2019-01',
+        endDate: '2026-01',
+        current: true,
+      },
+    ],
+    educations: [], // Skipped via "Passer"
+    rating: 4.9,
+    reviews: 28,
+    scenarioNotes: 'Housekeeper offering home cleaning services, skipped education',
+  },
 ];
 
 async function upsertUserWithLocation(
@@ -790,29 +883,24 @@ export async function seedMatching(prisma: PrismaClient) {
     lon: MATCHING_TESTER.lon,
   });
 
+  // Dedicated test account: Software engineer seeking deliveries & housemaids
+  await upsertUserWithLocation(prisma, {
+    ...TEST_ACCOUNT_SOFTWARE_SERVICES,
+    passwordHash,
+  });
+
+  // Dedicated test account: Client seeking IT services
+  await upsertUserWithLocation(prisma, {
+    ...TEST_ACCOUNT_IT_SEEKER,
+    passwordHash,
+  });
+
   const created: Array<{ id: string; email: string; likesTester?: boolean }> = [];
 
   for (const profile of PROFILES) {
     const user = await upsertUserWithLocation(prisma, {
-      email: profile.email,
+      ...profile,
       passwordHash,
-      name: profile.name,
-      job: profile.job,
-      category: profile.category,
-      city: profile.city,
-      bio: profile.bio,
-      interests: profile.interests,
-      goals: profile.goals,
-      looking_for: profile.looking_for,
-      activity_sector: profile.activity_sector,
-      service_type: profile.service_type,
-      profile_type: profile.profile_type,
-      image: profile.image,
-      plan: profile.plan,
-      lat: profile.lat,
-      lon: profile.lon,
-      contact_modes: profile.contact_modes,
-      onboardingOnly: profile.onboardingOnly,
     });
     created.push({ id: user.id, email: profile.email, likesTester: profile.likesTester });
   }
@@ -885,6 +973,8 @@ export async function seedMatching(prisma: PrismaClient) {
   return {
     testerEmail: MATCHING_TESTER.email,
     testerPassword: MATCHING_TESTER.password,
+    softwareServicesTesterEmail: TEST_ACCOUNT_SOFTWARE_SERVICES.email,
+    itSeekerTesterEmail: TEST_ACCOUNT_IT_SEEKER.email,
     profileCount: created.length,
   };
 }
