@@ -49,8 +49,8 @@ export function Explore() {
               alt={t('landing.exploreImageAlt')}
               width={736}
               height={560}
-              sizes="(max-width: 640px) 320px, (max-width: 768px) 400px, (max-width: 1024px) 460px, 580px"
-              className="h-auto w-full max-w-[320px] sm:max-w-[400px] md:max-w-[460px] lg:max-w-[540px] xl:max-w-[580px] object-contain"
+              sizes="(max-width: 768px) 90vw, 560px"
+              className="h-auto w-full max-w-[clamp(300px,min(42vw,72svh),560px)] object-contain"
             />
           </div>
         </Parallax>

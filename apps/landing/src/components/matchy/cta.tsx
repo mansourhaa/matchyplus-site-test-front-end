@@ -16,13 +16,13 @@ export function Cta() {
 
   return (
     <section
-      className="from-brand-teal relative mt-20 sm:mt-24 md:mt-28 lg:mt-32 xl:mt-36 bg-gradient-to-r via-[#3b9bb8] to-[#2d79be] pt-8 pb-16 sm:pt-10 sm:pb-20 md:pt-12 md:pb-24 lg:pb-28"
+      className="from-brand-teal relative mt-[clamp(96px,11vw,170px)] bg-gradient-to-r via-[#3b9bb8] to-[#2d79be] pt-8 pb-16 sm:pt-10 sm:pb-20 md:pt-12 md:pb-24 lg:pb-28"
       id="download"
     >
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 px-5 md:grid-cols-2 md:gap-10 lg:gap-14">
         <Parallax
           speed={20}
-          className="relative z-10 -mt-20 sm:-mt-24 md:-mt-28 lg:-mt-32 xl:-mt-36 flex justify-center"
+          className="relative z-10 -mt-[clamp(96px,11vw,170px)] flex justify-center"
         >
           <div className="relative flex w-full justify-center drop-shadow-2xl">
             <Image
@@ -30,8 +30,8 @@ export function Cta() {
               alt={t('landing.ctaImageAlt')}
               width={641}
               height={794}
-              sizes="(max-width: 640px) 270px, (max-width: 768px) 320px, (max-width: 1024px) 380px, 480px"
-              className="h-auto w-full max-w-[270px] sm:max-w-[320px] md:max-w-[380px] lg:max-w-[440px] xl:max-w-[480px] object-contain drop-shadow-2xl"
+              sizes="(max-width: 768px) 280px, 440px"
+              className="h-auto w-full max-w-[clamp(260px,min(32vw,52svh),440px)] object-contain drop-shadow-2xl"
             />
           </div>
         </Parallax>
