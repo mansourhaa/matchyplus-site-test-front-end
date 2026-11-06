@@ -29,8 +29,11 @@ export const ROLE_RANK: Record<Role, number> = {
   [Role.SUPER_ADMIN]: 3,
 };
 
-/** Discovery radius in meters (env override: DISCOVERY_RADIUS_M). */
-export const DISCOVERY_RADIUS_M = Number(process.env.DISCOVERY_RADIUS_M || 100_000);
+/** Discovery radius in meters (env override: DISCOVERY_RADIUS_M, default: 250 km). */
+export const DISCOVERY_RADIUS_M = Number(process.env.DISCOVERY_RADIUS_M || 250_000);
+
+/** Maximum discovery radius in kilometers derived from DISCOVERY_RADIUS_M (default: 250 km). */
+export const DISCOVERY_MAX_DISTANCE_KM = Math.round(DISCOVERY_RADIUS_M / 1000);
 
 /** Default swipe-feed page size (env override: DISCOVERY_PAGE_SIZE). */
 export const DISCOVERY_PAGE_SIZE = Number(process.env.DISCOVERY_PAGE_SIZE || 20);

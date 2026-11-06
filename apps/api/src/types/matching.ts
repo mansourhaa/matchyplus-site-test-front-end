@@ -31,6 +31,7 @@ export type FeedProfile = {
   activity_sector: string | null;
   service_type: string | null;
   rating: number;
+  reviews?: number | null;
   distance_km: number | null;
   match_score: number;
   match_group: MatchGroup;

@@ -449,4 +449,10 @@ export default async function seedDev() {
   console.log(
     `[seed] matching demo ready — login ${matching.testerEmail} / ${matching.testerPassword} (${matching.profileCount} nearby profiles + 1 match)`,
   );
+  console.log(
+    `[seed] test account A (Software -> Deliveries & Maid): ${matching.softwareServicesTesterEmail} / passer`,
+  );
+  console.log(
+    `[seed] test account B (Client -> IT Services): ${matching.itSeekerTesterEmail} / passer`,
+  );
 }
