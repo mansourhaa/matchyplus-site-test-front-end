@@ -155,3 +155,4 @@ export function searchTaxonomySuggestions(
 
   return results;
 }
+
