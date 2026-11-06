@@ -296,6 +296,7 @@ pipeline {
           pnpm lint
           pnpm turbo run test --filter=@saas-boilerplate/ai-contracts
           pnpm turbo run test --filter=@saas-boilerplate/api --filter=@saas-boilerplate/app --filter=@saas-boilerplate/admin -- --coverage
+          pnpm typecheck
         '''
       }
       post {

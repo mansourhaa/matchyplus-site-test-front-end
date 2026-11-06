@@ -32,6 +32,10 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "eslint.config.*", ".eslintrc*"]
     },
+    "typecheck": {
+      "dependsOn": ["^build", "^db:generate"],
+      "inputs": ["$TURBO_DEFAULT$", "tsconfig*.json"]
+    },
     "format": {
       "cache": false
     },
