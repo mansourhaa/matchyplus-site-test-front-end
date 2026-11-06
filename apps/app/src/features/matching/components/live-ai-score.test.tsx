@@ -26,13 +26,12 @@ const baseProfile: FeedProfile = {
   rating: 4.5,
   liked_me: false,
   compatibility: [
-    { dimension: 'sector', score: 85, weight: 0.3, contribution: 26 },
-    { dimension: 'roles', score: 92, weight: 0.2, contribution: 18 },
-    { dimension: 'goals', score: 70, weight: 0.15, contribution: 11 },
-    { dimension: 'proximity', score: 65, weight: 0.15, contribution: 10 },
-    { dimension: 'availability', score: 80, weight: 0.1, contribution: 8 },
-    { dimension: 'quality', score: 95, weight: 0.05, contribution: 5 },
-    { dimension: 'budget', score: 75, weight: 0.05, contribution: 4 },
+    { dimension: 'skills', score: 85, weight: 0.28, contribution: 24 },
+    { dimension: 'proximity', score: 65, weight: 0.22, contribution: 14 },
+    { dimension: 'goals', score: 70, weight: 0.18, contribution: 13 },
+    { dimension: 'availability', score: 80, weight: 0.12, contribution: 10 },
+    { dimension: 'languages', score: 90, weight: 0.10, contribution: 9 },
+    { dimension: 'quality', score: 95, weight: 0.10, contribution: 10 },
   ],
 };
 
@@ -45,7 +44,7 @@ describe('LiveScorePanel (MATCH-002)', () => {
     window.localStorage.clear();
   });
 
-  it('renders all 7 matching dimensions when details section is expanded', () => {
+  it('renders the 6 user-facing matching dimensions without exposing background params or percentages', () => {
     render(
       <I18nProvider>
         <LiveScorePanel profile={baseProfile} />
@@ -56,23 +55,26 @@ describe('LiveScorePanel (MATCH-002)', () => {
     const detailButton = screen.getByRole('button', { name: /détail|details/i });
     fireEvent.click(detailButton);
 
-    // Verify all 7 criteria are present with their respective percentage weights
-    expect(screen.getByText(/Secteur d'activité \(30%\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Complémentarité des rôles \(20%\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Objectifs communs \(15%\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Proximité géographique \(15%\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Disponibilité \(10%\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Qualité du profil \(5%\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Budget \/ Tarifs \(5%\)/i)).toBeInTheDocument();
+    // Verify the 6 user-facing criteria are present without percentage labels
+    expect(screen.getByText('Compétences & intérêts')).toBeInTheDocument();
+    expect(screen.getByText('Proximité géographique')).toBeInTheDocument();
+    expect(screen.getByText('Alignement des objectifs', { exact: true })).toBeInTheDocument();
+    expect(screen.getByText('Disponibilité partagée')).toBeInTheDocument();
+    expect(screen.getByText('Langues communes')).toBeInTheDocument();
+    expect(screen.getByText('Qualité du profil')).toBeInTheDocument();
 
-    // Verify dimension score values mapped from profile.compatibility
-    expect(screen.getByText('85%')).toBeInTheDocument();
-    expect(screen.getByText('92%')).toBeInTheDocument();
-    expect(screen.getByText('70%')).toBeInTheDocument();
-    expect(screen.getByText('65%')).toBeInTheDocument();
-    expect(screen.getByText('80%')).toBeInTheDocument();
-    expect(screen.getByText('95%')).toBeInTheDocument();
-    expect(screen.getByText('75%')).toBeInTheDocument();
+    // Verify background criteria are NOT exposed in details
+    expect(screen.queryByText(/Secteur d'activité/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Complémentarité des rôles/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Budget \/ Tarifs/i)).not.toBeInTheDocument();
+
+    // Verify raw percentages are removed from the dimension rows
+    expect(screen.queryByText('85%')).not.toBeInTheDocument();
+    expect(screen.queryByText('65%')).not.toBeInTheDocument();
+    expect(screen.queryByText('70%')).not.toBeInTheDocument();
+    expect(screen.queryByText('80%')).not.toBeInTheDocument();
+    expect(screen.queryByText('90%')).not.toBeInTheDocument();
+    expect(screen.queryByText('95%')).not.toBeInTheDocument();
   });
 
   it('safely handles missing GPS coordinates without rendering NaN or broken distances', () => {

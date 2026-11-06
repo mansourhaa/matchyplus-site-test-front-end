@@ -80,4 +80,63 @@ describe('computeMatchScore', () => {
     expect(score.matchGroup).toBe(4);
     expect(score.finalScore).toBeLessThanOrEqual(45);
   });
+
+  it('correctly matches an individual seeking home services with housemaids ahead of unrelated fields', () => {
+    const client = {
+      id: 'client-1',
+      profile_type: 'INDIVIDUAL',
+      activity_sector: 'informatique',
+      job: 'Ingénieur',
+      goals: ['Demander un service'],
+      interests: ['Ménage', 'Service à domicile'],
+    };
+
+    const housemaid = {
+      id: 'maid-1',
+      profile_type: 'PROVIDER',
+      activity_sector: 'Service à domicile',
+      category: 'Ménage',
+      service_type: 'Aide ménagère',
+      job: 'Femme de ménage',
+      goals: ['Proposer mes services'],
+      interests: ['Cuisine'],
+      rating: 4.8,
+      reviews: 15,
+    };
+
+    const dev = {
+      id: 'dev-1',
+      profile_type: 'PROVIDER',
+      activity_sector: 'informatique',
+      category: 'Informatique',
+      service_type: 'Web Developer',
+      job: 'Développeur',
+      goals: ['Proposer mes services'],
+      interests: ['React', 'TypeScript'],
+      rating: 5.0,
+      reviews: 30,
+    };
+
+    const maidScore = computeMatchScore(client, housemaid, 5);
+    const devScore = computeMatchScore(client, dev, 2);
+
+    expect(maidScore.matchGroup).toBe(1);
+    expect(maidScore.confidence).toBe('high');
+    expect(maidScore.finalScore).toBeGreaterThanOrEqual(75);
+
+    expect(devScore.matchGroup).toBe(4);
+    expect(devScore.finalScore).toBeLessThanOrEqual(55);
+    expect(maidScore.finalScore).toBeGreaterThan(devScore.finalScore);
+
+    // Verify 6-dimension breakdown structure
+    expect(maidScore.breakdown).toHaveLength(6);
+    expect(maidScore.breakdown.map((d) => d.dimension)).toEqual([
+      'skills',
+      'proximity',
+      'goals',
+      'availability',
+      'languages',
+      'quality',
+    ]);
+  });
 });

@@ -341,15 +341,14 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
 
     expect(result.profiles).toHaveLength(1);
     const profile = result.profiles[0]!;
-    expect(profile.compatibility).toHaveLength(7);
+    expect(profile.compatibility).toHaveLength(6);
     expect(profile.compatibility.map((d) => d.dimension)).toEqual([
-      'sector',
-      'roles',
-      'goals',
+      'skills',
       'proximity',
+      'goals',
       'availability',
+      'languages',
       'quality',
-      'budget',
     ]);
     expect(profile.match_score).toBeGreaterThanOrEqual(40);
     expect(profile.match_score).toBeLessThanOrEqual(100);

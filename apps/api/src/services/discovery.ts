@@ -534,8 +534,8 @@ function compareFeedProfiles(
     if (pa == null && pb != null) return 1;
     return b.match_score - a.match_score;
   }
-  if (b.match_score !== a.match_score) return b.match_score - a.match_score;
   if (a.match_group !== b.match_group) return a.match_group - b.match_group;
+  if (b.match_score !== a.match_score) return b.match_score - a.match_score;
   return 0;
 }
 

@@ -348,31 +348,13 @@ export function LiveScorePanel({
             >
               {[
                 {
-                  key: 'sector',
-                  label: t('matching.aiScore.dimensions.sector'),
-                  emoji: '🏢',
+                  key: 'skills',
+                  label: t('matching.aiScore.dimensions.skills'),
+                  emoji: '🎯',
                   score:
+                    dims.find((d) => d.dimension?.toLowerCase() === 'skills')?.score ??
                     dims.find((d) => d.dimension?.toLowerCase() === 'sector')?.score ??
-                    (score > 50 ? score - 5 : 40),
-                  color: '#E74C3C',
-                },
-                {
-                  key: 'roles',
-                  label: t('matching.aiScore.dimensions.roles'),
-                  emoji: '🤝',
-                  score:
-                    dims.find((d) => d.dimension?.toLowerCase() === 'roles')?.score ??
-                    (score > 60 ? 70 : 45),
-                  color: '#61BCA6',
-                },
-                {
-                  key: 'goals',
-                  label: t('matching.aiScore.dimensions.goals'),
-                  emoji: '🚀',
-                  score:
-                    dims.find((d) => d.dimension?.toLowerCase() === 'goals')?.score ??
-                    (score > 60 ? score - 10 : 40),
-                  color: '#94A3B8',
+                    50,
                 },
                 {
                   key: 'proximity',
@@ -383,7 +365,13 @@ export function LiveScorePanel({
                     (profile.distance_km != null && Number.isFinite(profile.distance_km)
                       ? Math.max(10, Math.min(100, Math.round(100 - profile.distance_km * 5)))
                       : 50),
-                  color: '#2F76BB',
+                },
+                {
+                  key: 'goals',
+                  label: t('matching.aiScore.dimensions.goals'),
+                  emoji: '🚀',
+                  score:
+                    dims.find((d) => d.dimension?.toLowerCase() === 'goals')?.score ?? 50,
                 },
                 {
                   key: 'availability',
@@ -391,38 +379,36 @@ export function LiveScorePanel({
                   emoji: '⏰',
                   score:
                     dims.find((d) => d.dimension?.toLowerCase() === 'availability')?.score ?? 65,
-                  color: '#F5A623',
+                },
+                {
+                  key: 'languages',
+                  label: t('matching.aiScore.dimensions.languages'),
+                  emoji: '🌐',
+                  score:
+                    dims.find((d) => d.dimension?.toLowerCase() === 'languages')?.score ?? 70,
                 },
                 {
                   key: 'quality',
                   label: t('matching.aiScore.dimensions.quality'),
                   emoji: '⭐',
                   score: dims.find((d) => d.dimension?.toLowerCase() === 'quality')?.score ?? 75,
-                  color: '#EAB308',
                 },
-                {
-                  key: 'budget',
-                  label: t('matching.aiScore.dimensions.budget'),
-                  emoji: '💳',
-                  score: dims.find((d) => d.dimension?.toLowerCase() === 'budget')?.score ?? 60,
-                  color: '#8B5CF6',
-                },
-              ].map((d, i) => (
-                <div key={d.key}>
-                  <div className="mb-1 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs">{d.emoji}</span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>
-                        {d.label}
-                      </span>
+              ].map((d, i) => {
+                const color = scoreTierColor(d.score);
+                return (
+                  <div key={d.key}>
+                    <div className="mb-1 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs">{d.emoji}</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>
+                          {d.label}
+                        </span>
+                      </div>
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: d.color }}>
-                      {Math.round(d.score)}%
-                    </span>
+                    <AnimatedBar score={d.score} color={color} delay={i * 60} />
                   </div>
-                  <AnimatedBar score={d.score} color={d.color} delay={i * 60} />
-                </div>
-              ))}
+                );
+              })}
             </motion.div>
           )}
         </AnimatePresence>
