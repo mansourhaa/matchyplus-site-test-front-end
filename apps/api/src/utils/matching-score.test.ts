@@ -139,4 +139,56 @@ describe('computeMatchScore', () => {
       'quality',
     ]);
   });
+
+  it('matches a software engineer seeking deliveries with delivery drivers ahead of other developers', () => {
+    const engineer: ScoringProfile = {
+      id: 'engineer',
+      profile_type: 'INDIVIDUAL',
+      job: 'Software Engineer',
+      activity_sector: 'tech_digital',
+      category: 'Informatique / Tech',
+      interests: ['deliveries', 'livraison'],
+      goals: ['Demander un service'],
+      languages: ['fr', 'en'],
+    };
+
+    const deliveryDriver: ScoringProfile = {
+      id: 'driver',
+      profile_type: 'PROVIDER',
+      job: 'Livreur Express',
+      service_type: 'Chauffeur / Transport',
+      activity_sector: 'transport_logistics',
+      category: 'Transport & Livraison',
+      interests: ['livraison', 'coursier'],
+      goals: ['Proposer mes services'],
+      languages: ['fr'],
+      rating: 4.9,
+      reviews: 20,
+    };
+
+    const fellowDev: ScoringProfile = {
+      id: 'dev',
+      profile_type: 'INDIVIDUAL',
+      job: 'Web Developer',
+      service_type: 'Informatique / Tech',
+      activity_sector: 'tech_digital',
+      category: 'Informatique / Tech',
+      interests: ['react', 'node', 'ai'],
+      goals: ['Trouver un job'],
+      languages: ['fr', 'en'],
+      rating: 5.0,
+      reviews: 15,
+    };
+
+    const driverScore = computeMatchScore(engineer, deliveryDriver, 3);
+    const devScore = computeMatchScore(engineer, fellowDev, 2);
+
+    expect(driverScore.matchGroup).toBe(1);
+    expect(driverScore.confidence).toBe('high');
+    expect(driverScore.finalScore).toBeGreaterThanOrEqual(80);
+
+    expect(devScore.matchGroup).toBe(4);
+    expect(devScore.finalScore).toBeLessThanOrEqual(50);
+    expect(driverScore.finalScore).toBeGreaterThan(devScore.finalScore);
+  });
 });

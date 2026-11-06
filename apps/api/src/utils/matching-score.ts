@@ -185,7 +185,26 @@ export function extractIntents(profile: ScoringProfile): MatchIntent[] {
   return intents;
 }
 
+import {
+  extractConceptsFromTokens,
+  extractSupplyConcepts,
+  matchDemandWithSupply,
+} from '../taxonomy/index.js';
+
 export function candidateMatchesInterests(cand: ScoringProfile, interests: string[]): boolean {
+  // 1. Fast taxonomy concept match (cross-lingual, dialect-aware)
+  try {
+    const demand = extractConceptsFromTokens(interests);
+    const supply = extractSupplyConcepts(cand);
+    const taxonomyMatch = matchDemandWithSupply(demand, supply);
+    if (taxonomyMatch.matches) {
+      return true;
+    }
+  } catch {
+    // Graceful fallback to heuristic tokens
+  }
+
+  // 2. Fallback heuristic string / token match for custom non-taxonomy terms
   const candTargets = [
     cand.category,
     cand.service_type,
@@ -201,12 +220,25 @@ export function candidateMatchesInterests(cand: ScoringProfile, interests: strin
     if (!target) continue;
 
     for (const candField of candTargets) {
-      if (candField === target || candField.includes(target) || target.includes(candField)) {
+      if (candField === target) {
         return true;
+      }
+      if (candField.length >= 4 && target.length >= 4) {
+        if (candField.includes(target) || target.includes(candField)) {
+          return true;
+        }
       }
       const targetWords = target.split(/[\s/,]+/).filter((w) => w.length >= 3);
       const candWords = candField.split(/[\s/,]+/).filter((w) => w.length >= 3);
-      if (targetWords.some((tw) => candWords.some((cw) => cw.includes(tw) || tw.includes(cw)))) {
+      if (
+        targetWords.some((tw) =>
+          candWords.some(
+            (cw) =>
+              cw === tw ||
+              (cw.length >= 4 && tw.length >= 4 && (cw.includes(tw) || tw.includes(cw))),
+          ),
+        )
+      ) {
         return true;
       }
     }
