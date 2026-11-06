@@ -1,6 +1,10 @@
 import { PrismaClient, Role, SwipeDirection, UserStatus } from '@saas-boilerplate/types';
 
-import { DISCOVERY_PAGE_SIZE, DISCOVERY_RADIUS_M } from '../constants.js';
+import {
+  DISCOVERY_MAX_DISTANCE_KM,
+  DISCOVERY_PAGE_SIZE,
+  DISCOVERY_RADIUS_M,
+} from '../constants.js';
 import { DiscoveryFeedQuery, DiscoverySectorsResponse, FeedProfile } from '../types/matching.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import {
@@ -44,7 +48,7 @@ export class DiscoveryService {
       const maxDistanceKm = asFiniteNumber(query.maxDistanceKm);
       const radiusM =
         maxDistanceKm != null
-          ? Math.min(200, Math.max(1, maxDistanceKm)) * 1000
+          ? Math.min(DISCOVERY_MAX_DISTANCE_KM, Math.max(1, maxDistanceKm)) * 1000
           : DISCOVERY_RADIUS_M;
       const serviceTypes = parseServiceTypes(query.serviceTypes);
       const sectors = [
@@ -197,6 +201,7 @@ export class DiscoveryService {
           contact_modes: candidate.contact_modes,
           verified: candidate.verified,
           rating: candidate.rating,
+          reviews: candidate.reviews,
           distance_km: distKm == null ? null : Math.round(distKm * 10) / 10,
           match_score: score.finalScore,
           match_group: score.matchGroup,
@@ -534,8 +539,8 @@ function compareFeedProfiles(
     if (pa == null && pb != null) return 1;
     return b.match_score - a.match_score;
   }
-  if (b.match_score !== a.match_score) return b.match_score - a.match_score;
   if (a.match_group !== b.match_group) return a.match_group - b.match_group;
+  if (b.match_score !== a.match_score) return b.match_score - a.match_score;
   return 0;
 }
 

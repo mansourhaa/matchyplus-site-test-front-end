@@ -16,13 +16,13 @@ export function Cta() {
 
   return (
     <section
-      className="from-brand-teal relative mt-28 bg-gradient-to-r via-[#3b9bb8] to-[#2d79be] pt-8 pb-16 sm:mt-36 sm:pt-10 sm:pb-20 md:mt-40 md:pt-12 md:pb-24 lg:mt-48 lg:pb-28"
+      className="from-brand-teal relative mt-[clamp(96px,11vw,170px)] bg-gradient-to-r via-[#3b9bb8] to-[#2d79be] pt-8 pb-16 sm:pt-10 sm:pb-20 md:pt-12 md:pb-24 lg:pb-28"
       id="download"
     >
-      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 px-5 md:grid-cols-12 md:gap-8 lg:gap-10">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 px-5 md:grid-cols-2 md:gap-10 lg:gap-14">
         <Parallax
           speed={20}
-          className="relative z-10 -mt-28 flex justify-center sm:-mt-36 md:col-span-5 md:-mt-40 lg:col-span-5 lg:-mt-52"
+          className="relative z-10 -mt-[clamp(96px,11vw,170px)] flex justify-center"
         >
           <div className="relative flex w-full justify-center drop-shadow-2xl">
             <Image
@@ -30,14 +30,15 @@ export function Cta() {
               alt={t('landing.ctaImageAlt')}
               width={641}
               height={794}
-              className="h-auto max-h-[460px] w-full max-w-[340px] object-contain sm:max-w-[400px] md:max-h-[500px] md:max-w-[420px] lg:max-h-[580px] lg:max-w-[500px]"
+              sizes="(max-width: 768px) 280px, 440px"
+              className="h-auto w-full max-w-[clamp(260px,min(32vw,52svh),440px)] object-contain drop-shadow-2xl"
             />
           </div>
         </Parallax>
 
         <Reveal
           direction={isRtl ? 'right' : 'left'}
-          className="text-center text-white md:col-span-7 lg:col-span-7 ltr:md:pl-4 ltr:md:text-left ltr:lg:pl-6 rtl:md:pr-4 rtl:md:text-right rtl:lg:pr-6"
+          className="text-center text-white ltr:md:pl-4 ltr:md:text-left ltr:lg:pl-6 rtl:md:pr-4 rtl:md:text-right rtl:lg:pr-6"
         >
           <h2 className="text-2xl leading-tight font-bold text-balance sm:text-3xl md:text-3xl lg:text-[2.4rem]">
             <span className="block lg:whitespace-nowrap">{t('landing.downloadTitle')}</span>

@@ -80,4 +80,115 @@ describe('computeMatchScore', () => {
     expect(score.matchGroup).toBe(4);
     expect(score.finalScore).toBeLessThanOrEqual(45);
   });
+
+  it('correctly matches an individual seeking home services with housemaids ahead of unrelated fields', () => {
+    const client = {
+      id: 'client-1',
+      profile_type: 'INDIVIDUAL',
+      activity_sector: 'informatique',
+      job: 'Ingénieur',
+      goals: ['Demander un service'],
+      interests: ['Ménage', 'Service à domicile'],
+    };
+
+    const housemaid = {
+      id: 'maid-1',
+      profile_type: 'PROVIDER',
+      activity_sector: 'Service à domicile',
+      category: 'Ménage',
+      service_type: 'Aide ménagère',
+      job: 'Femme de ménage',
+      goals: ['Proposer mes services'],
+      interests: ['Cuisine'],
+      rating: 4.8,
+      reviews: 15,
+    };
+
+    const dev = {
+      id: 'dev-1',
+      profile_type: 'PROVIDER',
+      activity_sector: 'informatique',
+      category: 'Informatique',
+      service_type: 'Web Developer',
+      job: 'Développeur',
+      goals: ['Proposer mes services'],
+      interests: ['React', 'TypeScript'],
+      rating: 5.0,
+      reviews: 30,
+    };
+
+    const maidScore = computeMatchScore(client, housemaid, 5);
+    const devScore = computeMatchScore(client, dev, 2);
+
+    expect(maidScore.matchGroup).toBe(1);
+    expect(maidScore.confidence).toBe('high');
+    expect(maidScore.finalScore).toBeGreaterThanOrEqual(75);
+
+    expect(devScore.matchGroup).toBe(4);
+    expect(devScore.finalScore).toBeLessThanOrEqual(55);
+    expect(maidScore.finalScore).toBeGreaterThan(devScore.finalScore);
+
+    // Verify 6-dimension breakdown structure
+    expect(maidScore.breakdown).toHaveLength(6);
+    expect(maidScore.breakdown.map((d) => d.dimension)).toEqual([
+      'skills',
+      'proximity',
+      'goals',
+      'availability',
+      'languages',
+      'quality',
+    ]);
+  });
+
+  it('matches a software engineer seeking deliveries with delivery drivers ahead of other developers', () => {
+    const engineer: ScoringProfile = {
+      id: 'engineer',
+      profile_type: 'INDIVIDUAL',
+      job: 'Software Engineer',
+      activity_sector: 'tech_digital',
+      category: 'Informatique / Tech',
+      interests: ['deliveries', 'livraison'],
+      goals: ['Demander un service'],
+      languages: ['fr', 'en'],
+    };
+
+    const deliveryDriver: ScoringProfile = {
+      id: 'driver',
+      profile_type: 'PROVIDER',
+      job: 'Livreur Express',
+      service_type: 'Chauffeur / Transport',
+      activity_sector: 'transport_logistics',
+      category: 'Transport & Livraison',
+      interests: ['livraison', 'coursier'],
+      goals: ['Proposer mes services'],
+      languages: ['fr'],
+      rating: 4.9,
+      reviews: 20,
+    };
+
+    const fellowDev: ScoringProfile = {
+      id: 'dev',
+      profile_type: 'INDIVIDUAL',
+      job: 'Web Developer',
+      service_type: 'Informatique / Tech',
+      activity_sector: 'tech_digital',
+      category: 'Informatique / Tech',
+      interests: ['react', 'node', 'ai'],
+      goals: ['Trouver un job'],
+      languages: ['fr', 'en'],
+      rating: 5.0,
+      reviews: 15,
+    };
+
+    const driverScore = computeMatchScore(engineer, deliveryDriver, 3);
+    const devScore = computeMatchScore(engineer, fellowDev, 2);
+
+    expect(driverScore.matchGroup).toBe(1);
+    expect(driverScore.confidence).toBe('high');
+    expect(driverScore.finalScore).toBeGreaterThanOrEqual(80);
+
+    expect(devScore.matchGroup).toBe(4);
+    expect(devScore.finalScore).toBeLessThanOrEqual(50);
+    expect(driverScore.finalScore).toBeGreaterThan(devScore.finalScore);
+  });
 });

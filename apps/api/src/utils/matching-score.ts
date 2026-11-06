@@ -185,23 +185,99 @@ export function extractIntents(profile: ScoringProfile): MatchIntent[] {
   return intents;
 }
 
+import {
+  extractConceptsFromTokens,
+  extractSupplyConcepts,
+  matchDemandWithSupply,
+} from '../taxonomy/index.js';
+
+export function candidateMatchesInterests(cand: ScoringProfile, interests: string[]): boolean {
+  // 1. Fast taxonomy concept match (cross-lingual, dialect-aware)
+  try {
+    const demand = extractConceptsFromTokens(interests);
+    const supply = extractSupplyConcepts(cand);
+    const taxonomyMatch = matchDemandWithSupply(demand, supply);
+    if (taxonomyMatch.matches) {
+      return true;
+    }
+  } catch {
+    // Graceful fallback to heuristic tokens
+  }
+
+  // 2. Fallback heuristic string / token match for custom non-taxonomy terms
+  const candTargets = [
+    cand.category,
+    cand.service_type,
+    cand.job,
+    cand.activity_sector,
+    ...(cand.interests || []),
+  ]
+    .map(norm)
+    .filter(Boolean);
+
+  for (const interest of interests) {
+    const target = norm(interest);
+    if (!target) continue;
+
+    for (const candField of candTargets) {
+      if (candField === target) {
+        return true;
+      }
+      if (candField.length >= 4 && target.length >= 4) {
+        if (candField.includes(target) || target.includes(candField)) {
+          return true;
+        }
+      }
+      const targetWords = target.split(/[\s/,]+/).filter((w) => w.length >= 3);
+      const candWords = candField.split(/[\s/,]+/).filter((w) => w.length >= 3);
+      if (
+        targetWords.some((tw) =>
+          candWords.some(
+            (cw) =>
+              cw === tw ||
+              (cw.length >= 4 && tw.length >= 4 && (cw.includes(tw) || tw.includes(cw))),
+          ),
+        )
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 function interestTokens(profile: ScoringProfile): string[] {
   const fromList = (profile.interests || []).map((s) => norm(s)).filter(Boolean);
-  if (fromList.length) return [...new Set(fromList)];
-  const fallback = [sectorLabel(profile), profile.service_type || '', profile.job || '']
+  const fromJobAndSector = [
+    sectorLabel(profile),
+    profile.category || '',
+    profile.service_type || '',
+    profile.job || '',
+  ]
     .join(' ')
     .toLowerCase()
     .split(/[\s/,]+/)
-    .map((w) => w.trim())
+    .map((w) => norm(w))
     .filter((w) => w.length >= 3);
-  return [...new Set(fallback)];
+  return [...new Set([...fromList, ...fromJobAndSector])];
 }
 
-function sectorsCompatible(meSect: string, candSect: string): boolean {
+function sectorsCompatible(
+  meSect: string,
+  candSect: string,
+  me?: ScoringProfile,
+  cand?: ScoringProfile,
+): boolean {
   const a = norm(meSect);
   const b = norm(candSect);
   if (!a || !b) return true;
-  return a === b || a.includes(b) || b.includes(a);
+  if (a === b || a.includes(b) || b.includes(a)) return true;
+
+  if (me?.interests && cand && candidateMatchesInterests(cand, me.interests)) {
+    return true;
+  }
+
+  return false;
 }
 
 function scoreMutualGoals(
@@ -209,11 +285,13 @@ function scoreMutualGoals(
   candIntents: MatchIntent[],
   meSect: string,
   candSect: string,
+  me?: ScoringProfile,
+  cand?: ScoringProfile,
 ): { pts: number; matchType: MatchType } {
   let strong = false;
   let domain = false;
   let same = false;
-  const compatible = sectorsCompatible(meSect, candSect);
+  const compatible = sectorsCompatible(meSect, candSect, me, cand);
   const sameSect = Boolean(norm(meSect) && norm(candSect) && compatible);
 
   for (const myIntent of myIntents) {
@@ -241,6 +319,20 @@ function scoreMutualGoals(
 
 /** 1. Secteur d'activité & Service (30%): Exact or compatible sector/service alignment */
 export function sectorScore(me: ScoringProfile, cand: ScoringProfile): number {
+  const meType = norm(me.profile_type);
+  const isMeIndividual =
+    meType.includes('individual') || meType.includes('particulier') || meType.includes('candidat');
+  const myIntents = extractIntents(me);
+  const isSeekingService = isMeIndividual || myIntents.includes('need_service');
+
+  // Case 1: When user is an individual / client seeking services and has specified interests
+  if (isSeekingService && me.interests && me.interests.length > 0) {
+    if (candidateMatchesInterests(cand, me.interests)) {
+      return 100;
+    }
+    return 20;
+  }
+
   const meSector = norm(sectorLabel(me));
   const candSector = norm(sectorLabel(cand));
   if (!meSector || !candSector) return 50;
@@ -324,7 +416,7 @@ export function skillsScore(me: ScoringProfile, cand: ScoringProfile): number {
     candTags.some((pt) => pt.includes(ut) || ut.includes(pt)),
   ).length;
 
-  const compatible = sectorsCompatible(sectorLabel(me), sectorLabel(cand));
+  const compatible = sectorsCompatible(sectorLabel(me), sectorLabel(cand), me, cand);
   const sectorBoost = compatible ? 1.15 : 0.85;
 
   return Math.max(
@@ -342,7 +434,7 @@ export function goalsScore(
   const candIntents = extractIntents(cand);
   const meSect = sectorLabel(me);
   const candSect = sectorLabel(cand);
-  const mutual = scoreMutualGoals(myIntents, candIntents, meSect, candSect);
+  const mutual = scoreMutualGoals(myIntents, candIntents, meSect, candSect, me, cand);
   const skills = skillsScore(me, cand);
 
   let baseIntentScore = 50;
@@ -501,8 +593,11 @@ export function computeMatchScore(
   const availability = availabilityScore(me, cand);
   const quality = qualityScore(cand);
   const budget = budgetScore(me, cand);
+  const skills = skillsScore(me, cand);
+  const languages = languageScore(me, cand);
 
-  const dimensions = [
+  // Background dimensions strictly used by the matching engine algorithm
+  const backgroundDimensions = [
     { label: 'sector', score: sector, weight: WEIGHTS.sector },
     { label: 'roles', score: roles, weight: WEIGHTS.roles },
     { label: 'goals', score: goals.score, weight: WEIGHTS.goals },
@@ -512,14 +607,17 @@ export function computeMatchScore(
     { label: 'budget', score: budget, weight: WEIGHTS.budget },
   ];
 
-  const rawWeighted = dimensions.reduce((sum, d) => sum + d.score * d.weight, 0);
+  const rawWeighted = backgroundDimensions.reduce((sum, d) => sum + d.score * d.weight, 0);
 
   // Deterministic seed jitter (±2 pts) to avoid visual ties across re-renders
   const seed = (cand.id.charCodeAt(0) || 0) + (cand.interests?.length || 0);
   const jitter = (seed % 5) - 2;
 
   const reciprocityBoost = options?.likedMe ? RECIPROCITY_BOOST : 0;
-  const clampedBase = Math.min(99, Math.max(30, Math.round(rawWeighted + jitter)));
+  let clampedBase = Math.min(99, Math.max(30, Math.round(rawWeighted + jitter)));
+  if (sector < 30) {
+    clampedBase = Math.min(50, clampedBase);
+  }
   const finalScore = Math.min(100, clampedBase + reciprocityBoost);
 
   let matchType = goals.matchType;
@@ -538,6 +636,17 @@ export function computeMatchScore(
     matchGroup = 4;
   }
 
+  // User-facing 6-dimension breakdown surfaced in the UI.
+  // Sector, roles, and budget stay background-only and are not exposed.
+  const userFacingDimensions: ScoreBreakdown[] = [
+    { dimension: 'skills', score: skills, weight: 0.28, contribution: Math.round(skills * 0.28) },
+    { dimension: 'proximity', score: proximity, weight: 0.22, contribution: Math.round(proximity * 0.22) },
+    { dimension: 'goals', score: goals.score, weight: 0.18, contribution: Math.round(goals.score * 0.18) },
+    { dimension: 'availability', score: availability, weight: 0.12, contribution: Math.round(availability * 0.12) },
+    { dimension: 'languages', score: languages, weight: 0.10, contribution: Math.round(languages * 0.10) },
+    { dimension: 'quality', score: quality, weight: 0.10, contribution: Math.round(quality * 0.10) },
+  ];
+
   return {
     finalScore,
     sortScore: finalScore,
@@ -546,11 +655,6 @@ export function computeMatchScore(
     matchTypeLabel: labelFor(matchType),
     matchGroup,
     reciprocityBoost,
-    breakdown: dimensions.map((d) => ({
-      dimension: d.label,
-      score: d.score,
-      weight: d.weight,
-      contribution: Math.round(d.score * d.weight),
-    })),
+    breakdown: userFacingDimensions,
   };
 }
