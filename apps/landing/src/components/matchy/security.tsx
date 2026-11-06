@@ -10,10 +10,10 @@ export function Security() {
   const isRtl = dir === 'rtl';
 
   return (
-    <section className="relative py-20 sm:py-24 md:py-28 lg:py-32" id="explore">
+    <section className="relative overflow-hidden py-20 sm:py-24 md:py-28 lg:py-32" id="explore">
       {/* Rounded organic card shape behind the image */}
       <div
-        className={`from-brand-blue to-brand-teal pointer-events-none absolute top-1/2 z-0 h-[420px] w-[300px] -translate-y-1/2 rounded-[3.5rem] bg-gradient-to-br opacity-85 sm:h-[480px] sm:w-[380px] sm:rounded-[4.5rem] md:h-[540px] md:w-[420px] md:rounded-[5rem] lg:h-[620px] lg:w-[500px] lg:rounded-[5.5rem] ${
+        className={`from-brand-blue to-brand-teal pointer-events-none absolute top-1/2 z-0 h-[320px] w-[240px] -translate-y-1/2 rounded-[3.5rem] bg-gradient-to-br opacity-85 sm:h-[400px] sm:w-[320px] sm:rounded-[4rem] md:h-[480px] md:w-[380px] md:rounded-[4.5rem] lg:h-[560px] lg:w-[460px] lg:rounded-[5rem] ${
           isRtl ? 'right-0' : 'left-0'
         }`}
         style={{
