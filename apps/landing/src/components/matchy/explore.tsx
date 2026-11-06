@@ -10,23 +10,19 @@ export function Explore() {
   const isRtl = dir === 'rtl';
 
   return (
-    <section className="relative overflow-hidden py-20 sm:py-24 md:py-28 lg:py-32" id="explore-map">
-      {/* Rounded organic card shape on the background (pushed lower on mobile so it sits behind the map, not the text) */}
+    <section className="relative py-20 sm:py-24 md:py-28 lg:py-32" id="explore-map">
+      {/* Rounded organic card shape on the background */}
       <div
-        className={`pointer-events-none absolute bottom-0 z-0 translate-y-28 sm:translate-y-20 md:translate-y-0 ${
+        className={`from-brand-blue to-brand-teal pointer-events-none absolute bottom-0 z-0 h-[420px] w-[300px] rounded-[3.5rem] bg-gradient-to-br opacity-85 sm:h-[480px] sm:w-[380px] sm:rounded-[4.5rem] md:h-[540px] md:w-[420px] md:rounded-[5rem] lg:h-[620px] lg:w-[500px] lg:rounded-[5.5rem] ${
           isRtl ? 'left-0' : 'right-0'
         }`}
+        style={{
+          transform: isRtl
+            ? 'translate(-20%, 15%) rotate(-20deg)'
+            : 'translate(20%, 15%) rotate(20deg)',
+        }}
         aria-hidden="true"
-      >
-        <div
-          className="from-brand-blue to-brand-teal h-[320px] w-[240px] sm:h-[400px] sm:w-[320px] md:h-[480px] md:w-[380px] lg:h-[560px] lg:w-[460px] rounded-[3.5rem] sm:rounded-[4rem] md:rounded-[4.5rem] lg:rounded-[5rem] bg-gradient-to-br opacity-85"
-          style={{
-            transform: isRtl
-              ? 'translate(-20%, 15%) rotate(-20deg)'
-              : 'translate(20%, 15%) rotate(20deg)',
-          }}
-        />
-      </div>
+      />
 
       <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 md:grid-cols-12 md:gap-8 lg:gap-14">
         <Reveal
