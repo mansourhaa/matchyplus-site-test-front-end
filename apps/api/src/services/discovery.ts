@@ -44,7 +44,7 @@ export class DiscoveryService {
       const maxDistanceKm = asFiniteNumber(query.maxDistanceKm);
       const radiusM =
         maxDistanceKm != null
-          ? Math.min(200, Math.max(1, maxDistanceKm)) * 1000
+          ? Math.min(1000, Math.max(1, maxDistanceKm)) * 1000
           : DISCOVERY_RADIUS_M;
       const serviceTypes = parseServiceTypes(query.serviceTypes);
       const sectors = [

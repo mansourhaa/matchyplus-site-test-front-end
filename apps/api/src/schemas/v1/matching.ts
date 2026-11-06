@@ -170,7 +170,7 @@ export const swipeFeedQuerySchema = {
       offset: { type: 'integer', minimum: 0 },
       context: { type: 'string', enum: ['swipe', 'search'] },
       q: { type: 'string', maxLength: 120 },
-      maxDistanceKm: { type: 'number', minimum: 1, maximum: 200 },
+      maxDistanceKm: { type: 'number', minimum: 1, maximum: 1000 },
       serviceTypes: { type: 'string', maxLength: 500 },
       sector: { type: 'string', maxLength: 100 },
       sectors: { type: 'string', maxLength: 500 },
