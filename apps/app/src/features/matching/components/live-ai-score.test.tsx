@@ -44,18 +44,14 @@ describe('LiveScorePanel (MATCH-002)', () => {
     window.localStorage.clear();
   });
 
-  it('renders the 6 user-facing matching dimensions without exposing background params or percentages', () => {
+  it('renders the 6 user-facing matching dimensions with dynamic percentages matching UI mock', () => {
     render(
       <I18nProvider>
         <LiveScorePanel profile={baseProfile} />
       </I18nProvider>,
     );
 
-    // Expand details
-    const detailButton = screen.getByRole('button', { name: /détail|details/i });
-    fireEvent.click(detailButton);
-
-    // Verify the 6 user-facing criteria are present without percentage labels
+    // Verify the 6 user-facing criteria are present
     expect(screen.getByText('Compétences & intérêts')).toBeInTheDocument();
     expect(screen.getByText('Proximité géographique')).toBeInTheDocument();
     expect(screen.getByText('Alignement des objectifs', { exact: true })).toBeInTheDocument();
@@ -68,13 +64,13 @@ describe('LiveScorePanel (MATCH-002)', () => {
     expect(screen.queryByText(/Complémentarité des rôles/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Budget \/ Tarifs/i)).not.toBeInTheDocument();
 
-    // Verify raw percentages are removed from the dimension rows
-    expect(screen.queryByText('85%')).not.toBeInTheDocument();
-    expect(screen.queryByText('65%')).not.toBeInTheDocument();
-    expect(screen.queryByText('70%')).not.toBeInTheDocument();
-    expect(screen.queryByText('80%')).not.toBeInTheDocument();
-    expect(screen.queryByText('90%')).not.toBeInTheDocument();
-    expect(screen.queryByText('95%')).not.toBeInTheDocument();
+    // Verify dynamic percentages are rendered for each dimension
+    expect(screen.getByText('85%')).toBeInTheDocument();
+    expect(screen.getByText('65%')).toBeInTheDocument();
+    expect(screen.getByText('70%')).toBeInTheDocument();
+    expect(screen.getByText('80%')).toBeInTheDocument();
+    expect(screen.getByText('90%')).toBeInTheDocument();
+    expect(screen.getByText('95%')).toBeInTheDocument();
   });
 
   it('safely handles missing GPS coordinates without rendering NaN or broken distances', () => {

@@ -214,71 +214,152 @@ export function LiveScorePanel({
   isComputing?: boolean;
 }) {
   const { t, locale } = useI18n();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const score = Math.round(profile?.match_score ?? 0);
   const totalDisplay = useCountUp(score, 800, 300);
-  const confKey = confidenceKey(profile?.confidence || 'medium');
+  const confKey = confidenceKey(
+    profile?.confidence || (score >= 75 ? 'high' : score >= 50 ? 'medium' : 'low'),
+  );
   const conf = CONFIDENCE_LABELS[confKey];
-  const mainColor = scoreTierColor(score);
   const dims: ScoreBreakdown[] = profile?.compatibility ?? [];
+
+  const skillsScore =
+    dims.find((d) => d.dimension?.toLowerCase() === 'skills')?.score ??
+    dims.find((d) => d.dimension?.toLowerCase() === 'sector')?.score ??
+    (profile?.interests && profile.interests.length > 0 ? 70 : 0);
+
+  const proximityScore =
+    dims.find((d) => d.dimension?.toLowerCase() === 'proximity')?.score ??
+    (profile?.distance_km != null && Number.isFinite(profile.distance_km)
+      ? Math.max(10, Math.min(100, Math.round(100 - profile.distance_km * 6)))
+      : 50);
+
+  const goalsScore =
+    dims.find((d) => d.dimension?.toLowerCase() === 'goals')?.score ??
+    (profile?.goals && profile.goals.length > 0 ? 65 : 38);
+
+  const availabilityScore =
+    dims.find((d) => d.dimension?.toLowerCase() === 'availability')?.score ??
+    (profile?.availability_days && profile.availability_days.length > 0 ? 50 : 30);
+
+  const languagesScore =
+    dims.find((d) => d.dimension?.toLowerCase() === 'languages')?.score ?? 60;
+
+  const qualityScore =
+    dims.find((d) => d.dimension?.toLowerCase() === 'quality')?.score ??
+    (profile?.rating != null ? Math.round(Math.min(100, profile.rating * 16)) : 75);
 
   if (isComputing) {
     return (
-      <div className="animate-pulse space-y-2">
-        <div className="h-8 rounded-xl" style={{ background: '#F0F0F0' }} />
-        <div className="h-4 rounded-lg" style={{ background: '#F5F5F5', width: '80%' }} />
-        <div className="h-4 rounded-lg" style={{ background: '#F5F5F5', width: '60%' }} />
+      <div className="animate-pulse space-y-2 rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+        <div className="h-10 rounded-xl bg-slate-100" />
+        <div className="h-4 w-4/5 rounded-lg bg-slate-100" />
+        <div className="h-4 w-3/5 rounded-lg bg-slate-100" />
       </div>
     );
   }
 
   if (!profile) return null;
 
+  const dimensions = [
+    {
+      key: 'skills',
+      label: t('matching.aiScore.dimensions.skills'),
+      emoji: '🎯',
+      score: skillsScore,
+      barColor: skillsScore > 0 ? '#10B981' : '#E2E8F0',
+      textColor: skillsScore > 0 ? '#10B981' : '#94A3B8',
+    },
+    {
+      key: 'proximity',
+      label: t('matching.aiScore.dimensions.proximity'),
+      emoji: '📍',
+      score: proximityScore,
+      barColor: '#10B981',
+      textColor: '#10B981',
+    },
+    {
+      key: 'goals',
+      label: t('matching.aiScore.dimensions.goals'),
+      emoji: '🚀',
+      score: goalsScore,
+      barColor: goalsScore < 45 ? '#64748B' : '#8B5CF6',
+      textColor: goalsScore < 45 ? '#64748B' : '#8B5CF6',
+    },
+    {
+      key: 'availability',
+      label: t('matching.aiScore.dimensions.availability'),
+      emoji: '⏰',
+      score: availabilityScore,
+      barColor: '#F5A623',
+      textColor: '#F5A623',
+    },
+    {
+      key: 'languages',
+      label: t('matching.aiScore.dimensions.languages'),
+      emoji: '🌐',
+      score: languagesScore,
+      barColor: '#F5A623',
+      textColor: '#0EA5E9',
+    },
+    {
+      key: 'quality',
+      label: t('matching.aiScore.dimensions.quality'),
+      emoji: '⭐',
+      score: qualityScore,
+      barColor: '#2563EB',
+      textColor: '#2563EB',
+    },
+  ];
+
+  const ringRadius = 22;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference * (1 - totalDisplay / 100);
+
   return (
     <motion.div
-      className="overflow-hidden rounded-2xl"
-      style={{ background: 'white', border: `1.5px solid ${mainColor}40` }}
+      className="overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)]"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div
-        className="flex items-center justify-between px-4 py-3"
-        style={{ background: `linear-gradient(135deg, ${mainColor}18, ${mainColor}08)` }}
-      >
-        <div className="flex items-center gap-2.5">
+      {/* Top Header */}
+      <div className="flex items-center justify-between pb-3.5">
+        <div className="flex items-center gap-3">
           <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
-            style={{ background: matchyBrand.gradient135 }}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-xs"
+            style={{ background: 'linear-gradient(135deg, #38B2AC, #0D9488)' }}
           >
-            <Brain size={16} color="white" />
+            <Brain size={22} color="white" />
           </div>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 600, color: '#888', letterSpacing: '0.5px' }}>
+            <p className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
               {locale === 'en'
                 ? 'AI MATCHING SCORE'
                 : locale === 'ar'
                   ? 'نقاط التوافق بالذكاء الاصطناعي'
                   : 'SCORE IA DE MATCHING'}
             </p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: conf.color }}>
+            <p className="text-[15px] font-bold" style={{ color: conf.color }}>
               {locale === 'en' ? conf.en : locale === 'ar' ? conf.ar : conf.fr}
             </p>
           </div>
         </div>
-        <div className="relative h-14 w-14">
-          <svg width="56" height="56" viewBox="0 0 56 56" className="absolute inset-0">
-            <circle cx="28" cy="28" r="24" fill="none" stroke="#F0F0F0" strokeWidth="4" />
+
+        {/* Circular Ring Gauge */}
+        <div className="relative h-13 w-13 shrink-0">
+          <svg width="52" height="52" viewBox="0 0 52 52" className="absolute inset-0">
+            <circle cx="26" cy="26" r={ringRadius} fill="none" stroke="#EDF2F7" strokeWidth="4" />
             <circle
-              cx="28"
-              cy="28"
-              r="24"
+              cx="26"
+              cy="26"
+              r={ringRadius}
               fill="none"
-              stroke={mainColor}
+              stroke="#64748B"
               strokeWidth="4"
               strokeLinecap="round"
-              strokeDasharray={`${2 * Math.PI * 24}`}
-              strokeDashoffset={`${2 * Math.PI * 24 * (1 - totalDisplay / 100)}`}
+              strokeDasharray={ringCircumference}
+              strokeDashoffset={ringOffset}
               style={{
                 transformOrigin: 'center',
                 transform: 'rotate(-90deg)',
@@ -287,128 +368,102 @@ export function LiveScorePanel({
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span style={{ fontSize: 13, fontWeight: 800, color: mainColor }}>{totalDisplay}%</span>
+            <span className="text-[13px] font-extrabold text-slate-600">{totalDisplay}%</span>
           </div>
         </div>
       </div>
 
-      {/* Summary bullet highlights matching screenshot */}
-      <div className="space-y-1.5 border-b px-4 py-2.5" style={{ borderColor: '#F0F4F8' }}>
+      {/* Summary bullet highlights */}
+      <div className="space-y-2 border-t border-slate-100 py-3 text-[12.5px] font-medium text-slate-600">
         {profile.distance_km != null && Number.isFinite(profile.distance_km) && (
-          <div className="flex items-center gap-1.5 text-xs text-[#555]">
-            <MapPin size={13} className="text-[#E74C3C]" />
+          <div className="flex items-center gap-2">
+            <span>📍</span>
             <span>
-              {t('matching.kmAway', { km: profile.distance_km })}
+              {profile.distance_km.toFixed(1)} km{' '}
+              {locale === 'fr' ? 'de vous' : locale === 'ar' ? 'عنك' : 'away'}
               {profile.distance_km <= 5 ? ` — ` : ''}
               {profile.distance_km <= 5 && (
-                <strong className="font-semibold text-[#2F76BB]">
+                <span className="font-semibold text-slate-700">
                   {t('matching.aiScore.veryClose')}
-                </strong>
+                </span>
+              )}
+              {profile.distance_km > 5 && profile.distance_km <= 15 && (
+                <span className="font-semibold text-slate-700">
+                  {t('matching.aiScore.nearby')}
+                </span>
               )}
             </span>
           </div>
         )}
-        <div className="flex items-center gap-1.5 text-xs text-[#555]">
-          <Star size={13} className="fill-[#F5A623] text-[#F5A623]" />
+
+        <div className="flex items-center gap-2">
+          <span>⭐</span>
           <span>
-            {Number.isFinite(profile.rating) ? profile.rating.toFixed(1) : '0.0'}/5
-            {` · `}
-            <span className="font-medium text-[#61BCA6]">{t('matching.available')}</span>
+            {locale === 'fr' ? 'Note ' : locale === 'ar' ? 'التقييم ' : 'Rating '}
+            {Number.isFinite(profile.rating) ? profile.rating.toFixed(1) : '4.5'}/5
+            {profile.reviews != null && profile.reviews > 0 ? (
+              <>
+                {' · '}
+                {profile.reviews} {locale === 'fr' ? 'avis' : locale === 'ar' ? 'تقييم' : 'reviews'}
+              </>
+            ) : null}
+            {' · '}
+            <span className="font-medium text-slate-700">{t('matching.available')}</span>
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-[#555]">
+
+        <div className="flex items-center gap-2">
           <span>🚀</span>
-          <span className="text-[#888]">
-            {score >= 70
+          <span>
+            {goalsScore >= 70
               ? t('matching.aiScore.highGoalAlignment')
-              : t('matching.aiScore.moderateGoalAlignment')}
+              : goalsScore >= 45
+                ? t('matching.aiScore.moderateGoalAlignment')
+                : t('matching.aiScore.lowGoalAlignment')}
           </span>
         </div>
       </div>
 
-      <div className="border-t border-[#F0F4F8]">
+      {/* DETAILS Collapsible Section */}
+      <div className="border-t border-slate-100 pt-1">
         <button
           type="button"
-          className="flex w-full items-center justify-between px-4 py-2.5 transition-colors hover:bg-[#F8FAFC]"
+          className="flex w-full cursor-pointer items-center justify-between py-2.5 transition-colors hover:opacity-80"
           onClick={() => setExpanded(!expanded)}
         >
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: '0.5px' }}>
-            {locale === 'en' ? 'DETAILS' : locale === 'ar' ? 'التفاصيل' : 'DÉTAIL'}
+          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            {locale === 'en' ? 'DETAILS' : locale === 'ar' ? 'التفاصيل' : 'DÉTAILS'}
           </span>
-          {expanded ? <ChevronUp size={14} color="#AAA" /> : <ChevronDown size={14} color="#AAA" />}
+          {expanded ? (
+            <ChevronUp size={15} className="text-slate-400" />
+          ) : (
+            <ChevronDown size={15} className="text-slate-400" />
+          )}
         </button>
+
         <AnimatePresence initial={false}>
           {expanded && (
             <motion.div
-              className="space-y-2.5 overflow-hidden px-4 pt-1 pb-3.5"
+              className="space-y-3 overflow-hidden pt-1 pb-1"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
             >
-              {[
-                {
-                  key: 'skills',
-                  label: t('matching.aiScore.dimensions.skills'),
-                  emoji: '🎯',
-                  score:
-                    dims.find((d) => d.dimension?.toLowerCase() === 'skills')?.score ??
-                    dims.find((d) => d.dimension?.toLowerCase() === 'sector')?.score ??
-                    50,
-                },
-                {
-                  key: 'proximity',
-                  label: t('matching.aiScore.dimensions.proximity'),
-                  emoji: '📍',
-                  score:
-                    dims.find((d) => d.dimension?.toLowerCase() === 'proximity')?.score ??
-                    (profile.distance_km != null && Number.isFinite(profile.distance_km)
-                      ? Math.max(10, Math.min(100, Math.round(100 - profile.distance_km * 5)))
-                      : 50),
-                },
-                {
-                  key: 'goals',
-                  label: t('matching.aiScore.dimensions.goals'),
-                  emoji: '🚀',
-                  score:
-                    dims.find((d) => d.dimension?.toLowerCase() === 'goals')?.score ?? 50,
-                },
-                {
-                  key: 'availability',
-                  label: t('matching.aiScore.dimensions.availability'),
-                  emoji: '⏰',
-                  score:
-                    dims.find((d) => d.dimension?.toLowerCase() === 'availability')?.score ?? 65,
-                },
-                {
-                  key: 'languages',
-                  label: t('matching.aiScore.dimensions.languages'),
-                  emoji: '🌐',
-                  score:
-                    dims.find((d) => d.dimension?.toLowerCase() === 'languages')?.score ?? 70,
-                },
-                {
-                  key: 'quality',
-                  label: t('matching.aiScore.dimensions.quality'),
-                  emoji: '⭐',
-                  score: dims.find((d) => d.dimension?.toLowerCase() === 'quality')?.score ?? 75,
-                },
-              ].map((d, i) => {
-                const color = scoreTierColor(d.score);
-                return (
-                  <div key={d.key}>
-                    <div className="mb-1 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs">{d.emoji}</span>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>
-                          {d.label}
-                        </span>
-                      </div>
+              {dimensions.map((d, i) => (
+                <div key={d.key} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[12px]">
+                    <div className="flex items-center gap-1.5 font-semibold text-slate-700">
+                      <span>{d.emoji}</span>
+                      <span>{d.label}</span>
                     </div>
-                    <AnimatedBar score={d.score} color={color} delay={i * 60} />
+                    <span className="font-bold" style={{ color: d.textColor }}>
+                      {d.score}%
+                    </span>
                   </div>
-                );
-              })}
+                  <AnimatedBar score={d.score} color={d.barColor} delay={i * 60} />
+                </div>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>

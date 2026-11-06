@@ -197,6 +197,7 @@ export class DiscoveryService {
           contact_modes: candidate.contact_modes,
           verified: candidate.verified,
           rating: candidate.rating,
+          reviews: candidate.reviews,
           distance_km: distKm == null ? null : Math.round(distKm * 10) / 10,
           match_score: score.finalScore,
           match_group: score.matchGroup,

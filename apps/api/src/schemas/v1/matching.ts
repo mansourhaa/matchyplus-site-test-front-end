@@ -58,6 +58,7 @@ const matchingProfile = {
     activity_sector: { type: 'string', nullable: true },
     service_type: { type: 'string', nullable: true },
     rating: { type: 'number' },
+    reviews: { type: 'number', nullable: true },
   },
 };
 
@@ -80,6 +81,7 @@ const feedProfile = {
     availability_days: { type: 'array', items: { type: 'string' } },
     contact_modes: { type: 'array', items: { type: 'string' } },
     rating: { type: 'number' },
+    reviews: { type: 'number', nullable: true },
     distance_km: { type: 'number', nullable: true },
     match_score: { type: 'number' },
     match_group: { type: 'integer', minimum: 1, maximum: 4 },
