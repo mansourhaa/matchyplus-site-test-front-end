@@ -301,6 +301,7 @@ export function SearchView() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [detailProfile, setDetailProfile] = useState<FeedProfile | null>(null);
@@ -352,7 +353,10 @@ export function SearchView() {
       const pageOffset = mode === 'append' ? offset : 0;
       const requestId = ++requestIdRef.current;
       if (mode === 'append') setLoadingMore(true);
-      else setLoading(true);
+      else {
+        setLoading(true);
+        setLoadError(false);
+      }
 
       try {
         const response = await api.get<SwipeFeedResponse>('/discovery/swipe-feed', {
@@ -365,9 +369,11 @@ export function SearchView() {
         setHasMore(Boolean(response.data.has_more));
         setOffset(pageOffset + next.length);
         setLoaded(true);
+        setLoadError(false);
       } catch {
         if (requestId === requestIdRef.current) {
           toast.error(t('matching.errors.feed'));
+          if (mode === 'replace') setLoadError(true);
         }
       } finally {
         if (requestId === requestIdRef.current) {
@@ -535,6 +541,22 @@ export function SearchView() {
                   <p className="text-[#888]" style={{ fontSize: 14 }}>
                     {t('matching.loadingFeed')}
                   </p>
+                </div>
+              ) : loadError && profiles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
+                    <Search size={24} />
+                  </div>
+                  <h3 className="text-base font-extrabold text-[#1E293B]">
+                    {t('matching.errors.feed')}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => void loadSearchFeed('replace')}
+                    className="mt-4 rounded-xl bg-[#2F76BB] px-5 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90"
+                  >
+                    {locale === 'ar' ? 'إعادة المحاولة' : locale === 'en' ? 'Retry' : 'Réessayer'}
+                  </button>
                 </div>
               ) : profiles.length === 0 ? (
                 <div className="flex flex-col items-center justify-center px-4 py-20 text-center">

@@ -1,0 +1,91 @@
+field_key,option_code,language_code,option_label,sector_id,match_weight
+usage_mode,SEEK_SERVICE,fr,Je cherche un service,0,1.0
+usage_mode,SEEK_SERVICE,en,I am looking for a service,0,1.0
+usage_mode,SEEK_SERVICE,ar,أبحث عن خدمة,0,1.0
+usage_mode,OFFER_SERVICES,fr,Je propose des services,0,1.0
+usage_mode,OFFER_SERVICES,en,I offer services,0,1.0
+usage_mode,OFFER_SERVICES,ar,أقدّم خدمات,0,1.0
+main_goals,FIND_JOB,fr,Trouver un emploi,0,1.0
+main_goals,FIND_JOB,en,Find a job,0,1.0
+main_goals,FIND_JOB,ar,العثور على وظيفة,0,1.0
+main_goals,HIRE_TALENT,fr,Recruter un collaborateur,0,1.0
+main_goals,HIRE_TALENT,en,Hire talent,0,1.0
+main_goals,HIRE_TALENT,ar,توظيف متعاون,0,1.0
+main_goals,WORK_PROVIDER,fr,Travailler comme prestataire,0,1.0
+main_goals,WORK_PROVIDER,en,Work as a service provider,0,1.0
+main_goals,WORK_PROVIDER,ar,العمل كمقدم خدمة,0,1.0
+main_goals,OFFER_MY_SERVICES,fr,Proposer mes services,0,1.0
+main_goals,OFFER_MY_SERVICES,en,Offer my services,0,1.0
+main_goals,OFFER_MY_SERVICES,ar,تقديم خدماتي,0,1.0
+main_goals,REQUEST_SERVICE,fr,Demander un service,0,1.0
+main_goals,REQUEST_SERVICE,en,Request a service,0,1.0
+main_goals,REQUEST_SERVICE,ar,طلب خدمة,0,1.0
+tasks_services,FIND_PRO,fr,Trouver un professionnel,0,1.0
+tasks_services,FIND_PRO,en,Find a professional,0,1.0
+tasks_services,FIND_PRO,ar,العثور على مهني,0,1.0
+tasks_services,MEET_NEARBY,fr,Rencontrer des personnes à proximité,0,1.0
+tasks_services,MEET_NEARBY,en,Meet people nearby,0,1.0
+tasks_services,MEET_NEARBY,ar,التعرف على أشخاص بالقرب مني,0,1.0
+tasks_services,FIND_TASKS,fr,Trouver des missions,0,1.0
+tasks_services,FIND_TASKS,en,Find projects or tasks,0,1.0
+tasks_services,FIND_TASKS,ar,العثور على مهام,0,1.0
+tasks_services,DISCOVER_OPPORTUNITIES,fr,Découvrir des opportunités,0,1.0
+tasks_services,DISCOVER_OPPORTUNITIES,en,Discover opportunities,0,1.0
+tasks_services,DISCOVER_OPPORTUNITIES,ar,اكتشاف فرص,0,1.0
+tasks_services,HOME_SERVICE,fr,Service à domicile,0,1.0
+tasks_services,HOME_SERVICE,en,Home service,0,1.0
+tasks_services,HOME_SERVICE,ar,خدمة منزلية,0,1.0
+interests_services,BRICOLAGE,fr,Bricolage,10,0.8
+interests_services,BRICOLAGE,en,DIY,10,0.8
+interests_services,BRICOLAGE,ar,أعمال يدوية,10,0.8
+interests_services,CHILDREN,fr,Enfants,0,0.8
+interests_services,CHILDREN,en,Children,0,0.8
+interests_services,CHILDREN,ar,الأطفال,0,0.8
+interests_services,COOKING,fr,Cuisine,10,0.8
+interests_services,COOKING,en,Cooking,10,0.8
+interests_services,COOKING,ar,الطبخ,10,0.8
+interests_services,HOUSEKEEPING,fr,Ménage,10,0.8
+interests_services,HOUSEKEEPING,en,Housekeeping,10,0.8
+interests_services,HOUSEKEEPING,ar,التنظيف المنزلي,10,0.8
+interests_services,GARDENING,fr,Jardinage,10,0.8
+interests_services,GARDENING,en,Gardening,10,0.8
+interests_services,GARDENING,ar,البستنة,10,0.8
+interests_services,COMPUTING,fr,Informatique,3,0.8
+interests_services,COMPUTING,en,Computing,3,0.8
+interests_services,COMPUTING,ar,الإعلامية,3,0.8
+service_type,DRIVER_TRANSPORT,fr,Chauffeur / Transport,9,1.0
+service_type,DRIVER_TRANSPORT,en,Driver / Transport,9,1.0
+service_type,DRIVER_TRANSPORT,ar,سائق / نقل,9,1.0
+service_type,HOME_SERVICE,fr,Service à domicile,10,1.0
+service_type,HOME_SERVICE,en,Home service,10,1.0
+service_type,HOME_SERVICE,ar,خدمة منزلية,10,1.0
+service_type,HOME_HELP,fr,Aide à domicile,10,1.0
+service_type,HOME_HELP,en,Home assistance,10,1.0
+service_type,HOME_HELP,ar,مساعدة منزلية,10,1.0
+service_type,CONSULTING,fr,Services et conseil,2,1.0
+service_type,CONSULTING,en,Services and consulting,2,1.0
+service_type,CONSULTING,ar,خدمات واستشارات,2,1.0
+service_type,RESTAURANT_CATERING,fr,Restaurant / Traiteur,10,1.0
+service_type,RESTAURANT_CATERING,en,Restaurant / Catering,10,1.0
+service_type,RESTAURANT_CATERING,ar,مطاعم / خدمة طعام,10,1.0
+service_type,IT_DIGITAL,fr,Informatique et digital,3,1.0
+service_type,IT_DIGITAL,en,IT and digital,3,1.0
+service_type,IT_DIGITAL,ar,الإعلامية والرقمنة,3,1.0
+service_type,EDUCATION,fr,Éducation et formation,8,1.0
+service_type,EDUCATION,en,Education and training,8,1.0
+service_type,EDUCATION,ar,التعليم والتدريب,8,1.0
+service_type,HEALTH_WELLNESS,fr,Santé et bien-être,7,1.0
+service_type,HEALTH_WELLNESS,en,Health and wellness,7,1.0
+service_type,HEALTH_WELLNESS,ar,الصحة والرفاه,7,1.0
+service_type,RETAIL,fr,Commerce et vente,1,1.0
+service_type,RETAIL,en,Retail and sales,1,1.0
+service_type,RETAIL,ar,التجارة والبيع,1,1.0
+service_type,FINANCE_INSURANCE,fr,Finance et assurance,4,1.0
+service_type,FINANCE_INSURANCE,en,Finance and insurance,4,1.0
+service_type,FINANCE_INSURANCE,ar,التمويل والتأمين,4,1.0
+service_type,INDUSTRY,fr,Industrie et production,5,1.0
+service_type,INDUSTRY,en,Industry and manufacturing,5,1.0
+service_type,INDUSTRY,ar,الصناعة والإنتاج,5,1.0
+service_type,AGRICULTURE_FOOD,fr,Agriculture et agroalimentaire,6,1.0
+service_type,AGRICULTURE_FOOD,en,Agriculture and food processing,6,1.0
+service_type,AGRICULTURE_FOOD,ar,الزراعة والصناعات الغذائية,6,1.0

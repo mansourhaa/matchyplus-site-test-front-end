@@ -174,7 +174,7 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(result.profiles.map((p) => p.id)).toEqual(['shared_fr']);
   });
 
-  it('filters by serviceTypes and default 100km radius', async () => {
+  it('filters by serviceTypes and default 250km radius', async () => {
     const prisma = createMockPrisma([
       candidate('near', {
         service_type: 'Restauration / Service',
@@ -188,12 +188,12 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
       }),
       candidate('far', {
         service_type: 'Restauration / Service',
-        // ~100km south
+        // ~350km south
         location: {
-          latitude: 35.8,
+          latitude: 33.5,
           longitude: 10.18,
           location_enabled: true,
-          city: 'Sousse',
+          city: 'Tataouine',
           country: 'TN',
         },
       }),
@@ -341,15 +341,14 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
 
     expect(result.profiles).toHaveLength(1);
     const profile = result.profiles[0]!;
-    expect(profile.compatibility).toHaveLength(7);
+    expect(profile.compatibility).toHaveLength(6);
     expect(profile.compatibility.map((d) => d.dimension)).toEqual([
-      'sector',
-      'roles',
-      'goals',
+      'skills',
       'proximity',
+      'goals',
       'availability',
+      'languages',
       'quality',
-      'budget',
     ]);
     expect(profile.match_score).toBeGreaterThanOrEqual(40);
     expect(profile.match_score).toBeLessThanOrEqual(100);

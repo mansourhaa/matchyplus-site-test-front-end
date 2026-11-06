@@ -1,0 +1,40 @@
+field_id,step,section,field_key,language_code,field_label,input_type,entry_mode,required,multiple_values,max_items,use_for_ai_matching,notes
+F01,1,profil,first_name,fr,Prénom,text,free_text,True,False,,False,
+F01,1,profil,first_name,en,First name,text,free_text,True,False,,False,
+F01,1,profil,first_name,ar,الاسم,text,free_text,True,False,,False,
+F02,1,profil,last_name,fr,Nom,text,free_text,True,False,,False,
+F02,1,profil,last_name,en,Last name,text,free_text,True,False,,False,
+F02,1,profil,last_name,ar,اللقب,text,free_text,True,False,,False,
+F03,1,profil,profile_photo,fr,Photo de profil,image,upload,False,False,,False,"JPG, PNG ou WebP; 8 Mo max selon écran fourni"
+F03,1,profil,profile_photo,en,Profile photo,image,upload,False,False,,False,"JPG, PNG ou WebP; 8 Mo max selon écran fourni"
+F03,1,profil,profile_photo,ar,الصورة الشخصية,image,upload,False,False,,False,"JPG, PNG ou WebP; 8 Mo max selon écran fourni"
+F04,1,activité,main_job_service,fr,Métier ou service principal,autocomplete_text,free_text+suggestions,True,False,,True,Champ prioritaire pour la classification métier et secteur
+F04,1,activité,main_job_service,en,Main job or service,autocomplete_text,free_text+suggestions,True,False,,True,Champ prioritaire pour la classification métier et secteur
+F04,1,activité,main_job_service,ar,مهنتك أو خدمتك الرئيسية,autocomplete_text,free_text+suggestions,True,False,,True,Champ prioritaire pour la classification métier et secteur
+F05,1,activité,sector,fr,Secteur,select,controlled_list,True,False,,True,10 secteurs Matchy Plus
+F05,1,activité,sector,en,Sector,select,controlled_list,True,False,,True,10 secteurs Matchy Plus
+F05,1,activité,sector,ar,القطاع,select,controlled_list,True,False,,True,10 secteurs Matchy Plus
+F06,1,profil,about,fr,À propos,textarea,free_text,False,False,,True,"Description libre utilisée pour extraction de métiers, services, compétences et intérêts"
+F06,1,profil,about,en,About you,textarea,free_text,False,False,,True,"Description libre utilisée pour extraction de métiers, services, compétences et intérêts"
+F06,1,profil,about,ar,عنك,textarea,free_text,False,False,,True,"Description libre utilisée pour extraction de métiers, services, compétences et intérêts"
+F07,1,profil,video_presentation,fr,Présentation vidéo,video,record_or_upload,False,False,,True,20 secondes maximum selon écran fourni; transcription à indexer
+F07,1,profil,video_presentation,en,Video presentation,video,record_or_upload,False,False,,True,20 secondes maximum selon écran fourni; transcription à indexer
+F07,1,profil,video_presentation,ar,قدّم نفسك عبر فيديو,video,record_or_upload,False,False,,True,20 secondes maximum selon écran fourni; transcription à indexer
+F08,1,usage,usage_mode,fr,Utilisation de Matchy Plus,single_choice,controlled_list,True,False,,True,Chercher un service ou proposer des services
+F08,1,usage,usage_mode,en,How will you use Matchy Plus?,single_choice,controlled_list,True,False,,True,Chercher un service ou proposer des services
+F08,1,usage,usage_mode,ar,كيف ترغب في استخدام Matchy+؟,single_choice,controlled_list,True,False,,True,Chercher un service ou proposer des services
+F09,2,objectifs,main_goals,fr,Objectifs principaux,multi_choice,controlled_list,False,True,,True,Plusieurs réponses possibles
+F09,2,objectifs,main_goals,en,Main goals,multi_choice,controlled_list,False,True,,True,Plusieurs réponses possibles
+F09,2,objectifs,main_goals,ar,ما هدفك الرئيسي؟,multi_choice,controlled_list,False,True,,True,Plusieurs réponses possibles
+F10,2,objectifs,tasks_services,fr,Services et missions,multi_choice,controlled_list,False,True,,True,Plusieurs réponses possibles
+F10,2,objectifs,tasks_services,en,Services and tasks,multi_choice,controlled_list,False,True,,True,Plusieurs réponses possibles
+F10,2,objectifs,tasks_services,ar,خدمات ومهام,multi_choice,controlled_list,False,True,,True,Plusieurs réponses possibles
+F11,2,intérêts,interests_services,fr,Centres d’intérêt ou services,tag_input,free_text+suggestions,False,True,5,True,Maximum 5 valeurs selon écran fourni
+F11,2,intérêts,interests_services,en,Interests or services,tag_input,free_text+suggestions,False,True,5,True,Maximum 5 valeurs selon écran fourni
+F11,2,intérêts,interests_services,ar,الاهتمامات أو الخدمات,tag_input,free_text+suggestions,False,True,5,True,Maximum 5 valeurs selon écran fourni
+F12,2,offre,offers_service,fr,Proposer un service,toggle,boolean,False,False,,True,
+F12,2,offre,offers_service,en,Offer a service,toggle,boolean,False,False,,True,
+F12,2,offre,offers_service,ar,تقديم خدمة؟,toggle,boolean,False,False,,True,
+F13,2,offre,service_type,fr,Type de service,select,controlled_list,False,False,,True,Affiché lorsque offers_service=true
+F13,2,offre,service_type,en,Service type,select,controlled_list,False,False,,True,Affiché lorsque offers_service=true
+F13,2,offre,service_type,ar,نوع الخدمة,select,controlled_list,False,False,,True,Affiché lorsque offers_service=true
