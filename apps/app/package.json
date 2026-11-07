@@ -27,7 +27,6 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@reduxjs/toolkit": "^2.12.0",
-    "@saas-boilerplate/types": "workspace:*",
     "@saas-boilerplate/ui": "workspace:*",
     "axios": "^1.18.1",
     "date-fns": "^4.4.0",
