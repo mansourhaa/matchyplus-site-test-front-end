@@ -7,20 +7,48 @@ export type SwipeQuota = {
   resets_at: 'midnight_utc';
 };
 
-import type {
-  ScoreBreakdown,
-  MatchingProfile,
-  FeedProfile,
-  MatchConfidence,
-  MatchGroup,
-} from '@saas-boilerplate/types';
+export type ScoreBreakdown = {
+  dimension: string;
+  score: number;
+  weight: number;
+  contribution: number;
+};
 
-export type {
-  ScoreBreakdown,
-  MatchingProfile,
-  FeedProfile,
-  MatchConfidence,
-  MatchGroup,
+export type MatchGroup = 1 | 2 | 3 | 4;
+export type MatchConfidence = 'high' | 'medium' | 'low';
+
+export type MatchingProfile = {
+  id: string;
+  name: string;
+  image: string | null;
+  video?: string | null;
+  bio: string | null;
+  job: string | null;
+  category: string | null;
+  city: string | null;
+  interests: string[];
+  activity_sector: string | null;
+  service_type: string | null;
+  price?: string | null;
+  availability_days?: string[];
+  contact_modes?: string[];
+  verified?: boolean;
+  rating: number;
+  reviews?: number | null;
+};
+
+export type FeedProfile = MatchingProfile & {
+  goals: string[];
+  distance_km: number | null;
+  match_score: number;
+  match_group: number;
+  match_type_label: string;
+  confidence: string;
+  compatibility: ScoreBreakdown[];
+  liked_me: boolean;
+  reviews?: number | null;
+  /** Server-set for search freemium; locked rows have redacted PII. */
+  is_locked?: boolean;
 };
 
 export type MatchRow = {
