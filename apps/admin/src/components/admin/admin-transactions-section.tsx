@@ -37,12 +37,14 @@ export function AdminTransactionsSection({
   title,
   transactions,
   limit,
+  isLive = false,
   onSeeAll,
 }: {
   title: string;
   transactions: AdminTransaction[];
   /** Preview mode (dashboard card) when set; the full list (subscriptions page) otherwise. */
   limit?: number;
+  isLive?: boolean;
   onSeeAll?: () => void;
 }) {
   const visible = limit ? transactions.slice(0, limit) : transactions;
@@ -52,7 +54,7 @@ export function AdminTransactionsSection({
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <p style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A2E' }}>{title}</p>
-          <LiveBadge />
+          {isLive && transactions.length > 0 && <LiveBadge />}
         </div>
         {onSeeAll && (
           <button

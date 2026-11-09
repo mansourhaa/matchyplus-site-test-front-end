@@ -199,6 +199,7 @@ export function AdminPanel() {
   };
 
   const handleSavePlan = async (id: AdminPlan['id'], changes: AdminPlanUpdate) => {
+    if (admin?.role && admin.role !== 'SUPER_ADMIN') return false;
     const result = await dispatch(updateAdminPlan({ id, changes }));
     if (!updateAdminPlan.fulfilled.match(result)) return false;
 
@@ -545,6 +546,7 @@ export function AdminPanel() {
               saving={savingPlan}
               savedAt={savedAt}
               onSave={handleSavePlan}
+              canManagePlans={!admin?.role || admin.role === 'SUPER_ADMIN'}
             />
           )}
 
