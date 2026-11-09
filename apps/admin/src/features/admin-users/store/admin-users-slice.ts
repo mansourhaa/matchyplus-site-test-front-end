@@ -28,32 +28,53 @@ const initialState: AdminUsersState = {
   },
 };
 
-export const fetchAdminStats = createAsyncThunk('adminUsers/fetchStats', async () => {
-  const response = await adminApi.get('/admin/stats');
-  return response.data.stats as AdminStats;
-});
+export const fetchAdminStats = createAsyncThunk(
+  'adminUsers/fetchStats',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await adminApi.get('/admin/stats');
+      return response.data.stats as AdminStats;
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, 'Impossible de charger les statistiques.'),
+      );
+    }
+  },
+);
 
 export const fetchAdminUsers = createAsyncThunk(
   'adminUsers/fetchUsers',
-  async (filters: AdminUserFilters) => {
-    const response = await adminApi.get('/admin/users', {
-      params: {
-        limit: 200,
-        search: filters.search || undefined,
-        status: filters.status !== 'all' ? filters.status : undefined,
-        plan: filters.plan !== 'all' ? filters.plan : undefined,
-        category: filters.category !== 'all' ? filters.category : undefined,
-      },
-    });
-    return response.data as { users: AdminManagedUser[]; total: number };
+  async (filters: AdminUserFilters, { rejectWithValue }) => {
+    try {
+      const response = await adminApi.get('/admin/users', {
+        params: {
+          limit: 200,
+          search: filters.search || undefined,
+          status: filters.status !== 'all' ? filters.status : undefined,
+          plan: filters.plan !== 'all' ? filters.plan : undefined,
+          category: filters.category !== 'all' ? filters.category : undefined,
+        },
+      });
+      return response.data as { users: AdminManagedUser[]; total: number };
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, 'Impossible de charger les utilisateurs.'),
+      );
+    }
   },
 );
 
 export const fetchAdminUserById = createAsyncThunk(
   'adminUsers/fetchUserById',
-  async (id: string) => {
-    const response = await adminApi.get(`/admin/users/${id}`);
-    return response.data.user as AdminManagedUser;
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await adminApi.get(`/admin/users/${id}`);
+      return response.data.user as AdminManagedUser;
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, "Impossible de charger les détails de l'utilisateur."),
+      );
+    }
   },
 );
 
@@ -155,7 +176,10 @@ const adminUsersSlice = createSlice({
       })
       .addCase(fetchAdminUsers.rejected, (state, action) => {
         state.loadingUsers = false;
-        state.error = action.error.message ?? 'Impossible de charger les utilisateurs';
+        state.error =
+          (action.payload as string | undefined) ??
+          action.error.message ??
+          'Impossible de charger les utilisateurs';
       })
       .addCase(fetchAdminUserById.fulfilled, (state, action) => {
         state.selectedUser = action.payload;

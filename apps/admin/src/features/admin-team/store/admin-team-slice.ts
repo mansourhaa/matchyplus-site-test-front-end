@@ -23,11 +23,17 @@ const initialState: AdminTeamState = {
 
 export const fetchAdminTeam = createAsyncThunk(
   'adminTeam/fetchTeam',
-  async (filters: AdminTeamFilters) => {
-    const response = await adminApi.get('/admin/team', {
-      params: { limit: 200, search: filters.search || undefined },
-    });
-    return response.data as { team: AdminTeamMember[]; total: number };
+  async (filters: AdminTeamFilters, { rejectWithValue }) => {
+    try {
+      const response = await adminApi.get('/admin/team', {
+        params: { limit: 200, search: filters.search || undefined },
+      });
+      return response.data as { team: AdminTeamMember[]; total: number };
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, "Impossible de charger l'équipe."),
+      );
+    }
   },
 );
 
@@ -102,7 +108,10 @@ const adminTeamSlice = createSlice({
       })
       .addCase(fetchAdminTeam.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? "Impossible de charger l'équipe";
+        state.error =
+          (action.payload as string | undefined) ??
+          action.error.message ??
+          "Impossible de charger l'équipe.";
       })
       .addCase(createAdminTeamMember.pending, (state) => {
         state.creating = true;
