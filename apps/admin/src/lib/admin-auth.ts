@@ -95,6 +95,11 @@ export function refreshAdminSessionMarker(maxAgeSeconds = ADMIN_SESSION_MAX_AGE_
 export function clearAdminSession() {
   if (typeof window === 'undefined') return;
   sessionStorage.removeItem(ADMIN_AUTH_USER_KEY);
+  try {
+    localStorage.removeItem('persist:root');
+  } catch {
+    // Ignore environments where localStorage is restricted
+  }
   clearSessionMarker();
   void api.post('/auth/admin/logout', null, { withCredentials: true }).catch(() => {});
 }

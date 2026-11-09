@@ -41,7 +41,9 @@ export function AdminSettingsSection({
       setSaved(true);
       setCurrentPassword('');
       setNewPassword('');
-      setTimeout(() => setSaved(false), 2500);
+      setTimeout(() => {
+        onLogout();
+      }, 1500);
     }
   };
 
@@ -142,7 +144,7 @@ export function AdminSettingsSection({
             {saved ? (
               <>
                 <Check size={16} />
-                Sauvegardé !
+                Sauvegardé ! Reconnexion...
               </>
             ) : (
               <>

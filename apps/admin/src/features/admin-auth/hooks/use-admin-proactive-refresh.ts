@@ -2,7 +2,11 @@
 
 import { useAppSelector } from '@/features/auth/hooks';
 import { refreshAdminSession } from '@/lib/admin-api';
-import { hasAdminSessionMarker, refreshAdminSessionMarker } from '@/lib/admin-auth';
+import {
+  clearAdminSession,
+  hasAdminSessionMarker,
+  refreshAdminSessionMarker,
+} from '@/lib/admin-auth';
 import { useEffect, useRef } from 'react';
 
 import { selectAdminAuth } from '../store/admin-auth-slice';
@@ -35,8 +39,7 @@ export function useAdminProactiveRefresh() {
         await refreshAdminSession();
         lastRefreshRef.current = Date.now();
       } catch {
-        // Ignored: adminApi's interceptor already handles the redirect-to-login if the
-        // refresh token is genuinely gone/expired.
+        clearAdminSession();
       }
     };
 
