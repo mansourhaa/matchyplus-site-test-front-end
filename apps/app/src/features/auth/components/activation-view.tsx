@@ -52,7 +52,7 @@ export function ActivationView() {
       const timer = window.setTimeout(() => {
         if (!isMounted) return;
         setPreviewError(
-          'Aucun jeton d’activation trouvé. Veuillez vérifier le lien reçu par SMS ou WhatsApp.',
+          'Aucun jeton d’activation trouvé. Veuillez vérifier le lien reçu par SMS.',
         );
         setLoadingPreview(false);
       }, 0);

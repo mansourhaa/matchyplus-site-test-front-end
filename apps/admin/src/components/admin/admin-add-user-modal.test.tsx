@@ -133,6 +133,14 @@ describe('AdminAddUserModal', () => {
     expect(
       screen.getByDisplayValue('http://localhost:3000/activer?token=test-tok'),
     ).toBeInTheDocument();
+    expect(screen.getByText("Message SMS d'invitation")).toBeInTheDocument();
+    expect(screen.queryByText(/whatsapp/i)).not.toBeInTheDocument();
+
+    const smsLink = screen.getByRole('link', { name: /envoyer par sms/i });
+    expect(smsLink).toHaveAttribute(
+      'href',
+      expect.stringContaining('sms:20123456?body='),
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Terminer' }));
     expect(onClose).toHaveBeenCalledTimes(1);

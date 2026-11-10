@@ -15,7 +15,12 @@ export function computeActivationExpiry(ttlMs: number = ACTIVATION_TOKEN_TTL_MS)
 }
 
 export function getFrontendBaseUrl(): string {
-  const candidates = [process.env.APP_URL, process.env.FRONTEND_URL, process.env.PUBLIC_APP_URL];
+  const candidates = [
+    process.env.APP_URL,
+    process.env.FRONTEND_URL,
+    process.env.PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+  ];
   for (const candidate of candidates) {
     const value = String(candidate || '')
       .trim()

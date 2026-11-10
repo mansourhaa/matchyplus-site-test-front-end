@@ -925,12 +925,17 @@ export function AdminUserDetail({
                 </div>
 
                 {(() => {
+                  const appBaseUrl = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/+$/, '');
+                  const rawActivationLink = activationResult.activationLink || '';
+                  const activationLink = rawActivationLink.startsWith('/')
+                    ? `${appBaseUrl || 'http://localhost:3000'}${rawActivationLink}`
+                    : rawActivationLink;
                   const cleanPhone = (user.phone ?? '').replace(/\D/g, '');
-                  const shareMsg = `Bonjour ${user.name}, votre profil ${user.job ? `(${user.job}) ` : ''}sur Matchy+ a été préparé ! Activez votre compte et définissez votre mot de passe ici : ${activationResult.activationLink}`;
+                  const shareMsg = `Bonjour ${user.name}, votre profil ${user.job ? `(${user.job}) ` : ''}sur Matchy+ a été préparé ! Activez votre compte et définissez votre mot de passe ici : ${activationLink}`;
                   return (
                     <div className="flex flex-col gap-1">
                       <label style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>
-                        Message WhatsApp / SMS
+                        Message SMS d&apos;invitation
                       </label>
                       <textarea
                         readOnly
@@ -950,18 +955,16 @@ export function AdminUserDetail({
                           className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
                         >
                           {copiedMessage ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
-                          {copiedMessage ? 'Message copié !' : 'Copier le message'}
+                          {copiedMessage ? 'Message copié !' : 'Copier le message SMS'}
                         </button>
                         {cleanPhone && (
                           <a
-                            href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(shareMsg)}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition"
-                            style={{ background: '#25D366' }}
+                            href={`sms:${cleanPhone}?body=${encodeURIComponent(shareMsg)}`}
+                            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+                            style={{ background: '#2F76BB' }}
                           >
                             <MessageSquare size={12} />
-                            Envoyer sur WhatsApp
+                            Envoyer par SMS
                             <ExternalLink size={10} />
                           </a>
                         )}
