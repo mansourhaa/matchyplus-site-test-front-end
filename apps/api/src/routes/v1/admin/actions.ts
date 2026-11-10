@@ -72,7 +72,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
   fastify.post<{ Body: AdminCreateUserPayload }>(
     '/users',
-    { schema: adminCreateUserSchema },
+    { schema: adminCreateUserSchema, bodyLimit: 15 * 1024 * 1024 },
     async (request, reply) => {
       try {
         const user = await adminService.createUser(request.body);
@@ -181,7 +181,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
 
   fastify.put<{ Params: UserParams; Body: AdminUpdateUserPayload }>(
     '/users/:id',
-    { schema: adminUpdateUserSchema },
+    { schema: adminUpdateUserSchema, bodyLimit: 15 * 1024 * 1024 },
     async (request, reply) => {
       const user = await adminService.updateUser(
         { id: request.loggedUser.id, role: request.loggedUser.role },

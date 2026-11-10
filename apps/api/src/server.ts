@@ -10,6 +10,7 @@ export async function createServerApp(opts: FastifyServerOptions = {}) {
   const trustProxyFromEnv = trustProxyEnv === 'true' || trustProxyEnv === '1';
 
   const app = fastify({
+    bodyLimit: opts.bodyLimit ?? 15 * 1024 * 1024,
     logger: opts.logger ?? (isDevelopment ? false : true),
     pluginTimeout: opts.pluginTimeout ?? 20000,
     ajv: opts.ajv ?? {
