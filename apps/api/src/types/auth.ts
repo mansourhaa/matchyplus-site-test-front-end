@@ -125,3 +125,22 @@ export type DeleteAccountPayload = {
 export type DeleteAccountResult = {
   message: string;
 };
+
+export type ActivationPreviewQuery = {
+  token: string;
+};
+
+export type ActivationPreviewResult = {
+  id: string;
+  name: string;
+  phone: string;
+  job: string | null;
+  city: string | null;
+  category: string | null;
+  profileType: string | null;
+};
+
+export type ActivationConfirmPayload = {
+  token: string;
+  password: string;
+};

@@ -18,6 +18,7 @@ import {
   adminListReportsSchema,
   adminListTeamSchema,
   adminListUsersSchema,
+  adminRegenerateActivationSchema,
   adminReportSummarySchema,
   adminStatsSchema,
   adminUpdatePlanSchema,
@@ -36,6 +37,7 @@ import {
   AdminUpdatePlanPayload,
   AdminUpdateUserPayload,
   AdminUpdateUserStatusPayload,
+  AdminUserIdParam,
 } from '../../../types/admin.js';
 import { AdminListReportsQuery, AdminUpdateReportPayload } from '../../../types/report.js';
 import {
@@ -72,8 +74,32 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     '/users',
     { schema: adminCreateUserSchema },
     async (request, reply) => {
-      const user = await adminService.createUser(request.body);
-      return reply.code(200).send({ user });
+      try {
+        const user = await adminService.createUser(request.body);
+        return reply.code(200).send({
+          user,
+          activationToken: user.activationToken,
+          activationLink: user.activationLink,
+        });
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
+
+  fastify.post<{ Params: AdminUserIdParam }>(
+    '/users/:id/regenerate-activation',
+    { schema: adminRegenerateActivationSchema },
+    async (request, reply) => {
+      try {
+        const result = await adminService.regenerateActivationToken(
+          { id: request.loggedUser.id, role: request.loggedUser.role },
+          request.params.id,
+        );
+        return reply.code(200).send(result);
+      } catch (err) {
+        throw err;
+      }
     },
   );
 

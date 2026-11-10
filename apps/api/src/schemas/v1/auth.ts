@@ -493,3 +493,53 @@ export const oauthExchangeSchema = {
     ...errorResponses,
   },
 };
+
+export const activationPreviewSchema = {
+  tags: ['auth'],
+  summary: 'Preview user info before password setup',
+  querystring: {
+    type: 'object',
+    required: ['token'],
+    additionalProperties: false,
+    properties: {
+      token: { type: 'string', minLength: 1 },
+    },
+  },
+  response: {
+    200: {
+      description: 'Activation preview profile data',
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        phone: { type: 'string' },
+        job: { type: 'string', nullable: true },
+        city: { type: 'string', nullable: true },
+        category: { type: 'string', nullable: true },
+        profileType: { type: 'string', nullable: true },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const activationConfirmSchema = {
+  tags: ['auth'],
+  summary: 'Confirm activation and set initial password',
+  body: {
+    type: 'object',
+    required: ['token', 'password'],
+    additionalProperties: false,
+    properties: {
+      token: { type: 'string', minLength: 1 },
+      password: { type: 'string', format: 'password', minLength: 8, maxLength: 128 },
+    },
+  },
+  response: {
+    200: {
+      description: 'Successful activation response',
+      ...userOnlyResponseSchema,
+    },
+    ...errorResponses,
+  },
+};

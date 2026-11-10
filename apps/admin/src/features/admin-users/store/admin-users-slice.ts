@@ -4,7 +4,9 @@ import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import type {
   AdminCreateUserInput,
+  AdminCreateUserResult,
   AdminManagedUser,
+  AdminRegenerateActivationResult,
   AdminStats,
   AdminUserFilters,
   AdminUserUpdate,
@@ -82,10 +84,26 @@ export const createAdminUser = createAsyncThunk(
   'adminUsers/createUser',
   async (input: AdminCreateUserInput, { rejectWithValue }) => {
     try {
-      const response = await adminApi.post('/admin/users', input);
-      return response.data.user as AdminManagedUser;
+      const response = await adminApi.post<AdminCreateUserResult>('/admin/users', input);
+      return response.data;
     } catch (error) {
       return rejectWithValue(extractAdminErrorMessage(error, "Impossible de créer l'utilisateur."));
+    }
+  },
+);
+
+export const regenerateAdminUserActivation = createAsyncThunk(
+  'adminUsers/regenerateActivation',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const response = await adminApi.post<AdminRegenerateActivationResult>(
+        `/admin/users/${userId}/regenerate-activation`,
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        extractAdminErrorMessage(error, "Impossible de régénérer le lien d'activation."),
+      );
     }
   },
 );
@@ -191,7 +209,7 @@ const adminUsersSlice = createSlice({
       .addCase(createAdminUser.fulfilled, (state, action) => {
         state.creatingUser = false;
         state.error = null;
-        state.users = [action.payload, ...state.users];
+        state.users = [action.payload.user, ...state.users];
         state.total += 1;
       })
       .addCase(createAdminUser.rejected, (state, action) => {

@@ -10,7 +10,11 @@ import {
   STATUS_COLOR,
   STATUS_LABEL,
 } from '@/features/admin-users/labels';
-import type { AdminManagedUser, AdminUserUpdate } from '@/features/admin-users/types';
+import type {
+  AdminManagedUser,
+  AdminRegenerateActivationResult,
+  AdminUserUpdate,
+} from '@/features/admin-users/types';
 import { useAdminUserPhoto } from '@/hooks/use-admin-user-photo';
 import { useAdminUserVideo } from '@/hooks/use-admin-user-video';
 import {
@@ -18,15 +22,21 @@ import {
   AlertTriangle,
   Award,
   Ban,
+  Check,
   CheckCircle,
   ChevronLeft,
   Clock,
+  Copy,
   CreditCard,
   Crown,
   Edit2,
+  ExternalLink,
   Filter,
+  KeyRound,
+  Link2,
   Mail,
   MapPin,
+  MessageSquare,
   Phone,
   PlayCircle,
   Save,
@@ -69,20 +79,40 @@ export function AdminUserDetail({
   onSave,
   onChangeStatus,
   onDelete,
+  onRegenerateActivation,
 }: {
   user: AdminManagedUser;
   onClose: () => void;
   onSave: (changes: AdminUserUpdate) => void;
   onChangeStatus: (status: AdminManagedUser['status']) => void;
   onDelete: () => void;
+  onRegenerateActivation?: () => Promise<AdminRegenerateActivationResult>;
 }) {
   const [activeTab, setActiveTab] = useState<DetailTab>('profile');
   const [editMode, setEditMode] = useState(false);
   const [edited, setEdited] = useState<AdminManagedUser>(user);
   const [showBanConfirm, setShowBanConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [activationResult, setActivationResult] =
+    useState<AdminRegenerateActivationResult | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedMessage, setCopiedMessage] = useState(false);
   const photoUrl = useAdminUserPhoto(user.id, user.image);
   const videoUrl = useAdminUserVideo(user.id, user.video);
+
+  const handleRegenerateActivation = async () => {
+    if (!onRegenerateActivation) return;
+    setIsRegenerating(true);
+    try {
+      const result = await onRegenerateActivation();
+      setActivationResult(result);
+    } catch {
+      // handled in parent/slice
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
 
   useEffect(() => {
     if (!editMode) {
@@ -165,6 +195,37 @@ export function AdminUserDetail({
                 {STATUS_LABEL[user.status]}
               </span>
             </div>
+            {user.must_change_password && (
+              <>
+                <div
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
+                  style={{
+                    background: '#FEF3C7',
+                    border: '1px solid #FCD34D',
+                    color: '#D97706',
+                  }}
+                >
+                  <KeyRound size={12} />
+                  <span style={{ fontSize: '12px', fontWeight: 700 }}>Activation en attente</span>
+                </div>
+                <button
+                  type="button"
+                  disabled={isRegenerating}
+                  onClick={handleRegenerateActivation}
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 transition disabled:opacity-50"
+                  style={{
+                    background: '#EFF6FF',
+                    border: '1px solid #BFDBFE',
+                    color: '#2F76BB',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                  }}
+                >
+                  <Link2 size={13} />
+                  {isRegenerating ? 'Génération...' : "Lien d'activation"}
+                </button>
+              </>
+            )}
             <button
               type="button"
               onClick={() => (editMode ? handleCancelEdit() : setEditMode(true))}
@@ -797,6 +858,133 @@ export function AdminUserDetail({
               >
                 Supprimer
               </button>
+            </div>
+          </div>
+        )}
+
+        {activationResult && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+          >
+            <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-100 p-4">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-lg"
+                    style={{ background: '#E8F7F3', color: '#61BCA6' }}
+                  >
+                    <Check size={16} strokeWidth={2.5} />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-800">Lien d&apos;activation régénéré</h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivationResult(null);
+                    setCopiedLink(false);
+                    setCopiedMessage(false);
+                  }}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3 p-5">
+                <p className="text-xs text-slate-600">
+                  Transmettez ce nouveau lien sécurisé à <strong>{user.name}</strong> ({user.phone}).
+                  Il lui permettra de choisir son mot de passe et d&apos;activer son compte.
+                </p>
+
+                <div className="flex flex-col gap-1">
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>
+                    Lien direct
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={activationResult.activationLink}
+                      className="flex-1 rounded-xl px-3 py-2 text-xs font-mono select-all outline-none"
+                      style={{ background: '#F5F7FA', border: '1.5px solid #D0E4F7', color: '#1A1A2E' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(activationResult.activationLink);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                      className="flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-bold text-white"
+                      style={{ background: copiedLink ? '#61BCA6' : '#2F76BB' }}
+                    >
+                      {copiedLink ? <Check size={13} /> : <Copy size={13} />}
+                      {copiedLink ? 'Copié !' : 'Copier'}
+                    </button>
+                  </div>
+                </div>
+
+                {(() => {
+                  const cleanPhone = (user.phone ?? '').replace(/\D/g, '');
+                  const shareMsg = `Bonjour ${user.name}, votre profil ${user.job ? `(${user.job}) ` : ''}sur Matchy+ a été préparé ! Activez votre compte et définissez votre mot de passe ici : ${activationResult.activationLink}`;
+                  return (
+                    <div className="flex flex-col gap-1">
+                      <label style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>
+                        Message WhatsApp / SMS
+                      </label>
+                      <textarea
+                        readOnly
+                        rows={3}
+                        value={shareMsg}
+                        className="w-full rounded-xl p-3 text-xs outline-none select-all resize-none"
+                        style={{ background: '#F5F7FA', border: '1.5px solid #D0E4F7', color: '#1A1A2E' }}
+                      />
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(shareMsg);
+                            setCopiedMessage(true);
+                            setTimeout(() => setCopiedMessage(false), 2000);
+                          }}
+                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                        >
+                          {copiedMessage ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                          {copiedMessage ? 'Message copié !' : 'Copier le message'}
+                        </button>
+                        {cleanPhone && (
+                          <a
+                            href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(shareMsg)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition"
+                            style={{ background: '#25D366' }}
+                          >
+                            <MessageSquare size={12} />
+                            Envoyer sur WhatsApp
+                            <ExternalLink size={10} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div className="flex justify-end border-t border-slate-100 p-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivationResult(null);
+                    setCopiedLink(false);
+                    setCopiedMessage(false);
+                  }}
+                  className="rounded-xl px-4 py-2 text-xs font-bold text-white"
+                  style={{ background: '#2F76BB' }}
+                >
+                  Fermer
+                </button>
+              </div>
             </div>
           </div>
         )}

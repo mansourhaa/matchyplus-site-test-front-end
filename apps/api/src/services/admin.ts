@@ -10,8 +10,10 @@ import {
   AdminChangePasswordPayload,
   AdminCreateTeamMemberPayload,
   AdminCreateUserPayload,
+  AdminCreateUserResult,
   AdminListTeamQuery,
   AdminListUsersQuery,
+  AdminRegenerateActivationResult,
   AdminUpdatePlanPayload,
   AdminUpdateUserPayload,
   AdminUserStatsResult,
@@ -19,6 +21,12 @@ import {
   adminUserSelect,
 } from '../types/admin.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import {
+  buildActivationLink,
+  computeActivationExpiry,
+  generateActivationToken,
+  hashActivationToken,
+} from '../utils/activation-token.js';
 import { badRequest, forbidden, insufficientPrivileges, notFound } from '../utils/http-errors.js';
 import { filenameFromStoredPath, isStoredMediaPath } from '../utils/media-storage.js';
 import { isPasswordPolicySatisfied } from '../utils/password-policy.js';
@@ -299,7 +307,7 @@ export class AdminService {
    * Creates a member account in one shot — same end state as a real phone signup that
    * finished onboarding, minus the OTP step (the admin vouches for the phone instead)..
    */
-  async createUser(payload: AdminCreateUserPayload) {
+  async createUser(payload: AdminCreateUserPayload): Promise<AdminCreateUserResult> {
     const phone = normalizePhoneForAuth(payload.phone);
     if (!phone) {
       throw badRequest('invalid phone number', 'invalid_phone');
@@ -316,8 +324,23 @@ export class AdminService {
       }
     }
 
-    if (!isPasswordPolicySatisfied(payload.password)) {
-      throw badRequest('password does not meet the security policy', 'weak_password');
+    const hasPassword = Boolean(payload.password?.trim());
+    let hashedPassword: string | null = null;
+    let activationToken: string | undefined;
+    let activationLink: string | undefined;
+    let activationTokenHash: string | null = null;
+    let activationTokenExpiresAt: Date | null = null;
+
+    if (hasPassword) {
+      if (!isPasswordPolicySatisfied(payload.password!)) {
+        throw badRequest('password does not meet the security policy', 'weak_password');
+      }
+      hashedPassword = await bcrypt.hash(payload.password!, await bcrypt.genSalt(10));
+    } else {
+      activationToken = generateActivationToken();
+      activationTokenHash = hashActivationToken(activationToken);
+      activationTokenExpiresAt = computeActivationExpiry();
+      activationLink = buildActivationLink(activationToken);
     }
 
     const name = payload.name.trim();
@@ -350,14 +373,15 @@ export class AdminService {
       throw badRequest('image must be a newly uploaded photo, not a stored path', 'invalid_image');
     }
 
-    const hashedPassword = await bcrypt.hash(payload.password, await bcrypt.genSalt(10));
-
     const user = await this.prisma.user.create({
       data: {
         name,
         phone,
         email: payload.email?.toLowerCase(),
         password: hashedPassword,
+        must_change_password: !hasPassword,
+        activation_token_hash: activationTokenHash,
+        activation_token_expires_at: activationTokenExpiresAt,
         auth_provider: 'phone',
         phone_verified: true,
         plan: payload.plan ?? UserPlan.FREE,
@@ -388,7 +412,61 @@ export class AdminService {
       select: adminUserSelect,
     });
 
-    return normalizeAdminUser(user);
+    const normalized = normalizeAdminUser(user);
+    if (!hasPassword) {
+      return Object.assign(normalized, {
+        activationToken,
+        activationLink,
+      });
+    }
+
+    return normalized;
+  }
+
+  /**
+   * Generates a fresh activation token and link for a pre-registered lead who has not yet
+   * activated their account, or whose initial activation link expired.
+   */
+  async regenerateActivationToken(
+    actor: AdminActor,
+    id: string,
+  ): Promise<AdminRegenerateActivationResult> {
+    try {
+      await this.assertCanManage(actor, id);
+
+      const target = await this.prisma.user.findUnique({
+        where: { id },
+        select: { id: true, status: true },
+      });
+      if (!target) {
+        throw notFound('user not found');
+      }
+      if (target.status === UserStatus.BANNED) {
+        throw badRequest('cannot regenerate activation for a banned user', 'user_banned');
+      }
+
+      const activationToken = generateActivationToken();
+      const activationTokenHash = hashActivationToken(activationToken);
+      const expiresAt = computeActivationExpiry();
+      const activationLink = buildActivationLink(activationToken);
+
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          must_change_password: true,
+          activation_token_hash: activationTokenHash,
+          activation_token_expires_at: expiresAt,
+        },
+      });
+
+      return {
+        activationToken,
+        activationLink,
+        expiresAt: expiresAt.toISOString(),
+      };
+    } catch (err) {
+      throw err;
+    }
   }
 
   /** Same hierarchy as the writes: an admin only opens a profile they could act on. */

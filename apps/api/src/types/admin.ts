@@ -40,6 +40,7 @@ export const adminUserSelect = {
   missions: true,
   total_earnings: true,
   last_login: true,
+  must_change_password: true,
   create_at: true,
 } satisfies Prisma.UserSelect;
 
@@ -106,10 +107,25 @@ export type AdminCreateTeamMemberPayload = {
 export type AdminCreateUserPayload = Omit<UpdateOnboardingProfileBody, 'name' | 'profileType'> & {
   name: string;
   phone: string;
-  password: string;
+  password?: string;
   email?: string;
   profileType: 'INDIVIDUAL' | 'PROVIDER';
   plan?: UserPlan;
+};
+
+export type AdminCreateUserResult = AdminUser & {
+  activationToken?: string;
+  activationLink?: string;
+};
+
+export type AdminUserIdParam = {
+  id: string;
+};
+
+export type AdminRegenerateActivationResult = {
+  activationToken: string;
+  activationLink: string;
+  expiresAt: string;
 };
 
 export type AdminUpdateUserPayload = {

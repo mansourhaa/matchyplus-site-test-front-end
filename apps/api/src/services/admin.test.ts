@@ -580,6 +580,25 @@ describe('AdminService createUser', () => {
     });
   });
 
+  it('allows creating a user without a password, generating an activation token and link', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'u-lead' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    const payload = validPayload({ password: '' });
+    const result = await service.createUser(payload);
+
+    const data = prisma.user.create.mock.calls[0][0].data;
+    expect(data.password).toBeNull();
+    expect(data.must_change_password).toBe(true);
+    expect(data.activation_token_hash).toBeDefined();
+    expect(data.activation_token_expires_at).toBeInstanceOf(Date);
+    expect(result.id).toBe('u-lead');
+    expect(result.activationToken).toBeDefined();
+    expect(result.activationLink).toContain('/activer?token=');
+  });
+
   it('rejects an image that is already a stored media path', async () => {
     const prisma = createMockPrisma();
     prisma.user.findUnique.mockResolvedValue(null);
@@ -591,6 +610,51 @@ describe('AdminService createUser', () => {
       ),
     ).rejects.toMatchObject({
       message: 'image must be a newly uploaded photo, not a stored path',
+      statusCode: 400,
+    });
+  });
+});
+
+describe('AdminService regenerateActivationToken', () => {
+  it('regenerates an activation link and token for an existing member', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'u1', role: 'USER' }) // for assertCanManage target
+      .mockResolvedValueOnce({ id: 'u1', status: 'ACTIVE' }); // for target lookup
+    prisma.user.update.mockResolvedValue({ id: 'u1' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    const result = await service.regenerateActivationToken(actor, 'u1');
+
+    expect(result.activationToken).toBeDefined();
+    expect(result.activationLink).toContain('/activer?token=');
+    expect(result.expiresAt).toBeDefined();
+
+    expect(prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'u1' },
+        data: expect.objectContaining({
+          must_change_password: true,
+          activation_token_hash: expect.any(String),
+          activation_token_expires_at: expect.any(Date),
+        }),
+      }),
+    );
+  });
+
+  it('refuses to regenerate activation for a banned user', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'u1', role: 'USER' })
+      .mockResolvedValueOnce({ id: 'u1', status: 'BANNED' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    await expect(service.regenerateActivationToken(actor, 'u1')).rejects.toMatchObject({
+      message: 'cannot regenerate activation for a banned user',
       statusCode: 400,
     });
   });

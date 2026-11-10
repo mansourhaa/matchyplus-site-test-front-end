@@ -19,11 +19,25 @@ import {
 import { createAdminUser, selectAdminUsers } from '@/features/admin-users/store/admin-users-slice';
 import type {
   AdminCreateUserInput,
+  AdminCreateUserResult,
   AdminEducationEntry,
   AdminExperienceEntry,
+  AdminManagedUser,
 } from '@/features/admin-users/types';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { Camera, Check, Plus, Trash2, User, X } from 'lucide-react';
+import {
+  Camera,
+  Check,
+  Copy,
+  ExternalLink,
+  KeyRound,
+  Link2,
+  MessageSquare,
+  Plus,
+  Trash2,
+  User,
+  X,
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 
 const inputStyle: React.CSSProperties = {
@@ -155,6 +169,10 @@ export function AdminAddUserModal({
   const { creatingUser } = useAppSelector(selectAdminUsers);
 
   const [form, setForm] = useState(initialForm);
+  const [authMode, setAuthMode] = useState<'activation_link' | 'manual_password'>('activation_link');
+  const [createdResult, setCreatedResult] = useState<AdminCreateUserResult | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedMessage, setCopiedMessage] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [interestInput, setInterestInput] = useState('');
   const [experiences, setExperiences] = useState<AdminExperienceEntry[]>([]);
@@ -169,6 +187,10 @@ export function AdminAddUserModal({
 
   const resetAndClose = () => {
     setForm(initialForm);
+    setAuthMode('activation_link');
+    setCreatedResult(null);
+    setCopiedLink(false);
+    setCopiedMessage(false);
     setImage(null);
     setInterestInput('');
     setExperiences([]);
@@ -208,8 +230,12 @@ export function AdminAddUserModal({
   const handleSubmit = async () => {
     setFormError(null);
 
-    if (!form.name.trim() || !form.phone.trim() || !form.password) {
-      setFormError('Le nom, le téléphone et le mot de passe sont obligatoires.');
+    if (!form.name.trim() || !form.phone.trim()) {
+      setFormError('Le nom et le téléphone sont obligatoires.');
+      return;
+    }
+    if (authMode === 'manual_password' && !form.password) {
+      setFormError('Le mot de passe est obligatoire en mode manuel.');
       return;
     }
     if (form.profileType === 'INDIVIDUAL' && !form.job.trim()) {
@@ -233,7 +259,7 @@ export function AdminAddUserModal({
     const input: AdminCreateUserInput = {
       name: form.name.trim(),
       phone: form.phone.trim(),
-      password: form.password,
+      password: authMode === 'manual_password' ? form.password : undefined,
       email: form.email.trim() || undefined,
       plan: form.plan,
       profileType: form.profileType,
@@ -259,12 +285,153 @@ export function AdminAddUserModal({
 
     const result = await dispatch(createAdminUser(input));
     if (createAdminUser.fulfilled.match(result)) {
-      onCreated?.();
-      resetAndClose();
+      if (result.payload.activationLink) {
+        setCreatedResult(result.payload);
+      } else {
+        onCreated?.();
+        resetAndClose();
+      }
     } else {
       setFormError((result.payload as string | undefined) ?? "Impossible de créer l'utilisateur.");
     }
   };
+
+  if (createdResult) {
+    const rawPhone = createdResult.user.phone || form.phone;
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const activationLink = createdResult.activationLink ?? '';
+    const shareMessage = `Bonjour ${createdResult.user.name}, votre profil ${createdResult.user.job ? `(${createdResult.user.job}) ` : ''}sur Matchy+ a été préparé ! Activez votre compte et définissez votre mot de passe ici : ${activationLink}`;
+
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+      >
+        <div
+          className="animate-in fade-in zoom-in flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl duration-200"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 p-5">
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-xl"
+                style={{ background: '#E8F7F3', color: '#61BCA6' }}
+              >
+                <Check size={20} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-800">Utilisateur pré-enregistré !</h3>
+                <p className="text-xs text-slate-500">Le compte a été créé avec succès.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onCreated?.();
+                resetAndClose();
+              }}
+              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              aria-label="Fermer"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="flex flex-col gap-4 overflow-y-auto p-6">
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+              <p className="text-sm font-semibold text-emerald-800">
+                Profil de {createdResult.user.name} ({createdResult.user.phone})
+              </p>
+              <p className="mt-1 text-xs text-emerald-700">
+                L&apos;utilisateur n&apos;a pas encore de mot de passe. Transmettez-lui ce lien pour qu&apos;il active son profil et se connecte.
+              </p>
+            </div>
+
+            {/* Direct Activation Link */}
+            <div className="flex flex-col gap-1.5">
+              <label style={labelStyle}>Lien d&apos;activation</label>
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={activationLink}
+                  className="flex-1 rounded-xl px-3 py-2 text-xs font-mono select-all outline-none"
+                  style={inputStyle}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(activationLink);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2000);
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-white transition"
+                  style={{ background: copiedLink ? '#61BCA6' : '#2F76BB' }}
+                >
+                  {copiedLink ? <Check size={14} /> : <Copy size={14} />}
+                  {copiedLink ? 'Copié !' : 'Copier'}
+                </button>
+              </div>
+            </div>
+
+            {/* Prepared Message for WhatsApp / SMS */}
+            <div className="flex flex-col gap-1.5">
+              <label style={labelStyle}>Message d&apos;invitation (WhatsApp / SMS)</label>
+              <textarea
+                readOnly
+                rows={3}
+                value={shareMessage}
+                className="w-full rounded-xl p-3 text-xs outline-none select-all resize-none"
+                style={inputStyle}
+              />
+              <div className="mt-1 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(shareMessage);
+                    setCopiedMessage(true);
+                    setTimeout(() => setCopiedMessage(false), 2000);
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  {copiedMessage ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                  {copiedMessage ? 'Message copié !' : 'Copier le message'}
+                </button>
+                {cleanPhone && (
+                  <a
+                    href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(shareMessage)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition"
+                    style={{ background: '#25D366' }}
+                  >
+                    <MessageSquare size={13} />
+                    Envoyer sur WhatsApp
+                    <ExternalLink size={11} />
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end border-t border-slate-100 p-4">
+            <button
+              type="button"
+              onClick={() => {
+                onCreated?.();
+                resetAndClose();
+              }}
+              className="rounded-xl px-5 py-2 text-xs font-bold text-white transition"
+              style={{ background: '#2F76BB' }}
+            >
+              Terminer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -370,16 +537,54 @@ export function AdminAddUserModal({
                 placeholder="20 123 456"
               />
             </Field>
-            <Field label="Mot de passe" htmlFor="new-user-password">
-              <input
-                id="new-user-password"
-                type="password"
-                value={form.password}
-                onChange={(event) => set('password', event.target.value)}
-                className="rounded-xl px-3 py-2 outline-none"
-                style={inputStyle}
-              />
-            </Field>
+            <div className="flex flex-col gap-2">
+              <label style={labelStyle}>Mode d&apos;accès & Mot de passe</label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAuthMode('activation_link')}
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition"
+                  style={{
+                    background: authMode === 'activation_link' ? '#2F76BB' : 'white',
+                    color: authMode === 'activation_link' ? 'white' : '#555',
+                    border: authMode === 'activation_link' ? 'none' : '1px solid #E0E0E0',
+                  }}
+                >
+                  <Link2 size={13} />
+                  Lien d&apos;activation (recommandé)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMode('manual_password')}
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition"
+                  style={{
+                    background: authMode === 'manual_password' ? '#2F76BB' : 'white',
+                    color: authMode === 'manual_password' ? 'white' : '#555',
+                    border: authMode === 'manual_password' ? 'none' : '1px solid #E0E0E0',
+                  }}
+                >
+                  <KeyRound size={13} />
+                  Mot de passe manuel
+                </button>
+              </div>
+              {authMode === 'activation_link' ? (
+                <p className="text-xs text-slate-500">
+                  Un lien sécurisé sera généré. Le contact pourra créer son propre mot de passe à la première connexion.
+                </p>
+              ) : (
+                <Field label="Mot de passe temporaire" htmlFor="new-user-password">
+                  <input
+                    id="new-user-password"
+                    type="password"
+                    value={form.password}
+                    onChange={(event) => set('password', event.target.value)}
+                    className="rounded-xl px-3 py-2 outline-none"
+                    style={inputStyle}
+                    placeholder="Au moins 8 caractères"
+                  />
+                </Field>
+              )}
+            </div>
             <Field label="Email (optionnel)" htmlFor="new-user-email">
               <input
                 id="new-user-email"

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { hashPassword } from '../lib/password.js';
 import { hashVerificationCode } from '../lib/verification-code.js';
+import { hashActivationToken } from '../utils/activation-token.js';
 import { PhoneAuthenticationService } from './phone-authentication.js';
 import { TokenService } from './token.js';
 
@@ -217,6 +218,22 @@ describe('PhoneAuthenticationService', () => {
       await expect(
         service.loginWithPhone({ phone: '+33612345678', password: 'password123' }),
       ).rejects.toThrow('oauth_only_account');
+    });
+
+    it('rejects an unactivated cold-contact account with a distinct account_activation_required error', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-cold',
+        phone: '+33612345678',
+        password: null,
+        must_change_password: true,
+        phone_verified: true,
+        status: 'ACTIVE',
+      });
+
+      await expect(
+        service.loginWithPhone({ phone: '+33612345678', password: 'Password123!' }),
+      ).rejects.toThrow('account_activation_required');
     });
   });
 
@@ -615,6 +632,139 @@ describe('PhoneAuthenticationService', () => {
       ).rejects.toThrow('invalid_otp');
       expect(prisma.otpChallenge.updateMany).not.toHaveBeenCalled();
       expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getActivationPreview', () => {
+    it('returns preview profile data for an unactivated account', async () => {
+      const { service, prisma } = createService();
+      const rawToken = 'test-token-1234567890';
+      const tokenHash = hashActivationToken(rawToken);
+
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-lead',
+        name: 'Sarra Ben Ali',
+        phone: '+21620123456',
+        job: 'Architecte',
+        city: 'Tunis',
+        category: 'Ingénierie',
+        profile_type: 'INDIVIDUAL',
+        must_change_password: true,
+        activation_token_expires_at: new Date(Date.now() + 86400000),
+        status: 'ACTIVE',
+      });
+
+      const result = await service.getActivationPreview(rawToken);
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { activation_token_hash: tokenHash },
+        select: expect.any(Object),
+      });
+      expect(result).toEqual({
+        id: 'user-lead',
+        name: 'Sarra Ben Ali',
+        phone: '+21620123456',
+        job: 'Architecte',
+        city: 'Tunis',
+        category: 'Ingénierie',
+        profileType: 'INDIVIDUAL',
+      });
+    });
+
+    it('rejects an expired activation token', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-lead',
+        must_change_password: true,
+        activation_token_expires_at: new Date(Date.now() - 1000),
+      });
+
+      await expect(service.getActivationPreview('expired-token')).rejects.toThrow(
+        'invalid_activation_token',
+      );
+    });
+
+    it('rejects when activation is already complete', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-lead',
+        must_change_password: false,
+        activation_token_expires_at: new Date(Date.now() + 86400000),
+      });
+
+      await expect(service.getActivationPreview('already-activated')).rejects.toThrow(
+        'invalid_activation_token',
+      );
+    });
+  });
+
+  describe('confirmActivation', () => {
+    it('sets password, completes activation, and returns session tokens', async () => {
+      const { service, prisma } = createService();
+      const rawToken = 'test-token-1234567890';
+      const tokenHash = hashActivationToken(rawToken);
+
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-lead',
+        name: 'Sarra Ben Ali',
+        phone: '+21620123456',
+        must_change_password: true,
+        activation_token_expires_at: new Date(Date.now() + 86400000),
+        status: 'ACTIVE',
+      });
+
+      prisma.user.update.mockResolvedValue({
+        id: 'user-lead',
+        name: 'Sarra Ben Ali',
+        phone: '+21620123456',
+        email: null,
+        auth_provider: 'phone',
+        email_verified: false,
+        phone_verified: true,
+        status: 'ACTIVE',
+        role: 'USER',
+        plan: 'FREE',
+        onboarding_completed_at: new Date(),
+      });
+
+      const issueTokenSpy = vi
+        .spyOn(TokenService.prototype, 'issueTokenPair')
+        .mockResolvedValue({ accessToken: 'access-123', refreshToken: 'refresh-123' });
+
+      const result = await service.confirmActivation({
+        token: rawToken,
+        password: 'ValidPassword123!',
+      });
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { activation_token_hash: tokenHash },
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-lead' },
+        data: expect.objectContaining({
+          password: expect.any(String),
+          must_change_password: false,
+          activation_token_hash: null,
+          activation_token_expires_at: null,
+          phone_verified: true,
+        }),
+      });
+      expect(result.accessToken).toBe('access-123');
+      expect(result.refreshToken).toBe('refresh-123');
+      expect(result.user.id).toBe('user-lead');
+
+      issueTokenSpy.mockRestore();
+    });
+
+    it('rejects weak password before touching database', async () => {
+      const { service } = createService();
+
+      await expect(
+        service.confirmActivation({
+          token: 'some-token',
+          password: 'short',
+        }),
+      ).rejects.toThrow('weak_password');
     });
   });
 });

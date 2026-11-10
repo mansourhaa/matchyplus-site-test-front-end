@@ -48,6 +48,7 @@ import {
   fetchAdminStats,
   fetchAdminUserById,
   fetchAdminUsers,
+  regenerateAdminUserActivation,
   selectAdminUsers,
   selectUser,
   setFilters,
@@ -230,6 +231,11 @@ export function AdminPanel() {
     if (!selectedUser) return;
     await dispatch(updateAdminUserStatus({ id: selectedUser.id, status }));
     void dispatch(fetchAdminStats());
+  };
+
+  const handleRegenerateActivation = async () => {
+    if (!selectedUser) throw new Error('no_selected_user');
+    return dispatch(regenerateAdminUserActivation(selectedUser.id)).unwrap();
   };
 
   const handleDelete = async (id: string) => {
@@ -574,6 +580,7 @@ export function AdminPanel() {
               onSave={handleSave}
               onChangeStatus={handleChangeStatus}
               onDelete={() => handleDelete(selectedUser.id)}
+              onRegenerateActivation={handleRegenerateActivation}
             />
           )}
         </div>
