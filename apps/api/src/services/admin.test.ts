@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AdminService } from './admin.js';
+import { AdminService, normalizeAdminUser } from './admin.js';
 
 function createMockPrisma() {
   return {
@@ -1039,5 +1039,66 @@ describe('AdminService password change', () => {
     expect(stored).not.toBe('newpass2026');
     const bcrypt = await import('bcryptjs');
     await expect(bcrypt.compare('newpass2026', stored)).resolves.toBe(true);
+  });
+
+  describe('normalizeAdminUser', () => {
+    it('falls back to sector, industry label, or activity sector when category is empty', () => {
+      expect(
+        normalizeAdminUser({
+          id: 'u1',
+          category: null,
+          sector: 'Développement Web',
+        }),
+      ).toMatchObject({
+        category: 'Développement Web',
+      });
+
+      expect(
+        normalizeAdminUser({
+          id: 'u2',
+          category: null,
+          sector: null,
+          industry: 'tech_digital',
+        }),
+      ).toMatchObject({
+        category: 'Technologie & Digital',
+      });
+
+      expect(
+        normalizeAdminUser({
+          id: 'u3',
+          category: null,
+          sector: null,
+          industry: null,
+          activity_sector: 'Artisanat',
+        }),
+      ).toMatchObject({
+        category: 'Artisanat',
+      });
+    });
+
+    it('falls back to looking_for when bio is empty', () => {
+      expect(
+        normalizeAdminUser({
+          id: 'u1',
+          bio: null,
+          looking_for: 'Cherche partenaires SaaS',
+        }),
+      ).toMatchObject({
+        bio: 'Cherche partenaires SaaS',
+      });
+    });
+
+    it('falls back to service_type when job is empty', () => {
+      expect(
+        normalizeAdminUser({
+          id: 'u1',
+          job: null,
+          service_type: 'Plombier',
+        }),
+      ).toMatchObject({
+        job: 'Plombier',
+      });
+    });
   });
 });

@@ -122,4 +122,30 @@ describe('AdminUserDetail', () => {
     Reflect.deleteProperty(URL, 'createObjectURL');
     Reflect.deleteProperty(URL, 'revokeObjectURL');
   });
+
+  it('shows free account message instead of mock billing entries for a free user', () => {
+    renderDetail(buildUser({ plan: 'FREE' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Abonnement' }));
+
+    expect(screen.getByText('Compte Gratuit')).toBeInTheDocument();
+    expect(
+      screen.getByText("Cet utilisateur n'a souscrit à aucun forfait payant."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Abonnement Premium — Avril 2026')).not.toBeInTheDocument();
+  });
+
+  it('displays user bio and category correctly on the profile tab', () => {
+    renderDetail(
+      buildUser({
+        category: 'Technologie & Digital',
+        bio: 'Développeur passionné par TypeScript et Fastify.',
+      }),
+    );
+
+    expect(screen.getByText('Technologie & Digital')).toBeInTheDocument();
+    expect(
+      screen.getByText('Développeur passionné par TypeScript et Fastify.'),
+    ).toBeInTheDocument();
+  });
 });

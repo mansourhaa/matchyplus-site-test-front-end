@@ -37,7 +37,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type DetailTab = 'profile' | 'activity' | 'subscription' | 'video';
 
@@ -83,6 +83,15 @@ export function AdminUserDetail({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const photoUrl = useAdminUserPhoto(user.id, user.image);
   const videoUrl = useAdminUserVideo(user.id, user.video);
+
+  useEffect(() => {
+    if (!editMode) {
+      const timeout = window.setTimeout(() => {
+        setEdited(user);
+      }, 0);
+      return () => window.clearTimeout(timeout);
+    }
+  }, [user, editMode]);
 
   const isBanned = user.status === 'BANNED';
 
@@ -592,23 +601,37 @@ export function AdminUserDetail({
                   </span>
                 </div>
                 <div className="space-y-2.5">
-                  {MOCK_BILLING_HISTORY.map((item) => (
+                  {user.plan === 'FREE' ? (
                     <div
-                      key={item.id}
-                      className="flex items-center justify-between rounded-xl px-3 py-2.5"
+                      className="rounded-xl px-4 py-6 text-center"
                       style={{ background: '#F5F7FA' }}
                     >
-                      <div>
-                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#353535' }}>
-                          {item.label}
-                        </p>
-                        <p style={{ fontSize: '11px', color: '#AAA' }}>{item.date}</p>
-                      </div>
-                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#FF6B6B' }}>
-                        -{item.amount} DT
+                      <p style={{ fontSize: '13px', color: '#666', fontWeight: 600 }}>
+                        Compte Gratuit
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#AAA', marginTop: '2px' }}>
+                        Cet utilisateur n&apos;a souscrit à aucun forfait payant.
                       </p>
                     </div>
-                  ))}
+                  ) : (
+                    MOCK_BILLING_HISTORY.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between rounded-xl px-3 py-2.5"
+                        style={{ background: '#F5F7FA' }}
+                      >
+                        <div>
+                          <p style={{ fontSize: '12px', fontWeight: 600, color: '#353535' }}>
+                            {item.label}
+                          </p>
+                          <p style={{ fontSize: '11px', color: '#AAA' }}>{item.date}</p>
+                        </div>
+                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#FF6B6B' }}>
+                          -{item.amount} DT
+                        </p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
