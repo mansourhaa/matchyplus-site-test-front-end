@@ -85,13 +85,15 @@ describe('proxy auth gate', () => {
     expect(location(resRegister)).toBe('https://app.test/onboarding');
   });
 
-  it('keeps neutral routes open without a session, including /onboarding', () => {
+  it('keeps neutral routes open without a session, including /onboarding and /activer', () => {
     expect(proxy(request('/oauth-callback')).status).toBe(200);
     expect(proxy(request('/inscription')).status).toBe(200);
     expect(proxy(request('/onboarding')).status).toBe(200);
     expect(proxy(request('/reset-password')).status).toBe(200);
     expect(proxy(request('/privacy-policy')).status).toBe(200);
     expect(proxy(request('/terms-of-service')).status).toBe(200);
+    expect(proxy(request('/activer')).status).toBe(200);
+    expect(proxy(request('/activer?token=3bc226ada82b1ddfac69b0c6c5cf1ff4b2be99e426af6f4039c752240bb9f72e')).status).toBe(200);
   });
 
   it('sends authenticated visitors away from /connexion', () => {
