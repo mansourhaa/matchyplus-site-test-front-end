@@ -60,14 +60,14 @@ describe('AdminUserDetail', () => {
     vi.resetAllMocks();
   });
 
-  it('falls back to "Membre Matchy+" for a plain member with no job, not a dash', () => {
+  it('falls back to "—" for a plain member with no job in the header', () => {
     renderDetail(buildUser({ job: null }));
 
-    expect(screen.getAllByText('Membre Matchy+').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
   });
 
-  it('falls back to "Non renseigné" for an unset field other than job', () => {
-    renderDetail(buildUser({ experience: null, price: null }));
+  it('falls back to "Non renseigné" for an unset field in the profile list', () => {
+    renderDetail(buildUser({ job: null, experience: null, price: null }));
 
     expect(screen.getAllByText('Non renseigné').length).toBeGreaterThan(0);
   });

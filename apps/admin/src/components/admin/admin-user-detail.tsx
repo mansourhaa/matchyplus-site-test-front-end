@@ -261,7 +261,7 @@ export function AdminUserDetail({
           <div className="min-w-0 flex-1">
             <p style={{ fontSize: '18px', fontWeight: 800, color: '#1A1A2E' }}>{user.name}</p>
             <p style={{ fontSize: '13px', color: '#2F76BB', fontWeight: 600 }}>
-              {user.job ?? 'Membre Matchy+'}
+              {user.job || '—'}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1">
@@ -374,7 +374,7 @@ export function AdminUserDetail({
                         >
                           <Icon size={14} color="#888" />
                           <span style={{ fontSize: '13px', color: '#353535' }}>
-                            {user[field] ?? (field === 'job' ? 'Membre Matchy+' : 'Non renseigné')}
+                            {user[field] ?? 'Non renseigné'}
                           </span>
                         </div>
                       )}

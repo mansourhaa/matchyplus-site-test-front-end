@@ -297,7 +297,7 @@ export function AdminUsersSection({
             </div>
 
             <div>
-              <p style={{ fontSize: '12px', color: '#555' }}>{user.job ?? 'Membre Matchy+'}</p>
+              <p style={{ fontSize: '12px', color: '#555' }}>{user.job || '—'}</p>
               <div className="mt-0.5 flex flex-wrap gap-1">
                 {user.category && (
                   <span
