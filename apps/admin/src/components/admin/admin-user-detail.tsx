@@ -17,8 +17,10 @@ import type {
 } from '@/features/admin-users/types';
 import { useAdminUserPhoto } from '@/hooks/use-admin-user-photo';
 import { useAdminUserVideo } from '@/hooks/use-admin-user-video';
+import { adminApi } from '@/lib/admin-api';
 import {
   Activity,
+  AlertCircle,
   AlertTriangle,
   Award,
   Ban,
@@ -34,6 +36,7 @@ import {
   Filter,
   KeyRound,
   Link2,
+  Loader2,
   Mail,
   MapPin,
   MessageSquare,
@@ -98,12 +101,20 @@ export function AdminUserDetail({
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState(false);
+  const [customMessage, setCustomMessage] = useState<string | null>(null);
+  const [sendingSms, setSendingSms] = useState(false);
+  const [smsSentSuccess, setSmsSentSuccess] = useState(false);
+  const [smsError, setSmsError] = useState<string | null>(null);
   const photoUrl = useAdminUserPhoto(user.id, user.image);
   const videoUrl = useAdminUserVideo(user.id, user.video);
 
   const handleRegenerateActivation = async () => {
     if (!onRegenerateActivation) return;
     setIsRegenerating(true);
+    setCustomMessage(null);
+    setSendingSms(false);
+    setSmsSentSuccess(false);
+    setSmsError(null);
     try {
       const result = await onRegenerateActivation();
       setActivationResult(result);
@@ -111,6 +122,27 @@ export function AdminUserDetail({
       // handled in parent/slice
     } finally {
       setIsRegenerating(false);
+    }
+  };
+
+  const handleSendSms = async (message: string, link: string) => {
+    if (!user.id) return;
+    setSendingSms(true);
+    setSmsError(null);
+    try {
+      await adminApi.post(`/admin/users/${user.id}/send-activation-sms`, {
+        message,
+        activationLink: link,
+      });
+      setSmsSentSuccess(true);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setSmsError(
+        axiosErr.response?.data?.message ||
+          "Échec de l'envoi du SMS via TunisieSMS. Veuillez vérifier le crédit ou le numéro.",
+      );
+    } finally {
+      setSendingSms(false);
     }
   };
 
@@ -954,19 +986,29 @@ export function AdminUserDetail({
                   const activationLink = rawActivationLink.startsWith('/')
                     ? `${appBaseUrl || 'http://localhost:3000'}${rawActivationLink}`
                     : rawActivationLink;
-                  const cleanPhone = (user.phone ?? '').replace(/\D/g, '');
-                  const shareMsg = `Bonjour ${user.name}, votre profil ${user.job ? `(${user.job}) ` : ''}sur Matchy+ a été préparé ! Activez votre compte et définissez votre mot de passe ici : ${activationLink}`;
+                  const defaultShareMessage = `Matchy+: Bonjour ${user.name}, activez votre compte ici: ${activationLink}`;
+                  const shareMsg = customMessage !== null ? customMessage : defaultShareMessage;
                   return (
-                    <div className="flex flex-col gap-1">
-                      <label style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>
-                        Message SMS d&apos;invitation
-                      </label>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>
+                          Message SMS d&apos;invitation
+                        </label>
+                        <span
+                          className="text-[11px] font-medium"
+                          style={{
+                            color: shareMsg.length <= 160 ? '#64748B' : '#D97706',
+                          }}
+                        >
+                          {shareMsg.length} / 160 caractères {shareMsg.length <= 160 ? '(1 SMS)' : `(~${Math.ceil(shareMsg.length / 153)} SMS)`}
+                        </span>
+                      </div>
                       <textarea
-                        readOnly
                         rows={3}
                         value={shareMsg}
-                        className="w-full rounded-xl p-3 text-xs outline-none select-all resize-none"
-                        style={{ background: '#F5F7FA', border: '1.5px solid #D0E4F7', color: '#1A1A2E' }}
+                        onChange={(e) => setCustomMessage(e.target.value)}
+                        className="w-full rounded-xl p-3 text-xs outline-none select-all resize-none leading-relaxed text-slate-800 transition"
+                        style={{ background: '#F5F7FA', border: '1.5px solid #D0E4F7' }}
                       />
                       <div className="mt-1 flex flex-wrap gap-2">
                         <button
@@ -976,23 +1018,39 @@ export function AdminUserDetail({
                             setCopiedMessage(true);
                             setTimeout(() => setCopiedMessage(false), 2000);
                           }}
-                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs"
                         >
                           {copiedMessage ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
                           {copiedMessage ? 'Message copié !' : 'Copier le message SMS'}
                         </button>
-                        {cleanPhone && (
-                          <a
-                            href={`sms:${cleanPhone}?body=${encodeURIComponent(shareMsg)}`}
-                            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
-                            style={{ background: '#2F76BB' }}
-                          >
+                        <button
+                          type="button"
+                          onClick={() => handleSendSms(shareMsg, activationLink)}
+                          disabled={sendingSms}
+                          className="flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 shadow-xs disabled:opacity-60"
+                          style={{ background: smsSentSuccess ? '#61BCA6' : '#2F76BB' }}
+                        >
+                          {sendingSms ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : smsSentSuccess ? (
+                            <Check size={12} strokeWidth={2.5} />
+                          ) : (
                             <MessageSquare size={12} />
-                            Envoyer par SMS
-                            <ExternalLink size={10} />
-                          </a>
-                        )}
+                          )}
+                          {sendingSms
+                            ? 'Envoi en cours...'
+                            : smsSentSuccess
+                              ? 'SMS envoyé avec succès !'
+                              : 'Envoyer par SMS'}
+                        </button>
                       </div>
+
+                      {smsError && (
+                        <div className="mt-2 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs text-red-600">
+                          <AlertCircle size={14} className="shrink-0" />
+                          <span>{smsError}</span>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -1005,8 +1063,12 @@ export function AdminUserDetail({
                     setActivationResult(null);
                     setCopiedLink(false);
                     setCopiedMessage(false);
+                    setCustomMessage(null);
+                    setSendingSms(false);
+                    setSmsSentSuccess(false);
+                    setSmsError(null);
                   }}
-                  className="rounded-xl px-4 py-2 text-xs font-bold text-white"
+                  className="rounded-xl px-4 py-2 text-xs font-bold text-white transition"
                   style={{ background: '#2F76BB' }}
                 >
                   Fermer

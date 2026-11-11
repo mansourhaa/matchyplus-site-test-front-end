@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AdminUserDetail } from './admin-user-detail';
 
 vi.mock('@/lib/admin-api', () => ({
-  adminApi: { get: vi.fn() },
+  adminApi: { get: vi.fn(), post: vi.fn() },
 }));
 
 function buildUser(overrides: Partial<AdminManagedUser> = {}): AdminManagedUser {
@@ -172,5 +172,38 @@ describe('AdminUserDetail', () => {
 
     expect(screen.getByText('Actif')).toBeInTheDocument();
     expect(screen.queryByText('Activation en attente')).not.toBeInTheDocument();
+  });
+
+  it('triggers SMS dispatch via adminApi when clicking "Envoyer par SMS"', async () => {
+    const onRegenerateActivation = vi.fn().mockResolvedValue({
+      activationLink: 'http://localhost:3000/activer?token=tok-test-123',
+    });
+    vi.mocked(adminApi.post).mockResolvedValue({ data: { message: 'sms_sent', smsSent: true } });
+
+    render(
+      <AdminUserDetail
+        user={buildUser({ id: 'u1', name: 'Sami Ben Amor', phone: '+21620123456', must_change_password: true })}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        onChangeStatus={vi.fn()}
+        onDelete={vi.fn()}
+        onRegenerateActivation={onRegenerateActivation}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: "Lien d'activation" }));
+    expect(onRegenerateActivation).toHaveBeenCalled();
+
+    expect(await screen.findByText("Message SMS d'invitation")).toBeInTheDocument();
+
+    const sendSmsButton = screen.getByRole('button', { name: 'Envoyer par SMS' });
+    fireEvent.click(sendSmsButton);
+
+    expect(adminApi.post).toHaveBeenCalledWith('/admin/users/u1/send-activation-sms', {
+      message: expect.stringContaining('http://localhost:3000/activer?token=tok-test-123'),
+      activationLink: 'http://localhost:3000/activer?token=tok-test-123',
+    });
+
+    expect(await screen.findByText('SMS envoyé avec succès !')).toBeInTheDocument();
   });
 });
