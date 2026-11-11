@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { AdminActor } from '../types/admin.js';
 import { AdminService, normalizeAdminUser } from './admin.js';
 
 function createMockPrisma() {
@@ -43,7 +44,7 @@ describe('AdminService', () => {
       } as never,
     );
 
-    const { where } = prisma.user.findMany.mock.calls[0][0];
+    const { where } = prisma.user.findMany.mock.calls[0]![0];
     expect(where.status).toBe('BANNED');
     expect(where.plan).toBe('FREE');
     expect(where.OR).toEqual([
@@ -66,7 +67,7 @@ describe('AdminService', () => {
       } as never,
     );
 
-    expect(prisma.user.findMany.mock.calls[0][0].where.category).toBe('Électricité');
+    expect(prisma.user.findMany.mock.calls[0]![0].where.category).toBe('Électricité');
   });
 
   it('never selects the password column', async () => {
@@ -77,7 +78,7 @@ describe('AdminService', () => {
     const service = new AdminService({ prisma: prisma as never });
     await service.listUsers({ id: 'sa1', role: 'SUPER_ADMIN' } as never, {});
 
-    const { select } = prisma.user.findMany.mock.calls[0][0];
+    const { select } = prisma.user.findMany.mock.calls[0]![0];
     expect(select).not.toHaveProperty('password');
     expect(select.email).toBe(true);
   });
@@ -92,10 +93,10 @@ describe('AdminService', () => {
       const service = new AdminService({ prisma: prisma as never });
       await service.listUsers({ id: 'a1', role } as never, {});
 
-      const { where } = prisma.user.findMany.mock.calls[0][0];
+      const { where } = prisma.user.findMany.mock.calls[0]![0];
       expect(where.role).toBe('USER');
       // The count has to be scoped the same way or pagination advertises hidden rows.
-      expect(prisma.user.count.mock.calls[0][0].where.role).toBe('USER');
+      expect(prisma.user.count.mock.calls[0]![0].where.role).toBe('USER');
     },
   );
 
@@ -224,7 +225,7 @@ describe('AdminService', () => {
       plan: 'PREMIUM_PLUS',
     } as never);
 
-    const { data } = prisma.user.update.mock.calls[0][0];
+    const { data } = prisma.user.update.mock.calls[0]![0];
     expect(data).toEqual({ city: 'Tunis' });
   });
 
@@ -280,7 +281,7 @@ describe('AdminService', () => {
       'BANNED' as never,
     );
 
-    const { where, data } = prisma.user.update.mock.calls[0][0];
+    const { where, data } = prisma.user.update.mock.calls[0]![0];
     expect(where).toEqual({ id: 'u1' });
     expect(data).toEqual({ status: 'BANNED' });
   });
@@ -400,9 +401,9 @@ describe('AdminService', () => {
     const service = new AdminService({ prisma: prisma as never });
     await service.getStats();
 
-    expect(prisma.user.count.mock.calls[0][0].where.role).toBe('USER');
-    expect(prisma.user.groupBy.mock.calls[0][0].where.role).toBe('USER');
-    expect(prisma.user.groupBy.mock.calls[1][0].where.role).toBe('USER');
+    expect(prisma.user.count.mock.calls[0]![0].where.role).toBe('USER');
+    expect(prisma.user.groupBy.mock.calls[0]![0].where.role).toBe('USER');
+    expect(prisma.user.groupBy.mock.calls[1]![0].where.role).toBe('USER');
   });
 });
 
@@ -430,7 +431,7 @@ describe('AdminService createUser', () => {
     const result = await service.createUser(validPayload());
 
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { phone: '+21620123456' } });
-    const data = prisma.user.create.mock.calls[0][0].data;
+    const data = prisma.user.create.mock.calls[0]![0].data;
     expect(data.phone).toBe('+21620123456');
     expect(data.auth_provider).toBe('phone');
     expect(data.phone_verified).toBe(true);
@@ -590,7 +591,7 @@ describe('AdminService createUser', () => {
     const payload = validPayload({ password: '' });
     const result = await service.createUser(payload);
 
-    const data = prisma.user.create.mock.calls[0][0].data;
+    const data = prisma.user.create.mock.calls[0]![0].data;
     expect(data.password).toBeNull();
     expect(data.must_change_password).toBe(true);
     expect(data.status).toBe('INACTIVE');
@@ -759,10 +760,10 @@ describe('AdminService listTeamMembers', () => {
     const service = new AdminService({ prisma: prisma as never });
     await service.listTeamMembers({ id: 'a1', role } as never, {});
 
-    const { where, select } = prisma.user.findMany.mock.calls[0][0];
+    const { where, select } = prisma.user.findMany.mock.calls[0]![0];
     expect(where.role.in).toEqual(visible);
     expect(select).not.toHaveProperty('password');
-    expect(prisma.user.count.mock.calls[0][0].where.role.in).toEqual(visible);
+    expect(prisma.user.count.mock.calls[0]![0].where.role.in).toEqual(visible);
   });
 
   it('applies a case-insensitive name/email search', async () => {
@@ -775,7 +776,7 @@ describe('AdminService listTeamMembers', () => {
       search: 'sami',
     });
 
-    const { where } = prisma.user.findMany.mock.calls[0][0];
+    const { where } = prisma.user.findMany.mock.calls[0]![0];
     expect(where.OR).toEqual([
       { name: { contains: 'sami', mode: 'insensitive' } },
       { email: { contains: 'sami', mode: 'insensitive' } },
@@ -832,7 +833,7 @@ describe('AdminService createTeamMember', () => {
       validPayload(),
     );
 
-    const { data } = prisma.user.create.mock.calls[0][0];
+    const { data } = prisma.user.create.mock.calls[0]![0];
     expect(data.email).toBe('sami@matchyplus.tn');
     expect(data.role).toBe('SUPPORT');
     expect(data.status).toBe('ACTIVE');
@@ -853,7 +854,7 @@ describe('AdminService createTeamMember', () => {
       validPayload({ role: 'MODERATOR' }),
     );
 
-    expect(prisma.user.create.mock.calls[0][0].data.role).toBe('MODERATOR');
+    expect(prisma.user.create.mock.calls[0]![0].data.role).toBe('MODERATOR');
   });
 
   it('rejects an email that is already registered', async () => {
@@ -937,7 +938,7 @@ describe('AdminService plan management', () => {
       price: 12.9,
     });
 
-    expect(prisma.plan.update.mock.calls[0][0]).toMatchObject({
+    expect(prisma.plan.update.mock.calls[0]![0]).toMatchObject({
       where: { id: 'PREMIUM' },
       data: { price: 12.9 },
     });
@@ -1131,7 +1132,7 @@ describe('AdminService analytics', () => {
 
     await new AdminService({ prisma: prisma as never }).getAnalytics();
 
-    expect(prisma.user.findMany.mock.calls[0][0].where).toEqual({ role: 'USER' });
+    expect(prisma.user.findMany.mock.calls[0]![0].where).toEqual({ role: 'USER' });
   });
 });
 
@@ -1176,7 +1177,7 @@ describe('AdminService password change', () => {
       newPassword: 'newpass2026',
     });
 
-    const stored = prisma.user.update.mock.calls[0][0].data.password;
+    const stored = prisma.user.update.mock.calls[0]![0].data.password;
     expect(stored).not.toBe('newpass2026');
     const bcrypt = await import('bcryptjs');
     await expect(bcrypt.compare('newpass2026', stored)).resolves.toBe(true);
