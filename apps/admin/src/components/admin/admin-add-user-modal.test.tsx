@@ -31,6 +31,14 @@ async function fillMinimumValidForm({ manualPassword = true }: { manualPassword?
   }
   fireEvent.change(screen.getByLabelText('Métier'), { target: { value: 'Plombier' } });
 
+  const file = new File(['fake-image-bytes'], 'photo.jpg', { type: 'image/jpeg' });
+  const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+  fireEvent.change(fileInput, { target: { files: [file] } });
+  await screen.findByAltText('Aperçu');
+
+  // Navigate to step 2
+  fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
+
   fireEvent.change(screen.getByPlaceholderText('Ajouter un centre d’intérêt personnalisé'), {
     target: { value: 'Plomberie' },
   });
@@ -40,10 +48,8 @@ async function fillMinimumValidForm({ manualPassword = true }: { manualPassword?
 
   fireEvent.click(screen.getByRole('button', { name: 'Trouver un job' }));
 
-  const file = new File(['fake-image-bytes'], 'photo.jpg', { type: 'image/jpeg' });
-  const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-  fireEvent.change(fileInput, { target: { files: [file] } });
-  await screen.findByAltText('Aperçu');
+  // Navigate to step 3
+  fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
 }
 
 describe('AdminAddUserModal', () => {
@@ -52,11 +58,11 @@ describe('AdminAddUserModal', () => {
     vi.restoreAllMocks();
   });
 
-  it('blocks submission and shows an error when required fields are missing', () => {
+  it('blocks navigation and shows an error when required fields are missing', () => {
     const post = vi.spyOn(adminApi, 'post');
     renderModal();
 
-    fireEvent.click(screen.getByRole('button', { name: "Créer l'utilisateur" }));
+    fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
 
     expect(
       screen.getByText('Le nom et le téléphone sont obligatoires.'),
@@ -64,7 +70,7 @@ describe('AdminAddUserModal', () => {
     expect(post).not.toHaveBeenCalled();
   });
 
-  it('blocks submission when manual password mode is selected but password is empty', () => {
+  it('blocks navigation when manual password mode is selected but password is empty', () => {
     const post = vi.spyOn(adminApi, 'post');
     renderModal();
 
@@ -72,7 +78,7 @@ describe('AdminAddUserModal', () => {
     fireEvent.change(screen.getByLabelText('Téléphone'), { target: { value: '20123456' } });
     fireEvent.click(screen.getByRole('button', { name: /mot de passe manuel/i }));
 
-    fireEvent.click(screen.getByRole('button', { name: "Créer l'utilisateur" }));
+    fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
 
     expect(
       screen.getByText('Le mot de passe est obligatoire en mode manuel.'),
@@ -163,6 +169,10 @@ describe('AdminAddUserModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /mot de passe manuel/i }));
     fireEvent.change(screen.getByLabelText('Mot de passe temporaire'), { target: { value: 'Matchy2026!' } });
     fireEvent.change(screen.getByLabelText('Métier'), { target: { value: 'Plombier' } });
+
+    // Step 1 to Step 2
+    fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
+
     fireEvent.change(screen.getByPlaceholderText('Ajouter un centre d’intérêt personnalisé'), {
       target: { value: 'Plomberie' },
     });
@@ -170,6 +180,9 @@ describe('AdminAddUserModal', () => {
       key: 'Enter',
     });
     fireEvent.click(screen.getByRole('button', { name: 'Trouver un job' }));
+
+    // Step 2 to Step 3
+    fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
 
     fireEvent.click(screen.getByRole('button', { name: "Créer l'utilisateur" }));
 
@@ -209,9 +222,29 @@ describe('AdminAddUserModal', () => {
     // Step 1 to Step 2
     fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
     expect(screen.getByRole('heading', { name: 'Centres d’intérêt' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: "Créer l'utilisateur" })).not.toBeInTheDocument();
 
     // Step 2 to Step 1 via Précédent
     fireEvent.click(screen.getByRole('button', { name: /précédent/i }));
     expect(screen.getByLabelText('Nom complet')).toBeInTheDocument();
+
+    // Step 1 to Step 2
+    fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
+    expect(screen.getByRole('heading', { name: 'Centres d’intérêt' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: "Créer l'utilisateur" })).not.toBeInTheDocument();
+
+    // Add required interest and goal for step 2
+    fireEvent.change(screen.getByPlaceholderText('Ajouter un centre d’intérêt personnalisé'), {
+      target: { value: 'Plomberie' },
+    });
+    fireEvent.keyDown(screen.getByPlaceholderText('Ajouter un centre d’intérêt personnalisé'), {
+      key: 'Enter',
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Trouver un job' }));
+
+    // Step 2 to Step 3
+    fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
+    expect(screen.getByRole('heading', { name: 'Disponibilités & Préférences' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: "Créer l'utilisateur" })).toBeInTheDocument();
   });
 });

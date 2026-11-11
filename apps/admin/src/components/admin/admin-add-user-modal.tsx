@@ -1131,7 +1131,7 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
               </button>
             )}
 
-            {activeStep < 3 && (
+            {activeStep < 3 ? (
               <button
                 type="button"
                 onClick={handleNextStep}
@@ -1140,20 +1140,20 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
               >
                 Suivant <ArrowRight size={14} />
               </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={creatingUser}
+                className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:opacity-95 disabled:opacity-60"
+                style={{
+                  background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
+                }}
+              >
+                <User size={14} />
+                {creatingUser ? 'Création…' : "Créer l'utilisateur"}
+              </button>
             )}
-
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={creatingUser}
-              className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:opacity-95 disabled:opacity-60"
-              style={{
-                background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
-              }}
-            >
-              <User size={14} />
-              {creatingUser ? 'Création…' : "Créer l'utilisateur"}
-            </button>
           </div>
         </div>
       </div>
