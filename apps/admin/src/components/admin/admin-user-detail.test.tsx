@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AdminUserDetail } from './admin-user-detail';
 
 vi.mock('@/lib/admin-api', () => ({
-  adminApi: { get: vi.fn() },
+  adminApi: { get: vi.fn(), post: vi.fn() },
 }));
 
 function buildUser(overrides: Partial<AdminManagedUser> = {}): AdminManagedUser {
@@ -60,14 +60,14 @@ describe('AdminUserDetail', () => {
     vi.resetAllMocks();
   });
 
-  it('falls back to "Membre Matchy+" for a plain member with no job, not a dash', () => {
+  it('falls back to "—" for a plain member with no job in the header', () => {
     renderDetail(buildUser({ job: null }));
 
-    expect(screen.getAllByText('Membre Matchy+').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
   });
 
-  it('falls back to "Non renseigné" for an unset field other than job', () => {
-    renderDetail(buildUser({ experience: null, price: null }));
+  it('falls back to "Non renseigné" for an unset field in the profile list', () => {
+    renderDetail(buildUser({ job: null, experience: null, price: null }));
 
     expect(screen.getAllByText('Non renseigné').length).toBeGreaterThan(0);
   });
@@ -121,5 +121,89 @@ describe('AdminUserDetail', () => {
     unmount();
     Reflect.deleteProperty(URL, 'createObjectURL');
     Reflect.deleteProperty(URL, 'revokeObjectURL');
+  });
+
+  it('shows free account message instead of mock billing entries for a free user', () => {
+    renderDetail(buildUser({ plan: 'FREE' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Abonnement' }));
+
+    expect(screen.getByText('Compte Gratuit')).toBeInTheDocument();
+    expect(
+      screen.getByText("Cet utilisateur n'a souscrit à aucun forfait payant."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Abonnement Premium — Avril 2026')).not.toBeInTheDocument();
+  });
+
+  it('displays user bio and category correctly on the profile tab', () => {
+    renderDetail(
+      buildUser({
+        category: 'Technologie & Digital',
+        bio: 'Développeur passionné par TypeScript et Fastify.',
+      }),
+    );
+
+    expect(screen.getByText('Technologie & Digital')).toBeInTheDocument();
+    expect(
+      screen.getByText('Développeur passionné par TypeScript et Fastify.'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders only "Activation en attente" badge (and not "Actif") when must_change_password is true', () => {
+    renderDetail(
+      buildUser({
+        status: 'INACTIVE',
+        must_change_password: true,
+      }),
+    );
+
+    expect(screen.getByText('Activation en attente')).toBeInTheDocument();
+    expect(screen.queryByText('Actif')).not.toBeInTheDocument();
+    expect(screen.queryByText('Inactif')).not.toBeInTheDocument();
+  });
+
+  it('renders "Actif" badge when must_change_password is false and status is ACTIVE', () => {
+    renderDetail(
+      buildUser({
+        status: 'ACTIVE',
+        must_change_password: false,
+      }),
+    );
+
+    expect(screen.getByText('Actif')).toBeInTheDocument();
+    expect(screen.queryByText('Activation en attente')).not.toBeInTheDocument();
+  });
+
+  it('triggers SMS dispatch via adminApi when clicking "Envoyer par SMS"', async () => {
+    const onRegenerateActivation = vi.fn().mockResolvedValue({
+      activationLink: 'http://localhost:3000/activer?token=tok-test-123',
+    });
+    vi.mocked(adminApi.post).mockResolvedValue({ data: { message: 'sms_sent', smsSent: true } });
+
+    render(
+      <AdminUserDetail
+        user={buildUser({ id: 'u1', name: 'Sami Ben Amor', phone: '+21620123456', must_change_password: true })}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        onChangeStatus={vi.fn()}
+        onDelete={vi.fn()}
+        onRegenerateActivation={onRegenerateActivation}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: "Lien d'activation" }));
+    expect(onRegenerateActivation).toHaveBeenCalled();
+
+    expect(await screen.findByText("Message SMS d'invitation")).toBeInTheDocument();
+
+    const sendSmsButton = screen.getByRole('button', { name: 'Envoyer par SMS' });
+    fireEvent.click(sendSmsButton);
+
+    expect(adminApi.post).toHaveBeenCalledWith('/admin/users/u1/send-activation-sms', {
+      message: expect.stringContaining('http://localhost:3000/activer?token=tok-test-123'),
+      activationLink: 'http://localhost:3000/activer?token=tok-test-123',
+    });
+
+    expect(await screen.findByText('SMS envoyé avec succès !')).toBeInTheDocument();
   });
 });

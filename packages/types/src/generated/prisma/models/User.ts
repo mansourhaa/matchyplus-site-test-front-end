@@ -85,6 +85,9 @@ export type UserMinAggregateOutputType = {
   linkedin_id: string | null
   phone_verified: boolean | null
   verified: boolean | null
+  must_change_password: boolean | null
+  activation_token_hash: string | null
+  activation_token_expires_at: Date | null
   token_version: number | null
   looking_for: string | null
   activity_sector: string | null
@@ -136,6 +139,9 @@ export type UserMaxAggregateOutputType = {
   linkedin_id: string | null
   phone_verified: boolean | null
   verified: boolean | null
+  must_change_password: boolean | null
+  activation_token_hash: string | null
+  activation_token_expires_at: Date | null
   token_version: number | null
   looking_for: string | null
   activity_sector: string | null
@@ -195,6 +201,9 @@ export type UserCountAggregateOutputType = {
   linkedin_id: number
   phone_verified: number
   verified: number
+  must_change_password: number
+  activation_token_hash: number
+  activation_token_expires_at: number
   token_version: number
   goals: number
   looking_for: number
@@ -271,6 +280,9 @@ export type UserMinAggregateInputType = {
   linkedin_id?: true
   phone_verified?: true
   verified?: true
+  must_change_password?: true
+  activation_token_hash?: true
+  activation_token_expires_at?: true
   token_version?: true
   looking_for?: true
   activity_sector?: true
@@ -322,6 +334,9 @@ export type UserMaxAggregateInputType = {
   linkedin_id?: true
   phone_verified?: true
   verified?: true
+  must_change_password?: true
+  activation_token_hash?: true
+  activation_token_expires_at?: true
   token_version?: true
   looking_for?: true
   activity_sector?: true
@@ -381,6 +396,9 @@ export type UserCountAggregateInputType = {
   linkedin_id?: true
   phone_verified?: true
   verified?: true
+  must_change_password?: true
+  activation_token_hash?: true
+  activation_token_expires_at?: true
   token_version?: true
   goals?: true
   looking_for?: true
@@ -528,6 +546,9 @@ export type UserGroupByOutputType = {
   linkedin_id: string | null
   phone_verified: boolean
   verified: boolean
+  must_change_password: boolean
+  activation_token_hash: string | null
+  activation_token_expires_at: Date | null
   token_version: number
   goals: string[]
   looking_for: string | null
@@ -611,6 +632,9 @@ export type UserWhereInput = {
   linkedin_id?: Prisma.StringNullableFilter<"User"> | string | null
   phone_verified?: Prisma.BoolFilter<"User"> | boolean
   verified?: Prisma.BoolFilter<"User"> | boolean
+  must_change_password?: Prisma.BoolFilter<"User"> | boolean
+  activation_token_hash?: Prisma.StringNullableFilter<"User"> | string | null
+  activation_token_expires_at?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   token_version?: Prisma.IntFilter<"User"> | number
   goals?: Prisma.StringNullableListFilter<"User">
   looking_for?: Prisma.StringNullableFilter<"User"> | string | null
@@ -695,6 +719,9 @@ export type UserOrderByWithRelationInput = {
   linkedin_id?: Prisma.SortOrderInput | Prisma.SortOrder
   phone_verified?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  must_change_password?: Prisma.SortOrder
+  activation_token_hash?: Prisma.SortOrderInput | Prisma.SortOrder
+  activation_token_expires_at?: Prisma.SortOrderInput | Prisma.SortOrder
   token_version?: Prisma.SortOrder
   goals?: Prisma.SortOrder
   looking_for?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -740,6 +767,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   phone?: string
   google_id?: string
   linkedin_id?: string
+  activation_token_hash?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
@@ -782,6 +810,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   email_verified?: Prisma.BoolFilter<"User"> | boolean
   phone_verified?: Prisma.BoolFilter<"User"> | boolean
   verified?: Prisma.BoolFilter<"User"> | boolean
+  must_change_password?: Prisma.BoolFilter<"User"> | boolean
+  activation_token_expires_at?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   token_version?: Prisma.IntFilter<"User"> | number
   goals?: Prisma.StringNullableListFilter<"User">
   looking_for?: Prisma.StringNullableFilter<"User"> | string | null
@@ -819,7 +849,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   conversations_as_high?: Prisma.ConversationListRelationFilter
   messages_sent?: Prisma.MessageListRelationFilter
   message_likes?: Prisma.MessageLikeListRelationFilter
-}, "id" | "email" | "phone" | "google_id" | "linkedin_id">
+}, "id" | "email" | "phone" | "google_id" | "linkedin_id" | "activation_token_hash">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -866,6 +896,9 @@ export type UserOrderByWithAggregationInput = {
   linkedin_id?: Prisma.SortOrderInput | Prisma.SortOrder
   phone_verified?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  must_change_password?: Prisma.SortOrder
+  activation_token_hash?: Prisma.SortOrderInput | Prisma.SortOrder
+  activation_token_expires_at?: Prisma.SortOrderInput | Prisma.SortOrder
   token_version?: Prisma.SortOrder
   goals?: Prisma.SortOrder
   looking_for?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -934,6 +967,9 @@ export type UserScalarWhereWithAggregatesInput = {
   linkedin_id?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   phone_verified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   verified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  must_change_password?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  activation_token_hash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  activation_token_expires_at?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   token_version?: Prisma.IntWithAggregatesFilter<"User"> | number
   goals?: Prisma.StringNullableListFilter<"User">
   looking_for?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -994,6 +1030,9 @@ export type UserCreateInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -1078,6 +1117,9 @@ export type UserUncheckedCreateInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -1162,6 +1204,9 @@ export type UserUpdateInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1246,6 +1291,9 @@ export type UserUncheckedUpdateInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1330,6 +1378,9 @@ export type UserCreateManyInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -1390,6 +1441,9 @@ export type UserUpdateManyMutationInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1450,6 +1504,9 @@ export type UserUncheckedUpdateManyInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1510,6 +1567,9 @@ export type UserCountOrderByAggregateInput = {
   linkedin_id?: Prisma.SortOrder
   phone_verified?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  must_change_password?: Prisma.SortOrder
+  activation_token_hash?: Prisma.SortOrder
+  activation_token_expires_at?: Prisma.SortOrder
   token_version?: Prisma.SortOrder
   goals?: Prisma.SortOrder
   looking_for?: Prisma.SortOrder
@@ -1573,6 +1633,9 @@ export type UserMaxOrderByAggregateInput = {
   linkedin_id?: Prisma.SortOrder
   phone_verified?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  must_change_password?: Prisma.SortOrder
+  activation_token_hash?: Prisma.SortOrder
+  activation_token_expires_at?: Prisma.SortOrder
   token_version?: Prisma.SortOrder
   looking_for?: Prisma.SortOrder
   activity_sector?: Prisma.SortOrder
@@ -1624,6 +1687,9 @@ export type UserMinOrderByAggregateInput = {
   linkedin_id?: Prisma.SortOrder
   phone_verified?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  must_change_password?: Prisma.SortOrder
+  activation_token_hash?: Prisma.SortOrder
+  activation_token_expires_at?: Prisma.SortOrder
   token_version?: Prisma.SortOrder
   looking_for?: Prisma.SortOrder
   activity_sector?: Prisma.SortOrder
@@ -2135,6 +2201,9 @@ export type UserCreateWithoutRefresh_tokensInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -2218,6 +2287,9 @@ export type UserUncheckedCreateWithoutRefresh_tokensInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -2317,6 +2389,9 @@ export type UserUpdateWithoutRefresh_tokensInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2400,6 +2475,9 @@ export type UserUncheckedUpdateWithoutRefresh_tokensInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2483,6 +2561,9 @@ export type UserCreateWithoutOtp_challengesInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -2566,6 +2647,9 @@ export type UserUncheckedCreateWithoutOtp_challengesInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -2665,6 +2749,9 @@ export type UserUpdateWithoutOtp_challengesInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2748,6 +2835,9 @@ export type UserUncheckedUpdateWithoutOtp_challengesInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2831,6 +2921,9 @@ export type UserCreateWithoutOauth_exchange_codesInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -2914,6 +3007,9 @@ export type UserUncheckedCreateWithoutOauth_exchange_codesInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -3013,6 +3109,9 @@ export type UserUpdateWithoutOauth_exchange_codesInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3096,6 +3195,9 @@ export type UserUncheckedUpdateWithoutOauth_exchange_codesInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3179,6 +3281,9 @@ export type UserCreateWithoutReports_madeInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -3262,6 +3367,9 @@ export type UserUncheckedCreateWithoutReports_madeInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -3350,6 +3458,9 @@ export type UserCreateWithoutReports_receivedInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -3433,6 +3544,9 @@ export type UserUncheckedCreateWithoutReports_receivedInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -3532,6 +3646,9 @@ export type UserUpdateWithoutReports_madeInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3615,6 +3732,9 @@ export type UserUncheckedUpdateWithoutReports_madeInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3709,6 +3829,9 @@ export type UserUpdateWithoutReports_receivedInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3792,6 +3915,9 @@ export type UserUncheckedUpdateWithoutReports_receivedInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3875,6 +4001,9 @@ export type UserCreateWithoutSwipes_madeInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -3958,6 +4087,9 @@ export type UserUncheckedCreateWithoutSwipes_madeInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -4046,6 +4178,9 @@ export type UserCreateWithoutSwipes_receivedInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -4129,6 +4264,9 @@ export type UserUncheckedCreateWithoutSwipes_receivedInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -4228,6 +4366,9 @@ export type UserUpdateWithoutSwipes_madeInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4311,6 +4452,9 @@ export type UserUncheckedUpdateWithoutSwipes_madeInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4405,6 +4549,9 @@ export type UserUpdateWithoutSwipes_receivedInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4488,6 +4635,9 @@ export type UserUncheckedUpdateWithoutSwipes_receivedInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4571,6 +4721,9 @@ export type UserCreateWithoutSwipe_logsInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -4654,6 +4807,9 @@ export type UserUncheckedCreateWithoutSwipe_logsInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -4742,6 +4898,9 @@ export type UserCreateWithoutSwipe_log_targetsInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -4825,6 +4984,9 @@ export type UserUncheckedCreateWithoutSwipe_log_targetsInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -4924,6 +5086,9 @@ export type UserUpdateWithoutSwipe_logsInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5007,6 +5172,9 @@ export type UserUncheckedUpdateWithoutSwipe_logsInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5101,6 +5269,9 @@ export type UserUpdateWithoutSwipe_log_targetsInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5184,6 +5355,9 @@ export type UserUncheckedUpdateWithoutSwipe_log_targetsInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5267,6 +5441,9 @@ export type UserCreateWithoutMatches_as_lowInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -5350,6 +5527,9 @@ export type UserUncheckedCreateWithoutMatches_as_lowInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -5438,6 +5618,9 @@ export type UserCreateWithoutMatches_as_highInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -5521,6 +5704,9 @@ export type UserUncheckedCreateWithoutMatches_as_highInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -5620,6 +5806,9 @@ export type UserUpdateWithoutMatches_as_lowInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5703,6 +5892,9 @@ export type UserUncheckedUpdateWithoutMatches_as_lowInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5797,6 +5989,9 @@ export type UserUpdateWithoutMatches_as_highInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5880,6 +6075,9 @@ export type UserUncheckedUpdateWithoutMatches_as_highInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5963,6 +6161,9 @@ export type UserCreateWithoutConversations_as_lowInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -6046,6 +6247,9 @@ export type UserUncheckedCreateWithoutConversations_as_lowInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -6134,6 +6338,9 @@ export type UserCreateWithoutConversations_as_highInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -6217,6 +6424,9 @@ export type UserUncheckedCreateWithoutConversations_as_highInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -6316,6 +6526,9 @@ export type UserUpdateWithoutConversations_as_lowInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6399,6 +6612,9 @@ export type UserUncheckedUpdateWithoutConversations_as_lowInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6493,6 +6709,9 @@ export type UserUpdateWithoutConversations_as_highInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6576,6 +6795,9 @@ export type UserUncheckedUpdateWithoutConversations_as_highInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6659,6 +6881,9 @@ export type UserCreateWithoutMessages_sentInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -6742,6 +6967,9 @@ export type UserUncheckedCreateWithoutMessages_sentInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -6841,6 +7069,9 @@ export type UserUpdateWithoutMessages_sentInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6924,6 +7155,9 @@ export type UserUncheckedUpdateWithoutMessages_sentInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7007,6 +7241,9 @@ export type UserCreateWithoutMessage_likesInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -7090,6 +7327,9 @@ export type UserUncheckedCreateWithoutMessage_likesInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -7189,6 +7429,9 @@ export type UserUpdateWithoutMessage_likesInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7272,6 +7515,9 @@ export type UserUncheckedUpdateWithoutMessage_likesInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7355,6 +7601,9 @@ export type UserCreateWithoutLocationInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -7438,6 +7687,9 @@ export type UserUncheckedCreateWithoutLocationInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -7537,6 +7789,9 @@ export type UserUpdateWithoutLocationInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7620,6 +7875,9 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7703,6 +7961,9 @@ export type UserCreateWithoutBlocks_madeInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -7786,6 +8047,9 @@ export type UserUncheckedCreateWithoutBlocks_madeInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -7874,6 +8138,9 @@ export type UserCreateWithoutBlocks_receivedInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -7957,6 +8224,9 @@ export type UserUncheckedCreateWithoutBlocks_receivedInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -8056,6 +8326,9 @@ export type UserUpdateWithoutBlocks_madeInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8139,6 +8412,9 @@ export type UserUncheckedUpdateWithoutBlocks_madeInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8233,6 +8509,9 @@ export type UserUpdateWithoutBlocks_receivedInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8316,6 +8595,9 @@ export type UserUncheckedUpdateWithoutBlocks_receivedInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8399,6 +8681,9 @@ export type UserCreateWithoutRatings_givenInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -8482,6 +8767,9 @@ export type UserUncheckedCreateWithoutRatings_givenInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -8570,6 +8858,9 @@ export type UserCreateWithoutRatings_receivedInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -8653,6 +8944,9 @@ export type UserUncheckedCreateWithoutRatings_receivedInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -8752,6 +9046,9 @@ export type UserUpdateWithoutRatings_givenInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8835,6 +9132,9 @@ export type UserUncheckedUpdateWithoutRatings_givenInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8929,6 +9229,9 @@ export type UserUpdateWithoutRatings_receivedInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9012,6 +9315,9 @@ export type UserUncheckedUpdateWithoutRatings_receivedInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9095,6 +9401,9 @@ export type UserCreateWithoutFavorites_givenInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -9178,6 +9487,9 @@ export type UserUncheckedCreateWithoutFavorites_givenInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -9266,6 +9578,9 @@ export type UserCreateWithoutFavorites_receivedInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -9349,6 +9664,9 @@ export type UserUncheckedCreateWithoutFavorites_receivedInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -9448,6 +9766,9 @@ export type UserUpdateWithoutFavorites_givenInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9531,6 +9852,9 @@ export type UserUncheckedUpdateWithoutFavorites_givenInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9625,6 +9949,9 @@ export type UserUpdateWithoutFavorites_receivedInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9708,6 +10035,9 @@ export type UserUncheckedUpdateWithoutFavorites_receivedInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9791,6 +10121,9 @@ export type UserCreateWithoutNotificationsInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -9874,6 +10207,9 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -9973,6 +10309,9 @@ export type UserUpdateWithoutNotificationsInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10056,6 +10395,9 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10139,6 +10481,9 @@ export type UserCreateWithoutAiJobsInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -10222,6 +10567,9 @@ export type UserUncheckedCreateWithoutAiJobsInput = {
   linkedin_id?: string | null
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: string | null
+  activation_token_expires_at?: Date | string | null
   token_version?: number
   goals?: Prisma.UserCreategoalsInput | string[]
   looking_for?: string | null
@@ -10321,6 +10669,9 @@ export type UserUpdateWithoutAiJobsInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10404,6 +10755,9 @@ export type UserUncheckedUpdateWithoutAiJobsInput = {
   linkedin_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  activation_token_hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activation_token_expires_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   token_version?: Prisma.IntFieldUpdateOperationsInput | number
   goals?: Prisma.UserUpdategoalsInput | string[]
   looking_for?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10716,6 +11070,9 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   linkedin_id?: boolean
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: boolean
+  activation_token_expires_at?: boolean
   token_version?: boolean
   goals?: boolean
   looking_for?: boolean
@@ -10801,6 +11158,9 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   linkedin_id?: boolean
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: boolean
+  activation_token_expires_at?: boolean
   token_version?: boolean
   goals?: boolean
   looking_for?: boolean
@@ -10861,6 +11221,9 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   linkedin_id?: boolean
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: boolean
+  activation_token_expires_at?: boolean
   token_version?: boolean
   goals?: boolean
   looking_for?: boolean
@@ -10921,6 +11284,9 @@ export type UserSelectScalar = {
   linkedin_id?: boolean
   phone_verified?: boolean
   verified?: boolean
+  must_change_password?: boolean
+  activation_token_hash?: boolean
+  activation_token_expires_at?: boolean
   token_version?: boolean
   goals?: boolean
   looking_for?: boolean
@@ -10936,7 +11302,7 @@ export type UserSelectScalar = {
   updated_at?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "password" | "auth_provider" | "role" | "status" | "plan" | "job" | "category" | "city" | "bio" | "image" | "video" | "interests" | "languages" | "contact_modes" | "experience" | "schedule" | "price" | "rating" | "reviews" | "matches" | "missions" | "total_earnings" | "last_login" | "profile_type" | "offer_service" | "service_type" | "sector" | "industry" | "selected_goals" | "experiences" | "education_level" | "educations" | "availability_days" | "availability_hours" | "onboarding_completed_at" | "email_verified" | "google_id" | "linkedin_id" | "phone_verified" | "verified" | "token_version" | "goals" | "looking_for" | "activity_sector" | "gps_latitude" | "gps_longitude" | "notify_all" | "notify_matches" | "notify_messages" | "notify_views" | "notify_email" | "create_at" | "updated_at", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "password" | "auth_provider" | "role" | "status" | "plan" | "job" | "category" | "city" | "bio" | "image" | "video" | "interests" | "languages" | "contact_modes" | "experience" | "schedule" | "price" | "rating" | "reviews" | "matches" | "missions" | "total_earnings" | "last_login" | "profile_type" | "offer_service" | "service_type" | "sector" | "industry" | "selected_goals" | "experiences" | "education_level" | "educations" | "availability_days" | "availability_hours" | "onboarding_completed_at" | "email_verified" | "google_id" | "linkedin_id" | "phone_verified" | "verified" | "must_change_password" | "activation_token_hash" | "activation_token_expires_at" | "token_version" | "goals" | "looking_for" | "activity_sector" | "gps_latitude" | "gps_longitude" | "notify_all" | "notify_matches" | "notify_messages" | "notify_views" | "notify_email" | "create_at" | "updated_at", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   aiJobs?: boolean | Prisma.User$aiJobsArgs<ExtArgs>
   refresh_tokens?: boolean | Prisma.User$refresh_tokensArgs<ExtArgs>
@@ -11049,6 +11415,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     linkedin_id: string | null
     phone_verified: boolean
     verified: boolean
+    must_change_password: boolean
+    activation_token_hash: string | null
+    activation_token_expires_at: Date | null
     /**
      * Bumped on password change / reset so outstanding access JWTs fail verification.
      */
@@ -11566,6 +11935,9 @@ export interface UserFieldRefs {
   readonly linkedin_id: Prisma.FieldRef<"User", 'String'>
   readonly phone_verified: Prisma.FieldRef<"User", 'Boolean'>
   readonly verified: Prisma.FieldRef<"User", 'Boolean'>
+  readonly must_change_password: Prisma.FieldRef<"User", 'Boolean'>
+  readonly activation_token_hash: Prisma.FieldRef<"User", 'String'>
+  readonly activation_token_expires_at: Prisma.FieldRef<"User", 'DateTime'>
   readonly token_version: Prisma.FieldRef<"User", 'Int'>
   readonly goals: Prisma.FieldRef<"User", 'String[]'>
   readonly looking_for: Prisma.FieldRef<"User", 'String'>

@@ -2,7 +2,7 @@ import { adminApi } from '@/lib/admin-api';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { useAdminUserPhoto } from './use-admin-user-photo';
+import { clearPhotoCache, useAdminUserPhoto } from './use-admin-user-photo';
 
 vi.mock('@/lib/admin-api', () => ({
   adminApi: { get: vi.fn() },
@@ -12,6 +12,7 @@ const uuid = '1f3e4151-7f9c-4d7b-a780-c41ef4207feb';
 
 describe('useAdminUserPhoto', () => {
   afterEach(() => {
+    clearPhotoCache();
     vi.restoreAllMocks();
     vi.resetAllMocks();
   });
@@ -70,5 +71,26 @@ describe('useAdminUserPhoto', () => {
 
     await waitFor(() => expect(adminApi.get).toHaveBeenCalled());
     expect(result.current).toBeNull();
+  });
+
+  it('reuses the cached blob for duplicate requests and avoids duplicate API calls', async () => {
+    const createObjectURL = vi.fn(() => 'blob:cached-user-photo');
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    vi.mocked(adminApi.get).mockResolvedValue({ data: new Blob(['cached-photo']) });
+
+    const { result: firstResult } = renderHook(() =>
+      useAdminUserPhoto('u2', `/uploads/photos/${uuid}.jpg`),
+    );
+    await waitFor(() => expect(firstResult.current).toBe('blob:cached-user-photo'));
+    expect(adminApi.get).toHaveBeenCalledTimes(1);
+
+    const { result: secondResult } = renderHook(() =>
+      useAdminUserPhoto('u2', `/uploads/photos/${uuid}.jpg`),
+    );
+    await waitFor(() => expect(secondResult.current).toBe('blob:cached-user-photo'));
+    // Should still be called only once due to blob cache
+    expect(adminApi.get).toHaveBeenCalledTimes(1);
+
+    Reflect.deleteProperty(URL, 'createObjectURL');
   });
 });

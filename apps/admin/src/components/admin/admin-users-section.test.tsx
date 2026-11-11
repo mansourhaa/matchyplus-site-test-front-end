@@ -84,11 +84,10 @@ describe('buildCsv', () => {
 });
 
 describe('AdminUsersSection', () => {
-  it('shows a fallback label for a member with no job or category', () => {
+  it('shows a dash for a member with no job', () => {
     renderSection([buildUser({ job: null, category: null, name: 'Utilisateur' })]);
 
-    // Scoped to a <p>: the domain filter's "no category" option shares this exact label.
-    expect(screen.getByText('Membre Matchy+', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByText('—', { selector: 'p' })).toBeInTheDocument();
   });
 
   it('lists real category names as domain filter options', () => {

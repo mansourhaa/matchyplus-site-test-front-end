@@ -48,6 +48,7 @@ import {
   fetchAdminStats,
   fetchAdminUserById,
   fetchAdminUsers,
+  regenerateAdminUserActivation,
   selectAdminUsers,
   selectUser,
   setFilters,
@@ -199,6 +200,7 @@ export function AdminPanel() {
   };
 
   const handleSavePlan = async (id: AdminPlan['id'], changes: AdminPlanUpdate) => {
+    if (admin?.role && admin.role !== 'SUPER_ADMIN') return false;
     const result = await dispatch(updateAdminPlan({ id, changes }));
     if (!updateAdminPlan.fulfilled.match(result)) return false;
 
@@ -229,6 +231,11 @@ export function AdminPanel() {
     if (!selectedUser) return;
     await dispatch(updateAdminUserStatus({ id: selectedUser.id, status }));
     void dispatch(fetchAdminStats());
+  };
+
+  const handleRegenerateActivation = async () => {
+    if (!selectedUser) throw new Error('no_selected_user');
+    return dispatch(regenerateAdminUserActivation(selectedUser.id)).unwrap();
   };
 
   const handleDelete = async (id: string) => {
@@ -545,6 +552,7 @@ export function AdminPanel() {
               saving={savingPlan}
               savedAt={savedAt}
               onSave={handleSavePlan}
+              canManagePlans={!admin?.role || admin.role === 'SUPER_ADMIN'}
             />
           )}
 
@@ -572,6 +580,7 @@ export function AdminPanel() {
               onSave={handleSave}
               onChangeStatus={handleChangeStatus}
               onDelete={() => handleDelete(selectedUser.id)}
+              onRegenerateActivation={handleRegenerateActivation}
             />
           )}
         </div>

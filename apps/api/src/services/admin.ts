@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 
 import { Prisma, PrismaClient, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
+import { INDUSTRY_LABELS, IndustryKey } from '../constants/industries.js';
+import { SmsClient } from '../lib/sms.js';
 import { normalizePhoneForAuth } from '../lib/phone.js';
 import {
   AdminActor,
@@ -9,8 +11,12 @@ import {
   AdminChangePasswordPayload,
   AdminCreateTeamMemberPayload,
   AdminCreateUserPayload,
+  AdminCreateUserResult,
   AdminListTeamQuery,
   AdminListUsersQuery,
+  AdminRegenerateActivationResult,
+  AdminSendActivationSmsPayload,
+  AdminSendActivationSmsResult,
   AdminUpdatePlanPayload,
   AdminUpdateUserPayload,
   AdminUserStatsResult,
@@ -18,7 +24,20 @@ import {
   adminUserSelect,
 } from '../types/admin.js';
 import { AbstractServiceOptions } from '../types/services.js';
-import { badRequest, forbidden, insufficientPrivileges, notFound } from '../utils/http-errors.js';
+import {
+  buildActivationLink,
+  computeActivationExpiry,
+  generateActivationToken,
+  hashActivationToken,
+} from '../utils/activation-token.js';
+import {
+  badGateway,
+  badRequest,
+  forbidden,
+  insufficientPrivileges,
+  notFound,
+  serviceUnavailable,
+} from '../utils/http-errors.js';
 import { filenameFromStoredPath, isStoredMediaPath } from '../utils/media-storage.js';
 import { isPasswordPolicySatisfied } from '../utils/password-policy.js';
 import { assertMinimumRole, outranks, rolesBelow } from '../utils/roles.js';
@@ -100,6 +119,56 @@ function computeTrends(timeline: CumulativePoint[]): AdminAnalyticsResult['trend
 }
 
 /**
+ * Normalizes member profile projections so the admin panel always receives consistent,
+ * non-empty values when users filled out their profile through onboarding or matching.
+ * Specifically:
+ * - Category falls back to sector, industry label, or activity sector.
+ * - Bio falls back to looking_for (the intent/need statement).
+ * - Job falls back to service_type (for providers).
+ */
+export function normalizeAdminUser<
+  T extends {
+    category?: string | null;
+    sector?: string | null;
+    industry?: string | null;
+    activity_sector?: string | null;
+    service_type?: string | null;
+    job?: string | null;
+    bio?: string | null;
+    looking_for?: string | null;
+  },
+>(user: T): T {
+  const result = { ...user };
+
+  if ('category' in user || 'sector' in user || 'industry' in user || 'activity_sector' in user) {
+    result.category =
+      user.category?.trim() ||
+      user.sector?.trim() ||
+      (user.industry && INDUSTRY_LABELS[user.industry as IndustryKey]) ||
+      user.activity_sector?.trim() ||
+      null;
+  }
+
+  if ('bio' in user || 'looking_for' in user) {
+    result.bio = user.bio?.trim() || user.looking_for?.trim() || null;
+  }
+
+  if ('job' in user || 'service_type' in user) {
+    result.job = user.job?.trim() || user.service_type?.trim() || null;
+  }
+
+  return result;
+}
+
+function toGsm7Friendly(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[«»“”]/g, '"')
+    .replace(/[‘’]/g, "'");
+}
+
+/**
  * Fields an admin is allowed to edit from the user detail panel. `plan` is deliberately
  * excluded: assigning a paid tier is a control-plane action, and leaving it here let any
  * admin who merely outranks the target grant premium through this generic update path,
@@ -119,13 +188,19 @@ const editableFields = [
   'status',
 ] as const;
 
+export type AdminServiceOptions = AbstractServiceOptions & {
+  smsClient?: SmsClient;
+};
+
 export class AdminService {
   prisma: PrismaClient;
   tokenService: TokenService;
+  smsClient?: SmsClient;
 
-  constructor(options: AbstractServiceOptions) {
+  constructor(options: AdminServiceOptions) {
     this.prisma = options.prisma;
     this.tokenService = new TokenService({ prisma: options.prisma });
+    this.smsClient = options.smsClient;
   }
 
   async listUsers(actor: AdminActor, query: AdminListUsersQuery) {
@@ -159,7 +234,7 @@ export class AdminService {
       this.prisma.user.count({ where }),
     ]);
 
-    return { users, total };
+    return { users: users.map(normalizeAdminUser), total };
   }
 
   /**
@@ -256,7 +331,7 @@ export class AdminService {
    * Creates a member account in one shot — same end state as a real phone signup that
    * finished onboarding, minus the OTP step (the admin vouches for the phone instead)..
    */
-  async createUser(payload: AdminCreateUserPayload) {
+  async createUser(payload: AdminCreateUserPayload): Promise<AdminCreateUserResult> {
     const phone = normalizePhoneForAuth(payload.phone);
     if (!phone) {
       throw badRequest('invalid phone number', 'invalid_phone');
@@ -273,8 +348,23 @@ export class AdminService {
       }
     }
 
-    if (!isPasswordPolicySatisfied(payload.password)) {
-      throw badRequest('password does not meet the security policy', 'weak_password');
+    const hasPassword = Boolean(payload.password?.trim());
+    let hashedPassword: string | null = null;
+    let activationToken: string | undefined;
+    let activationLink: string | undefined;
+    let activationTokenHash: string | null = null;
+    let activationTokenExpiresAt: Date | null = null;
+
+    if (hasPassword) {
+      if (!isPasswordPolicySatisfied(payload.password!)) {
+        throw badRequest('password does not meet the security policy', 'weak_password');
+      }
+      hashedPassword = await bcrypt.hash(payload.password!, await bcrypt.genSalt(10));
+    } else {
+      activationToken = generateActivationToken();
+      activationTokenHash = hashActivationToken(activationToken);
+      activationTokenExpiresAt = computeActivationExpiry();
+      activationLink = buildActivationLink(activationToken);
     }
 
     const name = payload.name.trim();
@@ -307,19 +397,22 @@ export class AdminService {
       throw badRequest('image must be a newly uploaded photo, not a stored path', 'invalid_image');
     }
 
-    const hashedPassword = await bcrypt.hash(payload.password, await bcrypt.genSalt(10));
-
     const user = await this.prisma.user.create({
       data: {
         name,
         phone,
         email: payload.email?.toLowerCase(),
         password: hashedPassword,
+        must_change_password: !hasPassword,
+        status: hasPassword ? UserStatus.ACTIVE : UserStatus.INACTIVE,
+        activation_token_hash: activationTokenHash,
+        activation_token_expires_at: activationTokenExpiresAt,
         auth_provider: 'phone',
         phone_verified: true,
         plan: payload.plan ?? UserPlan.FREE,
         job: payload.job,
         bio: payload.bio,
+        looking_for: payload.bio,
         image: payload.image,
         city: payload.city,
         profile_type: payload.profileType,
@@ -334,6 +427,8 @@ export class AdminService {
         languages: payload.languages ?? [],
         experience: isIndividual ? payload.experience : undefined,
         sector: payload.sector,
+        category: payload.sector,
+        activity_sector: payload.sector,
         education_level: payload.educationLevel,
         experiences: payload.experiences,
         educations: payload.educations,
@@ -342,7 +437,114 @@ export class AdminService {
       select: adminUserSelect,
     });
 
-    return user;
+    const normalized = normalizeAdminUser(user);
+    if (!hasPassword) {
+      return Object.assign(normalized, {
+        activationToken,
+        activationLink,
+        smsSent: false,
+      });
+    }
+
+    return normalized;
+  }
+
+  /**
+   * Sends the activation link SMS directly to the user's phone via the Tunisian SMS provider.
+   */
+  async sendActivationSms(
+    actor: AdminActor,
+    id: string,
+    payload?: AdminSendActivationSmsPayload,
+  ): Promise<AdminSendActivationSmsResult> {
+    try {
+      await this.assertCanManage(actor, id);
+
+      if (!this.smsClient) {
+        throw serviceUnavailable('SMS service is not configured', 'sms_service_not_configured');
+      }
+
+      const target = await this.prisma.user.findUnique({
+        where: { id },
+        select: { id: true, name: true, phone: true, status: true },
+      });
+      if (!target) {
+        throw notFound('user not found');
+      }
+      if (target.status === UserStatus.BANNED) {
+        throw badRequest('cannot send SMS to a banned user', 'user_banned');
+      }
+      if (!target.phone) {
+        throw badRequest('user does not have a phone number', 'missing_phone');
+      }
+
+      let messageToSend = payload?.message?.trim();
+      if (!messageToSend) {
+        let link = payload?.activationLink?.trim();
+        if (!link) {
+          const regen = await this.regenerateActivationToken(actor, id);
+          link = regen.activationLink;
+        }
+        messageToSend = `Matchy+: Bonjour ${target.name}, activez votre compte ici: ${link}`;
+      }
+
+      messageToSend = toGsm7Friendly(messageToSend);
+
+      try {
+        await this.smsClient.sendSms(target.phone, messageToSend);
+        return { success: true, phone: target.phone };
+      } catch {
+        throw badGateway('failed to deliver SMS', 'sms_delivery_failed');
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Generates a fresh activation token and link for a pre-registered lead who has not yet
+   * activated their account, or whose initial activation link expired.
+   */
+  async regenerateActivationToken(
+    actor: AdminActor,
+    id: string,
+  ): Promise<AdminRegenerateActivationResult> {
+    try {
+      await this.assertCanManage(actor, id);
+
+      const target = await this.prisma.user.findUnique({
+        where: { id },
+        select: { id: true, status: true },
+      });
+      if (!target) {
+        throw notFound('user not found');
+      }
+      if (target.status === UserStatus.BANNED) {
+        throw badRequest('cannot regenerate activation for a banned user', 'user_banned');
+      }
+
+      const activationToken = generateActivationToken();
+      const activationTokenHash = hashActivationToken(activationToken);
+      const expiresAt = computeActivationExpiry();
+      const activationLink = buildActivationLink(activationToken);
+
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          must_change_password: true,
+          activation_token_hash: activationTokenHash,
+          activation_token_expires_at: expiresAt,
+        },
+      });
+
+      return {
+        activationToken,
+        activationLink,
+        expiresAt: expiresAt.toISOString(),
+      };
+    } catch (err) {
+      throw err;
+    }
   }
 
   /** Same hierarchy as the writes: an admin only opens a profile they could act on. */
@@ -350,10 +552,11 @@ export class AdminService {
     await this.assertCanManage(actor, id);
 
     try {
-      return await this.prisma.user.findUniqueOrThrow({
+      const user = await this.prisma.user.findUniqueOrThrow({
         where: { id },
         select: adminUserSelect,
       });
+      return normalizeAdminUser(user);
     } catch (err) {
       throw notFound('user not found');
     }
@@ -418,12 +621,21 @@ export class AdminService {
       }
     }
 
+    if (payload.category !== undefined) {
+      data.sector = payload.category;
+      data.activity_sector = payload.category;
+    }
+    if (payload.bio !== undefined) {
+      data.looking_for = payload.bio;
+    }
+
     try {
-      return await this.prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { id },
         data,
         select: adminUserSelect,
       });
+      return normalizeAdminUser(user);
     } catch (err) {
       throw notFound('user not found');
     }
@@ -433,11 +645,12 @@ export class AdminService {
     await this.assertCanManage(actor, id);
 
     try {
-      return await this.prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { id },
         data: { status },
         select: adminUserSelect,
       });
+      return normalizeAdminUser(user);
     } catch (err) {
       throw notFound('user not found');
     }
@@ -528,13 +741,22 @@ export class AdminService {
     const [users, plans, matchesThisMonth] = await Promise.all([
       this.prisma.user.findMany({
         where: { role: Role.USER },
-        select: { category: true, city: true, matches: true, plan: true, create_at: true },
+        select: {
+          category: true,
+          sector: true,
+          industry: true,
+          activity_sector: true,
+          city: true,
+          matches: true,
+          plan: true,
+          create_at: true,
+        },
       }),
       this.prisma.plan.findMany({ orderBy: { sort_order: 'asc' } }),
       this.prisma.match.count({ where: { matched_at: { gte: startOfMonth } } }),
     ]);
 
-    const tally = <T extends string>(rows: (T | null)[]) => {
+    const tally = <T extends string>(rows: (T | null | undefined)[]) => {
       const counts = new Map<string, number>();
       rows.forEach((row) => {
         const key = row?.trim();
@@ -544,12 +766,12 @@ export class AdminService {
       return counts;
     };
 
-    const categoryCounts = tally(users.map((user) => user.category));
+    const categoryCounts = tally(users.map((user) => normalizeAdminUser(user).category));
     const cityCounts = tally(users.map((user) => user.city));
 
     const matchesByCategory = new Map<string, number>();
     users.forEach((user) => {
-      const key = user.category?.trim();
+      const key = normalizeAdminUser(user).category?.trim();
       if (!key) return;
       matchesByCategory.set(key, (matchesByCategory.get(key) ?? 0) + user.matches);
     });

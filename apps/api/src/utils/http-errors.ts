@@ -37,6 +37,16 @@ export function tooManyRequests(message: string, code?: string): HttpError {
   return httpError(429, message, code);
 }
 
+/** Upstream service (e.g. SMS provider, email gateway) failed. */
+export function badGateway(message: string, code?: string): HttpError {
+  return httpError(502, message, code);
+}
+
+/** A required external service or feature is unavailable or not configured. */
+export function serviceUnavailable(message: string, code?: string): HttpError {
+  return httpError(503, message, code);
+}
+
 export function insufficientPrivileges(): Error & { statusCode?: number } {
   return forbidden('insufficient privileges');
 }

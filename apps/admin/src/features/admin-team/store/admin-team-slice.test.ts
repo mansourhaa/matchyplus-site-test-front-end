@@ -50,7 +50,10 @@ describe('admin-team-slice fetchAdminTeam', () => {
   });
 
   it('surfaces an error message on failure', async () => {
-    vi.spyOn(adminApi, 'get').mockRejectedValue(new Error('insufficient privileges'));
+    vi.spyOn(adminApi, 'get').mockRejectedValue({
+      isAxiosError: true,
+      response: { data: { message: 'insufficient privileges' } },
+    });
     const store = buildStore();
 
     await store.dispatch(fetchAdminTeam({ search: '' }));

@@ -5,6 +5,8 @@ import { config } from '../../../config.js';
 import { RATE_LIMIT_STRICT } from '../../../constants.js';
 import { handleProviderOAuthCallback } from '../../../lib/oauth-callback-handler.js';
 import {
+  activationConfirmSchema,
+  activationPreviewSchema,
   adminLoginSchema,
   adminLogoutSchema,
   adminRefreshSchema,
@@ -28,6 +30,8 @@ import { OAuthAuthenticationService } from '../../../services/oauth-authenticati
 import { PhoneAuthenticationService } from '../../../services/phone-authentication.js';
 import { TokenService } from '../../../services/token.js';
 import {
+  ActivationConfirmPayload,
+  ActivationPreviewQuery,
   ChangePasswordPayload,
   ConfirmPasswordResetPayload,
   ConfirmPhoneLinkPayload,
@@ -85,6 +89,8 @@ const ERROR_STATUS: Record<
   phone_not_verified: 'forbidden',
   account_banned: 'forbidden',
   account_inactive: 'forbidden',
+  account_activation_required: 'forbidden',
+  invalid_activation_token: 'badRequest',
   phone_already_registered: 'conflict',
   phone_not_found: 'notFound',
   user_not_found: 'notFound',
@@ -383,6 +389,37 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         const data = await phoneAuthService.registerWithPhone(request.body);
         setMemberSessionCookies(reply, data);
         return reply.code(201).send(memberSessionResponse(request, data, data.user));
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
+  fastify.get<{ Querystring: ActivationPreviewQuery }>(
+    '/activation/preview',
+    {
+      schema: activationPreviewSchema,
+    },
+    async (request, reply) => {
+      try {
+        const data = await phoneAuthService.getActivationPreview(request.query.token);
+        return reply.code(200).send(data);
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
+  fastify.post<{ Body: ActivationConfirmPayload }>(
+    '/activation/confirm',
+    {
+      schema: activationConfirmSchema,
+    },
+    async (request, reply) => {
+      try {
+        const data = await phoneAuthService.confirmActivation(request.body);
+        setMemberSessionCookies(reply, data);
+        return reply.code(200).send(memberSessionResponse(request, data, data.user));
       } catch (err) {
         throw mapError(err as Error, request);
       }

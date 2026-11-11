@@ -297,9 +297,22 @@ export function AdminUsersSection({
             </div>
 
             <div>
-              <p style={{ fontSize: '12px', color: '#555' }}>{user.job ?? 'Membre Matchy+'}</p>
+              <p style={{ fontSize: '12px', color: '#555' }}>{user.job || '—'}</p>
               <div className="mt-0.5 flex flex-wrap gap-1">
-                {user.interests.slice(0, 2).map((tag) => (
+                {user.category && (
+                  <span
+                    className="rounded px-1.5"
+                    style={{
+                      fontSize: '10px',
+                      background: '#E8F7F3',
+                      color: '#61BCA6',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {user.category}
+                  </span>
+                )}
+                {user.interests.slice(0, user.category ? 1 : 2).map((tag) => (
                   <span
                     key={tag}
                     className="rounded px-1.5"
@@ -328,13 +341,30 @@ export function AdminUsersSection({
               {user.plan === 'PREMIUM_PLUS' ? 'P+' : PLAN_LABEL[user.plan]}
             </span>
 
-            <div className="flex items-center gap-1.5">
-              <div
-                className="h-2 w-2 rounded-full"
-                style={{ background: STATUS_COLOR[user.status] }}
-              />
-              <span style={{ fontSize: '12px', color: '#555' }}>{STATUS_LABEL[user.status]}</span>
-            </div>
+            {user.status === 'BANNED' ? (
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: STATUS_COLOR.BANNED }}
+                />
+                <span style={{ fontSize: '12px', color: '#555' }}>{STATUS_LABEL.BANNED}</span>
+              </div>
+            ) : user.must_change_password ? (
+              <div className="flex items-center gap-1.5">
+                <div className="h-2 w-2 rounded-full" style={{ background: '#D97706' }} />
+                <span style={{ fontSize: '12px', color: '#D97706', fontWeight: 600 }}>
+                  En attente
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: STATUS_COLOR[user.status] }}
+                />
+                <span style={{ fontSize: '12px', color: '#555' }}>{STATUS_LABEL[user.status]}</span>
+              </div>
+            )}
 
             <div className="flex items-center gap-1">
               <Star size={12} color="#F5A623" fill="#F5A623" />

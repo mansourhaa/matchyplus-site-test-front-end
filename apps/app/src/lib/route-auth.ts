@@ -16,6 +16,7 @@ export const NEUTRAL_ROUTES = [
   '/reset-password',
   '/privacy-policy',
   '/terms-of-service',
+  '/activer',
 ] as const;
 
 /**
@@ -55,7 +56,7 @@ export function requiresAuthentication(pathname: string): boolean {
  *   probe only adds noise. Cap with Preferences tokens is handled separately.
  * - `/oauth-callback`: session is established by exchange, not by a prior probe.
  */
-const SKIP_BOOTSTRAP_AUTHCHECK_PREFIXES = ['/connexion', '/oauth-callback'] as const;
+const SKIP_BOOTSTRAP_AUTHCHECK_PREFIXES = ['/connexion', '/oauth-callback', '/activer'] as const;
 
 export function skipsBootstrapAuthCheck(pathname: string): boolean {
   return SKIP_BOOTSTRAP_AUTHCHECK_PREFIXES.some(

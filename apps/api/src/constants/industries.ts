@@ -17,6 +17,19 @@ export const INDUSTRY_KEYS = [
 
 export type IndustryKey = (typeof INDUSTRY_KEYS)[number];
 
+export const INDUSTRY_LABELS: Record<IndustryKey, string> = {
+  commerce_retail: 'Commerce & Retail',
+  professional_services: 'Services professionnels & Conseil',
+  tech_digital: 'Technologie & Digital',
+  finance_insurance: 'Finance & Assurance',
+  industry_production: 'Industrie & Production',
+  agriculture_food: 'Agriculture & Agroalimentaire',
+  health_wellness: 'Santé & Bien-être',
+  education_training: 'Éducation & Formation',
+  transport_logistics: 'Transport & Logistique',
+  local_services_trades: 'Services de proximité & Métiers',
+};
+
 /**
  * Internal matching keywords for each industry, per language. Never shown to members: the app only
  * displays the industry name.

@@ -9,15 +9,23 @@ import type { AdminAuthState, AdminLoginInput, AdminPasswordChangeInput } from '
 
 const isClient = typeof window !== 'undefined';
 
+export function readPersistedAdmin(): AdminAuthState['admin'] {
+  if (!isClient) return null;
+  try {
+    const raw = sessionStorage.getItem(ADMIN_AUTH_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    sessionStorage.removeItem(ADMIN_AUTH_USER_KEY);
+    return null;
+  }
+}
+
 const initialState: AdminAuthState = {
   loading: false,
   error: null,
   // Only the profile is restored: the session token is an HttpOnly cookie this code cannot
   // read, so "logged in" is tracked by the presence of the admin rather than of a token.
-  admin:
-    isClient && sessionStorage.getItem(ADMIN_AUTH_USER_KEY)
-      ? JSON.parse(sessionStorage.getItem(ADMIN_AUTH_USER_KEY)!)
-      : null,
+  admin: readPersistedAdmin(),
   loginAt: null,
   passwordChangeLoading: false,
   passwordChangeError: null,

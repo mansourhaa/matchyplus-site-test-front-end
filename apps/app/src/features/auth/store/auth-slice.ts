@@ -10,6 +10,7 @@ import type {
   AuthState,
   AuthUser,
   ChangePasswordInput,
+  ConfirmActivationInput,
   ConfirmPasswordResetInput,
   ConfirmPhoneLinkInput,
   DeleteAccountInput,
@@ -119,6 +120,25 @@ export const registerPhone = createAsyncThunk(
       // Re-thrown as the API's own code (e.g. phone_already_registered) so the
       // identity step can show a specific message instead of a generic failure.
       throw new Error(getApiErrorCode(error) ?? 'register_phone_failed');
+    }
+  },
+);
+
+export const confirmActivation = createAsyncThunk(
+  'auth/confirmActivation',
+  async ({ token, password }: ConfirmActivationInput) => {
+    try {
+      const response = await api.post<SessionResponse>('/auth/activation/confirm', {
+        token,
+        password,
+      });
+      await requireNativeBodyTokens(response.data);
+      return response.data;
+    } catch (error) {
+      if (error instanceof Error && error.message === 'mobile_session_unavailable') {
+        throw error;
+      }
+      throw new Error(getApiErrorCode(error) ?? 'activation_failed');
     }
   },
 );
@@ -371,6 +391,18 @@ const authSlice = createSlice({
       .addCase(registerPhone.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to register';
+      })
+      .addCase(confirmActivation.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(confirmActivation.fulfilled, (state, action: PayloadAction<SessionResponse>) => {
+        state.loading = false;
+        applySession(state, action.payload.user);
+      })
+      .addCase(confirmActivation.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'activation_failed';
       })
       .addCase(
         fetchCurrentUser.fulfilled,

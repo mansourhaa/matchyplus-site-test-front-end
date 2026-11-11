@@ -18,6 +18,7 @@ export async function buildTestApp(
   opts: FastifyServerOptions = {},
 ): Promise<FastifyInstance> {
   const app = fastify({
+    bodyLimit: 15 * 1024 * 1024,
     logger: false,
     pluginTimeout: 20000,
     trustProxy: true,

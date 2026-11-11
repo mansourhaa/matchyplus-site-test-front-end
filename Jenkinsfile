@@ -561,7 +561,7 @@ pipeline {
         sh """
           docker build --pull -t ${REGISTRY_REPO}:api-${IMAGE_TAG} -f apps/api/Dockerfile .
           docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} --build-arg NEXT_PUBLIC_LANDING_URL=${FRONTEND_LANDING_URL} -t ${REGISTRY_REPO}:app-${IMAGE_TAG} -f apps/app/Dockerfile .
-          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
+          docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} --build-arg NEXT_PUBLIC_APP_URL=${FRONTEND_APP_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
           docker build --pull --build-arg NEXT_PUBLIC_APP_URL=${FRONTEND_APP_URL} --build-arg NEXT_PUBLIC_COOKIEYES_SRC=${env.ANALYTICS_COOKIEYES_SRC ?: ''} --build-arg NEXT_PUBLIC_GA_MEASUREMENT_ID=${env.ANALYTICS_GA_MEASUREMENT_ID ?: ''} --build-arg NEXT_PUBLIC_CLARITY_PROJECT_ID=${env.ANALYTICS_CLARITY_PROJECT_ID ?: ''} -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
           docker build --pull -t ${REGISTRY_REPO}:ai-${IMAGE_TAG} -f apps/ai/Dockerfile apps/ai
         """

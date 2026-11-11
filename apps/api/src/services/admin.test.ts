@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AdminService } from './admin.js';
+import type { AdminActor } from '../types/admin.js';
+import { AdminService, normalizeAdminUser } from './admin.js';
 
 function createMockPrisma() {
   return {
@@ -43,7 +44,7 @@ describe('AdminService', () => {
       } as never,
     );
 
-    const { where } = prisma.user.findMany.mock.calls[0][0];
+    const { where } = prisma.user.findMany.mock.calls[0]![0];
     expect(where.status).toBe('BANNED');
     expect(where.plan).toBe('FREE');
     expect(where.OR).toEqual([
@@ -66,7 +67,7 @@ describe('AdminService', () => {
       } as never,
     );
 
-    expect(prisma.user.findMany.mock.calls[0][0].where.category).toBe('Électricité');
+    expect(prisma.user.findMany.mock.calls[0]![0].where.category).toBe('Électricité');
   });
 
   it('never selects the password column', async () => {
@@ -77,7 +78,7 @@ describe('AdminService', () => {
     const service = new AdminService({ prisma: prisma as never });
     await service.listUsers({ id: 'sa1', role: 'SUPER_ADMIN' } as never, {});
 
-    const { select } = prisma.user.findMany.mock.calls[0][0];
+    const { select } = prisma.user.findMany.mock.calls[0]![0];
     expect(select).not.toHaveProperty('password');
     expect(select.email).toBe(true);
   });
@@ -92,10 +93,10 @@ describe('AdminService', () => {
       const service = new AdminService({ prisma: prisma as never });
       await service.listUsers({ id: 'a1', role } as never, {});
 
-      const { where } = prisma.user.findMany.mock.calls[0][0];
+      const { where } = prisma.user.findMany.mock.calls[0]![0];
       expect(where.role).toBe('USER');
       // The count has to be scoped the same way or pagination advertises hidden rows.
-      expect(prisma.user.count.mock.calls[0][0].where.role).toBe('USER');
+      expect(prisma.user.count.mock.calls[0]![0].where.role).toBe('USER');
     },
   );
 
@@ -224,7 +225,7 @@ describe('AdminService', () => {
       plan: 'PREMIUM_PLUS',
     } as never);
 
-    const { data } = prisma.user.update.mock.calls[0][0];
+    const { data } = prisma.user.update.mock.calls[0]![0];
     expect(data).toEqual({ city: 'Tunis' });
   });
 
@@ -280,7 +281,7 @@ describe('AdminService', () => {
       'BANNED' as never,
     );
 
-    const { where, data } = prisma.user.update.mock.calls[0][0];
+    const { where, data } = prisma.user.update.mock.calls[0]![0];
     expect(where).toEqual({ id: 'u1' });
     expect(data).toEqual({ status: 'BANNED' });
   });
@@ -400,9 +401,9 @@ describe('AdminService', () => {
     const service = new AdminService({ prisma: prisma as never });
     await service.getStats();
 
-    expect(prisma.user.count.mock.calls[0][0].where.role).toBe('USER');
-    expect(prisma.user.groupBy.mock.calls[0][0].where.role).toBe('USER');
-    expect(prisma.user.groupBy.mock.calls[1][0].where.role).toBe('USER');
+    expect(prisma.user.count.mock.calls[0]![0].where.role).toBe('USER');
+    expect(prisma.user.groupBy.mock.calls[0]![0].where.role).toBe('USER');
+    expect(prisma.user.groupBy.mock.calls[1]![0].where.role).toBe('USER');
   });
 });
 
@@ -430,7 +431,7 @@ describe('AdminService createUser', () => {
     const result = await service.createUser(validPayload());
 
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { phone: '+21620123456' } });
-    const data = prisma.user.create.mock.calls[0][0].data;
+    const data = prisma.user.create.mock.calls[0]![0].data;
     expect(data.phone).toBe('+21620123456');
     expect(data.auth_provider).toBe('phone');
     expect(data.phone_verified).toBe(true);
@@ -580,6 +581,29 @@ describe('AdminService createUser', () => {
     });
   });
 
+  it('allows creating a user without a password, generating an activation token and link without automatic SMS', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'u-lead' });
+    const smsClient = { sendSms: vi.fn() };
+
+    const service = new AdminService({ prisma: prisma as never, smsClient: smsClient as never });
+    const payload = validPayload({ password: '' });
+    const result = await service.createUser(payload);
+
+    const data = prisma.user.create.mock.calls[0]![0].data;
+    expect(data.password).toBeNull();
+    expect(data.must_change_password).toBe(true);
+    expect(data.status).toBe('INACTIVE');
+    expect(data.activation_token_hash).toBeDefined();
+    expect(data.activation_token_expires_at).toBeInstanceOf(Date);
+    expect(smsClient.sendSms).not.toHaveBeenCalled();
+    expect(result.id).toBe('u-lead');
+    expect(result.activationToken).toBeDefined();
+    expect(result.activationLink).toContain('/activer?token=');
+    expect(result.smsSent).toBe(false);
+  });
+
   it('rejects an image that is already a stored media path', async () => {
     const prisma = createMockPrisma();
     prisma.user.findUnique.mockResolvedValue(null);
@@ -591,6 +615,124 @@ describe('AdminService createUser', () => {
       ),
     ).rejects.toMatchObject({
       message: 'image must be a newly uploaded photo, not a stored path',
+      statusCode: 400,
+    });
+  });
+});
+
+describe('AdminService regenerateActivationToken', () => {
+  it('regenerates an activation link and token for an existing member', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'u1', role: 'USER' }) // for assertCanManage target
+      .mockResolvedValueOnce({ id: 'u1', status: 'ACTIVE' }); // for target lookup
+    prisma.user.update.mockResolvedValue({ id: 'u1' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    const result = await service.regenerateActivationToken(actor, 'u1');
+
+    expect(result.activationToken).toBeDefined();
+    expect(result.activationLink).toContain('/activer?token=');
+    expect(result.expiresAt).toBeDefined();
+
+    expect(prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'u1' },
+        data: expect.objectContaining({
+          must_change_password: true,
+          activation_token_hash: expect.any(String),
+          activation_token_expires_at: expect.any(Date),
+        }),
+      }),
+    );
+  });
+
+  it('refuses to regenerate activation for a banned user', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'u1', role: 'USER' })
+      .mockResolvedValueOnce({ id: 'u1', status: 'BANNED' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    await expect(service.regenerateActivationToken(actor, 'u1')).rejects.toMatchObject({
+      message: 'cannot regenerate activation for a banned user',
+      statusCode: 400,
+    });
+  });
+});
+
+describe('AdminService sendActivationSms', () => {
+  it('sends activation SMS to user phone with provided activation link', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'u1', role: 'USER' }) // for assertCanManage
+      .mockResolvedValueOnce({ id: 'u1', name: 'Karim Trabelsi', phone: '+21620123456', status: 'ACTIVE' });
+
+    const smsClient = { sendSms: vi.fn().mockResolvedValue(undefined) };
+    const service = new AdminService({ prisma: prisma as never, smsClient: smsClient as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    const result = await service.sendActivationSms(actor, 'u1', {
+      activationLink: 'http://localhost:3000/activer?token=abc',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.phone).toBe('+21620123456');
+    expect(smsClient.sendSms).toHaveBeenCalledWith(
+      '+21620123456',
+      expect.stringContaining('http://localhost:3000/activer?token=abc'),
+    );
+  });
+
+  it('sanitizes accented characters to GSM-7 friendly characters before sending', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'u1', role: 'USER' })
+      .mockResolvedValueOnce({ id: 'u1', name: 'Aimé', phone: '+21620123456', status: 'INACTIVE' });
+
+    const smsClient = { sendSms: vi.fn().mockResolvedValue(undefined) };
+    const service = new AdminService({ prisma: prisma as never, smsClient: smsClient as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    await service.sendActivationSms(actor, 'u1', {
+      message: 'Votre profil sur Matchy+ a été préparé «super» !',
+    });
+
+    expect(smsClient.sendSms).toHaveBeenCalledWith(
+      '+21620123456',
+      'Votre profil sur Matchy+ a ete prepare "super" !',
+    );
+  });
+
+  it('fails with serviceUnavailable when smsClient is not configured', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValueOnce({ id: 'u1', role: 'USER' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    await expect(service.sendActivationSms(actor, 'u1')).rejects.toMatchObject({
+      message: 'SMS service is not configured',
+      statusCode: 503,
+    });
+  });
+
+  it('fails when user is banned', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'u1', role: 'USER' })
+      .mockResolvedValueOnce({ id: 'u1', name: 'Karim', phone: '+21620123456', status: 'BANNED' });
+
+    const smsClient = { sendSms: vi.fn().mockResolvedValue(undefined) };
+    const service = new AdminService({ prisma: prisma as never, smsClient: smsClient as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    await expect(service.sendActivationSms(actor, 'u1')).rejects.toMatchObject({
+      message: 'cannot send SMS to a banned user',
       statusCode: 400,
     });
   });
@@ -618,10 +760,10 @@ describe('AdminService listTeamMembers', () => {
     const service = new AdminService({ prisma: prisma as never });
     await service.listTeamMembers({ id: 'a1', role } as never, {});
 
-    const { where, select } = prisma.user.findMany.mock.calls[0][0];
+    const { where, select } = prisma.user.findMany.mock.calls[0]![0];
     expect(where.role.in).toEqual(visible);
     expect(select).not.toHaveProperty('password');
-    expect(prisma.user.count.mock.calls[0][0].where.role.in).toEqual(visible);
+    expect(prisma.user.count.mock.calls[0]![0].where.role.in).toEqual(visible);
   });
 
   it('applies a case-insensitive name/email search', async () => {
@@ -634,7 +776,7 @@ describe('AdminService listTeamMembers', () => {
       search: 'sami',
     });
 
-    const { where } = prisma.user.findMany.mock.calls[0][0];
+    const { where } = prisma.user.findMany.mock.calls[0]![0];
     expect(where.OR).toEqual([
       { name: { contains: 'sami', mode: 'insensitive' } },
       { email: { contains: 'sami', mode: 'insensitive' } },
@@ -691,7 +833,7 @@ describe('AdminService createTeamMember', () => {
       validPayload(),
     );
 
-    const { data } = prisma.user.create.mock.calls[0][0];
+    const { data } = prisma.user.create.mock.calls[0]![0];
     expect(data.email).toBe('sami@matchyplus.tn');
     expect(data.role).toBe('SUPPORT');
     expect(data.status).toBe('ACTIVE');
@@ -712,7 +854,7 @@ describe('AdminService createTeamMember', () => {
       validPayload({ role: 'MODERATOR' }),
     );
 
-    expect(prisma.user.create.mock.calls[0][0].data.role).toBe('MODERATOR');
+    expect(prisma.user.create.mock.calls[0]![0].data.role).toBe('MODERATOR');
   });
 
   it('rejects an email that is already registered', async () => {
@@ -796,7 +938,7 @@ describe('AdminService plan management', () => {
       price: 12.9,
     });
 
-    expect(prisma.plan.update.mock.calls[0][0]).toMatchObject({
+    expect(prisma.plan.update.mock.calls[0]![0]).toMatchObject({
       where: { id: 'PREMIUM' },
       data: { price: 12.9 },
     });
@@ -990,7 +1132,7 @@ describe('AdminService analytics', () => {
 
     await new AdminService({ prisma: prisma as never }).getAnalytics();
 
-    expect(prisma.user.findMany.mock.calls[0][0].where).toEqual({ role: 'USER' });
+    expect(prisma.user.findMany.mock.calls[0]![0].where).toEqual({ role: 'USER' });
   });
 });
 
@@ -1035,9 +1177,70 @@ describe('AdminService password change', () => {
       newPassword: 'newpass2026',
     });
 
-    const stored = prisma.user.update.mock.calls[0][0].data.password;
+    const stored = prisma.user.update.mock.calls[0]![0].data.password;
     expect(stored).not.toBe('newpass2026');
     const bcrypt = await import('bcryptjs');
     await expect(bcrypt.compare('newpass2026', stored)).resolves.toBe(true);
+  });
+
+  describe('normalizeAdminUser', () => {
+    it('falls back to sector, industry label, or activity sector when category is empty', () => {
+      expect(
+        normalizeAdminUser({
+          id: 'u1',
+          category: null,
+          sector: 'Développement Web',
+        }),
+      ).toMatchObject({
+        category: 'Développement Web',
+      });
+
+      expect(
+        normalizeAdminUser({
+          id: 'u2',
+          category: null,
+          sector: null,
+          industry: 'tech_digital',
+        }),
+      ).toMatchObject({
+        category: 'Technologie & Digital',
+      });
+
+      expect(
+        normalizeAdminUser({
+          id: 'u3',
+          category: null,
+          sector: null,
+          industry: null,
+          activity_sector: 'Artisanat',
+        }),
+      ).toMatchObject({
+        category: 'Artisanat',
+      });
+    });
+
+    it('falls back to looking_for when bio is empty', () => {
+      expect(
+        normalizeAdminUser({
+          id: 'u1',
+          bio: null,
+          looking_for: 'Cherche partenaires SaaS',
+        }),
+      ).toMatchObject({
+        bio: 'Cherche partenaires SaaS',
+      });
+    });
+
+    it('falls back to service_type when job is empty', () => {
+      expect(
+        normalizeAdminUser({
+          id: 'u1',
+          job: null,
+          service_type: 'Plombier',
+        }),
+      ).toMatchObject({
+        job: 'Plombier',
+      });
+    });
   });
 });

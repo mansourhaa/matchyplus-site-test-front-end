@@ -102,3 +102,19 @@ export interface DeleteAccountInput {
 export interface ExchangeOAuthCodeInput {
   code: string;
 }
+
+export interface ActivationPreviewResponse {
+  id: string;
+  name: string;
+  phone: string;
+  image?: string | null;
+  job: string | null;
+  city: string | null;
+  category: string | null;
+  profileType: string | null;
+}
+
+export interface ConfirmActivationInput {
+  token: string;
+  password: string;
+}
