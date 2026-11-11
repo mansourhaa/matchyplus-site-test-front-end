@@ -145,11 +145,19 @@ describe('AdminAddUserModal', () => {
     expect(screen.getByText("Message SMS d'invitation")).toBeInTheDocument();
     expect(screen.queryByText(/whatsapp/i)).not.toBeInTheDocument();
 
-    const smsLink = screen.getByRole('link', { name: /envoyer par sms/i });
-    expect(smsLink).toHaveAttribute(
-      'href',
-      expect.stringContaining('sms:20123456?body='),
-    );
+    const smsButton = screen.getByRole('button', { name: /envoyer par sms/i });
+    expect(smsButton).toBeInTheDocument();
+
+    fireEvent.click(smsButton);
+    await waitFor(() => {
+      expect(post).toHaveBeenCalledWith(
+        '/admin/users/u-lead/send-activation-sms',
+        expect.objectContaining({
+          activationLink: 'http://localhost:3000/activer?token=test-tok',
+        }),
+      );
+    });
+    expect(await screen.findByText('SMS envoyé avec succès !')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Terminer' }));
     expect(onClose).toHaveBeenCalledTimes(1);

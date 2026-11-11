@@ -185,6 +185,7 @@ export const adminCreateUserSchema = {
         user: adminUser,
         activationToken: { type: 'string' },
         activationLink: { type: 'string' },
+        smsSent: { type: 'boolean' },
       },
     },
     ...errorResponses,
@@ -209,6 +210,38 @@ export const adminRegenerateActivationSchema = {
         activationToken: { type: 'string' },
         activationLink: { type: 'string' },
         expiresAt: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const adminSendActivationSmsSchema = {
+  tags: ['admin'],
+  summary: 'Send activation link SMS to user using Tunisian SMS provider',
+  security: [{ http: [] }],
+  params: {
+    type: 'object',
+    required: ['id'],
+    additionalProperties: false,
+    properties: { id: { type: 'string' } },
+  },
+  body: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      message: { type: 'string', minLength: 1, maxLength: 500 },
+      activationLink: { type: 'string', minLength: 1 },
+    },
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      required: ['success', 'phone'],
+      properties: {
+        success: { type: 'boolean' },
+        phone: { type: 'string' },
       },
     },
     ...errorResponses,

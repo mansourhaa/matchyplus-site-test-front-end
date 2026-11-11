@@ -660,6 +660,59 @@ describe('AdminService regenerateActivationToken', () => {
   });
 });
 
+describe('AdminService sendActivationSms', () => {
+  it('sends activation SMS to user phone with provided activation link', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'u1', role: 'USER' }) // for assertCanManage
+      .mockResolvedValueOnce({ id: 'u1', name: 'Karim Trabelsi', phone: '+21620123456', status: 'ACTIVE' });
+
+    const smsClient = { sendSms: vi.fn().mockResolvedValue(undefined) };
+    const service = new AdminService({ prisma: prisma as never, smsClient: smsClient as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    const result = await service.sendActivationSms(actor, 'u1', {
+      activationLink: 'http://localhost:3000/activer?token=abc',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.phone).toBe('+21620123456');
+    expect(smsClient.sendSms).toHaveBeenCalledWith(
+      '+21620123456',
+      expect.stringContaining('http://localhost:3000/activer?token=abc'),
+    );
+  });
+
+  it('fails with serviceUnavailable when smsClient is not configured', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique.mockResolvedValueOnce({ id: 'u1', role: 'USER' });
+
+    const service = new AdminService({ prisma: prisma as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    await expect(service.sendActivationSms(actor, 'u1')).rejects.toMatchObject({
+      message: 'SMS service is not configured',
+      statusCode: 503,
+    });
+  });
+
+  it('fails when user is banned', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'u1', role: 'USER' })
+      .mockResolvedValueOnce({ id: 'u1', name: 'Karim', phone: '+21620123456', status: 'BANNED' });
+
+    const smsClient = { sendSms: vi.fn().mockResolvedValue(undefined) };
+    const service = new AdminService({ prisma: prisma as never, smsClient: smsClient as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    await expect(service.sendActivationSms(actor, 'u1')).rejects.toMatchObject({
+      message: 'cannot send SMS to a banned user',
+      statusCode: 400,
+    });
+  });
+});
+
 describe('AdminService listTeamMembers', () => {
   it('refuses a SUPPORT actor outright, without touching the database', async () => {
     const prisma = createMockPrisma();

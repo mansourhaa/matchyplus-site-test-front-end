@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { Prisma, PrismaClient, Role, UserPlan, UserStatus } from '@saas-boilerplate/types';
 
 import { INDUSTRY_LABELS, IndustryKey } from '../constants/industries.js';
+import { SmsClient } from '../lib/sms.js';
 import { normalizePhoneForAuth } from '../lib/phone.js';
 import {
   AdminActor,
@@ -14,6 +15,8 @@ import {
   AdminListTeamQuery,
   AdminListUsersQuery,
   AdminRegenerateActivationResult,
+  AdminSendActivationSmsPayload,
+  AdminSendActivationSmsResult,
   AdminUpdatePlanPayload,
   AdminUpdateUserPayload,
   AdminUserStatsResult,
@@ -27,7 +30,14 @@ import {
   generateActivationToken,
   hashActivationToken,
 } from '../utils/activation-token.js';
-import { badRequest, forbidden, insufficientPrivileges, notFound } from '../utils/http-errors.js';
+import {
+  badGateway,
+  badRequest,
+  forbidden,
+  insufficientPrivileges,
+  notFound,
+  serviceUnavailable,
+} from '../utils/http-errors.js';
 import { filenameFromStoredPath, isStoredMediaPath } from '../utils/media-storage.js';
 import { isPasswordPolicySatisfied } from '../utils/password-policy.js';
 import { assertMinimumRole, outranks, rolesBelow } from '../utils/roles.js';
@@ -170,13 +180,19 @@ const editableFields = [
   'status',
 ] as const;
 
+export type AdminServiceOptions = AbstractServiceOptions & {
+  smsClient?: SmsClient;
+};
+
 export class AdminService {
   prisma: PrismaClient;
   tokenService: TokenService;
+  smsClient?: SmsClient;
 
-  constructor(options: AbstractServiceOptions) {
+  constructor(options: AdminServiceOptions) {
     this.prisma = options.prisma;
     this.tokenService = new TokenService({ prisma: options.prisma });
+    this.smsClient = options.smsClient;
   }
 
   async listUsers(actor: AdminActor, query: AdminListUsersQuery) {
@@ -414,13 +430,75 @@ export class AdminService {
 
     const normalized = normalizeAdminUser(user);
     if (!hasPassword) {
+      let smsSent = false;
+      if (activationLink && this.smsClient && phone) {
+        try {
+          const smsMessage = `Matchy+: Bonjour ${name}, votre compte a ete cree ! Activez votre profil ici : ${activationLink}`;
+          await this.smsClient.sendSms(phone, smsMessage);
+          smsSent = true;
+        } catch {
+          smsSent = false;
+        }
+      }
+
       return Object.assign(normalized, {
         activationToken,
         activationLink,
+        smsSent,
       });
     }
 
     return normalized;
+  }
+
+  /**
+   * Sends the activation link SMS directly to the user's phone via the Tunisian SMS provider.
+   */
+  async sendActivationSms(
+    actor: AdminActor,
+    id: string,
+    payload?: AdminSendActivationSmsPayload,
+  ): Promise<AdminSendActivationSmsResult> {
+    try {
+      await this.assertCanManage(actor, id);
+
+      if (!this.smsClient) {
+        throw serviceUnavailable('SMS service is not configured', 'sms_service_not_configured');
+      }
+
+      const target = await this.prisma.user.findUnique({
+        where: { id },
+        select: { id: true, name: true, phone: true, status: true },
+      });
+      if (!target) {
+        throw notFound('user not found');
+      }
+      if (target.status === UserStatus.BANNED) {
+        throw badRequest('cannot send SMS to a banned user', 'user_banned');
+      }
+      if (!target.phone) {
+        throw badRequest('user does not have a phone number', 'missing_phone');
+      }
+
+      let messageToSend = payload?.message?.trim();
+      if (!messageToSend) {
+        let link = payload?.activationLink?.trim();
+        if (!link) {
+          const regen = await this.regenerateActivationToken(actor, id);
+          link = regen.activationLink;
+        }
+        messageToSend = `Matchy+: Bonjour ${target.name}, votre profil a ete prepare ! Activez votre compte et definissez votre mot de passe ici : ${link}`;
+      }
+
+      try {
+        await this.smsClient.sendSms(target.phone, messageToSend);
+        return { success: true, phone: target.phone };
+      } catch {
+        throw badGateway('failed to deliver SMS', 'sms_delivery_failed');
+      }
+    } catch (err) {
+      throw err;
+    }
   }
 
   /**

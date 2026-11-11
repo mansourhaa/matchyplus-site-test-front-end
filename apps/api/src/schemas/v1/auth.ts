@@ -513,6 +513,7 @@ export const activationPreviewSchema = {
         id: { type: 'string' },
         name: { type: 'string' },
         phone: { type: 'string' },
+        image: { type: 'string', nullable: true },
         job: { type: 'string', nullable: true },
         city: { type: 'string', nullable: true },
         category: { type: 'string', nullable: true },

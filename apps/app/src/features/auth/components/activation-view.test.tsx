@@ -115,7 +115,7 @@ describe('ActivationView', () => {
     fireEvent.change(passwordInput, { target: { value: 'Secret2026!' } });
     fireEvent.change(confirmInput, { target: { value: 'Secret2026!' } });
 
-    const submitBtn = screen.getByRole('button', { name: 'Activer mon compte et continuer' });
+    const submitBtn = screen.getByRole('button', { name: /activer mon compte/i });
     expect(submitBtn).toBeEnabled();
 
     fireEvent.click(submitBtn);
@@ -128,5 +128,27 @@ describe('ActivationView', () => {
     });
 
     expect(await screen.findByText('Compte activé avec succès !')).toBeInTheDocument();
+  });
+
+  it('renders uploaded avatar image when available in preview', async () => {
+    searchParamsRef.current = new URLSearchParams('token=valid-lead-token');
+    vi.mocked(api.get).mockResolvedValueOnce({
+      data: {
+        id: 'u-lead-1',
+        name: 'Sarra Ben Ali',
+        phone: '+21620123456',
+        image: 'https://example.com/avatar.jpg',
+        job: 'Développeuse Web',
+        city: 'Tunis',
+        category: 'Informatique',
+        profileType: 'INDIVIDUAL',
+      },
+    });
+
+    renderWithAuthStore(<ActivationView />);
+
+    const img = await screen.findByAltText('Sarra Ben Ali');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'https://example.com/avatar.jpg');
   });
 });

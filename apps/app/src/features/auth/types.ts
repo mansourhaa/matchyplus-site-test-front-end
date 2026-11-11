@@ -107,6 +107,7 @@ export interface ActivationPreviewResponse {
   id: string;
   name: string;
   phone: string;
+  image?: string | null;
   job: string | null;
   city: string | null;
   category: string | null;

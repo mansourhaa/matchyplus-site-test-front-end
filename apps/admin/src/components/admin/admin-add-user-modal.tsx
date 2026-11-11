@@ -23,6 +23,7 @@ import type {
   AdminManagedUser,
 } from '@/features/admin-users/types';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
+import { adminApi } from '@/lib/admin-api';
 import {
   AlertCircle,
   ArrowLeft,
@@ -31,11 +32,13 @@ import {
   Calendar,
   Camera,
   Check,
+  ChevronDown,
   Copy,
   ExternalLink,
   KeyRound,
   Layers,
   Link2,
+  Loader2,
   MessageSquare,
   Plus,
   Sparkles,
@@ -50,8 +53,37 @@ import { useRef, useState } from 'react';
 const inputClassName =
   'w-full rounded-xl border border-slate-200 bg-[#F8FAFC] px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#2F76BB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2F76BB]/20 transition-all';
 
-const selectClassName =
-  'w-full cursor-pointer rounded-xl border border-slate-200 bg-[#F8FAFC] px-3.5 py-2.5 text-xs text-slate-900 focus:border-[#2F76BB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2F76BB]/20 transition-all';
+function SelectDropdown({
+  id,
+  value,
+  onChange,
+  children,
+  required,
+}: {
+  id?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <select
+        id={id}
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-[#F8FAFC] pl-3.5 pr-9 py-2.5 text-xs font-medium text-slate-800 transition-all focus:border-[#2F76BB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2F76BB]/20"
+      >
+        {children}
+      </select>
+      <ChevronDown
+        size={14}
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+      />
+    </div>
+  );
+}
 
 function FormSection({
   icon: Icon,
@@ -179,6 +211,9 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
   const [createdResult, setCreatedResult] = useState<AdminCreateUserResult | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState(false);
+  const [sendingSms, setSendingSms] = useState(false);
+  const [smsSentSuccess, setSmsSentSuccess] = useState(false);
+  const [smsError, setSmsError] = useState<string | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [interestInput, setInterestInput] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -196,10 +231,34 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
     setCreatedResult(null);
     setCopiedLink(false);
     setCopiedMessage(false);
+    setSendingSms(false);
+    setSmsSentSuccess(false);
+    setSmsError(null);
     setImage(null);
     setInterestInput('');
     setFormError(null);
     onClose();
+  };
+
+  const handleSendSms = async (message: string, link: string) => {
+    if (!createdResult?.user?.id) return;
+    setSendingSms(true);
+    setSmsError(null);
+    try {
+      await adminApi.post(`/admin/users/${createdResult.user.id}/send-activation-sms`, {
+        message,
+        activationLink: link,
+      });
+      setSmsSentSuccess(true);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setSmsError(
+        axiosErr.response?.data?.message ||
+          "Échec de l'envoi du SMS via TunisieSMS. Veuillez vérifier le crédit ou le numéro.",
+      );
+    } finally {
+      setSendingSms(false);
+    }
   };
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -401,6 +460,15 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
               </p>
             </div>
 
+            {Boolean(createdResult.smsSent) && (
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3.5 py-2.5 text-xs text-emerald-800">
+                <Check size={14} className="shrink-0 text-emerald-600" />
+                <span>
+                  SMS d&apos;invitation envoyé automatiquement au {rawPhone} via TunisieSMS.
+                </span>
+              </div>
+            )}
+
             {/* Direct Activation Link */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
@@ -410,7 +478,7 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
                 <input
                   readOnly
                   value={activationLink}
-                  className="flex-1 rounded-xl border border-slate-200 bg-[#F8FAFC] px-3.5 py-2.5 text-xs font-mono select-all outline-none"
+                  className="flex-1 rounded-xl border border-slate-200 bg-[#F8FAFC] px-3.5 py-2.5 text-xs font-mono font-medium text-slate-900 select-all outline-none shadow-2xs"
                 />
                 <button
                   type="button"
@@ -462,18 +530,34 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
                   {copiedMessage ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
                   {copiedMessage ? 'Message copié !' : 'Copier le message SMS'}
                 </button>
-                {cleanPhone && (
-                  <a
-                    href={`sms:${cleanPhone}?body=${encodeURIComponent(shareMessage)}`}
-                    className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-white transition hover:opacity-90 shadow-xs"
-                    style={{ background: '#2F76BB' }}
-                  >
+                <button
+                  type="button"
+                  onClick={() => handleSendSms(shareMessage, activationLink)}
+                  disabled={sendingSms}
+                  className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-white transition hover:opacity-90 shadow-xs disabled:opacity-60"
+                  style={{ background: smsSentSuccess ? '#61BCA6' : '#2F76BB' }}
+                >
+                  {sendingSms ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : smsSentSuccess ? (
+                    <Check size={13} strokeWidth={2.5} />
+                  ) : (
                     <MessageSquare size={13} />
-                    Envoyer par SMS
-                    <ExternalLink size={11} />
-                  </a>
-                )}
+                  )}
+                  {sendingSms
+                    ? 'Envoi en cours...'
+                    : smsSentSuccess
+                      ? 'SMS envoyé avec succès !'
+                      : 'Envoyer par SMS'}
+                </button>
               </div>
+
+              {smsError && (
+                <div className="mt-2 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs text-red-600">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>{smsError}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -744,30 +828,28 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <Field label="Type de profil" htmlFor="new-user-profile-type">
-                  <select
+                  <SelectDropdown
                     id="new-user-profile-type"
                     value={form.profileType}
                     onChange={(event) =>
                       set('profileType', event.target.value as typeof form.profileType)
                     }
-                    className={selectClassName}
                   >
                     <option value="INDIVIDUAL">J’offre (propose un service)</option>
                     <option value="PROVIDER">Je cherche (recherche un service)</option>
-                  </select>
+                  </SelectDropdown>
                 </Field>
 
                 <Field label="Forfait" htmlFor="new-user-plan">
-                  <select
+                  <SelectDropdown
                     id="new-user-plan"
                     value={form.plan}
                     onChange={(event) => set('plan', event.target.value as typeof form.plan)}
-                    className={selectClassName}
                   >
                     <option value="FREE">Gratuit</option>
                     <option value="PREMIUM">Premium</option>
                     <option value="PREMIUM_PLUS">Premium+</option>
-                  </select>
+                  </SelectDropdown>
                 </Field>
 
                 <Field
@@ -786,11 +868,10 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
 
                 {form.profileType === 'INDIVIDUAL' && (
                   <Field label="Expérience globale" htmlFor="new-user-experience">
-                    <select
+                    <SelectDropdown
                       id="new-user-experience"
                       value={form.experience}
                       onChange={(event) => set('experience', event.target.value)}
-                      className={selectClassName}
                     >
                       <option value="">Sélectionner…</option>
                       {EXPERIENCE_OPTIONS.map((option) => (
@@ -798,16 +879,15 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
                           {option}
                         </option>
                       ))}
-                    </select>
+                    </SelectDropdown>
                   </Field>
                 )}
 
                 <Field label="Secteur d’activité" htmlFor="new-user-sector">
-                  <select
+                  <SelectDropdown
                     id="new-user-sector"
                     value={form.sector}
                     onChange={(event) => set('sector', event.target.value)}
-                    className={selectClassName}
                   >
                     <option value="">Sélectionner…</option>
                     {SECTOR_OPTIONS.map((option) => (
@@ -815,15 +895,14 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
                         {option}
                       </option>
                     ))}
-                  </select>
+                  </SelectDropdown>
                 </Field>
 
                 <Field label="Niveau d’études" htmlFor="new-user-education">
-                  <select
+                  <SelectDropdown
                     id="new-user-education"
                     value={form.educationLevel}
                     onChange={(event) => set('educationLevel', event.target.value)}
-                    className={selectClassName}
                   >
                     <option value="">Sélectionner…</option>
                     {EDUCATION_OPTIONS.map((option) => (
@@ -831,7 +910,7 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
                         {option}
                       </option>
                     ))}
-                  </select>
+                  </SelectDropdown>
                 </Field>
               </div>
 
@@ -956,11 +1035,11 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
                 {form.offerService && (
                   <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200/60">
                     <Field label="Type de service" htmlFor="new-user-service-type" required>
-                      <select
+                      <SelectDropdown
                         id="new-user-service-type"
                         value={form.serviceType}
                         onChange={(event) => set('serviceType', event.target.value)}
-                        className={selectClassName}
+                        required
                       >
                         <option value="">Sélectionner…</option>
                         {SERVICE_TYPES.map((type) => (
@@ -968,7 +1047,7 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
                             {type}
                           </option>
                         ))}
-                      </select>
+                      </SelectDropdown>
                     </Field>
                     <Field label="Tarif indicatif" htmlFor="new-user-price" required>
                       <input

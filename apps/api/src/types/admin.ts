@@ -116,6 +116,17 @@ export type AdminCreateUserPayload = Omit<UpdateOnboardingProfileBody, 'name' | 
 export type AdminCreateUserResult = AdminUser & {
   activationToken?: string;
   activationLink?: string;
+  smsSent?: boolean;
+};
+
+export type AdminSendActivationSmsPayload = {
+  message?: string;
+  activationLink?: string;
+};
+
+export type AdminSendActivationSmsResult = {
+  success: boolean;
+  phone: string;
 };
 
 export type AdminUserIdParam = {

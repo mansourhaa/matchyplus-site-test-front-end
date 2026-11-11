@@ -19,6 +19,7 @@ import {
   adminListTeamSchema,
   adminListUsersSchema,
   adminRegenerateActivationSchema,
+  adminSendActivationSmsSchema,
   adminReportSummarySchema,
   adminStatsSchema,
   adminUpdatePlanSchema,
@@ -34,6 +35,7 @@ import {
   AdminCreateUserPayload,
   AdminListTeamQuery,
   AdminListUsersQuery,
+  AdminSendActivationSmsPayload,
   AdminUpdatePlanPayload,
   AdminUpdateUserPayload,
   AdminUpdateUserStatusPayload,
@@ -54,8 +56,8 @@ type UserParams = { id: string };
 type PlanParams = { id: UserPlan };
 
 const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-  const { prisma } = fastify;
-  const adminService = new AdminService({ prisma });
+  const { prisma, smsClient } = fastify;
+  const adminService = new AdminService({ prisma, smsClient });
   const reportsService = new ReportsService({ prisma });
 
   fastify.get<{ Querystring: AdminListUsersQuery }>(
@@ -80,6 +82,7 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           user,
           activationToken: user.activationToken,
           activationLink: user.activationLink,
+          smsSent: user.smsSent,
         });
       } catch (err) {
         throw err;
@@ -95,6 +98,23 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         const result = await adminService.regenerateActivationToken(
           { id: request.loggedUser.id, role: request.loggedUser.role },
           request.params.id,
+        );
+        return reply.code(200).send(result);
+      } catch (err) {
+        throw err;
+      }
+    },
+  );
+
+  fastify.post<{ Params: AdminUserIdParam; Body: AdminSendActivationSmsPayload }>(
+    '/users/:id/send-activation-sms',
+    { schema: adminSendActivationSmsSchema },
+    async (request, reply) => {
+      try {
+        const result = await adminService.sendActivationSms(
+          { id: request.loggedUser.id, role: request.loggedUser.role },
+          request.params.id,
+          request.body,
         );
         return reply.code(200).send(result);
       } catch (err) {

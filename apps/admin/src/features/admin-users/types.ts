@@ -35,6 +35,7 @@ export interface AdminCreateUserResult {
   user: AdminManagedUser;
   activationToken?: string;
   activationLink?: string;
+  smsSent?: boolean;
 }
 
 export interface AdminRegenerateActivationResult {
