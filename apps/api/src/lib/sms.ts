@@ -41,6 +41,8 @@ function createRealSmsClient(): SmsClient {
       }
       const sender = (config.tunisieSmsSender || 'Matchy plus').slice(0, 11);
 
+      console.log(`[SMS:TUNISIESMS] Dispatching SMS to ${cleanMobile} (sender: "${sender}")...`);
+
       const queryString = [
         `fct=sms`,
         `key=${encodeURIComponent(config.tunisieSmsKey as string)}`,
@@ -52,18 +54,22 @@ function createRealSmsClient(): SmsClient {
       let response: Response;
       try {
         response = await fetch(`${TUNISIESMS_API_URL}?${queryString}`);
-      } catch {
-        // Never log the params or the underlying error — the query string carries the
-        // API key and the OTP text.
+      } catch (err) {
+        console.error('[SMS:TUNISIESMS] Network fetch error communicating with SMS gateway:', err);
         throw new Error('sms_delivery_failed');
       }
 
       if (!response.ok) {
+        console.error(`[SMS:TUNISIESMS] Gateway HTTP error: status=${response.status}`);
         throw new Error('sms_delivery_failed');
       }
 
       const rawText = await response.text();
-      if (extractStatusCode(rawText) !== 200) {
+      const statusCode = extractStatusCode(rawText);
+      console.log(`[SMS:TUNISIESMS] Gateway response status_code=${statusCode}`);
+
+      if (statusCode !== 200) {
+        console.error(`[SMS:TUNISIESMS] Non-200 response from gateway: ${rawText}`);
         throw new Error('sms_delivery_failed');
       }
     },
@@ -93,13 +99,22 @@ function createUnconfiguredSmsClient(): SmsClient {
 }
 
 export function createSmsClient(): SmsClient {
-  if (config.disableSms) {
-    return createDisabledSmsClient();
-  }
+  const realClient = createRealSmsClient();
+  const disabledClient = createDisabledSmsClient();
+  const unconfiguredClient = createUnconfiguredSmsClient();
 
-  if (!isTunisieSmsConfigured()) {
-    return createUnconfiguredSmsClient();
-  }
-
-  return createRealSmsClient();
+  return {
+    async sendSms(phone, message) {
+      const isDisabled = /^(1|true|yes|on)$/i.test(
+        String(process.env.DISABLE_SMS ?? config.disableSms ?? ''),
+      );
+      if (isDisabled) {
+        return disabledClient.sendSms(phone, message);
+      }
+      if (!isTunisieSmsConfigured()) {
+        return unconfiguredClient.sendSms(phone, message);
+      }
+      return realClient.sendSms(phone, message);
+    },
+  };
 }
