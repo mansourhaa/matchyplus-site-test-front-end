@@ -6,6 +6,7 @@ describe('createSmsClient', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    delete process.env.DISABLE_SMS;
   });
 
   afterEach(() => {
@@ -13,6 +14,20 @@ describe('createSmsClient', () => {
     global.fetch = originalFetch;
     vi.resetModules();
     vi.restoreAllMocks();
+  });
+
+  it('returns a disabled client that logs and succeeds when DISABLE_SMS is true', async () => {
+    vi.resetModules();
+    process.env.DISABLE_SMS = 'true';
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const { createSmsClient } = await import('./sms.js');
+    const client = createSmsClient();
+
+    await expect(client.sendSms('+21612345678', 'code 123456')).resolves.toBeUndefined();
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[SMS:DISABLED] Mobile: +21612345678 | Message: code 123456'),
+    );
   });
 
   it('fails closed with sms_service_not_configured when TunisieSMS is unset', async () => {

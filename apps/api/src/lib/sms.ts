@@ -76,6 +76,14 @@ function isTunisieSmsConfigured(): boolean {
   return Boolean(config.tunisieSmsKey);
 }
 
+function createDisabledSmsClient(): SmsClient {
+  return {
+    async sendSms(phone, message) {
+      console.log(`[SMS:DISABLED] Mobile: ${phone} | Message: ${message}`);
+    },
+  };
+}
+
 function createUnconfiguredSmsClient(): SmsClient {
   return {
     async sendSms() {
@@ -85,6 +93,10 @@ function createUnconfiguredSmsClient(): SmsClient {
 }
 
 export function createSmsClient(): SmsClient {
+  if (config.disableSms) {
+    return createDisabledSmsClient();
+  }
+
   if (!isTunisieSmsConfigured()) {
     return createUnconfiguredSmsClient();
   }

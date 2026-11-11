@@ -83,6 +83,7 @@ export const config = {
    */
   tunisieSmsKey: process.env.TUNISIESMS_KEY,
   tunisieSmsSender: process.env.TUNISIESMS_SENDER,
+  disableSms: /^(1|true|yes|on)$/i.test(String(process.env.DISABLE_SMS || '')),
 
   /**
    * OTP challenge lifecycle (see services/otp-challenge.ts) — purpose-scoped codes
