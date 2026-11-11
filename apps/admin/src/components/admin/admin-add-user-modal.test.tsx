@@ -100,6 +100,9 @@ describe('AdminAddUserModal', () => {
         interests: ['Plomberie'],
         selectedGoals: ['Trouver un job'],
         image: expect.stringMatching(/^data:/),
+        languages: ['fr', 'ar'],
+        email: undefined,
+        city: undefined,
       }),
     );
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
@@ -190,5 +193,25 @@ describe('AdminAddUserModal', () => {
     expect(await screen.findByText('Ce numéro de téléphone est déjà utilisé.')).toBeInTheDocument();
     expect(post).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('navigates through steps with Suivant and Précédent buttons', async () => {
+    renderModal();
+
+    // Step 1: cannot advance without name & phone
+    fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
+    expect(screen.getByText('Le nom et le téléphone sont obligatoires.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Nom complet'), { target: { value: 'Amine Ben Salah' } });
+    fireEvent.change(screen.getByLabelText('Téléphone'), { target: { value: '20123456' } });
+    fireEvent.change(screen.getByLabelText('Métier'), { target: { value: 'Plombier' } });
+
+    // Step 1 to Step 2
+    fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
+    expect(screen.getByRole('heading', { name: 'Centres d’intérêt' })).toBeInTheDocument();
+
+    // Step 2 to Step 1 via Précédent
+    fireEvent.click(screen.getByRole('button', { name: /précédent/i }));
+    expect(screen.getByLabelText('Nom complet')).toBeInTheDocument();
   });
 });

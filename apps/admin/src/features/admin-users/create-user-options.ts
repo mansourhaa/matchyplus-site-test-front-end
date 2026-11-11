@@ -85,14 +85,14 @@ export const CONTACT_MODES: { value: string; label: string }[] = [
   { value: 'person', label: 'Rendez-vous présentiel' },
 ];
 
-export const LANGUAGES: { value: string; label: string }[] = [
-  { value: 'ar', label: 'Arabe' },
-  { value: 'ar-dialect', label: 'Arabe dialectal' },
-  { value: 'fr', label: 'Français' },
-  { value: 'en', label: 'Anglais' },
-  { value: 'de', label: 'Allemand' },
-  { value: 'es', label: 'Espagnol' },
-  { value: 'it', label: 'Italien' },
+export const LANGUAGES: { value: string; label: string; flag: string }[] = [
+  { value: 'ar', label: 'Arabe', flag: '🇹🇳' },
+  { value: 'ar-dialect', label: 'Arabe dialectal', flag: '🗣️' },
+  { value: 'fr', label: 'Français', flag: '🇫🇷' },
+  { value: 'en', label: 'Anglais', flag: '🇬🇧' },
+  { value: 'de', label: 'Allemand', flag: '🇩🇪' },
+  { value: 'es', label: 'Espagnol', flag: '🇪🇸' },
+  { value: 'it', label: 'Italien', flag: '🇮🇹' },
 ];
 
 export const EXPERIENCE_OPTIONS = [
