@@ -5,6 +5,7 @@ import { confirmActivation } from '@/features/auth/store/auth-slice';
 import type { ActivationPreviewResponse } from '@/features/auth/types';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { api, getApiErrorCode } from '@/lib/api';
+import { resolveMediaUrl } from '@/lib/media-url';
 import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import {
   AlertTriangle,
@@ -37,6 +38,7 @@ export function ActivationView() {
   const [loadingPreview, setLoadingPreview] = useState(true);
   const [preview, setPreview] = useState<ActivationPreviewResponse | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -225,13 +227,14 @@ export function ActivationView() {
                 }}
               >
                 <div className="flex items-center gap-3.5">
-                  {preview.image ? (
+                  {preview.image && !imageLoadError ? (
                     <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border-2 border-white shadow-md ring-2 ring-[#2F76BB]/20">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={preview.image}
+                        src={resolveMediaUrl(preview.image) ?? preview.image}
                         alt={preview.name}
                         className="h-full w-full object-cover"
+                        onError={() => setImageLoadError(true)}
                       />
                     </div>
                   ) : (

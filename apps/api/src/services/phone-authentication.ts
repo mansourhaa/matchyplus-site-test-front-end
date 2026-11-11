@@ -1,6 +1,9 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 import { OtpPurpose, PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
-import { SOCIAL_AUTH_PROVIDERS } from '../constants.js';
+import { PROFILE_PHOTO_CONTENT_TYPES, SOCIAL_AUTH_PROVIDERS } from '../constants.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import { normalizePhoneForAuth } from '../lib/phone.js';
 import { SmsClient } from '../lib/sms.js';
@@ -18,6 +21,8 @@ import {
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
 import { hashActivationToken } from '../utils/activation-token.js';
+import { extensionOf } from '../utils/media-http.js';
+import { PHOTOS_DIR, filenameFromStoredPath, isStoredMediaPath } from '../utils/media-storage.js';
 import { assertPasswordPolicy } from '../utils/password-policy.js';
 import { toMemberSessionUser } from '../utils/session-user.js';
 import { OtpChallengeService } from './otp-challenge.js';
@@ -372,11 +377,25 @@ export class PhoneAuthenticationService {
         throw new Error('account_banned');
       }
 
+      let resolvedImage: string | null = user.image;
+      if (user.image && isStoredMediaPath(user.image, 'photos')) {
+        try {
+          const filename = filenameFromStoredPath(user.image);
+          const fullPath = join(PHOTOS_DIR, filename);
+          const fileBuffer = await readFile(fullPath);
+          const ext = extensionOf(filename);
+          const mime = PROFILE_PHOTO_CONTENT_TYPES[ext] ?? 'image/jpeg';
+          resolvedImage = `data:${mime};base64,${fileBuffer.toString('base64')}`;
+        } catch {
+          resolvedImage = null;
+        }
+      }
+
       return {
         id: user.id,
         name: user.name,
         phone: user.phone ?? '',
-        image: user.image,
+        image: resolvedImage,
         job: user.job,
         city: user.city,
         category: user.category,

@@ -265,20 +265,28 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    event.target.value = '';
     if (!file) return;
 
     if (!isAllowedProfilePhoto(file)) {
       setFormError('Format de photo non supporté (JPEG, PNG ou WEBP uniquement).');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     if (file.size > PROFILE_PHOTO_MAX_BYTES) {
       setFormError('La photo dépasse la taille maximale de 8 Mo.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = () => setImage(reader.result as string);
+    reader.onload = () => {
+      setImage(reader.result as string);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.onerror = () => {
+      setFormError('Impossible de lire le fichier photo.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
     reader.readAsDataURL(file);
   };
 

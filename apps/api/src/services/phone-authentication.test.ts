@@ -698,6 +698,66 @@ describe('PhoneAuthenticationService', () => {
         'invalid_activation_token',
       );
     });
+
+    it('resolves stored media photos to a base64 data URL', async () => {
+      const { service, prisma } = createService();
+      const rawToken = 'test-token-stored-media';
+      const { mkdir, rm, writeFile } = await import('node:fs/promises');
+      const { join } = await import('node:path');
+      const { randomUUID } = await import('node:crypto');
+      const { PHOTOS_DIR } = await import('../utils/media-storage.js');
+
+      await mkdir(PHOTOS_DIR, { recursive: true });
+      const filename = `${randomUUID()}.png`;
+      const filePath = join(PHOTOS_DIR, filename);
+      const testBuffer = Buffer.from('fake-png-bytes');
+      await writeFile(filePath, testBuffer);
+
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-lead',
+        name: 'Sarra Ben Ali',
+        phone: '+21620123456',
+        image: `/uploads/photos/${filename}`,
+        job: 'Architecte',
+        city: 'Tunis',
+        category: 'Ingénierie',
+        profile_type: 'INDIVIDUAL',
+        must_change_password: true,
+        activation_token_expires_at: new Date(Date.now() + 86400000),
+        status: 'ACTIVE',
+      });
+
+      try {
+        const result = await service.getActivationPreview(rawToken);
+        expect(result.image).toBe(
+          `data:image/png;base64,${testBuffer.toString('base64')}`,
+        );
+      } finally {
+        await rm(filePath, { force: true });
+      }
+    });
+
+    it('gracefully handles missing stored media photo file from disk', async () => {
+      const { service, prisma } = createService();
+      const rawToken = 'test-token-missing-media';
+
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-lead',
+        name: 'Sarra Ben Ali',
+        phone: '+21620123456',
+        image: '/uploads/photos/22222222-2222-2222-2222-222222222222.jpg',
+        job: 'Architecte',
+        city: 'Tunis',
+        category: 'Ingénierie',
+        profile_type: 'INDIVIDUAL',
+        must_change_password: true,
+        activation_token_expires_at: new Date(Date.now() + 86400000),
+        status: 'ACTIVE',
+      });
+
+      const result = await service.getActivationPreview(rawToken);
+      expect(result.image).toBeNull();
+    });
   });
 
   describe('confirmActivation', () => {
