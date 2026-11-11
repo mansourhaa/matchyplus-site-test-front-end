@@ -7,14 +7,16 @@ export interface SmsClient {
 const TUNISIESMS_API_URL = 'https://api.l2t.io/tn/v0/api/api.aspx';
 
 // TunisieSMS's documented response is a JSON array (`[{ status_code, ... }]`), but the
-// live endpoint has been observed returning XML instead (`<status_code>200</status_code>`)
+// live endpoint has been observed returning XML instead (`<status_code>200</status_code>` or `<status>200</status>`)
 // for the same successful send — extract the code from whichever shape comes back
 // rather than assuming one.
 function extractStatusCode(rawText: string): number | null {
   try {
-    const parsed = JSON.parse(rawText) as Array<{ status_code?: number | string }>;
-    const value = parsed?.[0]?.status_code;
-    if (value !== undefined) {
+    const parsed = JSON.parse(rawText);
+    const value = Array.isArray(parsed)
+      ? (parsed[0] as { status_code?: number | string })?.status_code
+      : (parsed as { status_code?: number | string })?.status_code;
+    if (value !== undefined && value !== null) {
       return Number(value);
     }
   } catch {
@@ -22,23 +24,34 @@ function extractStatusCode(rawText: string): number | null {
   }
 
   const xmlMatch = rawText.match(/<status_code>\s*(\d+)\s*<\/status_code>/i);
-  return xmlMatch ? Number(xmlMatch[1]) : null;
+  if (xmlMatch) return Number(xmlMatch[1]);
+
+  const altXmlMatch = rawText.match(/<status>\s*(\d+)\s*<\/status>/i);
+  if (altXmlMatch) return Number(altXmlMatch[1]);
+
+  return null;
 }
 
 function createRealSmsClient(): SmsClient {
   return {
     async sendSms(phone, message) {
-      const params = new URLSearchParams({
-        fct: 'sms',
-        key: config.tunisieSmsKey as string,
-        mobile: phone.replace(/\D/g, ''),
-        sms: message,
-        sender: (config.tunisieSmsSender || 'Matchy plus').slice(0, 11),
-      });
+      let cleanMobile = phone.replace(/\D/g, '');
+      if (cleanMobile.length === 8) {
+        cleanMobile = `216${cleanMobile}`;
+      }
+      const sender = (config.tunisieSmsSender || 'Matchy plus').slice(0, 11);
+
+      const queryString = [
+        `fct=sms`,
+        `key=${encodeURIComponent(config.tunisieSmsKey as string)}`,
+        `mobile=${encodeURIComponent(cleanMobile)}`,
+        `sms=${encodeURIComponent(message)}`,
+        `sender=${encodeURIComponent(sender)}`,
+      ].join('&');
 
       let response: Response;
       try {
-        response = await fetch(`${TUNISIESMS_API_URL}?${params.toString()}`);
+        response = await fetch(`${TUNISIESMS_API_URL}?${queryString}`);
       } catch {
         // Never log the params or the underlying error — the query string carries the
         // API key and the OTP text.

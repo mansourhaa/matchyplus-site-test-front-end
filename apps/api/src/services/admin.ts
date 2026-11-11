@@ -160,6 +160,14 @@ export function normalizeAdminUser<
   return result;
 }
 
+function toGsm7Friendly(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[«»“”]/g, '"')
+    .replace(/[‘’]/g, "'");
+}
+
 /**
  * Fields an admin is allowed to edit from the user detail panel. `plan` is deliberately
  * excluded: assigning a paid tier is a control-plane action, and leaving it here let any
@@ -396,6 +404,7 @@ export class AdminService {
         email: payload.email?.toLowerCase(),
         password: hashedPassword,
         must_change_password: !hasPassword,
+        status: hasPassword ? UserStatus.ACTIVE : UserStatus.INACTIVE,
         activation_token_hash: activationTokenHash,
         activation_token_expires_at: activationTokenExpiresAt,
         auth_provider: 'phone',
@@ -430,21 +439,10 @@ export class AdminService {
 
     const normalized = normalizeAdminUser(user);
     if (!hasPassword) {
-      let smsSent = false;
-      if (activationLink && this.smsClient && phone) {
-        try {
-          const smsMessage = `Matchy+: Bonjour ${name}, votre compte a ete cree ! Activez votre profil ici : ${activationLink}`;
-          await this.smsClient.sendSms(phone, smsMessage);
-          smsSent = true;
-        } catch {
-          smsSent = false;
-        }
-      }
-
       return Object.assign(normalized, {
         activationToken,
         activationLink,
-        smsSent,
+        smsSent: false,
       });
     }
 
@@ -487,8 +485,10 @@ export class AdminService {
           const regen = await this.regenerateActivationToken(actor, id);
           link = regen.activationLink;
         }
-        messageToSend = `Matchy+: Bonjour ${target.name}, votre profil a ete prepare ! Activez votre compte et definissez votre mot de passe ici : ${link}`;
+        messageToSend = `Matchy+: Bonjour ${target.name}, activez votre compte ici: ${link}`;
       }
+
+      messageToSend = toGsm7Friendly(messageToSend);
 
       try {
         await this.smsClient.sendSms(target.phone, messageToSend);

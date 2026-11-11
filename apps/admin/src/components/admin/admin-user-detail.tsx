@@ -180,22 +180,23 @@ export function AdminUserDetail({
             <span style={{ fontSize: '14px', fontWeight: 700, color: '#353535' }}>{user.name}</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <div
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
-              style={{
-                background: STATUS_COLOR[user.status] + '18',
-                border: `1px solid ${STATUS_COLOR[user.status]}33`,
-              }}
-            >
+            {user.status === 'BANNED' ? (
               <div
-                className="h-2 w-2 rounded-full"
-                style={{ background: STATUS_COLOR[user.status] }}
-              />
-              <span style={{ fontSize: '12px', color: STATUS_COLOR[user.status], fontWeight: 700 }}>
-                {STATUS_LABEL[user.status]}
-              </span>
-            </div>
-            {user.must_change_password && (
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
+                style={{
+                  background: STATUS_COLOR.BANNED + '18',
+                  border: `1px solid ${STATUS_COLOR.BANNED}33`,
+                }}
+              >
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: STATUS_COLOR.BANNED }}
+                />
+                <span style={{ fontSize: '12px', color: STATUS_COLOR.BANNED, fontWeight: 700 }}>
+                  {STATUS_LABEL.BANNED}
+                </span>
+              </div>
+            ) : user.must_change_password ? (
               <>
                 <div
                   className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
@@ -225,6 +226,22 @@ export function AdminUserDetail({
                   {isRegenerating ? 'Génération...' : "Lien d'activation"}
                 </button>
               </>
+            ) : (
+              <div
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
+                style={{
+                  background: STATUS_COLOR[user.status] + '18',
+                  border: `1px solid ${STATUS_COLOR[user.status]}33`,
+                }}
+              >
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: STATUS_COLOR[user.status] }}
+                />
+                <span style={{ fontSize: '12px', color: STATUS_COLOR[user.status], fontWeight: 700 }}>
+                  {STATUS_LABEL[user.status]}
+                </span>
+              </div>
             )}
             <button
               type="button"
@@ -255,7 +272,14 @@ export function AdminUserDetail({
             />
             <div
               className="absolute -right-1 -bottom-1 h-4 w-4 rounded-full border-2 border-white"
-              style={{ background: STATUS_COLOR[user.status] }}
+              style={{
+                background:
+                  user.status === 'BANNED'
+                    ? STATUS_COLOR.BANNED
+                    : user.must_change_password
+                      ? '#D97706'
+                      : STATUS_COLOR[user.status],
+              }}
             />
           </div>
           <div className="min-w-0 flex-1">

@@ -211,6 +211,7 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
   const [createdResult, setCreatedResult] = useState<AdminCreateUserResult | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState(false);
+  const [customMessage, setCustomMessage] = useState<string | null>(null);
   const [sendingSms, setSendingSms] = useState(false);
   const [smsSentSuccess, setSmsSentSuccess] = useState(false);
   const [smsError, setSmsError] = useState<string | null>(null);
@@ -231,6 +232,7 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
     setCreatedResult(null);
     setCopiedLink(false);
     setCopiedMessage(false);
+    setCustomMessage(null);
     setSendingSms(false);
     setSmsSentSuccess(false);
     setSmsError(null);
@@ -414,7 +416,8 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
 
     const rawPhone = createdResult.user.phone || form.phone;
     const cleanPhone = rawPhone.replace(/\D/g, '');
-    const shareMessage = `Bonjour ${createdResult.user.name}, votre profil ${createdResult.user.job ? `(${createdResult.user.job}) ` : ''}sur Matchy+ a été préparé ! Activez votre compte et définissez votre mot de passe ici : ${activationLink}`;
+    const defaultShareMessage = `Matchy+: Bonjour ${createdResult.user.name}, activez votre compte ici: ${activationLink}`;
+    const shareMessage = customMessage !== null ? customMessage : defaultShareMessage;
 
     return (
       <div
@@ -460,15 +463,6 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
               </p>
             </div>
 
-            {Boolean(createdResult.smsSent) && (
-              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3.5 py-2.5 text-xs text-emerald-800">
-                <Check size={14} className="shrink-0 text-emerald-600" />
-                <span>
-                  SMS d&apos;invitation envoyé automatiquement au {rawPhone} via TunisieSMS.
-                </span>
-              </div>
-            )}
-
             {/* Direct Activation Link */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
@@ -508,14 +502,24 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
 
             {/* Prepared Message for SMS */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                Message SMS d&apos;invitation
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                  Message SMS d&apos;invitation
+                </label>
+                <span
+                  className="text-[11px] font-medium"
+                  style={{
+                    color: shareMessage.length <= 160 ? '#64748B' : '#D97706',
+                  }}
+                >
+                  {shareMessage.length} / 160 caractères {shareMessage.length <= 160 ? '(1 SMS)' : `(~${Math.ceil(shareMessage.length / 153)} SMS)`}
+                </span>
+              </div>
               <textarea
-                readOnly
                 rows={3}
                 value={shareMessage}
-                className="w-full rounded-xl border border-slate-200 bg-[#F8FAFC] p-3 text-xs outline-none select-all resize-none leading-relaxed text-slate-800"
+                onChange={(e) => setCustomMessage(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-[#F8FAFC] p-3 text-xs outline-none focus:border-[#2F76BB] focus:bg-white resize-none leading-relaxed text-slate-800 transition"
               />
               <div className="mt-1 flex flex-wrap gap-2">
                 <button

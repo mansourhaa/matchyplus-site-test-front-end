@@ -148,4 +148,29 @@ describe('AdminUserDetail', () => {
       screen.getByText('Développeur passionné par TypeScript et Fastify.'),
     ).toBeInTheDocument();
   });
+
+  it('renders only "Activation en attente" badge (and not "Actif") when must_change_password is true', () => {
+    renderDetail(
+      buildUser({
+        status: 'INACTIVE',
+        must_change_password: true,
+      }),
+    );
+
+    expect(screen.getByText('Activation en attente')).toBeInTheDocument();
+    expect(screen.queryByText('Actif')).not.toBeInTheDocument();
+    expect(screen.queryByText('Inactif')).not.toBeInTheDocument();
+  });
+
+  it('renders "Actif" badge when must_change_password is false and status is ACTIVE', () => {
+    renderDetail(
+      buildUser({
+        status: 'ACTIVE',
+        must_change_password: false,
+      }),
+    );
+
+    expect(screen.getByText('Actif')).toBeInTheDocument();
+    expect(screen.queryByText('Activation en attente')).not.toBeInTheDocument();
+  });
 });

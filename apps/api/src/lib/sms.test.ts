@@ -49,6 +49,25 @@ describe('createSmsClient', () => {
     expect(url).toContain('mobile=21612345678');
   });
 
+  it('prefixes 8-digit bare numbers with 216 country code', async () => {
+    vi.resetModules();
+    process.env.TUNISIESMS_KEY = 'test-key';
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => '<response><status>200</status></response>',
+    });
+    global.fetch = fetchMock as never;
+
+    const { createSmsClient } = await import('./sms.js');
+    const client = createSmsClient();
+
+    await client.sendSms('28012646', 'code 123456');
+
+    const url = fetchMock.mock.calls[0]?.[0] as string;
+    expect(url).toContain('mobile=21628012646');
+  });
+
   // The documented TunisieSMS response is a JSON array, but the live endpoint has been
   // observed returning XML for the same successful send — this must succeed too.
   it('sends via TunisieSMS and succeeds on an XML status_code 200', async () => {

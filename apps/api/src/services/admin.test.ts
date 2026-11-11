@@ -580,23 +580,27 @@ describe('AdminService createUser', () => {
     });
   });
 
-  it('allows creating a user without a password, generating an activation token and link', async () => {
+  it('allows creating a user without a password, generating an activation token and link without automatic SMS', async () => {
     const prisma = createMockPrisma();
     prisma.user.findUnique.mockResolvedValue(null);
     prisma.user.create.mockResolvedValue({ id: 'u-lead' });
+    const smsClient = { sendSms: vi.fn() };
 
-    const service = new AdminService({ prisma: prisma as never });
+    const service = new AdminService({ prisma: prisma as never, smsClient: smsClient as never });
     const payload = validPayload({ password: '' });
     const result = await service.createUser(payload);
 
     const data = prisma.user.create.mock.calls[0][0].data;
     expect(data.password).toBeNull();
     expect(data.must_change_password).toBe(true);
+    expect(data.status).toBe('INACTIVE');
     expect(data.activation_token_hash).toBeDefined();
     expect(data.activation_token_expires_at).toBeInstanceOf(Date);
+    expect(smsClient.sendSms).not.toHaveBeenCalled();
     expect(result.id).toBe('u-lead');
     expect(result.activationToken).toBeDefined();
     expect(result.activationLink).toContain('/activer?token=');
+    expect(result.smsSent).toBe(false);
   });
 
   it('rejects an image that is already a stored media path', async () => {
@@ -680,6 +684,26 @@ describe('AdminService sendActivationSms', () => {
     expect(smsClient.sendSms).toHaveBeenCalledWith(
       '+21620123456',
       expect.stringContaining('http://localhost:3000/activer?token=abc'),
+    );
+  });
+
+  it('sanitizes accented characters to GSM-7 friendly characters before sending', async () => {
+    const prisma = createMockPrisma();
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'u1', role: 'USER' })
+      .mockResolvedValueOnce({ id: 'u1', name: 'Aimé', phone: '+21620123456', status: 'INACTIVE' });
+
+    const smsClient = { sendSms: vi.fn().mockResolvedValue(undefined) };
+    const service = new AdminService({ prisma: prisma as never, smsClient: smsClient as never });
+    const actor: AdminActor = { id: 'admin-1', role: 'SUPER_ADMIN' };
+
+    await service.sendActivationSms(actor, 'u1', {
+      message: 'Votre profil sur Matchy+ a été préparé «super» !',
+    });
+
+    expect(smsClient.sendSms).toHaveBeenCalledWith(
+      '+21620123456',
+      'Votre profil sur Matchy+ a ete prepare "super" !',
     );
   });
 
