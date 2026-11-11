@@ -30,8 +30,10 @@ describe('route-auth', () => {
     expect(isPublicAuthRoute('/connexion/extra')).toBe(true);
     expect(isNeutralRoute('/oauth-callback')).toBe(true);
     expect(isNeutralRoute('/inscription')).toBe(true);
+    expect(isNeutralRoute('/activer')).toBe(true);
     expect(requiresAuthentication('/connexion')).toBe(false);
     expect(requiresAuthentication('/inscription')).toBe(false);
+    expect(requiresAuthentication('/activer')).toBe(false);
   });
 
   it('requires auth for every known (dashboard) path prefix', () => {
@@ -49,9 +51,10 @@ describe('route-auth', () => {
     expect(requiresAuthentication('/profile/xyz')).toBe(true);
   });
 
-  it('skips bootstrap authcheck on connexion and oauth-callback only', () => {
+  it('skips bootstrap authcheck on connexion, oauth-callback, and activer', () => {
     expect(skipsBootstrapAuthCheck('/connexion')).toBe(true);
     expect(skipsBootstrapAuthCheck('/oauth-callback')).toBe(true);
+    expect(skipsBootstrapAuthCheck('/activer')).toBe(true);
     expect(skipsBootstrapAuthCheck('/inscription')).toBe(false);
     expect(skipsBootstrapAuthCheck('/home')).toBe(false);
     expect(skipsBootstrapAuthCheck('/settings/account')).toBe(false);

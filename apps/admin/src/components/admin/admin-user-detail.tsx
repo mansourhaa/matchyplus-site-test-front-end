@@ -10,23 +10,36 @@ import {
   STATUS_COLOR,
   STATUS_LABEL,
 } from '@/features/admin-users/labels';
-import type { AdminManagedUser, AdminUserUpdate } from '@/features/admin-users/types';
+import type {
+  AdminManagedUser,
+  AdminRegenerateActivationResult,
+  AdminUserUpdate,
+} from '@/features/admin-users/types';
 import { useAdminUserPhoto } from '@/hooks/use-admin-user-photo';
 import { useAdminUserVideo } from '@/hooks/use-admin-user-video';
+import { adminApi } from '@/lib/admin-api';
 import {
   Activity,
+  AlertCircle,
   AlertTriangle,
   Award,
   Ban,
+  Check,
   CheckCircle,
   ChevronLeft,
   Clock,
+  Copy,
   CreditCard,
   Crown,
   Edit2,
+  ExternalLink,
   Filter,
+  KeyRound,
+  Link2,
+  Loader2,
   Mail,
   MapPin,
+  MessageSquare,
   Phone,
   PlayCircle,
   Save,
@@ -37,7 +50,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type DetailTab = 'profile' | 'activity' | 'subscription' | 'video';
 
@@ -69,20 +82,78 @@ export function AdminUserDetail({
   onSave,
   onChangeStatus,
   onDelete,
+  onRegenerateActivation,
 }: {
   user: AdminManagedUser;
   onClose: () => void;
   onSave: (changes: AdminUserUpdate) => void;
   onChangeStatus: (status: AdminManagedUser['status']) => void;
   onDelete: () => void;
+  onRegenerateActivation?: () => Promise<AdminRegenerateActivationResult>;
 }) {
   const [activeTab, setActiveTab] = useState<DetailTab>('profile');
   const [editMode, setEditMode] = useState(false);
   const [edited, setEdited] = useState<AdminManagedUser>(user);
   const [showBanConfirm, setShowBanConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [activationResult, setActivationResult] =
+    useState<AdminRegenerateActivationResult | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedMessage, setCopiedMessage] = useState(false);
+  const [customMessage, setCustomMessage] = useState<string | null>(null);
+  const [sendingSms, setSendingSms] = useState(false);
+  const [smsSentSuccess, setSmsSentSuccess] = useState(false);
+  const [smsError, setSmsError] = useState<string | null>(null);
   const photoUrl = useAdminUserPhoto(user.id, user.image);
   const videoUrl = useAdminUserVideo(user.id, user.video);
+
+  const handleRegenerateActivation = async () => {
+    if (!onRegenerateActivation) return;
+    setIsRegenerating(true);
+    setCustomMessage(null);
+    setSendingSms(false);
+    setSmsSentSuccess(false);
+    setSmsError(null);
+    try {
+      const result = await onRegenerateActivation();
+      setActivationResult(result);
+    } catch {
+      // handled in parent/slice
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const handleSendSms = async (message: string, link: string) => {
+    if (!user.id) return;
+    setSendingSms(true);
+    setSmsError(null);
+    try {
+      await adminApi.post(`/admin/users/${user.id}/send-activation-sms`, {
+        message,
+        activationLink: link,
+      });
+      setSmsSentSuccess(true);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setSmsError(
+        axiosErr.response?.data?.message ||
+          "Échec de l'envoi du SMS via TunisieSMS. Veuillez vérifier le crédit ou le numéro.",
+      );
+    } finally {
+      setSendingSms(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!editMode) {
+      const timeout = window.setTimeout(() => {
+        setEdited(user);
+      }, 0);
+      return () => window.clearTimeout(timeout);
+    }
+  }, [user, editMode]);
 
   const isBanned = user.status === 'BANNED';
 
@@ -141,21 +212,69 @@ export function AdminUserDetail({
             <span style={{ fontSize: '14px', fontWeight: 700, color: '#353535' }}>{user.name}</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <div
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
-              style={{
-                background: STATUS_COLOR[user.status] + '18',
-                border: `1px solid ${STATUS_COLOR[user.status]}33`,
-              }}
-            >
+            {user.status === 'BANNED' ? (
               <div
-                className="h-2 w-2 rounded-full"
-                style={{ background: STATUS_COLOR[user.status] }}
-              />
-              <span style={{ fontSize: '12px', color: STATUS_COLOR[user.status], fontWeight: 700 }}>
-                {STATUS_LABEL[user.status]}
-              </span>
-            </div>
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
+                style={{
+                  background: STATUS_COLOR.BANNED + '18',
+                  border: `1px solid ${STATUS_COLOR.BANNED}33`,
+                }}
+              >
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: STATUS_COLOR.BANNED }}
+                />
+                <span style={{ fontSize: '12px', color: STATUS_COLOR.BANNED, fontWeight: 700 }}>
+                  {STATUS_LABEL.BANNED}
+                </span>
+              </div>
+            ) : user.must_change_password ? (
+              <>
+                <div
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
+                  style={{
+                    background: '#FEF3C7',
+                    border: '1px solid #FCD34D',
+                    color: '#D97706',
+                  }}
+                >
+                  <KeyRound size={12} />
+                  <span style={{ fontSize: '12px', fontWeight: 700 }}>Activation en attente</span>
+                </div>
+                <button
+                  type="button"
+                  disabled={isRegenerating}
+                  onClick={handleRegenerateActivation}
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 transition disabled:opacity-50"
+                  style={{
+                    background: '#EFF6FF',
+                    border: '1px solid #BFDBFE',
+                    color: '#2F76BB',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                  }}
+                >
+                  <Link2 size={13} />
+                  {isRegenerating ? 'Génération...' : "Lien d'activation"}
+                </button>
+              </>
+            ) : (
+              <div
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
+                style={{
+                  background: STATUS_COLOR[user.status] + '18',
+                  border: `1px solid ${STATUS_COLOR[user.status]}33`,
+                }}
+              >
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: STATUS_COLOR[user.status] }}
+                />
+                <span style={{ fontSize: '12px', color: STATUS_COLOR[user.status], fontWeight: 700 }}>
+                  {STATUS_LABEL[user.status]}
+                </span>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => (editMode ? handleCancelEdit() : setEditMode(true))}
@@ -185,13 +304,20 @@ export function AdminUserDetail({
             />
             <div
               className="absolute -right-1 -bottom-1 h-4 w-4 rounded-full border-2 border-white"
-              style={{ background: STATUS_COLOR[user.status] }}
+              style={{
+                background:
+                  user.status === 'BANNED'
+                    ? STATUS_COLOR.BANNED
+                    : user.must_change_password
+                      ? '#D97706'
+                      : STATUS_COLOR[user.status],
+              }}
             />
           </div>
           <div className="min-w-0 flex-1">
             <p style={{ fontSize: '18px', fontWeight: 800, color: '#1A1A2E' }}>{user.name}</p>
             <p style={{ fontSize: '13px', color: '#2F76BB', fontWeight: 600 }}>
-              {user.job ?? 'Membre Matchy+'}
+              {user.job || '—'}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1">
@@ -304,7 +430,7 @@ export function AdminUserDetail({
                         >
                           <Icon size={14} color="#888" />
                           <span style={{ fontSize: '13px', color: '#353535' }}>
-                            {user[field] ?? (field === 'job' ? 'Membre Matchy+' : 'Non renseigné')}
+                            {user[field] ?? 'Non renseigné'}
                           </span>
                         </div>
                       )}
@@ -592,23 +718,37 @@ export function AdminUserDetail({
                   </span>
                 </div>
                 <div className="space-y-2.5">
-                  {MOCK_BILLING_HISTORY.map((item) => (
+                  {user.plan === 'FREE' ? (
                     <div
-                      key={item.id}
-                      className="flex items-center justify-between rounded-xl px-3 py-2.5"
+                      className="rounded-xl px-4 py-6 text-center"
                       style={{ background: '#F5F7FA' }}
                     >
-                      <div>
-                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#353535' }}>
-                          {item.label}
-                        </p>
-                        <p style={{ fontSize: '11px', color: '#AAA' }}>{item.date}</p>
-                      </div>
-                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#FF6B6B' }}>
-                        -{item.amount} DT
+                      <p style={{ fontSize: '13px', color: '#666', fontWeight: 600 }}>
+                        Compte Gratuit
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#AAA', marginTop: '2px' }}>
+                        Cet utilisateur n&apos;a souscrit à aucun forfait payant.
                       </p>
                     </div>
-                  ))}
+                  ) : (
+                    MOCK_BILLING_HISTORY.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between rounded-xl px-3 py-2.5"
+                        style={{ background: '#F5F7FA' }}
+                      >
+                        <div>
+                          <p style={{ fontSize: '12px', fontWeight: 600, color: '#353535' }}>
+                            {item.label}
+                          </p>
+                          <p style={{ fontSize: '11px', color: '#AAA' }}>{item.date}</p>
+                        </div>
+                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#FF6B6B' }}>
+                          -{item.amount} DT
+                        </p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -774,6 +914,166 @@ export function AdminUserDetail({
               >
                 Supprimer
               </button>
+            </div>
+          </div>
+        )}
+
+        {activationResult && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+          >
+            <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-100 p-4">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-lg"
+                    style={{ background: '#E8F7F3', color: '#61BCA6' }}
+                  >
+                    <Check size={16} strokeWidth={2.5} />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-800">Lien d&apos;activation régénéré</h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivationResult(null);
+                    setCopiedLink(false);
+                    setCopiedMessage(false);
+                  }}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3 p-5">
+                <p className="text-xs text-slate-600">
+                  Transmettez ce nouveau lien sécurisé à <strong>{user.name}</strong> ({user.phone}).
+                  Il lui permettra de choisir son mot de passe et d&apos;activer son compte.
+                </p>
+
+                <div className="flex flex-col gap-1">
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>
+                    Lien direct
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={activationResult.activationLink}
+                      className="flex-1 rounded-xl px-3 py-2 text-xs font-mono select-all outline-none"
+                      style={{ background: '#F5F7FA', border: '1.5px solid #D0E4F7', color: '#1A1A2E' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(activationResult.activationLink);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                      className="flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-bold text-white"
+                      style={{ background: copiedLink ? '#61BCA6' : '#2F76BB' }}
+                    >
+                      {copiedLink ? <Check size={13} /> : <Copy size={13} />}
+                      {copiedLink ? 'Copié !' : 'Copier'}
+                    </button>
+                  </div>
+                </div>
+
+                {(() => {
+                  const appBaseUrl = (process.env.NEXT_PUBLIC_APP_URL || '').trim().replace(/\/+$/, '');
+                  const rawActivationLink = activationResult.activationLink || '';
+                  const activationLink = rawActivationLink.startsWith('/')
+                    ? `${appBaseUrl || 'http://localhost:3000'}${rawActivationLink}`
+                    : rawActivationLink;
+                  const defaultShareMessage = `Matchy+: Bonjour ${user.name}, activez votre compte ici: ${activationLink}`;
+                  const shareMsg = customMessage !== null ? customMessage : defaultShareMessage;
+                  return (
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>
+                          Message SMS d&apos;invitation
+                        </label>
+                        <span
+                          className="text-[11px] font-medium"
+                          style={{
+                            color: shareMsg.length <= 160 ? '#64748B' : '#D97706',
+                          }}
+                        >
+                          {shareMsg.length} / 160 caractères {shareMsg.length <= 160 ? '(1 SMS)' : `(~${Math.ceil(shareMsg.length / 153)} SMS)`}
+                        </span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={shareMsg}
+                        onChange={(e) => setCustomMessage(e.target.value)}
+                        className="w-full rounded-xl p-3 text-xs outline-none select-all resize-none leading-relaxed text-slate-800 transition"
+                        style={{ background: '#F5F7FA', border: '1.5px solid #D0E4F7' }}
+                      />
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(shareMsg);
+                            setCopiedMessage(true);
+                            setTimeout(() => setCopiedMessage(false), 2000);
+                          }}
+                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs"
+                        >
+                          {copiedMessage ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                          {copiedMessage ? 'Message copié !' : 'Copier le message SMS'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSendSms(shareMsg, activationLink)}
+                          disabled={sendingSms}
+                          className="flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 shadow-xs disabled:opacity-60"
+                          style={{ background: smsSentSuccess ? '#61BCA6' : '#2F76BB' }}
+                        >
+                          {sendingSms ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : smsSentSuccess ? (
+                            <Check size={12} strokeWidth={2.5} />
+                          ) : (
+                            <MessageSquare size={12} />
+                          )}
+                          {sendingSms
+                            ? 'Envoi en cours...'
+                            : smsSentSuccess
+                              ? 'SMS envoyé avec succès !'
+                              : 'Envoyer par SMS'}
+                        </button>
+                      </div>
+
+                      {smsError && (
+                        <div className="mt-2 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs text-red-600">
+                          <AlertCircle size={14} className="shrink-0" />
+                          <span>{smsError}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div className="flex justify-end border-t border-slate-100 p-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivationResult(null);
+                    setCopiedLink(false);
+                    setCopiedMessage(false);
+                    setCustomMessage(null);
+                    setSendingSms(false);
+                    setSmsSentSuccess(false);
+                    setSmsError(null);
+                  }}
+                  className="rounded-xl px-4 py-2 text-xs font-bold text-white transition"
+                  style={{ background: '#2F76BB' }}
+                >
+                  Fermer
+                </button>
+              </div>
             </div>
           </div>
         )}

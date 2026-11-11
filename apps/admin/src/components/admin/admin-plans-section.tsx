@@ -271,6 +271,7 @@ export function AdminPlansSection({
   saving,
   savedAt,
   onSave,
+  canManagePlans = true,
 }: {
   plans: AdminPlan[];
   stats: AdminStats | null;
@@ -278,6 +279,7 @@ export function AdminPlansSection({
   saving: boolean;
   savedAt: string | null;
   onSave: (id: AdminPlan['id'], changes: AdminPlanUpdate) => Promise<boolean>;
+  canManagePlans?: boolean;
 }) {
   const [selectedId, setSelectedId] = useState<AdminPlan['id'] | null>(null);
   // `null` means "no local edits" — the server's copy is shown as-is. Deriving the shown
@@ -304,6 +306,7 @@ export function AdminPlansSection({
   };
 
   const handleSave = async () => {
+    if (!canManagePlans) return;
     const { id, sort_order, ...changes } = edited;
     const ok = await onSave(id, changes);
     // Drop the draft so the server's stored copy becomes the source of truth again.
@@ -377,7 +380,11 @@ export function AdminPlansSection({
                   plan={plan}
                   isSelected={plan.id === selected.id}
                   onSelect={() => selectPlan(plan)}
-                  onToggleActive={() => onSave(plan.id, { is_active: !plan.is_active })}
+                  onToggleActive={() => {
+                    if (canManagePlans) {
+                      void onSave(plan.id, { is_active: !plan.is_active });
+                    }
+                  }}
                 />
               ))}
             </div>
@@ -452,14 +459,17 @@ export function AdminPlansSection({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!hasChanges || saving}
+                disabled={!hasChanges || saving || !canManagePlans}
+                title={!canManagePlans ? 'Seul un Super Administrateur peut modifier les forfaits.' : undefined}
                 className="flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-white"
                 style={{
                   background:
-                    hasChanges && !saving ? 'linear-gradient(90deg, #61BCA6, #2F76BB)' : '#CBD8E5',
+                    hasChanges && !saving && canManagePlans
+                      ? 'linear-gradient(90deg, #61BCA6, #2F76BB)'
+                      : '#CBD8E5',
                   fontSize: '13px',
                   fontWeight: 700,
-                  cursor: hasChanges && !saving ? 'pointer' : 'not-allowed',
+                  cursor: hasChanges && !saving && canManagePlans ? 'pointer' : 'not-allowed',
                 }}
               >
                 <Save size={14} />
@@ -603,7 +613,11 @@ export function AdminPlansSection({
                   <button
                     type="button"
                     aria-label={`${selected.is_active ? 'Désactiver' : 'Activer'} ${selected.name} (forfait actif)`}
-                    onClick={() => onSave(selected.id, { is_active: !selected.is_active })}
+                    onClick={() => {
+                      if (canManagePlans) {
+                        void onSave(selected.id, { is_active: !selected.is_active });
+                      }
+                    }}
                   >
                     {selected.is_active ? (
                       <ToggleRight size={26} color="#61BCA6" />

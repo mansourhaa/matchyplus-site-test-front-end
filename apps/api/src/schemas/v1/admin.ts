@@ -66,6 +66,7 @@ const adminUser = {
     missions: { type: 'number' },
     total_earnings: { type: 'number' },
     last_login: { type: 'string', nullable: true },
+    must_change_password: { type: 'boolean' },
     create_at: { type: 'string' },
   },
 };
@@ -118,7 +119,7 @@ export const adminCreateUserSchema = {
   body: {
     type: 'object',
     additionalProperties: false,
-    required: ['name', 'phone', 'password', 'profileType'],
+    required: ['name', 'phone', 'profileType'],
     properties: {
       name: { type: 'string', minLength: 1, maxLength: 120 },
       phone: { type: 'string', minLength: 1 },
@@ -180,7 +181,68 @@ export const adminCreateUserSchema = {
     200: {
       description: 'Successful response',
       type: 'object',
-      properties: { user: adminUser },
+      properties: {
+        user: adminUser,
+        activationToken: { type: 'string' },
+        activationLink: { type: 'string' },
+        smsSent: { type: 'boolean' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const adminRegenerateActivationSchema = {
+  tags: ['admin'],
+  summary: 'Regenerate user activation link',
+  security: [{ http: [] }],
+  params: {
+    type: 'object',
+    required: ['id'],
+    additionalProperties: false,
+    properties: { id: { type: 'string' } },
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        activationToken: { type: 'string' },
+        activationLink: { type: 'string' },
+        expiresAt: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const adminSendActivationSmsSchema = {
+  tags: ['admin'],
+  summary: 'Send activation link SMS to user using Tunisian SMS provider',
+  security: [{ http: [] }],
+  params: {
+    type: 'object',
+    required: ['id'],
+    additionalProperties: false,
+    properties: { id: { type: 'string' } },
+  },
+  body: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      message: { type: 'string', minLength: 1, maxLength: 500 },
+      activationLink: { type: 'string', minLength: 1 },
+    },
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      required: ['success', 'phone'],
+      properties: {
+        success: { type: 'boolean' },
+        phone: { type: 'string' },
+      },
     },
     ...errorResponses,
   },

@@ -27,7 +27,21 @@ export interface AdminManagedUser {
   missions: number;
   total_earnings: number;
   last_login: string | null;
+  must_change_password?: boolean;
   create_at: string;
+}
+
+export interface AdminCreateUserResult {
+  user: AdminManagedUser;
+  activationToken?: string;
+  activationLink?: string;
+  smsSent?: boolean;
+}
+
+export interface AdminRegenerateActivationResult {
+  activationToken: string;
+  activationLink: string;
+  expiresAt: string;
 }
 
 export interface AdminStats {
@@ -67,7 +81,7 @@ export interface AdminUsersState {
 export interface AdminCreateUserInput {
   name: string;
   phone: string;
-  password: string;
+  password?: string;
   email?: string;
   plan?: UserPlan;
   profileType: 'INDIVIDUAL' | 'PROVIDER';

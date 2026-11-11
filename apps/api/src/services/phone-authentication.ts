@@ -1,10 +1,15 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 import { OtpPurpose, PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
-import { SOCIAL_AUTH_PROVIDERS } from '../constants.js';
+import { PROFILE_PHOTO_CONTENT_TYPES, SOCIAL_AUTH_PROVIDERS } from '../constants.js';
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import { normalizePhoneForAuth } from '../lib/phone.js';
 import { SmsClient } from '../lib/sms.js';
 import {
+  ActivationConfirmPayload,
+  ActivationPreviewResult,
   ConfirmPasswordResetPayload,
   ConfirmPhoneLinkPayload,
   LoginPhonePayload,
@@ -15,6 +20,9 @@ import {
   VerifyOtpPayload,
 } from '../types/auth.js';
 import { AbstractServiceOptions } from '../types/services.js';
+import { hashActivationToken } from '../utils/activation-token.js';
+import { extensionOf } from '../utils/media-http.js';
+import { PHOTOS_DIR, filenameFromStoredPath, isStoredMediaPath } from '../utils/media-storage.js';
 import { assertPasswordPolicy } from '../utils/password-policy.js';
 import { toMemberSessionUser } from '../utils/session-user.js';
 import { OtpChallengeService } from './otp-challenge.js';
@@ -99,6 +107,9 @@ export class PhoneAuthenticationService {
     // A social-only account never had a password to check — this is not a wrong
     // password, so it gets its own actionable code rather than the generic one.
     if (!user.password) {
+      if (user.must_change_password) {
+        throw new Error('account_activation_required');
+      }
       throw new Error('oauth_only_account');
     }
 
@@ -322,5 +333,130 @@ export class PhoneAuthenticationService {
     });
 
     return { message: 'phone_linked', phone: updated.phone as string };
+  }
+
+  /**
+   * Retrieves preview profile data for an unactivated account using its raw activation token.
+   * Fails if the token hash is not found, expired, or the account is already activated.
+   */
+  async getActivationPreview(rawToken: string): Promise<ActivationPreviewResult> {
+    try {
+      const token = rawToken?.trim();
+      if (!token) {
+        throw new Error('invalid_activation_token');
+      }
+
+      const tokenHash = hashActivationToken(token);
+      const user = await this.prisma.user.findUnique({
+        where: { activation_token_hash: tokenHash },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          image: true,
+          job: true,
+          city: true,
+          category: true,
+          profile_type: true,
+          must_change_password: true,
+          activation_token_expires_at: true,
+          status: true,
+        },
+      });
+
+      if (
+        !user ||
+        !user.must_change_password ||
+        !user.activation_token_expires_at ||
+        user.activation_token_expires_at < new Date()
+      ) {
+        throw new Error('invalid_activation_token');
+      }
+
+      if (user.status === UserStatus.BANNED) {
+        throw new Error('account_banned');
+      }
+
+      let resolvedImage: string | null = user.image;
+      if (user.image && isStoredMediaPath(user.image, 'photos')) {
+        try {
+          const filename = filenameFromStoredPath(user.image);
+          const fullPath = join(PHOTOS_DIR, filename);
+          const fileBuffer = await readFile(fullPath);
+          const ext = extensionOf(filename);
+          const mime = PROFILE_PHOTO_CONTENT_TYPES[ext] ?? 'image/jpeg';
+          resolvedImage = `data:${mime};base64,${fileBuffer.toString('base64')}`;
+        } catch {
+          resolvedImage = null;
+        }
+      }
+
+      return {
+        id: user.id,
+        name: user.name,
+        phone: user.phone ?? '',
+        image: resolvedImage,
+        job: user.job,
+        city: user.city,
+        category: user.category,
+        profileType: user.profile_type,
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Sets the password for a pre-registered lead, marks activation complete, and issues
+   * a regular member session token pair.
+   */
+  async confirmActivation(payload: ActivationConfirmPayload) {
+    try {
+      const token = payload.token?.trim();
+      if (!token) {
+        throw new Error('invalid_activation_token');
+      }
+
+      assertPasswordPolicy(payload.password);
+
+      const tokenHash = hashActivationToken(token);
+      const user = await this.prisma.user.findUnique({
+        where: { activation_token_hash: tokenHash },
+      });
+
+      if (
+        !user ||
+        !user.must_change_password ||
+        !user.activation_token_expires_at ||
+        user.activation_token_expires_at < new Date()
+      ) {
+        throw new Error('invalid_activation_token');
+      }
+
+      if (user.status === UserStatus.BANNED) {
+        throw new Error('account_banned');
+      }
+
+      const hashedPassword = await hashPassword(payload.password);
+
+      const updated = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: hashedPassword,
+          must_change_password: false,
+          activation_token_hash: null,
+          activation_token_expires_at: null,
+          phone_verified: true,
+          status: user.status === UserStatus.INACTIVE ? UserStatus.ACTIVE : user.status,
+          last_login: new Date(),
+          token_version: { increment: 1 },
+        },
+      });
+
+      const tokens = await this.tokenService.issueTokenPair(updated);
+      return { ...tokens, user: toMemberSessionUser(updated) };
+    } catch (err) {
+      throw err;
+    }
   }
 }

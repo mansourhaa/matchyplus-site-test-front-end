@@ -1,7 +1,6 @@
 import { adminApi, extractAdminErrorMessage } from '@/lib/admin-api';
 import type { RootState } from '@/lib/store';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { createSelector } from 'reselect';
 
 import type { AdminAnalytics, AdminAnalyticsState } from '../types';
 
