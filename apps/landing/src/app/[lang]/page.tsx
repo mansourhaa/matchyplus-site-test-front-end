@@ -3,6 +3,7 @@ import { Explore } from '@/components/matchy/explore';
 import { Features } from '@/components/matchy/features';
 import { Hero } from '@/components/matchy/hero';
 import { Security } from '@/components/matchy/security';
+import { ServicesBelt } from '@/components/matchy/services-belt';
 import { Steps } from '@/components/matchy/steps';
 import { PageFrame } from '@/components/site-shell';
 import { isLocale } from '@/features/i18n/routing';
@@ -34,6 +35,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
       <main className="bg-background overflow-x-hidden">
         <Hero />
         <Features />
+        <ServicesBelt />
         <Security />
         <Explore />
         <Steps />
