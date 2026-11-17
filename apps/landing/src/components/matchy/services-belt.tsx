@@ -18,7 +18,7 @@ import {
   useTransform,
   useVelocity,
 } from 'framer-motion';
-import { ArrowRight, BadgeCheck, Check, MapPin, MessageCircle, X } from 'lucide-react';
+import { ArrowRight, Heart } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -32,6 +32,7 @@ import {
 } from 'react';
 
 import { type BeltRadii, angleToFront, beltPose, frontIndex } from './belt-geometry';
+import { type BeltProfile, BeltProfileCard, confidenceTier } from './belt-profile-card';
 import { Reveal } from './motion';
 
 type ServiceImage = { src: string; width: number; height: number };
@@ -63,6 +64,36 @@ const DRAG_SPEED = 0.006;
 const WIDE_STAGE = 768;
 
 const FOCUS_SPRING = { type: 'spring', stiffness: 120, damping: 22 } as const;
+
+/** Little hearts floating up behind the match celebration. */
+const MATCH_HEARTS = [
+  { left: '18%', delay: 0 },
+  { left: '32%', delay: 0.5 },
+  { left: '68%', delay: 0.25 },
+  { left: '82%', delay: 0.75 },
+];
+
+function toProfiles(rows: unknown): Record<string, BeltProfile> {
+  if (!Array.isArray(rows)) return {};
+  const profiles: Record<string, BeltProfile> = {};
+  for (const row of rows) {
+    if (!Array.isArray(row)) continue;
+    const [code, name, age, distanceKm, rating, reviews, score, price, bio, ...tags] =
+      row as string[];
+    profiles[code] = {
+      name,
+      age,
+      distanceKm,
+      rating,
+      reviews,
+      score: Number(score),
+      price,
+      bio,
+      tags,
+    };
+  }
+  return profiles;
+}
 
 function toServices(rows: unknown): BeltService[] {
   if (!Array.isArray(rows)) return [];
@@ -182,7 +213,7 @@ function BeltPerson({
       >
         <span
           aria-hidden="true"
-          className="absolute -bottom-3 left-1/2 h-6 w-[80%] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(ellipse,rgba(39,52,74,0.35),transparent_70%)]"
+          className="absolute -bottom-3 left-1/2 h-6 w-[80%] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(ellipse,rgba(47,118,187,0.35),transparent_70%)]"
         />
         <span className="relative block h-full w-full transition-[transform,filter] duration-300 ease-out group-hover:-translate-y-2 group-hover:drop-shadow-[0_18px_24px_rgba(45,121,190,0.3)] group-focus-visible:-translate-y-2">
           <Image
@@ -208,190 +239,16 @@ function BeltPerson({
   );
 }
 
-function ServiceCard({
-  service,
-  titleId,
-  closeLabel,
-  cardTitle,
-  ctaLabel,
-  highlights,
-  reduceMotion,
-  onClose,
-  closeRef,
-}: {
-  service: BeltService;
-  titleId: string;
-  closeLabel: string;
-  cardTitle: string;
-  ctaLabel: string;
-  highlights: string[];
-  reduceMotion: boolean;
-  onClose: () => void;
-  closeRef: RefObject<HTMLButtonElement | null>;
-}) {
-  const highlightIcons = [BadgeCheck, MapPin, MessageCircle];
-  const tiltX = useMotionValue(0);
-  const tiltY = useMotionValue(0);
-  const rotateX = useSpring(tiltY, { stiffness: 150, damping: 15 });
-  const rotateY = useSpring(tiltX, { stiffness: 150, damping: 15 });
-
-  const handleTilt = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (reduceMotion || event.pointerType !== 'mouse') return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    tiltX.set(((event.clientX - rect.left) / rect.width - 0.5) * 12);
-    tiltY.set(((event.clientY - rect.top) / rect.height - 0.5) * -10);
-  };
-  const resetTilt = () => {
-    tiltX.set(0);
-    tiltY.set(0);
-  };
-
-  return (
-    <motion.div
-      role="dialog"
-      aria-modal="false"
-      aria-labelledby={titleId}
-      className="relative w-full origin-top"
-      initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: '-110%', rotate: -12 }}
-      animate={{ opacity: 1, y: 0, rotate: 0 }}
-      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: '-110%', rotate: 8 }}
-      transition={
-        reduceMotion
-          ? { duration: 0.2 }
-          : {
-              y: { type: 'spring', stiffness: 140, damping: 16 },
-              rotate: { type: 'spring', stiffness: 90, damping: 5 },
-              opacity: { duration: 0.2 },
-            }
-      }
-    >
-      {/* the string the card hangs from */}
-      <span
-        aria-hidden="true"
-        className="bg-brand-navy/30 absolute -top-14 left-1/2 hidden h-16 w-px md:block"
-      />
-      <motion.div
-        onPointerMove={handleTilt}
-        onPointerLeave={resetTilt}
-        style={{ rotateX, rotateY, transformPerspective: 900 }}
-        className="relative overflow-hidden rounded-2xl bg-[#fffdf7] shadow-2xl ring-1 shadow-black/15 ring-black/5"
-      >
-        {!reduceMotion && (
-          <motion.span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/70 to-transparent"
-            initial={{ left: '-40%' }}
-            animate={{ left: '120%' }}
-            transition={{
-              duration: 1.1,
-              delay: 0.7,
-              ease: 'easeInOut',
-              repeat: Number.POSITIVE_INFINITY,
-              repeatDelay: 5,
-            }}
-          />
-        )}
-        <div className="relative flex flex-col gap-4 px-5 pt-8 pb-5">
-          <span
-            aria-hidden="true"
-            className="absolute top-3 left-1/2 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-[#e2eaf2] ring-1 ring-[#c9d6e3]"
-          />
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={onClose}
-            aria-label={closeLabel}
-            className="text-brand-navy/60 hover:text-brand-navy focus-visible:ring-brand-teal absolute top-3 grid h-8 w-8 place-items-center rounded-full outline-none hover:bg-black/5 focus-visible:ring-2 ltr:right-3 rtl:left-3"
-          >
-            <X className="h-4 w-4" />
-          </button>
-
-          <div className="text-center leading-tight">
-            <p className="text-brand-blue text-xl font-extrabold">Matchy+</p>
-            <p className="text-muted-foreground font-mono text-[10px] tracking-[0.15em] uppercase">
-              {cardTitle}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span
-              dir="ltr"
-              className="bg-brand-navy rounded-md px-2.5 py-1.5 font-mono text-xl font-semibold tracking-widest text-white"
-            >
-              {service.code}
-            </span>
-            <div className="min-w-0">
-              <h3 id={titleId} className="text-brand-navy text-xl leading-tight font-extrabold">
-                {service.title}
-              </h3>
-              <p className="text-muted-foreground text-sm leading-snug">{service.description}</p>
-            </div>
-          </div>
-
-          <div className="border-t-[1.5px] border-dashed border-[#c9d6e3]" />
-
-          <ul className="space-y-2">
-            {service.items.map((item) => (
-              <li
-                key={item}
-                className="text-brand-navy flex items-center gap-2 text-sm font-semibold"
-              >
-                <Check className="text-brand-teal h-4 w-4 shrink-0" />
-                {item}
-              </li>
-            ))}
-          </ul>
-
-          <div className="border-t-[1.5px] border-dashed border-[#c9d6e3]" />
-
-          <ul className="grid grid-cols-3 gap-2 text-center">
-            {highlights.map((label, i) => {
-              const Icon = highlightIcons[i % highlightIcons.length];
-              return (
-                <li key={label} className="flex flex-col items-center gap-1">
-                  <Icon className="text-brand-blue h-4 w-4" />
-                  <span className="text-muted-foreground text-[11px] leading-tight">{label}</span>
-                </li>
-              );
-            })}
-          </ul>
-
-          <Link
-            href={APP_REGISTER_URL}
-            className="bg-brand-blue hover:bg-brand-navy focus-visible:ring-brand-teal flex items-center justify-between rounded-xl px-4 py-3 text-sm font-bold text-white transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-          >
-            {ctaLabel}
-            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-          </Link>
-
-          <div
-            aria-hidden="true"
-            className="h-10"
-            style={{
-              background:
-                'repeating-linear-gradient(90deg, #27344a 0 2px, transparent 2px 4px, #27344a 4px 5px, transparent 5px 8px, #27344a 8px 11px, transparent 11px 13px)',
-            }}
-          />
-        </div>
-        <p
-          dir="ltr"
-          className="bg-brand-teal py-2 text-center font-mono text-[11px] tracking-[0.18em] text-white uppercase"
-        >
-          Matchy+ · {service.code}
-        </p>
-      </motion.div>
-    </motion.div>
-  );
-}
-
 export function ServicesBelt() {
   const { t, dir } = useI18n();
   const isRtl = dir === 'rtl';
   const reduceMotion = useReducedMotion() ?? false;
   const titleId = useId();
+  const matchTitleId = useId();
 
   const services = toServices(t('landing.beltServices'));
-  const highlights = (t('landing.beltHighlights') as unknown as string[]) ?? [];
+  const profiles = toProfiles(t('landing.beltProfiles'));
+  const confidenceLabels = (t('landing.beltConfidence') as unknown as string[]) ?? [];
   const count = services.length;
 
   const stageRef = useRef<HTMLDivElement>(null);
@@ -400,6 +257,7 @@ export function ServicesBelt() {
   const [size, setSize] = useState<StageSize>({ width: 0, height: 0 });
   const [front, setFront] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  const [matched, setMatched] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
 
   const angle = useMotionValue(0);
@@ -441,7 +299,7 @@ export function ServicesBelt() {
   });
 
   useAnimationFrame((_, delta) => {
-    if (reduceMotion || !inView || paused || selected !== null) return;
+    if (reduceMotion || !inView || paused || selected !== null || matched !== null) return;
     if (dragging.current || spinning.current) return;
     angle.set(angle.get() + delta * AUTO_SPEED);
   });
@@ -465,17 +323,39 @@ export function ServicesBelt() {
     if (trigger !== null) personRefs.current[trigger]?.focus({ preventScroll: true });
   };
 
-  const onEscape = useEffectEvent(close);
+  // Pass: the card flies away and the next professional comes to the front.
+  const passCurrent = () => {
+    if (selected === null) return;
+    open((selected + 1) % count);
+  };
+
+  // Like: celebrate the match and invite the visitor to sign up.
+  const likeCurrent = () => {
+    if (selected === null) return;
+    setMatched(selected);
+    setSelected(null);
+  };
+
+  const keepExploring = () => {
+    const last = matched;
+    setMatched(null);
+    if (last !== null) open((last + 1) % count);
+  };
+
+  const onEscape = useEffectEvent(() => {
+    if (matched !== null) setMatched(null);
+    else close();
+  });
 
   useEffect(() => {
-    if (selected === null) return;
-    closeRef.current?.focus({ preventScroll: true });
+    if (selected === null && matched === null) return;
+    if (selected !== null) closeRef.current?.focus({ preventScroll: true });
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onEscape();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [selected]);
+  }, [selected, matched]);
 
   const handlePan = (_: PointerEvent, info: PanInfo) => {
     angle.set(angle.get() + info.delta.x * DRAG_SPEED);
@@ -513,6 +393,41 @@ export function ServicesBelt() {
   const wide = size.width >= WIDE_STAGE;
   const focused = selected !== null ? services[selected] : null;
   const current = services[front];
+  const matchedService = matched !== null ? services[matched] : null;
+  const matchedProfile = matchedService ? profiles[matchedService.code] : undefined;
+
+  const renderCard = (service: BeltService, className: string) => {
+    const profile = profiles[service.code];
+    if (!profile) return null;
+    return (
+      <BeltProfileCard
+        key={service.code}
+        className={className}
+        image={service.image}
+        profile={profile}
+        labels={{
+          role: service.title,
+          available: t('landing.beltAvailable'),
+          seeDetails: t('landing.beltSeeDetails'),
+          ai: t('landing.beltAi'),
+          confidence: confidenceLabels[confidenceTier(profile.score)] ?? '',
+          distance: t('landing.beltKm', { km: profile.distanceKm }),
+          price: t('landing.beltPrice', { price: profile.price }),
+          pass: t('landing.beltPass'),
+          like: t('landing.beltLike'),
+          close: t('landing.beltClose'),
+          sample: t('landing.beltSample'),
+        }}
+        detailsHref={APP_REGISTER_URL}
+        titleId={titleId}
+        reduceMotion={reduceMotion}
+        onPass={passCurrent}
+        onLike={likeCurrent}
+        onClose={close}
+        closeRef={closeRef}
+      />
+    );
+  };
 
   return (
     <section className="relative z-10 mx-auto max-w-6xl px-5 py-20" id="services-belt">
@@ -546,7 +461,7 @@ export function ServicesBelt() {
           pointerX.set(0);
           pointerY.set(0);
         }}
-        className="relative mt-12 h-[520px] touch-pan-y overflow-hidden rounded-[2.5rem] bg-[radial-gradient(ellipse_at_50%_58%,#ffffff_0%,#f3f6f9_45%,#e5ebf1_100%)] select-none sm:h-[600px] md:h-[680px]"
+        className="relative mt-12 h-[520px] touch-pan-y overflow-hidden rounded-[2.5rem] bg-[linear-gradient(160deg,#cfe2f6_0%,#bcdcef_45%,#a8dccd_100%)] select-none sm:h-[600px] md:h-[680px]"
       >
         {size.width > 0 && (
           <motion.div
@@ -557,6 +472,24 @@ export function ServicesBelt() {
               transformPerspective: 1400,
             }}
           >
+            {/* brand glow behind the belt */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(255,255,255,0.75)_0%,rgba(255,255,255,0)_55%)]"
+            />
+            {/* colored floor under the belt */}
+            {(() => {
+              const { radii, centerX, centerY } = stageGeometry(size);
+              const w = (radii.rx + 70) * 2;
+              const h = (radii.ry + 26) * 2;
+              return (
+                <div
+                  aria-hidden="true"
+                  className="absolute rounded-[50%] bg-[radial-gradient(ellipse,rgba(255,255,255,0.85)_0%,rgba(97,188,166,0.35)_55%,rgba(47,118,187,0.28)_100%)] shadow-[0_30px_80px_-20px_rgba(47,118,187,0.45)]"
+                  style={{ left: centerX - w / 2, top: centerY - h / 2, width: w, height: h }}
+                />
+              );
+            })()}
             {/* matte floor: fine concentric rings around the belt */}
             {(() => {
               const { radii, centerX, centerY } = stageGeometry(size);
@@ -564,7 +497,7 @@ export function ServicesBelt() {
                 <div
                   key={ring}
                   aria-hidden="true"
-                  className="border-brand-navy/[0.07] absolute rounded-[50%] border"
+                  className="absolute rounded-[50%] border border-white/60"
                   style={{
                     left: centerX - (radii.rx + 40) * ring,
                     top: centerY - (radii.ry + 14) * ring,
@@ -700,47 +633,98 @@ export function ServicesBelt() {
           />
         )}
 
-        {/* focus mode: the swinging service card (beside the pro on wide screens) */}
+        {/* focus mode: the profile card, beside the professional on wide screens */}
         {wide && (
-          <div className="absolute top-14 z-[400] w-[320px] ltr:right-8 rtl:left-8">
-            <AnimatePresence>
-              {focused && (
-                <ServiceCard
-                  key={focused.code}
-                  service={focused}
-                  titleId={titleId}
-                  closeLabel={t('landing.beltClose')}
-                  cardTitle={t('landing.beltCardTitle')}
-                  ctaLabel={t('landing.beltCta')}
-                  highlights={highlights}
-                  reduceMotion={reduceMotion}
-                  onClose={close}
-                  closeRef={closeRef}
-                />
-              )}
+          <div className="absolute top-6 z-[400] w-[340px] ltr:right-8 rtl:left-8">
+            <AnimatePresence mode="wait">
+              {focused && renderCard(focused, 'h-[620px]')}
             </AnimatePresence>
           </div>
         )}
+
+        {/* like: match celebration */}
+        <AnimatePresence>
+          {matchedService && matchedProfile && (
+            <motion.div
+              key="match"
+              role="alertdialog"
+              aria-labelledby={matchTitleId}
+              className="absolute inset-0 z-[500] flex items-center justify-center bg-[rgba(31,58,92,0.55)] p-6 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="relative w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl"
+                initial={reduceMotion ? false : { scale: 0.85, y: 24 }}
+                animate={{ scale: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 220, damping: 18 }}
+              >
+                {!reduceMotion &&
+                  MATCH_HEARTS.map((heart) => (
+                    <motion.span
+                      key={heart.left}
+                      aria-hidden="true"
+                      className="absolute top-10 text-[#22C55E]"
+                      style={{ left: heart.left }}
+                      initial={{ y: 0, opacity: 0, scale: 0.6 }}
+                      animate={{ y: -90, opacity: [0, 1, 0], scale: 1 }}
+                      transition={{
+                        duration: 1.6,
+                        delay: heart.delay,
+                        repeat: Number.POSITIVE_INFINITY,
+                        repeatDelay: 0.6,
+                      }}
+                    >
+                      <Heart className="h-4 w-4" fill="currentColor" />
+                    </motion.span>
+                  ))}
+                <div className="relative mx-auto mb-4 h-24 w-24">
+                  <div className="h-full w-full overflow-hidden rounded-full bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] ring-4 ring-[#22C55E]/30">
+                    <Image
+                      src={matchedService.image.src}
+                      alt=""
+                      width={matchedService.image.width}
+                      height={matchedService.image.height}
+                      sizes="96px"
+                      className="h-[180%] w-full object-cover object-top"
+                    />
+                  </div>
+                  <span className="absolute -right-1 -bottom-1 grid h-9 w-9 place-items-center rounded-full bg-[#22C55E] text-white shadow-lg ring-4 ring-white">
+                    <Heart className="h-4 w-4" fill="currentColor" />
+                  </span>
+                </div>
+                <h3 id={matchTitleId} className="text-brand-blue text-3xl font-extrabold">
+                  {t('landing.beltMatchTitle')}
+                </h3>
+                <p className="text-muted-foreground mt-2 leading-relaxed">
+                  {t('landing.beltMatchBody', { name: matchedProfile.name })}
+                </p>
+                <Link
+                  href={APP_REGISTER_URL}
+                  className="focus-visible:ring-brand-teal mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-offset-2"
+                >
+                  {t('landing.beltMatchCta')}
+                  <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={keepExploring}
+                  className="text-brand-navy mt-3 text-sm font-semibold hover:underline"
+                >
+                  {t('landing.beltMatchContinue')}
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* focus mode on small screens: the card drops below the stage */}
       {!wide && (
-        <div className="mx-auto mt-6 max-w-sm">
-          <AnimatePresence>
-            {focused && (
-              <ServiceCard
-                key={focused.code}
-                service={focused}
-                titleId={titleId}
-                closeLabel={t('landing.beltClose')}
-                cardTitle={t('landing.beltCardTitle')}
-                ctaLabel={t('landing.beltCta')}
-                highlights={highlights}
-                reduceMotion={reduceMotion}
-                onClose={close}
-                closeRef={closeRef}
-              />
-            )}
+        <div className="mx-auto mt-8 max-w-sm">
+          <AnimatePresence mode="wait">
+            {focused && renderCard(focused, 'h-[610px]')}
           </AnimatePresence>
           {!focused && current && (
             <button
