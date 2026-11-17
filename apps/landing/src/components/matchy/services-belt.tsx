@@ -18,9 +18,8 @@ import {
   useTransform,
   useVelocity,
 } from 'framer-motion';
-import { ArrowRight, Heart } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
@@ -32,6 +31,7 @@ import {
 } from 'react';
 
 import { type BeltRadii, angleToFront, beltPose, frontIndex } from './belt-geometry';
+import { BeltMatchDialog } from './belt-match-dialog';
 import { type BeltProfile, BeltProfileCard, confidenceTier } from './belt-profile-card';
 import { Reveal } from './motion';
 
@@ -64,14 +64,6 @@ const DRAG_SPEED = 0.006;
 const WIDE_STAGE = 768;
 
 const FOCUS_SPRING = { type: 'spring', stiffness: 120, damping: 22 } as const;
-
-/** Little hearts floating up behind the match celebration. */
-const MATCH_HEARTS = [
-  { left: '18%', delay: 0 },
-  { left: '32%', delay: 0.5 },
-  { left: '68%', delay: 0.25 },
-  { left: '82%', delay: 0.75 },
-];
 
 function toProfiles(rows: unknown): Record<string, BeltProfile> {
   if (!Array.isArray(rows)) return {};
@@ -244,7 +236,6 @@ export function ServicesBelt() {
   const isRtl = dir === 'rtl';
   const reduceMotion = useReducedMotion() ?? false;
   const titleId = useId();
-  const matchTitleId = useId();
 
   const services = toServices(t('landing.beltServices'));
   const profiles = toProfiles(t('landing.beltProfiles'));
@@ -342,20 +333,24 @@ export function ServicesBelt() {
     if (last !== null) open((last + 1) % count);
   };
 
-  const onEscape = useEffectEvent(() => {
-    if (matched !== null) setMatched(null);
-    else close();
-  });
+  // Backdrop click or Escape: close the match screen and give focus back to that professional.
+  const dismissMatch = () => {
+    const last = matched;
+    setMatched(null);
+    if (last !== null) personRefs.current[last]?.focus({ preventScroll: true });
+  };
+
+  const onEscape = useEffectEvent(() => close());
 
   useEffect(() => {
-    if (selected === null && matched === null) return;
-    if (selected !== null) closeRef.current?.focus({ preventScroll: true });
+    if (selected === null) return;
+    closeRef.current?.focus({ preventScroll: true });
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onEscape();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [selected, matched]);
+  }, [selected]);
 
   const handlePan = (_: PointerEvent, info: PanInfo) => {
     angle.set(angle.get() + info.delta.x * DRAG_SPEED);
@@ -645,77 +640,20 @@ export function ServicesBelt() {
         {/* like: match celebration */}
         <AnimatePresence>
           {matchedService && matchedProfile && (
-            <motion.div
+            <BeltMatchDialog
               key="match"
-              role="alertdialog"
-              aria-labelledby={matchTitleId}
-              className="absolute inset-0 z-[500] flex items-center justify-center bg-[rgba(31,58,92,0.55)] p-6 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.div
-                className="relative w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl"
-                initial={reduceMotion ? false : { scale: 0.85, y: 24 }}
-                animate={{ scale: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 220, damping: 18 }}
-              >
-                {!reduceMotion &&
-                  MATCH_HEARTS.map((heart) => (
-                    <motion.span
-                      key={heart.left}
-                      aria-hidden="true"
-                      className="absolute top-10 text-[#22C55E]"
-                      style={{ left: heart.left }}
-                      initial={{ y: 0, opacity: 0, scale: 0.6 }}
-                      animate={{ y: -90, opacity: [0, 1, 0], scale: 1 }}
-                      transition={{
-                        duration: 1.6,
-                        delay: heart.delay,
-                        repeat: Number.POSITIVE_INFINITY,
-                        repeatDelay: 0.6,
-                      }}
-                    >
-                      <Heart className="h-4 w-4" fill="currentColor" />
-                    </motion.span>
-                  ))}
-                <div className="relative mx-auto mb-4 h-24 w-24">
-                  <div className="h-full w-full overflow-hidden rounded-full bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] ring-4 ring-[#22C55E]/30">
-                    <Image
-                      src={matchedService.image.src}
-                      alt=""
-                      width={matchedService.image.width}
-                      height={matchedService.image.height}
-                      sizes="96px"
-                      className="h-[180%] w-full object-cover object-top"
-                    />
-                  </div>
-                  <span className="absolute -right-1 -bottom-1 grid h-9 w-9 place-items-center rounded-full bg-[#22C55E] text-white shadow-lg ring-4 ring-white">
-                    <Heart className="h-4 w-4" fill="currentColor" />
-                  </span>
-                </div>
-                <h3 id={matchTitleId} className="text-brand-blue text-3xl font-extrabold">
-                  {t('landing.beltMatchTitle')}
-                </h3>
-                <p className="text-muted-foreground mt-2 leading-relaxed">
-                  {t('landing.beltMatchBody', { name: matchedProfile.name })}
-                </p>
-                <Link
-                  href={APP_REGISTER_URL}
-                  className="focus-visible:ring-brand-teal mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-offset-2"
-                >
-                  {t('landing.beltMatchCta')}
-                  <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-                </Link>
-                <button
-                  type="button"
-                  onClick={keepExploring}
-                  className="text-brand-navy mt-3 text-sm font-semibold hover:underline"
-                >
-                  {t('landing.beltMatchContinue')}
-                </button>
-              </motion.div>
-            </motion.div>
+              image={matchedService.image}
+              labels={{
+                title: t('landing.beltMatchTitle'),
+                body: t('landing.beltMatchBody', { name: matchedProfile.name }),
+                cta: t('landing.beltMatchCta'),
+                continue: t('landing.beltMatchContinue'),
+              }}
+              registerHref={APP_REGISTER_URL}
+              reduceMotion={reduceMotion}
+              onDismiss={dismissMatch}
+              onContinue={keepExploring}
+            />
           )}
         </AnimatePresence>
       </motion.div>
