@@ -58,6 +58,8 @@ export function Analytics() {
 
   useEffect(() => {
     if (analytics === null) return;
+    window['ga-disable-G-R7FNSWEW2C'] = !analytics;
+    window['ga-disable-G-GBBJJXX8S4'] = !analytics;
     if (GA_MEASUREMENT_ID) window[`ga-disable-${GA_MEASUREMENT_ID}`] = !analytics;
     // consent(false) only erases Clarity's cookies; stop() also ends the cookieless recording.
     // Neither tool restarts cleanly in-page (Clarity's start() re-runs its init and warns CL001),
@@ -75,20 +77,6 @@ export function Analytics() {
   return (
     <>
       {COOKIEYES_SRC && <Script id="cookieyes" src={COOKIEYES_SRC} />}
-      {analytics !== null && GA_MEASUREMENT_ID && (
-        <>
-          <Script
-            id="ga4"
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-          />
-          <Script id="ga4-init">
-            {`window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', '${GA_MEASUREMENT_ID}');`}
-          </Script>
-        </>
-      )}
       {analytics !== null && CLARITY_PROJECT_ID && (
         <Script id="clarity-init">
           {`(function(c,l,a,r,i,t,y){
