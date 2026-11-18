@@ -939,7 +939,6 @@ describe('PhoneAuthenticationService', () => {
 
   describe('devOtp visibility by environment', () => {
     it('includes devOtp in development and omits it in production', async () => {
-      const originalNodeEnv = process.env.NODE_ENV;
       const { service, prisma } = createService();
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-lead',
@@ -953,15 +952,15 @@ describe('PhoneAuthenticationService', () => {
       prisma.otpChallenge.create.mockResolvedValue({});
 
       try {
-        process.env.NODE_ENV = 'development';
+        vi.stubEnv('NODE_ENV', 'development');
         const devResult = await service.sendActivationOtp('test-token-1234567890');
         expect(devResult.devOtp).toMatch(/^\d{6}$/);
 
-        process.env.NODE_ENV = 'production';
+        vi.stubEnv('NODE_ENV', 'production');
         const prodResult = await service.sendActivationOtp('test-token-1234567890');
         expect(prodResult).not.toHaveProperty('devOtp');
       } finally {
-        process.env.NODE_ENV = originalNodeEnv;
+        vi.unstubAllEnvs();
       }
     });
   });
