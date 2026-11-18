@@ -24,6 +24,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { AuthLayout } from './auth-layout';
+import { DevOtpBanner } from './dev-otp-banner';
 
 export function ActivationView() {
   const router = useRouter();
@@ -39,6 +40,7 @@ export function ActivationView() {
 
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [otpSending, setOtpSending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -108,6 +110,7 @@ export function ActivationView() {
       if (sendActivationOtp.fulfilled.match(result)) {
         setOtpSent(true);
         setOtpCode('');
+        setDevOtp(result.payload.devOtp ?? null);
         setResendCooldown(30);
       } else {
         const message = result.error.message;
@@ -368,6 +371,9 @@ export function ActivationView() {
                     className="flex-1 bg-transparent tracking-widest text-[#353535] outline-none"
                     style={{ fontSize: '16px', fontWeight: 700 }}
                   />
+                </div>
+                <div className="mt-2">
+                  <DevOtpBanner code={devOtp} />
                 </div>
               </div>
             )}

@@ -22,6 +22,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { AuthLayout } from './auth-layout';
+import { DevOtpBanner } from './dev-otp-banner';
 import { PhoneInput } from './phone-input';
 
 function LinkedInIcon() {
@@ -107,6 +108,7 @@ export function LoginForm() {
   const [nationalNumber, setNationalNumber] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [otpSending, setOtpSending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -211,6 +213,7 @@ export function LoginForm() {
     if (sendLoginOtp.fulfilled.match(resultAction)) {
       setOtpSent(true);
       setOtpCode('');
+      setDevOtp(resultAction.payload.devOtp ?? null);
       setResendCooldown(30);
     } else {
       setLocalError(loginPhoneErrorMessage(resultAction.error.message, t));
@@ -514,6 +517,9 @@ export function LoginForm() {
                   className="flex-1 bg-transparent tracking-widest text-[#353535] outline-none"
                   style={{ fontSize: '16px', fontWeight: 700 }}
                 />
+              </div>
+              <div className="mt-2">
+                <DevOtpBanner code={devOtp} />
               </div>
             </div>
           )}

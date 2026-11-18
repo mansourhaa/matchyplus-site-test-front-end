@@ -936,4 +936,33 @@ describe('PhoneAuthenticationService', () => {
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
+
+  describe('devOtp visibility by environment', () => {
+    it('includes devOtp in development and omits it in production', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-lead',
+        name: 'Sarra Ben Ali',
+        phone: '+21620123456',
+        must_change_password: true,
+        activation_token_expires_at: new Date(Date.now() + 86400000),
+        status: 'INACTIVE',
+      });
+      prisma.otpChallenge.findFirst.mockResolvedValue(null);
+      prisma.otpChallenge.create.mockResolvedValue({});
+
+      try {
+        process.env.NODE_ENV = 'development';
+        const devResult = await service.sendActivationOtp('test-token-1234567890');
+        expect(devResult.devOtp).toMatch(/^\d{6}$/);
+
+        process.env.NODE_ENV = 'production';
+        const prodResult = await service.sendActivationOtp('test-token-1234567890');
+        expect(prodResult).not.toHaveProperty('devOtp');
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+    });
+  });
 });

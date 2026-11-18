@@ -1,6 +1,7 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
+import { DevOtpBanner } from '@/features/auth/components/dev-otp-banner';
 import { PhoneInput } from '@/features/auth/components/phone-input';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
@@ -198,6 +199,7 @@ export function IdentityStep({
   const [nationalNumber, setNationalNumber] = useState('');
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [code, setCode] = useState('');
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
@@ -496,6 +498,7 @@ export function IdentityStep({
       setOtpError(t('onboarding.identity.errorOtpSend'));
       return;
     }
+    setDevOtp(sendAction.payload.devOtp ?? null);
     setResendCooldown(30);
   };
 
@@ -1012,6 +1015,10 @@ export function IdentityStep({
                 {t('onboarding.identity.otpModalDesc')}{' '}
                 <span style={{ fontWeight: 700, color: '#2F76BB' }}>{phone}</span>
               </p>
+            </div>
+
+            <div className="mt-4">
+              <DevOtpBanner code={devOtp} />
             </div>
 
             <input

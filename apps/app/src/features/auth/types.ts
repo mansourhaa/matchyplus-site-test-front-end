@@ -113,6 +113,12 @@ export interface ActivationPreviewResponse {
   profileType: string | null;
 }
 
+export interface OtpSendResponse {
+  message: string;
+  phone?: string;
+  devOtp?: string;
+}
+
 export interface SendActivationOtpInput {
   token: string;
 }

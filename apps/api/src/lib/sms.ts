@@ -108,7 +108,8 @@ export function createSmsClient(): SmsClient {
       const isDisabled = /^(1|true|yes|on)$/i.test(
         String(process.env.DISABLE_SMS ?? config.disableSms ?? ''),
       );
-      if (isDisabled) {
+      const isDev = (process.env.NODE_ENV ?? config.nodeEnv) === 'development';
+      if (isDisabled || isDev) {
         return disabledClient.sendSms(phone, message);
       }
       if (!isTunisieSmsConfigured()) {
