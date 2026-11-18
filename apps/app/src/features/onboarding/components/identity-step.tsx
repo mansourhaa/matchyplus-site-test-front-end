@@ -61,17 +61,20 @@ function ProfileSilhouette() {
 function IndustryDropdown({
   value,
   onChange,
+  hasError = false,
 }: {
   value: string;
   onChange: (value: IndustryKey) => void;
+  hasError?: boolean;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const selected = INDUSTRY_KEYS.find((key) => key === value);
   return (
     <div>
-      <label style={{ fontSize: '12px', color: '#888' }}>
+      <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
         {t('onboarding.identity.industryLabel')}
+        <span style={{ color: '#61BCA6' }}> *</span>
       </label>
       <div className="relative mt-1">
         <button
@@ -79,8 +82,8 @@ function IndustryDropdown({
           onClick={() => setOpen(!open)}
           className="flex w-full items-center justify-between rounded-xl px-3 py-2.5"
           style={{
-            border: '1.5px solid #E0E0E0',
-            background: 'white',
+            border: `2px solid ${hasError ? '#E24E59' : selected ? '#2F76BB' : '#E0E0E0'}`,
+            background: selected ? '#F5F9FF' : 'white',
             fontSize: '13px',
             color: selected ? '#353535' : '#BBB',
           }}
@@ -906,7 +909,11 @@ export function IdentityStep({
             </div>
 
             <div className="mt-4">
-              <IndustryDropdown value={industry} onChange={setIndustry} />
+              <IndustryDropdown
+                value={industry}
+                onChange={setIndustry}
+                hasError={requiredTouched && !industry}
+              />
             </div>
 
             <div>
