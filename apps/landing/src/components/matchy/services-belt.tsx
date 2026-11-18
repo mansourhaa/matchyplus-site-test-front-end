@@ -30,31 +30,13 @@ import {
   useState,
 } from 'react';
 
+import { type BeltService, toProfiles, toServices } from './belt-data';
 import { type BeltRadii, angleToFront, beltPose, frontIndex } from './belt-geometry';
 import { BeltMatchDialog } from './belt-match-dialog';
-import { type BeltProfile, BeltProfileCard, confidenceTier } from './belt-profile-card';
+import { BeltProfileCard, confidenceTier } from './belt-profile-card';
 import { Reveal } from './motion';
 
-type ServiceImage = { src: string; width: number; height: number };
-
-type BeltService = {
-  code: string;
-  title: string;
-  description: string;
-  items: string[];
-  image: ServiceImage;
-};
-
 type StageSize = { width: number; height: number };
-
-/** Cut-out illustration for each service code declared in `landing.beltServices`. */
-const SERVICE_IMAGES: Record<string, ServiceImage> = {
-  PLB: { src: '/matchy/belt/plumber.webp', width: 439, height: 934 },
-  ELC: { src: '/matchy/belt/electrician.webp', width: 513, height: 1100 },
-  CHF: { src: '/matchy/belt/driver.webp', width: 483, height: 1097 },
-  GDE: { src: '/matchy/belt/nanny.webp', width: 471, height: 946 },
-  MEN: { src: '/matchy/belt/cleaner.webp', width: 435, height: 905 },
-};
 
 /** Auto-rotation speed, in radians per millisecond (≈ one turn every 35 s). */
 const AUTO_SPEED = 0.00018;
@@ -64,38 +46,6 @@ const DRAG_SPEED = 0.006;
 const WIDE_STAGE = 768;
 
 const FOCUS_SPRING = { type: 'spring', stiffness: 120, damping: 22 } as const;
-
-function toProfiles(rows: unknown): Record<string, BeltProfile> {
-  if (!Array.isArray(rows)) return {};
-  const profiles: Record<string, BeltProfile> = {};
-  for (const row of rows) {
-    if (!Array.isArray(row)) continue;
-    const [code, name, age, distanceKm, rating, reviews, score, price, bio, ...tags] =
-      row as string[];
-    profiles[code] = {
-      name,
-      age,
-      distanceKm,
-      rating,
-      reviews,
-      score: Number(score),
-      price,
-      bio,
-      tags,
-    };
-  }
-  return profiles;
-}
-
-function toServices(rows: unknown): BeltService[] {
-  if (!Array.isArray(rows)) return [];
-  return rows.flatMap((row) => {
-    if (!Array.isArray(row)) return [];
-    const [code, title, description, ...items] = row as string[];
-    const image = SERVICE_IMAGES[code];
-    return image ? [{ code, title, description, items, image }] : [];
-  });
-}
 
 function stageGeometry({ width, height }: StageSize) {
   const rx = Math.min(width * 0.36, 440);
@@ -213,7 +163,7 @@ function BeltPerson({
             alt=""
             width={service.image.width}
             height={service.image.height}
-            sizes="(max-width: 768px) 220px, 440px"
+            sizes="(max-width: 768px) 130px, 210px"
             draggable={false}
             className="h-full w-full object-contain object-bottom select-none"
           />
@@ -531,28 +481,30 @@ export function ServicesBelt() {
         {/* index of services */}
         <nav
           aria-label={t('landing.beltServicesLabel')}
-          className="absolute top-5 z-[400] flex gap-1.5 font-mono md:flex-col ltr:left-5 rtl:right-5"
+          className="absolute inset-x-5 top-5 z-[400] flex [scrollbar-width:none] gap-1.5 overflow-x-auto font-mono md:inset-x-auto md:flex-col md:overflow-visible ltr:md:left-5 rtl:md:right-5"
         >
           {services.map((service, i) => {
             const active = (selected ?? front) === i;
+            const number = String(i + 1).padStart(2, '0');
             return (
               <button
                 key={service.code}
                 type="button"
-                aria-label={t('landing.beltSelect', { service: service.title })}
+                // starts with the visible number, so "click 02" works with voice control
+                aria-label={`${number} · ${t('landing.beltSelect', { service: service.title })}`}
                 aria-current={active ? 'true' : undefined}
                 onClick={() => {
                   setSelected(null);
                   rotateTo(i);
                 }}
                 className={cn(
-                  'focus-visible:ring-brand-teal h-7 w-10 rounded border text-xs font-semibold transition-colors outline-none focus-visible:ring-2',
+                  'focus-visible:ring-brand-teal h-7 w-10 shrink-0 rounded border text-xs font-semibold transition-colors outline-none focus-visible:ring-2',
                   active
                     ? 'border-brand-blue bg-brand-blue text-white'
                     : 'text-brand-navy border-black/10 bg-white/80 hover:bg-white',
                 )}
               >
-                {String(i + 1).padStart(2, '0')}
+                {number}
               </button>
             );
           })}

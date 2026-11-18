@@ -1,12 +1,10 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { APP_LOGIN_URL, APP_REGISTER_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
-import { LogIn } from 'lucide-react';
-import Link from 'next/link';
 
-import { PhoneMockup } from './phone-mockup';
+import { HeroLivePhone } from './hero-live-phone';
+import { HeroSearch } from './hero-search';
 
 export function Hero() {
   const { t } = useI18n();
@@ -26,9 +24,13 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="mb-3 text-sm font-medium tracking-wide text-white/80"
+            className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3.5 py-1.5 text-sm font-semibold text-white backdrop-blur-md"
           >
-            {t('landing.eyebrow')}
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#4ADE80] opacity-75 motion-reduce:hidden" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#22C55E]" />
+            </span>
+            {t('landing.heroLive')}
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 24 }}
@@ -51,24 +53,9 @@ export function Hero() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="mx-auto mt-8 flex max-w-sm flex-col items-stretch justify-center gap-3 sm:mx-0 sm:max-w-none sm:flex-row sm:items-center sm:gap-4 ltr:md:justify-start rtl:md:justify-start"
+            className="flex justify-center ltr:md:justify-start rtl:md:justify-start"
           >
-            <Link
-              href={APP_REGISTER_URL}
-              className="text-brand-blue inline-flex w-full items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-bold shadow-xl shadow-black/10 transition-all hover:scale-[1.03] hover:shadow-2xl active:scale-[0.98] sm:w-auto sm:text-base"
-            >
-              {t('landing.cta')}
-            </Link>
-            <Link
-              href={APP_LOGIN_URL}
-              className="group inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/50 bg-white/15 px-6.5 py-3.5 text-sm font-semibold text-white shadow-md backdrop-blur-md transition-all hover:scale-[1.03] hover:border-white/80 hover:bg-white/25 active:scale-[0.98] sm:w-auto sm:text-base"
-            >
-              <LogIn
-                size={17}
-                className="opacity-90 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-1 rtl:group-hover:-translate-x-0.5"
-              />
-              <span>{t('landing.login')}</span>
-            </Link>
+            <HeroSearch />
           </motion.div>
         </div>
 
@@ -83,7 +70,7 @@ export function Hero() {
             transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
             className="relative flex justify-center drop-shadow-2xl"
           >
-            <PhoneMockup src="/showcase/hero-phone.png" alt={t('landing.heroImageAlt')} priority />
+            <HeroLivePhone alt={t('landing.heroImageAlt')} />
           </motion.div>
         </motion.div>
       </div>

@@ -35,7 +35,7 @@ function renderCard() {
   const handlers = { onPass: vi.fn(), onLike: vi.fn(), onClose: vi.fn() };
   render(
     <BeltProfileCard
-      image={{ src: '/matchy/belt/plumber.webp', width: 439, height: 934 }}
+      image={{ src: '/matchy/belt/plumber-v2.webp', width: 507, height: 1100 }}
       profile={profile}
       labels={labels}
       detailsHref="https://app.matchyplus.com/register"

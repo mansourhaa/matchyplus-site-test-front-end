@@ -8,7 +8,7 @@ function renderDialog() {
   const handlers = { onDismiss: vi.fn(), onContinue: vi.fn() };
   render(
     <BeltMatchDialog
-      image={{ src: '/matchy/belt/plumber.webp', width: 439, height: 934 }}
+      image={{ src: '/matchy/belt/plumber-v2.webp', width: 507, height: 1100 }}
       labels={{
         title: "C'est un match !",
         body: 'Créez votre compte gratuit pour discuter avec Youssef B.',

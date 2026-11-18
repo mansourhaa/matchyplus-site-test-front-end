@@ -1,10 +1,15 @@
+import { CompanyStory } from '@/components/matchy/company-story';
 import { Cta } from '@/components/matchy/cta';
 import { Explore } from '@/components/matchy/explore';
 import { Features } from '@/components/matchy/features';
 import { Hero } from '@/components/matchy/hero';
+import { LiveCommunity } from '@/components/matchy/live-community';
+import { Partnerships } from '@/components/matchy/partnerships';
+import { ProBranding } from '@/components/matchy/pro-branding';
 import { Security } from '@/components/matchy/security';
 import { ServicesBelt } from '@/components/matchy/services-belt';
 import { Steps } from '@/components/matchy/steps';
+import { WhyMatchy } from '@/components/matchy/why-matchy';
 import { PageFrame } from '@/components/site-shell';
 import { isLocale } from '@/features/i18n/routing';
 import { homeJsonLd, localizedMetadata } from '@/lib/seo';
@@ -36,9 +41,14 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
         <Hero />
         <Features />
         <ServicesBelt />
+        <WhyMatchy />
+        <Steps />
+        <ProBranding />
+        <LiveCommunity />
         <Security />
         <Explore />
-        <Steps />
+        <CompanyStory />
+        <Partnerships />
         <Cta />
       </main>
       {!DISABLE_CHATBOT && CHATBOT_WIDGET_SRC && (
