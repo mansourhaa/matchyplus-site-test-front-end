@@ -1,13 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { hashPassword } from '../lib/password.js';
+import { hashVerificationCode } from '../lib/verification-code.js';
 import { buildTestApp } from './build-test-app.js';
 
 /**
- * Route-level coverage for the three distinct login-phone failure codes (see
+ * Route-level coverage for login-phone failure codes (see
  * services/phone-authentication.ts) — confirms actions.ts's ERROR_STATUS map turns each
- * into the right HTTP status and a stable `code` in the response body, not just that the
- * service throws the right message.
+ * into the right HTTP status and a stable `code` in the response body.
  */
 describe('POST /api/v1/auth/login-phone — error mapping', () => {
   const apps: Awaited<ReturnType<typeof buildTestApp>>[] = [];
@@ -17,35 +16,10 @@ describe('POST /api/v1/auth/login-phone — error mapping', () => {
     apps.length = 0;
   });
 
-  it('maps an unknown phone to 401 invalid_credentials', async () => {
-    const app = await buildTestApp({
-      prisma: { user: { findUnique: vi.fn().mockResolvedValue(null) } as never },
-    });
-    apps.push(app);
-
-    const response = await app.inject({
-      method: 'POST',
-      url: '/api/v1/auth/login-phone',
-      payload: { phone: '+21612345678', password: 'password123' },
-    });
-
-    expect(response.statusCode).toBe(401);
-    expect(response.json().code).toBe('invalid_credentials');
-  });
-
-  it('maps a wrong password to 401 invalid_credentials', async () => {
+  it('maps an invalid or missing OTP challenge to 400 invalid_otp', async () => {
     const app = await buildTestApp({
       prisma: {
-        user: {
-          findUnique: vi.fn().mockResolvedValue({
-            id: 'user-1',
-            phone: '+21612345678',
-            password: await hashPassword('password123'),
-            phone_verified: true,
-            status: 'ACTIVE',
-            token_version: 0,
-          }),
-        } as never,
+        otpChallenge: { findFirst: vi.fn().mockResolvedValue(null) } as never,
       },
     });
     apps.push(app);
@@ -53,24 +27,65 @@ describe('POST /api/v1/auth/login-phone — error mapping', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/login-phone',
-      payload: { phone: '+21612345678', password: 'wrong-password' },
+      payload: { phone: '+21612345678', code: '123456' },
     });
 
-    expect(response.statusCode).toBe(401);
-    expect(response.json().code).toBe('invalid_credentials');
+    expect(response.statusCode).toBe(400);
+    expect(response.json().code).toBe('invalid_otp');
   });
 
-  it('maps a social-only account to 403 oauth_only_account', async () => {
+  it('maps an unknown phone after OTP check to 404 phone_not_found', async () => {
     const app = await buildTestApp({
       prisma: {
+        otpChallenge: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: 'chal-1',
+            phone: '+21612345678',
+            purpose: 'PHONE_LOGIN',
+            code_hash: hashVerificationCode('123456'),
+            attempts: 0,
+            expires_at: new Date(Date.now() + 60_000),
+            consumed_at: null,
+          }),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        } as never,
+        user: { findUnique: vi.fn().mockResolvedValue(null) } as never,
+      },
+    });
+    apps.push(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login-phone',
+      payload: { phone: '+21612345678', code: '123456' },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json().code).toBe('phone_not_found');
+  });
+
+  it('maps a banned account to 403 account_banned', async () => {
+    const app = await buildTestApp({
+      prisma: {
+        otpChallenge: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: 'chal-1',
+            phone: '+21612345678',
+            purpose: 'PHONE_LOGIN',
+            code_hash: hashVerificationCode('123456'),
+            attempts: 0,
+            expires_at: new Date(Date.now() + 60_000),
+            consumed_at: null,
+          }),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        } as never,
         user: {
           findUnique: vi.fn().mockResolvedValue({
             id: 'user-1',
             phone: '+21612345678',
             password: null,
             phone_verified: true,
-            auth_provider: 'google',
-            status: 'ACTIVE',
+            status: 'BANNED',
             token_version: 0,
           }),
         } as never,
@@ -81,23 +96,36 @@ describe('POST /api/v1/auth/login-phone — error mapping', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/login-phone',
-      payload: { phone: '+21612345678', password: 'password123' },
+      payload: { phone: '+21612345678', code: '123456' },
     });
 
     expect(response.statusCode).toBe(403);
-    expect(response.json().code).toBe('oauth_only_account');
+    expect(response.json().code).toBe('account_banned');
   });
 
-  it('maps valid credentials with an unverified phone to 403 phone_not_verified', async () => {
+  it('maps a deactivated account (without pending activation) to 403 account_inactive', async () => {
     const app = await buildTestApp({
       prisma: {
+        otpChallenge: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: 'chal-1',
+            phone: '+21612345678',
+            purpose: 'PHONE_LOGIN',
+            code_hash: hashVerificationCode('123456'),
+            attempts: 0,
+            expires_at: new Date(Date.now() + 60_000),
+            consumed_at: null,
+          }),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        } as never,
         user: {
           findUnique: vi.fn().mockResolvedValue({
             id: 'user-1',
             phone: '+21612345678',
-            password: await hashPassword('password123'),
-            phone_verified: false,
-            status: 'ACTIVE',
+            password: null,
+            phone_verified: true,
+            must_change_password: false,
+            status: 'INACTIVE',
             token_version: 0,
           }),
         } as never,
@@ -108,10 +136,10 @@ describe('POST /api/v1/auth/login-phone — error mapping', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/login-phone',
-      payload: { phone: '+21612345678', password: 'password123' },
+      payload: { phone: '+21612345678', code: '123456' },
     });
 
     expect(response.statusCode).toBe(403);
-    expect(response.json().code).toBe('phone_not_verified');
+    expect(response.json().code).toBe('account_inactive');
   });
 });

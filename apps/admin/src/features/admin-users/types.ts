@@ -81,7 +81,6 @@ export interface AdminUsersState {
 export interface AdminCreateUserInput {
   name: string;
   phone: string;
-  password?: string;
   email?: string;
   plan?: UserPlan;
   profileType: 'INDIVIDUAL' | 'PROVIDER';

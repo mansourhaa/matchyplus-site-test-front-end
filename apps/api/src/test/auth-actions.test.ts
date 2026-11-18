@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { hashPassword } from '../lib/password.js';
+import { hashVerificationCode } from '../lib/verification-code.js';
 import { buildTestApp } from './build-test-app.js';
 import { signTestAccessToken } from './sign-test-access-token.js';
 
@@ -15,8 +15,8 @@ describe('POST /api/v1/auth — error/message translation', () => {
   it('translates a mapped error while preserving its code for programmatic handling', async () => {
     const app = await buildTestApp({
       prisma: {
-        user: {
-          findUnique: vi.fn().mockResolvedValue(null),
+        otpChallenge: {
+          findFirst: vi.fn().mockResolvedValue(null),
         } as never,
       },
     });
@@ -25,13 +25,12 @@ describe('POST /api/v1/auth — error/message translation', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/login-phone',
-      payload: { phone: '+33612345678', password: 'password123' },
+      payload: { phone: '+33612345678', code: '123456' },
     });
 
-    expect(response.statusCode).toBe(401);
+    expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({
-      code: 'invalid_credentials',
-      message: 'Invalid phone number or password.',
+      code: 'invalid_otp',
     });
   });
 
@@ -67,8 +66,8 @@ describe('POST /api/v1/auth — error/message translation', () => {
   it('does not expose unknown internal error messages', async () => {
     const app = await buildTestApp({
       prisma: {
-        user: {
-          findUnique: vi.fn().mockRejectedValue(new Error('database_connection_details')),
+        otpChallenge: {
+          findFirst: vi.fn().mockRejectedValue(new Error('database_connection_details')),
         } as never,
       },
     });
@@ -79,7 +78,7 @@ describe('POST /api/v1/auth — error/message translation', () => {
       url: '/api/v1/auth/login-phone',
       payload: {
         phone: '+33612345678',
-        password: 'password123',
+        code: '123456',
       },
     });
 
@@ -221,13 +220,25 @@ describe('member-session routes — onboarding_completed on the wire', () => {
   it('POST /login-phone returns onboarding_completed as a boolean, never the password', async () => {
     const app = await buildTestApp({
       prisma: {
+        otpChallenge: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: 'chal-1',
+            phone: '+33612345678',
+            purpose: 'PHONE_LOGIN',
+            code_hash: hashVerificationCode('123456'),
+            attempts: 0,
+            expires_at: new Date(Date.now() + 60_000),
+            consumed_at: null,
+          }),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        } as never,
         user: {
           findUnique: vi.fn().mockResolvedValue({
             id: 'user-1',
             email: null,
             phone: '+33612345678',
             name: 'Jane Doe',
-            password: await hashPassword('password123'),
+            password: null,
             auth_provider: 'phone',
             email_verified: false,
             phone_verified: true,
@@ -245,7 +256,7 @@ describe('member-session routes — onboarding_completed on the wire', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/login-phone',
-      payload: { phone: '+33612345678', password: 'password123' },
+      payload: { phone: '+33612345678', code: '123456' },
     });
 
     expect(response.statusCode).toBe(200);
@@ -260,7 +271,7 @@ describe('member-session routes — onboarding_completed on the wire', () => {
         phone_verified: true,
         google_linked: false,
         linkedin_linked: false,
-        has_password: true,
+        has_password: false,
         onboarding_completed: false,
       },
     });
@@ -299,7 +310,6 @@ describe('member-session routes — onboarding_completed on the wire', () => {
       url: '/api/v1/auth/register-phone',
       payload: {
         phone: '+33612345678',
-        password: 'Password123!',
         signupToken: 'a-valid-signup-grant-token',
       },
     });

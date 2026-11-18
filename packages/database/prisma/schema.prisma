@@ -46,6 +46,7 @@ enum ProfileType {
 /// see doc/reviews/authentication-contract.md.
 enum OtpPurpose {
   SIGNUP_VERIFICATION
+  PHONE_LOGIN
   PHONE_LINK
   PASSWORD_RESET
   ACCOUNT_DELETE

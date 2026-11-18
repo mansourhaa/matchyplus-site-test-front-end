@@ -22,6 +22,7 @@ import {
   requestAccountDeleteOtpSchema,
   requestPasswordResetSchema,
   requestPhoneLinkSchema,
+  sendLoginOtpSchema,
   sendOtpSchema,
   verifyOtpSchema,
 } from '../../../schemas/v1/index.js';
@@ -357,6 +358,22 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
           phone: data.phone,
           signupToken: data.signupToken,
         });
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
+  fastify.post<{ Body: SendOtpPayload }>(
+    '/login-otp/send',
+    {
+      schema: sendLoginOtpSchema,
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+    },
+    async (request, reply) => {
+      try {
+        const data = await phoneAuthService.sendLoginOtp(request.body);
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
       } catch (err) {
         throw mapError(err as Error, request);
       }

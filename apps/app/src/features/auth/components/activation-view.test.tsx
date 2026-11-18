@@ -80,7 +80,7 @@ describe('ActivationView', () => {
     expect(screen.getByText('+21620123456')).toBeInTheDocument();
   });
 
-  it('submits valid password and completes activation', async () => {
+  it('completes passwordless activation when clicking activate button', async () => {
     searchParamsRef.current = new URLSearchParams('token=valid-lead-token');
     vi.mocked(api.get).mockResolvedValueOnce({
       data: {
@@ -109,12 +109,6 @@ describe('ActivationView', () => {
 
     await screen.findByText('Bienvenue, Sarra Ben Ali !');
 
-    const passwordInput = screen.getByPlaceholderText('Créez un mot de passe sécurisé');
-    const confirmInput = screen.getByPlaceholderText('Répétez votre mot de passe');
-
-    fireEvent.change(passwordInput, { target: { value: 'Secret2026!' } });
-    fireEvent.change(confirmInput, { target: { value: 'Secret2026!' } });
-
     const submitBtn = screen.getByRole('button', { name: /activer mon compte/i });
     expect(submitBtn).toBeEnabled();
 
@@ -123,7 +117,6 @@ describe('ActivationView', () => {
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/auth/activation/confirm', {
         token: 'valid-lead-token',
-        password: 'Secret2026!',
       });
     });
 

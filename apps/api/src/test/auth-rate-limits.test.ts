@@ -15,18 +15,19 @@ describe('auth route rate limits', () => {
     const app = await buildTestApp({
       prisma: {
         user: { findUnique: vi.fn().mockResolvedValue(null) } as never,
+        otpChallenge: { findFirst: vi.fn().mockResolvedValue(null) } as never,
       },
     });
     apps.push(app);
 
-    const payload = { phone: '+21612345678', password: 'password123' };
+    const payload = { phone: '+21612345678', code: '123456' };
     for (let i = 0; i < config.rateLimitGlobalMax; i++) {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v1/auth/login-phone',
         payload,
       });
-      expect(response.statusCode).toBe(401);
+      expect(response.statusCode).toBe(400);
     }
 
     const limited = await app.inject({

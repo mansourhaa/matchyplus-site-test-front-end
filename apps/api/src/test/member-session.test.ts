@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { hashPassword } from '../lib/password.js';
+import { hashVerificationCode } from '../lib/verification-code.js';
 import { buildTestApp } from './build-test-app.js';
 
 /**
@@ -22,14 +23,25 @@ describe('member session cookies', () => {
   });
 
   it('returns tokens as HttpOnly cookies on login-phone, never in the response body', async () => {
-    const hashedPassword = await hashPassword('password123');
     const app = await buildTestApp({
       prisma: {
+        otpChallenge: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: 'chal-1',
+            phone: '+21612345678',
+            purpose: 'PHONE_LOGIN',
+            code_hash: hashVerificationCode('123456'),
+            attempts: 0,
+            expires_at: new Date(Date.now() + 60_000),
+            consumed_at: null,
+          }),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        } as never,
         user: {
           findUnique: vi.fn().mockResolvedValue({
             id: 'user-1',
             phone: '+21612345678',
-            password: hashedPassword,
+            password: null,
             phone_verified: true,
             status: 'ACTIVE',
             token_version: 0,
@@ -43,7 +55,7 @@ describe('member session cookies', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/login-phone',
-      payload: { phone: '+21612345678', password: 'password123' },
+      payload: { phone: '+21612345678', code: '123456' },
     });
 
     expect(response.statusCode).toBe(200);
@@ -61,14 +73,25 @@ describe('member session cookies', () => {
   });
 
   it('returns body tokens only for authorized Cap clients (label + mobile key)', async () => {
-    const hashedPassword = await hashPassword('password123');
     const app = await buildTestApp({
       prisma: {
+        otpChallenge: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: 'chal-1',
+            phone: '+21612345678',
+            purpose: 'PHONE_LOGIN',
+            code_hash: hashVerificationCode('123456'),
+            attempts: 0,
+            expires_at: new Date(Date.now() + 60_000),
+            consumed_at: null,
+          }),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        } as never,
         user: {
           findUnique: vi.fn().mockResolvedValue({
             id: 'user-1',
             phone: '+21612345678',
-            password: hashedPassword,
+            password: null,
             phone_verified: true,
             status: 'ACTIVE',
             token_version: 0,
@@ -83,7 +106,7 @@ describe('member session cookies', () => {
       method: 'POST',
       url: '/api/v1/auth/login-phone',
       headers: { 'x-matchy-client': 'mobile' },
-      payload: { phone: '+21612345678', password: 'password123' },
+      payload: { phone: '+21612345678', code: '123456' },
     });
     expect(spoofed.statusCode).toBe(200);
     expect(spoofed.json()).not.toHaveProperty('accessToken');
@@ -96,7 +119,7 @@ describe('member session cookies', () => {
         'x-matchy-client': 'mobile',
         'x-matchy-mobile-key': 'test-mobile-client-secret',
       },
-      payload: { phone: '+21612345678', password: 'password123' },
+      payload: { phone: '+21612345678', code: '123456' },
     });
 
     expect(authorized.statusCode).toBe(200);

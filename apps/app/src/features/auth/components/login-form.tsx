@@ -3,7 +3,7 @@
 import { matchyBrand } from '@/components/matchy/brand';
 import { HeaderBackButton } from '@/components/matchy/header-back-button';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
-import { loginPhone, logout, selectAuth } from '@/features/auth/store/auth-slice';
+import { loginPhone, logout, selectAuth, sendLoginOtp } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { landingPath } from '@/lib/landing';
 import { isNativeMobileClient } from '@/lib/native';
@@ -12,11 +12,9 @@ import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import {
   ChevronRight,
   Clock,
-  Eye,
-  EyeOff,
   Loader2,
-  Lock,
   Phone,
+  ShieldCheck,
   User as UserIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -67,16 +65,15 @@ function getOAuthRedirectUrl(provider: 'google' | 'linkedin') {
   return `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth/${provider}`;
 }
 
-// Mirrors the API's login-phone error codes (see services/phone-authentication.ts) —
-// phone_not_verified and oauth_only_account each get an actionable message; anything
-// else (including a plain wrong password) falls back to the generic one, so a caller
-// can't distinguish "wrong password" from "unknown phone number".
 function loginPhoneErrorMessage(code: string | undefined, t: (key: string) => string): string {
-  if (code === 'phone_not_verified') {
-    return t('auth.loginForm.errorPhoneNotVerified');
+  if (code === 'phone_not_found') {
+    return t('auth.loginForm.errorPhoneNotFound');
   }
-  if (code === 'oauth_only_account') {
-    return t('auth.loginForm.errorOauthOnlyAccount');
+  if (code === 'invalid_otp') {
+    return t('onboarding.identity.errorOtpInvalid');
+  }
+  if (code === 'otp_resend_too_soon') {
+    return t('auth.loginForm.errorOtpResendTooSoon');
   }
   if (code === 'mobile_session_unavailable') {
     return t('auth.loginForm.errorMobileSessionUnavailable');
@@ -108,13 +105,21 @@ export function LoginForm() {
 
   const [countryIso, setCountryIso] = useState(DEFAULT_PHONE_COUNTRY.iso);
   const [nationalNumber, setNationalNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSending, setOtpSending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [localError, setLocalError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const country = getPhoneCountry(countryIso);
   const phone = composeE164Phone(countryIso, nationalNumber);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = window.setTimeout(() => setResendCooldown((value) => value - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [resendCooldown]);
   const reasonParam = searchParams.get('reason');
   const sessionExpiredNotice =
     reasonParam === 'session_expired' ? t('common.errors.unauthorized') : null;
@@ -195,11 +200,28 @@ export function LoginForm() {
     router.refresh();
   };
 
-  const handlePhoneLogin = async () => {
-    if (nationalNumber.length < country.nationalLength || password.length < 6) return;
+  const handleSendLoginOtp = async () => {
+    if (nationalNumber.length < country.nationalLength || otpSending) return;
 
     setLocalError(null);
-    const resultAction = await dispatch(loginPhone({ phone, password }));
+    setOtpSending(true);
+    const resultAction = await dispatch(sendLoginOtp({ phone }));
+    setOtpSending(false);
+
+    if (sendLoginOtp.fulfilled.match(resultAction)) {
+      setOtpSent(true);
+      setOtpCode('');
+      setResendCooldown(30);
+    } else {
+      setLocalError(loginPhoneErrorMessage(resultAction.error.message, t));
+    }
+  };
+
+  const handlePhoneLogin = async () => {
+    if (nationalNumber.length < country.nationalLength || otpCode.trim().length < 4) return;
+
+    setLocalError(null);
+    const resultAction = await dispatch(loginPhone({ phone, code: otpCode.trim() }));
     if (loginPhone.fulfilled.match(resultAction)) {
       goToPostAuthDestination(resultAction.payload.user.onboarding_completed);
     } else {
@@ -439,53 +461,62 @@ export function LoginForm() {
             <PhoneInput
               countryIso={countryIso}
               nationalNumber={nationalNumber}
-              onCountryChange={setCountryIso}
-              onNationalNumberChange={setNationalNumber}
-              disabled={loading}
+              onCountryChange={(iso) => {
+                setCountryIso(iso);
+                setOtpSent(false);
+                setOtpCode('');
+              }}
+              onNationalNumberChange={(val) => {
+                setNationalNumber(val);
+                if (otpSent) {
+                  setOtpSent(false);
+                  setOtpCode('');
+                }
+              }}
+              disabled={loading || otpSending}
             />
           </div>
 
-          <div className="mb-4">
-            <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-              {t('auth.password')}
-            </label>
-            <div
-              className="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3.5"
-              style={{ border: '2px solid #2F76BB', background: '#F5F9FF' }}
-            >
-              <Lock size={16} color="#61BCA6" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder={t('auth.loginForm.passwordPlaceholder')}
-                className="flex-1 bg-transparent text-[#353535] outline-none"
-                style={{ fontSize: '15px' }}
-              />
-              <button type="button" onClick={() => setShowPassword((value) => !value)}>
-                {showPassword ? (
-                  <EyeOff size={18} color="#7A7A7A" />
-                ) : (
-                  <Eye size={18} color="#7A7A7A" />
-                )}
-              </button>
+          {otpSent && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+                  {t('onboarding.identity.otpCodeLabel')}
+                </label>
+                <button
+                  type="button"
+                  disabled={resendCooldown > 0 || otpSending}
+                  onClick={handleSendLoginOtp}
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: resendCooldown > 0 ? '#9CA3AF' : '#2F76BB',
+                  }}
+                >
+                  {resendCooldown > 0
+                    ? t('onboarding.identity.resendIn', { seconds: resendCooldown })
+                    : t('onboarding.identity.resendCode')}
+                </button>
+              </div>
+              <div
+                className="mt-2 flex items-center gap-3 rounded-2xl px-4 py-3.5"
+                style={{ border: '2px solid #2F76BB', background: '#F5F9FF' }}
+              >
+                <ShieldCheck size={16} color="#61BCA6" />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, ''))}
+                  placeholder="000000"
+                  className="flex-1 bg-transparent tracking-widest text-[#353535] outline-none"
+                  style={{ fontSize: '16px', fontWeight: 700 }}
+                />
+              </div>
             </div>
-          </div>
-
-          <div className="mb-4 text-right">
-            <button
-              type="button"
-              onClick={() => {
-                const params = new URLSearchParams();
-                if (countryIso) params.set('country', countryIso);
-                if (nationalNumber) params.set('national', nationalNumber);
-                router.push(`/reset-password?${params.toString()}`);
-              }}
-              style={{ fontSize: '12px', fontWeight: 700, color: '#2F76BB' }}
-            >
-              {t('auth.forgotPassword')}
-            </button>
-          </div>
+          )}
 
           {error && (
             <p className="mb-3 text-center" style={{ fontSize: '12px', color: '#E24E59' }}>
@@ -493,25 +524,47 @@ export function LoginForm() {
             </p>
           )}
 
-          <button
-            onClick={handlePhoneLogin}
-            disabled={
-              loading || nationalNumber.length < country.nationalLength || password.length < 6
-            }
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
-            style={{
-              background:
-                nationalNumber.length >= country.nationalLength && password.length >= 6 && !loading
-                  ? matchyBrand.gradient
-                  : '#D5D5D5',
-              fontSize: '14px',
-              fontWeight: 700,
-              transition: 'background 0.2s',
-            }}
-          >
-            {loading && <Loader2 size={16} className="animate-spin" />}
-            {t('auth.loginForm.continueButton')}
-          </button>
+          {!otpSent ? (
+            <button
+              onClick={handleSendLoginOtp}
+              disabled={otpSending || nationalNumber.length < country.nationalLength}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
+              style={{
+                background:
+                  nationalNumber.length >= country.nationalLength && !otpSending
+                    ? matchyBrand.gradient
+                    : '#D5D5D5',
+                fontSize: '14px',
+                fontWeight: 700,
+                transition: 'background 0.2s',
+              }}
+            >
+              {otpSending && <Loader2 size={16} className="animate-spin" />}
+              {t('auth.loginForm.sendOtpButton')}
+            </button>
+          ) : (
+            <button
+              onClick={handlePhoneLogin}
+              disabled={
+                loading || nationalNumber.length < country.nationalLength || otpCode.trim().length < 4
+              }
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-white"
+              style={{
+                background:
+                  nationalNumber.length >= country.nationalLength &&
+                  otpCode.trim().length >= 4 &&
+                  !loading
+                    ? matchyBrand.gradient
+                    : '#D5D5D5',
+                fontSize: '14px',
+                fontWeight: 700,
+                transition: 'background 0.2s',
+              }}
+            >
+              {loading && <Loader2 size={16} className="animate-spin" />}
+              {t('auth.loginForm.continueButton')}
+            </button>
+          )}
         </div>
       )}
 

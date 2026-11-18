@@ -57,6 +57,7 @@ export type ProfileType = (typeof ProfileType)[keyof typeof ProfileType]
 
 export const OtpPurpose = {
   SIGNUP_VERIFICATION: 'SIGNUP_VERIFICATION',
+  PHONE_LOGIN: 'PHONE_LOGIN',
   PHONE_LINK: 'PHONE_LINK',
   PASSWORD_RESET: 'PASSWORD_RESET',
   ACCOUNT_DELETE: 'ACCOUNT_DELETE'
