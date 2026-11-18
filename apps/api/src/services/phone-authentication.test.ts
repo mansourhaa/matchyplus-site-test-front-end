@@ -393,7 +393,6 @@ describe('PhoneAuthenticationService', () => {
       await expect(
         service.registerWithPhone({
           phone: '+33612345678',
-          password: 'Password123!',
           signupToken: 'valid-grant-token',
         }),
       ).rejects.toThrow('phone_already_registered');
