@@ -80,7 +80,7 @@ describe('ActivationView', () => {
     expect(screen.getByText('+21620123456')).toBeInTheDocument();
   });
 
-  it('completes passwordless activation when clicking activate button', async () => {
+  it('sends activation OTP, verifies code, and completes activation', async () => {
     searchParamsRef.current = new URLSearchParams('token=valid-lead-token');
     vi.mocked(api.get).mockResolvedValueOnce({
       data: {
@@ -94,29 +94,49 @@ describe('ActivationView', () => {
       },
     });
 
-    vi.mocked(api.post).mockResolvedValueOnce({
-      data: {
-        user: {
-          id: 'u-lead-1',
-          name: 'Sarra Ben Ali',
-          phone: '+21620123456',
-          onboarding_completed: true,
-        },
-      },
+    vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/activation/otp/send') {
+        return { data: { message: 'Code envoyé', phone: '+21620123456' } };
+      }
+      if (url === '/auth/activation/confirm') {
+        return {
+          data: {
+            user: {
+              id: 'u-lead-1',
+              name: 'Sarra Ben Ali',
+              phone: '+21620123456',
+              onboarding_completed: true,
+            },
+          },
+        };
+      }
+      throw new Error(`Unexpected URL ${url}`);
     });
 
     renderWithAuthStore(<ActivationView />);
 
     await screen.findByText('Bienvenue, Sarra Ben Ali !');
 
+    const sendBtn = screen.getByRole('button', { name: /envoyer le code/i });
+    fireEvent.click(sendBtn);
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/auth/activation/otp/send', {
+        token: 'valid-lead-token',
+      });
+    });
+
+    const otpInput = await screen.findByPlaceholderText('000000');
+    fireEvent.change(otpInput, { target: { value: '123456' } });
+
     const submitBtn = screen.getByRole('button', { name: /activer mon compte/i });
     expect(submitBtn).toBeEnabled();
-
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/auth/activation/confirm', {
         token: 'valid-lead-token',
+        code: '123456',
       });
     });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppDispatch } from '@/features/auth/hooks';
-import { confirmActivation } from '@/features/auth/store/auth-slice';
+import { confirmActivation, sendActivationOtp } from '@/features/auth/store/auth-slice';
 import type { ActivationPreviewResponse } from '@/features/auth/types';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { api, getApiErrorCode } from '@/lib/api';
@@ -35,9 +35,19 @@ export function ActivationView() {
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
 
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSending, setOtpSending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [activatedSuccess, setActivatedSuccess] = useState(false);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = window.setTimeout(() => setResendCooldown((value) => value - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [resendCooldown]);
 
   useEffect(() => {
     let isMounted = true;
@@ -87,8 +97,43 @@ export function ActivationView() {
     };
   }, [token, t]);
 
+  const handleSendOtp = async () => {
+    if (otpSending || activatedSuccess) return;
+    setSubmitError(null);
+    setOtpSending(true);
+    try {
+      const result = await dispatch(sendActivationOtp({ token: token.trim() }));
+      if (sendActivationOtp.fulfilled.match(result)) {
+        setOtpSent(true);
+        setOtpCode('');
+        setResendCooldown(30);
+      } else {
+        const message = result.error.message;
+        if (message === 'invalid_activation_token') {
+          setSubmitError(t('auth.activation.errorExpiredToken'));
+        } else if (message === 'otp_resend_too_soon') {
+          setSubmitError(t('auth.loginForm.errorOtpResendTooSoon'));
+        } else {
+          setSubmitError(t('onboarding.identity.errorOtpSend'));
+        }
+      }
+    } catch {
+      setSubmitError(t('onboarding.identity.errorOtpSend'));
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!otpSent) {
+      await handleSendOtp();
+      return;
+    }
+    if (otpCode.trim().length < 4) {
+      setSubmitError(t('onboarding.identity.errorOtpShort'));
+      return;
+    }
     setSubmitError(null);
 
     setSubmitting(true);
@@ -96,6 +141,7 @@ export function ActivationView() {
       const result = await dispatch(
         confirmActivation({
           token: token.trim(),
+          code: otpCode.trim(),
         }),
       );
 
@@ -110,7 +156,9 @@ export function ActivationView() {
         }, 1200);
       } else {
         const message = (result.payload as string | undefined) ?? result.error.message;
-        if (message === 'invalid_activation_token') {
+        if (message === 'invalid_otp') {
+          setSubmitError(t('onboarding.identity.errorOtpInvalid'));
+        } else if (message === 'invalid_activation_token') {
           setSubmitError(t('auth.activation.errorExpiredToken'));
         } else {
           setSubmitError(t('auth.activation.errorGeneric'));
@@ -266,22 +314,71 @@ export function ActivationView() {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
+                {otpSent && (
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="activation-otp-code"
+                        className="text-xs font-semibold text-slate-700"
+                      >
+                        {t('onboarding.identity.otpCodeLabel')}
+                      </label>
+                      <button
+                        type="button"
+                        disabled={resendCooldown > 0 || otpSending}
+                        onClick={handleSendOtp}
+                        className="text-xs font-bold disabled:text-slate-400"
+                        style={{ color: resendCooldown > 0 ? undefined : '#2F76BB' }}
+                      >
+                        {resendCooldown > 0
+                          ? t('onboarding.identity.resendIn', { seconds: resendCooldown })
+                          : t('onboarding.identity.resendCode')}
+                      </button>
+                    </div>
+                    <div
+                      className="flex items-center gap-3 rounded-2xl border px-4 py-3"
+                      style={{ background: '#F5F7FA', borderColor: '#D0E4F7' }}
+                    >
+                      <ShieldCheck size={16} color="#61BCA6" />
+                      <input
+                        id="activation-otp-code"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                        value={otpCode}
+                        disabled={submitting || activatedSuccess}
+                        onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, ''))}
+                        placeholder="000000"
+                        className="w-full bg-transparent text-base font-bold tracking-widest text-slate-900 outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Submit CTA */}
                 <button
                   type="submit"
-                  disabled={submitting || activatedSuccess}
+                  disabled={
+                    otpSending ||
+                    submitting ||
+                    activatedSuccess ||
+                    (otpSent && otpCode.trim().length < 4)
+                  }
                   className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white shadow-md transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
                   }}
                 >
-                  {submitting ? (
+                  {otpSending || submitting ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
                       {t('auth.activation.activatingButton')}
                     </>
-                  ) : (
+                  ) : otpSent ? (
                     t('auth.activation.activateButton')
+                  ) : (
+                    t('auth.loginForm.sendOtpButton')
                   )}
                 </button>
               </form>

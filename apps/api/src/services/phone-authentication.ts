@@ -436,34 +436,71 @@ export class PhoneAuthenticationService {
     }
   }
 
+  private async findPendingActivationUser(rawToken: string) {
+    const token = rawToken?.trim();
+    if (!token) {
+      throw new Error('invalid_activation_token');
+    }
+
+    const tokenHash = hashActivationToken(token);
+    const user = await this.prisma.user.findUnique({
+      where: { activation_token_hash: tokenHash },
+    });
+
+    if (
+      !user ||
+      !user.must_change_password ||
+      !user.activation_token_expires_at ||
+      user.activation_token_expires_at < new Date()
+    ) {
+      throw new Error('invalid_activation_token');
+    }
+
+    if (user.status === UserStatus.BANNED) {
+      throw new Error('account_banned');
+    }
+
+    if (!user.phone) {
+      throw new Error('invalid_phone');
+    }
+
+    return user;
+  }
+
   /**
-   * Activates a pre-registered lead without setting a password, and issues a regular
-   * member session token pair (subsequent logins use phone + OTP).
+   * Sends a 6-digit SMS OTP to the phone number of a pending activation user.
+   */
+  async sendActivationOtp(rawToken: string) {
+    try {
+      const user = await this.findPendingActivationUser(rawToken);
+      const phone = user.phone as string;
+      const code = await this.otpChallengeService.createChallenge(
+        phone,
+        OtpPurpose.PHONE_LOGIN,
+        user.id,
+      );
+      await this.smsClient.sendSms(phone, otpMessage(code));
+      return { message: 'otp_sent', phone };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Verifies the SMS OTP for a pre-registered lead, completes activation without setting
+   * a password, and issues a regular member session token pair.
    */
   async confirmActivation(payload: ActivationConfirmPayload) {
     try {
-      const token = payload.token?.trim();
-      if (!token) {
-        throw new Error('invalid_activation_token');
-      }
+      const user = await this.findPendingActivationUser(payload.token);
+      const phone = user.phone as string;
 
-      const tokenHash = hashActivationToken(token);
-      const user = await this.prisma.user.findUnique({
-        where: { activation_token_hash: tokenHash },
-      });
-
-      if (
-        !user ||
-        !user.must_change_password ||
-        !user.activation_token_expires_at ||
-        user.activation_token_expires_at < new Date()
-      ) {
-        throw new Error('invalid_activation_token');
-      }
-
-      if (user.status === UserStatus.BANNED) {
-        throw new Error('account_banned');
-      }
+      await this.otpChallengeService.verifyChallenge(
+        phone,
+        OtpPurpose.PHONE_LOGIN,
+        payload.code,
+        user.id,
+      );
 
       const updated = await this.prisma.user.update({
         where: { id: user.id },

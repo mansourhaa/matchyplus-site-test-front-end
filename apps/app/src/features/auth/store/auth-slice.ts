@@ -138,12 +138,28 @@ export const registerPhone = createAsyncThunk(
   },
 );
 
+export const sendActivationOtp = createAsyncThunk(
+  'auth/sendActivationOtp',
+  async ({ token }: { token: string }) => {
+    try {
+      const response = await api.post<{ message: string; phone: string }>(
+        '/auth/activation/otp/send',
+        { token },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getApiErrorCode(error) ?? 'otp_send_failed');
+    }
+  },
+);
+
 export const confirmActivation = createAsyncThunk(
   'auth/confirmActivation',
-  async ({ token }: ConfirmActivationInput) => {
+  async ({ token, code }: ConfirmActivationInput) => {
     try {
       const response = await api.post<SessionResponse>('/auth/activation/confirm', {
         token,
+        code,
       });
       await requireNativeBodyTokens(response.data);
       return response.data;
