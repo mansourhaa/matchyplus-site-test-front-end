@@ -412,7 +412,6 @@ describe('AdminService createUser', () => {
     return {
       name: 'Amine Ben Salah',
       phone: '20123456',
-      password: 'Matchy2026!',
       profileType: 'INDIVIDUAL',
       job: 'Plombier',
       interests: ['bricolage'],
@@ -422,7 +421,7 @@ describe('AdminService createUser', () => {
     } as never;
   }
 
-  it('creates a member account with the phone normalized and the password hashed', async () => {
+  it('creates a passwordless member account with the phone normalized and an activation link', async () => {
     const prisma = createMockPrisma();
     prisma.user.findUnique.mockResolvedValue(null);
     prisma.user.create.mockResolvedValue({ id: 'u1' });
@@ -435,8 +434,14 @@ describe('AdminService createUser', () => {
     expect(data.phone).toBe('+21620123456');
     expect(data.auth_provider).toBe('phone');
     expect(data.phone_verified).toBe(true);
-    expect(data.password).not.toBe('Matchy2026!');
-    expect(result).toEqual({ id: 'u1' });
+    expect(data.password).toBeNull();
+    expect(data.must_change_password).toBe(true);
+    expect(data.status).toBe('INACTIVE');
+    expect(result).toMatchObject({
+      id: 'u1',
+      activationToken: expect.any(String),
+      activationLink: expect.stringContaining('/activer?token='),
+    });
   });
 
   it('rejects an unparseable phone number', async () => {
@@ -478,18 +483,6 @@ describe('AdminService createUser', () => {
     expect(prisma.user.create).not.toHaveBeenCalled();
   });
 
-  it('rejects a password that fails the security policy', async () => {
-    const prisma = createMockPrisma();
-    prisma.user.findUnique.mockResolvedValue(null);
-    const service = new AdminService({ prisma: prisma as never });
-
-    await expect(service.createUser(validPayload({ password: 'weakpass' }))).rejects.toMatchObject({
-      message: 'password does not meet the security policy',
-      statusCode: 400,
-    });
-    expect(prisma.user.create).not.toHaveBeenCalled();
-  });
-
   it('rejects a blank name', async () => {
     const prisma = createMockPrisma();
     prisma.user.findUnique.mockResolvedValue(null);
@@ -521,7 +514,7 @@ describe('AdminService createUser', () => {
 
     await expect(
       service.createUser(validPayload({ profileType: 'PROVIDER', job: undefined })),
-    ).resolves.toEqual({ id: 'u1' });
+    ).resolves.toMatchObject({ id: 'u1' });
   });
 
   it('requires at least one interest', async () => {
@@ -567,7 +560,7 @@ describe('AdminService createUser', () => {
       service.createUser(
         validPayload({ offerService: true, serviceType: 'Plomberie', price: '50 DT' }),
       ),
-    ).resolves.toEqual({ id: 'u1' });
+    ).resolves.toMatchObject({ id: 'u1' });
   });
 
   it('allows creating a user without a profile photo', async () => {
@@ -576,7 +569,7 @@ describe('AdminService createUser', () => {
     prisma.user.create.mockResolvedValue({ id: 'u1' });
     const service = new AdminService({ prisma: prisma as never });
 
-    await expect(service.createUser(validPayload({ image: undefined }))).resolves.toEqual({
+    await expect(service.createUser(validPayload({ image: undefined }))).resolves.toMatchObject({
       id: 'u1',
     });
   });

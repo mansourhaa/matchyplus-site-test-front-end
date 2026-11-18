@@ -241,15 +241,41 @@ export const verifyOtpSchema = {
   },
 };
 
-export const loginPhoneSchema = {
+export const sendLoginOtpSchema = {
   tags: ['auth'],
+  summary: 'Send OTP code for phone login',
   body: {
     type: 'object',
+    additionalProperties: false,
     properties: {
       phone: { type: 'string', minLength: 6, maxLength: 20 },
-      password: { type: 'string', format: 'password' },
     },
-    required: ['phone', 'password'],
+    required: ['phone'],
+  },
+  response: {
+    200: {
+      description: 'Successful response',
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        phone: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const loginPhoneSchema = {
+  tags: ['auth'],
+  summary: 'Verify OTP code and log in with phone',
+  body: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      phone: { type: 'string', minLength: 6, maxLength: 20 },
+      code: { type: 'string', minLength: 4, maxLength: 10 },
+    },
+    required: ['phone', 'code'],
   },
   response: {
     200: {
@@ -262,15 +288,16 @@ export const loginPhoneSchema = {
 
 export const registerPhoneSchema = {
   tags: ['auth'],
+  summary: 'Register a new user with verified phone OTP',
   body: {
     type: 'object',
+    additionalProperties: false,
     properties: {
       phone: { type: 'string', minLength: 6, maxLength: 20 },
-      password: { type: 'string', format: 'password', minLength: 8, maxLength: 128 },
       signupToken: { type: 'string', minLength: 16 },
       name: { type: 'string' },
     },
-    required: ['phone', 'password', 'signupToken'],
+    required: ['phone', 'signupToken'],
   },
   response: {
     201: {
@@ -526,14 +553,13 @@ export const activationPreviewSchema = {
 
 export const activationConfirmSchema = {
   tags: ['auth'],
-  summary: 'Confirm activation and set initial password',
+  summary: 'Confirm account activation',
   body: {
     type: 'object',
-    required: ['token', 'password'],
+    required: ['token'],
     additionalProperties: false,
     properties: {
       token: { type: 'string', minLength: 1 },
-      password: { type: 'string', format: 'password', minLength: 8, maxLength: 128 },
     },
   },
   response: {

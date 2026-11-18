@@ -35,7 +35,6 @@ import {
   ChevronDown,
   Copy,
   ExternalLink,
-  KeyRound,
   Layers,
   Link2,
   Loader2,
@@ -176,7 +175,6 @@ const WIZARD_STEPS = [
 const initialForm = {
   name: '',
   phone: '',
-  password: '',
   plan: 'FREE' as AdminManagedUser['plan'],
   profileType: 'INDIVIDUAL' as 'INDIVIDUAL' | 'PROVIDER',
   job: '',
@@ -207,7 +205,6 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
 
   const [activeStep, setActiveStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState(initialForm);
-  const [authMode, setAuthMode] = useState<'activation_link' | 'manual_password'>('activation_link');
   const [createdResult, setCreatedResult] = useState<AdminCreateUserResult | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState(false);
@@ -228,7 +225,6 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
   const resetAndClose = () => {
     setActiveStep(1);
     setForm(initialForm);
-    setAuthMode('activation_link');
     setCreatedResult(null);
     setCopiedLink(false);
     setCopiedMessage(false);
@@ -304,10 +300,6 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
       setFormError('Le nom et le téléphone sont obligatoires.');
       return false;
     }
-    if (authMode === 'manual_password' && !form.password) {
-      setFormError('Le mot de passe est obligatoire en mode manuel.');
-      return false;
-    }
     if (form.profileType === 'INDIVIDUAL' && !form.job.trim()) {
       setFormError('Le métier est obligatoire pour un profil "J’offre".');
       return false;
@@ -379,7 +371,6 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
     const input: AdminCreateUserInput = {
       name: form.name.trim(),
       phone: form.phone.trim(),
-      password: authMode === 'manual_password' ? form.password : undefined,
       email: undefined,
       city: undefined,
       plan: form.plan,
@@ -756,80 +747,21 @@ export function AdminAddUserModal({ isOpen, onClose, onCreated }: AdminAddUserMo
                 </Field>
               </div>
 
-              {/* Access Mode Selector */}
-              <div className="flex flex-col gap-2 rounded-xl border border-slate-200/70 bg-[#F8FAFC] p-3.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                  Mode d&apos;accès & Mot de passe
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAuthMode('activation_link')}
-                    className={`flex items-start gap-2.5 rounded-xl p-3 text-left transition border ${
-                      authMode === 'activation_link'
-                        ? 'border-[#2F76BB] bg-white ring-2 ring-[#2F76BB]/20'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${
-                        authMode === 'activation_link' ? 'bg-[#2F76BB] text-white' : 'bg-slate-100 text-slate-500'
-                      }`}
-                    >
-                      <Link2 size={13} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-slate-800">Lien d&apos;activation</span>
-                        <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                          Recommandé
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-[11px] text-slate-500 leading-normal">
-                        Lien sécurisé (14 jours). Le membre définira son mot de passe lors de sa première visite.
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setAuthMode('manual_password')}
-                    className={`flex items-start gap-2.5 rounded-xl p-3 text-left transition border ${
-                      authMode === 'manual_password'
-                        ? 'border-[#2F76BB] bg-white ring-2 ring-[#2F76BB]/20'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div
-                      className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${
-                        authMode === 'manual_password' ? 'bg-[#2F76BB] text-white' : 'bg-slate-100 text-slate-500'
-                      }`}
-                    >
-                      <KeyRound size={13} />
-                    </div>
-                    <div className="flex-1">
-                      <span className="text-xs font-bold text-slate-800">Mot de passe manuel</span>
-                      <p className="mt-0.5 text-[11px] text-slate-500 leading-normal">
-                        Définir manuellement un mot de passe temporaire à communiquer au membre.
-                      </p>
-                    </div>
-                  </button>
+              {/* Passwordless OTP & Activation Link Notice */}
+              <div className="flex items-start gap-2.5 rounded-xl border border-slate-200/70 bg-[#F8FAFC] p-3.5">
+                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#2F76BB] text-white">
+                  <Link2 size={13} />
                 </div>
-
-                {authMode === 'manual_password' && (
-                  <div className="mt-2 border-t border-slate-200/60 pt-2">
-                    <Field label="Mot de passe temporaire" htmlFor="new-user-password" required>
-                      <input
-                        id="new-user-password"
-                        type="password"
-                        value={form.password}
-                        onChange={(event) => set('password', event.target.value)}
-                        className={inputClassName}
-                        placeholder="Au moins 8 caractères"
-                      />
-                    </Field>
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-slate-800">
+                      Connexion par OTP &amp; Lien d&apos;activation
+                    </span>
                   </div>
-                )}
+                  <p className="mt-0.5 text-[11px] text-slate-500 leading-normal">
+                    Aucun mot de passe requis. Un lien d&apos;activation sécurisé (14 jours) sera généré et le membre se connectera par code OTP SMS.
+                  </p>
+                </div>
               </div>
             </FormSection>
 

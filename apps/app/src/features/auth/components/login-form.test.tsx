@@ -67,16 +67,19 @@ describe('LoginForm — phone step', () => {
     window.localStorage.removeItem('matchy_locale');
   });
 
-  it('shows the phone + password login form by default, with no OTP send step (OTP is never login)', () => {
+  it('shows the phone input and send OTP button on step=phone', () => {
     renderWithAuthStore(<LoginForm />);
 
     expect(firstPlaceholder('XX XXX XXX')).toBeInTheDocument();
-    expect(firstPlaceholder('Votre mot de passe')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Envoyer le code' })).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Votre mot de passe')).not.toBeInTheDocument();
+    expect(firstButton('Envoyer le code')).toBeInTheDocument();
   });
 
-  it('logs in with phone + password via /auth/login-phone (never calling /auth/otp/*)', async () => {
+  it('sends login OTP and logs in via /auth/login-phone with { phone, code }', async () => {
     vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/login-otp/send') {
+        return { data: { message: 'Code envoyé', phone: '+21612345678' } };
+      }
       if (url === '/auth/login-phone') {
         return {
           data: { access_token: 'access-1', refresh_token: 'refresh-1', user: phoneUser },
@@ -88,9 +91,15 @@ describe('LoginForm — phone step', () => {
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
-      target: { value: 'secret123' },
-    });
+    fireEvent.click(firstButton('Envoyer le code'));
+
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/auth/login-otp/send', {
+        phone: '+21612345678',
+      }),
+    );
+
+    fireEvent.change(firstPlaceholder('000000'), { target: { value: '123456' } });
     fireEvent.click(firstButton('Continuer'));
 
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/home'));
@@ -98,108 +107,85 @@ describe('LoginForm — phone step', () => {
 
     expect(api.post).toHaveBeenCalledWith('/auth/login-phone', {
       phone: '+21612345678',
-      password: 'secret123',
+      code: '123456',
     });
-    expect(api.post).not.toHaveBeenCalledWith('/auth/otp/send', expect.anything());
-    expect(api.post).not.toHaveBeenCalledWith('/auth/otp/verify', expect.anything());
-  });
-
-  it('navigates to /reset-password with prefilled phone params when forgot password is clicked', () => {
-    renderWithAuthStore(<LoginForm />);
-
-    fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.click(firstButton('Mot de passe oublié ?'));
-
-    expect(pushMock).toHaveBeenCalledWith('/reset-password?country=TN&national=12345678');
   });
 
   function apiErrorWithCode(code: string) {
     return { isAxiosError: true, response: { data: { code } } };
   }
 
-  it('shows a specific message for an unverified phone, without offering OTP login', async () => {
-    vi.mocked(api.post).mockRejectedValue(apiErrorWithCode('phone_not_verified'));
+  it('shows a specific message when phone is not registered on sendLoginOtp', async () => {
+    vi.mocked(api.post).mockRejectedValue(apiErrorWithCode('phone_not_found'));
 
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
-      target: { value: 'secret123' },
-    });
-    fireEvent.click(firstButton('Continuer'));
+    fireEvent.click(firstButton('Envoyer le code'));
 
-    expect((await screen.findAllByText(/n'a pas encore été vérifié/))[0]).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Envoyer le code' })).not.toBeInTheDocument();
+    expect(
+      (await screen.findAllByText(/Aucun compte trouvé avec ce numéro/))[0],
+    ).toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it('shows a specific message for a social-only account', async () => {
-    vi.mocked(api.post).mockRejectedValue(apiErrorWithCode('oauth_only_account'));
-
-    renderWithAuthStore(<LoginForm />);
-
-    fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
-      target: { value: 'secret123' },
-    });
-    fireEvent.click(firstButton('Continuer'));
-
-    expect((await screen.findAllByText(/Google ou LinkedIn/))[0]).toBeInTheDocument();
-    expect(pushMock).not.toHaveBeenCalled();
-  });
-
-  // Regression: a banned/deactivated account has correct credentials — the account is
-  // just blocked — so it must not be lumped in with "wrong password or unknown phone"
-  // under the same generic invalid_credentials message.
   it.each([
     ['account_banned', /banni/],
     ['account_inactive', /désactivé/],
-  ])('shows a specific message for %s', async (code, expectedText) => {
+  ])('shows a specific message for %s on sendLoginOtp', async (code, expectedText) => {
     vi.mocked(api.post).mockRejectedValue(apiErrorWithCode(code));
 
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
-      target: { value: 'secret123' },
-    });
-    fireEvent.click(firstButton('Continuer'));
+    fireEvent.click(firstButton('Envoyer le code'));
 
     expect((await screen.findAllByText(expectedText))[0]).toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it('falls back to the generic message for invalid_credentials (wrong password or unknown phone)', async () => {
-    vi.mocked(api.post).mockRejectedValue(apiErrorWithCode('invalid_credentials'));
+  it('shows an invalid OTP message when /auth/login-phone rejects with invalid_otp', async () => {
+    vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/login-otp/send') {
+        return { data: { message: 'Code envoyé', phone: '+21612345678' } };
+      }
+      if (url === '/auth/login-phone') {
+        throw apiErrorWithCode('invalid_otp');
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    });
 
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
-      target: { value: 'secret123' },
-    });
+    fireEvent.click(firstButton('Envoyer le code'));
+
+    await waitFor(() => expect(firstPlaceholder('000000')).toBeInTheDocument());
+    fireEvent.change(firstPlaceholder('000000'), { target: { value: '999999' } });
     fireEvent.click(firstButton('Continuer'));
 
-    expect(
-      (
-        await screen.findAllByText('Connexion échouée. Vérifiez votre numéro et votre mot de passe')
-      )[0],
-    ).toBeInTheDocument();
+    expect((await screen.findAllByText(/Code incorrect/i))[0]).toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it('preserves a safe next param after a successful phone + password login', async () => {
+  it('preserves a safe next param after a successful phone OTP login', async () => {
     searchParamsRef.current = new URLSearchParams('step=phone&next=%2Fmatches');
-    vi.mocked(api.post).mockResolvedValue({
-      data: { access_token: 'access-1', refresh_token: 'refresh-1', user: phoneUser },
+    vi.mocked(api.post).mockImplementation(async (url: string) => {
+      if (url === '/auth/login-otp/send') {
+        return { data: { message: 'Code envoyé', phone: '+21612345678' } };
+      }
+      return {
+        data: { access_token: 'access-1', refresh_token: 'refresh-1', user: phoneUser },
+      };
     });
 
     renderWithAuthStore(<LoginForm />);
 
     fireEvent.change(firstPlaceholder('XX XXX XXX'), { target: { value: '12345678' } });
-    fireEvent.change(firstPlaceholder('Votre mot de passe'), {
-      target: { value: 'secret123' },
-    });
+    fireEvent.click(firstButton('Envoyer le code'));
+
+    await waitFor(() => expect(firstPlaceholder('000000')).toBeInTheDocument());
+    fireEvent.change(firstPlaceholder('000000'), { target: { value: '123456' } });
     fireEvent.click(firstButton('Continuer'));
 
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/matches'));

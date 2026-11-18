@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { OtpPurpose, PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
 import { PROFILE_PHOTO_CONTENT_TYPES, SOCIAL_AUTH_PROVIDERS } from '../constants.js';
-import { hashPassword, verifyPassword } from '../lib/password.js';
+import { hashPassword } from '../lib/password.js';
 import { normalizePhoneForAuth } from '../lib/phone.js';
 import { SmsClient } from '../lib/sms.js';
 import {
@@ -96,81 +96,111 @@ export class PhoneAuthenticationService {
     return { verified: true as const, phone, signupToken };
   }
 
-  async loginWithPhone(payload: LoginPhonePayload) {
-    const phone = normalizePhoneForAuth(payload.phone);
-    const user = phone ? await this.prisma.user.findUnique({ where: { phone } }) : null;
-
-    if (!user) {
-      throw new Error('invalid_credentials');
-    }
-
-    // A social-only account never had a password to check — this is not a wrong
-    // password, so it gets its own actionable code rather than the generic one.
-    if (!user.password) {
-      if (user.must_change_password) {
-        throw new Error('account_activation_required');
+  async sendLoginOtp(payload: SendOtpPayload) {
+    try {
+      const phone = normalizePhoneForAuth(payload.phone);
+      if (!phone) {
+        throw new Error('invalid_phone');
       }
-      throw new Error('oauth_only_account');
-    }
 
-    const isValid = await verifyPassword(payload.password, user.password);
-    if (!isValid) {
-      throw new Error('invalid_credentials');
-    }
+      const user = await this.prisma.user.findUnique({ where: { phone } });
+      if (!user) {
+        throw new Error('phone_not_found');
+      }
+      if (user.status === UserStatus.BANNED) {
+        throw new Error('account_banned');
+      }
+      if (user.status === UserStatus.INACTIVE && !user.must_change_password) {
+        throw new Error('account_inactive');
+      }
 
-    // Only reached once the password is already confirmed correct, so this can't be
-    // used to probe whether a phone number has an account at all.
-    if (!user.phone_verified) {
-      throw new Error('phone_not_verified');
-    }
+      const code = await this.otpChallengeService.createChallenge(
+        phone,
+        OtpPurpose.PHONE_LOGIN,
+        user.id,
+      );
+      await this.smsClient.sendSms(phone, otpMessage(code));
 
-    // Same reasoning as phone_not_verified above: a moderation status is only ever
-    // reached after the caller already proved they own the password, so surfacing it
-    // specifically here can't be used to enumerate banned/inactive accounts — unlike
-    // issueTokenPair's own generic gate below, which exists for callers that haven't
-    // already made that distinction.
-    if (user.status === UserStatus.BANNED) {
-      throw new Error('account_banned');
+      return { message: 'otp_sent', phone };
+    } catch (err) {
+      throw err;
     }
-    if (user.status === UserStatus.INACTIVE) {
-      throw new Error('account_inactive');
-    }
+  }
 
-    const tokens = await this.tokenService.issueTokenPair(user);
-    return { ...tokens, user: toMemberSessionUser(user) };
+  async loginWithPhone(payload: LoginPhonePayload) {
+    try {
+      const phone = normalizePhoneForAuth(payload.phone);
+      if (!phone) {
+        throw new Error('invalid_phone');
+      }
+
+      await this.otpChallengeService.verifyChallenge(phone, OtpPurpose.PHONE_LOGIN, payload.code);
+
+      const user = await this.prisma.user.findUnique({ where: { phone } });
+      if (!user) {
+        throw new Error('phone_not_found');
+      }
+      if (user.status === UserStatus.BANNED) {
+        throw new Error('account_banned');
+      }
+      if (user.status === UserStatus.INACTIVE && !user.must_change_password) {
+        throw new Error('account_inactive');
+      }
+
+      const activeUser =
+        user.must_change_password || user.status === UserStatus.INACTIVE || !user.phone_verified
+          ? await this.prisma.user.update({
+              where: { id: user.id },
+              data: {
+                must_change_password: false,
+                activation_token_hash: null,
+                activation_token_expires_at: null,
+                phone_verified: true,
+                status: user.status === UserStatus.INACTIVE ? UserStatus.ACTIVE : user.status,
+                last_login: new Date(),
+              },
+            })
+          : user;
+
+      const tokens = await this.tokenService.issueTokenPair(activeUser);
+      return { ...tokens, user: toMemberSessionUser(activeUser) };
+    } catch (err) {
+      throw err;
+    }
   }
 
   async registerWithPhone(payload: RegisterPhonePayload) {
-    const phone = normalizePhoneForAuth(payload.phone);
-    if (!phone) {
-      throw new Error('invalid_phone');
+    try {
+      const phone = normalizePhoneForAuth(payload.phone);
+      if (!phone) {
+        throw new Error('invalid_phone');
+      }
+
+      // Check for an existing account before burning the signup grant — it's a one-time
+      // token, so failing here must leave it usable for a genuine retry instead of forcing
+      // the user back through the whole OTP flow for a request that was always going to fail.
+      const existing = await this.prisma.user.findUnique({ where: { phone } });
+      if (existing) {
+        throw new Error('phone_already_registered');
+      }
+
+      await this.otpChallengeService.consumeSignupGrant(phone, payload.signupToken);
+
+      const user = await this.prisma.user.create({
+        data: {
+          phone,
+          password: null,
+          name: payload.name ?? phone,
+          auth_provider: 'phone',
+          phone_verified: true,
+        },
+      });
+
+      const tokens = await this.tokenService.issueTokenPair(user);
+      return { ...tokens, user: toMemberSessionUser(user) };
+    } catch (err) {
+      throw err;
     }
-
-    assertPasswordPolicy(payload.password);
-
-    // Check for an existing account before burning the signup grant — it's a one-time
-    // token, so failing here must leave it usable for a genuine retry instead of forcing
-    // the user back through the whole OTP flow for a request that was always going to fail.
-    const existing = await this.prisma.user.findUnique({ where: { phone } });
-    if (existing) {
-      throw new Error('phone_already_registered');
-    }
-
-    await this.otpChallengeService.consumeSignupGrant(phone, payload.signupToken);
-
-    const hashedPassword = await hashPassword(payload.password);
-    const user = await this.prisma.user.create({
-      data: {
-        phone,
-        password: hashedPassword,
-        name: payload.name ?? phone,
-        auth_provider: 'phone',
-        phone_verified: true,
-      },
-    });
-
-    const tokens = await this.tokenService.issueTokenPair(user);
-    return { ...tokens, user: toMemberSessionUser(user) };
   }
 
   async requestPasswordReset(payload: RequestPasswordResetPayload) {
@@ -407,8 +437,8 @@ export class PhoneAuthenticationService {
   }
 
   /**
-   * Sets the password for a pre-registered lead, marks activation complete, and issues
-   * a regular member session token pair.
+   * Activates a pre-registered lead without setting a password, and issues a regular
+   * member session token pair (subsequent logins use phone + OTP).
    */
   async confirmActivation(payload: ActivationConfirmPayload) {
     try {
@@ -416,8 +446,6 @@ export class PhoneAuthenticationService {
       if (!token) {
         throw new Error('invalid_activation_token');
       }
-
-      assertPasswordPolicy(payload.password);
 
       const tokenHash = hashActivationToken(token);
       const user = await this.prisma.user.findUnique({
@@ -437,12 +465,10 @@ export class PhoneAuthenticationService {
         throw new Error('account_banned');
       }
 
-      const hashedPassword = await hashPassword(payload.password);
-
       const updated = await this.prisma.user.update({
         where: { id: user.id },
         data: {
-          password: hashedPassword,
+          password: null,
           must_change_password: false,
           activation_token_hash: null,
           activation_token_expires_at: null,

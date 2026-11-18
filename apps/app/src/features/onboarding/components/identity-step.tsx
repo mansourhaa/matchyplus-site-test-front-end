@@ -1,7 +1,6 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
-import { PasswordRequirements } from '@/components/password-requirements';
 import { PhoneInput } from '@/features/auth/components/phone-input';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
@@ -18,17 +17,13 @@ import {
 } from '@/features/profile/store/profile-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { isNativeMobileClient } from '@/lib/native';
-import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import {
   Briefcase,
   Camera,
   Check,
   ChevronDown,
-  Eye,
-  EyeOff,
   Loader2,
-  Lock,
   ShieldCheck,
   Video,
   X,
@@ -198,12 +193,9 @@ export function IdentityStep({
   const pendingPhotoRef = useRef<File | null>(null);
   const localPhotoPreviewRef = useRef<string | null>(null);
 
-  // Credentials — only rendered/validated when !isAuthenticated. Single password field,
-  // no confirmation.
+  // Credentials — only rendered/validated when !isAuthenticated (phone + OTP only).
   const [countryIso, setCountryIso] = useState(DEFAULT_PHONE_COUNTRY.iso);
   const [nationalNumber, setNationalNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [code, setCode] = useState('');
   const [otpSending, setOtpSending] = useState(false);
@@ -224,7 +216,6 @@ export function IdentityStep({
   const country = getPhoneCountry(countryIso);
   const phone = composeE164Phone(countryIso, nationalNumber);
   const isPhoneValid = nationalNumber.length >= country.nationalLength;
-  const passwordReady = isPasswordPolicySatisfied(password);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -479,16 +470,12 @@ export function IdentityStep({
 
   const photoPreview = useAuthenticatedMediaUrl(image || null);
 
-  // Only ever checks phone/password, never the identity fields above — handleNext
+  // Only ever checks phone, never the identity fields above — handleNext
   // validates those once before the first call, but the modal's "Renvoyer le code"
   // button calls this directly and must not re-run that validation on every resend.
   const requestOtp = async () => {
     if (!isPhoneValid) {
       setError(t('onboarding.identity.errorPhoneRequired', { length: country.nationalLength }));
-      return;
-    }
-    if (!passwordReady) {
-      setError(t('onboarding.identity.errorPasswordRequired'));
       return;
     }
 
@@ -564,7 +551,7 @@ export function IdentityStep({
 
     onRegistered?.();
     const registerAction = await dispatch(
-      registerPhone({ phone, password, signupToken: verifyAction.payload.signupToken }),
+      registerPhone({ phone, signupToken: verifyAction.payload.signupToken }),
     );
     if (!registerPhone.fulfilled.match(registerAction)) {
       setOtpVerifying(false);
@@ -879,46 +866,6 @@ export function IdentityStep({
                       disabled={loading || otpSending}
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                    {t('onboarding.identity.passwordLabel')}{' '}
-                    <span style={{ color: '#61BCA6' }}>*</span>
-                  </label>
-                  <div
-                    className="mt-1 flex items-center gap-3 rounded-xl px-4 py-3"
-                    style={{
-                      border: `2px solid ${
-                        password.length > 0 && !passwordReady
-                          ? '#E74C3C'
-                          : passwordReady
-                            ? '#2F76BB'
-                            : '#E0E0E0'
-                      }`,
-                      background: password ? '#F5F9FF' : '#FAFAFA',
-                    }}
-                  >
-                    <Lock size={16} color="#61BCA6" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      autoComplete="new-password"
-                      value={password}
-                      disabled={loading || otpSending}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="••••••••"
-                      className="flex-1 bg-transparent text-[#353535] outline-none"
-                      style={{ fontSize: '14px' }}
-                    />
-                    <button type="button" onClick={() => setShowPassword((value) => !value)}>
-                      {showPassword ? (
-                        <EyeOff size={18} color="#7A7A7A" />
-                      ) : (
-                        <Eye size={18} color="#7A7A7A" />
-                      )}
-                    </button>
-                  </div>
-                  <PasswordRequirements password={password} />
                 </div>
               </>
             )}

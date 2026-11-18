@@ -102,18 +102,64 @@ describe('PhoneAuthenticationService', () => {
     });
   });
 
+  describe('sendLoginOtp', () => {
+    it('creates a PHONE_LOGIN challenge and sends it by SMS for an active phone user', async () => {
+      const { service, prisma, smsClient } = createService();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        phone: '+33612345678',
+        status: 'ACTIVE',
+      });
+      prisma.otpChallenge.findFirst.mockResolvedValue(null);
+      prisma.otpChallenge.create.mockResolvedValue({});
+
+      const result = await service.sendLoginOtp({ phone: '+33 6 12 34 56 78' });
+
+      expect(result).toEqual({ message: 'otp_sent', phone: '+33612345678' });
+      expect(prisma.otpChallenge.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          phone: '+33612345678',
+          purpose: 'PHONE_LOGIN',
+          user_id: 'user-1',
+        }),
+      });
+      expect(smsClient.sendSms).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects an unregistered phone with phone_not_found', async () => {
+      const { service, prisma, smsClient } = createService();
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.sendLoginOtp({ phone: '+33612345678' })).rejects.toThrow(
+        'phone_not_found',
+      );
+      expect(smsClient.sendSms).not.toHaveBeenCalled();
+    });
+  });
+
   describe('loginWithPhone', () => {
-    it('logs in a verified phone user with the correct password', async () => {
+    it('logs in a phone user with a valid OTP code', async () => {
       const { service, prisma } = createService();
+      prisma.otpChallenge.findFirst.mockResolvedValue({
+        id: 'chal-1',
+        phone: '+33612345678',
+        purpose: 'PHONE_LOGIN',
+        code_hash: hashVerificationCode('123456'),
+        attempts: 0,
+        expires_at: new Date(Date.now() + 60_000),
+        consumed_at: null,
+      });
+      prisma.otpChallenge.updateMany.mockResolvedValue({ count: 1 });
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
         email: null,
         phone: '+33612345678',
         name: 'Jane Doe',
-        password: await hashPassword('password123'),
+        password: null,
         auth_provider: 'phone',
         email_verified: false,
         phone_verified: true,
+        must_change_password: false,
         status: 'ACTIVE',
         onboarding_completed_at: null,
       });
@@ -124,12 +170,10 @@ describe('PhoneAuthenticationService', () => {
 
       const result = await service.loginWithPhone({
         phone: '+33612345678',
-        password: 'password123',
+        code: '123456',
       });
 
       expect(result.accessToken).toBe('access-token');
-      // The wire response must never carry the password hash or the raw
-      // onboarding_completed_at timestamp — only the derived boolean.
       expect(result.user).toEqual({
         id: 'user-1',
         email: null,
@@ -141,99 +185,130 @@ describe('PhoneAuthenticationService', () => {
         phone_verified: true,
         google_linked: false,
         linkedin_linked: false,
-        has_password: true,
+        has_password: false,
         onboarding_completed: false,
       });
       issueTokenPairSpy.mockRestore();
     });
 
-    it('rejects a correct password with a distinct phone_not_verified error', async () => {
+    it('rejects an invalid OTP code with invalid_otp', async () => {
       const { service, prisma } = createService();
-      prisma.user.findUnique.mockResolvedValue({
-        id: 'user-1',
+      prisma.otpChallenge.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.loginWithPhone({ phone: '+33612345678', code: '123456' }),
+      ).rejects.toThrow('invalid_otp');
+    });
+
+    it('rejects a BANNED account with account_banned', async () => {
+      const { service, prisma } = createService();
+      prisma.otpChallenge.findFirst.mockResolvedValue({
+        id: 'chal-1',
         phone: '+33612345678',
-        password: await hashPassword('password123'),
-        phone_verified: false,
-        status: 'ACTIVE',
+        purpose: 'PHONE_LOGIN',
+        code_hash: hashVerificationCode('123456'),
+        attempts: 0,
+        expires_at: new Date(Date.now() + 60_000),
+        consumed_at: null,
       });
-
-      await expect(
-        service.loginWithPhone({ phone: '+33612345678', password: 'password123' }),
-      ).rejects.toThrow('phone_not_verified');
-    });
-
-    it.each(['BANNED', 'INACTIVE'] as const)(
-      'rejects a correct password for a %s account with a distinct error, not invalid_credentials',
-      async (status) => {
-        const { service, prisma } = createService();
-        prisma.user.findUnique.mockResolvedValue({
-          id: 'user-1',
-          phone: '+33612345678',
-          password: await hashPassword('password123'),
-          phone_verified: true,
-          status,
-        });
-
-        await expect(
-          service.loginWithPhone({ phone: '+33612345678', password: 'password123' }),
-        ).rejects.toThrow(status === 'BANNED' ? 'account_banned' : 'account_inactive');
-      },
-    );
-
-    it('rejects an unknown phone with the generic invalid_credentials error', async () => {
-      const { service, prisma } = createService();
-      prisma.user.findUnique.mockResolvedValue(null);
-
-      await expect(
-        service.loginWithPhone({ phone: '+33612345678', password: 'password123' }),
-      ).rejects.toThrow('invalid_credentials');
-    });
-
-    it('rejects a wrong password with the generic invalid_credentials error, not phone_not_verified', async () => {
-      const { service, prisma } = createService();
-      prisma.user.findUnique.mockResolvedValue({
-        id: 'user-1',
-        phone: '+33612345678',
-        password: await hashPassword('password123'),
-        phone_verified: false,
-        status: 'ACTIVE',
-      });
-
-      await expect(
-        service.loginWithPhone({ phone: '+33612345678', password: 'wrong-password' }),
-      ).rejects.toThrow('invalid_credentials');
-    });
-
-    it('rejects a social-only account (no password) with a distinct oauth_only_account error', async () => {
-      const { service, prisma } = createService();
+      prisma.otpChallenge.updateMany.mockResolvedValue({ count: 1 });
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
         phone: '+33612345678',
         password: null,
         phone_verified: true,
-        auth_provider: 'google',
-        status: 'ACTIVE',
+        must_change_password: false,
+        status: 'BANNED',
       });
 
       await expect(
-        service.loginWithPhone({ phone: '+33612345678', password: 'password123' }),
-      ).rejects.toThrow('oauth_only_account');
+        service.loginWithPhone({ phone: '+33612345678', code: '123456' }),
+      ).rejects.toThrow('account_banned');
     });
 
-    it('rejects an unactivated cold-contact account with a distinct account_activation_required error', async () => {
+    it('rejects a deactivated INACTIVE account (without pending activation) with account_inactive', async () => {
       const { service, prisma } = createService();
+      prisma.otpChallenge.findFirst.mockResolvedValue({
+        id: 'chal-1',
+        phone: '+33612345678',
+        purpose: 'PHONE_LOGIN',
+        code_hash: hashVerificationCode('123456'),
+        attempts: 0,
+        expires_at: new Date(Date.now() + 60_000),
+        consumed_at: null,
+      });
+      prisma.otpChallenge.updateMany.mockResolvedValue({ count: 1 });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        phone: '+33612345678',
+        password: null,
+        phone_verified: true,
+        must_change_password: false,
+        status: 'INACTIVE',
+      });
+
+      await expect(
+        service.loginWithPhone({ phone: '+33612345678', code: '123456' }),
+      ).rejects.toThrow('account_inactive');
+    });
+
+    it('activates a pending admin-created lead on valid OTP login', async () => {
+      const { service, prisma } = createService();
+      prisma.otpChallenge.findFirst.mockResolvedValue({
+        id: 'chal-1',
+        phone: '+33612345678',
+        purpose: 'PHONE_LOGIN',
+        code_hash: hashVerificationCode('123456'),
+        attempts: 0,
+        expires_at: new Date(Date.now() + 60_000),
+        consumed_at: null,
+      });
+      prisma.otpChallenge.updateMany.mockResolvedValue({ count: 1 });
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-cold',
         phone: '+33612345678',
+        name: 'Lead',
+        email: null,
         password: null,
+        auth_provider: 'phone',
+        email_verified: false,
         must_change_password: true,
         phone_verified: true,
+        status: 'INACTIVE',
+        onboarding_completed_at: new Date(),
+      });
+      prisma.user.update.mockResolvedValue({
+        id: 'user-cold',
+        phone: '+33612345678',
+        name: 'Lead',
+        email: null,
+        password: null,
+        auth_provider: 'phone',
+        email_verified: false,
+        must_change_password: false,
+        phone_verified: true,
         status: 'ACTIVE',
+        onboarding_completed_at: new Date(),
+      });
+      const issueTokenPairSpy = vi
+        .spyOn(TokenService.prototype, 'issueTokenPair')
+        .mockResolvedValue({ accessToken: 'access-token', refreshToken: 'refresh-token' });
+
+      const result = await service.loginWithPhone({
+        phone: '+33612345678',
+        code: '123456',
       });
 
-      await expect(
-        service.loginWithPhone({ phone: '+33612345678', password: 'Password123!' }),
-      ).rejects.toThrow('account_activation_required');
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-cold' },
+        data: expect.objectContaining({
+          status: 'ACTIVE',
+          must_change_password: false,
+          phone_verified: true,
+        }),
+      });
+      expect(result.accessToken).toBe('access-token');
+      issueTokenPairSpy.mockRestore();
     });
   });
 
@@ -260,7 +335,6 @@ describe('PhoneAuthenticationService', () => {
 
       const result = await service.registerWithPhone({
         phone: '+33 6 12 34 56 78',
-        password: 'Password123!',
         signupToken: 'valid-grant-token',
       });
 
@@ -298,19 +372,6 @@ describe('PhoneAuthenticationService', () => {
       issueTokenPairSpy.mockRestore();
     });
 
-    it('rejects a weak password before creating a user', async () => {
-      const { service, prisma } = createService();
-
-      await expect(
-        service.registerWithPhone({
-          phone: '+33612345678',
-          password: 'password123',
-          signupToken: 'valid-grant-token',
-        }),
-      ).rejects.toThrow('weak_password');
-      expect(prisma.user.create).not.toHaveBeenCalled();
-    });
-
     it('rejects an invalid or already-consumed signup grant without creating a user', async () => {
       const { service, prisma } = createService();
       prisma.otpChallenge.updateMany.mockResolvedValue({ count: 0 });
@@ -318,7 +379,6 @@ describe('PhoneAuthenticationService', () => {
       await expect(
         service.registerWithPhone({
           phone: '+33612345678',
-          password: 'Password123!',
           signupToken: 'bad-token',
         }),
       ).rejects.toThrow('invalid_signup_grant');
@@ -795,7 +855,6 @@ describe('PhoneAuthenticationService', () => {
 
       const result = await service.confirmActivation({
         token: rawToken,
-        password: 'ValidPassword123!',
       });
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
@@ -804,7 +863,7 @@ describe('PhoneAuthenticationService', () => {
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-lead' },
         data: expect.objectContaining({
-          password: expect.any(String),
+          password: null,
           must_change_password: false,
           activation_token_hash: null,
           activation_token_expires_at: null,
@@ -816,17 +875,6 @@ describe('PhoneAuthenticationService', () => {
       expect(result.user.id).toBe('user-lead');
 
       issueTokenSpy.mockRestore();
-    });
-
-    it('rejects weak password before touching database', async () => {
-      const { service } = createService();
-
-      await expect(
-        service.confirmActivation({
-          token: 'some-token',
-          password: 'short',
-        }),
-      ).rejects.toThrow('weak_password');
     });
   });
 });

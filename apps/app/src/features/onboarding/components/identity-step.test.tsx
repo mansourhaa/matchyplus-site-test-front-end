@@ -619,40 +619,10 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     );
 
     fillIdentityAndCredentials();
-    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'Password123!' },
-    });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
     expect(api.post).not.toHaveBeenCalled();
     expect(screen.getAllByText('La photo de profil est obligatoire.')[0]).toBeInTheDocument();
-    expect(onNext).not.toHaveBeenCalled();
-  });
-
-  it('does not send an OTP when the password fails the security policy', () => {
-    const onNext = vi.fn().mockResolvedValue(true);
-    renderWithAuthStore(
-      <IdentityStep
-        profile={unauthenticatedProfileWithPhoto}
-        stepNumber={1}
-        totalSteps={3}
-        loading={false}
-        isAuthenticated={false}
-        onNext={onNext}
-      />,
-      unauthenticatedState,
-    );
-
-    fillIdentityAndCredentials();
-    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'short' },
-    });
-    fireEvent.click(firstButton('Continuer et vérifier par SMS'));
-
-    expect(api.post).not.toHaveBeenCalled();
-    expect(
-      screen.getAllByText('Le mot de passe doit respecter les règles de sécurité.')[0],
-    ).toBeInTheDocument();
     expect(onNext).not.toHaveBeenCalled();
   });
 
@@ -688,9 +658,6 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     );
 
     fillIdentityAndCredentials();
-    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'Password123!' },
-    });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
     expect(await findFirstPlaceholder('------')).toBeInTheDocument();
@@ -711,7 +678,6 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     await waitFor(() =>
       expect(api.post).toHaveBeenCalledWith('/auth/register-phone', {
         phone: '+21612345678',
-        password: 'Password123!',
         signupToken: 'valid-grant-token',
       }),
     );
@@ -771,9 +737,6 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     // that preview to actually land, or the missing-photo check below would still see
     // the pre-selection empty state and block submission before the OTP modal opens.
     await waitFor(() => expect(document.querySelector('img')).toBeInTheDocument());
-    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'Password123!' },
-    });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
     const codeInput = await findFirstPlaceholder('------');
@@ -830,9 +793,6 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     );
 
     fillIdentityAndCredentials();
-    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'Password123!' },
-    });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
     const codeInput = await findFirstPlaceholder('------');
@@ -875,9 +835,6 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     );
 
     fillIdentityAndCredentials();
-    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'Password123!' },
-    });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
     const codeInput = await findFirstPlaceholder('------');
@@ -925,9 +882,6 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     );
 
     fillIdentityAndCredentials();
-    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'Password123!' },
-    });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
     const codeInput = await findFirstPlaceholder('------');
@@ -962,9 +916,6 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     );
 
     fillIdentityAndCredentials();
-    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'Password123!' },
-    });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
     const codeInput = await findFirstPlaceholder('------');
@@ -996,9 +947,6 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     );
 
     fillIdentityAndCredentials();
-    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'Password123!' },
-    });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
     expect(
@@ -1038,9 +986,6 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
     );
 
     fillIdentityAndCredentials();
-    fireEvent.change(screen.getAllByPlaceholderText('••••••••')[0], {
-      target: { value: 'Password123!' },
-    });
     fireEvent.click(firstButton('Continuer et vérifier par SMS'));
 
     const codeInput = await findFirstPlaceholder('------');

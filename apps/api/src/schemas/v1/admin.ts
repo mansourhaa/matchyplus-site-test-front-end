@@ -123,7 +123,6 @@ export const adminCreateUserSchema = {
     properties: {
       name: { type: 'string', minLength: 1, maxLength: 120 },
       phone: { type: 'string', minLength: 1 },
-      password: { type: 'string', minLength: 8, maxLength: 128 },
       email: { type: 'string', format: 'email' },
       plan: { type: 'string', enum: userPlanEnum },
       job: { type: 'string', maxLength: 120 },
