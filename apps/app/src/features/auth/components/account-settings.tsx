@@ -36,6 +36,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 
+import { DevOtpBanner } from './dev-otp-banner';
 import { PhoneInput } from './phone-input';
 
 function SettingsCard({
@@ -328,6 +329,7 @@ export function PhoneLinkSection() {
   const [countryIso, setCountryIso] = useState(DEFAULT_PHONE_COUNTRY.iso);
   const [nationalNumber, setNationalNumber] = useState('');
   const [code, setCode] = useState('');
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [codeVisible, setCodeVisible] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -353,7 +355,8 @@ export function PhoneLinkSection() {
 
     setRequestLoading(true);
     try {
-      await dispatch(requestPhoneLink({ phone })).unwrap();
+      const result = await dispatch(requestPhoneLink({ phone })).unwrap();
+      setDevOtp(result?.devOtp ?? null);
       setCodeVisible(true);
       setInfo(
         locale === 'en'
@@ -458,6 +461,7 @@ export function PhoneLinkSection() {
 
       {codeVisible && (
         <>
+          <DevOtpBanner code={devOtp} />
           <TextField
             label={
               locale === 'en'
@@ -673,6 +677,7 @@ export function DeleteAccountSection() {
   const hasPassword = Boolean(user?.has_password);
   const [password, setPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [otpSent, setOtpSent] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -682,7 +687,8 @@ export function DeleteAccountSection() {
     setError(null);
     setSubmitting(true);
     try {
-      await dispatch(requestAccountDeleteOtp()).unwrap();
+      const result = await dispatch(requestAccountDeleteOtp()).unwrap();
+      setDevOtp(result?.devOtp ?? null);
       setOtpSent(true);
     } catch {
       setError(
@@ -794,6 +800,7 @@ export function DeleteAccountSection() {
                   ? 'إرسال رمز الرسائل القصيرة'
                   : 'Envoyer le code SMS'}
           </button>
+          <DevOtpBanner code={devOtp} />
         </>
       )}
       {error && <InlineBanner kind="error" message={error} />}

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { OtpPurpose, PrismaClient, UserStatus } from '@saas-boilerplate/types';
 
+import { config } from '../config.js';
 import { PROFILE_PHOTO_CONTENT_TYPES, SOCIAL_AUTH_PROVIDERS } from '../constants.js';
 import { hashPassword } from '../lib/password.js';
 import { normalizePhoneForAuth } from '../lib/phone.js';
@@ -39,6 +40,14 @@ function otpMessage(code: string): string {
   return `MatchyPlus: your verification code is ${code}.`;
 }
 
+function withDevOtp<T extends Record<string, unknown>>(
+  payload: T,
+  code: string,
+): T & { devOtp?: string } {
+  const isDev = (process.env.NODE_ENV ?? config.nodeEnv) === 'development';
+  return isDev ? { ...payload, devOtp: code } : payload;
+}
+
 const noopLogger: Logger = { warn: () => {} };
 
 export class PhoneAuthenticationService {
@@ -72,7 +81,7 @@ export class PhoneAuthenticationService {
     );
     await this.smsClient.sendSms(phone, otpMessage(code));
 
-    return { message: 'otp_sent', phone };
+    return withDevOtp({ message: 'otp_sent', phone }, code);
   }
 
   /**
@@ -121,7 +130,7 @@ export class PhoneAuthenticationService {
       );
       await this.smsClient.sendSms(phone, otpMessage(code));
 
-      return { message: 'otp_sent', phone };
+      return withDevOtp({ message: 'otp_sent', phone }, code);
     } catch (err) {
       throw err;
     }
@@ -214,6 +223,7 @@ export class PhoneAuthenticationService {
       where: { phone },
     });
 
+    let devOtp: string | undefined;
     if (user && user.password) {
       try {
         const code = await this.otpChallengeService.createChallenge(
@@ -222,6 +232,9 @@ export class PhoneAuthenticationService {
           user.id,
         );
         await this.smsClient.sendSms(phone, otpMessage(code));
+        if ((process.env.NODE_ENV ?? config.nodeEnv) === 'development') {
+          devOtp = code;
+        }
       } catch (err) {
         // The caller always gets the same uniform response either way (anti-
         // enumeration), but a delivery/config/cooldown failure here means no code
@@ -231,9 +244,7 @@ export class PhoneAuthenticationService {
       }
     }
 
-    return {
-      message: 'reset_code_sent',
-    };
+    return devOtp ? { message: 'reset_code_sent', devOtp } : { message: 'reset_code_sent' };
   }
 
   async requestAccountDeleteOtp(userId: string) {
@@ -255,7 +266,7 @@ export class PhoneAuthenticationService {
     );
     await this.smsClient.sendSms(user.phone, otpMessage(code));
 
-    return { message: 'account_delete_otp_sent', phone: user.phone };
+    return withDevOtp({ message: 'account_delete_otp_sent', phone: user.phone }, code);
   }
 
   async confirmPasswordReset(payload: ConfirmPasswordResetPayload) {
@@ -317,7 +328,7 @@ export class PhoneAuthenticationService {
     );
     await this.smsClient.sendSms(phone, otpMessage(code));
 
-    return { message: 'phone_link_code_sent', phone };
+    return withDevOtp({ message: 'phone_link_code_sent', phone }, code);
   }
 
   async confirmPhoneLink(payload: ConfirmPhoneLinkPayload) {
@@ -480,7 +491,7 @@ export class PhoneAuthenticationService {
         user.id,
       );
       await this.smsClient.sendSms(phone, otpMessage(code));
-      return { message: 'otp_sent', phone };
+      return withDevOtp({ message: 'otp_sent', phone }, code);
     } catch (err) {
       throw err;
     }

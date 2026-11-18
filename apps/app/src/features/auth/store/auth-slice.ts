@@ -16,9 +16,11 @@ import type {
   DeleteAccountInput,
   ExchangeOAuthCodeInput,
   LoginPhoneInput,
+  OtpSendResponse,
   RegisterPhoneInput,
   RequestPasswordResetInput,
   RequestPhoneLinkInput,
+  SendActivationOtpInput,
   SendOtpInput,
   VerifyOtpInput,
 } from '../types';
@@ -64,7 +66,7 @@ async function requireNativeBodyTokens(data: SessionResponse) {
 
 export const sendOtp = createAsyncThunk('auth/sendOtp', async ({ phone }: SendOtpInput) => {
   try {
-    const response = await api.post<{ message: string; phone: string }>('/auth/otp/send', {
+    const response = await api.post<OtpSendResponse>('/auth/otp/send', {
       phone,
     });
     return response.data;
@@ -85,10 +87,7 @@ export const sendLoginOtp = createAsyncThunk(
   'auth/sendLoginOtp',
   async ({ phone }: SendOtpInput) => {
     try {
-      const response = await api.post<{ message: string; phone: string }>(
-        '/auth/login-otp/send',
-        { phone },
-      );
+      const response = await api.post<OtpSendResponse>('/auth/login-otp/send', { phone });
       return response.data;
     } catch (error) {
       throw new Error(getApiErrorCode(error) ?? 'otp_send_failed');
@@ -140,12 +139,9 @@ export const registerPhone = createAsyncThunk(
 
 export const sendActivationOtp = createAsyncThunk(
   'auth/sendActivationOtp',
-  async ({ token }: { token: string }) => {
+  async ({ token }: SendActivationOtpInput) => {
     try {
-      const response = await api.post<{ message: string; phone: string }>(
-        '/auth/activation/otp/send',
-        { token },
-      );
+      const response = await api.post<OtpSendResponse>('/auth/activation/otp/send', { token });
       return response.data;
     } catch (error) {
       throw new Error(getApiErrorCode(error) ?? 'otp_send_failed');
@@ -177,10 +173,7 @@ export const confirmActivation = createAsyncThunk(
 export const requestPasswordReset = createAsyncThunk(
   'auth/requestPasswordReset',
   async ({ phone }: RequestPasswordResetInput) => {
-    const response = await api.post<{ message: string; phone: string }>(
-      '/auth/password-reset/request',
-      { phone },
-    );
+    const response = await api.post<OtpSendResponse>('/auth/password-reset/request', { phone });
     return response.data;
   },
 );
@@ -234,10 +227,7 @@ export const changePassword = createAsyncThunk(
 export const requestPhoneLink = createAsyncThunk(
   'auth/requestPhoneLink',
   async ({ phone }: RequestPhoneLinkInput) => {
-    const response = await api.post<{ message: string; phone: string }>(
-      '/auth/phone-link/request',
-      { phone },
-    );
+    const response = await api.post<OtpSendResponse>('/auth/phone-link/request', { phone });
     return response.data;
   },
 );
@@ -266,7 +256,7 @@ export const deleteAccount = createAsyncThunk(
 export const requestAccountDeleteOtp = createAsyncThunk(
   'auth/requestAccountDeleteOtp',
   async () => {
-    const response = await api.post<{ message: string; phone: string }>('/auth/account/delete-otp');
+    const response = await api.post<OtpSendResponse>('/auth/account/delete-otp');
     return response.data;
   },
 );

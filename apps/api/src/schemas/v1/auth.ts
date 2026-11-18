@@ -209,6 +209,7 @@ export const sendOtpSchema = {
       properties: {
         message: { type: 'string' },
         phone: { type: 'string' },
+        devOtp: { type: 'string' },
       },
     },
     ...errorResponses,
@@ -259,6 +260,7 @@ export const sendLoginOtpSchema = {
       properties: {
         message: { type: 'string' },
         phone: { type: 'string' },
+        devOtp: { type: 'string' },
       },
     },
     ...errorResponses,
@@ -350,6 +352,7 @@ export const requestPasswordResetSchema = {
       properties: {
         message: { type: 'string' },
         phone: { type: 'string' },
+        devOtp: { type: 'string' },
       },
     },
     ...errorResponses,
@@ -432,6 +435,7 @@ export const requestPhoneLinkSchema = {
       properties: {
         message: { type: 'string' },
         phone: { type: 'string' },
+        devOtp: { type: 'string' },
       },
     },
     ...errorResponses,
@@ -497,6 +501,7 @@ export const requestAccountDeleteOtpSchema = {
       properties: {
         message: { type: 'string' },
         phone: { type: 'string' },
+        devOtp: { type: 'string' },
       },
     },
     ...errorResponses,
@@ -569,6 +574,7 @@ export const activationOtpSendSchema = {
       properties: {
         message: { type: 'string' },
         phone: { type: 'string' },
+        devOtp: { type: 'string' },
       },
     },
     ...errorResponses,
