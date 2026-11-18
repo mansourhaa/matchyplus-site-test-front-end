@@ -74,8 +74,9 @@ All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `e
 ### 2. Services belt
 
 - **What it is:** a 3D carousel of 10 professionals (plumber, electrician, driver, nanny,
-  cleaner, delivery, cook, seamstress, gardener, waiter). You can drag it, use the numbered
-  buttons, or use the keyboard.
+  cleaner, delivery, cook, seamstress, gardener, waiter) on a white stage, like the rest of the
+  site. You can drag it, click a person, or use the keyboard. At the manager's request there is no
+  numbered index on the side.
 - **Picking a pro:** clicking one opens their profile card (`belt-profile-card.tsx`) with
   app-style "Passer" / "Connecter" buttons.
   - "Connecter" opens a match screen (`belt-match-dialog.tsx`). It has a focus trap, and Escape
@@ -87,8 +88,8 @@ All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `e
 - **Photos:** WebP with a transparent background, about 55–115 KB each. The `sizes` attribute
   matches their real on-screen width (about 130 px on phones, 210 px on computers), so the
   browser downloads small versions.
-- **Accessibility:** the numbered buttons are named "02 · Afficher : Électricien", so voice
-  control ("click 02") works.
+- **Accessibility:** each person is a button named after their trade ("Afficher : Électricien"),
+  so screen readers and keyboards can pick any trade.
 
 ### 3. Without / with Matchy+ (`why-matchy.tsx`)
 

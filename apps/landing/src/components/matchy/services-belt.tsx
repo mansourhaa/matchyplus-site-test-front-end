@@ -406,7 +406,7 @@ export function ServicesBelt() {
           pointerX.set(0);
           pointerY.set(0);
         }}
-        className="relative mt-12 h-[520px] touch-pan-y overflow-hidden rounded-[2.5rem] bg-[linear-gradient(160deg,#cfe2f6_0%,#bcdcef_45%,#a8dccd_100%)] select-none sm:h-[600px] md:h-[680px]"
+        className="relative mt-12 h-[520px] touch-pan-y overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white shadow-2xl shadow-[#2F76BB]/10 select-none sm:h-[600px] md:h-[680px]"
       >
         {size.width > 0 && (
           <motion.div
@@ -417,10 +417,10 @@ export function ServicesBelt() {
               transformPerspective: 1400,
             }}
           >
-            {/* brand glow behind the belt */}
+            {/* soft brand glow behind the belt */}
             <div
               aria-hidden="true"
-              className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(255,255,255,0.75)_0%,rgba(255,255,255,0)_55%)]"
+              className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,rgba(97,188,166,0.12)_0%,rgba(255,255,255,0)_60%)]"
             />
             {/* colored floor under the belt */}
             {(() => {
@@ -430,7 +430,7 @@ export function ServicesBelt() {
               return (
                 <div
                   aria-hidden="true"
-                  className="absolute rounded-[50%] bg-[radial-gradient(ellipse,rgba(255,255,255,0.85)_0%,rgba(97,188,166,0.35)_55%,rgba(47,118,187,0.28)_100%)] shadow-[0_30px_80px_-20px_rgba(47,118,187,0.45)]"
+                  className="absolute rounded-[50%] bg-[radial-gradient(ellipse,rgba(255,255,255,1)_0%,rgba(97,188,166,0.22)_55%,rgba(47,118,187,0.18)_100%)] shadow-[0_30px_80px_-24px_rgba(47,118,187,0.30)]"
                   style={{ left: centerX - w / 2, top: centerY - h / 2, width: w, height: h }}
                 />
               );
@@ -442,7 +442,7 @@ export function ServicesBelt() {
                 <div
                   key={ring}
                   aria-hidden="true"
-                  className="absolute rounded-[50%] border border-white/60"
+                  className="border-brand-blue/10 absolute rounded-[50%] border"
                   style={{
                     left: centerX - (radii.rx + 40) * ring,
                     top: centerY - (radii.ry + 14) * ring,
@@ -477,38 +477,6 @@ export function ServicesBelt() {
             ))}
           </motion.div>
         )}
-
-        {/* index of services */}
-        <nav
-          aria-label={t('landing.beltServicesLabel')}
-          className="absolute inset-x-5 top-5 z-[400] flex [scrollbar-width:none] gap-1.5 overflow-x-auto font-mono md:inset-x-auto md:flex-col md:overflow-visible ltr:md:left-5 rtl:md:right-5"
-        >
-          {services.map((service, i) => {
-            const active = (selected ?? front) === i;
-            const number = String(i + 1).padStart(2, '0');
-            return (
-              <button
-                key={service.code}
-                type="button"
-                // starts with the visible number, so "click 02" works with voice control
-                aria-label={`${number} · ${t('landing.beltSelect', { service: service.title })}`}
-                aria-current={active ? 'true' : undefined}
-                onClick={() => {
-                  setSelected(null);
-                  rotateTo(i);
-                }}
-                className={cn(
-                  'focus-visible:ring-brand-teal h-7 w-10 shrink-0 rounded border text-xs font-semibold transition-colors outline-none focus-visible:ring-2',
-                  active
-                    ? 'border-brand-blue bg-brand-blue text-white'
-                    : 'text-brand-navy border-black/10 bg-white/80 hover:bg-white',
-                )}
-              >
-                {number}
-              </button>
-            );
-          })}
-        </nav>
 
         {/* belt mode: current service + its services */}
         <AnimatePresence>

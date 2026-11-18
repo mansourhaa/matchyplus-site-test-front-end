@@ -208,7 +208,6 @@ export const messages: Record<Locale, MessageTree> = {
       beltTitle: 'Des talents locaux, pour tous vos besoins',
       beltBody:
         'Faites tourner le tapis, choisissez un métier et découvrez ce que nos professionnels proposent près de chez vous.',
-      beltServicesLabel: 'Services',
       beltRunning: 'Tapis en marche',
       beltInService: 'Dans ce service',
       beltOpenCard: 'Voir la carte',
@@ -697,7 +696,6 @@ export const messages: Record<Locale, MessageTree> = {
       beltEyebrow: 'Our local services',
       beltTitle: 'Local talent for every need',
       beltBody: 'Spin the belt, pick a trade and see what our professionals offer near you.',
-      beltServicesLabel: 'Services',
       beltRunning: 'Belt running',
       beltInService: 'In this service',
       beltOpenCard: 'View card',
@@ -1166,7 +1164,6 @@ export const messages: Record<Locale, MessageTree> = {
       beltEyebrow: 'خدماتنا المحلية',
       beltTitle: 'مواهب محلية لكل احتياجاتك',
       beltBody: 'أدر الشريط، اختر مهنة واكتشف ما يقدّمه مهنيّونا بالقرب منك.',
-      beltServicesLabel: 'الخدمات',
       beltRunning: 'الشريط يدور',
       beltInService: 'ضمن هذه الخدمة',
       beltOpenCard: 'عرض البطاقة',
