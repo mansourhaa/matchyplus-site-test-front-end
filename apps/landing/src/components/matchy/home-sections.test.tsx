@@ -42,8 +42,8 @@ const NEW_KEYS = [
   'partnersBenefits',
   'partnersCta',
   'communityTitle',
-  'communityActive',
-  'communityToday',
+  'communityPresence',
+  'communityAudience',
   'communityVisitors',
   'communityMapLabel',
   'communityLegendSwipe',
@@ -176,7 +176,7 @@ describe('home sections', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Carte du monde/ })).toBeInTheDocument();
     expect(screen.getByText('Données d’exemple')).toBeInTheDocument();
-    // 233 active visitors and 1 240 today (narrow no-break space in French). The counters exist
+    // 233 visitors on the map and an audience of 1 240 (narrow no-break space in French). The counters exist
     // twice: on the map for computers and under it for phones; CSS shows one or the other.
     expect(screen.getAllByText('233')).toHaveLength(2);
     expect(screen.getAllByText(/^1\s?240$/)).toHaveLength(2);

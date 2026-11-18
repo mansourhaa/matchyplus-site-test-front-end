@@ -10,14 +10,14 @@ import {
   HUB_ID,
   MAP_HEIGHT,
   MAP_WIDTH,
+  SAMPLE_AUDIENCE,
   SAMPLE_LOCATIONS,
-  SAMPLE_TODAY,
   arcPath,
   nudge,
   numberLocale,
   toCityNames,
   tooltipPlacement,
-  totalActive,
+  totalVisitors,
 } from './community-map';
 import { Reveal } from './motion';
 
@@ -34,8 +34,8 @@ const ARC_STAGGER = 0.7;
 
 /**
  * Where the counters float on the map on computers, in % (left / top). Same order as the
- * counters: active now at the top centre (over the light Arctic, the headline number), visitors
- * today over the South Pacific (no land under it).
+ * counters: international presence at the top centre (over the light Arctic, the headline
+ * number), audience over the South Pacific (no land under it).
  */
 const STAT_SPOTS = [
   { left: 50, top: 1, centered: true },
@@ -64,7 +64,7 @@ export function LiveCommunity() {
   const format = new Intl.NumberFormat(numberLocale(locale));
 
   const [locations, setLocations] = useState(SAMPLE_LOCATIONS);
-  const [today, setToday] = useState(SAMPLE_TODAY);
+  const [audience, setAudience] = useState(SAMPLE_AUDIENCE);
   const [arrival, setArrival] = useState<Arrival | null>(null);
   const [selectedId, setSelectedId] = useState<CityId | null>(null);
 
@@ -79,7 +79,7 @@ export function LiveCommunity() {
       const delta = Math.random() > 0.47 ? 1 : -1;
       setLocations((current) => nudge(current, index, delta));
       if (delta > 0) setArrival({ id: SAMPLE_LOCATIONS[index].id, key: Date.now() });
-      if (Math.random() > 0.35) setToday((current) => current + 1);
+      if (Math.random() > 0.35) setAudience((current) => current + 1);
     }, UPDATE_EVERY);
     return () => window.clearInterval(id);
   }, [inView]);
@@ -109,8 +109,8 @@ export function LiveCommunity() {
   const selected = locations.find((location) => location.id === selectedId);
   const placement = selected ? tooltipPlacement(selected.x, selected.y) : null;
   const metrics = [
-    { label: t('landing.communityActive'), value: totalActive(locations), live: true },
-    { label: t('landing.communityToday'), value: today, live: false },
+    { label: t('landing.communityPresence'), value: totalVisitors(locations), headline: true },
+    { label: t('landing.communityAudience'), value: audience, headline: false },
   ];
 
   return (
@@ -271,7 +271,7 @@ export function LiveCommunity() {
                     );
                   })}
 
-                  {/* live counters, floating over the oceans (computers only) */}
+                  {/* counters, floating over the map (computers only) */}
                   {metrics.map((metric, index) => (
                     <motion.div
                       key={metric.label}
@@ -354,19 +354,19 @@ export function LiveCommunity() {
 }
 
 /**
- * One live counter: label, then the number, which slides in when it changes. The live one
- * (active now) is the headline, so it is bigger.
+ * One counter: label, then the number, which slides in when it changes. The headline one
+ * (international presence) is bigger and teal, with a pulsing dot.
  */
 function Stat({
   label,
   value,
-  live,
+  headline,
   format,
   centered = false,
 }: {
   label: string;
   value: number;
-  live: boolean;
+  headline: boolean;
   format: Intl.NumberFormat;
   centered?: boolean;
 }) {
@@ -375,14 +375,14 @@ function Stat({
       <dt
         className={`flex items-center gap-1.5 text-[10px] leading-tight font-bold text-slate-500 uppercase sm:text-xs sm:tracking-wide ${centered ? 'justify-center' : ''}`}
       >
-        {live && (
+        {headline && (
           <span className="bg-brand-teal h-1.5 w-1.5 shrink-0 rounded-full motion-safe:animate-pulse" />
         )}
         {label}
       </dt>
       {/* not animated on the first render, so the HTML matches the server's */}
       <dd
-        className={`relative mt-1 overflow-hidden font-extrabold tabular-nums [text-shadow:0_0_16px_#F7FAFD] ${live ? 'text-brand-teal text-3xl md:text-6xl' : 'text-brand-blue text-2xl md:text-4xl'}`}
+        className={`relative mt-1 overflow-hidden font-extrabold tabular-nums [text-shadow:0_0_16px_#F7FAFD] ${headline ? 'text-brand-teal text-3xl md:text-6xl' : 'text-brand-blue text-2xl md:text-4xl'}`}
       >
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span

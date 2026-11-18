@@ -156,11 +156,11 @@ smaller benefit.
 
 ## Example data: where it is, how to plug the real data
 
-| What                                           | Where                                                   | Status on screen                |
-| ---------------------------------------------- | ------------------------------------------------------- | ------------------------------- |
-| Pros in the belt, the hero and the pro card    | `belt-data.ts` + `landing.beltProfiles`                 | "Profil d'exemple"              |
-| Community map: cities, counts, visitors today  | `community-map.ts` (`SAMPLE_LOCATIONS`, `SAMPLE_TODAY`) | "Données d'exemple"             |
-| Referral code `MP-7K2Q9`, `[X]` / `[Y]` points | `landing.referral*`                                     | sample code, placeholder points |
+| What                                           | Where                                                      | Status on screen                |
+| ---------------------------------------------- | ---------------------------------------------------------- | ------------------------------- |
+| Pros in the belt, the hero and the pro card    | `belt-data.ts` + `landing.beltProfiles`                    | "Profil d'exemple"              |
+| Community map: cities, counts, audience        | `community-map.ts` (`SAMPLE_LOCATIONS`, `SAMPLE_AUDIENCE`) | "Données d'exemple"             |
+| Referral code `MP-7K2Q9`, `[X]` / `[Y]` points | `landing.referral*`                                        | sample code, placeholder points |
 
 **Community map, going live:** replace the sample data with **aggregated** numbers from the API
 or Google Analytics: city, approximate position and active visitors. Never send visitor IPs to

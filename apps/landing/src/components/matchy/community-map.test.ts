@@ -9,12 +9,12 @@ import {
   numberLocale,
   toCityNames,
   tooltipPlacement,
-  totalActive,
+  totalVisitors,
 } from './community-map';
 
 describe('community map data', () => {
-  it('adds up the active visitors', () => {
-    expect(totalActive(SAMPLE_LOCATIONS)).toBe(233);
+  it('adds up the visitors of every city', () => {
+    expect(totalVisitors(SAMPLE_LOCATIONS)).toBe(233);
   });
 
   it('keeps every city on the map', () => {

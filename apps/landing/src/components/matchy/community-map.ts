@@ -1,6 +1,6 @@
 /**
  * Data for the live community map. Sample figures for now, clearly labelled on screen.
- * To go live, replace SAMPLE_LOCATIONS / SAMPLE_TODAY with aggregated numbers from the API
+ * To go live, replace SAMPLE_LOCATIONS / SAMPLE_AUDIENCE with aggregated numbers from the API
  * (city, approximate position, active visitors): never send visitor IPs to the browser.
  */
 
@@ -21,8 +21,6 @@ export type CityId =
 
 export type CommunityLocation = {
   id: CityId;
-  /** ISO country code. */
-  country: string;
   /** Position on the map, in % of its width and height. */
   x: number;
   y: number;
@@ -36,20 +34,22 @@ export type CommunityLocation = {
  * If the map is regenerated, recompute them with the same projection.
  */
 export const SAMPLE_LOCATIONS: readonly CommunityLocation[] = [
-  { id: 'tunis', country: 'TN', x: 52.7, y: 31.6, count: 72 },
-  { id: 'paris', country: 'FR', x: 50.6, y: 23.0, count: 41 },
-  { id: 'london', country: 'GB', x: 50.0, y: 21.2, count: 18 },
-  { id: 'newYork', country: 'US', x: 30.9, y: 28.8, count: 23 },
-  { id: 'montreal', country: 'CA', x: 31.4, y: 25.4, count: 15 },
-  { id: 'dubai', country: 'AE', x: 65.1, y: 40.0, count: 29 },
-  { id: 'mumbai', country: 'IN', x: 70.1, y: 44.5, count: 14 },
-  { id: 'singapore', country: 'SG', x: 79.2, y: 57.2, count: 12 },
-  { id: 'sydney', country: 'AU', x: 90.2, y: 82.7, count: 9 },
+  { id: 'tunis', x: 52.7, y: 31.6, count: 72 },
+  { id: 'paris', x: 50.6, y: 23.0, count: 41 },
+  { id: 'london', x: 50.0, y: 21.2, count: 18 },
+  { id: 'newYork', x: 30.9, y: 28.8, count: 23 },
+  { id: 'montreal', x: 31.4, y: 25.4, count: 15 },
+  { id: 'dubai', x: 65.1, y: 40.0, count: 29 },
+  { id: 'mumbai', x: 70.1, y: 44.5, count: 14 },
+  { id: 'singapore', x: 79.2, y: 57.2, count: 12 },
+  { id: 'sydney', x: 90.2, y: 82.7, count: 9 },
 ];
 
-export const SAMPLE_TODAY = 1240;
+/** "Audience Matchy+" number. */
+export const SAMPLE_AUDIENCE = 1240;
 
-export function totalActive(locations: readonly CommunityLocation[]): number {
+/** "Présence internationale" number: the visitors of every city on the map, added up. */
+export function totalVisitors(locations: readonly CommunityLocation[]): number {
   return locations.reduce((total, location) => total + location.count, 0);
 }
 
