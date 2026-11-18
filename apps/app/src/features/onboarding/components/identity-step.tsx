@@ -17,6 +17,7 @@ import {
   uploadProfileVideo,
 } from '@/features/profile/store/profile-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
+import { isNativeMobileClient } from '@/lib/native';
 import { isPasswordPolicySatisfied } from '@/lib/password-policy';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import {
@@ -283,11 +284,7 @@ export function IdentityStep({
     return () => clearLocalPhotoPreview();
   }, []);
 
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-
+  const processSelectedPhoto = (file: File) => {
     if (!isAllowedProfilePhoto(file)) {
       setError(t('onboarding.identity.errorPhotoType'));
       return;
@@ -307,6 +304,37 @@ export function IdentityStep({
       setImage(preview);
     } else {
       setImage(file.name);
+    }
+  };
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    processSelectedPhoto(file);
+  };
+
+  const handleNativePhotoPick = async (event: React.MouseEvent<HTMLElement>) => {
+    if (!isNativeMobileClient()) return;
+    event.preventDefault();
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+      const photo = await Camera.getPhoto({
+        quality: 85,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Prompt,
+      });
+      if (!photo.dataUrl) return;
+      const res = await fetch(photo.dataUrl);
+      const blob = await res.blob();
+      const ext = photo.format || 'jpeg';
+      const file = new File([blob], `profile.${ext}`, {
+        type: blob.type || `image/${ext}`,
+      });
+      processSelectedPhoto(file);
+    } catch {
+      // User cancelled or camera unavailable; fallback to web file input if needed
     }
   };
 
@@ -594,47 +622,51 @@ export function IdentityStep({
         <div className="space-y-6 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
           {/* Left: photo + profile type */}
           <div className="mb-6 flex flex-col items-center md:mb-0">
-            <div className="relative mb-3">
-              <div
-                className="flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-4 transition-transform hover:scale-105"
-                style={{
-                  borderColor: missingPhoto ? '#E74C3C' : '#2F76BB',
-                  background: '#D5E6F5',
-                }}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {photoPreview.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={photoPreview.url}
-                    alt="Profile"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <ProfileSilhouette />
-                )}
+            <label
+              onClick={handleNativePhotoPick}
+              className="group mb-2 flex w-full max-w-[240px] cursor-pointer flex-col items-center rounded-2xl p-3 transition-colors hover:bg-[#F5F9FF] active:bg-[#EBF4FF]"
+            >
+              <div className="relative mb-3">
+                <div
+                  className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border-4 transition-transform group-hover:scale-105"
+                  style={{
+                    borderColor: missingPhoto ? '#E74C3C' : '#2F76BB',
+                    background: '#D5E6F5',
+                  }}
+                >
+                  {photoPreview.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={photoPreview.url}
+                      alt="Profile"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <ProfileSilhouette />
+                  )}
+                </div>
+                <span
+                  className="absolute -right-2 -bottom-2 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-white shadow-md transition-transform group-hover:scale-110"
+                  style={{ borderColor: '#61BCA6' }}
+                  aria-label={t('onboarding.identity.imageUploadDesc')}
+                >
+                  <Camera size={18} color="#61BCA6" />
+                </span>
               </div>
-              <button
-                type="button"
-                className="absolute -right-2 -bottom-2 flex h-9 w-9 items-center justify-center rounded-full border-2 bg-white shadow-md"
-                style={{ borderColor: '#61BCA6' }}
-                onClick={() => fileInputRef.current?.click()}
-                aria-label={t('onboarding.identity.imageUploadDesc')}
-              >
-                <Camera size={16} color="#61BCA6" />
-              </button>
+              <p style={{ fontSize: '12px', color: '#AAA', fontWeight: 600 }}>
+                {t('onboarding.identity.photoLabel')}
+              </p>
+              <p style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                {t('onboarding.identity.photoHint')}
+              </p>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept={PROFILE_PHOTO_ACCEPT}
-                className="hidden"
+                className="sr-only"
                 onChange={handlePhotoChange}
               />
-            </div>
-            <p style={{ fontSize: '12px', color: '#AAA' }}>{t('onboarding.identity.photoLabel')}</p>
-            <p style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-              {t('onboarding.identity.photoHint')}
-            </p>
+            </label>
             {missingPhoto && (
               <p style={{ fontSize: '11px', color: '#E74C3C', marginTop: '4px' }}>
                 {t('onboarding.identity.photoRequired')}

@@ -36,9 +36,22 @@ describe('proxy auth gate', () => {
     vi.useRealTimers();
   });
 
+  it('redirects first-time unauthenticated visitors on / to /onboarding, and returning visitors to /connexion', () => {
+    const firstVisit = proxy(request('/'));
+    expect(firstVisit.status).toBe(307);
+    expect(location(firstVisit)).toBe('https://app.test/onboarding');
+
+    const returningHeaders = new Headers();
+    returningHeaders.set('cookie', 'matchy_intro_seen=1');
+    const returningVisit = proxy(
+      new NextRequest(new URL('/', 'https://app.test'), { headers: returningHeaders }),
+    );
+    expect(returningVisit.status).toBe(307);
+    expect(location(returningVisit)).toBe('https://app.test/connexion');
+  });
+
   it('redirects unauthenticated visitors away from every (dashboard) path', () => {
     const paths = [
-      '/',
       '/home',
       '/matches',
       '/chat/1',

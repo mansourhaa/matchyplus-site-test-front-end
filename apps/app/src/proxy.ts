@@ -41,9 +41,12 @@ export function proxy(request: NextRequest) {
 
   const isPublicRoute = isPublicAuthRoute(pathname);
 
-  // Deny-by-default: no usable session → /connexion for every protected path
-  // (includes all of app/(dashboard)/**).
+  // Deny-by-default: no usable session → /connexion (or /onboarding for first-time visitors on `/`)
+  // for every protected path (includes all of app/(dashboard)/**).
   if (!usableSession && requiresAuthentication(pathname)) {
+    if (pathname === '/' && request.cookies.get('matchy_intro_seen')?.value !== '1') {
+      return NextResponse.redirect(new URL('/onboarding', request.url));
+    }
     return NextResponse.redirect(new URL('/connexion', request.url));
   }
 
