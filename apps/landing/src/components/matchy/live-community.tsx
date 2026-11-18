@@ -1,7 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { AnimatePresence, motion, useInView } from 'framer-motion';
+import { AnimatePresence, MotionConfig, motion, useInView } from 'framer-motion';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
@@ -32,6 +32,16 @@ const MOBILE_FOCUS_X = 52.7;
 const ARC_DRAW = 1.6;
 const ARC_FADE = 0.8;
 const ARC_STAGGER = 0.7;
+
+/**
+ * Where the counters float on the map on computers, in % (left / top), over open ocean:
+ * no land or city under them (South Pacific, Indian Ocean, North Atlantic).
+ */
+const STAT_SPOTS = [
+  { left: 5, top: 62 },
+  { left: 64, top: 61 },
+  { left: 37.5, top: 35 },
+] as const;
 
 const TOOLTIP_ALIGN = {
   start: '-translate-x-4',
@@ -107,32 +117,30 @@ export function LiveCommunity() {
 
   return (
     <section ref={sectionRef} className="relative z-10 bg-[#F7FAFD] py-20 md:py-24">
-      <div className="mx-auto max-w-6xl px-5">
-        <Reveal>
-          <div className="relative overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-5 shadow-2xl shadow-[#2F76BB]/10 md:p-8">
-            <div
-              aria-hidden="true"
-              className="bg-brand-teal/10 absolute -top-32 h-72 w-72 rounded-full blur-3xl ltr:-left-20 rtl:-right-20"
-            />
+      {/* floating and sliding stop for visitors who ask for reduced motion */}
+      <MotionConfig reducedMotion="user">
+        <div className="mx-auto max-w-6xl px-5">
+          {/* same heading as the other sections */}
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <div className="bg-brand-teal mx-auto mb-4 h-1 w-10 rounded" />
+            <p className="text-brand-teal mb-2 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide">
+              <span className="relative flex h-2 w-2">
+                <span className="bg-brand-teal absolute inline-flex h-full w-full rounded-full opacity-75 motion-safe:animate-ping" />
+                <span className="bg-brand-teal relative inline-flex h-2 w-2 rounded-full" />
+              </span>
+              {t('landing.communityBadge')}
+            </p>
+            <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
+              {t('landing.communityTitle')}
+            </h2>
+            <p className="text-muted-foreground mt-4 leading-relaxed text-pretty">
+              {t('landing.communityBody')}
+            </p>
+          </Reveal>
 
-            <header className="relative max-w-2xl">
-              <p className="text-brand-teal flex items-center gap-2 text-xs font-extrabold tracking-[0.12em] uppercase">
-                <span className="relative flex h-2 w-2">
-                  <span className="bg-brand-teal absolute inline-flex h-full w-full rounded-full opacity-75 motion-safe:animate-ping" />
-                  <span className="bg-brand-teal relative inline-flex h-2 w-2 rounded-full" />
-                </span>
-                {t('landing.communityBadge')}
-              </p>
-              <h2 className="text-brand-blue mt-3 text-2xl font-extrabold text-balance md:text-4xl">
-                {t('landing.communityTitle')}
-              </h2>
-              <p className="text-muted-foreground mt-3 text-sm leading-relaxed md:text-base">
-                {t('landing.communityBody')}
-              </p>
-            </header>
-
-            {/* on phones the counters sit in a band under the map, so they never hide a city */}
-            <figure className="relative mt-6 overflow-hidden rounded-2xl border border-slate-100 bg-[#F1F6FB] pb-[5.25rem] md:pb-0">
+          <Reveal delay={0.15}>
+            {/* no frame: the map blends into the page, its edges fade out */}
+            <figure className="relative mt-10">
               {/* map positions are left-to-right whatever the page direction; on phones the
                   map keeps a readable size and scrolls sideways */}
               <div
@@ -150,16 +158,22 @@ export function LiveCommunity() {
                     width={MAP_WIDTH}
                     height={MAP_HEIGHT}
                     unoptimized
-                    className="absolute inset-0 h-full w-full select-none"
+                    className="absolute inset-0 h-full w-full [mask-image:radial-gradient(ellipse_75%_75%_at_50%_50%,black_70%,transparent_100%)] select-none"
                     draggable={false}
                   />
-                  <motion.div
+                  {/* light sweep, with the same faded edges as the map so it never shows as a box */}
+                  <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 bg-[linear-gradient(110deg,transparent_20%,rgba(73,184,173,0.10)_43%,transparent_63%)] motion-reduce:hidden"
-                    initial={{ x: '-120%' }}
-                    animate={{ x: '120%' }}
-                    transition={{ duration: 7, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
-                  />
+                    className="pointer-events-none absolute inset-0 overflow-hidden [mask-image:radial-gradient(ellipse_75%_75%_at_50%_50%,black_70%,transparent_100%)] motion-reduce:hidden"
+                  >
+                    <motion.div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 bg-[linear-gradient(110deg,transparent_20%,rgba(73,184,173,0.10)_43%,transparent_63%)] motion-reduce:hidden"
+                      initial={{ x: '-120%' }}
+                      animate={{ x: '120%' }}
+                      transition={{ duration: 7, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
+                    />
+                  </div>
 
                   {/* lines from Tunis, where Matchy+ was born, drawn one after another */}
                   {hub && (
@@ -259,6 +273,36 @@ export function LiveCommunity() {
                     );
                   })}
 
+                  {/* live counters, floating over the oceans (computers only) */}
+                  {metrics.map((metric, index) => (
+                    <motion.div
+                      key={metric.label}
+                      className="pointer-events-none absolute z-10 hidden md:block"
+                      style={{
+                        left: `${STAT_SPOTS[index].left}%`,
+                        top: `${STAT_SPOTS[index].top}%`,
+                      }}
+                      initial={{ opacity: 0, y: 16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.6 }}
+                      transition={{ duration: 0.6, delay: 0.3 + index * 0.2, ease: 'easeOut' }}
+                    >
+                      <motion.dl
+                        // the map is left-to-right; the counter's text follows the page language
+                        dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                        animate={{ y: [0, -6, 0] }}
+                        transition={{
+                          duration: 5,
+                          repeat: Number.POSITIVE_INFINITY,
+                          ease: 'easeInOut',
+                          delay: index * 0.8,
+                        }}
+                      >
+                        <Stat {...metric} format={format} />
+                      </motion.dl>
+                    </motion.div>
+                  ))}
+
                   <div role="status" aria-live="polite">
                     {selected && placement && (
                       <div
@@ -278,45 +322,18 @@ export function LiveCommunity() {
                   </div>
                 </div>
               </div>
-
-              {/* live counters on the map: bottom-left over the ocean on computers (in every
-                  language, since the map runs left to right), in the band under it on phones */}
-              <dl className="absolute inset-x-3 bottom-3 z-10 grid grid-cols-3 gap-2 md:inset-x-auto md:bottom-5 md:left-5 md:w-52 md:grid-cols-1">
-                {metrics.map(({ label, value, live }) => (
-                  <div
-                    key={label}
-                    className="min-w-0 rounded-xl border border-slate-100 bg-white/90 px-2.5 py-2 shadow-lg shadow-[#2F76BB]/10 backdrop-blur-sm sm:px-3 md:px-4 md:py-3"
-                  >
-                    <dt className="flex items-center gap-1.5 text-[9px] leading-tight font-bold text-slate-500 uppercase sm:text-[10px] sm:tracking-wide md:text-xs">
-                      {live && (
-                        <span className="bg-brand-teal h-1.5 w-1.5 shrink-0 rounded-full motion-safe:animate-pulse" />
-                      )}
-                      {label}
-                    </dt>
-                    {/* each new number slides in; not on the first render, so the HTML matches
-                        the server's */}
-                    <dd
-                      className={`relative mt-0.5 overflow-hidden text-lg font-extrabold tabular-nums md:text-2xl ${live ? 'text-brand-teal' : 'text-brand-navy'}`}
-                    >
-                      <AnimatePresence mode="popLayout" initial={false}>
-                        <motion.span
-                          key={value}
-                          className="block"
-                          initial={{ y: '-100%', opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          exit={{ y: '100%', opacity: 0 }}
-                          transition={{ duration: 0.35, ease: 'easeOut' }}
-                        >
-                          {format.format(value)}
-                        </motion.span>
-                      </AnimatePresence>
-                    </dd>
-                  </div>
-                ))}
-              </dl>
             </figure>
 
-            <footer className="text-muted-foreground relative mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs sm:text-sm">
+            {/* phones: the counters sit in a row under the map */}
+            <div className="mt-6 grid grid-cols-3 divide-x divide-slate-200 text-center md:hidden rtl:divide-x-reverse">
+              {metrics.map((metric) => (
+                <dl key={metric.label} className="px-2">
+                  <Stat {...metric} format={format} centered />
+                </dl>
+              ))}
+            </div>
+
+            <footer className="text-muted-foreground mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-center text-xs sm:text-sm">
               <span className="flex items-center gap-2">
                 <span className="bg-brand-teal h-2 w-2 rounded-full shadow-[0_0_0_2px_#FFFFFF,0_0_8px_rgba(73,184,173,0.7)]" />
                 {t('landing.communityLegendApprox')}
@@ -326,13 +343,58 @@ export function LiveCommunity() {
               <span className="text-brand-teal font-semibold">
                 ● {t('landing.communityLegendLive')}
               </span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 font-semibold text-slate-600 ltr:ml-auto rtl:mr-auto">
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 font-semibold text-slate-600">
                 {t('landing.communitySample')}
               </span>
             </footer>
-          </div>
-        </Reveal>
-      </div>
+          </Reveal>
+        </div>
+      </MotionConfig>
     </section>
+  );
+}
+
+/** One live counter: label, then the number, which slides in when it changes. */
+function Stat({
+  label,
+  value,
+  live,
+  format,
+  centered = false,
+}: {
+  label: string;
+  value: number;
+  live: boolean;
+  format: Intl.NumberFormat;
+  centered?: boolean;
+}) {
+  return (
+    <>
+      <dt
+        className={`flex items-center gap-1.5 text-[10px] leading-tight font-bold text-slate-500 uppercase sm:text-xs sm:tracking-wide ${centered ? 'justify-center' : ''}`}
+      >
+        {live && (
+          <span className="bg-brand-teal h-1.5 w-1.5 shrink-0 rounded-full motion-safe:animate-pulse" />
+        )}
+        {label}
+      </dt>
+      {/* not animated on the first render, so the HTML matches the server's */}
+      <dd
+        className={`relative mt-1 overflow-hidden text-2xl font-extrabold tabular-nums [text-shadow:0_0_16px_#F7FAFD] md:text-4xl ${live ? 'text-brand-teal' : 'text-brand-blue'}`}
+      >
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={value}
+            className="block"
+            initial={{ y: '-100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+          >
+            {format.format(value)}
+          </motion.span>
+        </AnimatePresence>
+      </dd>
+    </>
   );
 }

@@ -112,17 +112,22 @@ reviews, no idea of availability) with Matchy+.
 
 Based on the manager's reference (a live visitors map), rebuilt in the site's theme:
 
-- **Layout:** a white card and a light world map, with the countries that have visitors in brand
-  blue.
-- **Counters on the map:** "Actifs maintenant", "Visiteurs aujourd'hui" and "Pays". On computers
-  they sit over the ocean at the bottom left. On phones they sit in a band under the map, so they
-  never hide a city.
+- **Layout:** the same centered, animated heading as the other sections. No card around it: the
+  light world map sits directly on the page and its edges fade out. Countries with visitors are in
+  brand blue.
+- **Counters in the map:** "Actifs maintenant", "Visiteurs aujourd'hui" and "Pays" float over open
+  ocean (South Pacific, Indian Ocean, North Atlantic: no land or city under them, positions in
+  `STAT_SPOTS`). They appear one after another, then float gently. On phones, they sit in a row
+  under the map instead, so they never hide a city.
 - **Cities:** 9 cities pulse on the map. Hovering or tapping one shows its name and number of
   active visitors.
 - **Animations:**
   - curved lines drawn from Tunis (where Matchy+ was born) to each city;
   - a ring and a "+1" when a visitor arrives;
-  - numbers that slide when they change.
+  - numbers that slide when they change;
+  - a soft light sweep across the map.
+  - All of it stops for "reduce motion": CSS `motion-reduce:` for the lines and sweep, and
+    `MotionConfig reducedMotion="user"` for the floating and sliding.
 - **Phones:** the map keeps a readable width and scrolls sideways. It starts on Tunis, and a
   tapped city slides to the middle so its tooltip is never cut off.
 
