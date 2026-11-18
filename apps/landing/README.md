@@ -115,13 +115,14 @@ Based on the manager's reference (a live visitors map), rebuilt in the site's th
 - **Layout:** the same centered, animated heading as the other sections. No card around it: the
   light world map sits directly on the page and its edges fade out. Tunisia, France, Russia,
   Algeria and Morocco are in brand blue (the manager's choice).
-- **Counters in the map:** "Actifs maintenant", the headline number, sits at the top centre of the
-  map; "Visiteurs aujourd'hui" floats over the South Pacific (positions in `STAT_SPOTS`). No city
-  is under them.
-  They appear one after another, then float gently. On phones, they sit in a row under the map
-  instead, so they never hide a city.
+- **Texts (manager's wording):** badge "Acquisition & visibilité internationale", title
+  "Matchy+ attire des professionnels dans plusieurs pays". No "active now" wording anywhere.
+- **Counters in the map:** "Présence internationale", the headline number, sits at the top centre
+  of the map; "Audience Matchy+" floats over the South Pacific (positions in `STAT_SPOTS`). No city
+  is under them. They appear one after another, then float gently. On phones, they sit in a row
+  under the map instead, so they never hide a city.
 - **Cities:** 9 cities pulse on the map. Hovering or tapping one shows its name and number of
-  active visitors.
+  visitors.
 - **Animations:**
   - curved lines drawn from Tunis (where Matchy+ was born) to each city;
   - a ring and a "+1" when a visitor arrives;

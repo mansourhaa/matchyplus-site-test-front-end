@@ -170,7 +170,9 @@ describe('home sections', () => {
   it('LiveCommunity shows the map, the counters and a tooltip per city, clearly labelled', () => {
     renderIn('fr', <LiveCommunity />);
     expect(
-      screen.getByRole('heading', { name: 'La communauté Matchy+ en temps réel' }),
+      screen.getByRole('heading', {
+        name: 'Matchy+ attire des professionnels dans plusieurs pays',
+      }),
     ).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Carte du monde/ })).toBeInTheDocument();
     expect(screen.getByText('Données d’exemple')).toBeInTheDocument();
@@ -178,9 +180,13 @@ describe('home sections', () => {
     // twice: on the map for computers and under it for phones; CSS shows one or the other.
     expect(screen.getAllByText('233')).toHaveLength(2);
     expect(screen.getAllByText(/^1\s?240$/)).toHaveLength(2);
+    expect(screen.getAllByText('Présence internationale')).toHaveLength(2);
+    expect(screen.getAllByText('Audience Matchy+')).toHaveLength(2);
+    // no "active now" wording and no country count any more
+    expect(screen.queryByText(/actifs/i)).toBeNull();
     expect(screen.queryByText('Pays')).toBeNull();
 
-    const tunis = screen.getByRole('button', { name: /^Tunis, Tunisie : 72 visiteurs actifs$/ });
+    const tunis = screen.getByRole('button', { name: /^Tunis, Tunisie : 72 visiteurs$/ });
     fireEvent.pointerEnter(tunis, { pointerType: 'mouse' });
     expect(within(screen.getByRole('status')).getByText('Tunis, Tunisie')).toBeInTheDocument();
     // a touch leaving the point (the map slid under the finger) keeps the tooltip open
