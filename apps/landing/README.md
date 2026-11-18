@@ -113,12 +113,13 @@ reviews, no idea of availability) with Matchy+.
 Based on the manager's reference (a live visitors map), rebuilt in the site's theme:
 
 - **Layout:** the same centered, animated heading as the other sections. No card around it: the
-  light world map sits directly on the page and its edges fade out. Countries with visitors are in
-  brand blue.
-- **Counters in the map:** "Actifs maintenant", "Visiteurs aujourd'hui" and "Pays" float over open
-  ocean (South Pacific, Indian Ocean, North Atlantic: no land or city under them, positions in
-  `STAT_SPOTS`). They appear one after another, then float gently. On phones, they sit in a row
-  under the map instead, so they never hide a city.
+  light world map sits directly on the page and its edges fade out. Tunisia, France, Russia,
+  Algeria and Morocco are in brand blue (the manager's choice).
+- **Counters in the map:** "Actifs maintenant", the headline number, sits at the top centre of the
+  map; "Visiteurs aujourd'hui" floats over the South Pacific (positions in `STAT_SPOTS`). No city
+  is under them.
+  They appear one after another, then float gently. On phones, they sit in a row under the map
+  instead, so they never hide a city.
 - **Cities:** 9 cities pulse on the map. Hovering or tapping one shows its name and number of
   active visitors.
 - **Animations:**
@@ -134,7 +135,9 @@ Based on the manager's reference (a live visitors map), rebuilt in the site's th
 **Why our own map:** the reference image looked like a screenshot from an analytics tool, with
 unclear rights, and weighed 264 KB. `public/matchy/community/world-map.svg` is generated from
 Natural Earth data (public domain, `world-atlas` countries-110m) with d3-geo's `geoNaturalEarth1`
-projection, without Antarctica (about 50 KB over the network). The city positions in
+projection, without Antarctica (about 50 KB over the network). Only mainland France is
+highlighted (not French Guiana), and Russia's far-east tip beyond the 180° line is flattened so it
+does not show as a stray spot next to Alaska. The city positions in
 `community-map.ts` come from **the same projection**, so they land exactly on the cities. If the
 map is regenerated, recompute them the same way.
 
@@ -225,7 +228,7 @@ stub), and the same Testing Library setup as `apps/app`.
 | `belt-profile-card.test.tsx` | Same match thresholds as the app (75 / 55), card content, Passer / Connecter / close                                 |
 | `belt-match-dialog.test.tsx` | Focus trap, Escape, click outside, continue                                                                          |
 | `referral.test.tsx`          | Sign-up link with code, texts in 3 languages, copy button                                                            |
-| `community-map.test.ts`      | Totals, countries, positions on the map, curves, tooltip placement, number format, city names                        |
+| `community-map.test.ts`      | Totals, positions on the map, curves, tooltip placement, number format, city names                                   |
 | `home-sections.test.tsx`     | Every new section renders in fr/en/ar, labels, links, map tooltip (mouse vs touch), new texts exist in all languages |
 
 ---

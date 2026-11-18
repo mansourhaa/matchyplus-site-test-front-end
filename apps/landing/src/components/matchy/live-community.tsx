@@ -13,7 +13,6 @@ import {
   SAMPLE_LOCATIONS,
   SAMPLE_TODAY,
   arcPath,
-  countCountries,
   nudge,
   numberLocale,
   toCityNames,
@@ -34,13 +33,13 @@ const ARC_FADE = 0.8;
 const ARC_STAGGER = 0.7;
 
 /**
- * Where the counters float on the map on computers, in % (left / top), over open ocean:
- * no land or city under them (South Pacific, Indian Ocean, North Atlantic).
+ * Where the counters float on the map on computers, in % (left / top). Same order as the
+ * counters: active now at the top centre (over the light Arctic, the headline number), visitors
+ * today over the South Pacific (no land under it).
  */
 const STAT_SPOTS = [
-  { left: 5, top: 62 },
-  { left: 64, top: 61 },
-  { left: 37.5, top: 35 },
+  { left: 50, top: 1, centered: true },
+  { left: 5, top: 62, centered: false },
 ] as const;
 
 const TOOLTIP_ALIGN = {
@@ -112,7 +111,6 @@ export function LiveCommunity() {
   const metrics = [
     { label: t('landing.communityActive'), value: totalActive(locations), live: true },
     { label: t('landing.communityToday'), value: today, live: false },
-    { label: t('landing.communityCountries'), value: countCountries(locations), live: false },
   ];
 
   return (
@@ -277,7 +275,8 @@ export function LiveCommunity() {
                   {metrics.map((metric, index) => (
                     <motion.div
                       key={metric.label}
-                      className="pointer-events-none absolute z-10 hidden md:block"
+                      // Tailwind's translate and framer's transform are separate CSS properties
+                      className={`pointer-events-none absolute z-10 hidden md:block ${STAT_SPOTS[index].centered ? '-translate-x-1/2 text-center' : ''}`}
                       style={{
                         left: `${STAT_SPOTS[index].left}%`,
                         top: `${STAT_SPOTS[index].top}%`,
@@ -298,7 +297,7 @@ export function LiveCommunity() {
                           delay: index * 0.8,
                         }}
                       >
-                        <Stat {...metric} format={format} />
+                        <Stat {...metric} format={format} centered={STAT_SPOTS[index].centered} />
                       </motion.dl>
                     </motion.div>
                   ))}
@@ -325,7 +324,7 @@ export function LiveCommunity() {
             </figure>
 
             {/* phones: the counters sit in a row under the map */}
-            <div className="mt-6 grid grid-cols-3 divide-x divide-slate-200 text-center md:hidden rtl:divide-x-reverse">
+            <div className="mt-6 grid grid-cols-2 divide-x divide-slate-200 text-center md:hidden rtl:divide-x-reverse">
               {metrics.map((metric) => (
                 <dl key={metric.label} className="px-2">
                   <Stat {...metric} format={format} centered />

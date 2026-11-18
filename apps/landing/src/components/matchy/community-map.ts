@@ -21,7 +21,7 @@ export type CityId =
 
 export type CommunityLocation = {
   id: CityId;
-  /** ISO country code, to count the countries. */
+  /** ISO country code. */
   country: string;
   /** Position on the map, in % of its width and height. */
   x: number;
@@ -51,10 +51,6 @@ export const SAMPLE_TODAY = 18763;
 
 export function totalActive(locations: readonly CommunityLocation[]): number {
   return locations.reduce((total, location) => total + location.count, 0);
-}
-
-export function countCountries(locations: readonly CommunityLocation[]): number {
-  return new Set(locations.map((location) => location.country)).size;
 }
 
 /** One visitor arrives (+1) or leaves (-1) in one city; a city never drops below 1. */

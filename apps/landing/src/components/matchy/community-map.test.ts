@@ -5,7 +5,6 @@ import {
   HUB_ID,
   SAMPLE_LOCATIONS,
   arcPath,
-  countCountries,
   nudge,
   numberLocale,
   toCityNames,
@@ -14,10 +13,8 @@ import {
 } from './community-map';
 
 describe('community map data', () => {
-  it('adds up the active visitors and counts each country once', () => {
+  it('adds up the active visitors', () => {
     expect(totalActive(SAMPLE_LOCATIONS)).toBe(1284);
-    expect(countCountries(SAMPLE_LOCATIONS)).toBe(9);
-    expect(countCountries([...SAMPLE_LOCATIONS, { ...SAMPLE_LOCATIONS[0], id: 'paris' }])).toBe(9);
   });
 
   it('keeps every city on the map', () => {
