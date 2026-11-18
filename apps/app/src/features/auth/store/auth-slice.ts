@@ -81,11 +81,26 @@ export const verifyOtp = createAsyncThunk(
   },
 );
 
+export const sendLoginOtp = createAsyncThunk(
+  'auth/sendLoginOtp',
+  async ({ phone }: SendOtpInput) => {
+    try {
+      const response = await api.post<{ message: string; phone: string }>(
+        '/auth/login-otp/send',
+        { phone },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getApiErrorCode(error) ?? 'otp_send_failed');
+    }
+  },
+);
+
 export const loginPhone = createAsyncThunk(
   'auth/loginPhone',
-  async ({ phone, password }: LoginPhoneInput) => {
+  async ({ phone, code }: LoginPhoneInput) => {
     try {
-      const response = await api.post<SessionResponse>('/auth/login-phone', { phone, password });
+      const response = await api.post<SessionResponse>('/auth/login-phone', { phone, code });
       await requireNativeBodyTokens(response.data);
       return response.data;
     } catch (error) {
@@ -93,21 +108,20 @@ export const loginPhone = createAsyncThunk(
         throw error;
       }
       // Re-thrown as the error's own message so LoginForm can branch on the exact API
-      // code (invalid_credentials / oauth_only_account / phone_not_verified) via
+      // code (invalid_otp / phone_not_found / account_banned / account_inactive) via
       // loginPhone.rejected's action.error.message, instead of axios's generic
       // "Request failed with status code ..." text.
-      throw new Error(getApiErrorCode(error) ?? 'invalid_credentials');
+      throw new Error(getApiErrorCode(error) ?? 'invalid_otp');
     }
   },
 );
 
 export const registerPhone = createAsyncThunk(
   'auth/registerPhone',
-  async ({ phone, password, name, signupToken }: RegisterPhoneInput) => {
+  async ({ phone, name, signupToken }: RegisterPhoneInput) => {
     try {
       const response = await api.post<SessionResponse>('/auth/register-phone', {
         phone,
-        password,
         name,
         signupToken,
       });
@@ -126,11 +140,10 @@ export const registerPhone = createAsyncThunk(
 
 export const confirmActivation = createAsyncThunk(
   'auth/confirmActivation',
-  async ({ token, password }: ConfirmActivationInput) => {
+  async ({ token }: ConfirmActivationInput) => {
     try {
       const response = await api.post<SessionResponse>('/auth/activation/confirm', {
         token,
-        password,
       });
       await requireNativeBodyTokens(response.data);
       return response.data;

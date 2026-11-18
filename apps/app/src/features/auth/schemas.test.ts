@@ -37,30 +37,28 @@ describe('verifyOtpSchema', () => {
 });
 
 describe('loginPhoneSchema', () => {
-  it('accepts a valid phone and password (including legacy weak passwords)', () => {
+  it('accepts a valid phone and OTP code', () => {
     expect(
-      loginPhoneSchema.safeParse({ phone: '+21612345678', password: 'secret123' }).success,
+      loginPhoneSchema.safeParse({ phone: '+21612345678', code: '123456' }).success,
     ).toBe(true);
   });
 
-  it('rejects an empty password', () => {
-    expect(loginPhoneSchema.safeParse({ phone: '+21612345678', password: '' }).success).toBe(false);
+  it('rejects a short OTP code', () => {
+    expect(loginPhoneSchema.safeParse({ phone: '+21612345678', code: '12' }).success).toBe(false);
   });
 
   it('rejects a phone number that is too short', () => {
-    expect(loginPhoneSchema.safeParse({ phone: '123', password: 'secret123' }).success).toBe(false);
+    expect(loginPhoneSchema.safeParse({ phone: '123', code: '123456' }).success).toBe(false);
   });
 });
 
 describe('registerPhoneSchema', () => {
   const signupToken = 'a'.repeat(20);
-  const strongPassword = 'Password123!';
 
-  it('accepts a valid phone, strong password, and signup token', () => {
+  it('accepts a valid phone and signup token without password', () => {
     expect(
       registerPhoneSchema.safeParse({
         phone: '+21612345678',
-        password: strongPassword,
         signupToken,
       }).success,
     ).toBe(true);
@@ -70,36 +68,22 @@ describe('registerPhoneSchema', () => {
     expect(
       registerPhoneSchema.safeParse({
         phone: '+21612345678',
-        password: strongPassword,
         signupToken,
         name: 'Jane Doe',
       }).success,
     ).toBe(true);
   });
 
-  it('rejects a weak password', () => {
-    expect(
-      registerPhoneSchema.safeParse({
-        phone: '+21612345678',
-        password: 'secret123',
-        signupToken,
-      }).success,
-    ).toBe(false);
-  });
-
   // register-phone requires the signup grant proving a verified OTP (see /otp/verify) —
   // registration must not be submittable without one.
   it('rejects a missing signup token', () => {
-    expect(
-      registerPhoneSchema.safeParse({ phone: '+21612345678', password: strongPassword }).success,
-    ).toBe(false);
+    expect(registerPhoneSchema.safeParse({ phone: '+21612345678' }).success).toBe(false);
   });
 
   it('rejects a signup token shorter than 16 characters', () => {
     expect(
       registerPhoneSchema.safeParse({
         phone: '+21612345678',
-        password: strongPassword,
         signupToken: 'short',
       }).success,
     ).toBe(false);

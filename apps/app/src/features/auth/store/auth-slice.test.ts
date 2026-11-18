@@ -52,14 +52,13 @@ describe('auth-slice', () => {
   });
 
   describe('registerPhone', () => {
-    it('sends { phone, password, signupToken, name } to /auth/register-phone, no tokens are ever in the response', async () => {
+    it('sends { phone, signupToken, name } to /auth/register-phone, no tokens are ever in the response', async () => {
       vi.mocked(api.post).mockResolvedValue({ data: { user } });
 
       const store = buildStore();
       await store.dispatch(
         registerPhone({
           phone: '+21612345678',
-          password: 'Password123!',
           signupToken: 'valid-grant-token',
           name: 'Jane Doe',
         }),
@@ -67,7 +66,6 @@ describe('auth-slice', () => {
 
       expect(api.post).toHaveBeenCalledWith('/auth/register-phone', {
         phone: '+21612345678',
-        password: 'Password123!',
         signupToken: 'valid-grant-token',
         name: 'Jane Doe',
       });
@@ -85,7 +83,7 @@ describe('auth-slice', () => {
       vi.mocked(api.post).mockResolvedValue({ data: { user } });
 
       const store = buildStore();
-      await store.dispatch(loginPhone({ phone: '+21612345678', password: 'secret123' }));
+      await store.dispatch(loginPhone({ phone: '+21612345678', code: '123456' }));
 
       expect(store.getState().auth.status).toBe('authenticated');
       expect(store.getState().auth.sessionChecked).toBe(true);
@@ -102,7 +100,7 @@ describe('auth-slice', () => {
 
       const store = buildStore();
       const result = await store.dispatch(
-        loginPhone({ phone: '+21612345678', password: 'secret123' }),
+        loginPhone({ phone: '+21612345678', code: '123456' }),
       );
 
       expect(result.meta.requestStatus).toBe('rejected');
@@ -123,7 +121,7 @@ describe('auth-slice', () => {
       });
 
       const result = await buildStore().dispatch(
-        loginPhone({ phone: '+21612345678', password: 'secret123' }),
+        loginPhone({ phone: '+21612345678', code: '123456' }),
       );
 
       expect(result.meta.requestStatus).toBe('rejected');
@@ -203,7 +201,7 @@ describe('auth-slice', () => {
       // registerPhone completes first, establishing a real session.
       vi.mocked(api.post).mockResolvedValue({ data: { user } });
       await store.dispatch(
-        registerPhone({ phone: '+21612345678', password: 'Password123!', signupToken: 'grant' }),
+        registerPhone({ phone: '+21612345678', signupToken: 'grant' }),
       );
       expect(store.getState().auth.status).toBe('authenticated');
 
@@ -230,7 +228,7 @@ describe('auth-slice', () => {
       const newerUser: AuthUser = { ...user, id: 'user-2', name: 'Someone Else' };
       vi.mocked(api.post).mockResolvedValue({ data: { user: newerUser } });
       await store.dispatch(
-        registerPhone({ phone: '+21699999999', password: 'Password123!', signupToken: 'grant' }),
+        registerPhone({ phone: '+21699999999', signupToken: 'grant' }),
       );
 
       // The stale bootstrap authcheck finally resolves with the OLD (pre-signup) user.

@@ -58,12 +58,11 @@ export interface VerifyOtpInput {
 
 export interface LoginPhoneInput {
   phone: string;
-  password: string;
+  code: string;
 }
 
 export interface RegisterPhoneInput {
   phone: string;
-  password: string;
   signupToken: string;
   name?: string;
 }
@@ -116,5 +115,4 @@ export interface ActivationPreviewResponse {
 
 export interface ConfirmActivationInput {
   token: string;
-  password: string;
 }

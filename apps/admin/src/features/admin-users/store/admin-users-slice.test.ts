@@ -12,7 +12,6 @@ function buildStore() {
 const INPUT: AdminCreateUserInput = {
   name: 'Amine Ben Salah',
   phone: '20123456',
-  password: 'Matchy2026!',
   profileType: 'INDIVIDUAL',
   job: 'Plombier',
   interests: ['Plomberie'],

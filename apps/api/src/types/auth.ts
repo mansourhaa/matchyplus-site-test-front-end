@@ -39,12 +39,11 @@ export type VerifyOtpResult = {
 
 export type LoginPhonePayload = {
   phone: string;
-  password: string;
+  code: string;
 };
 
 export type RegisterPhonePayload = {
   phone: string;
-  password: string;
   signupToken: string;
   name?: string;
 };
@@ -143,5 +142,4 @@ export type ActivationPreviewResult = {
 
 export type ActivationConfirmPayload = {
   token: string;
-  password: string;
 };

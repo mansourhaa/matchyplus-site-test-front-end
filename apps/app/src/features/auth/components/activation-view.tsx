@@ -10,13 +10,8 @@ import { resolvePostAuthDestination } from '@/lib/post-auth-routing';
 import {
   AlertTriangle,
   Award,
-  Check,
   CheckCircle,
-  Eye,
-  EyeOff,
-  KeyRound,
   Loader2,
-  Lock,
   MapPin,
   Phone,
   ShieldCheck,
@@ -39,11 +34,6 @@ export function ActivationView() {
   const [preview, setPreview] = useState<ActivationPreviewResponse | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
-
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -97,33 +87,15 @@ export function ActivationView() {
     };
   }, [token, t]);
 
-  // Security requirements checks
-  const hasMinLength = password.length >= 8;
-  const hasUppercase = /[A-Z]/.test(password);
-  const hasLowercase = /[a-z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
-  const passwordsMatch = password.length > 0 && password === confirmPassword;
-  const isPolicySatisfied = hasMinLength && hasUppercase && hasLowercase && hasNumber;
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setSubmitError(null);
-
-    if (!isPolicySatisfied) {
-      setSubmitError(t('auth.activation.policyNotSatisfied'));
-      return;
-    }
-    if (password !== confirmPassword) {
-      setSubmitError(t('auth.activation.passwordsDoNotMatch'));
-      return;
-    }
 
     setSubmitting(true);
     try {
       const result = await dispatch(
         confirmActivation({
           token: token.trim(),
-          password,
         }),
       );
 
@@ -138,9 +110,7 @@ export function ActivationView() {
         }, 1200);
       } else {
         const message = (result.payload as string | undefined) ?? result.error.message;
-        if (message === 'weak_password') {
-          setSubmitError(t('auth.activation.errorWeakPassword'));
-        } else if (message === 'invalid_activation_token') {
+        if (message === 'invalid_activation_token') {
           setSubmitError(t('auth.activation.errorExpiredToken'));
         } else {
           setSubmitError(t('auth.activation.errorGeneric'));
@@ -296,155 +266,10 @@ export function ActivationView() {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Password */}
-                <div className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor="activation-password"
-                    className="text-xs font-semibold text-slate-700"
-                  >
-                    {t('auth.activation.newPasswordLabel')}
-                  </label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                      <Lock size={16} />
-                    </div>
-                    <input
-                      id="activation-password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      disabled={submitting || activatedSuccess}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder={t('auth.activation.newPasswordPlaceholder')}
-                      className="w-full rounded-2xl border py-3 pr-11 pl-10 text-xs sm:text-sm text-slate-900 outline-none transition focus:border-[#2F76BB] focus:ring-2 focus:ring-[#2F76BB]/15"
-                      style={{ background: '#F5F7FA', borderColor: '#D0E4F7' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600"
-                      aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm password */}
-                <div className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor="activation-confirm-password"
-                    className="text-xs font-semibold text-slate-700"
-                  >
-                    {t('auth.activation.confirmPasswordLabel')}
-                  </label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                      <KeyRound size={16} />
-                    </div>
-                    <input
-                      id="activation-confirm-password"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      disabled={submitting || activatedSuccess}
-                      onChange={(event) => setConfirmPassword(event.target.value)}
-                      placeholder={t('auth.activation.confirmPasswordPlaceholder')}
-                      className="w-full rounded-2xl border py-3 pr-11 pl-10 text-xs sm:text-sm text-slate-900 outline-none transition focus:border-[#2F76BB] focus:ring-2 focus:ring-[#2F76BB]/15"
-                      style={{ background: '#F5F7FA', borderColor: '#D0E4F7' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600"
-                      aria-label={showConfirmPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                    >
-                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Security checklist */}
-                <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-3.5 text-xs">
-                  <p className="mb-2 font-semibold text-slate-700">
-                    {t('auth.activation.securityRequirements')}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className={`flex h-4 w-4 items-center justify-center rounded-full text-white ${
-                          hasMinLength ? 'bg-emerald-500' : 'bg-slate-300'
-                        }`}
-                      >
-                        <Check size={10} strokeWidth={3} />
-                      </div>
-                      <span className={hasMinLength ? 'font-medium text-emerald-800' : 'text-slate-500'}>
-                        {t('auth.activation.minCharacters')}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className={`flex h-4 w-4 items-center justify-center rounded-full text-white ${
-                          hasUppercase ? 'bg-emerald-500' : 'bg-slate-300'
-                        }`}
-                      >
-                        <Check size={10} strokeWidth={3} />
-                      </div>
-                      <span className={hasUppercase ? 'font-medium text-emerald-800' : 'text-slate-500'}>
-                        {t('auth.activation.uppercaseLetter')}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className={`flex h-4 w-4 items-center justify-center rounded-full text-white ${
-                          hasLowercase ? 'bg-emerald-500' : 'bg-slate-300'
-                        }`}
-                      >
-                        <Check size={10} strokeWidth={3} />
-                      </div>
-                      <span className={hasLowercase ? 'font-medium text-emerald-800' : 'text-slate-500'}>
-                        {t('auth.activation.lowercaseLetter')}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className={`flex h-4 w-4 items-center justify-center rounded-full text-white ${
-                          hasNumber ? 'bg-emerald-500' : 'bg-slate-300'
-                        }`}
-                      >
-                        <Check size={10} strokeWidth={3} />
-                      </div>
-                      <span className={hasNumber ? 'font-medium text-emerald-800' : 'text-slate-500'}>
-                        {t('auth.activation.oneDigit')}
-                      </span>
-                    </div>
-                  </div>
-                  {confirmPassword.length > 0 && (
-                    <div className="mt-2.5 flex items-center gap-1.5 border-t border-slate-200/60 pt-2.5">
-                      <div
-                        className={`flex h-4 w-4 items-center justify-center rounded-full text-white ${
-                          passwordsMatch ? 'bg-emerald-500' : 'bg-amber-400'
-                        }`}
-                      >
-                        <Check size={10} strokeWidth={3} />
-                      </div>
-                      <span
-                        className={
-                          passwordsMatch
-                            ? 'font-medium text-emerald-800'
-                            : 'font-medium text-amber-700'
-                        }
-                      >
-                        {passwordsMatch
-                          ? t('auth.activation.passwordsMatch')
-                          : t('auth.activation.passwordsDoNotMatch')}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
                 {/* Submit CTA */}
                 <button
                   type="submit"
-                  disabled={submitting || !isPolicySatisfied || !passwordsMatch || activatedSuccess}
+                  disabled={submitting || activatedSuccess}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white shadow-md transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     background: 'linear-gradient(90deg, #61BCA6, #2F76BB)',
