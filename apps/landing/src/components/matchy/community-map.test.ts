@@ -14,7 +14,7 @@ import {
 
 describe('community map data', () => {
   it('adds up the active visitors', () => {
-    expect(totalActive(SAMPLE_LOCATIONS)).toBe(1284);
+    expect(totalActive(SAMPLE_LOCATIONS)).toBe(233);
   });
 
   it('keeps every city on the map', () => {
@@ -47,8 +47,8 @@ describe('community map data', () => {
   });
 
   it('formats numbers per language, with Latin digits in Arabic', () => {
-    expect(new Intl.NumberFormat(numberLocale('ar')).format(1284)).toMatch(/^1\D?284$/);
-    expect(new Intl.NumberFormat(numberLocale('en')).format(1284)).toBe('1,284');
+    expect(new Intl.NumberFormat(numberLocale('ar')).format(1240)).toMatch(/^1\D?240$/);
+    expect(new Intl.NumberFormat(numberLocale('en')).format(1240)).toBe('1,240');
   });
 
   it.each(SUPPORTED_LOCALES)('%s names every city on the map', (locale) => {

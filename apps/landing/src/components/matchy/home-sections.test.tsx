@@ -174,12 +174,13 @@ describe('home sections', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Carte du monde/ })).toBeInTheDocument();
     expect(screen.getByText('Données d’exemple')).toBeInTheDocument();
-    // 1 284 active visitors (narrow no-break space in French). The counters exist twice: on the
-    // map for computers and under it for phones; CSS shows one or the other. No country count.
-    expect(screen.getAllByText(/^1\s?284$/)).toHaveLength(2);
+    // 233 active visitors and 1 240 today (narrow no-break space in French). The counters exist
+    // twice: on the map for computers and under it for phones; CSS shows one or the other.
+    expect(screen.getAllByText('233')).toHaveLength(2);
+    expect(screen.getAllByText(/^1\s?240$/)).toHaveLength(2);
     expect(screen.queryByText('Pays')).toBeNull();
 
-    const tunis = screen.getByRole('button', { name: /^Tunis, Tunisie : 312 visiteurs actifs$/ });
+    const tunis = screen.getByRole('button', { name: /^Tunis, Tunisie : 72 visiteurs actifs$/ });
     fireEvent.pointerEnter(tunis, { pointerType: 'mouse' });
     expect(within(screen.getByRole('status')).getByText('Tunis, Tunisie')).toBeInTheDocument();
     // a touch leaving the point (the map slid under the finger) keeps the tooltip open

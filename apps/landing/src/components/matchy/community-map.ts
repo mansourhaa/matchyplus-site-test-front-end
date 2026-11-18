@@ -36,18 +36,18 @@ export type CommunityLocation = {
  * If the map is regenerated, recompute them with the same projection.
  */
 export const SAMPLE_LOCATIONS: readonly CommunityLocation[] = [
-  { id: 'tunis', country: 'TN', x: 52.7, y: 31.6, count: 312 },
-  { id: 'paris', country: 'FR', x: 50.6, y: 23.0, count: 186 },
-  { id: 'london', country: 'GB', x: 50.0, y: 21.2, count: 122 },
-  { id: 'newYork', country: 'US', x: 30.9, y: 28.8, count: 159 },
-  { id: 'montreal', country: 'CA', x: 31.4, y: 25.4, count: 74 },
-  { id: 'dubai', country: 'AE', x: 65.1, y: 40.0, count: 146 },
-  { id: 'mumbai', country: 'IN', x: 70.1, y: 44.5, count: 98 },
-  { id: 'singapore', country: 'SG', x: 79.2, y: 57.2, count: 105 },
-  { id: 'sydney', country: 'AU', x: 90.2, y: 82.7, count: 82 },
+  { id: 'tunis', country: 'TN', x: 52.7, y: 31.6, count: 72 },
+  { id: 'paris', country: 'FR', x: 50.6, y: 23.0, count: 41 },
+  { id: 'london', country: 'GB', x: 50.0, y: 21.2, count: 18 },
+  { id: 'newYork', country: 'US', x: 30.9, y: 28.8, count: 23 },
+  { id: 'montreal', country: 'CA', x: 31.4, y: 25.4, count: 15 },
+  { id: 'dubai', country: 'AE', x: 65.1, y: 40.0, count: 29 },
+  { id: 'mumbai', country: 'IN', x: 70.1, y: 44.5, count: 14 },
+  { id: 'singapore', country: 'SG', x: 79.2, y: 57.2, count: 12 },
+  { id: 'sydney', country: 'AU', x: 90.2, y: 82.7, count: 9 },
 ];
 
-export const SAMPLE_TODAY = 18763;
+export const SAMPLE_TODAY = 1240;
 
 export function totalActive(locations: readonly CommunityLocation[]): number {
   return locations.reduce((total, location) => total + location.count, 0);

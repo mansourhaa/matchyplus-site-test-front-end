@@ -353,7 +353,10 @@ export function LiveCommunity() {
   );
 }
 
-/** One live counter: label, then the number, which slides in when it changes. */
+/**
+ * One live counter: label, then the number, which slides in when it changes. The live one
+ * (active now) is the headline, so it is bigger.
+ */
 function Stat({
   label,
   value,
@@ -379,7 +382,7 @@ function Stat({
       </dt>
       {/* not animated on the first render, so the HTML matches the server's */}
       <dd
-        className={`relative mt-1 overflow-hidden text-2xl font-extrabold tabular-nums [text-shadow:0_0_16px_#F7FAFD] md:text-4xl ${live ? 'text-brand-teal' : 'text-brand-blue'}`}
+        className={`relative mt-1 overflow-hidden font-extrabold tabular-nums [text-shadow:0_0_16px_#F7FAFD] ${live ? 'text-brand-teal text-3xl md:text-6xl' : 'text-brand-blue text-2xl md:text-4xl'}`}
       >
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
