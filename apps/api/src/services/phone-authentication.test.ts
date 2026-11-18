@@ -820,8 +820,37 @@ describe('PhoneAuthenticationService', () => {
     });
   });
 
+  describe('sendActivationOtp', () => {
+    it('sends a PHONE_LOGIN OTP to the pending activation user phone', async () => {
+      const { service, prisma, smsClient } = createService();
+      const rawToken = 'test-token-1234567890';
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-lead',
+        name: 'Sarra Ben Ali',
+        phone: '+21620123456',
+        must_change_password: true,
+        activation_token_expires_at: new Date(Date.now() + 86400000),
+        status: 'INACTIVE',
+      });
+      prisma.otpChallenge.findFirst.mockResolvedValue(null);
+      prisma.otpChallenge.create.mockResolvedValue({});
+
+      const result = await service.sendActivationOtp(rawToken);
+
+      expect(result).toEqual({ message: 'otp_sent', phone: '+21620123456' });
+      expect(prisma.otpChallenge.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          phone: '+21620123456',
+          purpose: 'PHONE_LOGIN',
+          user_id: 'user-lead',
+        }),
+      });
+      expect(smsClient.sendSms).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('confirmActivation', () => {
-    it('sets password, completes activation, and returns session tokens', async () => {
+    it('verifies OTP, completes activation without password, and returns session tokens', async () => {
       const { service, prisma } = createService();
       const rawToken = 'test-token-1234567890';
       const tokenHash = hashActivationToken(rawToken);
@@ -832,8 +861,19 @@ describe('PhoneAuthenticationService', () => {
         phone: '+21620123456',
         must_change_password: true,
         activation_token_expires_at: new Date(Date.now() + 86400000),
-        status: 'ACTIVE',
+        status: 'INACTIVE',
       });
+      prisma.otpChallenge.findFirst.mockResolvedValue({
+        id: 'chal-act-1',
+        phone: '+21620123456',
+        purpose: 'PHONE_LOGIN',
+        user_id: 'user-lead',
+        code_hash: hashVerificationCode('123456'),
+        attempts: 0,
+        expires_at: new Date(Date.now() + 60_000),
+        consumed_at: null,
+      });
+      prisma.otpChallenge.updateMany.mockResolvedValue({ count: 1 });
 
       prisma.user.update.mockResolvedValue({
         id: 'user-lead',
@@ -855,6 +895,7 @@ describe('PhoneAuthenticationService', () => {
 
       const result = await service.confirmActivation({
         token: rawToken,
+        code: '123456',
       });
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
@@ -868,6 +909,7 @@ describe('PhoneAuthenticationService', () => {
           activation_token_hash: null,
           activation_token_expires_at: null,
           phone_verified: true,
+          status: 'ACTIVE',
         }),
       });
       expect(result.accessToken).toBe('access-123');
@@ -875,6 +917,24 @@ describe('PhoneAuthenticationService', () => {
       expect(result.user.id).toBe('user-lead');
 
       issueTokenSpy.mockRestore();
+    });
+
+    it('rejects activation when OTP code is missing or invalid', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-lead',
+        name: 'Sarra Ben Ali',
+        phone: '+21620123456',
+        must_change_password: true,
+        activation_token_expires_at: new Date(Date.now() + 86400000),
+        status: 'INACTIVE',
+      });
+      prisma.otpChallenge.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.confirmActivation({ token: 'test-token-1234567890', code: '000000' }),
+      ).rejects.toThrow('invalid_otp');
+      expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
 });

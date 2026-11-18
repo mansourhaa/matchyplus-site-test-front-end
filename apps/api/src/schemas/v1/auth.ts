@@ -551,15 +551,40 @@ export const activationPreviewSchema = {
   },
 };
 
-export const activationConfirmSchema = {
+export const activationOtpSendSchema = {
   tags: ['auth'],
-  summary: 'Confirm account activation',
+  summary: 'Send OTP code to verify phone ownership before account activation',
   body: {
     type: 'object',
     required: ['token'],
     additionalProperties: false,
     properties: {
       token: { type: 'string', minLength: 1 },
+    },
+  },
+  response: {
+    200: {
+      description: 'OTP sent',
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        phone: { type: 'string' },
+      },
+    },
+    ...errorResponses,
+  },
+};
+
+export const activationConfirmSchema = {
+  tags: ['auth'],
+  summary: 'Verify OTP and confirm account activation',
+  body: {
+    type: 'object',
+    required: ['token', 'code'],
+    additionalProperties: false,
+    properties: {
+      token: { type: 'string', minLength: 1 },
+      code: { type: 'string', minLength: 4, maxLength: 10 },
     },
   },
   response: {

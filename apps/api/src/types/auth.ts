@@ -140,6 +140,11 @@ export type ActivationPreviewResult = {
   profileType: string | null;
 };
 
+export type ActivationOtpPayload = {
+  token: string;
+};
+
 export type ActivationConfirmPayload = {
   token: string;
+  code: string;
 };
