@@ -10,7 +10,7 @@ const serverUrl = process.env.CAPACITOR_SERVER_URL?.trim();
 
 const config: CapacitorConfig = {
   appId: 'com.matchy.app',
-  appName: 'Matchy Plus',
+  appName: 'Matchy+',
   // Placeholder only — runtime content comes from CAPACITOR_SERVER_URL when set.
   webDir: 'www',
   plugins: {
