@@ -4,6 +4,7 @@ import { Explore } from '@/components/matchy/explore';
 import { Features } from '@/components/matchy/features';
 import { Hero } from '@/components/matchy/hero';
 import { LiveCommunity } from '@/components/matchy/live-community';
+import { ReducedMotion } from '@/components/matchy/motion';
 import { Partnerships } from '@/components/matchy/partnerships';
 import { ProBranding } from '@/components/matchy/pro-branding';
 import { Security } from '@/components/matchy/security';
@@ -38,18 +39,21 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd(lang)) }}
       />
       <main className="bg-background overflow-x-hidden">
-        <Hero />
-        <Features />
-        <ServicesBelt />
-        <WhyMatchy />
-        <Steps />
-        <ProBranding />
-        <LiveCommunity />
-        <Security />
-        <Explore />
-        <CompanyStory />
-        <Partnerships />
-        <Cta />
+        {/* one "reduce motion" rule for every section (see motion.tsx) */}
+        <ReducedMotion>
+          <Hero />
+          <Features />
+          <ServicesBelt />
+          <WhyMatchy />
+          <Steps />
+          <ProBranding />
+          <LiveCommunity />
+          <Security />
+          <Explore />
+          <CompanyStory />
+          <Partnerships />
+          <Cta />
+        </ReducedMotion>
       </main>
       {!DISABLE_CHATBOT && CHATBOT_WIDGET_SRC && (
         <Script

@@ -83,6 +83,7 @@ export function BeltProfileCard({
 
   const swipe = (direction: -1 | 1) => {
     if (leaving !== 0) return;
+    // reduced motion: no fly-away, the next pro comes straight away (logic, not markup)
     if (reduceMotion) {
       if (direction === 1) onLike();
       else onPass();
@@ -97,12 +98,10 @@ export function BeltProfileCard({
       aria-modal="false"
       aria-labelledby={titleId}
       className={cn('relative flex w-full flex-col', className)}
-      initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 40, scale: 0.92, rotate: -4 }}
+      initial={{ opacity: 0, y: 40, scale: 0.92, rotate: -4 }}
       animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
       exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
-      transition={
-        reduceMotion ? { duration: 0.2 } : { type: 'spring', stiffness: 170, damping: 18 }
-      }
+      transition={{ type: 'spring', stiffness: 170, damping: 18 }}
     >
       <button
         ref={closeRef}

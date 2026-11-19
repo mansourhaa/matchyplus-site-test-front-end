@@ -204,10 +204,22 @@ Older issues, not caused by this work but worth a separate ticket:
   - Messages accept text, lists and tables only (no objects), so maps are stored as rows
     `[id, label]`.
   - Remove keys that become unused.
-- **No hydration mismatch:**
-  - Never render differently based on `useReducedMotion()` or anything browser-only. Hide
-    animations with Tailwind `motion-reduce:` / `motion-safe:` instead.
-  - First states must equal the server's. Otherwise React throws error #418.
+  - Read lists and tables with `tList(key)` / `tRows(key)` from `useI18n()`: they check the data
+    and return `[]` when a key is missing. Never cast `t(...)` with `as unknown as string[]`.
+- **Reduce motion, one rule:**
+  - The whole home page is wrapped in `<ReducedMotion>` (`motion.tsx`, framer-motion's
+    `MotionConfig reducedMotion="user"`): movement is skipped for visitors who ask for it, fades
+    stay. Components never pick their markup or animation props from `useReducedMotion()`.
+  - Effects framer-motion cannot stop (CSS `animate-ping`, an element moving `top`) use Tailwind
+    `motion-reduce:` / `motion-safe:`.
+  - JavaScript checks it only for logic: the belt's auto-rotation and spin, the hero's timer and
+    pointer tilt, the card's instant swipe.
+  - First states must equal the server's. Otherwise React throws hydration error #418.
+- **Section headings, two styles from the original site:**
+  - Centred (like `features`): teal bar `h-1 w-10 rounded`, optional teal kicker
+    (`text-sm font-semibold tracking-wide`), `h2` `text-brand-blue text-3xl font-bold md:text-4xl`.
+  - Beside a visual (like `steps`, `security`, `explore`): blue bar `h-1 w-14 rounded-full`
+    aligned to the text side, `h2` `font-extrabold`.
 - **Phones:** hover handlers react only to `pointerType === 'mouse'`, so content that slides
   under a finger does not close a tooltip.
 - **Images:**

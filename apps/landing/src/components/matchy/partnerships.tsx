@@ -2,7 +2,7 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowRight, Handshake, Megaphone, Users } from 'lucide-react';
 import Link from 'next/link';
 
@@ -13,17 +13,17 @@ const LOGO_SLOTS = 8;
 
 /** Partnerships: what partners get, a strip of partner logos, and the way to become one. */
 export function Partnerships() {
-  const { t, locale } = useI18n();
-  const reduceMotion = useReducedMotion() ?? false;
-  const benefits = (t('landing.partnersBenefits') as unknown as string[][]) ?? [];
+  const { t, locale, tRows } = useI18n();
+  const benefits = tRows('landing.partnersBenefits');
   const logos = Array.from({ length: LOGO_SLOTS }, (_, index) => index);
 
   return (
     <section className="from-brand-blue via-brand-blue to-brand-teal relative overflow-hidden bg-gradient-to-br py-20 text-white md:py-24">
       <div className="mx-auto max-w-6xl px-5">
         <Reveal className="text-center">
-          <div className="mx-auto mb-5 h-1 w-14 rounded-full bg-white" />
-          <h2 className="text-2xl font-extrabold text-balance sm:text-3xl md:text-4xl">
+          {/* centred heading, same as features / belt / map (white bar on the dark band) */}
+          <div className="mx-auto mb-4 h-1 w-10 rounded bg-white" />
+          <h2 className="text-3xl font-bold text-balance md:text-4xl">
             {t('landing.partnersTitle')}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/85 md:text-base">
@@ -53,7 +53,7 @@ export function Partnerships() {
       <div className="mt-14 overflow-hidden" aria-hidden="true">
         <motion.div
           className="flex w-max gap-4"
-          animate={reduceMotion ? undefined : { x: ['0%', '-50%'] }}
+          animate={{ x: ['0%', '-50%'] }}
           transition={{ duration: 30, ease: 'linear', repeat: Number.POSITIVE_INFINITY }}
         >
           {[...logos, ...logos].map((slot, index) => (

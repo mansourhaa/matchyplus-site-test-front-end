@@ -64,12 +64,12 @@ export function swipeDirection(step: number): -1 | 0 | 1 {
  * scene follows the mouse a little. Everything stops for reduced motion and when off screen.
  */
 export function HeroLivePhone({ alt }: { alt: string }) {
-  const { t } = useI18n();
+  const { t, tList, tRows } = useI18n();
   const reduceMotion = useReducedMotion() ?? false;
-  const services = toServices(t('landing.beltServices'));
-  const profiles = toProfiles(t('landing.beltProfiles'));
-  const confidenceLabels = (t('landing.beltConfidence') as unknown as string[]) ?? [];
-  const tabs = ((t('landing.heroPhoneTabs') as unknown as string[]) ?? []).slice(0, 4);
+  const services = toServices(tRows('landing.beltServices'));
+  const profiles = toProfiles(tRows('landing.beltProfiles'));
+  const confidenceLabels = tList('landing.beltConfidence');
+  const tabs = tList('landing.heroPhoneTabs').slice(0, 4);
   const cards: DemoCard[] = services.flatMap((service) => {
     const profile = profiles[service.code];
     return profile ? [{ service, profile }] : [];
@@ -97,6 +97,7 @@ export function HeroLivePhone({ alt }: { alt: string }) {
   const rotateY = useTransform(smoothX, [-1, 1], [-8, 8]);
   const rotateX = useTransform(smoothY, [-1, 1], [6, -6]);
 
+  // logic, not markup: no pointer tilt for visitors who ask for reduced motion
   useEffect(() => {
     if (reduceMotion) return;
     const onMove = (event: PointerEvent) => {
@@ -129,7 +130,8 @@ export function HeroLivePhone({ alt }: { alt: string }) {
     <div ref={sceneRef} className="relative mx-auto w-[clamp(230px,min(24vw,38svh),300px)]">
       <motion.div
         className="relative"
-        style={reduceMotion ? undefined : { rotateX, rotateY, transformPerspective: 1000 }}
+        // tilt values stay at 0 when the pointer listener is off (reduced motion)
+        style={{ rotateX, rotateY, transformPerspective: 1000 }}
       >
         <Image
           src="/showcase/hero-phone.png"
@@ -237,7 +239,6 @@ export function HeroLivePhone({ alt }: { alt: string }) {
             depth={14}
             float={4.2}
             pointerX={smoothX}
-            reduceMotion={reduceMotion}
             id={`a-${step}`}
             icon={<Check className="h-3.5 w-3.5" strokeWidth={3} />}
             iconClass="bg-[#22C55E]"
@@ -249,7 +250,6 @@ export function HeroLivePhone({ alt }: { alt: string }) {
             depth={-18}
             float={5}
             pointerX={smoothX}
-            reduceMotion={reduceMotion}
             id={`b-${step}`}
             icon={<MapPin className="h-3.5 w-3.5" />}
             iconClass="bg-brand-blue"
@@ -261,7 +261,6 @@ export function HeroLivePhone({ alt }: { alt: string }) {
             depth={10}
             float={4.6}
             pointerX={smoothX}
-            reduceMotion={reduceMotion}
             id={`c-${step}`}
             icon={<Brain className="h-3.5 w-3.5" />}
             iconClass="bg-[#61BCA6]"
@@ -279,7 +278,6 @@ function Bubble({
   depth,
   float,
   pointerX,
-  reduceMotion,
   id,
   icon,
   iconClass,
@@ -289,7 +287,6 @@ function Bubble({
   depth: number;
   float: number;
   pointerX: MotionValue<number>;
-  reduceMotion: boolean;
   id: string;
   icon: ReactNode;
   iconClass: string;
@@ -300,15 +297,15 @@ function Bubble({
     <motion.div
       aria-hidden="true"
       className={`absolute z-20 ${className}`}
-      style={reduceMotion ? undefined : { x }}
-      animate={reduceMotion ? undefined : { y: [0, -7, 0] }}
+      style={{ x }}
+      animate={{ y: [0, -7, 0] }}
       transition={{ duration: float, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
     >
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={id}
           className="text-brand-navy flex items-center gap-2 rounded-2xl border border-white/60 bg-white/90 py-1.5 ps-1.5 pe-3 text-[11px] font-bold whitespace-nowrap shadow-xl shadow-black/10 backdrop-blur-md sm:text-xs"
-          initial={reduceMotion ? false : { opacity: 0, scale: 0.85, y: 6 }}
+          initial={{ opacity: 0, scale: 0.85, y: 6 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
           transition={{ type: 'spring', stiffness: 260, damping: 20 }}

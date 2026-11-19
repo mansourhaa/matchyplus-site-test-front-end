@@ -8,15 +8,16 @@ import { Reveal } from './motion';
 
 /** "Before / with Matchy+" comparison: finding a pro today vs with Matchy+. */
 export function WhyMatchy() {
-  const { t } = useI18n();
-  const before = (t('landing.whyBefore') as unknown as string[]) ?? [];
-  const after = (t('landing.whyAfter') as unknown as string[]) ?? [];
+  const { t, tList } = useI18n();
+  const before = tList('landing.whyBefore');
+  const after = tList('landing.whyAfter');
 
   return (
     <section className="mx-auto max-w-6xl px-5 py-20 md:py-24">
       <Reveal className="text-center">
-        <div className="bg-brand-blue mx-auto mb-5 h-1 w-14 rounded-full" />
-        <h2 className="text-brand-blue text-2xl font-extrabold text-balance sm:text-3xl md:text-4xl">
+        {/* centred heading, same as features / belt / map */}
+        <div className="bg-brand-teal mx-auto mb-4 h-1 w-10 rounded" />
+        <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
           {t('landing.whyTitle')}
         </h2>
         <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-sm leading-relaxed md:text-base">

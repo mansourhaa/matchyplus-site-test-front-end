@@ -41,14 +41,12 @@ export function BeltMatchDialog({
   image,
   labels,
   registerHref,
-  reduceMotion,
   onDismiss,
   onContinue,
 }: {
   image: MatchImage;
   labels: BeltMatchLabels;
   registerHref: string;
-  reduceMotion: boolean;
   onDismiss: () => void;
   onContinue: () => void;
 }) {
@@ -104,29 +102,28 @@ export function BeltMatchDialog({
       <motion.div
         ref={boxRef}
         className="relative w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl"
-        initial={reduceMotion ? false : { scale: 0.85, y: 24 }}
+        initial={{ scale: 0.85, y: 24 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 220, damping: 18 }}
       >
-        {!reduceMotion &&
-          MATCH_HEARTS.map((heart) => (
-            <motion.span
-              key={heart.left}
-              aria-hidden="true"
-              className="absolute top-10 text-[#22C55E]"
-              style={{ left: heart.left }}
-              initial={{ y: 0, opacity: 0, scale: 0.6 }}
-              animate={{ y: -90, opacity: [0, 1, 0], scale: 1 }}
-              transition={{
-                duration: 1.6,
-                delay: heart.delay,
-                repeat: Number.POSITIVE_INFINITY,
-                repeatDelay: 0.6,
-              }}
-            >
-              <Heart className="h-4 w-4" fill="currentColor" />
-            </motion.span>
-          ))}
+        {MATCH_HEARTS.map((heart) => (
+          <motion.span
+            key={heart.left}
+            aria-hidden="true"
+            className="absolute top-10 text-[#22C55E] motion-reduce:hidden"
+            style={{ left: heart.left }}
+            initial={{ y: 0, opacity: 0, scale: 0.6 }}
+            animate={{ y: -90, opacity: [0, 1, 0], scale: 1 }}
+            transition={{
+              duration: 1.6,
+              delay: heart.delay,
+              repeat: Number.POSITIVE_INFINITY,
+              repeatDelay: 0.6,
+            }}
+          >
+            <Heart className="h-4 w-4" fill="currentColor" />
+          </motion.span>
+        ))}
         <div className="relative mx-auto mb-4 h-24 w-24">
           <div className="h-full w-full overflow-hidden rounded-full bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] ring-4 ring-[#22C55E]/30">
             <Image

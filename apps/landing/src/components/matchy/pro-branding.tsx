@@ -2,7 +2,7 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_REGISTER_URL } from '@/lib/constants';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowRight, BadgeCheck, Eye, MapPin, Star, Store } from 'lucide-react';
 import Link from 'next/link';
 
@@ -14,20 +14,20 @@ const ICONS = [Store, Star, BadgeCheck, Eye];
 
 /** "Your pro storefront": what a professional gets on Matchy+, beside a sample profile. */
 export function ProBranding() {
-  const { t, dir } = useI18n();
-  const reduceMotion = useReducedMotion() ?? false;
-  const points = (t('landing.brandPoints') as unknown as string[][]) ?? [];
+  const { t, dir, tRows } = useI18n();
+  const points = tRows('landing.brandPoints');
   const isRtl = dir === 'rtl';
   // Same sample plumber as in the services belt, so every section tells one story.
-  const sample = toProfiles(t('landing.beltProfiles')).PLB;
-  const stats = (t('landing.brandSampleStats') as unknown as string[][]) ?? [];
+  const sample = toProfiles(tRows('landing.beltProfiles')).PLB;
+  const stats = tRows('landing.brandSampleStats');
 
   return (
     <section className="relative z-10 bg-[#F4F8FC] py-20 md:py-24">
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-5 lg:grid-cols-2">
         <Reveal direction={isRtl ? 'right' : 'left'}>
           <div className="bg-brand-blue mb-5 h-1 w-14 rounded-full ltr:mr-auto rtl:ml-auto" />
-          <p className="text-brand-teal text-sm font-bold tracking-wide uppercase">
+          {/* side heading, same as steps / security / explore */}
+          <p className="text-brand-teal text-sm font-semibold tracking-wide">
             {t('landing.brandEyebrow')}
           </p>
           <h2 className="text-brand-blue mt-2 text-2xl font-extrabold text-balance sm:text-3xl md:text-4xl">
@@ -64,7 +64,7 @@ export function ProBranding() {
 
         <Reveal direction={isRtl ? 'left' : 'right'} className="flex justify-center">
           <motion.div
-            animate={reduceMotion ? undefined : { y: [0, -10, 0] }}
+            animate={{ y: [0, -10, 0] }}
             transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
             className="w-full max-w-sm overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-[#2F76BB]/20"
           >

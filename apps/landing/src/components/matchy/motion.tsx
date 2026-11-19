@@ -1,9 +1,19 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { MotionConfig, motion, useScroll, useTransform } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+
+/**
+ * One rule for "reduce motion" on the whole page: framer-motion skips movement (transforms) for
+ * visitors who ask for it, and keeps fades. Components never branch their markup on it (that would
+ * make the server and browser HTML differ); only logic (auto-rotation, timers) checks it in JS.
+ * CSS-only effects use Tailwind `motion-reduce:` / `motion-safe:`.
+ */
+export function ReducedMotion({ children }: { children: ReactNode }) {
+  return <MotionConfig reducedMotion="user">{children}</MotionConfig>;
+}
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 

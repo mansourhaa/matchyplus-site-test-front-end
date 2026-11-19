@@ -5,8 +5,8 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import { Reveal } from './motion';
 
 export function Steps() {
-  const { t, dir } = useI18n();
-  const steps = t('landing.steps') as unknown as string[][];
+  const { t, dir, tRows } = useI18n();
+  const steps = tRows('landing.steps');
   const isRtl = dir === 'rtl';
 
   return (

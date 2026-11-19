@@ -1454,6 +1454,23 @@ export function getMessage(
   return typeof node === 'string' || Array.isArray(node) ? node : undefined;
 }
 
+/** Reads a message as a list of texts; anything else (missing key, plain text…) gives []. */
+export function asList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
+}
+
+/** Reads a message as a table (rows of texts); anything else gives []. */
+export function asRows(value: unknown): string[][] {
+  return Array.isArray(value)
+    ? value.filter(
+        (row): row is string[] =>
+          Array.isArray(row) && row.every((cell) => typeof cell === 'string'),
+      )
+    : [];
+}
+
 export function formatMessage(template: string, vars?: Record<string, string | number>): string {
   if (!vars) return template;
   return Object.entries(vars).reduce(

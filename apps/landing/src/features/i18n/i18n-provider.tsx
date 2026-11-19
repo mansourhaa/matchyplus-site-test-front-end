@@ -3,6 +3,8 @@
 import {
   DEFAULT_LOCALE,
   Locale,
+  asList,
+  asRows,
   formatMessage,
   getMessage,
   messages,
@@ -15,6 +17,10 @@ type I18nContextValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: string, vars?: Record<string, string | number>) => string;
+  /** A list of texts (`string[]`), [] if the key is missing or holds something else. */
+  tList: (key: string) => string[];
+  /** A table of texts (`string[][]`), [] if the key is missing or holds something else. */
+  tRows: (key: string) => string[][];
   dir: 'ltr' | 'rtl';
 };
 
@@ -51,14 +57,24 @@ export function I18nProvider({ locale, children }: { locale: Locale; children: R
     [locale],
   );
 
+  // same lookup as `t` (current language, then the default one), typed instead of cast
+  const lookup = useCallback(
+    (key: string) => getMessage(messages[locale], key) ?? getMessage(messages[DEFAULT_LOCALE], key),
+    [locale],
+  );
+  const tList = useCallback((key: string) => asList(lookup(key)), [lookup]);
+  const tRows = useCallback((key: string) => asRows(lookup(key)), [lookup]);
+
   const value = useMemo(
     () => ({
       locale,
       setLocale,
       t,
+      tList,
+      tRows,
       dir: localeDir(locale),
     }),
-    [locale, setLocale, t],
+    [locale, setLocale, t, tList, tRows],
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

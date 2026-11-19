@@ -16,7 +16,6 @@ function renderDialog() {
         continue: 'Continuer à découvrir',
       }}
       registerHref="https://app.matchyplus.com/register"
-      reduceMotion
       {...handlers}
     />,
   );

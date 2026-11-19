@@ -184,14 +184,14 @@ function BeltPerson({
 }
 
 export function ServicesBelt() {
-  const { t, dir } = useI18n();
+  const { t, dir, tList, tRows } = useI18n();
   const isRtl = dir === 'rtl';
   const reduceMotion = useReducedMotion() ?? false;
   const titleId = useId();
 
-  const services = toServices(t('landing.beltServices'));
-  const profiles = toProfiles(t('landing.beltProfiles'));
-  const confidenceLabels = (t('landing.beltConfidence') as unknown as string[]) ?? [];
+  const services = toServices(tRows('landing.beltServices'));
+  const profiles = toProfiles(tRows('landing.beltProfiles'));
+  const confidenceLabels = tList('landing.beltConfidence');
   const count = services.length;
 
   const stageRef = useRef<HTMLDivElement>(null);
@@ -546,11 +546,11 @@ export function ServicesBelt() {
           )}
         </AnimatePresence>
 
-        {/* focus mode: scan line over the professional */}
-        {focused !== null && !reduceMotion && (
+        {/* focus mode: scan line over the professional (it moves `top`, so CSS hides it) */}
+        {focused !== null && (
           <motion.div
             aria-hidden="true"
-            className="bg-brand-teal pointer-events-none absolute z-[350] h-0.5 w-56 -translate-x-1/2 shadow-[0_0_14px_#49b8ad]"
+            className="bg-brand-teal pointer-events-none absolute z-[350] h-0.5 w-56 -translate-x-1/2 shadow-[0_0_14px_#49b8ad] motion-reduce:hidden"
             style={{ left: size.width / 2 + (wide ? size.width * (isRtl ? 0.2 : -0.2) : 0) }}
             initial={{ top: '12%', opacity: 0 }}
             animate={{ top: ['12%', '86%'], opacity: [0, 1, 1, 0] }}
@@ -580,7 +580,6 @@ export function ServicesBelt() {
                 continue: t('landing.beltMatchContinue'),
               }}
               registerHref={APP_REGISTER_URL}
-              reduceMotion={reduceMotion}
               onDismiss={dismissMatch}
               onContinue={keepExploring}
             />

@@ -23,13 +23,13 @@ export function buildSearchUrl(base: string, service: string, city: string): str
  * For now every path ends on sign-up, carrying the search in the URL.
  */
 export function HeroSearch() {
-  const { t, locale } = useI18n();
+  const { t, locale, tList } = useI18n();
   const [audience, setAudience] = useState<Audience>('client');
   const [service, setService] = useState('');
   const [city, setCity] = useState('');
   const serviceId = useId();
   const cityId = useId();
-  const popular = (t('landing.searchPopular') as unknown as string[]) ?? [];
+  const popular = tList('landing.searchPopular');
 
   const tabs: { key: Audience; label: string }[] = [
     { key: 'client', label: t('landing.searchTabClient') },
