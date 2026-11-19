@@ -16,6 +16,7 @@ import {
   type RelabelledProposals,
   type VideoAnalysisResult,
   applyRelabel,
+  keepPageScript,
   proposalsForRelabel,
   relabelSourceFromAnalysis,
   suggestionsFromAnalysis,
@@ -301,6 +302,15 @@ const onboardingSlice = createSlice({
         state.videoAnalysis.locale = locale;
         state.videoAnalysis.analysisLocale = locale;
         state.videoAnalysis.byLocale = { [locale]: action.payload.suggestions };
+      })
+      .addCase(relabelVideoAnalysis.rejected, (state, action) => {
+        // Voice service unreachable: no other language for the AI values, but never
+        // leave the page with text in the wrong alphabet.
+        const analysis = state.videoAnalysis;
+        const original = analysis?.analysisLocale && analysis.byLocale?.[analysis.analysisLocale];
+        if (!analysis || analysis.status !== 'succeeded' || !original) return;
+        analysis.suggestions = keepPageScript(original, action.meta.arg);
+        analysis.locale = action.meta.arg;
       })
       .addCase(relabelVideoAnalysis.fulfilled, (state, action) => {
         const analysis = state.videoAnalysis;

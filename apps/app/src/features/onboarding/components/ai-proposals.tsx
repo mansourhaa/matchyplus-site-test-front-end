@@ -1,6 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { inPageScript } from '@/features/onboarding/video-analysis';
 import { Sparkles } from 'lucide-react';
 
 type AiProposalsProps = {
@@ -16,8 +17,10 @@ type AiProposalsProps = {
  * chips): what the AI heard but is not sure enough to write by itself.
  */
 export function AiProposals({ options, current, onPick }: AiProposalsProps) {
-  const { t } = useI18n();
-  const visible = (options ?? []).filter((option) => option !== current);
+  const { t, locale } = useI18n();
+  const visible = (options ?? []).filter(
+    (option) => option !== current && inPageScript(option, locale),
+  );
   if (!visible.length) return null;
 
   return (

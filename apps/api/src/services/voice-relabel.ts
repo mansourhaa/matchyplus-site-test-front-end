@@ -34,6 +34,17 @@ export type RelabelResponse = {
 const DEFAULT_VOICE_AI_URL = 'http://localhost:8001';
 const RELABEL_TIMEOUT_MS = 5000;
 
+/**
+ * `VOICE_AI_URL` is written for the AI worker, which runs in Docker and reaches the voice
+ * service through host.docker.internal. The API may run on the host itself (`pnpm dev`),
+ * where that name does not always resolve: then localhost is tried too.
+ */
+function candidateUrls(baseUrl: string): string[] {
+  const base = baseUrl.replace(/\/$/, '');
+  const onHost = base.replace('://host.docker.internal', '://localhost');
+  return onHost === base ? [base] : [base, onHost];
+}
+
 function unavailable(message: string): Error {
   return Object.assign(new Error(message), { statusCode: 503 });
 }
@@ -50,35 +61,42 @@ export class VoiceRelabelService {
   ) {}
 
   async relabel(request: RelabelRequest): Promise<RelabelResponse> {
-    let response: Response;
-    try {
-      response = await this.fetchImpl(`${this.baseUrl.replace(/\/$/, '')}/relabel`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          values: request.values,
-          uiLocale: request.uiLocale,
-          serviceId: request.serviceId ?? null,
-          aiFields: request.aiFields ?? [],
-          suggestions: request.suggestions ?? {},
-        }),
-        signal: AbortSignal.timeout(RELABEL_TIMEOUT_MS),
-      });
-    } catch {
+    const body = JSON.stringify({
+      values: request.values,
+      uiLocale: request.uiLocale,
+      serviceId: request.serviceId ?? null,
+      aiFields: request.aiFields ?? [],
+      suggestions: request.suggestions ?? {},
+    });
+    let response: Response | null = null;
+    for (const base of candidateUrls(this.baseUrl)) {
+      try {
+        response = await this.fetchImpl(`${base}/relabel`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body,
+          signal: AbortSignal.timeout(RELABEL_TIMEOUT_MS),
+        });
+        break;
+      } catch {
+        // Unreachable: try the next address, if any.
+      }
+    }
+    if (!response) {
       throw unavailable('voice service unreachable');
     }
     if (!response.ok) {
       throw unavailable(`voice service answered ${response.status}`);
     }
 
-    const body = (await response.json()) as {
+    const data = (await response.json()) as {
       fields?: Record<string, { value?: unknown; review?: unknown }>;
       suggestions?: Record<string, { value?: unknown; label?: unknown }[]>;
       serviceId?: unknown;
     };
     const fields: RelabelResponse['fields'] = {};
     for (const key of RELABEL_FIELDS) {
-      const field = body.fields?.[key];
+      const field = data.fields?.[key];
       if (!field) continue;
       fields[key] = {
         value: typeof field.value === 'string' && field.value.trim() ? field.value : null,
@@ -87,7 +105,7 @@ export class VoiceRelabelService {
     }
     const suggestions: RelabelResponse['suggestions'] = {};
     for (const key of RELABEL_FIELDS) {
-      const options = (body.suggestions?.[key] ?? [])
+      const options = (data.suggestions?.[key] ?? [])
         .map((option) => ({
           value: typeof option.value === 'string' ? option.value : '',
           label: typeof option.label === 'string' ? option.label : undefined,
@@ -98,7 +116,7 @@ export class VoiceRelabelService {
     return {
       fields,
       suggestions,
-      serviceId: typeof body.serviceId === 'string' ? body.serviceId : null,
+      serviceId: typeof data.serviceId === 'string' ? data.serviceId : null,
     };
   }
 }

@@ -71,4 +71,19 @@ describe('VoiceRelabelService', () => {
       statusCode: 503,
     });
   });
+
+  it('falls back to localhost when host.docker.internal does not resolve (API on the host)', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('ENOTFOUND host.docker.internal'))
+      .mockResolvedValueOnce(jsonResponse({ ok: true, fields: {}, serviceId: null }));
+    const service = new VoiceRelabelService('http://host.docker.internal:8001', fetchMock);
+
+    await service.relabel({ values: { city: 'سوسة' }, uiLocale: 'fr' });
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      'http://host.docker.internal:8001/relabel',
+      'http://localhost:8001/relabel',
+    ]);
+  });
 });

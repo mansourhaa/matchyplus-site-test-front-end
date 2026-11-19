@@ -297,4 +297,36 @@ describe('onboarding-slice video analysis', () => {
     expect(api.post).toHaveBeenCalledTimes(2);
     expect(store.getState().onboarding.videoAnalysis!.suggestions).toEqual(arabic);
   });
+
+  it('drops the AI values in the wrong alphabet when the language switch fails', async () => {
+    vi.mocked(api.post)
+      .mockResolvedValueOnce({
+        data: {
+          job: {
+            id: 'job-5',
+            status: 'SUCCEEDED',
+            error: null,
+            result: {
+              ok: true,
+              profile: {
+                first_name: { value: 'مهدي', status: 'fill' },
+                price: { value: '50', status: 'fill' },
+              },
+            },
+          },
+          token: 't0k3n',
+        },
+      })
+      .mockRejectedValueOnce(new Error('Network Error'));
+    const store = buildStore();
+    await store.dispatch(analyzeProfileVideo({ file: clip(), uiLocale: 'ar' }));
+
+    await store.dispatch(relabelVideoAnalysis('fr'));
+
+    expect(store.getState().onboarding.videoAnalysis!).toMatchObject({
+      locale: 'fr',
+      suggestions: { price: '50' },
+    });
+    expect(store.getState().onboarding.videoAnalysis!.suggestions!.firstName).toBeUndefined();
+  });
 });

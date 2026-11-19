@@ -511,3 +511,27 @@ export function aiFieldUpdate(
     return current;
   };
 }
+
+/**
+ * Fallback when the language switch could not reach the voice service: the AI values
+ * already written in the new page alphabet stay, the others are dropped, so a page never
+ * mixes alphabets (e.g. Arabic names on the French page).
+ */
+export function keepPageScript(
+  suggestions: OnboardingSuggestions,
+  locale: Locale,
+): OnboardingSuggestions {
+  const next: OnboardingSuggestions = { ...suggestions };
+  for (const target of Object.values(RELABEL_TEXT_FIELDS)) {
+    const value = next[target];
+    if (value !== undefined && !inPageScript(value, locale)) delete next[target];
+  }
+  const proposals: OnboardingSuggestions['proposals'] = {};
+  for (const [field, options] of Object.entries(suggestions.proposals ?? {})) {
+    const kept = (options ?? []).filter((option) => inPageScript(option, locale));
+    if (kept.length) proposals[field as ProposalField] = kept;
+  }
+  if (Object.keys(proposals).length) next.proposals = proposals;
+  else delete next.proposals;
+  return next;
+}
