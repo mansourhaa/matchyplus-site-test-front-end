@@ -10,12 +10,13 @@ import {
   ONBOARDING_CLIP_MAX_AGE_MS,
   PROFILE_VIDEO_MAX_BYTES,
 } from '../constants.js';
+import { VideoAnalysisLocale } from '../types/video-analysis.js';
 import { badRequest } from '../utils/http-errors.js';
 import { ONBOARDING_CLIPS_DIR, deleteMediaFile, saveMediaFile } from '../utils/media-storage.js';
 import { validateUploadedFile } from '../utils/media-validation.js';
 import { AiJobsService } from './ai-jobs.js';
 
-export type VideoAnalysisLocale = 'fr' | 'ar' | 'en';
+export type { VideoAnalysisLocale };
 
 export type VideoAnalysisServiceDeps = {
   prisma: PrismaClient;
@@ -50,48 +51,56 @@ export class VideoAnalysisService {
     clip: OnboardingClip,
     uiLocale: VideoAnalysisLocale = 'fr',
   ): Promise<{ job: AiJob; token: string }> {
-    if (clip.buffer.byteLength > PROFILE_VIDEO_MAX_BYTES) {
-      throw badRequest('video exceeds the 50MB limit', 'video_too_large');
-    }
-    const validation = validateUploadedFile({
-      buffer: clip.buffer,
-      originalname: clip.filename,
-      mimetype: clip.mimetype,
-      // The recorder sends the sound-only track when it has one, else the video.
-      allowedMimes: [...ALLOWED_PROFILE_VIDEO_MIMES, ...ALLOWED_VOICE_AUDIO_MIMES],
-    });
-    if (!validation.ok) {
-      throw badRequest(validation.error, validation.error);
-    }
-
-    await this.sweepStaleClips();
-
-    const savedFilename = await saveMediaFile(ONBOARDING_CLIPS_DIR, clip.buffer, validation.ext);
-    const token = randomBytes(24).toString('hex');
     try {
-      const job = await this.deps.aiJobs.createJob(null, {
-        type: 'ANALYZE_VIDEO',
-        payload: {
-          mediaPath: `onboarding-clips/${savedFilename}`,
-          uiLocale,
-          deleteAfter: true,
-          accessToken: token,
-        },
+      if (clip.buffer.byteLength > PROFILE_VIDEO_MAX_BYTES) {
+        throw badRequest('video exceeds the 50MB limit', 'video_too_large');
+      }
+      const validation = validateUploadedFile({
+        buffer: clip.buffer,
+        originalname: clip.filename,
+        mimetype: clip.mimetype,
+        // The recorder sends the sound-only track when it has one, else the video.
+        allowedMimes: [...ALLOWED_PROFILE_VIDEO_MIMES, ...ALLOWED_VOICE_AUDIO_MIMES],
       });
-      return { job, token };
+      if (!validation.ok) {
+        throw badRequest(validation.error, validation.error);
+      }
+
+      await this.sweepStaleClips();
+
+      const savedFilename = await saveMediaFile(ONBOARDING_CLIPS_DIR, clip.buffer, validation.ext);
+      const token = randomBytes(24).toString('hex');
+      try {
+        const job = await this.deps.aiJobs.createJob(null, {
+          type: 'ANALYZE_VIDEO',
+          payload: {
+            mediaPath: `onboarding-clips/${savedFilename}`,
+            uiLocale,
+            deleteAfter: true,
+            accessToken: token,
+          },
+        });
+        return { job, token };
+      } catch (err) {
+        await deleteMediaFile(ONBOARDING_CLIPS_DIR, savedFilename);
+        throw err;
+      }
     } catch (err) {
-      await deleteMediaFile(ONBOARDING_CLIPS_DIR, savedFilename);
       throw err;
     }
   }
 
   /** The anonymous ANALYZE_VIDEO job matching this id and token, or null. */
   async getClipStatus(jobId: string, token: string): Promise<AiJob | null> {
-    const job = await this.deps.prisma.aiJob.findUnique({ where: { id: jobId } });
-    if (!job || job.type !== 'ANALYZE_VIDEO' || job.userId !== null) return null;
-    const payload = (job.payload ?? {}) as Record<string, unknown>;
-    if (!sameToken(payload.accessToken, token)) return null;
-    return job;
+    try {
+      const job = await this.deps.prisma.aiJob.findUnique({ where: { id: jobId } });
+      if (!job || job.type !== 'ANALYZE_VIDEO' || job.userId !== null) return null;
+      const payload = (job.payload ?? {}) as Record<string, unknown>;
+      if (!sameToken(payload.accessToken, token)) return null;
+      return job;
+    } catch (err) {
+      throw err;
+    }
   }
 
   /** Best effort: removes clips the worker never got to (queue down, job failed for good). */

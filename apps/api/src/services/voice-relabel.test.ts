@@ -72,6 +72,17 @@ describe('VoiceRelabelService', () => {
     });
   });
 
+  it('reports 503 when the voice service answers something that is not JSON', async () => {
+    const service = new VoiceRelabelService(
+      'http://voice-ai:8001',
+      vi.fn().mockResolvedValue(new Response('<html>Bad gateway</html>', { status: 200 })),
+    );
+
+    await expect(service.relabel({ values: {}, uiLocale: 'fr' })).rejects.toMatchObject({
+      statusCode: 503,
+    });
+  });
+
   it('falls back to localhost when host.docker.internal does not resolve (API on the host)', async () => {
     const fetchMock = vi
       .fn()

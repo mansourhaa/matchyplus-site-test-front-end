@@ -11,12 +11,14 @@ import {
   startOnboardingVideoAnalysisSchema,
 } from '../../../schemas/v1/index.js';
 import { AiJobsService } from '../../../services/ai-jobs.js';
-import { VideoAnalysisLocale, VideoAnalysisService } from '../../../services/video-analysis.js';
-import { RelabelRequest, VoiceRelabelService } from '../../../services/voice-relabel.js';
+import { VideoAnalysisService } from '../../../services/video-analysis.js';
+import { VoiceRelabelService } from '../../../services/voice-relabel.js';
 import {
   OnboardingVideoAnalysisParams,
   OnboardingVideoAnalysisQuery,
+  RelabelOnboardingFieldsBody,
   StartOnboardingVideoAnalysisBody,
+  VideoAnalysisLocale,
 } from '../../../types/video-analysis.js';
 import { badRequest, notFound } from '../../../utils/http-errors.js';
 
@@ -96,14 +98,18 @@ const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
       config: { rateLimit: ONBOARDING_VIDEO_ANALYSIS_POLL_RATE_LIMIT },
     },
     async (request, reply) => {
-      const job = await videoAnalysis.getClipStatus(request.params.jobId, request.query.token);
-      if (!job) throw notFound('video analysis job not found', 'job_not_found');
-      reply.header('Cache-Control', 'private, no-store');
-      return reply.code(200).send({ job: serializeJob(job) });
+      try {
+        const job = await videoAnalysis.getClipStatus(request.params.jobId, request.query.token);
+        if (!job) throw notFound('video analysis job not found', 'job_not_found');
+        reply.header('Cache-Control', 'private, no-store');
+        return reply.code(200).send({ job: serializeJob(job) });
+      } catch (err) {
+        throw err;
+      }
     },
   );
 
-  fastify.post<{ Body: RelabelRequest }>(
+  fastify.post<{ Body: RelabelOnboardingFieldsBody }>(
     '/relabel',
     {
       schema: relabelOnboardingFieldsSchema,

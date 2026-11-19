@@ -9,11 +9,14 @@ from app.processors import get_processor
 
 
 class FakeResponse:
-    def __init__(self, status_code: int, body: dict):
+    def __init__(self, status_code: int, body: dict | None, text: str = ""):
         self.status_code = status_code
         self._body = body
+        self.text = text
 
     def json(self) -> dict:
+        if self._body is None:
+            raise ValueError("not JSON")
         return self._body
 
 
@@ -78,6 +81,17 @@ def test_voice_ai_down_raises_for_retry(video, monkeypatch):
         lambda url, **kw: FakeResponse(503, {"ok": False, "detail": "loading"}),
     )
     with pytest.raises(RuntimeError):
+        get_processor("ANALYZE_VIDEO")({"mediaPath": "videos/intro.webm"})
+    assert video.exists()  # kept for the retry
+
+
+def test_non_json_error_page_raises_a_clear_error_for_retry(video, monkeypatch):
+    monkeypatch.setattr(
+        httpx,
+        "post",
+        lambda url, **kw: FakeResponse(502, None, "<html>502 Bad Gateway</html>"),
+    )
+    with pytest.raises(RuntimeError, match="voice-ai 502: <html>502 Bad Gateway"):
         get_processor("ANALYZE_VIDEO")({"mediaPath": "videos/intro.webm"})
     assert video.exists()  # kept for the retry
 

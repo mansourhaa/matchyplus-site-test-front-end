@@ -1,35 +1,11 @@
-import { VideoAnalysisLocale } from './video-analysis.js';
+import {
+  RELABEL_FIELDS,
+  RelabelOnboardingFieldsBody,
+  RelabelOnboardingFieldsResponse,
+} from '../types/video-analysis.js';
 
-/** Text fields the voice service can rewrite in another page language. */
-export const RELABEL_FIELDS = [
-  'first_name',
-  'last_name',
-  'profession',
-  'city',
-  'bio',
-  'years_experience',
-  'availability',
-] as const;
-export type RelabelField = (typeof RELABEL_FIELDS)[number];
-
-export type RelabelOption = { value: string; label?: string };
-
-export type RelabelRequest = {
-  values: Partial<Record<RelabelField, string>>;
-  uiLocale: VideoAnalysisLocale;
-  serviceId?: string | null;
-  aiFields?: RelabelField[];
-  /** One-click proposals shown under the fields, rewritten in the new language too. */
-  suggestions?: Partial<Record<RelabelField, RelabelOption[]>>;
-};
-
-export type RelabelledField = { value: string | null; review: boolean };
-
-export type RelabelResponse = {
-  fields: Partial<Record<RelabelField, RelabelledField>>;
-  suggestions: Partial<Record<RelabelField, RelabelOption[]>>;
-  serviceId: string | null;
-};
+export type RelabelRequest = RelabelOnboardingFieldsBody;
+export type RelabelResponse = RelabelOnboardingFieldsResponse;
 
 const DEFAULT_VOICE_AI_URL = 'http://localhost:8001';
 const RELABEL_TIMEOUT_MS = 5000;
@@ -61,62 +37,69 @@ export class VoiceRelabelService {
   ) {}
 
   async relabel(request: RelabelRequest): Promise<RelabelResponse> {
-    const body = JSON.stringify({
-      values: request.values,
-      uiLocale: request.uiLocale,
-      serviceId: request.serviceId ?? null,
-      aiFields: request.aiFields ?? [],
-      suggestions: request.suggestions ?? {},
-    });
-    let response: Response | null = null;
-    for (const base of candidateUrls(this.baseUrl)) {
-      try {
-        response = await this.fetchImpl(`${base}/relabel`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body,
-          signal: AbortSignal.timeout(RELABEL_TIMEOUT_MS),
-        });
-        break;
-      } catch {
-        // Unreachable: try the next address, if any.
+    try {
+      const body = JSON.stringify({
+        values: request.values,
+        uiLocale: request.uiLocale,
+        serviceId: request.serviceId ?? null,
+        aiFields: request.aiFields ?? [],
+        suggestions: request.suggestions ?? {},
+      });
+      let response: Response | null = null;
+      for (const base of candidateUrls(this.baseUrl)) {
+        try {
+          response = await this.fetchImpl(`${base}/relabel`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body,
+            signal: AbortSignal.timeout(RELABEL_TIMEOUT_MS),
+          });
+          break;
+        } catch {
+          // Unreachable: try the next address, if any.
+        }
       }
-    }
-    if (!response) {
-      throw unavailable('voice service unreachable');
-    }
-    if (!response.ok) {
-      throw unavailable(`voice service answered ${response.status}`);
-    }
+      if (!response) {
+        throw unavailable('voice service unreachable');
+      }
+      if (!response.ok) {
+        throw unavailable(`voice service answered ${response.status}`);
+      }
 
-    const data = (await response.json()) as {
-      fields?: Record<string, { value?: unknown; review?: unknown }>;
-      suggestions?: Record<string, { value?: unknown; label?: unknown }[]>;
-      serviceId?: unknown;
-    };
-    const fields: RelabelResponse['fields'] = {};
-    for (const key of RELABEL_FIELDS) {
-      const field = data.fields?.[key];
-      if (!field) continue;
-      fields[key] = {
-        value: typeof field.value === 'string' && field.value.trim() ? field.value : null,
-        review: field.review === true,
+      // A proxy or a crash can answer plain text or HTML: report it as « unavailable ».
+      const data = (await response.json().catch(() => {
+        throw unavailable(`voice service answered ${response.status} without JSON`);
+      })) as {
+        fields?: Record<string, { value?: unknown; review?: unknown }>;
+        suggestions?: Record<string, { value?: unknown; label?: unknown }[]>;
+        serviceId?: unknown;
       };
+      const fields: RelabelResponse['fields'] = {};
+      for (const key of RELABEL_FIELDS) {
+        const field = data.fields?.[key];
+        if (!field) continue;
+        fields[key] = {
+          value: typeof field.value === 'string' && field.value.trim() ? field.value : null,
+          review: field.review === true,
+        };
+      }
+      const suggestions: RelabelResponse['suggestions'] = {};
+      for (const key of RELABEL_FIELDS) {
+        const options = (data.suggestions?.[key] ?? [])
+          .map((option) => ({
+            value: typeof option.value === 'string' ? option.value : '',
+            label: typeof option.label === 'string' ? option.label : undefined,
+          }))
+          .filter((option) => option.value || option.label);
+        if (options.length) suggestions[key] = options;
+      }
+      return {
+        fields,
+        suggestions,
+        serviceId: typeof data.serviceId === 'string' ? data.serviceId : null,
+      };
+    } catch (err) {
+      throw err;
     }
-    const suggestions: RelabelResponse['suggestions'] = {};
-    for (const key of RELABEL_FIELDS) {
-      const options = (data.suggestions?.[key] ?? [])
-        .map((option) => ({
-          value: typeof option.value === 'string' ? option.value : '',
-          label: typeof option.label === 'string' ? option.label : undefined,
-        }))
-        .filter((option) => option.value || option.label);
-      if (options.length) suggestions[key] = options;
-    }
-    return {
-      fields,
-      suggestions,
-      serviceId: typeof data.serviceId === 'string' ? data.serviceId : null,
-    };
   }
 }

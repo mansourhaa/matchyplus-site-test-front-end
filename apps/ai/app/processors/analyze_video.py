@@ -52,7 +52,15 @@ def process_analyze_video(payload: dict[str, Any]) -> dict[str, Any]:
                 "field": payload.get("targetField") or "",
             },
         )
-    body = response.json()
+    # A proxy or a crash can answer plain text or HTML (500/502/504): retry with a clear message.
+    try:
+        body = response.json()
+    except ValueError:
+        raise RuntimeError(
+            f"voice-ai {response.status_code}: {response.text[:200]}"
+        ) from None
+    if not isinstance(body, dict):
+        raise RuntimeError(f"voice-ai {response.status_code}: {str(body)[:200]}")
     if response.status_code == 503:  # voice-ai not ready -> retry later
         raise RuntimeError(body.get("detail") or "AI_UNAVAILABLE")
     if not (body.get("ok") or body.get("error") in BUSINESS_ERRORS):
