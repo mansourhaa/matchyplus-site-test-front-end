@@ -138,6 +138,22 @@ def classify_profile(body: ClassifyIn) -> dict:
     return classify.classify(body.fields, _ui(body.uiLocale))
 
 
+class AgentsFeedIn(BaseModel):
+    me: dict                                    # profil de la personne (champs de l'application)
+    candidates: list[dict] = []                 # profils déjà filtrés par l'API, avec distance_km
+    swipes: list[dict] = []                     # historique : {"direction": "like"|"pass", "at": ISO, "profile": {...}}
+    uiLocale: str = "fr"
+    radiusKm: float | None = None
+
+
+@app.post("/agents/feed")
+def agents_feed(body: AgentsFeedIn) -> dict:
+    """Accueil de l'application : comportement → classification → matching (moteur du chef) → boost vidéo ×3.
+    Sans état : l'API envoie le profil, les candidats et les swipes (voir app/agents.py)."""
+    from .agents import feed
+    return feed(body.me, body.candidates[:400], body.swipes[:500], _ui(body.uiLocale), body.radiusKm)
+
+
 @app.post("/analyze")
 async def analyze(media: UploadFile = File(...), uiLocale: str = Form("fr"), field: str | None = Form(None)):
     """Vidéo ou audio (20 s max) → champs du formulaire dans la langue de la page."""

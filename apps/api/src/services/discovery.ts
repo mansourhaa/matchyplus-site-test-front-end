@@ -16,6 +16,7 @@ import {
 import { notFound } from '../utils/http-errors.js';
 import { computeMatchScore, haversineKm } from '../utils/matching-score.js';
 import { SwipeQuotaService } from './swipe-quota.js';
+import { VoiceAgentsService } from './voice-agents.js';
 
 /**
  * Product discovery: eligibility filters + scripted score.
@@ -24,10 +25,12 @@ import { SwipeQuotaService } from './swipe-quota.js';
 export class DiscoveryService {
   prisma: PrismaClient;
   quota: SwipeQuotaService;
+  agents: VoiceAgentsService;
 
-  constructor(options: AbstractServiceOptions) {
+  constructor(options: AbstractServiceOptions & { agents?: VoiceAgentsService }) {
     this.prisma = options.prisma;
     this.quota = new SwipeQuotaService({ prisma: options.prisma });
+    this.agents = options.agents ?? new VoiceAgentsService({ prisma: options.prisma });
   }
 
   async getSwipeFeed(userId: string, query: DiscoveryFeedQuery = {}) {
@@ -213,6 +216,14 @@ export class DiscoveryService {
       }
 
       scored.sort((a, b) => compareFeedProfiles(a, b, sort));
+
+      // MATCHING_ENGINE=agents: the 2.0.8 agents rank the feed (off by default; on any
+      // problem the built-in order above is kept).
+      const byAgents = await this.agents.rank(userId, scored, radiusM / 1000);
+      if (byAgents) {
+        scored.splice(0, scored.length, ...byAgents);
+        if (sort !== 'match') scored.sort((a, b) => compareFeedProfiles(a, b, sort));
+      }
 
       const page = scored.slice(offset, offset + limit);
       const hasMore = offset + limit < scored.length;

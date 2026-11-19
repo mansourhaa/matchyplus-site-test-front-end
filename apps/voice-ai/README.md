@@ -12,13 +12,14 @@ No cloud API, no API key: speech-to-text runs locally (faster-whisper + a Tunisi
 
 ## Endpoints
 
-| Method | Path                                          | Used by                                                                             |
-| ------ | --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| GET    | `/health`                                     | Docker / compose healthcheck                                                        |
-| POST   | `/analyze`                                    | `apps/ai/app/processors/analyze_video.py` (multipart: `media`, `uiLocale`, `field`) |
-| POST   | `/relabel`                                    | Language switch without AI (dictionaries only)                                      |
-| POST   | `/classify`                                   | Sector classification (10 official sectors)                                         |
-| GET    | `/taxonomy`, `/form-options`, `/convert-name` | Labels and options in the page language                                             |
+| Method | Path                                          | Used by                                                                                                         |
+| ------ | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| GET    | `/health`                                     | Docker / compose healthcheck                                                                                    |
+| POST   | `/analyze`                                    | `apps/ai/app/processors/analyze_video.py` (multipart: `media`, `uiLocale`, `field`)                             |
+| POST   | `/relabel`                                    | Language switch without AI (dictionaries only)                                                                  |
+| POST   | `/classify`                                   | Sector classification (10 official sectors)                                                                     |
+| POST   | `/agents/feed`                                | Home feed ranking by the matching agents, when the API runs with `MATCHING_ENGINE=agents` (see `app/agents.py`) |
+| GET    | `/taxonomy`, `/form-options`, `/convert-name` | Labels and options in the page language                                                                         |
 
 ## Data
 
