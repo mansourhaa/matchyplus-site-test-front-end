@@ -117,9 +117,9 @@ Based on the manager's reference (a live visitors map), rebuilt in the site's th
   Algeria and Morocco are in brand blue (the manager's choice).
 - **Texts (manager's wording):** badge "Acquisition & visibilité internationale", title
   "Matchy+ attire des professionnels dans plusieurs pays". No "active now" wording anywhere.
-- **Counters in the map:** "Présence internationale", the headline number, sits at the top centre
-  of the map; "Audience Matchy+" floats over the South Pacific (positions in `STAT_SPOTS`). No city
-  is under them. They appear one after another, then float gently. On phones, they sit in a row
+- **Counters in the map:** "Présence internationale", the headline number, floats over the South
+  Pacific on the left; "Audience Matchy+" over the Indian Ocean (positions in `STAT_SPOTS`). No
+  city is under them. They appear one after another, then float gently. On phones, they sit in a row
   under the map instead, so they never hide a city.
 - **Cities:** 9 cities pulse on the map. Hovering or tapping one shows its name and number of
   visitors.
@@ -147,7 +147,8 @@ smaller benefit.
 
 ### 6. Company story and partnerships
 
-- **`company-story.tsx`:** the story behind Matchy+ and the founder. It still uses placeholders
+- **`company-story.tsx`:** the story behind Matchy+: the founder's photo
+  (`public/showcase/founder.webp`), quote and story. The quote and name are still placeholders
   (see below).
 - **`partnerships.tsx`:** the partnership offer, a strip of partner logos (placeholders), and a
   link to `/devenir-partenaire/`.
@@ -174,7 +175,7 @@ The sample updates only run while the section is on screen and the tab is visibl
 
 These placeholders are visible on the page today:
 
-1. **Company story:** `[Photo du fondateur]`, `[Prénom Nom]`, `[Phrase forte du fondateur…]`.
+1. **Company story:** `[Prénom Nom]` and `[Phrase forte de la fondatrice…]` (the photo is in place).
 2. **Partnerships:** `[Logo partenaire]`.
 3. **Referral:** Matchy+ has **no referral system yet**. The code, the QR code and the `[X]` /
    `[Y]` points should go live only once the programme exists. Otherwise, hide the block.

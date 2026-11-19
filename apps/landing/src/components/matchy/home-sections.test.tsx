@@ -149,6 +149,13 @@ describe('home sections', () => {
     ).toBeInTheDocument();
   });
 
+  it('CompanyStory shows the founder photo, described for screen readers', () => {
+    renderIn('fr', <CompanyStory />);
+    const photo = screen.getByRole('img', { name: 'Portrait de la fondatrice de Matchy+' });
+    expect(photo.getAttribute('src')).toContain('founder.webp');
+    expect(screen.queryByText('[Photo du fondateur]')).toBeNull();
+  });
+
   it('CompanyStory links to the about page', () => {
     renderIn('en', <CompanyStory />);
     expect(screen.getByRole('link', { name: /Discover our story/ })).toHaveAttribute(

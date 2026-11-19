@@ -19,7 +19,7 @@ export function buildSearchUrl(base: string, service: string, city: string): str
 }
 
 /**
- * Hero search (Sponta style): who you are, then what you need and where.
+ * Hero search: who you are, then what you need and where.
  * For now every path ends on sign-up, carrying the search in the URL.
  */
 export function HeroSearch() {

@@ -3,11 +3,12 @@
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
 import { ArrowRight, Quote } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { Reveal } from './motion';
 
-/** The story behind Matchy+ (Sponta style founder card). Copy stays a placeholder until written. */
+/** The story behind Matchy+: the founder's photo, quote and story. Quote and name still to be written. */
 export function CompanyStory() {
   const { t, locale } = useI18n();
 
@@ -21,9 +22,14 @@ export function CompanyStory() {
         <div className="relative grid grid-cols-1 items-center gap-10 md:grid-cols-[220px_minmax(0,1fr)]">
           <div className="flex flex-col items-center gap-3">
             <div className="from-brand-blue to-brand-teal rounded-full bg-gradient-to-br p-1.5 shadow-xl">
-              <div className="text-muted-foreground grid h-48 w-48 place-items-center rounded-full border-4 border-white bg-[#DCE9F5] p-6 text-center text-sm font-semibold">
-                {t('landing.storyPhoto')}
-              </div>
+              <Image
+                src="/showcase/founder.webp"
+                alt={t('landing.storyPhotoAlt')}
+                width={192}
+                height={192}
+                sizes="192px"
+                className="h-48 w-48 rounded-full border-4 border-white bg-[#DCE9F5] object-cover"
+              />
             </div>
             <span className="text-brand-teal -rotate-3 text-lg font-bold">
               {t('landing.storyEyebrow')}

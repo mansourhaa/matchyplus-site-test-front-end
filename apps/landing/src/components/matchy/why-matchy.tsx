@@ -6,7 +6,7 @@ import Image from 'next/image';
 
 import { Reveal } from './motion';
 
-/** "Before / with Matchy+" comparison, in the style of Mybzz's criteria block. */
+/** "Before / with Matchy+" comparison: finding a pro today vs with Matchy+. */
 export function WhyMatchy() {
   const { t } = useI18n();
   const before = (t('landing.whyBefore') as unknown as string[]) ?? [];

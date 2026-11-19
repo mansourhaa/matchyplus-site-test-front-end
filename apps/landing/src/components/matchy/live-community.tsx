@@ -33,13 +33,13 @@ const ARC_FADE = 0.8;
 const ARC_STAGGER = 0.7;
 
 /**
- * Where the counters float on the map on computers, in % (left / top). Same order as the
- * counters: international presence at the top centre (over the light Arctic, the headline
- * number), audience over the South Pacific (no land under it).
+ * Where the counters float on the map on computers, in % (left / top), over open ocean: no land
+ * or city under them. Same order as the counters: international presence (the headline number)
+ * over the South Pacific, audience over the Indian Ocean.
  */
 const STAT_SPOTS = [
-  { left: 50, top: 1, centered: true },
   { left: 5, top: 62, centered: false },
+  { left: 64, top: 61, centered: false },
 ] as const;
 
 const TOOLTIP_ALIGN = {
