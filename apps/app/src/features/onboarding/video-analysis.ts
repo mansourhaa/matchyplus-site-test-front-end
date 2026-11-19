@@ -389,14 +389,20 @@ export function suggestionsFromAnalysis(
   if (tags.serviceType) suggestions.serviceType = tags.serviceType;
   if (tags.homeService) suggestions.homeService = true;
 
-  const availability = text('availability');
+  // Days, hours and languages are closed lists, easy to change in one tap: like the sector,
+  // a proposed value pre-fills them too (2.0.8 rule for closed lists).
+  const closedList = (key: string) => {
+    const field = sure(result, key) ?? proposed(result, key);
+    return field ? String(field.label || field.value).trim() : undefined;
+  };
+  const availability = closedList('availability');
   if (availability) {
     const { days, hours } = parseAvailability(availability, locale);
     if (days.length) suggestions.availabilityDays = days;
     if (hours.length) suggestions.availabilityHours = hours;
   }
 
-  const languages = text('spoken_languages');
+  const languages = closedList('spoken_languages');
   if (languages) {
     const codes = parseLanguages(languages, locale);
     if (codes.length) suggestions.languages = codes;

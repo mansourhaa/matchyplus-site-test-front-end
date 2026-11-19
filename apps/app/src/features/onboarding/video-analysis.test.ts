@@ -227,3 +227,21 @@ describe('interests added from the video', () => {
     expect(videoInterests(suggestions, 'fr')).toEqual(['Ménage', 'Bricolage']);
   });
 });
+
+describe('closed lists from the video', () => {
+  it('pre-fills days and languages even when the AI only proposes them', () => {
+    const result = {
+      ok: true,
+      profile: {
+        availability: { value: 'السبت، الأحد · صباحًا', status: 'suggest' },
+        spoken_languages: { value: 'العربية، الفرنسية، الإنجليزية', status: 'suggest' },
+      },
+    };
+
+    expect(suggestionsFromAnalysis(result, 'ar')).toMatchObject({
+      availabilityDays: ['Sam', 'Dim'],
+      availabilityHours: ['morning'],
+      languages: ['ar', 'fr', 'en'],
+    });
+  });
+});

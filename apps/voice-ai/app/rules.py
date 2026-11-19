@@ -24,12 +24,22 @@ def light(text: str) -> str:
     return re.sub(r"\s+", " ", t).strip()
 
 
-def _find_word(text_l: str, words: list[str]) -> str | None:
-    """Premier mot ou expression trouvé, en respectant les limites de mots."""
+def _find_word(text_l: str, words: list[str], article: bool = False) -> str | None:
+    """Premier mot ou expression trouvé, en respectant les limites de mots.
+
+    article=True (listes fermées : jours, moments, langues) : accepte aussi l'article et
+    « fi » collés au mot, comme on les dit en derja (« العربي », « فالصباح », « والأحد »).
+    """
     for w in sorted(words, key=len, reverse=True):
         wl = light(w)
+        arabic = bool(re.match(r"[؀-ۿ]", wl or ""))
         # En arabe, « et » se colle au mot : « والفرنسية », « وفرنساوي ».
-        prefix = "(?:و)?" if re.match(r"[؀-ۿ]", wl or "") else ""
+        if arabic and article and not wl.startswith("ال"):
+            prefix = "(?:و)?(?:ف|ب)?(?:ال)?"
+        elif arabic and article:
+            prefix = "(?:و)?(?:ف|ب)?"
+        else:
+            prefix = "(?:و)?" if arabic else ""
         if wl and re.search(rf"(?<!\w){prefix}{re.escape(wl)}(?!\w)", text_l):
             return wl
     return None
@@ -291,7 +301,7 @@ def money(text_l: str, ui: str) -> dict:
 def _codes(text_l: str, table: dict[str, list[str]]) -> tuple[list[str], str | None]:
     codes, ev = [], None
     for code, words in table.items():
-        w = _find_word(text_l, words)
+        w = _find_word(text_l, words, article=True)
         if w:
             codes.append(code)
             ev = ev or w
