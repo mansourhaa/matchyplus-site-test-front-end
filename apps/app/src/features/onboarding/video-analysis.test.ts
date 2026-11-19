@@ -9,6 +9,7 @@ import {
   parseLanguages,
   suggestionsFromAnalysis,
   tagsForService,
+  videoInterests,
 } from './video-analysis';
 
 const fill = (value: string, label?: string) => ({ value, label: label ?? null, status: 'fill' });
@@ -210,5 +211,19 @@ describe('step 2 tags from the job heard in the video', () => {
       serviceType: 'Informatique / Tech',
       proposals: { job: ['مهندسة إعلامية'] },
     });
+  });
+});
+
+describe('interests added from the video', () => {
+  it('writes them in the page language, never in another alphabet', () => {
+    const suggestions = { job: 'عاملة تنظيف', interestTags: ['Ménage', 'Bricolage'] };
+
+    expect(videoInterests(suggestions, 'ar')).toEqual(['عاملة تنظيف', 'نظافة', 'أعمال يدوية']);
+    expect(videoInterests({ ...suggestions, job: 'Housekeeper' }, 'en')).toEqual([
+      'Housekeeper',
+      'Cleaning',
+      'DIY',
+    ]);
+    expect(videoInterests(suggestions, 'fr')).toEqual(['Ménage', 'Bricolage']);
   });
 });

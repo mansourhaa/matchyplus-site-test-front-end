@@ -10,7 +10,7 @@ import {
 } from '@/features/onboarding/constants';
 import { interestsStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile } from '@/features/onboarding/types';
-import type { OnboardingSuggestions } from '@/features/onboarding/video-analysis';
+import { type OnboardingSuggestions, videoInterests } from '@/features/onboarding/video-analysis';
 import { Check, ChevronDown, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -63,7 +63,7 @@ export function InterestsStep({
   onSaveDraft,
   aiSuggestions = null,
 }: InterestsStepProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const isIndividual = (profile?.profile_type ?? 'INDIVIDUAL') === 'INDIVIDUAL';
   const isNewStep = !profile?.interests?.length && !profile?.selected_goals?.length;
 
@@ -99,28 +99,29 @@ export function InterestsStep({
   // After a page-language switch, that interest follows the language.
   const appliedSuggestionsRef = useRef<OnboardingSuggestions | null>(null);
   const goalsTouchedRef = useRef(false);
+  const appliedInterestsRef = useRef<string[]>([]);
   useEffect(() => {
     const suggestions = aiSuggestions;
     if (!suggestions || !hydratedRef.current || appliedSuggestionsRef.current === suggestions) {
       return;
     }
-    const previousJob = appliedSuggestionsRef.current?.job;
     appliedSuggestionsRef.current = suggestions;
+    const previous = appliedInterestsRef.current;
+    const next = videoInterests(suggestions, locale);
+    appliedInterestsRef.current = next;
     setPrice((current) => current || suggestions.price || '');
     setInterests((current) => {
-      if (previousJob && current.includes(previousJob)) {
-        return current.map((entry) => (entry === previousJob ? (suggestions.job ?? entry) : entry));
+      // Same analysis, other page language: the interests it added (not removed since)
+      // follow the language, in the same order.
+      if (previous.length && current.some((entry) => previous.includes(entry))) {
+        return current
+          .map((entry) => {
+            const index = previous.indexOf(entry);
+            return index === -1 ? entry : next[index];
+          })
+          .filter((entry): entry is string => Boolean(entry));
       }
-      if (current.length) return current;
-      const fromVideo = [suggestions.job, ...(suggestions.interestTags ?? [])].filter(
-        (entry): entry is string => Boolean(entry),
-      );
-      return fromVideo
-        .filter(
-          (entry, index) =>
-            fromVideo.findIndex((other) => other.toLowerCase() === entry.toLowerCase()) === index,
-        )
-        .slice(0, MAX_INTERESTS);
+      return current.length ? current : next.slice(0, MAX_INTERESTS);
     });
     // Goals the person has not touched yet: every goal of their profile type, and home
     // service when the job heard in the video is one.
@@ -131,7 +132,7 @@ export function InterestsStep({
       setServiceType((current) => current || suggestions.serviceType || '');
       if (suggestions.offerService && isNewStep) setOfferService(true);
     }
-  }, [aiSuggestions, profile, isIndividual, isNewStep]);
+  }, [aiSuggestions, profile, isIndividual, isNewStep, locale]);
 
   // "Offrir un service" only applies to INDIVIDUAL (Employé) profiles — matching the
   // old app's Inscription2, which hides this card entirely for Employeur.

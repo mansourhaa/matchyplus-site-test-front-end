@@ -535,3 +535,34 @@ export function keepPageScript(
   else delete next.proposals;
   return next;
 }
+
+/** The catalogue interests in the page language (the catalogue itself is in French). */
+const INTEREST_LABELS: Record<string, Record<Locale, string>> = {
+  Bricolage: { fr: 'Bricolage', ar: 'أعمال يدوية', en: 'DIY' },
+  Jardinage: { fr: 'Jardinage', ar: 'بستنة', en: 'Gardening' },
+  Enfants: { fr: 'Enfants', ar: 'أطفال', en: 'Children' },
+  Ménage: { fr: 'Ménage', ar: 'نظافة', en: 'Cleaning' },
+  Cuisine: { fr: 'Cuisine', ar: 'طبخ', en: 'Cooking' },
+  Informatique: { fr: 'Informatique', ar: 'إعلامية', en: 'IT' },
+  Traduction: { fr: 'Traduction', ar: 'ترجمة', en: 'Translation' },
+  Graphisme: { fr: 'Graphisme', ar: 'تصميم جرافيكي', en: 'Graphic design' },
+  Marketing: { fr: 'Marketing', ar: 'تسويق', en: 'Marketing' },
+  Comptabilité: { fr: 'Comptabilité', ar: 'محاسبة', en: 'Accounting' },
+  Transport: { fr: 'Transport', ar: 'نقل', en: 'Transport' },
+  Déménagement: { fr: 'Déménagement', ar: 'نقل الأثاث', en: 'Moving' },
+  Plomberie: { fr: 'Plomberie', ar: 'سباكة', en: 'Plumbing' },
+  Électricité: { fr: 'Électricité', ar: 'كهرباء', en: 'Electricity' },
+  Peinture: { fr: 'Peinture', ar: 'دهن', en: 'Painting' },
+};
+
+/** Interests added from the video, written in the page language: the job, then the tags. */
+export function videoInterests(suggestions: OnboardingSuggestions, locale: Locale): string[] {
+  const labels = [
+    suggestions.job,
+    ...(suggestions.interestTags ?? []).map((tag) => INTEREST_LABELS[tag]?.[locale] ?? tag),
+  ].filter((entry): entry is string => Boolean(entry) && inPageScript(entry as string, locale));
+  return labels.filter(
+    (entry, index) =>
+      labels.findIndex((other) => other.toLowerCase() === entry.toLowerCase()) === index,
+  );
+}
