@@ -30,7 +30,7 @@ import {
   useState,
 } from 'react';
 
-import { type BeltService, toProfiles, toServices } from './belt-data';
+import { type BeltService, personTag, toProfiles, toServices } from './belt-data';
 import { type BeltRadii, angleToFront, beltPose, frontIndex } from './belt-geometry';
 import { BeltMatchDialog } from './belt-match-dialog';
 import { BeltProfileCard, confidenceTier } from './belt-profile-card';
@@ -73,7 +73,7 @@ function BeltPerson({
   isRtl,
   entered,
   label,
-  hint,
+  tag,
   onOpen,
   buttonRef,
 }: {
@@ -89,7 +89,8 @@ function BeltPerson({
   isRtl: boolean;
   entered: boolean;
   label: string;
-  hint: string;
+  /** Name and price shown beside the pro on hover, before the click. */
+  tag: string;
   onOpen: (index: number) => void;
   buttonRef: (node: HTMLButtonElement | null) => void;
 }) {
@@ -168,12 +169,13 @@ function BeltPerson({
             className="h-full w-full object-contain object-bottom select-none"
           />
         </span>
+        {/* hover tag beside the chest: name and price, before the click */}
         {!selected && (
           <span
             aria-hidden="true"
-            className="bg-brand-navy absolute -top-2 left-1/2 -translate-x-1/2 translate-y-1 rounded px-2.5 py-1 font-mono text-[11px] tracking-wider whitespace-nowrap text-white uppercase opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
+            className="border-brand-navy text-brand-navy absolute top-[34%] translate-y-1 rounded-[3px] border bg-white px-2 py-1 font-mono text-[11px] font-semibold tracking-wider whitespace-nowrap uppercase opacity-0 shadow-sm transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 ltr:left-[58%] rtl:right-[58%]"
           >
-            {hint}
+            {tag}
           </span>
         )}
       </motion.button>
@@ -453,28 +455,36 @@ export function ServicesBelt() {
               ));
             })()}
 
-            {services.map((service, i) => (
-              <BeltPerson
-                key={service.code}
-                service={service}
-                index={i}
-                count={count}
-                angle={angle}
-                motionBlur={motionBlur}
-                size={size}
-                selected={selected === i}
-                hidden={selected !== null && selected !== i}
-                wide={wide}
-                isRtl={isRtl}
-                entered={entered}
-                label={t('landing.beltSelect', { service: service.title })}
-                hint={t('landing.beltOpenCard')}
-                onOpen={open}
-                buttonRef={(node) => {
-                  personRefs.current[i] = node;
-                }}
-              />
-            ))}
+            {services.map((service, i) => {
+              const profile = profiles[service.code];
+              const tag = personTag(
+                profile,
+                t('landing.beltPrice', { price: profile?.price ?? '' }),
+                service.title,
+              );
+              return (
+                <BeltPerson
+                  key={service.code}
+                  service={service}
+                  index={i}
+                  count={count}
+                  angle={angle}
+                  motionBlur={motionBlur}
+                  size={size}
+                  selected={selected === i}
+                  hidden={selected !== null && selected !== i}
+                  wide={wide}
+                  isRtl={isRtl}
+                  entered={entered}
+                  label={`${t('landing.beltSelect', { service: service.title })}, ${tag}`}
+                  tag={tag}
+                  onOpen={open}
+                  buttonRef={(node) => {
+                    personRefs.current[i] = node;
+                  }}
+                />
+              );
+            })}
           </motion.div>
         )}
 

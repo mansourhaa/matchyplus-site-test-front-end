@@ -57,3 +57,15 @@ export function toServices(rows: unknown): BeltService[] {
     return image ? [{ code, title, description, items, image }] : [];
   });
 }
+
+/**
+ * Hover tag of a pro on the belt, e.g. "Youssef B. · 25 DT/h". Without a profile, the trade
+ * name is shown instead.
+ */
+export function personTag(
+  profile: BeltProfile | undefined,
+  priceLabel: string,
+  fallback: string,
+): string {
+  return profile ? `${profile.name} · ${priceLabel}` : fallback;
+}

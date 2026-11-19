@@ -1,7 +1,7 @@
 import { SUPPORTED_LOCALES, getMessage, messages } from '@/features/i18n/messages';
 import { describe, expect, it } from 'vitest';
 
-import { SERVICE_IMAGES, toProfiles, toServices } from './belt-data';
+import { SERVICE_IMAGES, personTag, toProfiles, toServices } from './belt-data';
 import { swipeDirection } from './hero-live-phone';
 
 describe('toProfiles', () => {
@@ -71,5 +71,15 @@ describe('swipeDirection', () => {
     expect(cycle).toContain(-1);
     expect(cycle).toContain(1);
     expect(swipeDirection(6)).toBe(swipeDirection(1));
+  });
+});
+
+describe('personTag', () => {
+  it('shows the name and the price, or the trade without a profile', () => {
+    const profiles = toProfiles([
+      ['PLB', 'Youssef B.', '27', '2,4', '4,8', '132', '88', '25', 'Plombier.'],
+    ]);
+    expect(personTag(profiles.PLB, '25 DT/h', 'Plombier')).toBe('Youssef B. · 25 DT/h');
+    expect(personTag(undefined, '', 'Plombier')).toBe('Plombier');
   });
 });

@@ -77,6 +77,9 @@ All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `e
   cleaner, delivery, cook, seamstress, gardener, waiter) on a white stage, like the rest of the
   site. You can drag it, click a person, or use the keyboard. At the manager's request there is no
   numbered index on the side.
+- **Hover tag:** before the click, hovering a person shows a small white tag beside them with their
+  name and hourly price ("Youssef B. · 25 DT/h", built by `personTag` in `belt-data.ts`). The same
+  text is part of the person's accessible name, so screen readers hear it too.
 - **Picking a pro:** clicking one opens their profile card (`belt-profile-card.tsx`) with
   app-style "Passer" / "Connecter" buttons.
   - "Connecter" opens a match screen (`belt-match-dialog.tsx`). It has a focus trap, and Escape
