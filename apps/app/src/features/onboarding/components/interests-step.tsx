@@ -10,12 +10,15 @@ import {
 } from '@/features/onboarding/constants';
 import { interestsStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile } from '@/features/onboarding/types';
+import type { OnboardingSuggestions } from '@/features/onboarding/video-analysis';
 import { Check, ChevronDown, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { OnboardingStepLayout, StepCard, StepCtaRow, StepProgress } from './onboarding-step-layout';
 
 type InterestsStepProps = {
+  /** Fields found in the profile video (identity step); used only for empty fields. */
+  aiSuggestions?: OnboardingSuggestions | null;
   profile: OnboardingProfile | null;
   stepNumber: number;
   totalSteps: number;
@@ -31,6 +34,25 @@ type InterestsStepProps = {
   onSaveDraft?: (patch: Partial<OnboardingProfile>) => void;
 };
 
+/** Goals: what the person saved, or for a new step a default from the profile type —
+ * someone offering services is looking for work, someone looking for a service is hiring. */
+function initialGoals(
+  profile: OnboardingProfile | null | undefined,
+  isNewStep: boolean,
+  isIndividual: boolean,
+): string[] {
+  if (profile?.selected_goals?.length || !isNewStep) return profile?.selected_goals ?? [];
+  return [isIndividual ? 'Trouver un job' : "Recruter quelqu'un"];
+}
+
+/** Goals pre-filled from the video analysis (the most the profile type allows). */
+function videoGoals(isIndividual: boolean, homeService: boolean): string[] {
+  const goals = isIndividual
+    ? ['Trouver un job', 'Proposer mes services', 'Travailler comme prestataire']
+    : ["Recruter quelqu'un", 'Demander un service', 'Trouver un prestataire'];
+  return homeService ? [...goals, 'Service à domicile'] : goals;
+}
+
 export function InterestsStep({
   profile,
   stepNumber,
@@ -39,6 +61,7 @@ export function InterestsStep({
   onNext,
   onBack,
   onSaveDraft,
+  aiSuggestions = null,
 }: InterestsStepProps) {
   const { t } = useI18n();
   const isIndividual = (profile?.profile_type ?? 'INDIVIDUAL') === 'INDIVIDUAL';
@@ -47,7 +70,9 @@ export function InterestsStep({
   const [interests, setInterests] = useState<string[]>(profile?.interests ?? []);
   const [interestInput, setInterestInput] = useState('');
   const [lastRemovedInterest, setLastRemovedInterest] = useState<string | null>(null);
-  const [selectedGoals, setSelectedGoals] = useState<string[]>(profile?.selected_goals ?? []);
+  const [selectedGoals, setSelectedGoals] = useState<string[]>(
+    initialGoals(profile, isNewStep, isIndividual),
+  );
   const [offerService, setOfferService] = useState(
     isNewStep ? isIndividual : (profile?.offer_service ?? false),
   );
@@ -63,11 +88,50 @@ export function InterestsStep({
     if (hydratedRef.current || !profile) return;
     hydratedRef.current = true;
     setInterests(profile.interests ?? []);
-    setSelectedGoals(profile.selected_goals ?? []);
+    setSelectedGoals(initialGoals(profile, isNewStep, isIndividual));
     setOfferService(isNewStep ? isIndividual : (profile.offer_service ?? false));
     setServiceType(profile.service_type ?? '');
     setPrice(profile.price ?? '');
   }, [profile, isNewStep, isIndividual]);
+
+  // AI autofill from the profile video (identity step), only where the person left it empty:
+  // the price, and the job heard in the video as the first interest (as in the 2.0.8 demo).
+  // After a page-language switch, that interest follows the language.
+  const appliedSuggestionsRef = useRef<OnboardingSuggestions | null>(null);
+  const goalsTouchedRef = useRef(false);
+  useEffect(() => {
+    const suggestions = aiSuggestions;
+    if (!suggestions || !hydratedRef.current || appliedSuggestionsRef.current === suggestions) {
+      return;
+    }
+    const previousJob = appliedSuggestionsRef.current?.job;
+    appliedSuggestionsRef.current = suggestions;
+    setPrice((current) => current || suggestions.price || '');
+    setInterests((current) => {
+      if (previousJob && current.includes(previousJob)) {
+        return current.map((entry) => (entry === previousJob ? (suggestions.job ?? entry) : entry));
+      }
+      if (current.length) return current;
+      const fromVideo = [suggestions.job, ...(suggestions.interestTags ?? [])].filter(
+        (entry): entry is string => Boolean(entry),
+      );
+      return fromVideo
+        .filter(
+          (entry, index) =>
+            fromVideo.findIndex((other) => other.toLowerCase() === entry.toLowerCase()) === index,
+        )
+        .slice(0, MAX_INTERESTS);
+    });
+    // Goals the person has not touched yet: every goal of their profile type, and home
+    // service when the job heard in the video is one.
+    if (!goalsTouchedRef.current && isNewStep) {
+      setSelectedGoals(videoGoals(isIndividual, Boolean(suggestions.homeService)));
+    }
+    if (isIndividual) {
+      setServiceType((current) => current || suggestions.serviceType || '');
+      if (suggestions.offerService && isNewStep) setOfferService(true);
+    }
+  }, [aiSuggestions, profile, isIndividual, isNewStep]);
 
   // "Offrir un service" only applies to INDIVIDUAL (Employé) profiles — matching the
   // old app's Inscription2, which hides this card entirely for Employeur.
@@ -98,6 +162,7 @@ export function InterestsStep({
   };
 
   const toggleGoal = (goal: string) => {
+    goalsTouchedRef.current = true;
     setSelectedGoals((current) =>
       current.includes(goal) ? current.filter((value) => value !== goal) : [...current, goal],
     );
@@ -133,7 +198,10 @@ export function InterestsStep({
   // Show a short suggestion row, but put a just-removed catalog tag first so deleting
   // an interest immediately returns it to the visible suggestions (instead of staying
   // buried past .slice(0, 4)).
-  const unusedSuggestions = INTERESTS_SUGGESTIONS.filter(
+  const unusedSuggestions = [
+    ...(aiSuggestions?.proposals?.job ?? []),
+    ...INTERESTS_SUGGESTIONS,
+  ].filter(
     (suggestion) => !interests.some((entry) => entry.toLowerCase() === suggestion.toLowerCase()),
   );
   const suggestions = [

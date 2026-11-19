@@ -75,7 +75,6 @@ describe('InterestsStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton('Trouver un emploi'));
     fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
@@ -100,6 +99,8 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
+    // A new INDIVIDUAL step starts with its default goal: remove it.
+    fireEvent.click(firstButton('Trouver un emploi'));
     fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
@@ -136,7 +137,6 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un emploi'));
     fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
@@ -161,7 +161,6 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un emploi'));
     selectServiceType('Chauffeur / Transport');
     fireEvent.click(continueButton());
 
@@ -185,7 +184,6 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un emploi'));
     // New INDIVIDUAL steps default offer-service on — turn it off for this case.
     fireEvent.click(screen.getAllByRole('switch')[0]);
     fireEvent.click(continueButton());
@@ -213,7 +211,6 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un emploi'));
     selectServiceType('Chauffeur / Transport');
     fireEvent.change(firstPlaceholder('Montant'), { target: { value: '50' } });
     fireEvent.click(continueButton());
@@ -263,5 +260,136 @@ describe('InterestsStep', () => {
     );
 
     expect(screen.getAllByText('Bricolage').length).toBeGreaterThan(0);
+  });
+
+  it('pre-fills an empty price from the profile video analysis', () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={{ ...baseProfile, offer_service: true }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+        aiSuggestions={{ price: '20' }}
+      />,
+    );
+
+    fireEvent.click(firstButton('+ Bricolage'));
+    selectServiceType('Chauffeur / Transport');
+    fireEvent.click(continueButton());
+
+    expect(onNext).toHaveBeenCalledWith(expect.objectContaining({ price: '20' }));
+  });
+
+  it('starts a new step with a default goal from the profile type', () => {
+    const { unmount } = renderStep(
+      <InterestsStep
+        profile={baseProfile}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+    expect(firstButton('Trouver un emploi').textContent).toBe('Trouver un emploi');
+    expect(firstButton('Trouver un emploi').style.fontWeight).toBe('700');
+    unmount();
+
+    renderStep(
+      <InterestsStep
+        profile={{ ...baseProfile, profile_type: 'PROVIDER' }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+    expect(firstButton('Recruter un collaborateur').style.fontWeight).toBe('700');
+    expect(firstButton('Trouver un emploi').style.fontWeight).toBe('400');
+  });
+
+  it('pre-fills interests and goals from the video, and proposes the other jobs', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={baseProfile}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+        aiSuggestions={{
+          job: 'Aide ménagère',
+          interestTags: ['Ménage'],
+          homeService: true,
+          proposals: { job: ['Femme de ménage'] },
+        }}
+      />,
+    );
+
+    fireEvent.click(firstButton('+ Femme de ménage'));
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    fireEvent.click(continueButton());
+
+    expect(onNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        interests: ['Aide ménagère', 'Ménage', 'Femme de ménage'],
+        selectedGoals: [
+          'Trouver un job',
+          'Proposer mes services',
+          'Travailler comme prestataire',
+          'Service à domicile',
+        ],
+      }),
+    );
+  });
+
+  it('pre-fills the service type from the video for someone offering services', () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={baseProfile}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+        aiSuggestions={{ job: 'Aide ménagère', serviceType: 'Aide ménagère', price: '20' }}
+      />,
+    );
+
+    fireEvent.click(continueButton());
+
+    expect(onNext).toHaveBeenCalledWith(
+      expect.objectContaining({ offerService: true, serviceType: 'Aide ménagère', price: '20' }),
+    );
+  });
+
+  it('keeps the goals the person chose', () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={{
+          ...baseProfile,
+          interests: ['Cuisine'],
+          selected_goals: ['Trouver des missions'],
+        }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+        aiSuggestions={{ job: 'Aide ménagère', homeService: true }}
+      />,
+    );
+    fireEvent.click(continueButton());
+
+    expect(onNext).toHaveBeenCalledWith(
+      expect.objectContaining({ interests: ['Cuisine'], selectedGoals: ['Trouver des missions'] }),
+    );
   });
 });

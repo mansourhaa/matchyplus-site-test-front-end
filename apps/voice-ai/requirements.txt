@@ -1,0 +1,9 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+httpx>=0.27
+rapidfuzz>=3.9
+faster-whisper>=1.1
+vosk>=0.3.45
+huggingface_hub>=0.25
+scikit-learn>=1.4

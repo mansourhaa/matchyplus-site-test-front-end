@@ -3,8 +3,11 @@ import { configureStore } from '@reduxjs/toolkit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import onboardingReducer, {
+  analyzeProfileVideo,
+  clearVideoAnalysis,
   completeOnboarding,
   fetchOnboardingProfile,
+  relabelVideoAnalysis,
   updateOnboardingProfile,
 } from './onboarding-slice';
 
@@ -138,5 +141,160 @@ describe('onboarding-slice', () => {
 
       expect(store.getState().onboarding.profile).toEqual(profile);
     });
+  });
+});
+
+const clip = () => new File([new Uint8Array([1, 2, 3])], 'clip.webm', { type: 'video/webm' });
+
+describe('onboarding-slice video analysis', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('sends the clip before any account exists, polls with its token and keeps only sure fields', async () => {
+    vi.useFakeTimers();
+    vi.mocked(api.post).mockResolvedValue({
+      data: { job: { id: 'job-1', status: 'QUEUED', result: null, error: null }, token: 't0k3n' },
+    });
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        job: {
+          id: 'job-1',
+          status: 'SUCCEEDED',
+          error: null,
+          result: {
+            ok: true,
+            profile: {
+              profession: { value: 'menage.aide_menagere', label: 'Aide ménagère', status: 'fill' },
+              first_name: { value: 'Hela', status: 'suggest' },
+            },
+          },
+        },
+      },
+    });
+    const store = buildStore();
+
+    const pending = store.dispatch(analyzeProfileVideo({ file: clip(), uiLocale: 'fr' }));
+    expect(store.getState().onboarding.videoAnalysis!.status).toBe('running');
+    await vi.runAllTimersAsync();
+    await pending;
+
+    const [url, form] = vi.mocked(api.post).mock.calls[0] as [string, FormData];
+    expect(url).toBe('/onboarding/video-analysis');
+    expect(form.get('uiLocale')).toBe('fr');
+    expect(form.get('video')).toBeInstanceOf(File);
+    expect(api.get).toHaveBeenCalledWith('/onboarding/video-analysis/job-1', {
+      params: { token: 't0k3n' },
+    });
+    expect(store.getState().onboarding.videoAnalysis!).toMatchObject({
+      status: 'succeeded',
+      suggestions: { job: 'Aide ménagère' },
+    });
+  });
+
+  it('ends in failed when the worker could not analyse the video', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      data: {
+        job: {
+          id: 'job-2',
+          status: 'SUCCEEDED',
+          error: null,
+          result: { ok: false, error: 'NO_SPEECH_DETECTED' },
+        },
+        token: 't0k3n',
+      },
+    });
+    const store = buildStore();
+
+    await store.dispatch(analyzeProfileVideo({ file: clip(), uiLocale: 'ar' }));
+
+    expect(store.getState().onboarding.videoAnalysis!).toMatchObject({
+      status: 'failed',
+      error: 'NO_SPEECH_DETECTED',
+    });
+  });
+
+  it('ignores a late answer after the video was removed', async () => {
+    let answer: (value: unknown) => void = () => undefined;
+    vi.mocked(api.post).mockReturnValue(new Promise((resolve) => (answer = resolve)) as never);
+    const store = buildStore();
+
+    const pending = store.dispatch(analyzeProfileVideo({ file: clip(), uiLocale: 'fr' }));
+    store.dispatch(clearVideoAnalysis());
+    answer({
+      data: {
+        job: {
+          id: 'job-3',
+          status: 'SUCCEEDED',
+          error: null,
+          result: { ok: true, profile: { city: { value: 'Sousse', status: 'fill' } } },
+        },
+        token: 't0k3n',
+      },
+    });
+    await pending;
+
+    expect(store.getState().onboarding.videoAnalysis!.status).toBe('idle');
+    expect(store.getState().onboarding.videoAnalysis!.suggestions).toBeNull();
+  });
+
+  it('switches the page language with the dictionaries, then gives the first language back', async () => {
+    vi.mocked(api.post)
+      .mockResolvedValueOnce({
+        data: {
+          job: {
+            id: 'job-4',
+            status: 'SUCCEEDED',
+            error: null,
+            result: {
+              ok: true,
+              profile: {
+                profession: {
+                  value: 'menage.aide_menagere',
+                  label: 'معينة منزلية',
+                  status: 'fill',
+                },
+                city: { value: 'سوسة', status: 'fill' },
+                sector_id: { value: 2, status: 'fill' },
+              },
+            },
+          },
+          token: 't0k3n',
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          fields: {
+            profession: { value: 'Aide ménagère', review: false },
+            city: { value: 'Sousse', review: false },
+          },
+        },
+      });
+    const store = buildStore();
+    await store.dispatch(analyzeProfileVideo({ file: clip(), uiLocale: 'ar' }));
+    const arabic = store.getState().onboarding.videoAnalysis!.suggestions;
+
+    await store.dispatch(relabelVideoAnalysis('fr'));
+
+    expect(vi.mocked(api.post).mock.calls[1]).toEqual([
+      '/onboarding/relabel',
+      {
+        values: { profession: 'معينة منزلية', city: 'سوسة' },
+        uiLocale: 'fr',
+        serviceId: 'menage.aide_menagere',
+        aiFields: ['profession', 'city'],
+        suggestions: {},
+      },
+    ]);
+    expect(store.getState().onboarding.videoAnalysis!).toMatchObject({
+      locale: 'fr',
+      suggestions: { job: 'Aide ménagère', city: 'Sousse', industry: arabic?.industry },
+    });
+
+    await store.dispatch(relabelVideoAnalysis('ar'));
+
+    expect(api.post).toHaveBeenCalledTimes(2);
+    expect(store.getState().onboarding.videoAnalysis!.suggestions).toEqual(arabic);
   });
 });

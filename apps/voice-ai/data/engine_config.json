@@ -1,0 +1,131 @@
+{
+  "_doc": "Configuration versionnée du moteur de matching (doc v2 §8 : poids et seuils injectés par configuration, somme des poids = 1,00). Source : AIMatchingEngine.ts + MatchyPlus_Documentation_Fonctionnelle_Technique_Moteur_IA_v2 + Documentation_fonctionnelle_algorithme_IA (9 nov. 2026).",
+  "engineVersion": "2.1.0",
+  "weights": {
+    "interests": 0.28,
+    "geo": 0.22,
+    "goals": 0.18,
+    "availability": 0.12,
+    "language": 0.1,
+    "quality": 0.1
+  },
+  "confidence": {
+    "high": 75,
+    "medium": 55
+  },
+  "scoreTier": {
+    "teal": 80,
+    "blue": 65,
+    "orange": 50
+  },
+  "defaultRadiusKm": 10,
+  "geoExponent": 1.6,
+  "neutral": {
+    "goals": 50,
+    "availabilityDays": 0.5,
+    "availabilityHours": 0.5,
+    "language": 60,
+    "quality": 50
+  },
+  "behavior": {
+    "categoryLike": 0.12,
+    "categoryPass": -0.06,
+    "tagLike": 0.05,
+    "tagPass": -0.02,
+    "min": 0.3,
+    "max": 2.0,
+    "multiplierMin": 0.6,
+    "multiplierMax": 1.4,
+    "historySize": 50,
+    "personalizedAfter": 5,
+    "eliminateJobAfterPasses": null,
+    "eliminationDays": 30
+  },
+  "plans": {
+    "free": {
+      "dailyActions": 10,
+      "countedActions": ["like", "pass"],
+      "visibleInSearch": 3,
+      "detailedScore": false,
+      "topPicks": false,
+      "boost": 1,
+      "likedMeFilter": false
+    },
+    "premium": {
+      "dailyActions": null,
+      "countedActions": [],
+      "visibleInSearch": null,
+      "detailedScore": true,
+      "topPicks": false,
+      "boost": 2,
+      "likedMeFilter": false
+    },
+    "premium_plus": {
+      "dailyActions": null,
+      "countedActions": [],
+      "visibleInSearch": null,
+      "detailedScore": true,
+      "topPicks": true,
+      "boost": 5,
+      "likedMeFilter": true
+    }
+  },
+  "_goalMatrixDoc": "GOAL_CATEGORY_MATRIX de AIMatchingEngine.ts, catégories ramenées aux secteurs officiels (Transport→9 ; Ménage, Cuisine, Jardinage, Garde enfants, Plomberie→10 ; Freelance, IT→3), objectifs ramenés aux codes du formulaire. Valeur = la plus haute des catégories regroupées. À valider par le chef.",
+  "goalMatrix": {
+    "9": {
+      "FIND_JOB": 0.9,
+      "OFFER_MY_SERVICES": 1.0,
+      "WORK_PROVIDER": 1.0,
+      "REQUEST_SERVICE": 0.8
+    },
+    "10": {
+      "REQUEST_SERVICE": 1.0,
+      "HOME_SERVICE": 1.0,
+      "FIND_PRO": 1.0,
+      "FIND_JOB": 0.8,
+      "OFFER_MY_SERVICES": 0.9
+    },
+    "3": {
+      "HIRE_TALENT": 1.0,
+      "FIND_TASKS": 1.0,
+      "WORK_PROVIDER": 0.9
+    }
+  },
+  "languages": {
+    "ar": ["ar", "arabe", "arabic", "العربية", "عربي"],
+    "fr": ["fr", "français", "francais", "french", "الفرنسية", "fransi", "فرنساوي"],
+    "en": ["en", "english", "anglais", "الإنجليزية", "انجليزي"],
+    "ar-dialect": [
+      "ar-dialect",
+      "dialectal",
+      "darja",
+      "دارجة",
+      "arabe dialectal",
+      "tounsi",
+      "تونسي"
+    ],
+    "de": ["de", "german", "allemand", "الألمانية"],
+    "es": ["es", "spanish", "espagnol", "الإسبانية"]
+  },
+  "days": {
+    "mon": ["mon", "monday", "lundi", "الاثنين", "lethnin"],
+    "tue": ["tue", "tuesday", "mardi", "الثلاثاء", "thleth"],
+    "wed": ["wed", "wednesday", "mercredi", "الاربعاء", "lerb3a"],
+    "thu": ["thu", "thursday", "jeudi", "الخميس", "khmis"],
+    "fri": ["fri", "friday", "vendredi", "الجمعة", "jom3a"],
+    "sat": ["sat", "saturday", "samedi", "السبت", "sebt"],
+    "sun": ["sun", "sunday", "dimanche", "الاحد", "a7ad"]
+  },
+  "topPicks": {
+    "count": 5,
+    "minRating": 4.5,
+    "availableOnly": true,
+    "minConfidence": "medium"
+  },
+  "demo": {
+    "_doc": "Démo seulement : un profil fictif rend le like si le score moteur >= likeBackMinScore (règle fixe, jamais de hasard). Production : null.",
+    "likeBackMinScore": 75
+  },
+  "videoBoost": 3,
+  "_videoBoostDoc": "Réunion du 13 nov. : « يزيد فيديو التعريف من فرص تطابقك حتى 3 أضعاف ». Un profil avec vidéo a un boost de visibilité ×3 (multiplié par celui de la formule) : il passe en priorité dans la place « Sponsorisé ». Le score de pertinence n'est jamais changé (doc §9)."
+}
