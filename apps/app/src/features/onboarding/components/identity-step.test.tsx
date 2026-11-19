@@ -1,7 +1,14 @@
+import authReducer from '@/features/auth/store/auth-slice';
 import { I18nProvider } from '@/features/i18n/i18n-provider';
+import { LocationProvider } from '@/features/location/location-context';
+import onboardingReducer, {
+  analyzeProfileVideo,
+  relabelVideoAnalysis,
+} from '@/features/onboarding/store/onboarding-slice';
 import { api } from '@/lib/api';
 import { renderWithAuthStore } from '@/test/render-with-auth-store';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { configureStore } from '@reduxjs/toolkit';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,6 +19,33 @@ const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock, replace: vi.fn(), refresh: vi.fn() }),
 }));
+
+// The real recorder needs a camera; this stand-in hands back a clip like it does.
+vi.mock('./video-recorder-modal', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./video-recorder-modal')>();
+  return {
+    ...actual,
+    VideoRecorderModal: ({
+      onVideoReady,
+    }: {
+      onVideoReady: (blob: Blob, blobUrl: string, filename: string, audio?: Blob) => void;
+    }) => (
+      <button
+        type="button"
+        onClick={() =>
+          onVideoReady(
+            new Blob([new Uint8Array([1, 2, 3])], { type: 'video/webm' }),
+            'data:',
+            'clip.webm',
+            new Blob([new Uint8Array([4, 5, 6])], { type: 'audio/webm' }),
+          )
+        }
+      >
+        fake-record
+      </button>
+    ),
+  };
+});
 
 vi.mock('@/lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api')>();
@@ -554,6 +588,213 @@ describe('IdentityStep', () => {
     expect(firstPlaceholder('Votre prénom')).toHaveValue('Existing');
     expect(firstPlaceholder('Votre nom')).toHaveValue('Name');
     expect(firstPlaceholder('Exemple : plombier, électricien, chauffeur…')).toHaveValue('Plombier');
+  });
+
+  it('pre-fills only the empty fields from the profile video analysis', async () => {
+    const store = configureStore({
+      reducer: { auth: authReducer, onboarding: onboardingReducer },
+      preloadedState: {
+        auth: {
+          status: 'authenticated' as const,
+          loading: false,
+          error: null,
+          user: oauthAuthState.user,
+          sessionChecked: true,
+          sessionGeneration: 0,
+        },
+      },
+    });
+    render(
+      <I18nProvider>
+        <LocationProvider>
+          <Provider store={store}>
+            <IdentityStep
+              profile={null}
+              stepNumber={1}
+              totalSteps={3}
+              loading={false}
+              isAuthenticated={true}
+              onNext={vi.fn()}
+            />
+          </Provider>
+        </LocationProvider>
+      </I18nProvider>,
+    );
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+
+    // Same actions the real thunk dispatches once the worker has analysed the video.
+    const meta = { requestId: 'r1', arg: { uiLocale: 'fr' } };
+    store.dispatch({ type: analyzeProfileVideo.pending.type, meta });
+    store.dispatch({
+      type: analyzeProfileVideo.fulfilled.type,
+      payload: {
+        suggestions: { firstName: 'Hela', lastName: 'Ben Salah', job: 'Aide ménagère' },
+        source: { values: {}, serviceId: null },
+      },
+      meta,
+    });
+
+    await waitFor(() => {
+      expect(firstPlaceholder('Exemple : plombier, électricien, chauffeur…')).toHaveValue(
+        'Aide ménagère',
+      );
+    });
+    expect(firstPlaceholder('Votre prénom')).toHaveValue('Jane');
+    expect(firstPlaceholder('Votre nom')).toHaveValue('Ben Salah');
+  });
+
+  it('shows what the AI is not sure about as one-click proposals under the field', async () => {
+    const store = configureStore({
+      reducer: { auth: authReducer, onboarding: onboardingReducer },
+    });
+    render(
+      <I18nProvider>
+        <LocationProvider>
+          <Provider store={store}>
+            <IdentityStep
+              profile={null}
+              stepNumber={1}
+              totalSteps={3}
+              loading={false}
+              isAuthenticated={false}
+              onNext={vi.fn()}
+            />
+          </Provider>
+        </LocationProvider>
+      </I18nProvider>,
+    );
+    const meta = { requestId: 'r1', arg: { uiLocale: 'fr' } };
+    store.dispatch({ type: analyzeProfileVideo.pending.type, meta });
+    store.dispatch({
+      type: analyzeProfileVideo.fulfilled.type,
+      payload: {
+        suggestions: { proposals: { job: ['Ingénieure informatique'] } },
+        source: { values: {}, serviceId: null },
+      },
+      meta,
+    });
+
+    fireEvent.click((await screen.findAllByRole('button', { name: 'Ingénieure informatique' }))[0]);
+
+    expect(firstPlaceholder('Exemple : plombier, électricien, chauffeur…')).toHaveValue(
+      'Ingénieure informatique',
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Ingénieure informatique' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('after a page-language switch, rewrites the AI values but keeps what the person typed', async () => {
+    const store = configureStore({
+      reducer: { auth: authReducer, onboarding: onboardingReducer },
+      preloadedState: {
+        auth: {
+          status: 'authenticated' as const,
+          loading: false,
+          error: null,
+          user: oauthAuthState.user,
+          sessionChecked: true,
+          sessionGeneration: 0,
+        },
+      },
+    });
+    render(
+      <I18nProvider>
+        <LocationProvider>
+          <Provider store={store}>
+            <IdentityStep
+              profile={null}
+              stepNumber={1}
+              totalSteps={3}
+              loading={false}
+              isAuthenticated={true}
+              onNext={vi.fn()}
+            />
+          </Provider>
+        </LocationProvider>
+      </I18nProvider>,
+    );
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    const meta = { requestId: 'r1', arg: { uiLocale: 'ar' } };
+    store.dispatch({ type: analyzeProfileVideo.pending.type, meta });
+    store.dispatch({
+      type: analyzeProfileVideo.fulfilled.type,
+      payload: {
+        suggestions: { firstName: 'هالة', job: 'معينة منزلية' },
+        source: { values: { first_name: 'هالة', profession: 'معينة منزلية' }, serviceId: null },
+      },
+      meta,
+    });
+    await waitFor(() => {
+      expect(firstPlaceholder('Exemple : plombier, électricien, chauffeur…')).toHaveValue(
+        'معينة منزلية',
+      );
+    });
+
+    store.dispatch({
+      type: relabelVideoAnalysis.fulfilled.type,
+      payload: {
+        analysisId: 'r1',
+        locale: 'fr',
+        suggestions: { firstName: 'Hela', job: 'Aide ménagère' },
+      },
+      meta: { requestId: 'x', arg: 'fr' },
+    });
+
+    await waitFor(() => {
+      expect(firstPlaceholder('Exemple : plombier, électricien, chauffeur…')).toHaveValue(
+        'Aide ménagère',
+      );
+    });
+    expect(firstPlaceholder('Votre prénom')).toHaveValue('Jane');
+  });
+  it('sends the sound-only track to the AI right after the recording, before the SMS check', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      data: {
+        job: {
+          id: 'job-1',
+          status: 'SUCCEEDED',
+          error: null,
+          result: {
+            ok: true,
+            profile: { bio: { value: 'Je fais le ménage à domicile.', status: 'fill' } },
+          },
+        },
+        token: 't0k3n',
+      },
+    });
+    const store = configureStore({
+      reducer: { auth: authReducer, onboarding: onboardingReducer },
+    });
+    render(
+      <I18nProvider>
+        <LocationProvider>
+          <Provider store={store}>
+            <IdentityStep
+              profile={unauthenticatedProfileWithPhoto}
+              stepNumber={1}
+              totalSteps={3}
+              loading={false}
+              isAuthenticated={false}
+              onNext={vi.fn()}
+            />
+          </Provider>
+        </LocationProvider>
+      </I18nProvider>,
+    );
+
+    fireEvent.click(firstButton(/Enregistrer ou importer une vidéo/));
+    fireEvent.click(screen.getByRole('button', { name: 'fake-record' }));
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/onboarding/video-analysis', expect.any(FormData));
+    });
+    const sent = (vi.mocked(api.post).mock.calls[0][1] as FormData).get('video') as File;
+    expect(sent.name).toBe('clip-audio.webm');
+    expect(sent.type).toBe('audio/webm');
+    await waitFor(() => {
+      expect(screen.getAllByDisplayValue('Je fais le ménage à domicile.')[0]).toBeInTheDocument();
+    });
   });
 });
 

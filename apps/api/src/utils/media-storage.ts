@@ -16,12 +16,16 @@ export const AUDIO_DIR = join(UPLOAD_ROOT, 'audio');
 // Selfies — private, single-use, never served over a GET route, shared with the `ai`
 // container via a bind mount (see compose.dev.yaml).
 export const IDENTITY_DIR = join(UPLOAD_ROOT, 'identity');
+// Onboarding clips — private, single-use: the video recorded before the SMS check, sent
+// to the AI to pre-fill the form, then deleted by the worker (ANALYZE_VIDEO deleteAfter).
+export const ONBOARDING_CLIPS_DIR = join(UPLOAD_ROOT, 'onboarding-clips');
 
 export async function ensureUploadDirs(): Promise<void> {
   await mkdir(PHOTOS_DIR, { recursive: true });
   await mkdir(VIDEOS_DIR, { recursive: true });
   await mkdir(AUDIO_DIR, { recursive: true });
   await mkdir(IDENTITY_DIR, { recursive: true });
+  await mkdir(ONBOARDING_CLIPS_DIR, { recursive: true });
 }
 
 /** Writes a validated buffer under `dir` with a fresh UUID filename; returns that filename. */

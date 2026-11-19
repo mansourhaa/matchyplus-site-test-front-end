@@ -6,6 +6,7 @@ import {
   markOnboardingCompleted,
   selectAuth,
 } from '@/features/auth/store/auth-slice';
+import { useI18n } from '@/features/i18n/i18n-provider';
 import {
   getNextStep,
   getPreviousStep,
@@ -17,7 +18,9 @@ import {
   completeOnboarding,
   fetchOnboardingProfile,
   patchOnboardingProfile,
+  relabelVideoAnalysis,
   selectOnboarding,
+  selectVideoAnalysis,
   updateOnboardingProfile,
 } from '@/features/onboarding/store/onboarding-slice';
 import type {
@@ -43,6 +46,16 @@ export function OnboardingWizard() {
   const dispatch = useAppDispatch();
   const { isAuthenticated, sessionChecked } = useAppSelector(selectAuth);
   const { profile, loading } = useAppSelector(selectOnboarding);
+  const videoAnalysis = useAppSelector(selectVideoAnalysis);
+  const { locale } = useI18n();
+
+  // Page language changed after the video analysis: the AI-filled fields follow it, with
+  // the dictionaries of the voice service (no AI, no new analysis).
+  useEffect(() => {
+    if (videoAnalysis.status === 'succeeded' && videoAnalysis.locale !== locale) {
+      void dispatch(relabelVideoAnalysis(locale));
+    }
+  }, [dispatch, locale, videoAnalysis.status, videoAnalysis.locale]);
 
   const [justRegistered, setJustRegistered] = useState(false);
   const introSeen = useSyncExternalStore(subscribeIntro, readStoredIntroSeen, () => false);
@@ -182,6 +195,7 @@ export function OnboardingWizard() {
           onNext={goToNextStep}
           onBack={goBack}
           onSaveDraft={(draft) => dispatch(patchOnboardingProfile(draft))}
+          aiSuggestions={videoAnalysis.suggestions}
         />
       );
     case 'location':
@@ -194,6 +208,7 @@ export function OnboardingWizard() {
           onNext={goToNextStep}
           onBack={goBack}
           onSaveDraft={(draft) => dispatch(patchOnboardingProfile(draft))}
+          aiSuggestions={videoAnalysis.suggestions}
         />
       );
     case 'welcome':

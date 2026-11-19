@@ -4,6 +4,8 @@ redis==5.3.1
 psycopg[binary]==3.2.10
 python-dotenv==1.2.2
 Werkzeug==3.1.7
+# ANALYZE_VIDEO: HTTP client for the internal voice-ai service (VOICE_AI_URL).
+httpx==0.28.1
 # Real face comparison for VERIFY_IDENTITY, gated behind AI_ENABLE_FACE_MODEL (see
 # app/config.py) — pulls in TensorFlow, a heavy dependency, so keeping this pinned and
 # separate from the always-loaded deps above.

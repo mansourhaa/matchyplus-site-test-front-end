@@ -128,6 +128,10 @@ export const messages: Record<Locale, MessageTree> = {
         errorVideoUpload: 'Video upload failed.',
         errorVideoDelete: 'Video deletion failed.',
         videoPresentationLabel: 'Presentation video',
+        videoAnalyzing: 'AI is listening to your video to pre-fill the form…',
+        videoAnalyzed: 'Empty fields were pre-filled from your video. Please check them.',
+        videoAnalysisFailed: 'The video could not be analysed. You can fill the form by hand.',
+        aiProposal: 'Suggestion:',
       },
       interests: {
         title: 'What would you like to do on Matchy+?',
@@ -903,7 +907,8 @@ export const messages: Record<Locale, MessageTree> = {
         errorExpiredToken:
           'This activation link is invalid or has expired (valid for 14 days). Contact the Matchy+ team to receive a new link.',
         errorBanned: 'This account has been suspended by moderation.',
-        errorGeneric: 'Unable to load your account data. Please check your connection and try again.',
+        errorGeneric:
+          'Unable to load your account data. Please check your connection and try again.',
         errorWeakPassword: 'Password does not meet the security requirements.',
         backToLogin: 'Back to login',
       },
@@ -1169,6 +1174,12 @@ export const messages: Record<Locale, MessageTree> = {
         errorVideoUpload: "Échec de l'upload vidéo.",
         errorVideoDelete: 'Échec de la suppression.',
         videoPresentationLabel: 'Vidéo de présentation',
+        videoAnalyzing: "L'IA écoute votre vidéo pour pré-remplir le formulaire…",
+        videoAnalyzed:
+          'Les champs vides ont été pré-remplis à partir de votre vidéo. Vérifiez-les.',
+        videoAnalysisFailed:
+          "La vidéo n'a pas pu être analysée. Vous pouvez remplir le formulaire à la main.",
+        aiProposal: 'Suggestion :',
       },
       interests: {
         title: 'Que souhaitez-vous faire sur Matchy+ ?',
@@ -1954,7 +1965,8 @@ export const messages: Record<Locale, MessageTree> = {
         loadingTitle: 'Vérification de votre lien d’activation...',
         loadingSubtitle: 'Veuillez patienter quelques instants',
         errorTitle: 'Lien inaccessible',
-        errorMissingToken: 'Aucun jeton d’activation trouvé. Veuillez vérifier le lien reçu par SMS.',
+        errorMissingToken:
+          'Aucun jeton d’activation trouvé. Veuillez vérifier le lien reçu par SMS.',
         errorExpiredToken:
           'Ce lien d’activation est invalide ou a expiré (durée de validité : 14 jours). Contactez l’équipe Matchy+ pour recevoir un nouveau lien.',
         errorBanned: 'Ce compte a été suspendu par la modération.',
@@ -2229,6 +2241,10 @@ export const messages: Record<Locale, MessageTree> = {
         errorVideoUpload: 'فشل رفع الفيديو.',
         errorVideoDelete: 'فشل الحذف.',
         videoPresentationLabel: 'فيديو تعريفي',
+        videoAnalyzing: 'الذكاء الاصطناعي يستمع إلى الفيديو لتعبئة الاستمارة…',
+        videoAnalyzed: 'تمت تعبئة الحقول الفارغة من الفيديو. يرجى التحقق منها.',
+        videoAnalysisFailed: 'تعذر تحليل الفيديو. يمكنك تعبئة الاستمارة يدويًا.',
+        aiProposal: 'اقتراح:',
       },
       interests: {
         title: 'ماذا ترغب في أن تفعل على Matchy+؟',

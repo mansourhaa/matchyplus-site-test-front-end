@@ -69,7 +69,8 @@ export interface VideoRecorderTranslations {
 }
 
 interface VideoRecorderModalProps {
-  onVideoReady: (blob: Blob, blobUrl: string, filename: string) => void;
+  /** `audio`: the same take recorded as sound only (clean track for the voice AI). */
+  onVideoReady: (blob: Blob, blobUrl: string, filename: string, audio?: Blob) => void;
   onClose: () => void;
   tr: VideoRecorderTranslations;
   isRtl?: boolean;
@@ -199,6 +200,11 @@ export function VideoRecorderModal({
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const currentBlobRef = useRef<Blob | null>(null);
+  // Sound-only copy of the take, recorded in parallel like the voice demo: the voice AI
+  // reads a clean audio track instead of the sound mixed into the video file.
+  const audioRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioBlobRef = useRef<Blob | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const handedOffUrlRef = useRef(false);
@@ -216,6 +222,16 @@ export function VideoRecorderModal({
     }
     recorderRef.current = null;
     chunksRef.current = [];
+    const audioRecorder = audioRecorderRef.current;
+    if (audioRecorder && audioRecorder.state !== 'inactive') {
+      try {
+        audioRecorder.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+    audioRecorderRef.current = null;
+    audioChunksRef.current = [];
   }, []);
 
   const stopStream = useCallback(() => {
@@ -254,6 +270,7 @@ export function VideoRecorderModal({
     stopStream();
     revokeTrackedUrls();
     currentBlobRef.current = null;
+    audioBlobRef.current = null;
   }, [revokeTrackedUrls, stopRecorder, stopStream]);
 
   const startCamera = useCallback(
@@ -264,7 +281,7 @@ export function VideoRecorderModal({
         const videoConstraints = getVideoMediaConstraints(getStoredVideoSettings().quality, facing);
         const stream = await navigator.mediaDevices.getUserMedia({
           video: videoConstraints,
-          audio: true,
+          audio: { echoCancellation: true, noiseSuppression: true },
         });
         streamRef.current = stream;
         if (liveRef.current) {
@@ -369,6 +386,7 @@ export function VideoRecorderModal({
         e.target.value = '';
       } else {
         currentBlobRef.current = file;
+        audioBlobRef.current = null; // an imported file has no separate sound track
         setTrackedBlobUrl(url);
         setCurrentFilename(file.name);
         setTrackedRecordedUrl(url);
@@ -387,6 +405,45 @@ export function VideoRecorderModal({
     const next = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(next);
     void startCamera(next);
+  };
+
+  const stopAudioRecorder = () => {
+    const audioRecorder = audioRecorderRef.current;
+    if (audioRecorder?.state === 'recording') audioRecorder.stop();
+  };
+
+  const startAudioRecorder = (stream: MediaStream) => {
+    audioChunksRef.current = [];
+    audioBlobRef.current = null;
+    audioRecorderRef.current = null;
+    const tracks = stream.getAudioTracks();
+    if (!tracks.length) return;
+    const audioType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((t) => {
+      try {
+        return MediaRecorder.isTypeSupported(t);
+      } catch {
+        return false;
+      }
+    });
+    try {
+      const audioRecorder = audioType
+        ? new MediaRecorder(new MediaStream(tracks), { mimeType: audioType })
+        : new MediaRecorder(new MediaStream(tracks));
+      audioRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      audioRecorder.onstop = () => {
+        const type = (audioRecorder.mimeType || audioType || 'audio/webm').split(';')[0].trim();
+        if (audioChunksRef.current.length) {
+          audioBlobRef.current = new Blob(audioChunksRef.current, { type });
+        }
+      };
+      audioRecorder.start(200);
+      audioRecorderRef.current = audioRecorder;
+    } catch {
+      // Without it the voice AI simply reads the sound of the video file.
+      audioRecorderRef.current = null;
+    }
   };
 
   const startRecording = () => {
@@ -432,6 +489,7 @@ export function VideoRecorderModal({
       setTrackedBlobUrl(url);
       setCurrentFilename(fname);
       setPhase('review');
+      stopAudioRecorder();
       stopStream();
       if (timerRef.current) clearInterval(timerRef.current);
     };
@@ -444,6 +502,7 @@ export function VideoRecorderModal({
       recorderRef.current = null;
       return;
     }
+    startAudioRecorder(streamRef.current);
     setPhase('recording');
     setCountdown(MAX_DURATION);
 
@@ -453,6 +512,7 @@ export function VideoRecorderModal({
       setCountdown(rem);
       if (rem <= 0) {
         if (timerRef.current) clearInterval(timerRef.current);
+        stopAudioRecorder();
         if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
       }
     }, 1000);
@@ -460,6 +520,7 @@ export function VideoRecorderModal({
 
   const stopRecording = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    stopAudioRecorder();
     if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
   };
 
@@ -475,6 +536,7 @@ export function VideoRecorderModal({
     setTrackedRecordedUrl(null);
     setTrackedBlobUrl(null);
     currentBlobRef.current = null;
+    audioBlobRef.current = null;
     setPhase('preview');
     setCountdown(MAX_DURATION);
     void startCamera(facingMode);
@@ -483,7 +545,12 @@ export function VideoRecorderModal({
   const handleConfirm = () => {
     if (currentBlobRef.current && currentBlobUrl && currentFilename) {
       handedOffUrlRef.current = true;
-      onVideoReady(currentBlobRef.current, currentBlobUrl, currentFilename);
+      onVideoReady(
+        currentBlobRef.current,
+        currentBlobUrl,
+        currentFilename,
+        audioBlobRef.current ?? undefined,
+      );
     }
   };
 
@@ -497,6 +564,7 @@ export function VideoRecorderModal({
     setTrackedRecordedUrl(null);
     setTrackedBlobUrl(null);
     currentBlobRef.current = null;
+    audioBlobRef.current = null;
     setUploadError(null);
     setPhase('choose');
     stopStream();

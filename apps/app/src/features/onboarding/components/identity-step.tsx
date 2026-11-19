@@ -6,10 +6,17 @@ import { PhoneInput } from '@/features/auth/components/phone-input';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import type { Locale } from '@/features/i18n/messages';
 import { INDUSTRY_KEYS, type IndustryKey } from '@/features/onboarding/constants';
 import { identityStepSchema } from '@/features/onboarding/schemas';
-import { patchOnboardingProfile } from '@/features/onboarding/store/onboarding-slice';
+import {
+  analyzeProfileVideo,
+  clearVideoAnalysis,
+  patchOnboardingProfile,
+  selectVideoAnalysis,
+} from '@/features/onboarding/store/onboarding-slice';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
+import { aiFieldUpdate } from '@/features/onboarding/video-analysis';
 import { humanizeMediaError } from '@/features/profile/media-errors';
 import {
   deleteProfileVideo,
@@ -33,6 +40,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { AiProposals } from './ai-proposals';
 import { FieldMicButton } from './field-mic-button';
 import { OnboardingStepLayout, StepCtaRow, StepProgress } from './onboarding-step-layout';
 import { VideoRecorderModal, buildVideoRecorderTr } from './video-recorder-modal';
@@ -252,6 +260,23 @@ export function IdentityStep({
     setVideoPendingLocal(false);
   }, [profile, t]);
 
+  // AI autofill from the profile video: only fields the person left empty, once per analysis;
+  // after a page-language switch, the AI's own values (not edited since) follow the language.
+  const videoAnalysis = useAppSelector(selectVideoAnalysis);
+  const appliedSuggestionsRef = useRef<typeof videoAnalysis.suggestions>(null);
+  useEffect(() => {
+    const suggestions = videoAnalysis.suggestions;
+    if (!suggestions || appliedSuggestionsRef.current === suggestions) return;
+    const previous = appliedSuggestionsRef.current;
+    appliedSuggestionsRef.current = suggestions;
+    const next = aiFieldUpdate(previous, suggestions);
+    setFirstName((current) => next(current, 'firstName'));
+    setLastName((current) => next(current, 'lastName'));
+    setJob((current) => next(current, 'job'));
+    setBio((current) => next(current, 'bio'));
+    setIndustry((current) => current || suggestions.industry || '');
+  }, [videoAnalysis.suggestions]);
+
   const [hasPendingPhoto, setHasPendingPhoto] = useState(false);
   const { user } = useAppSelector(selectAuth);
   const name = `${firstName} ${lastName}`.trim();
@@ -383,9 +408,23 @@ export function IdentityStep({
     return false;
   };
 
-  const handleVideoReady = async (blob: Blob, blobUrl: string, filename: string) => {
+  const handleVideoReady = async (blob: Blob, blobUrl: string, filename: string, audio?: Blob) => {
     setShowVideoModal(false);
     setVideoError(null);
+    // AI autofill right after the recording, before the SMS check: runs in the
+    // background, the person can keep typing meanwhile. Like the voice demo, the AI gets
+    // the clean sound-only track when the recorder made one, else the video itself.
+    const audioType = audio?.type || 'audio/webm';
+    void dispatch(
+      analyzeProfileVideo({
+        file: audio
+          ? new File([audio], audioType.includes('mp4') ? 'clip-audio.m4a' : 'clip-audio.webm', {
+              type: audioType,
+            })
+          : new File([blob], filename, { type: blob.type || 'video/webm' }),
+        uiLocale: locale as Locale,
+      }),
+    );
     try {
       if (!isAuthenticated) {
         pendingVideoRef.current = { blob, filename };
@@ -407,6 +446,7 @@ export function IdentityStep({
   };
 
   const clearLocalVideo = () => {
+    dispatch(clearVideoAnalysis());
     setVideoLabel(null);
     setVideoError(null);
     setVideoPendingLocal(false);
@@ -802,6 +842,26 @@ export function IdentityStep({
                     {t('onboarding.identity.videoUploading')}
                   </p>
                 )}
+                {!isUploadingVideo && videoAnalysis.status === 'running' && (
+                  <p
+                    role="status"
+                    className="flex items-center gap-1.5"
+                    style={{ fontSize: '12px', color: '#2F76BB', marginTop: '6px' }}
+                  >
+                    <Loader2 size={12} className="animate-spin" />
+                    {t('onboarding.identity.videoAnalyzing')}
+                  </p>
+                )}
+                {videoAnalysis.status === 'succeeded' && (
+                  <p role="status" style={{ fontSize: '12px', color: '#2A9177', marginTop: '6px' }}>
+                    {t('onboarding.identity.videoAnalyzed')}
+                  </p>
+                )}
+                {videoAnalysis.status === 'failed' && (
+                  <p role="status" style={{ fontSize: '12px', color: '#888', marginTop: '6px' }}>
+                    {t('onboarding.identity.videoAnalysisFailed')}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -830,6 +890,11 @@ export function IdentityStep({
                   disabled={loading || otpSending}
                 />
               </div>
+              <AiProposals
+                options={videoAnalysis.suggestions?.proposals?.firstName}
+                current={firstName}
+                onPick={setFirstName}
+              />
             </div>
 
             <div>
@@ -854,6 +919,11 @@ export function IdentityStep({
                   disabled={loading || otpSending}
                 />
               </div>
+              <AiProposals
+                options={videoAnalysis.suggestions?.proposals?.lastName}
+                current={lastName}
+                onPick={setLastName}
+              />
             </div>
 
             {!isAuthenticated && (
@@ -906,6 +976,11 @@ export function IdentityStep({
                   disabled={loading || otpSending}
                 />
               </div>
+              <AiProposals
+                options={videoAnalysis.suggestions?.proposals?.job}
+                current={job}
+                onPick={setJob}
+              />
             </div>
 
             <div className="mt-4">
@@ -943,6 +1018,11 @@ export function IdentityStep({
                   />
                 </div>
               </div>
+              <AiProposals
+                options={videoAnalysis.suggestions?.proposals?.bio}
+                current={bio}
+                onPick={(text) => setBio(text.slice(0, 250))}
+              />
             </div>
           </div>
         </div>
