@@ -38,6 +38,9 @@ GOAL_CODES = {
     "Trouver des missions": "FIND_TASKS", "Découvrir des idées et opportunités": "DISCOVER_OPPORTUNITIES",
     "Service à domicile": "HOME_SERVICE",
 }
+# Les 2 boutons de l'inscription = 2 types de profil, pris comme objectif du moteur (demande du chef) :
+# PROVIDER = « Je cherche un prestataire » (client), INDIVIDUAL = « Je propose mes services ».
+TYPE_GOALS = {"PROVIDER": "REQUEST_SERVICE", "INDIVIDUAL": "OFFER_MY_SERVICES"}
 DAY_CODES = {"Lun": "mon", "Mar": "tue", "Mer": "wed", "Jeu": "thu", "Ven": "fri", "Sam": "sat", "Dim": "sun"}
 PLAN_KEYS = {"FREE": "free", "PREMIUM": "premium", "PREMIUM_PLUS": "premium_plus"}
 
@@ -123,15 +126,18 @@ def _days(values: list[str] | None) -> list[str]:
     return [DAY_CODES.get(v, v) for v in values or []]
 
 
-def _goals(values: list[str] | None) -> list[str]:
-    return [GOAL_CODES[v] for v in values or [] if v in GOAL_CODES]
+def _goals(values: list[str] | None, profile_type: str | None = None) -> list[str]:
+    codes = [GOAL_CODES[v] for v in values or [] if v in GOAL_CODES]
+    if profile_type in TYPE_GOALS:
+        codes.append(TYPE_GOALS[profile_type])
+    return list(dict.fromkeys(codes))
 
 
 def _user_view(me: dict, c: dict, radius_km: float) -> dict:
     labels = _labels(c["tags"])
     cat = [sector_label(c["sector"], lang) for lang in ("fr", "en", "ar")] if c["sector"] else []
     keywords = list(dict.fromkeys(labels["fr"] + labels["en"] + labels["ar"] + cat + list(me.get("interests") or [])))
-    return {"keywords": keywords, "goals": _goals(me.get("selected_goals")), "radiusKm": radius_km,
+    return {"keywords": keywords, "goals": _goals(me.get("selected_goals"), me.get("profile_type")), "radiusKm": radius_km,
             "days": _days(me.get("availability_days")), "slots": list(me.get("availability_hours") or []),
             "languages": list(me.get("languages") or [])}
 

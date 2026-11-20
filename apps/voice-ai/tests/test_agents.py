@@ -55,3 +55,11 @@ def test_endpoint():
     assert res.status_code == 200
     body = res.json()
     assert body["ok"] is True and body["results"][0]["id"] == "c1"
+
+
+def test_profile_type_counts_as_a_goal():
+    """« Je cherche un prestataire » / « Je propose mes services » = objectif du moteur."""
+    assert agents._goals(["Demander un service"], "PROVIDER") == ["REQUEST_SERVICE"]
+    assert agents._goals([], "PROVIDER") == ["REQUEST_SERVICE"]
+    assert agents._goals(["Trouver un job"], "INDIVIDUAL") == ["FIND_JOB", "OFFER_MY_SERVICES"]
+    assert agents._goals(["Trouver un job"], None) == ["FIND_JOB"]

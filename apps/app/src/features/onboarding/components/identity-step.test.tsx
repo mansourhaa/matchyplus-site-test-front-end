@@ -283,7 +283,7 @@ describe('IdentityStep', () => {
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
     fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
-    fireEvent.click(firstButton('Je recherche un service'));
+    fireEvent.click(firstButton('Je cherche un prestataire'));
     fireEvent.click(firstButton('Enregistrer et continuer'));
 
     expect(onNext).not.toHaveBeenCalled();
@@ -306,7 +306,7 @@ describe('IdentityStep', () => {
 
     fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
     fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
-    fireEvent.click(firstButton('Je recherche un service'));
+    fireEvent.click(firstButton('Je cherche un prestataire'));
     fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
       target: { value: 'Électricien' },
     });
@@ -320,6 +320,72 @@ describe('IdentityStep', () => {
       profileType: 'PROVIDER',
       industry: 'tech_digital',
     });
+  });
+
+  it('asks a 20 s voice message and the city, not a video, from someone looking for a provider', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={true}
+        onNext={onNext}
+      />,
+      oauthAuthState,
+    );
+
+    expect(screen.queryAllByText('Décrivez ce que vous cherchez')).toHaveLength(0);
+    fireEvent.click(firstButton('Je cherche un prestataire'));
+    expect(screen.getAllByText('Décrivez ce que vous cherchez').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Enregistrer un message vocal').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Présentez-vous en vidéo')).toHaveLength(0);
+
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Votre ville (ex : Tunis, Sousse...)'), {
+      target: { value: 'Sousse' },
+    });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
+      target: { value: 'Enseignant' },
+    });
+    pickIndustry('Technologie & Digital');
+    fireEvent.click(firstButton('Enregistrer et continuer'));
+
+    expect(onNext).toHaveBeenCalledWith(
+      expect.objectContaining({ city: 'Sousse', job: 'Enseignant', profileType: 'PROVIDER' }),
+    );
+  });
+
+  it('asks the city from someone offering services too', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderWithAuthStore(
+      <IdentityStep
+        profile={null}
+        stepNumber={1}
+        totalSteps={3}
+        loading={false}
+        isAuthenticated={true}
+        onNext={onNext}
+      />,
+      oauthAuthState,
+    );
+
+    fireEvent.change(firstPlaceholder('Votre prénom'), { target: { value: 'Jane' } });
+    fireEvent.change(firstPlaceholder('Votre nom'), { target: { value: 'Doe' } });
+    fireEvent.change(firstPlaceholder('Votre ville (ex : Tunis, Sousse...)'), {
+      target: { value: 'Monastir' },
+    });
+    fireEvent.change(firstPlaceholder('Exemple : plombier, électricien, chauffeur…'), {
+      target: { value: 'Électricien' },
+    });
+    pickIndustry('Technologie & Digital');
+    fireEvent.click(firstButton('Enregistrer et continuer'));
+
+    expect(onNext).toHaveBeenCalledWith(
+      expect.objectContaining({ city: 'Monastir', profileType: 'INDIVIDUAL' }),
+    );
   });
 
   it('blocks submission and shows an error when the industry is missing', async () => {
@@ -363,7 +429,7 @@ describe('IdentityStep', () => {
     );
 
     pickIndustry('Santé & Bien-être');
-    fireEvent.click(firstButton('Je recherche un service'));
+    fireEvent.click(firstButton('Je cherche un prestataire'));
     expect(firstButton('Santé & Bien-être')).toBeInTheDocument();
     fireEvent.click(firstButton('Je propose mes services'));
     expect(firstButton('Santé & Bien-être')).toBeInTheDocument();
@@ -641,6 +707,56 @@ describe('IdentityStep', () => {
     });
     expect(firstPlaceholder('Votre prénom')).toHaveValue('Jane');
     expect(firstPlaceholder('Votre nom')).toHaveValue('Ben Salah');
+  });
+
+  it('fills the city but not the job from the voice message of someone looking for a provider', async () => {
+    const store = configureStore({
+      reducer: { auth: authReducer, onboarding: onboardingReducer },
+      preloadedState: {
+        auth: {
+          status: 'authenticated' as const,
+          loading: false,
+          error: null,
+          user: oauthAuthState.user,
+          sessionChecked: true,
+          sessionGeneration: 0,
+        },
+      },
+    });
+    render(
+      <I18nProvider>
+        <LocationProvider>
+          <Provider store={store}>
+            <IdentityStep
+              profile={null}
+              stepNumber={1}
+              totalSteps={3}
+              loading={false}
+              isAuthenticated={true}
+              onNext={vi.fn()}
+            />
+          </Provider>
+        </LocationProvider>
+      </I18nProvider>,
+    );
+    fireEvent.click(firstButton('Je cherche un prestataire'));
+
+    const meta = { requestId: 'r1', arg: { uiLocale: 'fr' } };
+    store.dispatch({ type: analyzeProfileVideo.pending.type, meta });
+    store.dispatch({
+      type: analyzeProfileVideo.fulfilled.type,
+      payload: {
+        suggestions: { firstName: 'Hela', job: 'Plombier', city: 'Sousse', industry: 'btp' },
+        source: { values: {}, serviceId: null },
+      },
+      meta,
+    });
+
+    await waitFor(() => {
+      expect(firstPlaceholder('Votre ville (ex : Tunis, Sousse...)')).toHaveValue('Sousse');
+    });
+    expect(firstPlaceholder('Votre prénom')).toHaveValue('Hela');
+    expect(firstPlaceholder('Exemple : plombier, électricien, chauffeur…')).toHaveValue('');
   });
 
   it('shows what the AI is not sure about as one-click proposals under the field', async () => {
@@ -1259,8 +1375,8 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
         oauthAuthState,
       );
 
-      // Click "Je recherche un service" (PROVIDER)
-      const providerBtn = firstButton('Je recherche un service');
+      // Click "Je cherche un prestataire" (PROVIDER)
+      const providerBtn = firstButton('Je cherche un prestataire');
       fireEvent.click(providerBtn);
 
       // Confirmation modal should appear
@@ -1299,8 +1415,8 @@ describe('IdentityStep — credentials for a not-yet-authenticated visitor', () 
         oauthAuthState,
       );
 
-      // Click "Je recherche un service" (PROVIDER)
-      fireEvent.click(firstButton('Je recherche un service'));
+      // Click "Je cherche un prestataire" (PROVIDER)
+      fireEvent.click(firstButton('Je cherche un prestataire'));
       // No confirmation modal
     });
   });
