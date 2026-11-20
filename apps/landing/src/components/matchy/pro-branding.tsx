@@ -55,7 +55,7 @@ export function ProBranding() {
           </ul>
         </Reveal>
 
-        <Reveal direction={isRtl ? 'left' : 'right'} className="flex flex-col items-center gap-8">
+        <Reveal direction={isRtl ? 'left' : 'right'} className="flex justify-center">
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
@@ -98,19 +98,16 @@ export function ProBranding() {
                   </div>
                 ))}
               </div>
-              <p className="text-muted-foreground mt-4 text-center text-[11px]">
-                {t('landing.beltSample')}
-              </p>
+              {/* the call to action sits inside the card, as the manager asked */}
+              <Link
+                href={APP_REGISTER_URL}
+                className="bg-brand-blue hover:bg-brand-navy mt-5 flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold text-white shadow-lg transition-colors md:text-base"
+              >
+                {t('landing.brandCta')}
+                <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+              </Link>
             </div>
           </motion.div>
-          {/* the call to action sits under the card, as the manager asked */}
-          <Link
-            href={APP_REGISTER_URL}
-            className="bg-brand-blue hover:bg-brand-navy inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold text-white shadow-lg transition-colors md:text-base"
-          >
-            {t('landing.brandCta')}
-            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-          </Link>
         </Reveal>
       </div>
     </section>

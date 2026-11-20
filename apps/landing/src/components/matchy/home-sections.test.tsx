@@ -160,6 +160,14 @@ describe('home sections', () => {
     expect(
       screen.getByText(getMessage(messages.ar, 'landing.referralYou') as string),
     ).toBeInTheDocument();
+    // the sign-up button is inside the card; the card has no "sample profile" line
+    const cta = screen.getByRole('link', {
+      name: getMessage(messages.ar, 'landing.brandCta') as string,
+    });
+    expect(cta.closest('.rounded-\\[2rem\\]')).not.toBeNull();
+    expect(
+      screen.queryByText(getMessage(messages.ar, 'landing.beltSample') as string),
+    ).not.toBeInTheDocument();
   });
 
   it('CompanyStory shows the founder photo, described for screen readers', () => {

@@ -120,8 +120,9 @@ reviews, no idea of availability) with Matchy+.
 - **Right side:** a sample pro card. Following the manager's request, it has **no photo**. On
   top is the referral block: the code with a copy button, a QR code to the sign-up page
   (`?ref=CODE`), and the member's points ("10 points pour vous"). Below come the name, trade,
-  daily price range, rating, "Disponible", area and 3 stats. The "Créez votre profil pro" button
-  sits under the card (manager's request).
+  daily price range, rating, "Disponible", area, 3 stats and, at the bottom of the card, the
+  "Créez votre profil pro" button. At the manager's request the card shows no "Profil d'exemple"
+  line (the belt still does).
 - **Why there is no separate referral section:** the manager wanted the code and points inside
   the card, so that section was removed with its texts and tests.
 - **Dependency:** the QR code uses `qrcode.react` (same version as `apps/app`).
@@ -183,12 +184,12 @@ smaller benefit.
 
 ## Example data: where it is, how to plug the real data
 
-| What                                        | Where                                                      | Status on screen       |
-| ------------------------------------------- | ---------------------------------------------------------- | ---------------------- |
-| Pros in the belt, the hero and the pro card | `belt-data.ts` + `landing.beltProfiles`                    | "Profil d'exemple"     |
-| Community map: cities, counts, audience     | `community-map.ts` (`SAMPLE_LOCATIONS`, `SAMPLE_AUDIENCE`) | "Données d'exemple"    |
-| Referral code `MP-7K2Q9`, 10 points         | `landing.referral*`                                        | sample code and points |
-| Search results count                        | `search-results-data.ts` (`sampleResultCount`)             | "Chiffre indicatif"    |
+| What                                        | Where                                                      | Status on screen          |
+| ------------------------------------------- | ---------------------------------------------------------- | ------------------------- |
+| Pros in the belt, the hero and the pro card | `belt-data.ts` + `landing.beltProfiles`                    | "Profil d'exemple" (belt) |
+| Community map: cities, counts, audience     | `community-map.ts` (`SAMPLE_LOCATIONS`, `SAMPLE_AUDIENCE`) | "Données d'exemple"       |
+| Referral code `MP-7K2Q9`, 10 points         | `landing.referral*`                                        | sample code and points    |
+| Search results count                        | `search-results-data.ts` (`sampleResultCount`)             | "Chiffre indicatif"       |
 
 **Community map, going live:** replace the sample data with **aggregated** numbers from the API
 or Google Analytics: city, approximate position and active visitors. Never send visitor IPs to
