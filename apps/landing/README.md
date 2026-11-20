@@ -88,8 +88,10 @@ All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `e
   fades out on every side into the white page (`EDGE_FADE` in `motion.tsx`). You can drag it, click a person, or use the keyboard. At the manager's request there is no
   numbered index on the side.
 - **Hover tag:** before the click, hovering a person shows a small white tag beside them with their
-  name and daily price range ("Youssef B. · 25 à 30 DT/jour", built by `personTag` in `belt-data.ts`). The same
-  text is part of the person's accessible name, so screen readers hear it too.
+  name and daily price range ("Youssef B. · 25 à 30 DT/jour", built by `personTag` in
+  `belt-data.ts`). It opens towards the middle of the belt, so it is never cut at the edges, and it
+  is hidden on phones (no mouse; a tap opens the card). The same text is part of the person's
+  accessible name, so screen readers hear it too.
 - **Picking a pro:** clicking one opens their profile card (`belt-profile-card.tsx`) with
   app-style "Passer" / "Connecter" buttons.
   - "Connecter" opens a match screen (`belt-match-dialog.tsx`). It has a focus trap, and Escape

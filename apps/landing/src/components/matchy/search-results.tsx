@@ -30,12 +30,12 @@ export function SearchResults() {
         <p className="flex flex-wrap items-center justify-center gap-2 text-sm font-bold">
           {service && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5">
-              <Search className="h-4 w-4" />
+              <Search className="h-4 w-4 shrink-0" />
               {service}
             </span>
           )}
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5">
-            <MapPin className="h-4 w-4" />
+            <MapPin className="h-4 w-4 shrink-0" />
             {city || t('landing.resultsNear')}
           </span>
         </p>

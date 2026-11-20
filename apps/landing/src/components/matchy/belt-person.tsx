@@ -1,8 +1,9 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type MotionValue, motion, useTransform } from 'framer-motion';
+import { type MotionValue, motion, useMotionValueEvent, useTransform } from 'framer-motion';
 import Image from 'next/image';
+import { useState } from 'react';
 
 import type { BeltService } from './belt-data';
 import { type StageSize, beltPose, stageGeometry } from './belt-geometry';
@@ -49,6 +50,9 @@ export function BeltPerson({
   const pose = (a: number) => beltPose(a, index, count, radii);
 
   const x = useTransform(angle, (a) => pose(a).x);
+  // the hover tag opens towards the middle of the belt, so it never goes past the stage's edges
+  const [onRightHalf, setOnRightHalf] = useState(() => x.get() > 0);
+  useMotionValueEvent(x, 'change', (value) => setOnRightHalf(value > 0));
   const y = useTransform(angle, (a) => pose(a).y);
   const scale = useTransform(angle, (a) => pose(a).scale);
   const opacity = useTransform(angle, (a) => pose(a).opacity);
@@ -124,7 +128,12 @@ export function BeltPerson({
         {!selected && (
           <span
             aria-hidden="true"
-            className="border-brand-navy text-brand-navy absolute top-[34%] translate-y-1 rounded-[3px] border bg-white px-2 py-1 font-mono text-[11px] font-semibold tracking-wider whitespace-nowrap uppercase opacity-0 shadow-sm transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 ltr:left-[58%] rtl:right-[58%]"
+            className={cn(
+              'border-brand-navy text-brand-navy absolute top-[34%] translate-y-1 rounded-[3px] border bg-white px-2 py-1 font-mono text-[11px] font-semibold tracking-wider whitespace-nowrap uppercase opacity-0 shadow-sm transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100',
+              onRightHalf ? 'right-[58%]' : 'left-[58%]',
+              // a mouse feature: on phones a tap opens the card, and the stage is too narrow
+              'max-md:hidden',
+            )}
           >
             {tag}
           </span>
