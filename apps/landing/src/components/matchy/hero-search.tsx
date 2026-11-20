@@ -6,24 +6,20 @@ import { APP_LOGIN_URL, APP_REGISTER_URL } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { ArrowRight, LogIn, MapPin, Search } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { type FormEvent, useId, useState } from 'react';
+
+import { withSearch } from './search-results-data';
 
 type Audience = 'client' | 'pro' | 'business';
 
-/** Sign-up link that carries the visitor's search, e.g. …/register?service=Plombier&ville=Sfax. */
-export function buildSearchUrl(base: string, service: string, city: string): string {
-  const url = new URL(base);
-  if (service.trim()) url.searchParams.set('service', service.trim());
-  if (city.trim()) url.searchParams.set('ville', city.trim());
-  return url.toString();
-}
-
 /**
  * Hero search: who you are, then what you need and where.
- * For now every path ends on sign-up, carrying the search in the URL.
+ * A search opens the results page (how many pros match), which then leads to sign-up.
  */
 export function HeroSearch() {
   const { t, locale, tList } = useI18n();
+  const router = useRouter();
   const [audience, setAudience] = useState<Audience>('client');
   const [service, setService] = useState('');
   const [city, setCity] = useState('');
@@ -39,7 +35,7 @@ export function HeroSearch() {
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    window.location.assign(buildSearchUrl(APP_REGISTER_URL, service, city));
+    router.push(withSearch(localizePath(locale, '/recherche'), service, city));
   };
 
   return (

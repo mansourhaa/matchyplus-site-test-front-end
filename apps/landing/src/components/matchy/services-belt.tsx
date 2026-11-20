@@ -265,7 +265,7 @@ export function ServicesBelt() {
           pointerX.set(0);
           pointerY.set(0);
         }}
-        className="relative mt-12 h-[520px] touch-pan-y overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white shadow-2xl shadow-[#2F76BB]/10 select-none sm:h-[600px] md:h-[680px]"
+        className="relative mt-12 h-[520px] touch-pan-y overflow-hidden bg-white select-none sm:h-[600px] md:h-[680px]"
       >
         {size.width > 0 && (
           <motion.div

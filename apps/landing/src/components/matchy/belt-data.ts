@@ -59,7 +59,7 @@ export function toServices(rows: unknown): BeltService[] {
 }
 
 /**
- * Hover tag of a pro on the belt, e.g. "Youssef B. · 25 DT/h". Without a profile, the trade
+ * Hover tag of a pro on the belt, e.g. "Youssef B. · 25 à 30 DT/jour". Without a profile, the trade
  * name is shown instead.
  */
 export function personTag(

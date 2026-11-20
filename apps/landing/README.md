@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **113 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **125 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -65,23 +65,30 @@ All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `e
   slight parallax.
   - The screenshot has French buttons and tabs baked in. They are redrawn on top of it in the page
     language, with the app's own labels (key `heroPhoneTabs`). Without this, the English and
-    Arabic pages showed French.
+    Arabic pages showed French. The tab labels sit on the label row only (below the icons) and
+    are clipped to the screen's rounded corners, so they never spill onto the phone frame.
   - Split into small files: `hero-phone-overlay.tsx` (the redrawn buttons and tabs, with their
     positions), `hero-phone-bubble.tsx` (a floating bubble), `hero-mini-card.tsx` (the swiping
     card). `hero-live-phone.tsx` keeps the timer, the swipes and the tilt.
 - **`hero-search.tsx`:** "I'm looking for a pro / I'm a professional / Business" toggles, plus
-  "what service?" and "where?". It sends people to the app's sign-up page with the search in the
-  URL (`buildSearchUrl` adds `service` and `ville`).
+  "what service?" and "where?". A search opens the **results page** (`/recherche/`, see below),
+  which then leads to sign-up with the search in the URL.
+- **Results page** (`app/[lang]/recherche/`, `search-results.tsx`, `search-results-data.ts`): the
+  site's blue sub-page band with "37 professionnels disponibles", the search (service, city or
+  "Près de chez vous") and a "Créer mon compte gratuit" button to the app's sign-up page
+  (`buildSearchUrl` adds `service` and `ville`). The number is a **sample** (same search, same
+  number, 12 to 48) and the page says "Chiffre indicatif" until a search API exists. The page is
+  `noindex` and stays out of the sitemap.
   - The navbar has no login link, so the hero keeps "Déjà membre ? Connexion".
 
 ### 2. Services belt
 
 - **What it is:** a 3D carousel of 10 professionals (plumber, electrician, driver, nanny,
-  cleaner, delivery, cook, seamstress, gardener, waiter) on a white stage, like the rest of the
-  site. You can drag it, click a person, or use the keyboard. At the manager's request there is no
+  cleaner, delivery, cook, seamstress, gardener, waiter) on a white stage with no box: the floor
+  fades out on every side into the white page (`EDGE_FADE` in `motion.tsx`). You can drag it, click a person, or use the keyboard. At the manager's request there is no
   numbered index on the side.
 - **Hover tag:** before the click, hovering a person shows a small white tag beside them with their
-  name and hourly price ("Youssef B. · 25 DT/h", built by `personTag` in `belt-data.ts`). The same
+  name and daily price range ("Youssef B. · 25 à 30 DT/jour", built by `personTag` in `belt-data.ts`). The same
   text is part of the person's accessible name, so screen readers hear it too.
 - **Picking a pro:** clicking one opens their profile card (`belt-profile-card.tsx`) with
   app-style "Passer" / "Connecter" buttons.
@@ -112,8 +119,9 @@ reviews, no idea of availability) with Matchy+.
   visibility).
 - **Right side:** a sample pro card. Following the manager's request, it has **no photo**. On
   top is the referral block: the code with a copy button, a QR code to the sign-up page
-  (`?ref=CODE`), and the points for both sides. Below come the name, trade, price, rating,
-  "Disponible", area and 3 stats.
+  (`?ref=CODE`), and the member's points ("10 points pour vous"). Below come the name, trade,
+  daily price range, rating, "Disponible", area and 3 stats. The "Créez votre profil pro" button
+  sits under the card (manager's request).
 - **Why there is no separate referral section:** the manager wanted the code and points inside
   the card, so that section was removed with its texts and tests.
 - **Dependency:** the QR code uses `qrcode.react` (same version as `apps/app`).
@@ -128,7 +136,8 @@ is `community-marker.tsx`, the lines from Tunis are `community-arcs.tsx`, the ci
 Based on the manager's reference (a live visitors map), rebuilt in the site's theme:
 
 - **Layout:** the same centered, animated heading as the other sections. No card around it: the
-  light world map sits directly on the page and its edges fade out. Tunisia, France, Russia,
+  light world map sits directly on a white section and fades out on all four sides
+  (`EDGE_FADE`, the same fade as the belt floor). Tunisia, France, Russia,
   Algeria and Morocco are in brand blue (the manager's choice).
 - **Texts (manager's wording):** badge "Acquisition & visibilité internationale", title
   "Matchy+ attire des professionnels dans plusieurs pays". No "active now" wording anywhere.
@@ -172,11 +181,12 @@ smaller benefit.
 
 ## Example data: where it is, how to plug the real data
 
-| What                                           | Where                                                      | Status on screen                |
-| ---------------------------------------------- | ---------------------------------------------------------- | ------------------------------- |
-| Pros in the belt, the hero and the pro card    | `belt-data.ts` + `landing.beltProfiles`                    | "Profil d'exemple"              |
-| Community map: cities, counts, audience        | `community-map.ts` (`SAMPLE_LOCATIONS`, `SAMPLE_AUDIENCE`) | "Données d'exemple"             |
-| Referral code `MP-7K2Q9`, `[X]` / `[Y]` points | `landing.referral*`                                        | sample code, placeholder points |
+| What                                        | Where                                                      | Status on screen       |
+| ------------------------------------------- | ---------------------------------------------------------- | ---------------------- |
+| Pros in the belt, the hero and the pro card | `belt-data.ts` + `landing.beltProfiles`                    | "Profil d'exemple"     |
+| Community map: cities, counts, audience     | `community-map.ts` (`SAMPLE_LOCATIONS`, `SAMPLE_AUDIENCE`) | "Données d'exemple"    |
+| Referral code `MP-7K2Q9`, 10 points         | `landing.referral*`                                        | sample code and points |
+| Search results count                        | `search-results-data.ts` (`sampleResultCount`)             | "Chiffre indicatif"    |
 
 **Community map, going live:** replace the sample data with **aggregated** numbers from the API
 or Google Analytics: city, approximate position and active visitors. Never send visitor IPs to
@@ -192,10 +202,10 @@ These placeholders are visible on the page today:
 
 1. **Company story:** `[Prénom Nom]` and `[Phrase forte de la fondatrice…]` (the photo is in place).
 2. **Partnerships:** `[Logo partenaire]`.
-3. **Referral:** Matchy+ has **no referral system yet**. The code, the QR code and the `[X]` /
-   `[Y]` points should go live only once the programme exists. Otherwise, hide the block.
-4. **Example data:** the community map and the sample pros are labelled as examples. Real data
-   makes them much stronger.
+3. **Referral:** Matchy+ has **no referral system yet**. The code, the QR code and the
+   "10 points" should go live only once the programme exists. Otherwise, hide the block.
+4. **Example data:** the community map, the sample pros and the search results count are
+   labelled as examples. Real data makes them much stronger.
 
 Older issues, not caused by this work but worth a separate ticket:
 
@@ -250,16 +260,18 @@ Older issues, not caused by this work but worth a separate ticket:
 Vitest with jsdom (`vitest.config.ts`, `src/test/setup.ts`: cleanup and an IntersectionObserver
 stub), and the same Testing Library setup as `apps/app`.
 
-| File                         | What it covers                                                                                                       |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `belt-geometry.test.ts`      | Front / back slots (size, blur, depth), even spacing, nearest slot, shortest turn, stage size                        |
-| `messages.test.ts`           | `tList` / `tRows` helpers: only strings kept, the real belt and city tables                                          |
-| `belt-data.test.ts`          | Profile rows from the texts, invalid data ignored, a photo for every trade, pass / connect sequence                  |
-| `belt-profile-card.test.tsx` | Same match thresholds as the app (75 / 55), card content, Passer / Connecter / close                                 |
-| `belt-match-dialog.test.tsx` | Focus trap, Escape, click outside, continue                                                                          |
-| `referral.test.tsx`          | Sign-up link with code, texts in 3 languages, copy button                                                            |
-| `community-map.test.ts`      | Totals, positions on the map, curves, tooltip placement, number format, city names                                   |
-| `home-sections.test.tsx`     | Every new section renders in fr/en/ar, labels, links, map tooltip (mouse vs touch), new texts exist in all languages |
+| File                          | What it covers                                                                                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `belt-geometry.test.ts`       | Front / back slots (size, blur, depth), even spacing, nearest slot, shortest turn, stage size                                                       |
+| `messages.test.ts`            | `tList` / `tRows` helpers: only strings kept, the real belt and city tables                                                                         |
+| `belt-data.test.ts`           | Profile rows from the texts, invalid data ignored, a photo for every trade, pass / connect sequence                                                 |
+| `belt-profile-card.test.tsx`  | Same match thresholds as the app (75 / 55), card content, Passer / Connecter / close                                                                |
+| `belt-match-dialog.test.tsx`  | Focus trap, Escape, click outside, continue                                                                                                         |
+| `referral.test.tsx`           | Sign-up link with code, texts in 3 languages, copy button                                                                                           |
+| `community-map.test.ts`       | Totals, positions on the map, curves, tooltip placement, number format, city names                                                                  |
+| `search-results-data.test.ts` | Search in the URL (site and sign-up), sample count range and stability                                                                              |
+| `search-results.test.tsx`     | Results page: count, search, sign-up link with the search, "near you", back link                                                                    |
+| `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), new texts exist in all languages |
 
 ---
 

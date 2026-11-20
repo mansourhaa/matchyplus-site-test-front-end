@@ -7,14 +7,16 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CompanyStory } from './company-story';
 import { HeroLivePhone } from './hero-live-phone';
-import { HeroSearch, buildSearchUrl } from './hero-search';
+import { HeroSearch } from './hero-search';
 import { LiveCommunity } from './live-community';
 import { Partnerships } from './partnerships';
 import { ProBranding } from './pro-branding';
 import { WhyMatchy } from './why-matchy';
 
+const push = vi.hoisted(() => vi.fn());
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ push, replace: vi.fn(), refresh: vi.fn() }),
   usePathname: () => '/fr/',
 }));
 
@@ -30,6 +32,11 @@ const NEW_KEYS = [
   'searchTabBusiness',
   'searchPopular',
   'searchMember',
+  'resultsTitle',
+  'resultsNear',
+  'resultsSearching',
+  'resultsCta',
+  'resultsSample',
   'whyTitle',
   'whyBefore',
   'whyAfter',
@@ -62,20 +69,6 @@ describe('new home texts', () => {
   });
 });
 
-describe('buildSearchUrl', () => {
-  it('carries the trimmed service and city', () => {
-    expect(buildSearchUrl('https://app.matchyplus.com/register', ' Plombier ', 'Sfax')).toBe(
-      'https://app.matchyplus.com/register?service=Plombier&ville=Sfax',
-    );
-  });
-
-  it('leaves empty fields out', () => {
-    expect(buildSearchUrl('https://app.matchyplus.com/register', '', '  ')).toBe(
-      'https://app.matchyplus.com/register',
-    );
-  });
-});
-
 describe('HeroSearch', () => {
   it('starts on "Je cherche un pro" with the search form', () => {
     renderIn('fr', <HeroSearch />);
@@ -85,6 +78,14 @@ describe('HeroSearch', () => {
     );
     expect(screen.getByLabelText('Quel service ?')).toBeInTheDocument();
     expect(screen.getByLabelText('Où ?')).toBeInTheDocument();
+  });
+
+  it('a search opens the results page of the current language, with the search', () => {
+    renderIn('fr', <HeroSearch />);
+    fireEvent.change(screen.getByLabelText('Quel service ?'), { target: { value: 'Plombier' } });
+    fireEvent.change(screen.getByLabelText('Où ?'), { target: { value: 'Sfax' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Rechercher' }));
+    expect(push).toHaveBeenCalledWith('/fr/recherche/?service=Plombier&ville=Sfax');
   });
 
   it('a popular chip fills the service field', () => {

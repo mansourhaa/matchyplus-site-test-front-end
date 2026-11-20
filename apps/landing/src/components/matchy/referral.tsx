@@ -15,8 +15,8 @@ export function referralUrl(base: string, code: string): string {
 
 /**
  * Referral block at the top of the sample pro card: the member's code (with a copy button),
- * a QR code to the sign-up page, and the points both sides earn.
- * Matchy+ has no referral system yet: the code is a sample and the points are placeholders.
+ * a QR code to the sign-up page, and the points the member earns.
+ * Matchy+ has no referral system yet: the code and the points are samples.
  */
 export function ReferralCode() {
   const { t } = useI18n();
@@ -82,16 +82,11 @@ export function ReferralCode() {
           />
         </div>
       </div>
-      <div className="relative mt-1 flex flex-wrap gap-1.5">
-        {[t('landing.referralYou'), t('landing.referralFriend')].map((label) => (
-          <span
-            key={label}
-            className="text-brand-navy inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold"
-          >
-            <Gift className="h-3 w-3" />
-            {label}
-          </span>
-        ))}
+      <div className="relative mt-1 flex">
+        <span className="text-brand-navy inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold">
+          <Gift className="h-3 w-3" />
+          {t('landing.referralYou')}
+        </span>
       </div>
     </div>
   );

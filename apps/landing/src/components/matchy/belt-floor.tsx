@@ -1,12 +1,16 @@
 import { type StageSize, stageGeometry } from './belt-geometry';
+import { EDGE_FADE } from './motion';
 
-/** Floor under the belt: soft brand glow, coloured ellipse and fine concentric rings. */
+/**
+ * Floor under the belt: soft brand glow, coloured ellipse and fine concentric rings. It fades out
+ * on every side, so the stage has no visible box on the white page.
+ */
 export function BeltFloor({ size }: { size: StageSize }) {
   const { radii, centerX, centerY } = stageGeometry(size);
   const floorWidth = (radii.rx + 70) * 2;
   const floorHeight = (radii.ry + 26) * 2;
   return (
-    <>
+    <div aria-hidden="true" className={`pointer-events-none absolute inset-0 ${EDGE_FADE}`}>
       {/* soft brand glow behind the belt */}
       <div
         aria-hidden="true"
@@ -37,6 +41,6 @@ export function BeltFloor({ size }: { size: StageSize }) {
           }}
         />
       ))}
-    </>
+    </div>
   );
 }

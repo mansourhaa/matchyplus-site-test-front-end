@@ -18,7 +18,6 @@ const KEYS = [
   'referralCopied',
   'referralQr',
   'referralYou',
-  'referralFriend',
 ];
 
 describe('referralUrl', () => {
@@ -44,14 +43,13 @@ describe('ReferralCode', () => {
     );
   }
 
-  it('shows the code, a QR code and the points for both sides', () => {
+  it('shows the code, a QR code and the points', () => {
     renderFr();
     expect(screen.getByText('MP-7K2Q9')).toBeInTheDocument();
     // the QR code is an SVG with a title, so screen readers know what it is
     expect(screen.getByText('Scannez pour rejoindre Matchy+')).toBeInTheDocument();
     expect(document.querySelector('svg title')).not.toBeNull();
-    expect(screen.getByText('[X] points pour vous')).toBeInTheDocument();
-    expect(screen.getByText('[Y] points pour votre filleul')).toBeInTheDocument();
+    expect(screen.getByText('10 points pour vous')).toBeInTheDocument();
   });
 
   it('copies the code and says so', async () => {

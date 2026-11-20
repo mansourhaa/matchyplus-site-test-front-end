@@ -6,6 +6,13 @@ import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 /**
+ * Fades an element out on all four sides (no visible box edge), so it melts into a white page.
+ * Used by the belt floor and the community map.
+ */
+export const EDGE_FADE =
+  '[mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent),linear-gradient(to_bottom,transparent,black_14%,black_86%,transparent)] [mask-composite:intersect]';
+
+/**
  * One rule for "reduce motion" on the whole page: framer-motion skips movement (transforms) for
  * visitors who ask for it, and keeps fades. Components never branch their markup on it (that would
  * make the server and browser HTML differ); only logic (auto-rotation, timers) checks it in JS.

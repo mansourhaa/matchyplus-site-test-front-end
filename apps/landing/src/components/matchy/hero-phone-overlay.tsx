@@ -17,10 +17,14 @@ export const CONNECT_BUTTON: CSSProperties = {
 
 /**
  * The screenshot's tab labels are in French: each one is covered by a translated label,
- * centred under its icon (x in %), on the label row. Fixed width, so a short word still hides a long one.
+ * centred under its icon (x in %), on the label row only (below the icons). Fixed width, so a
+ * short word still hides a long one.
  */
 const TAB_CENTERS = ['18.6%', '40.2%', '62.2%', '81.8%'] as const;
-const TAB_ROW: CSSProperties = { top: '95.6%', height: '2.35%', width: '15%' };
+const TAB_ROW: CSSProperties = { top: '96.45%', height: '1.4%', width: '13%' };
+
+/** The phone screen's shape in the screenshot: the labels never spill onto the frame's corners. */
+const SCREEN_CLIP: CSSProperties = { clipPath: 'inset(0 5.6% 2.2% 5% round 11.8% / 5.9%)' };
 
 /**
  * The screenshot's Pass / Connect buttons and bottom tabs, redrawn on top of it so their labels
@@ -52,15 +56,17 @@ export function HeroPhoneOverlay({
         <Check className="h-[4.6cqw] w-[4.6cqw]" strokeWidth={2.5} />
         {connectLabel}
       </span>
-      {tabs.map((label, index) => (
-        <span
-          key={label}
-          className={`absolute flex -translate-x-1/2 items-center justify-center bg-white px-[1cqw] text-[2.9cqw] leading-none whitespace-nowrap ${index === 0 ? 'text-brand-blue font-bold' : 'text-[#64748B]'}`}
-          style={{ ...TAB_ROW, left: TAB_CENTERS[index] }}
-        >
-          {label}
-        </span>
-      ))}
+      <div className="absolute inset-0" style={SCREEN_CLIP}>
+        {tabs.map((label, index) => (
+          <span
+            key={label}
+            className={`absolute flex -translate-x-1/2 items-center justify-center bg-white px-[1cqw] text-[2.9cqw] leading-none whitespace-nowrap ${index === 0 ? 'text-brand-blue font-bold' : 'text-[#64748B]'}`}
+            style={{ ...TAB_ROW, left: TAB_CENTERS[index] }}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

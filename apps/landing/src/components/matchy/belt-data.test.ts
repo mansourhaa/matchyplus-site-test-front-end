@@ -79,7 +79,9 @@ describe('personTag', () => {
     const profiles = toProfiles([
       ['PLB', 'Youssef B.', '27', '2,4', '4,8', '132', '88', '25', 'Plombier.'],
     ]);
-    expect(personTag(profiles.PLB, '25 DT/h', 'Plombier')).toBe('Youssef B. · 25 DT/h');
+    expect(personTag(profiles.PLB, '25 à 30 DT/jour', 'Plombier')).toBe(
+      'Youssef B. · 25 à 30 DT/jour',
+    );
     expect(personTag(undefined, '', 'Plombier')).toBe('Plombier');
   });
 });

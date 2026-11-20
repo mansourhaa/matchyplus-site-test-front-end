@@ -24,7 +24,7 @@ const labels = {
   ai: 'IA',
   confidence: 'Très compatible',
   distance: 'à 2,4 km',
-  price: '25 DT/h',
+  price: '25 à 30 DT/jour',
   pass: 'Passer',
   like: 'Connecter',
   close: 'Fermer',
@@ -66,7 +66,7 @@ describe('BeltProfileCard', () => {
     expect(screen.getByRole('dialog', { name: 'Youssef B., 27' })).toBeInTheDocument();
     expect(screen.getByText('88%')).toBeInTheDocument();
     expect(screen.getByText('Très compatible')).toBeInTheDocument();
-    expect(screen.getByText('25 DT/h')).toBeInTheDocument();
+    expect(screen.getByText('25 à 30 DT/jour')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Voir détails/ })).toHaveAttribute(
       'href',
       'https://app.matchyplus.com/register',

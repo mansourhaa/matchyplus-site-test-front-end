@@ -21,7 +21,7 @@ import {
 } from './community-map';
 import { CommunityMarker } from './community-marker';
 import { CommunityTooltip } from './community-tooltip';
-import { Reveal } from './motion';
+import { EDGE_FADE, Reveal } from './motion';
 
 /** Time between two sample updates, in ms. */
 const UPDATE_EVERY = 1800;
@@ -92,7 +92,7 @@ export function LiveCommunity() {
   ];
 
   return (
-    <section ref={sectionRef} className="relative z-10 bg-[#F7FAFD] py-20 md:py-24">
+    <section ref={sectionRef} className="relative z-10 bg-white py-20 md:py-24">
       <div className="mx-auto max-w-6xl px-5">
         {/* same heading as the other sections */}
         <Reveal className="mx-auto max-w-2xl text-center">
@@ -132,13 +132,13 @@ export function LiveCommunity() {
                   width={MAP_WIDTH}
                   height={MAP_HEIGHT}
                   unoptimized
-                  className="absolute inset-0 h-full w-full [mask-image:radial-gradient(ellipse_75%_75%_at_50%_50%,black_70%,transparent_100%)] select-none"
+                  className={`absolute inset-0 h-full w-full select-none ${EDGE_FADE}`}
                   draggable={false}
                 />
                 {/* light sweep, with the same faded edges as the map so it never shows as a box */}
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 overflow-hidden [mask-image:radial-gradient(ellipse_75%_75%_at_50%_50%,black_70%,transparent_100%)] motion-reduce:hidden"
+                  className={`pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden ${EDGE_FADE}`}
                 >
                   <motion.div
                     aria-hidden="true"

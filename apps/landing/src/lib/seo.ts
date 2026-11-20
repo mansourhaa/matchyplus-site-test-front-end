@@ -66,7 +66,8 @@ export type PageKey =
   | 'terms-of-service'
   | 'privacy-policy'
   | 'suppression-compte'
-  | 'coming-soon';
+  | 'coming-soon'
+  | 'recherche';
 
 /** The À propos copy ships with its page content in `locales/<lang>/about.json`. */
 function aboutCopy(): Record<Locale, PageCopy> {
@@ -281,6 +282,24 @@ export const PAGES: Record<PageKey, PageSeo> = {
         title: 'قريباً',
         description:
           'تطبيق Matchy+ للهاتف المحمول قيد التطوير وسيكون متاحًا قريبًا على Google Play و App Store.',
+      },
+    },
+  },
+  recherche: {
+    path: '/recherche',
+    noindex: true,
+    copy: {
+      fr: {
+        title: 'Résultats de recherche',
+        description: 'Les professionnels Matchy+ disponibles pour votre recherche.',
+      },
+      en: {
+        title: 'Search results',
+        description: 'Matchy+ professionals available for your search.',
+      },
+      ar: {
+        title: 'نتائج البحث',
+        description: 'المحترفون المتاحون على Matchy+ لبحثك.',
       },
     },
   },
