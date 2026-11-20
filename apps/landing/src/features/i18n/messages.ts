@@ -108,18 +108,8 @@ export const messages: Record<Locale, MessageTree> = {
       partnersTitle: 'Ils avancent avec Matchy+',
       partnersBody:
         'Entreprises, associations et marques locales : construisons ensemble un réseau de services de confiance.',
-      partnersBenefits: [
-        [
-          'Visibilité locale',
-          'Votre marque mise en avant auprès des utilisateurs de votre région.',
-        ],
-        ['Nouveaux clients', 'Des demandes qualifiées, au bon endroit et au bon moment.'],
-        [
-          'Un vrai partenariat',
-          'Une équipe qui vous accompagne et des actions construites ensemble.',
-        ],
-      ],
       partnersLogo: '[Logo partenaire]',
+      partnersSlot: 'Votre marque ici',
       partnersCta: 'Devenir partenaire',
       referralYou: '10 points pour vous',
       referralCodeLabel: 'Votre code de parrainage',
@@ -611,12 +601,8 @@ export const messages: Record<Locale, MessageTree> = {
       partnersTitle: 'Growing together with Matchy+',
       partnersBody:
         'Companies, associations and local brands: let’s build a network of trusted services together.',
-      partnersBenefits: [
-        ['Local visibility', 'Your brand showcased to users in your region.'],
-        ['New clients', 'Qualified requests, in the right place at the right time.'],
-        ['A real partnership', 'A team by your side and actions we build together.'],
-      ],
       partnersLogo: '[Partner logo]',
+      partnersSlot: 'Your brand here',
       partnersCta: 'Become a partner',
       referralYou: '10 points for you',
       referralCodeLabel: 'Your referral code',
@@ -1093,12 +1079,8 @@ export const messages: Record<Locale, MessageTree> = {
       storyLink: 'اكتشف قصتنا',
       partnersTitle: 'يتقدّمون مع Matchy+',
       partnersBody: 'شركات وجمعيات وعلامات محلية: لنبنِ معًا شبكة خدمات موثوقة.',
-      partnersBenefits: [
-        ['ظهور محلي', 'علامتك أمام المستخدمين في منطقتك.'],
-        ['عملاء جدد', 'طلبات مؤهلة، في المكان والوقت المناسبين.'],
-        ['شراكة حقيقية', 'فريق يرافقك وأعمال نبنيها معًا.'],
-      ],
       partnersLogo: '[شعار الشريك]',
+      partnersSlot: 'علامتك هنا',
       partnersCta: 'كن شريكًا',
       referralYou: '10 نقاط لك',
       referralCodeLabel: 'رمز الدعوة الخاص بك',

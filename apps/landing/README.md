@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **125 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **126 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -174,8 +174,10 @@ smaller benefit.
 - **`company-story.tsx`:** the story behind Matchy+: the founder's photo
   (`public/showcase/founder.webp`), quote and story. The quote and name are still placeholders
   (see below).
-- **`partnerships.tsx`:** the partnership offer, a strip of partner logos (placeholders), and a
-  link to `/devenir-partenaire/`.
+- **`partnerships.tsx`:** the heading, a sliding strip of big cards that alternates partner logos
+  (white cards, placeholders for now) with free places ("Votre marque ici" with a "+", linking
+  to `/devenir-partenaire/`), and the "Devenir partenaire" button. The strip fades out at both
+  ends. The 3 benefit cards were removed at the manager's request.
 
 ---
 
@@ -201,7 +203,7 @@ The sample updates only run while the section is on screen and the tab is visibl
 These placeholders are visible on the page today:
 
 1. **Company story:** `[Prénom Nom]` and `[Phrase forte de la fondatrice…]` (the photo is in place).
-2. **Partnerships:** `[Logo partenaire]`.
+2. **Partnerships:** `[Logo partenaire]` in the white cards of the strip.
 3. **Referral:** Matchy+ has **no referral system yet**. The code, the QR code and the
    "10 points" should go live only once the programme exists. Otherwise, hide the block.
 4. **Example data:** the community map, the sample pros and the search results count are

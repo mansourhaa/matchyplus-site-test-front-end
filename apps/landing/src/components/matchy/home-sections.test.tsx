@@ -46,8 +46,8 @@ const NEW_KEYS = [
   'storyQuote',
   'storyBody',
   'partnersTitle',
-  'partnersBenefits',
   'partnersCta',
+  'partnersSlot',
   'communityTitle',
   'communityPresence',
   'communityAudience',
@@ -102,6 +102,18 @@ describe('HeroSearch', () => {
       'href',
       expect.stringMatching(/^\/fr\/devenir-partenaire\/?$/),
     );
+  });
+
+  it('Partnerships strip: free places lead to the partner page, out of the tab order', () => {
+    const { container } = renderIn('fr', <Partnerships />);
+    // the strip is decorative, so its links are not in the accessibility tree: query the DOM
+    const slots = [...container.querySelectorAll('[aria-hidden="true"] a')];
+    expect(slots.length).toBeGreaterThan(0);
+    for (const slot of slots) {
+      expect(slot).toHaveTextContent('Votre marque ici');
+      expect(slot).toHaveAttribute('tabindex', '-1');
+      expect(slot.getAttribute('href')).toMatch(/^\/fr\/devenir-partenaire\/?$/);
+    }
   });
 });
 
@@ -165,9 +177,9 @@ describe('home sections', () => {
     );
   });
 
-  it('Partnerships shows three benefits and the partner link', () => {
+  it('Partnerships shows the heading and the partner link', () => {
     renderIn('fr', <Partnerships />);
-    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3);
+    expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument();
     // next/link drops the trailing slash in tests; the site adds it back (trailingSlash).
     expect(screen.getByRole('link', { name: /Devenir partenaire/ })).toHaveAttribute(
       'href',
