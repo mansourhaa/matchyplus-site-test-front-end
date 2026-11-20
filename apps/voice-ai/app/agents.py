@@ -18,6 +18,7 @@ Likes, matchs, messages, blocages et quotas restent ceux de l'application (pas d
 """
 from __future__ import annotations
 
+import logging
 import time
 from functools import lru_cache
 
@@ -39,6 +40,8 @@ GOAL_CODES = {
 }
 DAY_CODES = {"Lun": "mon", "Mar": "tue", "Mer": "wed", "Jeu": "thu", "Ven": "fri", "Sam": "sat", "Dim": "sun"}
 PLAN_KEYS = {"FREE": "free", "PREMIUM": "premium", "PREMIUM_PLUS": "premium_plus"}
+
+log = logging.getLogger("matchy.agents")
 
 
 class Trace:
@@ -188,6 +191,19 @@ def feed(me: dict, candidates: list[dict], swipes: list[dict], ui: str = "fr", r
     sponsored = max(boosted, key=lambda r: (r["boost"], r["score"]))["id"] if boosted else None
     tr.add("boost", "place mise en avant (vidéo ×3 × formule)", t0, sponsored=sponsored)
 
+    _log_feed(candidates, results, sponsored, prefs)
     return {"ok": True, "engineVersion": engine.version(), "results": results, "sponsored": sponsored,
             "behavior": {k: prefs[k] for k in ("categoryWeights", "interactionCount", "personalized")},
             "orchestration": tr.out()}
+
+
+def _log_feed(candidates: list[dict], results: list[dict], sponsored: str | None, prefs: dict) -> None:
+    """Une ligne par appel dans la console du service, pour voir le travail des agents sans outils :
+    le classement, le score du moteur du chef, le poids appris (comportement) et le boost."""
+    names = {p.get("id"): p.get("name") or p.get("id") for p in candidates or []}
+    lines = [f"[agents] {len(results)} profil(s) · {prefs['interactionCount']} swipe(s) appris · "
+             f"mise en avant (boost) : {names.get(sponsored, '—') if sponsored else '—'}"]
+    for rank, r in enumerate(results[:10], start=1):
+        lines.append(f"  #{rank} {names.get(r['id'], r['id'])} : score {r['score']} · "
+                     f"comportement ×{r['behaviorMultiplier']} · boost ×{r['boost']}")
+    log.info("\n".join(lines))

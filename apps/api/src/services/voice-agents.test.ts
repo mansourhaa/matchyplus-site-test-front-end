@@ -30,15 +30,21 @@ function feedProfile(id: string, score: number): FeedProfile {
 function prismaMock() {
   return {
     user: {
-      findUnique: vi.fn().mockResolvedValue({ id: 'me', job: 'x' }),
-      findMany: vi.fn().mockResolvedValue([{ id: 'a' }, { id: 'b' }, { id: 'c' }]),
+      findUnique: vi.fn().mockResolvedValue({ id: 'me', job: 'x', video: null }),
+      findMany: vi
+        .fn()
+        .mockResolvedValue([
+          { id: 'a', video: '/uploads/videos/a.webm' },
+          { id: 'b' },
+          { id: 'c' },
+        ]),
     },
     swipeLog: {
       findMany: vi.fn().mockResolvedValue([
         {
           direction: 'RIGHT',
           swiped_at: new Date('2026-11-19T10:00:00Z'),
-          target: { id: 'z', job: 'Plombier' },
+          target: { id: 'z', job: 'Plombier', video: null },
         },
       ]),
     },
@@ -106,10 +112,15 @@ describe('VoiceAgentsService', () => {
     expect(url).toBe('http://voice-ai:8001/agents/feed');
     const sent = JSON.parse(init.body);
     expect(sent.candidates).toHaveLength(3);
-    expect(sent.candidates[0]).toMatchObject({ id: 'a', distance_km: 3 });
+    expect(sent.candidates[0]).toEqual({ id: 'a', video: true, distance_km: 3 });
     expect(sent.swipes).toEqual([
-      { direction: 'like', at: '2026-11-19T10:00:00.000Z', profile: { id: 'z', job: 'Plombier' } },
+      {
+        direction: 'like',
+        at: '2026-11-19T10:00:00.000Z',
+        profile: { id: 'z', job: 'Plombier', video: false },
+      },
     ]);
+    expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
   it('keeps the built-in order when the voice service is down', async () => {
@@ -121,5 +132,21 @@ describe('VoiceAgentsService', () => {
     });
 
     await expect(service.rank('me', [feedProfile('a', 50)], 50)).resolves.toBeNull();
+  });
+
+  it('sends matching attributes and ids only (no name, phone, email, bio or media path)', async () => {
+    const prisma = prismaMock();
+    const service = new VoiceAgentsService({
+      prisma: prisma as never,
+      enabled: true,
+      fetchImpl: vi.fn().mockResolvedValue(jsonResponse({ ok: true, results: [] })),
+    });
+
+    await service.rank('me', [feedProfile('a', 50)], 50);
+
+    const select = prisma.user.findMany.mock.calls[0][0].select;
+    for (const field of ['name', 'phone', 'email', 'bio', 'password', 'image']) {
+      expect(select).not.toHaveProperty(field);
+    }
   });
 });

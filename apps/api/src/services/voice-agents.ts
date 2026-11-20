@@ -2,7 +2,10 @@ import { PrismaClient, SwipeDirection } from '@saas-boilerplate/types';
 
 import { FeedProfile } from '../types/matching.js';
 
-/** Profile fields the agents read (classification, behaviour, matching). */
+/**
+ * Profile fields the agents read (classification, behaviour, matching). Matching attributes
+ * and ids only: no name, phone, email, bio or media path is sent to voice-ai.
+ */
 export const agentProfileSelect = {
   id: true,
   job: true,
@@ -10,7 +13,6 @@ export const agentProfileSelect = {
   industry: true,
   interests: true,
   selected_goals: true,
-  bio: true,
   availability_days: true,
   availability_hours: true,
   languages: true,
@@ -19,6 +21,28 @@ export const agentProfileSelect = {
   video: true,
   plan: true,
 } as const;
+
+type AgentProfileRow = {
+  id: string;
+  job: string | null;
+  service_type: string | null;
+  industry: string | null;
+  interests: string[];
+  selected_goals: string[];
+  availability_days: string[];
+  availability_hours: string[];
+  languages: string[];
+  rating: number | null;
+  reviews: number | null;
+  video: string | null;
+  plan: string | null;
+};
+
+/** What voice-ai receives for a profile: the video only as « has one or not ». */
+function toAgentProfile(row: AgentProfileRow) {
+  const { video, ...attributes } = row;
+  return { ...attributes, video: Boolean(video) };
+}
 
 type AgentResult = {
   id: string;
@@ -44,7 +68,8 @@ const DIMENSION_NAMES: Record<string, string> = {
 };
 
 const DEFAULT_VOICE_AI_URL = 'http://localhost:8001';
-const AGENTS_TIMEOUT_MS = 4000;
+// Tight: the home feed must not wait for the agents (built-in order is kept on timeout).
+const AGENTS_TIMEOUT_MS = 1500;
 const SWIPE_HISTORY = 500;
 
 function candidateUrls(baseUrl: string): string[] {
@@ -110,15 +135,18 @@ export class VoiceAgentsService {
 
       const byId = new Map(details.map((detail) => [detail.id, detail]));
       const body = JSON.stringify({
-        me,
-        candidates: profiles.map((profile) => ({
-          ...(byId.get(profile.id) ?? { id: profile.id }),
-          distance_km: profile.distance_km,
-        })),
+        me: toAgentProfile(me as AgentProfileRow),
+        candidates: profiles.map((profile) => {
+          const row = byId.get(profile.id) as AgentProfileRow | undefined;
+          return {
+            ...(row ? toAgentProfile(row) : { id: profile.id }),
+            distance_km: profile.distance_km,
+          };
+        }),
         swipes: logs.map((log) => ({
           direction: log.direction === SwipeDirection.RIGHT ? 'like' : 'pass',
           at: log.swiped_at.toISOString(),
-          profile: log.target,
+          profile: toAgentProfile(log.target as AgentProfileRow),
         })),
         radiusKm,
       });
