@@ -471,3 +471,45 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(res.sectors).toContain('Informatique / Tech');
   });
 });
+
+describe('DiscoveryService.getSwipeFeed with MATCHING_ENGINE=agents', () => {
+  it('uses the order and the score of the agents', async () => {
+    const prisma = createMockPrisma([candidate('a'), candidate('b')]);
+    const agents = {
+      rank: vi
+        .fn()
+        .mockImplementation((_userId: string, profiles: { id: string }[]) =>
+          Promise.resolve(
+            [...profiles]
+              .sort((x, y) => (x.id < y.id ? 1 : -1))
+              .map((profile) => ({ ...profile, match_score: 77 })),
+          ),
+        ),
+    };
+    const service = new DiscoveryService({ prisma: prisma as never, agents: agents as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      context: 'swipe',
+    });
+
+    expect(agents.rank).toHaveBeenCalledWith('me', expect.any(Array), expect.any(Number));
+    expect(result.profiles.map((p) => p.id)).toEqual(['b', 'a']);
+    expect(result.profiles[0].match_score).toBe(77);
+  });
+
+  it('keeps the built-in feed when the agents give nothing back', async () => {
+    const prisma = createMockPrisma([candidate('a')]);
+    const agents = { rank: vi.fn().mockResolvedValue(null) };
+    const service = new DiscoveryService({ prisma: prisma as never, agents: agents as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      context: 'swipe',
+    });
+
+    expect(result.profiles.map((p) => p.id)).toEqual(['a']);
+  });
+});
