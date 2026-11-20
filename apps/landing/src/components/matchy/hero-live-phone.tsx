@@ -3,7 +3,6 @@
 import { useI18n } from '@/features/i18n/i18n-provider';
 import {
   AnimatePresence,
-  type MotionValue,
   motion,
   useInView,
   useMotionValue,
@@ -11,46 +10,28 @@ import {
   useSpring,
   useTransform,
 } from 'framer-motion';
-import { Brain, Check, Heart, MapPin, Star, X } from 'lucide-react';
+import { Brain, Check, Heart, MapPin } from 'lucide-react';
 import Image from 'next/image';
-import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useRef, useState } from 'react';
 
-import { type BeltService, toProfiles, toServices } from './belt-data';
-import { type BeltProfile, confidenceTier } from './belt-profile-card';
+import { toProfiles, toServices } from './belt-data';
+import { confidenceTier } from './belt-profile-card';
+import { type DemoCard, MiniCard } from './hero-mini-card';
+import { Bubble } from './hero-phone-bubble';
+import { CONNECT_BUTTON, HeroPhoneOverlay, PASS_BUTTON } from './hero-phone-overlay';
 
 /** Time between two automatic swipes, in ms. */
 const SWIPE_EVERY = 2800;
 /** Pass, connect, pass, pass, connect… so the demo shows both buttons and a match. */
 const DIRECTIONS = [-1, 1, -1, -1, 1] as const;
-const TIER_COLORS = ['#61BCA6', '#2F76BB', '#F5A623'] as const;
 
-/** Where the app's card and its two buttons sit inside hero-phone.png (323 × 639 px). */
+/** Where the app's card sits inside hero-phone.png (323 × 639 px); buttons: hero-phone-overlay.tsx. */
 const CARD_AREA: CSSProperties = {
   left: '12.07%',
   top: '12.52%',
   width: '75.54%',
   height: '62.44%',
 };
-const PASS_BUTTON: CSSProperties = {
-  left: '12.38%',
-  top: '84.35%',
-  width: '31.58%',
-  height: '5.95%',
-};
-const CONNECT_BUTTON: CSSProperties = {
-  left: '47.99%',
-  top: '84.35%',
-  width: '39.32%',
-  height: '5.95%',
-};
-/**
- * The screenshot's tab labels are in French: each one is covered by a translated label,
- * centred under its icon (x in %), on the label row. Fixed width, so a short word still hides a long one.
- */
-const TAB_CENTERS = ['18.6%', '40.2%', '62.2%', '81.8%'] as const;
-const TAB_ROW: CSSProperties = { top: '95.6%', height: '2.35%', width: '15%' };
-
-type DemoCard = { service: BeltService; profile: BeltProfile };
 
 /** Swipe direction of the swipe number `step` (1-based); 0 before the first swipe. */
 export function swipeDirection(step: number): -1 | 0 | 1 {
@@ -144,31 +125,11 @@ export function HeroLivePhone({ alt }: { alt: string }) {
         />
 
         {/* the screenshot's buttons and tabs, redrawn so their labels follow the page language */}
-        <div aria-hidden="true" className="@container pointer-events-none absolute inset-0">
-          <span
-            className="absolute flex items-center justify-center gap-[2cqw] rounded-[14px] border border-[#E2E8F0] bg-white text-[4.3cqw] font-bold whitespace-nowrap text-[#475569]"
-            style={PASS_BUTTON}
-          >
-            <X className="h-[4.6cqw] w-[4.6cqw] text-[#64748B]" strokeWidth={2.5} />
-            {t('landing.beltPass')}
-          </span>
-          <span
-            className="absolute flex items-center justify-center gap-[2cqw] rounded-[14px] bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] text-[4.3cqw] font-bold whitespace-nowrap text-white"
-            style={CONNECT_BUTTON}
-          >
-            <Check className="h-[4.6cqw] w-[4.6cqw]" strokeWidth={2.5} />
-            {t('landing.beltLike')}
-          </span>
-          {tabs.map((label, index) => (
-            <span
-              key={label}
-              className={`absolute flex -translate-x-1/2 items-center justify-center bg-white px-[1cqw] text-[2.9cqw] leading-none whitespace-nowrap ${index === 0 ? 'text-brand-blue font-bold' : 'text-[#64748B]'}`}
-              style={{ ...TAB_ROW, left: TAB_CENTERS[index] }}
-            >
-              {label}
-            </span>
-          ))}
-        </div>
+        <HeroPhoneOverlay
+          passLabel={t('landing.beltPass')}
+          connectLabel={t('landing.beltLike')}
+          tabs={tabs}
+        />
 
         {current && next && (
           <div aria-hidden="true" className="@container absolute" style={CARD_AREA}>
@@ -269,144 +230,6 @@ export function HeroLivePhone({ alt }: { alt: string }) {
           </Bubble>
         </>
       )}
-    </div>
-  );
-}
-
-function Bubble({
-  className,
-  depth,
-  float,
-  pointerX,
-  id,
-  icon,
-  iconClass,
-  children,
-}: {
-  className: string;
-  depth: number;
-  float: number;
-  pointerX: MotionValue<number>;
-  id: string;
-  icon: ReactNode;
-  iconClass: string;
-  children: ReactNode;
-}) {
-  const x = useTransform(pointerX, [-1, 1], [-depth, depth]);
-  return (
-    <motion.div
-      aria-hidden="true"
-      className={`absolute z-20 ${className}`}
-      style={{ x }}
-      animate={{ y: [0, -7, 0] }}
-      transition={{ duration: float, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={id}
-          className="text-brand-navy flex items-center gap-2 rounded-2xl border border-white/60 bg-white/90 py-1.5 ps-1.5 pe-3 text-[11px] font-bold whitespace-nowrap shadow-xl shadow-black/10 backdrop-blur-md sm:text-xs"
-          initial={{ opacity: 0, scale: 0.85, y: 6 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
-          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-        >
-          <span
-            className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-white ${iconClass}`}
-          >
-            {icon}
-          </span>
-          {children}
-        </motion.div>
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-function MiniCard({
-  card,
-  labels,
-}: {
-  card: DemoCard;
-  labels: { available: string; ai: string; confidence: string; distance: string; price: string };
-}) {
-  const { service, profile } = card;
-  const tierColor = TIER_COLORS[confidenceTier(profile.score)];
-  return (
-    <div className="absolute inset-0 overflow-hidden rounded-[6cqw] bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] shadow-lg">
-      <Image
-        src={service.image.src}
-        alt=""
-        width={service.image.width}
-        height={service.image.height}
-        sizes="240px"
-        draggable={false}
-        className="absolute bottom-0 left-1/2 h-[94%] w-auto max-w-none -translate-x-1/2"
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 34%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.3) 100%)',
-        }}
-      />
-
-      <div className="absolute top-[4cqw] flex flex-col items-start gap-[2cqw] ltr:left-[4cqw] rtl:right-[4cqw]">
-        <span
-          dir="ltr"
-          className="flex items-center gap-[1cqw] rounded-full bg-white/95 px-[2.6cqw] py-[1cqw] text-[4.6cqw] font-bold text-[#353535]"
-        >
-          <Star className="h-[4.4cqw] w-[4.4cqw]" color="#F5A623" fill="#F5A623" />
-          {profile.rating}
-        </span>
-        <span
-          dir="ltr"
-          className="flex items-center gap-[1.4cqw] rounded-full bg-black/55 px-[2.6cqw] py-[1cqw] text-[4.6cqw] font-extrabold text-white"
-        >
-          <Brain className="h-[4.4cqw] w-[4.4cqw] text-[#61BCA6]" />
-          {profile.score}%<span className="text-[3.2cqw] opacity-85">{labels.ai}</span>
-        </span>
-        <span
-          className="rounded-full border bg-black/35 px-[2.4cqw] py-[0.6cqw] text-[3.6cqw] font-bold"
-          style={{ color: tierColor, borderColor: `${tierColor}99` }}
-        >
-          {labels.confidence}
-        </span>
-      </div>
-      <span className="absolute top-[4cqw] flex items-center gap-[1cqw] rounded-full bg-[rgba(97,188,166,0.9)] px-[2.6cqw] py-[1.2cqw] text-[4.2cqw] font-bold text-white ltr:right-[4cqw] rtl:left-[4cqw]">
-        <Check className="h-[4cqw] w-[4cqw]" strokeWidth={3} />
-        {labels.available}
-      </span>
-
-      <div className="absolute inset-x-0 bottom-0 p-[5cqw] text-white">
-        <div className="flex items-end justify-between gap-[3cqw]">
-          <div className="min-w-0">
-            <p className="truncate text-[8cqw] leading-tight font-bold">
-              {profile.name}, {profile.age}
-            </p>
-            <p className="text-[5cqw] opacity-90">{service.title}</p>
-          </div>
-          <span
-            dir="ltr"
-            className="bg-brand-blue shrink-0 rounded-[3cqw] px-[3cqw] py-[1.6cqw] text-[4.8cqw] font-bold"
-          >
-            {labels.price}
-          </span>
-        </div>
-        <p className="mt-[1.5cqw] flex items-center gap-[1cqw] text-[4.4cqw] opacity-85">
-          <MapPin className="h-[4.4cqw] w-[4.4cqw]" color="#61BCA6" />
-          {labels.distance}
-        </p>
-        <ul className="mt-[2.5cqw] flex flex-wrap gap-[1.6cqw]">
-          {profile.tags.slice(0, 2).map((tag) => (
-            <li
-              key={tag}
-              className="rounded-full bg-[rgba(97,188,166,0.65)] px-[2.6cqw] py-[0.8cqw] text-[3.8cqw]"
-            >
-              {tag}
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 }

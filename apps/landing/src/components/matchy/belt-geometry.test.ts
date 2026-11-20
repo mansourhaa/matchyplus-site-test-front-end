@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { angleToFront, beltPose, beltStep, frontIndex } from './belt-geometry';
+import {
+  WIDE_STAGE,
+  angleToFront,
+  beltPose,
+  beltStep,
+  frontIndex,
+  stageGeometry,
+} from './belt-geometry';
 
 const RADII = { rx: 400, ry: 150 };
 
@@ -53,5 +60,23 @@ describe('angleToFront', () => {
         expect(Math.abs(angleToFront(current, index, 5) - current)).toBeLessThanOrEqual(Math.PI);
       }
     }
+  });
+});
+
+describe('stageGeometry', () => {
+  it('centres the belt and caps its width and the front height', () => {
+    const wide = stageGeometry({ width: 1200, height: 680 });
+    expect(wide.centerX).toBe(600);
+    expect(wide.radii.rx).toBe(432);
+    expect(wide.radii.ry).toBeCloseTo(129.6);
+    expect(wide.baseHeight).toBe(353.6);
+    // very wide stage: the ellipse stops growing
+    expect(stageGeometry({ width: 3000, height: 680 }).radii.rx).toBe(440);
+  });
+
+  it('puts the belt lower on narrow screens', () => {
+    const narrow = stageGeometry({ width: WIDE_STAGE - 1, height: 520 });
+    const wide = stageGeometry({ width: WIDE_STAGE, height: 520 });
+    expect(narrow.centerY).toBeGreaterThan(wide.centerY);
   });
 });

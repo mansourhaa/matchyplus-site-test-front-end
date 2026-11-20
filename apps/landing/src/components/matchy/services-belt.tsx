@@ -2,10 +2,8 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_REGISTER_URL } from '@/lib/constants';
-import { cn } from '@/lib/utils';
 import {
   AnimatePresence,
-  type MotionValue,
   type PanInfo,
   animate,
   motion,
@@ -19,10 +17,8 @@ import {
   useVelocity,
 } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import Image from 'next/image';
 import {
   type PointerEvent as ReactPointerEvent,
-  type RefObject,
   useEffect,
   useEffectEvent,
   useId,
@@ -31,157 +27,18 @@ import {
 } from 'react';
 
 import { type BeltService, personTag, toProfiles, toServices } from './belt-data';
-import { type BeltRadii, angleToFront, beltPose, frontIndex } from './belt-geometry';
+import { BeltFloor } from './belt-floor';
+import { type StageSize, WIDE_STAGE, angleToFront, frontIndex } from './belt-geometry';
 import { BeltMatchDialog } from './belt-match-dialog';
+import { BeltPerson, FOCUS_SPRING } from './belt-person';
 import { BeltProfileCard, confidenceTier } from './belt-profile-card';
+import { BeltServiceInfo } from './belt-service-info';
 import { Reveal } from './motion';
-
-type StageSize = { width: number; height: number };
 
 /** Auto-rotation speed, in radians per millisecond (≈ one turn every 35 s). */
 const AUTO_SPEED = 0.00018;
 /** Drag sensitivity, in radians per pixel. */
 const DRAG_SPEED = 0.006;
-/** Breakpoint (px) above which the card sits beside the professional instead of below. */
-const WIDE_STAGE = 768;
-
-const FOCUS_SPRING = { type: 'spring', stiffness: 120, damping: 22 } as const;
-
-function stageGeometry({ width, height }: StageSize) {
-  const rx = Math.min(width * 0.36, 440);
-  const radii: BeltRadii = { rx, ry: rx * 0.3 };
-  return {
-    radii,
-    centerX: width / 2,
-    // On narrow screens the belt sits lower, closer to the title strip.
-    centerY: height * (width < WIDE_STAGE ? 0.6 : 0.54),
-    // Full-body portraits: the front professional takes about half the stage height.
-    baseHeight: Math.min(Math.max(height * 0.52, 230), 380),
-  };
-}
-
-function BeltPerson({
-  service,
-  index,
-  count,
-  angle,
-  motionBlur,
-  size,
-  selected,
-  hidden,
-  wide,
-  isRtl,
-  entered,
-  label,
-  tag,
-  onOpen,
-  buttonRef,
-}: {
-  service: BeltService;
-  index: number;
-  count: number;
-  angle: MotionValue<number>;
-  motionBlur: MotionValue<number>;
-  size: StageSize;
-  selected: boolean;
-  hidden: boolean;
-  wide: boolean;
-  isRtl: boolean;
-  entered: boolean;
-  label: string;
-  /** Name and price shown beside the pro on hover, before the click. */
-  tag: string;
-  onOpen: (index: number) => void;
-  buttonRef: (node: HTMLButtonElement | null) => void;
-}) {
-  const { radii, centerX, centerY, baseHeight } = stageGeometry(size);
-  const pose = (a: number) => beltPose(a, index, count, radii);
-
-  const x = useTransform(angle, (a) => pose(a).x);
-  const y = useTransform(angle, (a) => pose(a).y);
-  const scale = useTransform(angle, (a) => pose(a).scale);
-  const opacity = useTransform(angle, (a) => pose(a).opacity);
-  const zIndex = useTransform(angle, (a) => pose(a).zIndex);
-  const filter = useTransform([angle, motionBlur], ([a, blur]: number[]) => {
-    const p = pose(a);
-    return `blur(${(p.blur + blur * (0.4 + p.depth)).toFixed(2)}px)`;
-  });
-
-  const width = baseHeight * (service.image.width / service.image.height);
-  const focusShift = wide ? size.width * (isRtl ? 0.2 : -0.2) : 0;
-
-  return (
-    // Full-stage layer: scaling it around the front spot enlarges the selected professional in place.
-    <motion.div
-      className="pointer-events-none absolute inset-0"
-      style={{
-        zIndex: selected ? 300 : zIndex,
-        transformOrigin: `${centerX}px ${centerY + radii.ry}px`,
-      }}
-      initial={{ opacity: 0, y: 60 }}
-      animate={
-        !entered
-          ? { opacity: 0, y: 60 }
-          : selected
-            ? { scale: wide ? 1.25 : 1.12, x: focusShift, y: 0, opacity: 1, filter: 'blur(0px)' }
-            : hidden
-              ? { scale: 0.92, x: 0, y: 0, opacity: 0, filter: 'blur(12px)' }
-              : { scale: 1, x: 0, y: 0, opacity: 1, filter: 'blur(0px)' }
-      }
-      // People step onto the belt one after another, and come back the same way.
-      transition={selected ? FOCUS_SPRING : { ...FOCUS_SPRING, delay: index * 0.09 }}
-    >
-      <motion.button
-        ref={buttonRef}
-        type="button"
-        onClick={() => onOpen(index)}
-        disabled={hidden}
-        aria-label={label}
-        className={cn(
-          'group absolute origin-bottom cursor-pointer outline-none',
-          'focus-visible:ring-brand-teal focus-visible:ring-4 focus-visible:ring-offset-4',
-          hidden ? 'pointer-events-none' : 'pointer-events-auto',
-        )}
-        style={{
-          left: centerX - width / 2,
-          top: centerY - baseHeight,
-          width,
-          height: baseHeight,
-          x,
-          y,
-          scale,
-          opacity,
-          filter: selected ? 'none' : filter,
-        }}
-      >
-        <span
-          aria-hidden="true"
-          className="absolute -bottom-3 left-1/2 h-6 w-[80%] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(ellipse,rgba(47,118,187,0.35),transparent_70%)]"
-        />
-        <span className="relative block h-full w-full transition-[transform,filter] duration-300 ease-out group-hover:-translate-y-2 group-hover:drop-shadow-[0_18px_24px_rgba(45,121,190,0.3)] group-focus-visible:-translate-y-2">
-          <Image
-            src={service.image.src}
-            alt=""
-            width={service.image.width}
-            height={service.image.height}
-            sizes="(max-width: 768px) 130px, 210px"
-            draggable={false}
-            className="h-full w-full object-contain object-bottom select-none"
-          />
-        </span>
-        {/* hover tag beside the chest: name and price, before the click */}
-        {!selected && (
-          <span
-            aria-hidden="true"
-            className="border-brand-navy text-brand-navy absolute top-[34%] translate-y-1 rounded-[3px] border bg-white px-2 py-1 font-mono text-[11px] font-semibold tracking-wider whitespace-nowrap uppercase opacity-0 shadow-sm transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 ltr:left-[58%] rtl:right-[58%]"
-          >
-            {tag}
-          </span>
-        )}
-      </motion.button>
-    </motion.div>
-  );
-}
 
 export function ServicesBelt() {
   const { t, dir, tList, tRows } = useI18n();
@@ -419,41 +276,7 @@ export function ServicesBelt() {
               transformPerspective: 1400,
             }}
           >
-            {/* soft brand glow behind the belt */}
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,rgba(97,188,166,0.12)_0%,rgba(255,255,255,0)_60%)]"
-            />
-            {/* colored floor under the belt */}
-            {(() => {
-              const { radii, centerX, centerY } = stageGeometry(size);
-              const w = (radii.rx + 70) * 2;
-              const h = (radii.ry + 26) * 2;
-              return (
-                <div
-                  aria-hidden="true"
-                  className="absolute rounded-[50%] bg-[radial-gradient(ellipse,rgba(255,255,255,1)_0%,rgba(97,188,166,0.22)_55%,rgba(47,118,187,0.18)_100%)] shadow-[0_30px_80px_-24px_rgba(47,118,187,0.30)]"
-                  style={{ left: centerX - w / 2, top: centerY - h / 2, width: w, height: h }}
-                />
-              );
-            })()}
-            {/* matte floor: fine concentric rings around the belt */}
-            {(() => {
-              const { radii, centerX, centerY } = stageGeometry(size);
-              return [1, 1.35, 1.75].map((ring) => (
-                <div
-                  key={ring}
-                  aria-hidden="true"
-                  className="border-brand-blue/10 absolute rounded-[50%] border"
-                  style={{
-                    left: centerX - (radii.rx + 40) * ring,
-                    top: centerY - (radii.ry + 14) * ring,
-                    width: (radii.rx + 40) * ring * 2,
-                    height: (radii.ry + 14) * ring * 2,
-                  }}
-                />
-              ));
-            })()}
+            <BeltFloor size={size} />
 
             {services.map((service, i) => {
               const profile = profiles[service.code];
@@ -491,58 +314,13 @@ export function ServicesBelt() {
         {/* belt mode: current service + its services */}
         <AnimatePresence>
           {focused === null && current && (
-            <motion.div
+            <BeltServiceInfo
               key="belt-info"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="pointer-events-none absolute inset-x-5 bottom-5 z-[400] flex items-end justify-between gap-6"
-            >
-              <div className="min-w-0">
-                <p className="text-muted-foreground flex items-center gap-2 font-mono text-[11px] tracking-wider uppercase">
-                  <span className="bg-brand-teal h-2 w-2 animate-pulse rounded-full" />
-                  {t('landing.beltRunning')}
-                  <span dir="ltr" className="bg-brand-navy rounded px-1.5 text-white">
-                    {String(front + 1).padStart(2, '0')}
-                  </span>
-                  <span dir="ltr">/ {String(count).padStart(2, '0')}</span>
-                </p>
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.p
-                    key={current.code}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.25 }}
-                    className="text-brand-blue truncate text-4xl leading-none font-extrabold md:text-6xl"
-                  >
-                    {current.title}
-                  </motion.p>
-                </AnimatePresence>
-              </div>
-
-              <div className="pointer-events-auto hidden w-72 shrink-0 rounded-2xl border border-black/5 bg-white/90 p-4 shadow-xl shadow-black/5 backdrop-blur md:block">
-                <p className="text-muted-foreground flex justify-between border-b border-black/5 pb-2 font-mono text-[10px] tracking-wider uppercase">
-                  <span>{t('landing.beltInService')}</span>
-                  <span dir="ltr">{current.code}</span>
-                </p>
-                <ul className="divide-y divide-black/5">
-                  {current.items.map((item) => (
-                    <li key={item} className="text-brand-navy py-2 text-sm font-semibold">
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  onClick={() => open(front)}
-                  className="bg-brand-blue hover:bg-brand-navy focus-visible:ring-brand-teal mt-2 flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                >
-                  {t('landing.beltOpenCard')}
-                  <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-                </button>
-              </div>
-            </motion.div>
+              service={current}
+              position={front}
+              count={count}
+              onOpen={() => open(front)}
+            />
           )}
         </AnimatePresence>
 

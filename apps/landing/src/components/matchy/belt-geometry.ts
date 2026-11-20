@@ -64,3 +64,23 @@ export function angleToFront(current: number, index: number, count: number): num
   const delta = ((((target - current) % TAU) + TAU * 1.5) % TAU) - Math.PI;
   return current + delta;
 }
+
+/** Size of the belt stage, in pixels. */
+export type StageSize = { width: number; height: number };
+
+/** Breakpoint (px) above which the card sits beside the professional instead of below. */
+export const WIDE_STAGE = 768;
+
+/** Belt ellipse, centre and front height for a stage size. */
+export function stageGeometry({ width, height }: StageSize) {
+  const rx = Math.min(width * 0.36, 440);
+  const radii: BeltRadii = { rx, ry: rx * 0.3 };
+  return {
+    radii,
+    centerX: width / 2,
+    // On narrow screens the belt sits lower, closer to the title strip.
+    centerY: height * (width < WIDE_STAGE ? 0.6 : 0.54),
+    // Full-body portraits: the front professional takes about half the stage height.
+    baseHeight: Math.min(Math.max(height * 0.52, 230), 380),
+  };
+}

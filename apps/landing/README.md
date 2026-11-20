@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **107 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **113 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -37,20 +37,20 @@ The sign-up and login buttons point to the app (`apps/app`) through `NEXT_PUBLIC
 
 Defined in `src/app/[lang]/page.tsx`. Sections marked **new** or **changed** are part of this work.
 
-| #   | Section                        | File(s) in `src/components/matchy/`                                                                       | Status    |
-| --- | ------------------------------ | --------------------------------------------------------------------------------------------------------- | --------- |
-| 1   | Hero: live phone + search      | `hero.tsx`, `hero-live-phone.tsx`, `hero-search.tsx`                                                      | changed   |
-| 2   | Features                       | `features.tsx`                                                                                            | unchanged |
-| 3   | Services belt (10 trades)      | `services-belt.tsx`, `belt-geometry.ts`, `belt-profile-card.tsx`, `belt-match-dialog.tsx`, `belt-data.ts` | new       |
-| 4   | Without / with Matchy+         | `why-matchy.tsx`                                                                                          | new       |
-| 5   | How it works (`#how`)          | `steps.tsx`                                                                                               | unchanged |
-| 6   | Pro storefront card + referral | `pro-branding.tsx`, `referral.tsx`                                                                        | new       |
-| 7   | Live community map             | `live-community.tsx`, `community-map.ts`                                                                  | new       |
-| 8   | Wallet / security              | `security.tsx`                                                                                            | unchanged |
-| 9   | Explore                        | `explore.tsx`                                                                                             | unchanged |
-| 10  | Company story                  | `company-story.tsx`                                                                                       | new       |
-| 11  | Partnerships                   | `partnerships.tsx`                                                                                        | new       |
-| 12  | Call to action                 | `cta.tsx`                                                                                                 | unchanged |
+| #   | Section                        | File(s) in `src/components/matchy/`                                                                                                                                     | Status    |
+| --- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| 1   | Hero: live phone + search      | `hero.tsx`, `hero-live-phone.tsx`, `hero-phone-overlay.tsx`, `hero-phone-bubble.tsx`, `hero-mini-card.tsx`, `hero-search.tsx`                                           | changed   |
+| 2   | Features                       | `features.tsx`                                                                                                                                                          | unchanged |
+| 3   | Services belt (10 trades)      | `services-belt.tsx`, `belt-person.tsx`, `belt-floor.tsx`, `belt-service-info.tsx`, `belt-geometry.ts`, `belt-profile-card.tsx`, `belt-match-dialog.tsx`, `belt-data.ts` | new       |
+| 4   | Without / with Matchy+         | `why-matchy.tsx`                                                                                                                                                        | new       |
+| 5   | How it works (`#how`)          | `steps.tsx`                                                                                                                                                             | unchanged |
+| 6   | Pro storefront card + referral | `pro-branding.tsx`, `referral.tsx`                                                                                                                                      | new       |
+| 7   | Live community map             | `live-community.tsx`, `community-marker.tsx`, `community-arcs.tsx`, `community-tooltip.tsx`, `community-counters.tsx`, `community-map.ts`                               | new       |
+| 8   | Wallet / security              | `security.tsx`                                                                                                                                                          | unchanged |
+| 9   | Explore                        | `explore.tsx`                                                                                                                                                           | unchanged |
+| 10  | Company story                  | `company-story.tsx`                                                                                                                                                     | new       |
+| 11  | Partnerships                   | `partnerships.tsx`                                                                                                                                                      | new       |
+| 12  | Call to action                 | `cta.tsx`                                                                                                                                                               | unchanged |
 
 All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `en` and `ar`.
 
@@ -66,6 +66,9 @@ All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `e
   - The screenshot has French buttons and tabs baked in. They are redrawn on top of it in the page
     language, with the app's own labels (key `heroPhoneTabs`). Without this, the English and
     Arabic pages showed French.
+  - Split into small files: `hero-phone-overlay.tsx` (the redrawn buttons and tabs, with their
+    positions), `hero-phone-bubble.tsx` (a floating bubble), `hero-mini-card.tsx` (the swiping
+    card). `hero-live-phone.tsx` keeps the timer, the swipes and the tilt.
 - **`hero-search.tsx`:** "I'm looking for a pro / I'm a professional / Business" toggles, plus
   "what service?" and "where?". It sends people to the app's sign-up page with the search in the
   URL (`buildSearchUrl` adds `service` and `ville`).
@@ -84,7 +87,11 @@ All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `e
   app-style "Passer" / "Connecter" buttons.
   - "Connecter" opens a match screen (`belt-match-dialog.tsx`). It has a focus trap, and Escape
     or a click outside closes it. Its main button leads to sign-up.
-- **Positions:** computed by pure functions in `belt-geometry.ts`, which are tested on their own.
+- **Positions:** computed by pure functions in `belt-geometry.ts` (slots and stage size), which
+  are tested on their own.
+- **Files:** `services-belt.tsx` keeps the rotation, drag and keyboard. One person on the belt is
+  `belt-person.tsx` (with the hover tag), the coloured floor is `belt-floor.tsx`, the text and
+  button beside the belt are `belt-service-info.tsx`.
 - **Data:** in `belt-data.ts`. Each trade (code `PLB`, `ELC`…) maps to a photo in
   `public/matchy/belt/`. Names, prices, ratings and skills come from `messages.ts`, in the 3
   languages.
@@ -112,6 +119,11 @@ reviews, no idea of availability) with Matchy+.
 - **Dependency:** the QR code uses `qrcode.react` (same version as `apps/app`).
 
 ### 5. Live community map (`live-community.tsx`, `community-map.ts`)
+
+`live-community.tsx` keeps the layout, the sample updates and the phone scroll. One city point
+is `community-marker.tsx`, the lines from Tunis are `community-arcs.tsx`, the city tooltip is
+`community-tooltip.tsx` and the two counters (over the map, or in a row on phones) are
+`community-counters.tsx`.
 
 Based on the manager's reference (a live visitors map), rebuilt in the site's theme:
 
@@ -240,7 +252,8 @@ stub), and the same Testing Library setup as `apps/app`.
 
 | File                         | What it covers                                                                                                       |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `belt-geometry.test.ts`      | Front / back slots (size, blur, depth), even spacing, nearest slot, shortest turn                                    |
+| `belt-geometry.test.ts`      | Front / back slots (size, blur, depth), even spacing, nearest slot, shortest turn, stage size                        |
+| `messages.test.ts`           | `tList` / `tRows` helpers: only strings kept, the real belt and city tables                                          |
 | `belt-data.test.ts`          | Profile rows from the texts, invalid data ignored, a photo for every trade, pass / connect sequence                  |
 | `belt-profile-card.test.tsx` | Same match thresholds as the app (75 / 55), card content, Passer / Connecter / close                                 |
 | `belt-match-dialog.test.tsx` | Focus trap, Escape, click outside, continue                                                                          |

@@ -1,10 +1,12 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { AnimatePresence, motion, useInView } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
+import { CommunityArcs } from './community-arcs';
+import { type CommunityMetric, CounterRow, FloatingCounters } from './community-counters';
 import {
   type CityId,
   HUB_ID,
@@ -12,13 +14,13 @@ import {
   MAP_WIDTH,
   SAMPLE_AUDIENCE,
   SAMPLE_LOCATIONS,
-  arcPath,
   nudge,
   numberLocale,
   toCityNames,
-  tooltipPlacement,
   totalVisitors,
 } from './community-map';
+import { CommunityMarker } from './community-marker';
+import { CommunityTooltip } from './community-tooltip';
 import { Reveal } from './motion';
 
 /** Time between two sample updates, in ms. */
@@ -26,27 +28,6 @@ const UPDATE_EVERY = 1800;
 
 /** Where the phone view of the map starts: Tunis, in % of the map width. */
 const MOBILE_FOCUS_X = 52.7;
-
-/** Lines from Tunis: each takes ARC_DRAW s to draw, one starts every ARC_STAGGER s. */
-const ARC_DRAW = 1.6;
-const ARC_FADE = 0.8;
-const ARC_STAGGER = 0.7;
-
-/**
- * Where the counters float on the map on computers, in % (left / top), over open ocean: no land
- * or city under them. Same order as the counters: international presence (the headline number)
- * over the South Pacific, audience over the Indian Ocean.
- */
-const STAT_SPOTS = [
-  { left: 5, top: 62, centered: false },
-  { left: 64, top: 61, centered: false },
-] as const;
-
-const TOOLTIP_ALIGN = {
-  start: '-translate-x-4',
-  center: '-translate-x-1/2',
-  end: '-translate-x-[calc(100%-1rem)]',
-} as const;
 
 /** Last sample update, to show a "+1" on the city a visitor just arrived in. */
 type Arrival = { id: CityId; key: number };
@@ -59,7 +40,7 @@ type Arrival = { id: CityId; key: number };
  * browser always render the same HTML.
  */
 export function LiveCommunity() {
-  const { t, locale, tRows } = useI18n();
+  const { t, locale, dir, tRows } = useI18n();
   const cities = toCityNames(tRows('landing.communityCities'));
   const format = new Intl.NumberFormat(numberLocale(locale));
 
@@ -103,12 +84,9 @@ export function LiveCommunity() {
 
   const hub = SAMPLE_LOCATIONS.find((location) => location.id === HUB_ID);
   const routes = SAMPLE_LOCATIONS.filter((location) => location.id !== HUB_ID);
-  // every line waits for the others before drawing again
-  const arcPause = (routes.length - 1) * ARC_STAGGER + 1;
 
   const selected = locations.find((location) => location.id === selectedId);
-  const placement = selected ? tooltipPlacement(selected.x, selected.y) : null;
-  const metrics = [
+  const metrics: CommunityMetric[] = [
     { label: t('landing.communityPresence'), value: totalVisitors(locations), headline: true },
     { label: t('landing.communityAudience'), value: audience, headline: false },
   ];
@@ -172,149 +150,39 @@ export function LiveCommunity() {
                 </div>
 
                 {/* lines from Tunis, where Matchy+ was born, drawn one after another */}
-                {hub && (
-                  <svg
-                    aria-hidden="true"
-                    viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-                    className="pointer-events-none absolute inset-0 h-full w-full motion-reduce:hidden"
-                  >
-                    {routes.map((route, index) => (
-                      <motion.path
-                        key={route.id}
-                        d={arcPath(hub, route)}
-                        fill="none"
-                        stroke="#49B8AD"
-                        strokeWidth={1.6}
-                        strokeLinecap="round"
-                        vectorEffect="non-scaling-stroke"
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{ pathLength: [0, 1, 1], opacity: [0, 0.9, 0] }}
-                        transition={{
-                          duration: ARC_DRAW + ARC_FADE,
-                          times: [0, ARC_DRAW / (ARC_DRAW + ARC_FADE), 1],
-                          delay: index * ARC_STAGGER,
-                          repeat: Number.POSITIVE_INFINITY,
-                          repeatDelay: arcPause,
-                          ease: 'easeInOut',
-                        }}
-                      />
-                    ))}
-                  </svg>
-                )}
+                {hub && <CommunityArcs hub={hub} routes={routes} />}
 
-                {locations.map((location, index) => {
-                  const city = cities[location.id] ?? location.id;
-                  const isSelected = location.id === selectedId;
-                  const isHub = location.id === HUB_ID;
-                  return (
-                    <button
-                      key={location.id}
-                      type="button"
-                      aria-label={`${city} : ${t('landing.communityVisitors', { count: format.format(location.count) })}`}
-                      className="group absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full outline-none"
-                      style={{ left: `${location.x}%`, top: `${location.y}%` }}
-                      // hover only with a real mouse: on phones the tap opens the tooltip, and the map
-                      // sliding under the finger must not close it
-                      onPointerEnter={(event) => {
-                        if (event.pointerType === 'mouse') setSelectedId(location.id);
-                      }}
-                      onPointerLeave={(event) => {
-                        if (event.pointerType === 'mouse') setSelectedId(null);
-                      }}
-                      onFocus={() => setSelectedId(location.id)}
-                      onBlur={() => setSelectedId(null)}
-                      onClick={() => {
-                        setSelectedId(location.id);
-                        centerOn(location.x, 'smooth');
-                      }}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="bg-brand-teal/50 absolute h-3 w-3 rounded-full motion-safe:animate-ping"
-                        style={{ animationDelay: `${index * 0.27}s`, animationDuration: '2.4s' }}
-                      />
-                      <span
-                        aria-hidden="true"
-                        className={`relative rounded-full shadow-[0_0_0_3px_#FFFFFF,0_0_14px_rgba(73,184,173,0.7)] transition-colors ${isHub ? 'h-3.5 w-3.5 sm:h-4 sm:w-4' : 'h-2.5 w-2.5 sm:h-3 sm:w-3'} ${isSelected || isHub ? 'bg-brand-blue' : 'bg-brand-teal'} group-focus-visible:outline-brand-blue group-focus-visible:outline-2 group-focus-visible:outline-offset-4`}
-                      />
-                      {/* a visitor just arrived here: a ring bursts and "+1" floats up */}
-                      <AnimatePresence>
-                        {arrival?.id === location.id && (
-                          <motion.span
-                            key={arrival.key}
-                            aria-hidden="true"
-                            className="pointer-events-none absolute inset-0 motion-reduce:hidden"
-                            initial={{ opacity: 1 }}
-                            animate={{ opacity: 0 }}
-                            transition={{ duration: 1.4, ease: 'easeOut' }}
-                          >
-                            <motion.span
-                              className="border-brand-teal absolute inset-0 rounded-full border-2"
-                              initial={{ scale: 0.4 }}
-                              animate={{ scale: 2.6 }}
-                              transition={{ duration: 1.2, ease: 'easeOut' }}
-                            />
-                            <motion.span
-                              className="text-brand-teal absolute -top-2 left-1/2 -translate-x-1/2 text-xs font-extrabold"
-                              initial={{ y: 0 }}
-                              animate={{ y: -18 }}
-                              transition={{ duration: 1.2, ease: 'easeOut' }}
-                            >
-                              +1
-                            </motion.span>
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                    </button>
-                  );
-                })}
-
-                {/* counters, floating over the map (computers only) */}
-                {metrics.map((metric, index) => (
-                  <motion.div
-                    key={metric.label}
-                    // Tailwind's translate and framer's transform are separate CSS properties
-                    className={`pointer-events-none absolute z-10 hidden md:block ${STAT_SPOTS[index].centered ? '-translate-x-1/2 text-center' : ''}`}
-                    style={{
-                      left: `${STAT_SPOTS[index].left}%`,
-                      top: `${STAT_SPOTS[index].top}%`,
+                {locations.map((location, index) => (
+                  <CommunityMarker
+                    key={location.id}
+                    location={location}
+                    index={index}
+                    label={`${cities[location.id] ?? location.id} : ${t('landing.communityVisitors', { count: format.format(location.count) })}`}
+                    selected={location.id === selectedId}
+                    hub={location.id === HUB_ID}
+                    arrivalKey={arrival?.id === location.id ? arrival.key : null}
+                    onShow={() => setSelectedId(location.id)}
+                    onHide={() => setSelectedId(null)}
+                    onTap={() => {
+                      setSelectedId(location.id);
+                      centerOn(location.x, 'smooth');
                     }}
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.6 }}
-                    transition={{ duration: 0.6, delay: 0.3 + index * 0.2, ease: 'easeOut' }}
-                  >
-                    <motion.dl
-                      // the map is left-to-right; the counter's text follows the page language
-                      dir={locale === 'ar' ? 'rtl' : 'ltr'}
-                      animate={{ y: [0, -6, 0] }}
-                      transition={{
-                        duration: 5,
-                        repeat: Number.POSITIVE_INFINITY,
-                        ease: 'easeInOut',
-                        delay: index * 0.8,
-                      }}
-                    >
-                      <Stat {...metric} format={format} centered={STAT_SPOTS[index].centered} />
-                    </motion.dl>
-                  </motion.div>
+                  />
                 ))}
 
+                {/* counters, floating over the map (computers only) */}
+                <FloatingCounters metrics={metrics} format={format} dir={dir} />
+
                 <div role="status" aria-live="polite">
-                  {selected && placement && (
-                    <div
-                      className={`bg-brand-navy pointer-events-none absolute z-20 min-w-40 rounded-xl px-3 py-2 text-white shadow-xl ${TOOLTIP_ALIGN[placement.align]} ${placement.below ? 'translate-y-4' : '-translate-y-[calc(100%+1rem)]'}`}
-                      style={{ left: `${selected.x}%`, top: `${selected.y}%` }}
-                    >
-                      <p dir={locale === 'ar' ? 'rtl' : 'ltr'} className="text-sm font-bold">
-                        {cities[selected.id]}
-                      </p>
-                      <p dir={locale === 'ar' ? 'rtl' : 'ltr'} className="text-xs text-white/70">
-                        {t('landing.communityVisitors', {
-                          count: format.format(selected.count),
-                        })}
-                      </p>
-                    </div>
+                  {selected && (
+                    <CommunityTooltip
+                      location={selected}
+                      city={cities[selected.id] ?? selected.id}
+                      visitors={t('landing.communityVisitors', {
+                        count: format.format(selected.count),
+                      })}
+                      dir={dir}
+                    />
                   )}
                 </div>
               </div>
@@ -322,13 +190,7 @@ export function LiveCommunity() {
           </figure>
 
           {/* phones: the counters sit in a row under the map */}
-          <div className="mt-6 grid grid-cols-2 divide-x divide-slate-200 text-center md:hidden rtl:divide-x-reverse">
-            {metrics.map((metric) => (
-              <dl key={metric.label} className="px-2">
-                <Stat {...metric} format={format} centered />
-              </dl>
-            ))}
-          </div>
+          <CounterRow metrics={metrics} format={format} />
 
           <footer className="text-muted-foreground mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-center text-xs sm:text-sm">
             <span className="flex items-center gap-2">
@@ -347,53 +209,5 @@ export function LiveCommunity() {
         </Reveal>
       </div>
     </section>
-  );
-}
-
-/**
- * One counter: label, then the number, which slides in when it changes. The headline one
- * (international presence) is bigger and teal, with a pulsing dot.
- */
-function Stat({
-  label,
-  value,
-  headline,
-  format,
-  centered = false,
-}: {
-  label: string;
-  value: number;
-  headline: boolean;
-  format: Intl.NumberFormat;
-  centered?: boolean;
-}) {
-  return (
-    <>
-      <dt
-        className={`flex items-center gap-1.5 text-[10px] leading-tight font-bold text-slate-500 uppercase sm:text-xs sm:tracking-wide ${centered ? 'justify-center' : ''}`}
-      >
-        {headline && (
-          <span className="bg-brand-teal h-1.5 w-1.5 shrink-0 rounded-full motion-safe:animate-pulse" />
-        )}
-        {label}
-      </dt>
-      {/* not animated on the first render, so the HTML matches the server's */}
-      <dd
-        className={`relative mt-1 overflow-hidden font-extrabold tabular-nums [text-shadow:0_0_16px_#F7FAFD] ${headline ? 'text-brand-teal text-3xl md:text-6xl' : 'text-brand-blue text-2xl md:text-4xl'}`}
-      >
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.span
-            key={value}
-            className="block"
-            initial={{ y: '-100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
-          >
-            {format.format(value)}
-          </motion.span>
-        </AnimatePresence>
-      </dd>
-    </>
   );
 }
