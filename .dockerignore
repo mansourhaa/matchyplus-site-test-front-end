@@ -18,6 +18,8 @@ coverage
 **/__pycache__
 **/.pytest_cache
 **/.ruff_cache
+# voice-ai speech models (~1 GB, downloaded at runtime into a volume)
+apps/voice-ai/models
 
 # Env & secrets
 .env
