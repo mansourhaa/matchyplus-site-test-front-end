@@ -68,9 +68,9 @@ export function PressCard({
         <div className="relative flex items-start justify-between gap-3">
           <span className="rounded-xl bg-white px-2.5 py-1.5 text-center leading-none shadow-sm">
             <span className="text-brand-teal block text-[11px] font-bold uppercase">
-              {date.month}
+              {date.top}
             </span>
-            <span className="text-brand-navy block text-2xl font-extrabold">{date.day}</span>
+            <span className="text-brand-navy block text-2xl font-extrabold">{date.big}</span>
           </span>
           <span className="text-brand-blue rounded-full bg-white px-2.5 py-0.5 text-[11px] font-bold tracking-wide uppercase">
             {text.tag}

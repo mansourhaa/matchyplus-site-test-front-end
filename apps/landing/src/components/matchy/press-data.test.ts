@@ -8,7 +8,7 @@ describe('press items', () => {
     expect(new Set(PRESS_ITEMS.map((item) => item.slug)).size).toBe(PRESS_ITEMS.length);
     for (const item of PRESS_ITEMS) {
       expect(item.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
-      expect(item.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(item.date).toMatch(/^\d{4}-\d{2}(-\d{2})?$/);
       expect(Number.isNaN(new Date(item.date).getTime())).toBe(false);
       for (const locale of SUPPORTED_LOCALES) {
         const text = item.text[locale];
@@ -18,6 +18,7 @@ describe('press items', () => {
         expect(text.body.length).toBeGreaterThan(0);
       }
       if (item.video) expect(youtubeId(item.video)).not.toBeNull();
+      if (item.linkedin) expect(item.linkedin).toMatch(/^https:\/\/www\.linkedin\.com\//);
     }
   });
 
@@ -60,8 +61,14 @@ describe('youtubeId', () => {
 
 describe('pressDate', () => {
   it('gives the same calendar day in every language', () => {
-    expect(pressDate('2026-11-12', 'fr').day).toBe('12');
+    expect(pressDate('2026-11-12', 'fr').big).toBe('12');
+    expect(pressDate('2026-11-12', 'fr').top).toBe('nov.');
     expect(pressDate('2026-11-12', 'en').full).toBe('Nov 12, 2026');
     expect(pressDate('2026-01-01', 'fr').full).toBe('1 janv. 2026');
+  });
+
+  it('shows a month-only date as the month and year, without inventing a day', () => {
+    expect(pressDate('2026-06', 'fr')).toEqual({ top: '2026', big: 'juin', full: 'juin 2026' });
+    expect(pressDate('2026-06', 'en').full).toBe('June 2026');
   });
 });

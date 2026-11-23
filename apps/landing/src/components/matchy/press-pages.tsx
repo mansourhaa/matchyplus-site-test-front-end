@@ -3,7 +3,7 @@
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, ExternalLink, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -93,13 +93,26 @@ export function PressArticle({ slug }: { slug: string }) {
           ))}
         </div>
 
-        <Link
-          href={localizePath(locale, '/actualites')}
-          className="text-brand-blue mt-8 inline-flex items-center gap-2 text-sm font-bold hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
-          {t('landing.pressAll')}
-        </Link>
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+          <Link
+            href={localizePath(locale, '/actualites')}
+            className="text-brand-blue inline-flex items-center gap-2 text-sm font-bold hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
+            {t('landing.pressAll')}
+          </Link>
+          {item.linkedin && (
+            <a
+              href={item.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-brand-blue hover:bg-brand-navy inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-lg transition-colors"
+            >
+              {t('landing.pressLinkedin')}
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          )}
+        </div>
       </article>
     </main>
   );

@@ -36,6 +36,7 @@ const NEW_KEYS = [
   'pressSample',
   'pressPageTitle',
   'pressVideo',
+  'pressLinkedin',
   'ourPartnersTitle',
   'ourPartnersBody',
   'ourPartnersVisit',
@@ -265,10 +266,20 @@ describe('Matchy+ Press and partners', () => {
     );
   });
 
-  it('sample news are labelled as samples', () => {
+  it('only sample news are labelled as samples', () => {
     renderIn('fr', <PressList />);
     const samples = PRESS_ITEMS.filter((item) => item.sample).length;
-    expect(screen.getAllByText('Exemple')).toHaveLength(samples);
+    expect(screen.queryAllByText('Exemple')).toHaveLength(samples);
+  });
+
+  it('an article with a LinkedIn post links to it in a new tab', () => {
+    const item = PRESS_ITEMS.find((entry) => entry.linkedin);
+    if (!item) return;
+    renderIn('fr', <PressArticle slug={item.slug} />);
+    const link = screen.getByRole('link', { name: 'Voir la publication sur LinkedIn' });
+    expect(link).toHaveAttribute('href', item.linkedin);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('an article shows its texts in the page language and links back to all news', () => {

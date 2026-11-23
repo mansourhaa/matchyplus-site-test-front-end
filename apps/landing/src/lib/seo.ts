@@ -290,8 +290,8 @@ export const PAGES: Record<PageKey, PageSeo> = {
   },
   actualites: {
     path: '/actualites',
-    // the news are examples for now: index this page once real news are published
-    noindex: true,
+    changeFrequency: 'weekly',
+    priority: 0.7,
     copy: {
       fr: {
         title: 'Actualités',

@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **148 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **150 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -54,7 +54,7 @@ Defined in `src/app/[lang]/page.tsx`. Sections marked **new** or **changed** are
 | Page                  | Files                                                                       | What it shows                                                                                                                                                                                                                           |
 | --------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/utilisation/`       | `app/[lang]/utilisation/page.tsx`, `usage-hero.tsx`                         | How Matchy+ works: the 5 sections that left the home page, unchanged and in the same order: `features.tsx`, `steps.tsx` (`#how`), `security.tsx` (wallet), `explore.tsx`, `cta.tsx`. The menu's "Utilisation" opens it. In the sitemap. |
-| `/actualites/`        | `app/[lang]/actualites/`, `press-pages.tsx` (`PressList`)                   | Every news item, newest first. `noindex` while the news are examples.                                                                                                                                                                   |
+| `/actualites/`        | `app/[lang]/actualites/`, `press-pages.tsx` (`PressList`)                   | Every news item, newest first. In the sitemap.                                                                                                                                                                                          |
 | `/actualites/<slug>/` | `app/[lang]/actualites/[slug]/page.tsx`, `press-pages.tsx` (`PressArticle`) | One news item: date, tag, title, place, the YouTube video (if any), the text. One static page per item and language; any other slug is a 404.                                                                                           |
 | `/recherche/`         | `app/[lang]/recherche/`, `search-results.tsx`                               | Results of the hero search (see the hero section below).                                                                                                                                                                                |
 
@@ -181,18 +181,25 @@ smaller benefit.
 ### 6. Matchy+ Press (`press.tsx`, `press-card.tsx`, `press-data.ts`, `press-pages.tsx`)
 
 - **The news live in one file, `press-data.ts`** (`PRESS_ITEMS`): slug (the URL), date, the
-  texts in fr/en/ar (tag, title, place, summary, paragraphs), an optional YouTube link and an
-  optional cover image. **To publish a real news item:** copy an entry, fill it in, set `sample`
-  to `false`. No other code changes. The home page shows the 3 newest; `/actualites/` shows all.
+  texts in fr/en/ar (tag, title, place, summary, paragraphs), and optionally a YouTube link, a
+  cover image and the LinkedIn post. **To add a news item:** copy an entry and fill it in. No
+  other code changes. The home page shows the 3 newest; `/actualites/` shows all.
+- **The 3 current news are real**, rewritten from Randa Touati's LinkedIn posts: Meetup Pro 2026
+  (Sousse), the Al Wataniya TV show "جيل المستقبل" (10 Nov 2026) and the Afrique Innovante 2026
+  programme. Their photos and videos are not in yet: each entry has a comment where the cover or
+  the YouTube link goes. A date can be a month only (`2026-06`, shown "juin 2026") when the day is
+  unknown; Meetup Pro's exact day comes from its LinkedIn link.
+- **LinkedIn:** an item with a `linkedin` link shows a "Voir la publication sur LinkedIn" button
+  (new tab, `rel="noopener noreferrer"`).
 - **Card** (`press-card.tsx`, same on the home page and on `/actualites/`): date badge, tag, big
   title, place and a Matchy+ footer on a cover. Without a cover image the card uses a brand
   gradient. On phones the home cards are a swipeable row.
 - **Video:** `youtubeId()` accepts watch, youtu.be, shorts and embed links and refuses any other
   site. The article embeds `youtube-nocookie.com` (no YouTube cookies until the visitor plays it),
   loaded lazily.
-- **SEO:** example news are labelled "Exemple" and get `noindex`; real ones get their own title,
-  description, canonical, hreflang and `og:type=article` (`pressMetadata` in `lib/seo.ts`).
-  When the first real news is out, remove `noindex` from the `actualites` page in `lib/seo.ts`.
+- **SEO:** each article has its own title, description, canonical, hreflang and
+  `og:type=article` (`pressMetadata` in `lib/seo.ts`), and is listed in the sitemap. An item marked `sample: true` is labelled
+  "Exemple" and gets `noindex`.
 
 ### 7. Nos partenaires (`partner-logos.tsx`)
 
@@ -220,7 +227,6 @@ PitchBook profile until it has a website. To add a partner: one line in `PARTNER
 | Community map: cities, counts, audience     | `community-map.ts` (`SAMPLE_LOCATIONS`, `SAMPLE_AUDIENCE`) | not labelled (manager)    |
 | Referral code `MP-7K2Q9`, 10 points         | `landing.referral*`                                        | sample code and points    |
 | Search results count                        | `search-results-data.ts` (`sampleResultCount`)             | "Chiffre indicatif"       |
-| The 3 news items                            | `press-data.ts` (`sample: true`)                           | "Exemple", `noindex`      |
 
 **Community map, going live:** replace the sample data with **aggregated** numbers from the API
 or Google Analytics: city, approximate position and active visitors. Never send visitor IPs to
@@ -307,7 +313,7 @@ stub), and the same Testing Library setup as `apps/app`.
 | `community-map.test.ts`       | Totals, positions on the map, curves, tooltip placement, number format, city names                                                                                                                               |
 | `search-results-data.test.ts` | Search in the URL (site and sign-up), sample count range and stability                                                                                                                                           |
 | `search-results.test.tsx`     | Results page: count, search, sign-up link with the search, "near you", back link                                                                                                                                 |
-| `press-data.test.ts`          | News: unique URL-safe slugs, dates, texts in 3 languages, newest first, YouTube links (accepted / refused), dates per language                                                                                   |
+| `press-data.test.ts`          | News: unique URL-safe slugs, dates (day or month only), texts in 3 languages, LinkedIn links, newest first, YouTube links (accepted / refused), dates per language                                               |
 | `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), news cards and article (video, unknown slug), partner links, new texts exist in all languages |
 
 ---
