@@ -241,9 +241,20 @@ export class DiscoveryService {
           ? await this.applySearchVisibilityLock(userId, page, offset)
           : page.map((profile) => ({ ...profile, is_locked: false }));
 
+      // Paid-only fields (detailed 6-dimension breakdown + who-liked-me flag) must not be
+      // leaked in the API response for FREE accounts where the UI hides them behind a lock.
+      const isPaidPlan = quota.plan === 'PREMIUM' || quota.plan === 'PREMIUM_PLUS';
+      const sanitizedProfiles = isPaidPlan
+        ? lockedProfiles
+        : lockedProfiles.map((profile) => ({
+            ...profile,
+            compatibility: [],
+            liked_me: false,
+          }));
+
       return {
-        profiles: lockedProfiles,
-        count: lockedProfiles.length,
+        profiles: sanitizedProfiles,
+        count: sanitizedProfiles.length,
         offset,
         limit,
         has_more: hasMore,

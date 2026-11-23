@@ -321,7 +321,7 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(page2.profiles[1]?.id).toBe('locked-3');
   });
 
-  it('computes 6-dimension compatibility breakdown', async () => {
+  it('computes 6-dimension compatibility breakdown for paid plans', async () => {
     const prisma = createMockPrisma([
       candidate('test_cand', {
         interests: ['Mobile', 'React'],
@@ -331,6 +331,17 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
         reviews: 12,
       }),
     ]);
+    prisma.user.findUnique.mockImplementation(
+      ({ where, select }: { where: { id: string }; select?: unknown }) => {
+        if (where.id === 'me') {
+          if (select && typeof select === 'object' && 'plan' in (select as object)) {
+            return Promise.resolve({ plan: 'PREMIUM' });
+          }
+          return Promise.resolve(baseUser());
+        }
+        return Promise.resolve(null);
+      },
+    );
     const service = new DiscoveryService({ prisma: prisma as never });
 
     const result = await service.getSwipeFeed('me', {
@@ -352,6 +363,24 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     ]);
     expect(profile.match_score).toBeGreaterThanOrEqual(40);
     expect(profile.match_score).toBeLessThanOrEqual(100);
+  });
+
+  it('strips compatibility breakdown and liked_me for FREE users', async () => {
+    const prisma = createMockPrisma([candidate('liker_1')]);
+    prisma.swipeLog.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ user_id: 'liker_1' }]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      context: 'swipe',
+    });
+
+    expect(result.profiles).toHaveLength(1);
+    expect(result.profiles[0]?.compatibility).toEqual([]);
+    expect(result.profiles[0]?.liked_me).toBe(false);
   });
 
   it('filters by sector, minPrice, maxPrice, and availableOnly', async () => {
