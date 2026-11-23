@@ -1,4 +1,5 @@
 import sitemap from '@/app/sitemap';
+import { pressItems } from '@/components/matchy/press-data';
 import { SUPPORTED_LOCALES } from '@/features/i18n/messages';
 import { describe, expect, it } from 'vitest';
 
@@ -61,7 +62,23 @@ describe('sitemap', () => {
   it('lists each indexable page once per language on the public domain', () => {
     const urls = entries.map((entry) => entry.url);
     expect(new Set(urls).size).toBe(urls.length);
-    expect(urls).toHaveLength(8 * SUPPORTED_LOCALES.length);
+    const articles = pressItems().filter((item) => !item.sample);
+    expect(urls).toHaveLength((12 + articles.length) * SUPPORTED_LOCALES.length);
+    // the story page has the addresses of its document, translated per language
+    for (const path of [
+      'fr/a-propos/histoire-matchy-plus/',
+      'en/about/matchy-plus-story/',
+      'ar/about/matchy-plus-story/',
+    ]) {
+      expect(urls).toContain(`https://matchyplus.com/${path}`);
+    }
+    // every date is real, including news dated by month or by year only
+    for (const entry of entries) {
+      expect(Number.isNaN(new Date(entry.lastModified ?? '').getTime())).toBe(false);
+    }
+    for (const item of articles) {
+      expect(urls).toContain(`https://matchyplus.com/fr/actualites/${item.slug}/`);
+    }
     expect(urls).toContain(`https://matchyplus.com${encodeURI('/ar/الأسئلة-الشائعة/')}`);
     expect(urls.every((url) => url.startsWith('https://matchyplus.com/'))).toBe(true);
   });

@@ -11,9 +11,11 @@ export function Security() {
 
   return (
     <section className="relative py-20 sm:py-24 md:py-28 lg:py-32" id="explore">
-      {/* Rounded organic card shape behind the image */}
+      {/* Rounded organic card shape behind the image. Its -50% lift is in the inline transform
+          only: a Tailwind -translate-y-1/2 is a separate CSS property (Tailwind 4) and would lift it
+          twice, over the steps text above. */}
       <div
-        className={`from-brand-blue to-brand-teal pointer-events-none absolute top-1/2 z-0 h-[420px] w-[300px] -translate-y-1/2 rounded-[3.5rem] bg-gradient-to-br opacity-85 sm:h-[480px] sm:w-[380px] sm:rounded-[4.5rem] md:h-[540px] md:w-[420px] md:rounded-[5rem] lg:h-[620px] lg:w-[500px] lg:rounded-[5.5rem] ${
+        className={`from-brand-blue to-brand-teal pointer-events-none absolute top-1/2 z-0 h-[420px] w-[300px] rounded-[3.5rem] bg-gradient-to-br opacity-85 sm:h-[480px] sm:w-[380px] sm:rounded-[4.5rem] md:h-[540px] md:w-[420px] md:rounded-[5rem] lg:h-[620px] lg:w-[500px] lg:rounded-[5.5rem] ${
           isRtl ? 'right-0' : 'left-0'
         }`}
         style={{
@@ -38,7 +40,6 @@ export function Security() {
           direction={isRtl ? 'right' : 'left'}
           className="text-center ltr:lg:text-left rtl:lg:text-right"
         >
-          <div className="bg-brand-blue mx-auto mb-5 h-1 w-14 rounded-full ltr:lg:mr-auto ltr:lg:ml-0 rtl:lg:mr-0 rtl:lg:ml-auto" />
           <h2 className="text-brand-blue text-2xl font-extrabold text-balance sm:text-3xl md:text-3xl lg:text-[2.2rem] lg:leading-tight">
             {t('landing.wallet')}
             <span className="mt-1 block">{t('landing.walletSubtitle')}</span>

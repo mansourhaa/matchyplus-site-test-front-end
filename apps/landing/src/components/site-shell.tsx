@@ -3,7 +3,7 @@
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
 import { localizePath } from '@/features/i18n/routing';
-import { APP_REGISTER_URL, SOCIAL_LINKS } from '@/lib/constants';
+import { APP_LOGIN_URL, APP_REGISTER_URL, SOCIAL_LINKS } from '@/lib/constants';
 import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -141,7 +141,7 @@ export function Header() {
         <nav className="desktop-nav" aria-label="Main navigation">
           <Link href={localizePath(locale, '/services')}>{t('landing.services')}</Link>
           <Link href={localizePath(locale, '/a-propos')}>{t('landing.about')}</Link>
-          <Link href={localizePath(locale, '/#how')}>{t('landing.how')}</Link>
+          <Link href={localizePath(locale, '/utilisation')}>{t('landing.how')}</Link>
           <Link href={localizePath(locale, '/contact')}>{t('landing.contact')}</Link>
           <div ref={langRef} className="language-picker-custom relative">
             <button
@@ -198,7 +198,7 @@ export function Header() {
           <Link href={localizePath(locale, '/a-propos')} onClick={() => setOpen(false)}>
             {t('landing.about')}
           </Link>
-          <Link href={localizePath(locale, '/#how')} onClick={() => setOpen(false)}>
+          <Link href={localizePath(locale, '/utilisation')} onClick={() => setOpen(false)}>
             {t('landing.how')}
           </Link>
           <Link href={localizePath(locale, '/faq')} onClick={() => setOpen(false)}>
@@ -242,8 +242,58 @@ export function Header() {
   );
 }
 
+declare global {
+  interface Window {
+    /** CookieYes (loaded by analytics.tsx): reopens its preferences, for "Gérer les cookies". */
+    revisitCkyConsent?: () => void;
+  }
+}
+
+/** One footer link: a page of this site, or an app page (sign-up, log-in). */
+type FooterLink = { label: string; href: string; app?: boolean };
+
+/** The 3 footer columns, as the manager listed them. */
+function footerColumns(t: (key: string) => string, locale: Locale) {
+  const page = (path: string) => localizePath(locale, path);
+  const columns: { title: string; links: FooterLink[] }[] = [
+    {
+      title: t('landing.footerProsTitle'),
+      links: [
+        { label: t('landing.footerCreateProfile'), href: APP_REGISTER_URL, app: true },
+        { label: t('landing.footerVisibility'), href: page('/utilisation') },
+        { label: t('landing.footerHowItWorks'), href: page('/utilisation') },
+        { label: t('landing.footerHelp'), href: page('/faq') },
+        { label: t('landing.footerAllServices'), href: page('/services') },
+        { label: t('landing.footerLogin'), href: APP_LOGIN_URL, app: true },
+        // the professional's way in: the partner form
+        { label: t('landing.partnersCta'), href: page('/devenir-partenaire') },
+      ],
+    },
+    {
+      title: t('landing.footerMatchyTitle'),
+      links: [
+        { label: t('landing.footerAbout'), href: page('/a-propos') },
+        { label: t('landing.footerNews'), href: page('/actualites') },
+        { label: t('landing.footerDownload'), href: `${page('/utilisation')}#download` },
+        { label: t('landing.footerContact'), href: page('/contact') },
+        // the companies' way in: our partners and what a partnership brings
+        { label: t('landing.partnersCta'), href: page('/partenaires') },
+      ],
+    },
+    {
+      title: t('landing.footerLegalTitle'),
+      links: [
+        { label: t('landing.footerPrivacy'), href: page('/privacy-policy') },
+        { label: t('landing.footerTerms'), href: page('/terms-of-service') },
+      ],
+    },
+  ];
+  return columns;
+}
+
 export function Footer() {
   const { locale, t } = useI18n();
+  const columns = footerColumns(t, locale);
   return (
     <footer className="site-footer">
       <div className="footer-grid container">
@@ -254,25 +304,32 @@ export function Footer() {
           <p>{t('landing.panAfrican')}</p>
           <SocialLinks />
         </div>
-        <div>
-          <h3>{locale === 'ar' ? 'اكتشف' : locale === 'en' ? 'Discover' : 'Découvrir'}</h3>
-          <Link href={localizePath(locale, '/services')}>{t('landing.services')}</Link>
-          <Link href={localizePath(locale, '/a-propos')}>{t('landing.about')}</Link>
-          <Link href={localizePath(locale, '/#how')}>{t('landing.how')}</Link>
-        </div>
-        <div>
-          <h3>
-            {locale === 'ar' ? 'روابط مفيدة' : locale === 'en' ? 'Useful links' : 'Liens utiles'}
-          </h3>
-          <Link href={localizePath(locale, '/faq')}>{t('landing.faq')}</Link>
-          <Link href={localizePath(locale, '/contact')}>{t('landing.contact')}</Link>
-          <Link href={localizePath(locale, '/devenir-partenaire')}>{t('landing.partner')}</Link>
-        </div>
-        <div>
-          <h3>{locale === 'ar' ? 'معلومات قانونية' : locale === 'en' ? 'Legal' : 'Légal'}</h3>
-          <Link href={localizePath(locale, '/privacy-policy')}>{t('landing.privacyPolicy')}</Link>
-          <Link href={localizePath(locale, '/terms-of-service')}>{t('landing.terms')}</Link>
-        </div>
+        {columns.map((column, index) => (
+          <nav key={column.title} aria-label={column.title}>
+            <h3>{column.title}</h3>
+            {column.links.map((link) =>
+              link.app ? (
+                <a key={link.label} href={link.href}>
+                  {link.label}
+                </a>
+              ) : (
+                <Link key={link.label} href={link.href}>
+                  {link.label}
+                </Link>
+              ),
+            )}
+            {/* last column: reopens the CookieYes preferences (only loaded on the public site) */}
+            {index === columns.length - 1 && (
+              <button
+                type="button"
+                className="footer-link-button cky-banner-element"
+                onClick={() => window.revisitCkyConsent?.()}
+              >
+                {t('landing.footerCookies')}
+              </button>
+            )}
+          </nav>
+        ))}
       </div>
       <div className="footer-bottom container">
         <span>{t('landing.allRights')}</span>

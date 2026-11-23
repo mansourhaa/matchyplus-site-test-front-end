@@ -1,9 +1,13 @@
-import { Cta } from '@/components/matchy/cta';
-import { Explore } from '@/components/matchy/explore';
-import { Features } from '@/components/matchy/features';
+import { CompanyStory } from '@/components/matchy/company-story';
 import { Hero } from '@/components/matchy/hero';
-import { Security } from '@/components/matchy/security';
-import { Steps } from '@/components/matchy/steps';
+import { LiveCommunity } from '@/components/matchy/live-community';
+import { ReducedMotion } from '@/components/matchy/motion';
+import { PartnerLogos } from '@/components/matchy/partner-logos';
+import { Partnerships } from '@/components/matchy/partnerships';
+import { Press } from '@/components/matchy/press';
+import { ProBranding } from '@/components/matchy/pro-branding';
+import { ServicesBelt } from '@/components/matchy/services-belt';
+import { WhyMatchy } from '@/components/matchy/why-matchy';
 import { PageFrame } from '@/components/site-shell';
 import { isLocale } from '@/features/i18n/routing';
 import { homeJsonLd, localizedMetadata } from '@/lib/seo';
@@ -32,12 +36,19 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd(lang)) }}
       />
       <main className="bg-background overflow-x-hidden">
-        <Hero />
-        <Features />
-        <Security />
-        <Explore />
-        <Steps />
-        <Cta />
+        {/* one "reduce motion" rule for every section (see motion.tsx) */}
+        <ReducedMotion>
+          {/* how Matchy+ works (features, steps, wallet, explore, download) is on /utilisation/ */}
+          <Hero />
+          <Press />
+          <LiveCommunity />
+          <Partnerships />
+          <WhyMatchy />
+          <ProBranding />
+          <ServicesBelt />
+          <CompanyStory />
+          <PartnerLogos />
+        </ReducedMotion>
       </main>
       {!DISABLE_CHATBOT && CHATBOT_WIDGET_SRC && (
         <Script

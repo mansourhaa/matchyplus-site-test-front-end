@@ -1,5 +1,6 @@
 import { ABOUT_CONTENT } from '@/components/about/content';
 import { FAQ_CONTENT } from '@/components/faq/content';
+import type { PressItem } from '@/components/matchy/press-data';
 import { SERVICES_CONTENT } from '@/components/services/content';
 import { DEFAULT_LOCALE, type Locale, SUPPORTED_LOCALES } from '@/features/i18n/messages';
 import { isLocale, localizePath } from '@/features/i18n/routing';
@@ -59,14 +60,19 @@ type PageSeo = {
 export type PageKey =
   | 'home'
   | 'a-propos'
+  | 'histoire'
   | 'services'
   | 'devenir-partenaire'
+  | 'partenaires'
   | 'contact'
   | 'faq'
   | 'terms-of-service'
   | 'privacy-policy'
   | 'suppression-compte'
-  | 'coming-soon';
+  | 'coming-soon'
+  | 'recherche'
+  | 'actualites'
+  | 'utilisation';
 
 /** The À propos copy ships with its page content in `locales/<lang>/about.json`. */
 function aboutCopy(): Record<Locale, PageCopy> {
@@ -149,6 +155,60 @@ export const PAGES: Record<PageKey, PageSeo> = {
     changeFrequency: 'monthly',
     priority: 0.8,
     copy: aboutCopy(),
+  },
+  histoire: {
+    path: '/a-propos/histoire-matchy-plus',
+    changeFrequency: 'monthly',
+    priority: 0.7,
+    // texts of the "Story Matchy" document (SEO and Open Graph parts)
+    copy: {
+      fr: {
+        title: 'L’histoire de Matchy+ | Du premier MVP à une ambition réelle',
+        description:
+          'Découvrez comment Matchy+ est née d’un premier MVP créé avec l’aide de l’IA pour rendre les compétences locales plus visibles et les opportunités plus accessibles.',
+        ogTitle: 'Matchy+ : une idée, un premier MVP et une ambition devenue réalité',
+        ogDescription:
+          'Découvrez comment Matchy+ est née avec l’aide de l’intelligence artificielle pour rapprocher les besoins, les compétences et les opportunités.',
+      },
+      en: {
+        title: 'The Matchy+ Story | From First MVP to Growing Ambition',
+        description:
+          'Discover how Matchy+ grew from a first AI-assisted MVP into a platform making local skills more visible and opportunities more accessible.',
+        ogTitle: 'Matchy+: An Idea, a First MVP and an Ambition Brought to Life',
+        ogDescription:
+          'Discover how Matchy+ began with the help of AI to connect needs, skills and opportunities.',
+      },
+      ar: {
+        title: 'قصة Matchy+\u200E | من النموذج الأولي إلى الطموح',
+        description:
+          'اكتشفوا كيف بدأت Matchy+\u200E بنموذج أولي تم إنشاؤه بمساعدة الذكاء الاصطناعي لجعل المهارات المحلية أكثر ظهوراً والفرص أكثر سهولة.',
+        ogTitle: 'Matchy+\u200E: فكرة، ونموذج أولي، وطموح أصبح حقيقة',
+        ogDescription:
+          'اكتشفوا كيف بدأت Matchy+\u200E بمساعدة الذكاء الاصطناعي لربط الاحتياجات والمهارات والفرص.',
+      },
+    },
+  },
+  partenaires: {
+    path: '/partenaires',
+    changeFrequency: 'monthly',
+    priority: 0.6,
+    copy: {
+      fr: {
+        title: 'Nos partenaires',
+        description:
+          'Les partenaires de Matchy+ (Sahora, Pro Services Maintenance) et les avantages d’un partenariat avec la plateforme de services locaux.',
+      },
+      en: {
+        title: 'Our partners',
+        description:
+          'Matchy+ partners (Sahora, Pro Services Maintenance) and the benefits of partnering with the local services platform.',
+      },
+      ar: {
+        title: 'شركاؤنا',
+        description:
+          'شركاء Matchy+\u200E (Sahora وPro Services Maintenance) ومزايا الشراكة مع منصة الخدمات المحلية.',
+      },
+    },
   },
   'devenir-partenaire': {
     path: '/devenir-partenaire',
@@ -284,6 +344,65 @@ export const PAGES: Record<PageKey, PageSeo> = {
       },
     },
   },
+  actualites: {
+    path: '/actualites',
+    changeFrequency: 'weekly',
+    priority: 0.7,
+    copy: {
+      fr: {
+        title: 'Actualités',
+        description: 'Événements, interviews et annonces de Matchy+.',
+      },
+      en: {
+        title: 'News',
+        description: 'Matchy+ events, interviews and announcements.',
+      },
+      ar: {
+        title: 'الأخبار',
+        description: 'فعاليات وحوارات وإعلانات Matchy+.',
+      },
+    },
+  },
+  utilisation: {
+    path: '/utilisation',
+    changeFrequency: 'monthly',
+    priority: 0.7,
+    copy: {
+      fr: {
+        title: 'Comment utiliser Matchy+',
+        description:
+          'Trouvez un professionnel en trois étapes, boostez votre visibilité avec Matchy Wallet et découvrez les pros autour de vous.',
+      },
+      en: {
+        title: 'How to use Matchy+',
+        description:
+          'Find a professional in three steps, boost your visibility with Matchy Wallet and discover pros around you.',
+      },
+      ar: {
+        title: 'كيفية استخدام Matchy+',
+        description:
+          'اعثر على محترف في ثلاث خطوات، وعزّز ظهورك مع Matchy Wallet واكتشف المحترفين من حولك.',
+      },
+    },
+  },
+  recherche: {
+    path: '/recherche',
+    noindex: true,
+    copy: {
+      fr: {
+        title: 'Résultats de recherche',
+        description: 'Les professionnels Matchy+ disponibles pour votre recherche.',
+      },
+      en: {
+        title: 'Search results',
+        description: 'Matchy+ professionals available for your search.',
+      },
+      ar: {
+        title: 'نتائج البحث',
+        description: 'المحترفون المتاحون على Matchy+ لبحثك.',
+      },
+    },
+  },
 };
 
 /** Absolute URL, percent-encoding non-ASCII slugs (`/ar/من-نحن/`) as sitemaps require. */
@@ -381,6 +500,33 @@ export function localizedMetadata(key: PageKey) {
   return async ({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> => {
     const { lang } = await params;
     return isLocale(lang) ? pageMetadata(lang, key) : {};
+  };
+}
+
+/** Title, description, canonical, hreflang and social tags of one Matchy+ Press article. */
+export function pressMetadata(locale: Locale, item: PressItem): Metadata {
+  const path = `/actualites/${item.slug}`;
+  const { title, summary } = item.text[locale];
+  const url = absoluteUrl(localizePath(locale, path));
+  const image = item.cover ? { url: item.cover, alt: title } : OG_IMAGE;
+  return {
+    title,
+    description: summary,
+    alternates: { canonical: url, languages: languageAlternates(path) },
+    openGraph: {
+      type: 'article',
+      siteName: SITE_NAME,
+      locale: OG_LOCALE[locale],
+      url,
+      title: `${title} | ${SITE_NAME}`,
+      description: summary,
+      // only a full date: a year-only or month-only date is not a publication time
+      ...(/^\d{4}-\d{2}-\d{2}$/.test(item.date) && { publishedTime: item.date }),
+      images: [image],
+    },
+    twitter: { card: 'summary_large_image', title, description: summary, images: [image.url] },
+    // example news stay out of search results
+    ...(item.sample && { robots: { index: false, follow: true } }),
   };
 }
 
