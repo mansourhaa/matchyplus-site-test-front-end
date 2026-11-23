@@ -61,19 +61,19 @@ Defined in `src/app/[lang]/page.tsx`. Sections marked **new** or **changed** are
 
 All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `en` and `ar`.
 
-**Footer** (`Footer` in `components/site-shell.tsx`, every page): the 4 columns of the content
-brief, each a `<nav>` with its links:
+**Footer** (`Footer` in `components/site-shell.tsx`, every page): 4 columns as the manager listed
+them, each a `<nav>` with its links:
 
-- **Trouver un service:** search page; 5 service categories open the search page filled with
-  that service (`?service=`); all services.
+- **Trouver un service:** search page; "Services à domicile" and "Services aux entreprises" open
+  the search page filled with that service (`?service=`); all services.
 - **Pour les professionnels:** sign-up, /utilisation/ (visibility, how it works), /faq/ (help
-  centre), log-in.
-- **Matchy+:** /a-propos/, /actualites/, /partenaires/, /devenir-partenaire/ (business offer),
-  /contact/, sign-up.
-- **Informations légales:** terms, privacy policy, "Gestion des cookies" (a button that reopens
-  the CookieYes preferences, loaded on the public site only), report content (/contact/).
-- **Left out until the pages exist:** "Politique de cookies" and "Mentions légales". Add them
-  to `footerColumns` when the company publishes them.
+  centre), log-in, "Devenir partenaire" → the partner form (/devenir-partenaire/).
+- **Matchy+:** /a-propos/, /actualites/, "Télécharger l'application" (/utilisation/#download),
+  /contact/, "Devenir partenaire" → /partenaires/ (our partners and the benefits).
+- **Informations légales:** privacy policy, terms, "Gérer les cookies" (a button that reopens
+  the CookieYes preferences, loaded on the public site only).
+- **Not in the footer yet:** "Inviter un ami": the app has no referral programme yet, so the
+  footer promises no points. Add it to `footerColumns` when the programme is live.
 
 ---
 
@@ -336,7 +336,7 @@ stub), and the same Testing Library setup as `apps/app`.
 | `search-results.test.tsx`     | Results page: no count, search, sign-up link with the search, "near you", back link                                                                                                                                                                                                                                    |
 | `press-data.test.ts`          | News: unique URL-safe slugs, dates (day, month or year only), texts and headings in 3 languages, cover alt, LinkedIn links, newest first, YouTube links (accepted / refused), dates per language                                                                                                                       |
 | `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), news cards and article (headings, 3 next steps, video, unknown slug), map counters (no source line), partner links, partners strip with real logos, partners page, new texts exist in all languages |
-| `site-shell.test.tsx`         | Footer: the 4 columns of the content brief with their links in order, where each link goes, the cookie settings button, en/ar                                                                                                                                                                                          |
+| `site-shell.test.tsx`         | Footer: the 4 columns with their links in order, where each link goes, the cookie settings button, en/ar                                                                                                                                                                                                               |
 
 ---
 

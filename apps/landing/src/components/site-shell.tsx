@@ -246,7 +246,7 @@ export function Header() {
 /** One footer link: a page of this site, or an app page (sign-up, log-in). */
 type FooterLink = { label: string; href: string; app?: boolean };
 
-/** The 4 footer columns, in the order of the content brief. */
+/** The 4 footer columns, as the manager listed them. */
 function footerColumns(t: (key: string) => string, locale: Locale) {
   const page = (path: string) => localizePath(locale, path);
   // a service category opens the search page already filled with it
@@ -256,15 +256,8 @@ function footerColumns(t: (key: string) => string, locale: Locale) {
       title: t('landing.footerFindTitle'),
       links: [
         { label: t('landing.footerFindPro'), href: page('/recherche') },
-        ...(
-          [
-            'footerHomeServices',
-            'footerCrafts',
-            'footerTransport',
-            'footerChildcare',
-            'footerBusiness',
-          ] as const
-        ).map((key) => ({ label: t(`landing.${key}`), href: search(t(`landing.${key}`)) })),
+        { label: t('landing.footerHomeServices'), href: search(t('landing.footerHomeServices')) },
+        { label: t('landing.footerBusiness'), href: search(t('landing.footerBusiness')) },
         { label: t('landing.footerAllServices'), href: page('/services') },
       ],
     },
@@ -273,10 +266,11 @@ function footerColumns(t: (key: string) => string, locale: Locale) {
       links: [
         { label: t('landing.footerCreateProfile'), href: APP_REGISTER_URL, app: true },
         { label: t('landing.footerVisibility'), href: page('/utilisation') },
-        { label: t('landing.footerOpportunities'), href: APP_REGISTER_URL, app: true },
         { label: t('landing.footerHowItWorks'), href: page('/utilisation') },
         { label: t('landing.footerHelp'), href: page('/faq') },
         { label: t('landing.footerLogin'), href: APP_LOGIN_URL, app: true },
+        // the professional's way in: the partner form
+        { label: t('landing.partnersCta'), href: page('/devenir-partenaire') },
       ],
     },
     {
@@ -284,18 +278,17 @@ function footerColumns(t: (key: string) => string, locale: Locale) {
       links: [
         { label: t('landing.footerAbout'), href: page('/a-propos') },
         { label: t('landing.footerNews'), href: page('/actualites') },
-        { label: t('landing.footerPartners'), href: page('/partenaires') },
-        { label: t('landing.footerBusinessOffer'), href: page('/devenir-partenaire') },
+        { label: t('landing.footerDownload'), href: `${page('/utilisation')}#download` },
         { label: t('landing.footerContact'), href: page('/contact') },
-        { label: t('landing.footerJoin'), href: APP_REGISTER_URL, app: true },
+        // the companies' way in: our partners and what a partnership brings
+        { label: t('landing.partnersCta'), href: page('/partenaires') },
       ],
     },
     {
       title: t('landing.footerLegalTitle'),
       links: [
-        { label: t('landing.footerTerms'), href: page('/terms-of-service') },
         { label: t('landing.footerPrivacy'), href: page('/privacy-policy') },
-        { label: t('landing.footerReport'), href: page('/contact') },
+        { label: t('landing.footerTerms'), href: page('/terms-of-service') },
       ],
     },
   ];

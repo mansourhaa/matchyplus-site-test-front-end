@@ -10,42 +10,34 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/fr/',
 }));
 
-/** The footer columns of the content brief, each with its links, in order. */
+/** The footer columns, each with its links, in order. */
 const COLUMNS = {
   'Trouver un service': [
     'Trouver un professionnel',
     'Services à domicile',
-    'Artisans et travaux',
-    'Transport et livraison',
-    'Garde d’enfants',
     'Services aux entreprises',
     'Tous les services',
   ],
   'Pour les professionnels': [
     'Créer mon profil',
     'Développer ma visibilité',
-    'Trouver des opportunités',
     'Fonctionnement',
     'Centre d’aide',
     'Se connecter',
+    'Devenir partenaire',
   ],
   'Matchy+': [
     'À propos',
     'Actualités',
-    'Partenaires',
-    'Offre entreprise',
+    'Télécharger l’application',
     'Nous contacter',
-    'Rejoindre Matchy+',
+    'Devenir partenaire',
   ],
-  'Informations légales': [
-    'Conditions générales d’utilisation',
-    'Politique de confidentialité',
-    'Signaler un contenu',
-  ],
+  'Informations légales': ['Politique de confidentialité', 'Conditions d’utilisation'],
 };
 
 describe('Footer', () => {
-  it('has the 4 columns of the content brief, every link in order', () => {
+  it('has the 4 columns, every link in order', () => {
     render(
       <I18nProvider locale="fr">
         <Footer />
@@ -60,7 +52,7 @@ describe('Footer', () => {
       ).toEqual(labels);
     }
     // the cookie settings are a button (it opens the CookieYes preferences, not a page)
-    expect(screen.getByRole('button', { name: 'Gestion des cookies' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Gérer les cookies' })).toHaveClass(
       'cky-banner-element',
     );
   });
@@ -71,19 +63,26 @@ describe('Footer', () => {
         <Footer />
       </I18nProvider>,
     );
-    const href = (name: string) => screen.getByRole('link', { name }).getAttribute('href');
+    const href = (name: string, column = 'Trouver un service') =>
+      within(screen.getByRole('navigation', { name: column }))
+        .getByRole('link', { name })
+        .getAttribute('href');
     expect(href('Trouver un professionnel')).toMatch(/^\/fr\/recherche\/?$/);
-    expect(href('Garde d’enfants')).toMatch(
-      /^\/fr\/recherche\/?\?service=Garde\+d%E2%80%99enfants$/,
+    expect(href('Services à domicile')).toMatch(
+      /^\/fr\/recherche\/?\?service=Services\+%C3%A0\+domicile$/,
     );
     expect(href('Tous les services')).toMatch(/^\/fr\/services\/?$/);
-    expect(href('Centre d’aide')).toMatch(/^\/fr\/faq\/?$/);
-    expect(href('Se connecter')).toMatch(/\/connexion$/);
-    expect(href('Créer mon profil')).toMatch(/\/register$/);
-    expect(href('Partenaires')).toMatch(/^\/fr\/partenaires\/?$/);
-    expect(href('Offre entreprise')).toMatch(/^\/fr\/devenir-partenaire\/?$/);
-    expect(href('Conditions générales d’utilisation')).toMatch(/^\/fr\/terms-of-service\/?$/);
-    expect(href('Signaler un contenu')).toMatch(/^\/fr\/contact\/?$/);
+    const pros = 'Pour les professionnels';
+    expect(href('Créer mon profil', pros)).toMatch(/\/register$/);
+    expect(href('Centre d’aide', pros)).toMatch(/^\/fr\/faq\/?$/);
+    expect(href('Se connecter', pros)).toMatch(/\/connexion$/);
+    // professionals: the partner form; Matchy+: the page of our partners
+    expect(href('Devenir partenaire', pros)).toMatch(/^\/fr\/devenir-partenaire\/?$/);
+    expect(href('Devenir partenaire', 'Matchy+')).toMatch(/^\/fr\/partenaires\/?$/);
+    expect(href('Télécharger l’application', 'Matchy+')).toMatch(/^\/fr\/utilisation\/?#download$/);
+    expect(href('Conditions d’utilisation', 'Informations légales')).toMatch(
+      /^\/fr\/terms-of-service\/?$/,
+    );
   });
 
   it('is translated in English and Arabic', () => {
