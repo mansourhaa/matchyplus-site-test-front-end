@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **166 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **168 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -203,7 +203,8 @@ smaller benefit.
   shows the 3 newest; `/actualites/` shows all.
 - **The 5 news come from the "Articles storytelling V4" kit** (French texts, headings and slugs
   as in the kit; English and Arabic translated): Al Wataniya 1 "جيل المستقبل" (22 Nov 2026, TV
-  photo as cover), Afrique Innovante 2026, Express FM Mundo Design (YouTube video), Female
+  photo on the card, replay video in the article), Afrique Innovante 2026 (photo of Randa
+  Touati presented for Tunisia), Express FM Mundo Design (YouTube video), Female
   Founders Tribe Founder Circle, Meetup Pro 2026. The kit marks 4 dates "à confirmer": they show
   **the year only** (`date: '2026'`), never an invented day. When a date is confirmed, write it
   `YYYY-MM-DD`.
@@ -214,9 +215,11 @@ smaller benefit.
   (partner page).
 - **LinkedIn:** an item with a `linkedin` link shows a "Voir la publication sur LinkedIn" button
   (new tab, `rel="noopener noreferrer"`).
-- **Card** (`press-card.tsx`, same on the home page and on `/actualites/`): date badge, tag, big
-  title, place and a Matchy+ footer on a cover. Without a cover image the card uses a brand
-  gradient. On phones the home cards are a swipeable row.
+- **Card** (`press-card.tsx`, same on the home page and on `/actualites/`): date badge, tag,
+  place and a Matchy+ footer on the cover, then the title (shown once, under the cover). Without
+  a cover image the card uses a brand gradient with the Matchy+ logo. An item with a video shows
+  its cover on the card and plays the video in the article. On phones the home cards are a
+  swipeable row.
 - **Video:** `youtubeId()` accepts watch, youtu.be, shorts and embed links and refuses any other
   site. The article embeds `youtube-nocookie.com` (no YouTube cookies until the visitor plays it),
   loaded lazily.

@@ -16,7 +16,7 @@ const COVERS = [
 ] as const;
 
 /**
- * One Matchy+ Press card: a cover (image or brand gradient) with the date, tag, big title and
+ * One Matchy+ Press card: a cover (photo, or brand gradient with the logo) with the date, tag and
  * place, then the title, place and, on the "all news" page, a short summary. Opens the article.
  */
 export function PressCard({
@@ -80,14 +80,23 @@ export function PressCard({
           </span>
         </div>
 
-        {/* the same title is the heading below: screen readers hear it once */}
+        {/* the title is only under the cover (it was shown twice); a cover without a photo
+            shows the Matchy+ logo instead */}
+        {!item.cover && (
+          <Image
+            src="/logo-matchy-white.svg"
+            alt=""
+            width={161}
+            height={42}
+            className="relative m-auto h-10 w-auto opacity-90"
+          />
+        )}
         <p
-          aria-hidden="true"
-          className="relative mt-auto line-clamp-3 text-2xl leading-tight font-extrabold text-balance"
+          className={cn(
+            'relative flex items-center gap-1.5 text-sm text-white/85',
+            item.cover && 'mt-auto',
+          )}
         >
-          {text.title}
-        </p>
-        <p className="relative mt-2 flex items-center gap-1.5 text-sm text-white/85">
           <span className="bg-brand-teal h-1.5 w-1.5 rounded-full" />
           {text.place}
         </p>

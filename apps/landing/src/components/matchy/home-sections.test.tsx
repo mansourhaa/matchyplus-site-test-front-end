@@ -340,6 +340,27 @@ describe('Matchy+ Press and partners', () => {
     );
   });
 
+  it('a news card shows its title once (not on the cover too)', () => {
+    renderIn('fr', <Press />);
+    for (const item of pressItems().slice(0, 3)) {
+      expect(screen.getAllByText(item.text.fr.title)).toHaveLength(1);
+    }
+  });
+
+  it('the Al Wataniya 1 and Express FM articles play their replay', () => {
+    for (const [slug, id] of [
+      ['matchy-plus-al-wataniya-1-jil-al-mostakbal', 'Nk3_BD6rfTQ'],
+      ['matchy-plus-express-fm-mundo-design', '8IjW794Bv4c'],
+    ]) {
+      const { container, unmount } = renderIn('fr', <PressArticle slug={slug} />);
+      expect(container.querySelector('iframe')).toHaveAttribute(
+        'src',
+        `https://www.youtube-nocookie.com/embed/${id}`,
+      );
+      unmount();
+    }
+  });
+
   it('every article ends with the 3 next steps: find a pro, create a profile, propose a collaboration', () => {
     renderIn('fr', <PressArticle slug={PRESS_ITEMS[0].slug} />);
     expect(screen.getByRole('link', { name: /Trouver un professionnel/ })).toHaveAttribute(
