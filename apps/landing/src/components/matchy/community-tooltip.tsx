@@ -10,10 +10,13 @@ const TOOLTIP_ALIGN = {
 export function CommunityTooltip({
   location,
   city,
+  detail,
   dir,
 }: {
   location: CommunityLocation;
   city: string;
+  /** Second line, e.g. "136 apparitions dans Google", already translated. */
+  detail: string;
   /** Page direction: the map is left-to-right, the tooltip's text follows the page language. */
   dir: 'ltr' | 'rtl';
 }) {
@@ -25,6 +28,9 @@ export function CommunityTooltip({
     >
       <p dir={dir} className="text-sm font-bold">
         {city}
+      </p>
+      <p dir={dir} className="text-xs text-white/70">
+        {detail}
       </p>
     </div>
   );

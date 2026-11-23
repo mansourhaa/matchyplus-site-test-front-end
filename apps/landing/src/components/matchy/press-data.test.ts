@@ -8,14 +8,20 @@ describe('press items', () => {
     expect(new Set(PRESS_ITEMS.map((item) => item.slug)).size).toBe(PRESS_ITEMS.length);
     for (const item of PRESS_ITEMS) {
       expect(item.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
-      expect(item.date).toMatch(/^\d{4}-\d{2}(-\d{2})?$/);
-      expect(Number.isNaN(new Date(item.date).getTime())).toBe(false);
+      expect(item.date).toMatch(/^\d{4}(-\d{2}(-\d{2})?)?$/);
+      expect(pressDate(item.date, 'fr').full).not.toMatch(/Invalid/);
       for (const locale of SUPPORTED_LOCALES) {
         const text = item.text[locale];
-        for (const value of [text.tag, text.title, text.place, text.summary]) {
+        for (const value of [text.tag, text.title, text.place, text.summary, text.intro]) {
           expect(value.trim()).not.toBe('');
         }
-        expect(text.body.length).toBeGreaterThan(0);
+        expect(text.sections.length).toBeGreaterThan(0);
+        for (const section of text.sections) {
+          expect(section.heading.trim()).not.toBe('');
+          expect(section.text.trim()).not.toBe('');
+        }
+        // a cover always says what it shows
+        if (item.cover) expect(text.coverAlt?.trim()).toBeTruthy();
       }
       if (item.video) expect(youtubeId(item.video)).not.toBeNull();
       if (item.linkedin) expect(item.linkedin).toMatch(/^https:\/\/www\.linkedin\.com\//);
@@ -70,5 +76,10 @@ describe('pressDate', () => {
   it('shows a month-only date as the month and year, without inventing a day', () => {
     expect(pressDate('2026-06', 'fr')).toEqual({ top: '2026', big: 'juin', full: 'juin 2026' });
     expect(pressDate('2026-06', 'en').full).toBe('June 2026');
+  });
+
+  it('shows a year-only date as the year alone', () => {
+    expect(pressDate('2026', 'fr')).toEqual({ top: '', big: '2026', full: '2026' });
+    expect(pressDate('2026', 'ar').full).toBe(pressDate('2026', 'fr').full);
   });
 });

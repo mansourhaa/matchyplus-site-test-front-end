@@ -464,7 +464,8 @@ export function pressMetadata(locale: Locale, item: PressItem): Metadata {
       url,
       title: `${title} | ${SITE_NAME}`,
       description: summary,
-      publishedTime: item.date,
+      // only a full date: a year-only or month-only date is not a publication time
+      ...(/^\d{4}-\d{2}-\d{2}$/.test(item.date) && { publishedTime: item.date }),
       images: [image],
     },
     twitter: { card: 'summary_large_image', title, description: summary, images: [image.url] },

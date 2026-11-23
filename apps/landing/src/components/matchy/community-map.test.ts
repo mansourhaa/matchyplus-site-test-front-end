@@ -2,17 +2,25 @@ import { SUPPORTED_LOCALES, getMessage, messages } from '@/features/i18n/message
 import { describe, expect, it } from 'vitest';
 
 import {
-  CITY_POINTS,
+  COUNTRY_POINTS,
   HUB_ID,
+  SEARCH_CONSOLE,
   arcPath,
   numberLocale,
-  toCityNames,
+  toCountryNames,
   tooltipPlacement,
 } from './community-map';
 
 describe('community map data', () => {
-  it('keeps every city on the map', () => {
-    for (const { x, y } of CITY_POINTS) {
+  it('holds the Search Console figures: the listed countries fit within the totals', () => {
+    const listed = COUNTRY_POINTS.reduce((total, point) => total + point.impressions, 0);
+    expect(listed).toBeLessThanOrEqual(SEARCH_CONSOLE.impressions);
+    expect(COUNTRY_POINTS.length).toBeLessThanOrEqual(SEARCH_CONSOLE.countries);
+    expect(SEARCH_CONSOLE.asOf).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('keeps every country on the map', () => {
+    for (const { x, y } of COUNTRY_POINTS) {
       expect(x).toBeGreaterThan(0);
       expect(x).toBeLessThan(100);
       expect(y).toBeGreaterThan(0);
@@ -22,7 +30,7 @@ describe('community map data', () => {
 
   it('draws a curve from one city to another, bowing upwards', () => {
     expect(arcPath({ x: 0, y: 50 }, { x: 10, y: 50 })).toBe('M0 226 Q50 196 100 226');
-    expect(CITY_POINTS.some(({ id }) => id === HUB_ID)).toBe(true);
+    expect(COUNTRY_POINTS.some(({ id }) => id === HUB_ID)).toBe(true);
   });
 
   it('opens the tooltip towards the inside of the map', () => {
@@ -38,7 +46,7 @@ describe('community map data', () => {
   });
 
   it.each(SUPPORTED_LOCALES)('%s names every city on the map', (locale) => {
-    const cities = toCityNames(getMessage(messages[locale], 'landing.communityCities'));
-    for (const { id } of CITY_POINTS) expect(cities[id]).toBeTruthy();
+    const names = toCountryNames(getMessage(messages[locale], 'landing.communityCountries'));
+    for (const { id } of COUNTRY_POINTS) expect(names[id]).toBeTruthy();
   });
 });

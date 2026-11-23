@@ -6,37 +6,61 @@ import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 import { CommunityArcs } from './community-arcs';
+import { type CommunityMetric, CounterRow, FloatingCounters } from './community-counters';
 import {
-  CITY_POINTS,
-  type CityId,
+  COUNTRY_POINTS,
+  type CountryId,
   HUB_ID,
   MAP_HEIGHT,
   MAP_WIDTH,
-  toCityNames,
+  SEARCH_CONSOLE,
+  numberLocale,
+  toCountryNames,
 } from './community-map';
 import { CommunityMarker } from './community-marker';
 import { CommunityTooltip } from './community-tooltip';
 import { EDGE_FADE, Reveal } from './motion';
 
-/** Where the phone view of the map starts: Tunis, in % of the map width. */
-const MOBILE_FOCUS_X = 52.7;
+/** Where the phone view of the map starts: Tunisia, in % of the map width. */
+const MOBILE_FOCUS_X = 52.5;
 
 /**
  * Matchy+'s ambition: a world map with the highlighted countries, the cities, lines from Tunis
- * and a tooltip per city. No figures: the content brief allows only sourced numbers, so plug
- * real, defined KPIs (see community-map.ts) before showing any.
+ * and a tooltip per country. Every figure is a real Google Search Console number, with its
+ * source shown under the map (the content brief allows only defined, sourced figures).
  * Animations are hidden with CSS for "reduce motion", never with JS, so the server and the
  * browser always render the same HTML.
  */
 export function LiveCommunity() {
-  const { t, dir, tRows } = useI18n();
-  const cities = toCityNames(tRows('landing.communityCities'));
+  const { t, locale, dir, tRows } = useI18n();
+  const countries = toCountryNames(tRows('landing.communityCountries'));
+  const format = new Intl.NumberFormat(numberLocale(locale));
+  const asOf = new Intl.DateTimeFormat(numberLocale(locale), {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${SEARCH_CONSOLE.asOf}T12:00:00Z`));
+  const appearances = (count: number) =>
+    t('landing.communityImpressionsCount', { count: format.format(count) });
 
-  const locations = CITY_POINTS;
-  const [selectedId, setSelectedId] = useState<CityId | null>(null);
+  const locations = COUNTRY_POINTS;
+  const [selectedId, setSelectedId] = useState<CountryId | null>(null);
+  const metrics: CommunityMetric[] = [
+    {
+      label: t('landing.communityCountriesLabel'),
+      value: SEARCH_CONSOLE.countries,
+      headline: true,
+    },
+    {
+      label: t('landing.communityImpressionsLabel'),
+      value: SEARCH_CONSOLE.impressions,
+      headline: false,
+    },
+  ];
 
-  // On phones the map is wider than the screen and scrolls sideways: it starts on Tunis,
-  // and a tapped city slides to the middle so its tooltip is fully visible.
+  // On phones the map is wider than the screen and scrolls sideways: it starts on Tunisia,
+  // and a tapped country slides to the middle so its tooltip is fully visible.
   const scrollerRef = useRef<HTMLDivElement>(null);
   const centerOn = (x: number, behavior: ScrollBehavior) => {
     const scroller = scrollerRef.current;
@@ -52,13 +76,13 @@ export function LiveCommunity() {
     scroller.scrollLeft = (scroller.scrollWidth * MOBILE_FOCUS_X) / 100 - scroller.clientWidth / 2;
   }, []);
 
-  const hub = CITY_POINTS.find((location) => location.id === HUB_ID);
-  const routes = CITY_POINTS.filter((location) => location.id !== HUB_ID);
+  const hub = COUNTRY_POINTS.find((location) => location.id === HUB_ID);
+  const routes = COUNTRY_POINTS.filter((location) => location.id !== HUB_ID);
 
   const selected = locations.find((location) => location.id === selectedId);
 
   return (
-    <section className="relative z-10 bg-white py-20 md:py-24">
+    <section className="relative z-10 bg-white pt-20 pb-8 md:pt-24 md:pb-10">
       <div className="mx-auto max-w-6xl px-5">
         {/* same heading as the other sections */}
         <Reveal className="mx-auto max-w-2xl text-center">
@@ -88,7 +112,7 @@ export function LiveCommunity() {
                 style={{ aspectRatio: `${MAP_WIDTH} / ${MAP_HEIGHT}` }}
               >
                 <Image
-                  src="/matchy/community/world-map.svg"
+                  src="/matchy/community/world-map-v2.svg"
                   alt={t('landing.communityMapLabel')}
                   width={MAP_WIDTH}
                   height={MAP_HEIGHT}
@@ -118,7 +142,7 @@ export function LiveCommunity() {
                     key={location.id}
                     location={location}
                     index={index}
-                    label={cities[location.id] ?? location.id}
+                    label={`${countries[location.id] ?? location.id} : ${appearances(location.impressions)}`}
                     selected={location.id === selectedId}
                     hub={location.id === HUB_ID}
                     onShow={() => setSelectedId(location.id)}
@@ -130,11 +154,15 @@ export function LiveCommunity() {
                   />
                 ))}
 
+                {/* counters, floating over the oceans (computers only) */}
+                <FloatingCounters metrics={metrics} format={format} dir={dir} />
+
                 <div role="status" aria-live="polite">
                   {selected && (
                     <CommunityTooltip
                       location={selected}
-                      city={cities[selected.id] ?? selected.id}
+                      city={countries[selected.id] ?? selected.id}
+                      detail={appearances(selected.impressions)}
                       dir={dir}
                     />
                   )}
@@ -142,6 +170,12 @@ export function LiveCommunity() {
               </div>
             </div>
           </figure>
+
+          {/* phones: the counters sit in a row under the map */}
+          <CounterRow metrics={metrics} format={format} />
+          <p className="text-muted-foreground mt-5 text-center text-xs">
+            {t('landing.communitySource', { date: asOf })}
+          </p>
         </Reveal>
       </div>
     </section>

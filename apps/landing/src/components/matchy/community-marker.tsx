@@ -3,7 +3,7 @@
 import type { CommunityLocation } from './community-map';
 
 /**
- * One city on the map: a pulsing point (bigger and blue for the hub). Hover reacts only to a real mouse: on phones the tap opens the tooltip, and
+ * One country on the map: a pulsing point (bigger and blue for the hub). Hover reacts only to a real mouse: on phones the tap opens the tooltip, and
  * the map sliding under the finger must not close it.
  */
 export function CommunityMarker({
@@ -19,7 +19,7 @@ export function CommunityMarker({
   location: CommunityLocation;
   /** Position in the list, to offset the pulse of each point. */
   index: number;
-  /** Accessible name: the city. */
+  /** Accessible name: the country and its Google appearances. */
   label: string;
   selected: boolean;
   hub: boolean;

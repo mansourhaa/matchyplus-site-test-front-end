@@ -3,6 +3,7 @@ import { Hero } from '@/components/matchy/hero';
 import { LiveCommunity } from '@/components/matchy/live-community';
 import { ReducedMotion } from '@/components/matchy/motion';
 import { PartnerLogos } from '@/components/matchy/partner-logos';
+import { Partnerships } from '@/components/matchy/partnerships';
 import { Press } from '@/components/matchy/press';
 import { ProBranding } from '@/components/matchy/pro-branding';
 import { Roadmap } from '@/components/matchy/roadmap';
@@ -47,6 +48,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
           <LiveCommunity />
           <PartnerLogos />
           <CompanyStory />
+          <Partnerships />
           <Roadmap />
         </ReducedMotion>
       </main>

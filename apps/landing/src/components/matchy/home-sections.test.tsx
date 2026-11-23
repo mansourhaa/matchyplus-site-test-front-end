@@ -10,6 +10,8 @@ import { HeroLivePhone } from './hero-live-phone';
 import { HeroSearch } from './hero-search';
 import { LiveCommunity } from './live-community';
 import { PartnerLogos } from './partner-logos';
+import { PARTNERS } from './partners-data';
+import { Partnerships } from './partnerships';
 import { Press } from './press';
 import { PRESS_ITEMS, pressItems } from './press-data';
 import { PressArticle, PressList } from './press-pages';
@@ -61,6 +63,12 @@ const NEW_KEYS = [
   'brandSampleStats',
   'storyQuote',
   'storyBody',
+  'partnersTitle',
+  'partnersCta',
+  'partnersSlot',
+  'pressNext',
+  'pressCtaFind',
+  'pressCtaPartner',
   'roadmapTitle',
   'roadmapBody',
   'roadmapSteps',
@@ -70,7 +78,11 @@ const NEW_KEYS = [
   'pressWebsite',
   'communityTitle',
   'communityMapLabel',
-  'communityCities',
+  'communityCountries',
+  'communityCountriesLabel',
+  'communityImpressionsLabel',
+  'communityImpressionsCount',
+  'communitySource',
 ];
 
 describe('new home texts', () => {
@@ -195,6 +207,28 @@ describe('home sections', () => {
     );
   });
 
+  it('Partnerships strip shows the real partner logos, and free places lead to the partner page', () => {
+    const { container } = renderIn('fr', <Partnerships />);
+    // the strip is decorative, so its links and logos are not in the accessibility tree
+    const strip = container.querySelector('[aria-hidden="true"]');
+    const logos = [...(strip?.querySelectorAll('img') ?? [])].map((img) => img.getAttribute('src'));
+    for (const partner of PARTNERS) {
+      expect(logos.some((src) => src?.includes(partner.logo.split('/').pop() ?? ''))).toBe(true);
+    }
+    expect(strip?.textContent).not.toMatch(/\[/);
+    const slots = [...(strip?.querySelectorAll('a') ?? [])];
+    expect(slots.length).toBeGreaterThan(0);
+    for (const slot of slots) {
+      expect(slot).toHaveTextContent('Votre marque ici');
+      expect(slot).toHaveAttribute('tabindex', '-1');
+      expect(slot.getAttribute('href')).toMatch(/^\/fr\/devenir-partenaire\/?$/);
+    }
+    expect(screen.getByRole('link', { name: /Devenir partenaire/ })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/fr\/devenir-partenaire\/?$/),
+    );
+  });
+
   it('Roadmap lists the five steps in order and a link to join, in every language', () => {
     for (const locale of ['fr', 'en', 'ar'] as const) {
       const { unmount } = renderIn(locale, <Roadmap />);
@@ -212,7 +246,7 @@ describe('home sections', () => {
     }
   });
 
-  it('LiveCommunity shows the map and a tooltip per city, without any figure', () => {
+  it('LiveCommunity shows the real Search Console figures with their source, and a tooltip per country', () => {
     renderIn('fr', <LiveCommunity />);
     expect(
       screen.getByRole('heading', {
@@ -220,18 +254,22 @@ describe('home sections', () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Carte du monde/ })).toBeInTheDocument();
-    // the content brief allows only sourced figures: no counters, no visitor counts
-    expect(screen.queryByText(/\d/)).toBeNull();
-    expect(screen.queryByText(/visiteurs/)).toBeNull();
+    // the counters exist twice: on the map for computers and under it for phones
+    expect(screen.getAllByText('52')).toHaveLength(2);
+    expect(screen.getAllByText('434')).toHaveLength(2);
+    expect(screen.getAllByText('Pays où Matchy+ apparaît dans Google')).toHaveLength(2);
+    expect(
+      screen.getByText('Source : Google Search Console, 3 derniers mois (au 23 nov. 2026)'),
+    ).toBeInTheDocument();
 
-    const tunis = screen.getByRole('button', { name: 'Tunis, Tunisie' });
+    const tunis = screen.getByRole('button', { name: 'Tunisie : 136 apparitions dans Google' });
     fireEvent.pointerEnter(tunis, { pointerType: 'mouse' });
-    expect(within(screen.getByRole('status')).getByText('Tunis, Tunisie')).toBeInTheDocument();
+    expect(within(screen.getByRole('status')).getByText('Tunisie')).toBeInTheDocument();
     // a touch leaving the point (the map slid under the finger) keeps the tooltip open
     fireEvent.pointerLeave(tunis, { pointerType: 'touch' });
-    expect(within(screen.getByRole('status')).getByText('Tunis, Tunisie')).toBeInTheDocument();
+    expect(within(screen.getByRole('status')).getByText('Tunisie')).toBeInTheDocument();
     fireEvent.pointerLeave(tunis, { pointerType: 'mouse' });
-    expect(within(screen.getByRole('status')).queryByText('Tunis, Tunisie')).toBeNull();
+    expect(within(screen.getByRole('status')).queryByText('Tunisie')).toBeNull();
   });
 });
 
@@ -279,11 +317,30 @@ describe('Matchy+ Press and partners', () => {
     const item = PRESS_ITEMS[0];
     renderIn('ar', <PressArticle slug={item.slug} />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(item.text.ar.title);
-    for (const paragraph of item.text.ar.body)
-      expect(screen.getByText(paragraph)).toBeInTheDocument();
+    expect(screen.getByText(item.text.ar.intro)).toBeInTheDocument();
+    for (const section of item.text.ar.sections) {
+      expect(screen.getByRole('heading', { level: 2, name: section.heading })).toBeInTheDocument();
+      expect(screen.getByText(section.text)).toBeInTheDocument();
+    }
     expect(screen.getByRole('link', { name: 'كل الأخبار' })).toHaveAttribute(
       'href',
       expect.stringMatching(/^\/ar\/actualites\/?$/),
+    );
+  });
+
+  it('every article ends with the 3 next steps: find a pro, create a profile, propose a collaboration', () => {
+    renderIn('fr', <PressArticle slug={PRESS_ITEMS[0].slug} />);
+    expect(screen.getByRole('link', { name: /Trouver un professionnel/ })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/fr\/recherche\/?$/),
+    );
+    expect(screen.getByRole('link', { name: 'Créer mon profil gratuitement' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/\/register$/),
+    );
+    expect(screen.getByRole('link', { name: 'Proposer une collaboration' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/fr\/devenir-partenaire\/?$/),
     );
   });
 

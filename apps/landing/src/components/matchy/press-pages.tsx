@@ -3,7 +3,8 @@
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
-import { ArrowLeft, ExternalLink, MapPin } from 'lucide-react';
+import { APP_REGISTER_URL } from '@/lib/constants';
+import { ArrowLeft, ArrowRight, ExternalLink, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -77,8 +78,9 @@ export function PressArticle({ slug }: { slug: string }) {
             <div className="relative aspect-video overflow-hidden rounded-3xl shadow-2xl">
               <Image
                 src={item.cover}
-                alt=""
+                alt={text.coverAlt ?? ''}
                 fill
+                priority
                 sizes="(min-width: 768px) 768px, 100vw"
                 className="object-cover"
               />
@@ -86,11 +88,40 @@ export function PressArticle({ slug }: { slug: string }) {
           )
         )}
 
-        <div className="mt-10 space-y-5 rounded-3xl bg-white p-6 text-base leading-relaxed text-slate-700 shadow-xl ring-1 shadow-[#2F76BB]/10 ring-slate-100 md:p-10 md:text-lg">
-          {text.body.map((paragraph, index) => (
-            // a fixed list of paragraphs: their position is a stable key
-            <p key={index}>{paragraph}</p>
+        <div className="mt-10 rounded-3xl bg-white p-6 text-base leading-relaxed text-slate-700 shadow-xl ring-1 shadow-[#2F76BB]/10 ring-slate-100 md:p-10 md:text-lg">
+          <p className="text-brand-navy font-semibold">{text.intro}</p>
+          {text.sections.map((section) => (
+            <section key={section.heading} className="mt-8">
+              <h2 className="text-brand-navy text-xl font-extrabold md:text-2xl">
+                {section.heading}
+              </h2>
+              <p className="mt-3">{section.text}</p>
+            </section>
           ))}
+        </div>
+
+        {/* the next step for each reader: a client, a professional or a partner */}
+        <div className="from-brand-navy to-brand-blue mt-8 flex flex-col gap-3 rounded-3xl bg-gradient-to-br p-6 text-white shadow-xl sm:flex-row sm:flex-wrap sm:items-center md:p-8">
+          <p className="text-lg font-extrabold sm:me-auto">{t('landing.pressNext')}</p>
+          <Link
+            href={localizePath(locale, '/recherche')}
+            className="text-brand-blue inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold shadow-lg transition-transform hover:scale-[1.03]"
+          >
+            {t('landing.pressCtaFind')}
+            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+          </Link>
+          <a
+            href={APP_REGISTER_URL}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-white/15 px-5 py-2.5 text-sm font-bold ring-1 ring-white/40 transition-colors hover:bg-white/25"
+          >
+            {t('landing.searchProCta')}
+          </a>
+          <Link
+            href={localizePath(locale, '/devenir-partenaire')}
+            className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold underline-offset-4 hover:underline"
+          >
+            {t('landing.pressCtaPartner')}
+          </Link>
         </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
