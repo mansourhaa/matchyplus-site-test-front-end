@@ -1,15 +1,12 @@
 import { CompanyStory } from '@/components/matchy/company-story';
-import { Cta } from '@/components/matchy/cta';
-import { Explore } from '@/components/matchy/explore';
-import { Features } from '@/components/matchy/features';
 import { Hero } from '@/components/matchy/hero';
 import { LiveCommunity } from '@/components/matchy/live-community';
 import { ReducedMotion } from '@/components/matchy/motion';
+import { PartnerLogos } from '@/components/matchy/partner-logos';
 import { Partnerships } from '@/components/matchy/partnerships';
+import { Press } from '@/components/matchy/press';
 import { ProBranding } from '@/components/matchy/pro-branding';
-import { Security } from '@/components/matchy/security';
 import { ServicesBelt } from '@/components/matchy/services-belt';
-import { Steps } from '@/components/matchy/steps';
 import { WhyMatchy } from '@/components/matchy/why-matchy';
 import { PageFrame } from '@/components/site-shell';
 import { isLocale } from '@/features/i18n/routing';
@@ -41,18 +38,16 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
       <main className="bg-background overflow-x-hidden">
         {/* one "reduce motion" rule for every section (see motion.tsx) */}
         <ReducedMotion>
+          {/* how Matchy+ works (features, steps, wallet, explore, download) is on /utilisation/ */}
           <Hero />
-          <Features />
+          <Press />
           <ServicesBelt />
           <WhyMatchy />
-          <Steps />
           <ProBranding />
           <LiveCommunity />
-          <Security />
-          <Explore />
+          <PartnerLogos />
           <CompanyStory />
           <Partnerships />
-          <Cta />
         </ReducedMotion>
       </main>
       {!DISABLE_CHATBOT && CHATBOT_WIDGET_SRC && (

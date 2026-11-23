@@ -61,7 +61,7 @@ describe('sitemap', () => {
   it('lists each indexable page once per language on the public domain', () => {
     const urls = entries.map((entry) => entry.url);
     expect(new Set(urls).size).toBe(urls.length);
-    expect(urls).toHaveLength(8 * SUPPORTED_LOCALES.length);
+    expect(urls).toHaveLength(9 * SUPPORTED_LOCALES.length);
     expect(urls).toContain(`https://matchyplus.com${encodeURI('/ar/الأسئلة-الشائعة/')}`);
     expect(urls.every((url) => url.startsWith('https://matchyplus.com/'))).toBe(true);
   });

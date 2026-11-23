@@ -1,0 +1,67 @@
+import { SUPPORTED_LOCALES } from '@/features/i18n/messages';
+import { describe, expect, it } from 'vitest';
+
+import { PRESS_ITEMS, pressDate, pressItem, pressItems, youtubeId } from './press-data';
+
+describe('press items', () => {
+  it('have unique URL-safe slugs, a valid date and every text in every language', () => {
+    expect(new Set(PRESS_ITEMS.map((item) => item.slug)).size).toBe(PRESS_ITEMS.length);
+    for (const item of PRESS_ITEMS) {
+      expect(item.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+      expect(item.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(Number.isNaN(new Date(item.date).getTime())).toBe(false);
+      for (const locale of SUPPORTED_LOCALES) {
+        const text = item.text[locale];
+        for (const value of [text.tag, text.title, text.place, text.summary]) {
+          expect(value.trim()).not.toBe('');
+        }
+        expect(text.body.length).toBeGreaterThan(0);
+      }
+      if (item.video) expect(youtubeId(item.video)).not.toBeNull();
+    }
+  });
+
+  it('are listed newest first and found by slug', () => {
+    const dates = pressItems().map((item) => item.date);
+    expect(dates).toEqual([...dates].sort().reverse());
+    expect(pressItem(PRESS_ITEMS[0].slug)).toBe(PRESS_ITEMS[0]);
+    expect(pressItem('missing')).toBeUndefined();
+  });
+});
+
+describe('youtubeId', () => {
+  it('reads the usual YouTube links', () => {
+    for (const link of [
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://youtube.com/watch?v=dQw4w9WgXcQ&t=42s',
+      'https://m.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://youtu.be/dQw4w9WgXcQ?si=abc',
+      'https://www.youtube.com/shorts/dQw4w9WgXcQ',
+      'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+    ]) {
+      expect(youtubeId(link)).toBe('dQw4w9WgXcQ');
+    }
+  });
+
+  it('refuses anything else, so a wrong link never embeds another site', () => {
+    for (const link of [
+      undefined,
+      '',
+      'not a link',
+      'https://vimeo.com/123456',
+      'https://evil.example/watch?v=dQw4w9WgXcQ',
+      'https://www.youtube.com/watch?v=short',
+      'https://www.youtube.com/channel/UC123',
+    ]) {
+      expect(youtubeId(link)).toBeNull();
+    }
+  });
+});
+
+describe('pressDate', () => {
+  it('gives the same calendar day in every language', () => {
+    expect(pressDate('2026-11-12', 'fr').day).toBe('12');
+    expect(pressDate('2026-11-12', 'en').full).toBe('Nov 12, 2026');
+    expect(pressDate('2026-01-01', 'fr').full).toBe('1 janv. 2026');
+  });
+});

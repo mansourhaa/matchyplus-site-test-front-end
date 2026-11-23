@@ -141,7 +141,7 @@ export function Header() {
         <nav className="desktop-nav" aria-label="Main navigation">
           <Link href={localizePath(locale, '/services')}>{t('landing.services')}</Link>
           <Link href={localizePath(locale, '/a-propos')}>{t('landing.about')}</Link>
-          <Link href={localizePath(locale, '/#how')}>{t('landing.how')}</Link>
+          <Link href={localizePath(locale, '/utilisation')}>{t('landing.how')}</Link>
           <Link href={localizePath(locale, '/contact')}>{t('landing.contact')}</Link>
           <div ref={langRef} className="language-picker-custom relative">
             <button
@@ -198,7 +198,7 @@ export function Header() {
           <Link href={localizePath(locale, '/a-propos')} onClick={() => setOpen(false)}>
             {t('landing.about')}
           </Link>
-          <Link href={localizePath(locale, '/#how')} onClick={() => setOpen(false)}>
+          <Link href={localizePath(locale, '/utilisation')} onClick={() => setOpen(false)}>
             {t('landing.how')}
           </Link>
           <Link href={localizePath(locale, '/faq')} onClick={() => setOpen(false)}>
@@ -258,7 +258,7 @@ export function Footer() {
           <h3>{locale === 'ar' ? 'اكتشف' : locale === 'en' ? 'Discover' : 'Découvrir'}</h3>
           <Link href={localizePath(locale, '/services')}>{t('landing.services')}</Link>
           <Link href={localizePath(locale, '/a-propos')}>{t('landing.about')}</Link>
-          <Link href={localizePath(locale, '/#how')}>{t('landing.how')}</Link>
+          <Link href={localizePath(locale, '/utilisation')}>{t('landing.how')}</Link>
         </div>
         <div>
           <h3>

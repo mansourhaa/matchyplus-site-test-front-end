@@ -9,7 +9,11 @@ import { CompanyStory } from './company-story';
 import { HeroLivePhone } from './hero-live-phone';
 import { HeroSearch } from './hero-search';
 import { LiveCommunity } from './live-community';
+import { PartnerLogos } from './partner-logos';
 import { Partnerships } from './partnerships';
+import { Press } from './press';
+import { PRESS_ITEMS, pressItems } from './press-data';
+import { PressArticle, PressList } from './press-pages';
 import { ProBranding } from './pro-branding';
 import { WhyMatchy } from './why-matchy';
 
@@ -25,6 +29,18 @@ function renderIn(locale: Locale, ui: ReactNode) {
 }
 
 const NEW_KEYS = [
+  'pressKicker',
+  'pressTitle',
+  'pressSubtitle',
+  'pressAll',
+  'pressSample',
+  'pressPageTitle',
+  'pressVideo',
+  'ourPartnersTitle',
+  'ourPartnersBody',
+  'ourPartnersVisit',
+  'usageTitle',
+  'usageBody',
   'heroLive',
   'heroPhoneTabs',
   'searchTabClient',
@@ -222,5 +238,83 @@ describe('home sections', () => {
     expect(within(screen.getByRole('status')).getByText('Tunis, Tunisie')).toBeInTheDocument();
     fireEvent.pointerLeave(tunis, { pointerType: 'mouse' });
     expect(within(screen.getByRole('status')).queryByText('Tunis, Tunisie')).toBeNull();
+  });
+});
+
+describe('Matchy+ Press and partners', () => {
+  it('Press shows the 3 latest news, each opening its page, and a link to all the news', () => {
+    renderIn('fr', <Press />);
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+      'Les dernières actualités de Matchy+',
+    );
+    const latest = pressItems().slice(0, 3);
+    for (const item of latest) {
+      // each title is announced once per card (the big cover title is hidden from screen readers)
+      expect(screen.getAllByRole('heading', { level: 3, name: item.text.fr.title })).toHaveLength(
+        1,
+      );
+      const heading = screen.getAllByRole('heading', { level: 3, name: item.text.fr.title })[0];
+      expect(heading.closest('a')).toHaveAttribute(
+        'href',
+        expect.stringMatching(new RegExp(`^/fr/actualites/${item.slug}/?$`)),
+      );
+    }
+    expect(screen.getByRole('link', { name: 'Toutes les actualités' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/fr\/actualites\/?$/),
+    );
+  });
+
+  it('sample news are labelled as samples', () => {
+    renderIn('fr', <PressList />);
+    const samples = PRESS_ITEMS.filter((item) => item.sample).length;
+    expect(screen.getAllByText('Exemple')).toHaveLength(samples);
+  });
+
+  it('an article shows its texts in the page language and links back to all news', () => {
+    const item = PRESS_ITEMS[0];
+    renderIn('ar', <PressArticle slug={item.slug} />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(item.text.ar.title);
+    for (const paragraph of item.text.ar.body)
+      expect(screen.getByText(paragraph)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'كل الأخبار' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/ar\/actualites\/?$/),
+    );
+  });
+
+  it('an article with a YouTube link embeds it without cookies; an unknown slug renders nothing', () => {
+    const original = PRESS_ITEMS[0].video;
+    PRESS_ITEMS[0].video = 'https://youtu.be/dQw4w9WgXcQ';
+    try {
+      const { container } = renderIn('fr', <PressArticle slug={PRESS_ITEMS[0].slug} />);
+      expect(container.querySelector('iframe')).toHaveAttribute(
+        'src',
+        'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+      );
+      expect(container.querySelector('iframe')).toHaveAttribute(
+        'referrerpolicy',
+        'strict-origin-when-cross-origin',
+      );
+    } finally {
+      PRESS_ITEMS[0].video = original;
+    }
+    const { container } = renderIn('fr', <PressArticle slug="missing" />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('Nos partenaires links each logo to the partner site in a new tab', () => {
+    renderIn('fr', <PartnerLogos />);
+    expect(screen.getByRole('heading', { level: 2, name: 'Nos partenaires' })).toBeInTheDocument();
+    const links = screen.getAllByRole('link');
+    expect(links).toHaveLength(3);
+    for (const link of links) {
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+      expect(link.getAttribute('href')).toMatch(/^https:\/\//);
+    }
+    expect(
+      screen.getByRole('link', { name: 'Site de DOT-IT (nouvel onglet)' }),
+    ).toBeInTheDocument();
   });
 });

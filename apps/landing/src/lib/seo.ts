@@ -1,5 +1,6 @@
 import { ABOUT_CONTENT } from '@/components/about/content';
 import { FAQ_CONTENT } from '@/components/faq/content';
+import type { PressItem } from '@/components/matchy/press-data';
 import { SERVICES_CONTENT } from '@/components/services/content';
 import { DEFAULT_LOCALE, type Locale, SUPPORTED_LOCALES } from '@/features/i18n/messages';
 import { isLocale, localizePath } from '@/features/i18n/routing';
@@ -67,7 +68,9 @@ export type PageKey =
   | 'privacy-policy'
   | 'suppression-compte'
   | 'coming-soon'
-  | 'recherche';
+  | 'recherche'
+  | 'actualites'
+  | 'utilisation';
 
 /** The À propos copy ships with its page content in `locales/<lang>/about.json`. */
 function aboutCopy(): Record<Locale, PageCopy> {
@@ -285,6 +288,47 @@ export const PAGES: Record<PageKey, PageSeo> = {
       },
     },
   },
+  actualites: {
+    path: '/actualites',
+    // the news are examples for now: index this page once real news are published
+    noindex: true,
+    copy: {
+      fr: {
+        title: 'Actualités',
+        description: 'Événements, interviews et annonces de Matchy+.',
+      },
+      en: {
+        title: 'News',
+        description: 'Matchy+ events, interviews and announcements.',
+      },
+      ar: {
+        title: 'الأخبار',
+        description: 'فعاليات وحوارات وإعلانات Matchy+.',
+      },
+    },
+  },
+  utilisation: {
+    path: '/utilisation',
+    changeFrequency: 'monthly',
+    priority: 0.7,
+    copy: {
+      fr: {
+        title: 'Comment utiliser Matchy+',
+        description:
+          'Trouvez un professionnel en trois étapes, boostez votre visibilité avec Matchy Wallet et découvrez les pros autour de vous.',
+      },
+      en: {
+        title: 'How to use Matchy+',
+        description:
+          'Find a professional in three steps, boost your visibility with Matchy Wallet and discover pros around you.',
+      },
+      ar: {
+        title: 'كيفية استخدام Matchy+',
+        description:
+          'اعثر على محترف في ثلاث خطوات، وعزّز ظهورك مع Matchy Wallet واكتشف المحترفين من حولك.',
+      },
+    },
+  },
   recherche: {
     path: '/recherche',
     noindex: true,
@@ -400,6 +444,32 @@ export function localizedMetadata(key: PageKey) {
   return async ({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> => {
     const { lang } = await params;
     return isLocale(lang) ? pageMetadata(lang, key) : {};
+  };
+}
+
+/** Title, description, canonical, hreflang and social tags of one Matchy+ Press article. */
+export function pressMetadata(locale: Locale, item: PressItem): Metadata {
+  const path = `/actualites/${item.slug}`;
+  const { title, summary } = item.text[locale];
+  const url = absoluteUrl(localizePath(locale, path));
+  const image = item.cover ? { url: item.cover, alt: title } : OG_IMAGE;
+  return {
+    title,
+    description: summary,
+    alternates: { canonical: url, languages: languageAlternates(path) },
+    openGraph: {
+      type: 'article',
+      siteName: SITE_NAME,
+      locale: OG_LOCALE[locale],
+      url,
+      title: `${title} | ${SITE_NAME}`,
+      description: summary,
+      publishedTime: item.date,
+      images: [image],
+    },
+    twitter: { card: 'summary_large_image', title, description: summary, images: [image.url] },
+    // example news stay out of search results
+    ...(item.sample && { robots: { index: false, follow: true } }),
   };
 }
 
