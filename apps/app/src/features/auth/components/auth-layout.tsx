@@ -1,5 +1,6 @@
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { LangPickerLight } from '@/features/onboarding/components/lang-picker-light';
+import { Crown, MapPin, MessageCircle, Video, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { MatchyLogoWhite } from './matchy-logo';
@@ -9,27 +10,27 @@ function AuthFeatures() {
 
   return [
     {
-      emoji: '⚡',
+      icon: <Zap size={20} color="#FDBA74" />,
       title: t('layout.featureInstantMatching'),
       desc: t('layout.featureInstantMatchingDesc'),
     },
     {
-      emoji: '📍',
+      icon: <MapPin size={20} color="#F9A8D4" />,
       title: t('layout.featureGeolocation'),
       desc: t('layout.featureGeolocationDesc'),
     },
     {
-      emoji: '🎥',
+      icon: <Video size={20} color="white" />,
       title: t('layout.featureVideoAI'),
       desc: t('layout.featureVideoAIDesc'),
     },
     {
-      emoji: '💬',
+      icon: <MessageCircle size={20} color="white" />,
       title: t('layout.featureChat'),
       desc: t('layout.featureChatDesc'),
     },
     {
-      emoji: '👑',
+      icon: <Crown size={20} color="#FDE047" />,
       title: t('layout.featureFreemium'),
       desc: t('layout.featureFreemiumDesc'),
     },
@@ -173,7 +174,7 @@ export function AuthLayout({
                       fontSize: '18px',
                     }}
                   >
-                    {feature.emoji}
+                    {feature.icon}
                   </div>
                   <div>
                     <p style={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>

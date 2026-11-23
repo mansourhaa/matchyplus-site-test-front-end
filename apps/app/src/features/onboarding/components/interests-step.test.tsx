@@ -108,7 +108,7 @@ describe('InterestsStep', () => {
     expect(screen.queryByText(/expected array/i)).not.toBeInTheDocument();
   });
 
-  it('hides the "offer a service" card for a PROVIDER (Employeur) profile', () => {
+  it('shows « Chercher un prestataire » instead of « Offrir un service » for a PROVIDER profile', () => {
     renderStep(
       <InterestsStep
         profile={{ ...baseProfile, profile_type: 'PROVIDER' }}
@@ -121,6 +121,75 @@ describe('InterestsStep', () => {
     );
 
     expect(screen.queryAllByText('Offrir un service ?')).toHaveLength(0);
+    expect(screen.getAllByText('Chercher un prestataire').length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText('Élargissez votre cercle d’activité autour de vous.').length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText('Budget indicatif (DT)').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Années d’expérience')).toHaveLength(0);
+  });
+
+  it('saves the service wanted and the budget of a PROVIDER profile without offering a service', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={{ ...baseProfile, profile_type: 'PROVIDER' }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(firstButton('+ Bricolage'));
+    selectServiceType('Chauffeur / Transport');
+    fireEvent.change(firstPlaceholder('Montant'), { target: { value: '40' } });
+    fireEvent.click(continueButton());
+
+    expect(onNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        offerService: false,
+        serviceType: 'Chauffeur / Transport',
+        price: '40',
+      }),
+    );
+  });
+
+  it('pre-fills the service wanted and the budget from the voice message of a PROVIDER profile', () => {
+    renderStep(
+      <InterestsStep
+        profile={{ ...baseProfile, profile_type: 'PROVIDER' }}
+        aiSuggestions={{ serviceType: 'Jardinage / Bricolage', price: '40' }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByText('Jardinage / Bricolage').length).toBeGreaterThan(0);
+    expect(firstPlaceholder('Montant')).toHaveValue('40');
+  });
+
+  it('shows type of service and price, without experience, to someone offering a service', () => {
+    renderStep(
+      <InterestsStep
+        profile={{ ...baseProfile, offer_service: true }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByText('Élargissez votre activité autour de vous.').length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText('Prix approximatif (DT)').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Années d’expérience')).toHaveLength(0);
   });
 
   it('requires a service type when offering a service', async () => {
@@ -192,9 +261,39 @@ describe('InterestsStep', () => {
       interests: ['Bricolage'],
       selectedGoals: ['Trouver un job'],
       offerService: false,
-      serviceType: undefined,
-      price: undefined,
+      serviceType: '',
+      price: '',
     });
+  });
+
+  it('clears the saved service type and budget when the service card is turned off', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={{
+          ...baseProfile,
+          profile_type: 'PROVIDER',
+          interests: ['Bricolage'],
+          selected_goals: ['Trouver un job'],
+          service_type: 'Chauffeur / Transport',
+          price: '40',
+        }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+      />,
+    );
+
+    // « Chercher un prestataire » is on (saved service) — turn it off.
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    fireEvent.click(continueButton());
+
+    const patch = onNext.mock.calls[0][0];
+    expect(patch).toMatchObject({ offerService: false, serviceType: '', price: '' });
+    // Sent to the API as empty strings, so the old values are overwritten.
+    expect(JSON.parse(JSON.stringify(patch))).toMatchObject({ serviceType: '', price: '' });
   });
 
   it('submits full service details once every required field is filled', async () => {

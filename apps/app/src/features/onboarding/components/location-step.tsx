@@ -18,14 +18,14 @@ import { type OnboardingSuggestions, aiFieldUpdate } from '@/features/onboarding
 import {
   Check,
   Clock,
-  Coffee,
   Globe,
   MessageCircle,
   Moon,
   Phone,
-  Smile,
   Sun,
+  Sunrise,
   Sunset,
+  Users,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -35,14 +35,15 @@ import { OnboardingStepLayout, StepCard, StepCtaRow, StepProgress } from './onbo
 const CONTACT_ICONS: Record<string, ReactNode> = {
   phone: <Phone size={15} />,
   whatsapp: <MessageCircle size={15} />,
-  person: <Coffee size={15} />,
+  person: <Users size={15} />,
 };
 
 const TIME_ICONS: Record<string, ReactNode> = {
-  morning: <Sun size={14} />,
-  afternoon: <Sunset size={14} />,
-  evening: <Moon size={14} />,
-  flexible: <Smile size={14} />,
+  // Same icons and colours as the 2.0.8 demo.
+  morning: <Sunrise size={14} color="#F59E0B" />,
+  afternoon: <Sun size={14} color="#F97316" />,
+  evening: <Sunset size={14} color="#6366F1" />,
+  flexible: <Moon size={14} color="#61BCA6" />,
 };
 
 function LangFlag({ langKey, size = 18 }: { langKey: string; size?: number }) {

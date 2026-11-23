@@ -13,6 +13,7 @@ export const agentProfileSelect = {
   industry: true,
   interests: true,
   selected_goals: true,
+  profile_type: true,
   availability_days: true,
   availability_hours: true,
   languages: true,
@@ -29,6 +30,7 @@ type AgentProfileRow = {
   industry: string | null;
   interests: string[];
   selected_goals: string[];
+  profile_type: string | null;
   availability_days: string[];
   availability_hours: string[];
   languages: string[];
