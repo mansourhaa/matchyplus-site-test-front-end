@@ -370,6 +370,10 @@ Other checks:
 - No browser errors and no hydration errors, with and without "reduce motion".
 - No broken internal links, and one `<h1>` per page.
 - Checked visually in French, English and Arabic, on computer and phone.
+- Checked at Windows display scaling (110 % to 200 %): the hero's blue band is cut along its
+  slant (`hero.tsx`), so no blue hairline shows along its bottom or right edge.
+- /utilisation/: the Matchy Wallet shape is lifted once (inline transform only), so it stays
+  behind the phone and no longer covers the steps text above it (`security.tsx`).
 - Pre-production review (53 pages in fr/en/ar, 57 internal links): every page answers 200,
   unknown pages 404, one `<h1>`, title, description, canonical, hreflang, OG image and valid
   JSON-LD on each page, `dir="rtl"` in Arabic, no broken link, no browser error.

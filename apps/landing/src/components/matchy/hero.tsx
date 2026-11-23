@@ -13,11 +13,13 @@ export function Hero() {
   const { t, tList } = useI18n();
 
   return (
-    <section className="from-brand-blue via-brand-blue to-brand-teal relative overflow-hidden bg-gradient-to-br">
-      {/* white cut at the bottom */}
+    <section className="relative overflow-hidden">
+      {/* the blue band, cut along the slant: nothing is painted under it, so with Windows display
+          scaling no blue hairline shows along the bottom or right edge (a white cut laid over a
+          full blue band left one) */}
       <div
-        className="bg-background absolute inset-0"
-        style={{ clipPath: 'polygon(0 82%, 100% 94%, 100% 100%, 0 100%)' }}
+        className="from-brand-blue via-brand-blue to-brand-teal absolute inset-0 bg-gradient-to-br"
+        style={{ clipPath: 'polygon(0 0, 100% 0, 100% 94%, 0 82%)' }}
         aria-hidden="true"
       />
 
