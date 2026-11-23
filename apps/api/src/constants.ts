@@ -97,6 +97,8 @@ export const ONBOARDING_VIDEO_ANALYSIS_POLL_RATE_LIMIT = { max: 300, timeWindow:
 export const ONBOARDING_RELABEL_RATE_LIMIT = { max: 120, timeWindow: '1 hour' };
 /** A clip the worker never got to (queue down, job failed) is swept after this. */
 export const ONBOARDING_CLIP_MAX_AGE_MS = 60 * 60 * 1000;
+/** How often the API removes stale onboarding clips (background, not in the upload request). */
+export const ONBOARDING_CLIP_SWEEP_INTERVAL_MS = 15 * 60 * 1000;
 
 /** Voice-note upload limits for messaging. */
 export const VOICE_AUDIO_MAX_BYTES = 10 * 1024 * 1024;

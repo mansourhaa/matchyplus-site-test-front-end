@@ -144,6 +144,7 @@ class AgentsFeedIn(BaseModel):
     swipes: list[dict] = []                     # historique : {"direction": "like"|"pass", "at": ISO, "profile": {...}}
     uiLocale: str = "fr"
     radiusKm: float | None = None
+    prefs: dict | None = None                   # poids déjà appris (cache Redis de l'API) : swipes non relus
 
 
 @app.post("/agents/feed")
@@ -151,7 +152,7 @@ def agents_feed(body: AgentsFeedIn) -> dict:
     """Accueil de l'application : comportement → classification → matching (moteur du chef) → boost vidéo ×3.
     Sans état : l'API envoie le profil, les candidats et les swipes (voir app/agents.py)."""
     from .agents import feed
-    return feed(body.me, body.candidates[:400], body.swipes[:500], _ui(body.uiLocale), body.radiusKm)
+    return feed(body.me, body.candidates[:400], body.swipes[:500], _ui(body.uiLocale), body.radiusKm, body.prefs)
 
 
 @app.post("/analyze")

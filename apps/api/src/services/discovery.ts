@@ -1,3 +1,5 @@
+import { type Redis } from 'ioredis';
+
 import { PrismaClient, Role, SwipeDirection, UserStatus } from '@saas-boilerplate/types';
 
 import {
@@ -27,10 +29,13 @@ export class DiscoveryService {
   quota: SwipeQuotaService;
   agents: VoiceAgentsService;
 
-  constructor(options: AbstractServiceOptions & { agents?: VoiceAgentsService }) {
+  constructor(
+    options: AbstractServiceOptions & { agents?: VoiceAgentsService; redis?: Redis | null },
+  ) {
     this.prisma = options.prisma;
     this.quota = new SwipeQuotaService({ prisma: options.prisma });
-    this.agents = options.agents ?? new VoiceAgentsService({ prisma: options.prisma });
+    this.agents =
+      options.agents ?? new VoiceAgentsService({ prisma: options.prisma, redis: options.redis });
   }
 
   async getSwipeFeed(userId: string, query: DiscoveryFeedQuery = {}) {
@@ -220,6 +225,8 @@ export class DiscoveryService {
       // MATCHING_ENGINE=agents: the 2.0.8 agents rank the feed (off by default; on any
       // problem the built-in order above is kept).
       const byAgents = await this.agents.rank(userId, scored, radiusM / 1000);
+      // Which engine produced match_score: the agents when they ranked this feed.
+      const scoringVersion = byAgents ? ('agents' as const) : ('v5-scripted' as const);
       if (byAgents) {
         scored.splice(0, scored.length, ...byAgents);
         if (sort !== 'match') scored.sort((a, b) => compareFeedProfiles(a, b, sort));
@@ -242,7 +249,7 @@ export class DiscoveryService {
         has_more: hasMore,
         feed_breakdown: { ...breakdown, feed_total: scored.length },
         quota,
-        scoring_version: 'v5-scripted' as const,
+        scoring_version: scoringVersion,
       };
     } catch (err) {
       throw err;

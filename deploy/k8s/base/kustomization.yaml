@@ -7,6 +7,7 @@ resources:
   - namespace.yaml
   - redis/deployment.yaml
   - redis/service.yaml
+  - uploads/pvc.yaml
   - ai/deployment.yaml
   - ai/service.yaml
   - api/statefulset.yaml

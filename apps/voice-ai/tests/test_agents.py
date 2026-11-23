@@ -50,6 +50,27 @@ def test_likes_raise_the_sector_in_the_ranking():
     assert learned["results"][0]["score"] >= neutral["score"]
 
 
+def test_feed_reuses_the_weights_cached_by_the_api():
+    """Poids déjà appris (cache Redis de l'API) : pas besoin des swipes, même résultat."""
+    me = {"id": "me", "job": "Client", "selected_goals": ["Demander un service"]}
+    cands = [{"id": "p1", "job": "Plombier", "distance_km": 2},
+             {"id": "e1", "job": "Électricien", "distance_km": 2}]
+    swipes = [{"direction": "like", "at": "2026-11-19T10:00:00Z", "profile": {"id": "z", "job": "Plombier"}}]
+
+    learned = agents.feed(me, cands, swipes)
+    assert learned["prefs"]["interactionCount"] == 1
+
+    cached = agents.feed(me, cands, [], prefs=learned["prefs"])
+    assert [r["id"] for r in cached["results"]] == [r["id"] for r in learned["results"]]
+    assert [r["score"] for r in cached["results"]] == [r["score"] for r in learned["results"]]
+
+
+def test_feed_ignores_malformed_cached_weights():
+    out = agents.feed({"id": "me"}, [{"id": "p1", "job": "Plombier"}], [],
+                      prefs={"categoryWeights": "x", "tagWeights": None, "interactionCount": -3})
+    assert out["ok"] and out["prefs"]["interactionCount"] == 0
+
+
 def test_endpoint():
     res = TestClient(app).post("/agents/feed", json={"me": ME, "candidates": [CLEANER], "uiLocale": "ar"})
     assert res.status_code == 200

@@ -154,12 +154,28 @@ def _profile_view(p: dict, c: dict) -> dict:
             "reviews": int(p.get("reviews") or 0), "available": True}
 
 
-def feed(me: dict, candidates: list[dict], swipes: list[dict], ui: str = "fr", radius_km: float | None = None) -> dict:
-    """Accueil : comportement (poids appris) → classification → matching (score du chef) → boost (place mise en avant)."""
+def _cached_prefs(prefs: dict | None) -> dict | None:
+    """Poids déjà appris, renvoyés par l'API depuis son cache Redis (sinon None : on réapprend des swipes)."""
+    if not isinstance(prefs, dict):
+        return None
+    cats = engine.sanitize_weights(prefs.get("categoryWeights"))
+    tags = engine.sanitize_weights(prefs.get("tagWeights"))
+    count = prefs.get("interactionCount")
+    count = int(count) if isinstance(count, (int, float)) and count >= 0 else 0
+    return {"categoryWeights": cats, "tagWeights": tags, "interactionCount": count,
+            "personalized": count >= engine.config()["behavior"]["personalizedAfter"]}
+
+
+def feed(me: dict, candidates: list[dict], swipes: list[dict], ui: str = "fr", radius_km: float | None = None,
+         prefs: dict | None = None) -> dict:
+    """Accueil : comportement (poids appris) → classification → matching (score du chef) → boost (place mise en avant).
+    prefs : poids déjà appris (cache de l'API) ; absent → appris des swipes."""
     tr = Trace()
     t0 = time.perf_counter()
-    prefs = learn(swipes)
-    tr.add("comportement", "poids appris des swipes", t0, interactions=prefs["interactionCount"])
+    cached = _cached_prefs(prefs)
+    prefs = cached or learn(swipes)
+    tr.add("comportement", "poids du cache" if cached else "poids appris des swipes", t0,
+           interactions=prefs["interactionCount"])
 
     t0 = time.perf_counter()
     me_c = classify_profile(me)
@@ -200,6 +216,7 @@ def feed(me: dict, candidates: list[dict], swipes: list[dict], ui: str = "fr", r
     _log_feed(candidates, results, sponsored, prefs)
     return {"ok": True, "engineVersion": engine.version(), "results": results, "sponsored": sponsored,
             "behavior": {k: prefs[k] for k in ("categoryWeights", "interactionCount", "personalized")},
+            "prefs": prefs,
             "orchestration": tr.out()}
 
 

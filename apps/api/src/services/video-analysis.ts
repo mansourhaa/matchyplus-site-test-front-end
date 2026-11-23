@@ -8,6 +8,7 @@ import {
   ALLOWED_PROFILE_VIDEO_MIMES,
   ALLOWED_VOICE_AUDIO_MIMES,
   ONBOARDING_CLIP_MAX_AGE_MS,
+  ONBOARDING_CLIP_SWEEP_INTERVAL_MS,
   PROFILE_VIDEO_MAX_BYTES,
 } from '../constants.js';
 import { VideoAnalysisLocale } from '../types/video-analysis.js';
@@ -66,8 +67,6 @@ export class VideoAnalysisService {
         throw badRequest(validation.error, validation.error);
       }
 
-      await this.sweepStaleClips();
-
       const savedFilename = await saveMediaFile(ONBOARDING_CLIPS_DIR, clip.buffer, validation.ext);
       const token = randomBytes(24).toString('hex');
       try {
@@ -103,18 +102,42 @@ export class VideoAnalysisService {
     }
   }
 
-  /** Best effort: removes clips the worker never got to (queue down, job failed for good). */
-  private async sweepStaleClips(): Promise<void> {
+  /**
+   * Best effort: removes clips the worker never got to (queue down, job failed for good).
+   * Runs in the background (startClipSweeper), never in the upload request. Several API
+   * replicas may sweep the same shared folder: a clip already gone is skipped.
+   */
+  async sweepStaleClips(): Promise<number> {
+    let removed = 0;
+    let names: string[];
     try {
-      const now = Date.now();
-      for (const name of await readdir(ONBOARDING_CLIPS_DIR)) {
+      names = await readdir(ONBOARDING_CLIPS_DIR);
+    } catch {
+      return 0; // The folder may not exist yet.
+    }
+    const now = Date.now();
+    for (const name of names) {
+      try {
         const info = await stat(join(ONBOARDING_CLIPS_DIR, name));
         if (now - info.mtimeMs > ONBOARDING_CLIP_MAX_AGE_MS) {
           await deleteMediaFile(ONBOARDING_CLIPS_DIR, name);
+          removed += 1;
         }
+      } catch {
+        // Deleted meanwhile (worker or another replica): nothing to do.
       }
-    } catch {
-      // The folder may not exist yet; a failed sweep must never block an analysis.
     }
+    return removed;
+  }
+
+  /** Sweeps now, then every `intervalMs`, off the request path. Returns the stop function. */
+  startClipSweeper(intervalMs = ONBOARDING_CLIP_SWEEP_INTERVAL_MS): () => void {
+    const run = () => {
+      void this.sweepStaleClips().catch(() => undefined);
+    };
+    run();
+    const timer = setInterval(run, intervalMs);
+    timer.unref?.();
+    return () => clearInterval(timer);
   }
 }

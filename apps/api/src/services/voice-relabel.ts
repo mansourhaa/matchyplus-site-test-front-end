@@ -3,23 +3,12 @@ import {
   RelabelOnboardingFieldsBody,
   RelabelOnboardingFieldsResponse,
 } from '../types/video-analysis.js';
+import { DEFAULT_VOICE_AI_URL, postToVoiceAi } from '../utils/voice-ai-http.js';
 
 export type RelabelRequest = RelabelOnboardingFieldsBody;
 export type RelabelResponse = RelabelOnboardingFieldsResponse;
 
-const DEFAULT_VOICE_AI_URL = 'http://localhost:8001';
 const RELABEL_TIMEOUT_MS = 5000;
-
-/**
- * `VOICE_AI_URL` is written for the AI worker, which runs in Docker and reaches the voice
- * service through host.docker.internal. The API may run on the host itself (`pnpm dev`),
- * where that name does not always resolve: then localhost is tried too.
- */
-function candidateUrls(baseUrl: string): string[] {
-  const base = baseUrl.replace(/\/$/, '');
-  const onHost = base.replace('://host.docker.internal', '://localhost');
-  return onHost === base ? [base] : [base, onHost];
-}
 
 function unavailable(message: string): Error {
   return Object.assign(new Error(message), { statusCode: 503 });
@@ -45,31 +34,25 @@ export class VoiceRelabelService {
         aiFields: request.aiFields ?? [],
         suggestions: request.suggestions ?? {},
       });
-      let response: Response | null = null;
-      for (const base of candidateUrls(this.baseUrl)) {
-        try {
-          response = await this.fetchImpl(`${base}/relabel`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body,
-            signal: AbortSignal.timeout(RELABEL_TIMEOUT_MS),
-          });
-          break;
-        } catch {
-          // Unreachable: try the next address, if any.
-        }
-      }
-      if (!response) {
+      // Both addresses at once (VOICE_AI_URL and its localhost twin): at most 5 s in all.
+      const reply = await postToVoiceAi(
+        this.baseUrl,
+        '/relabel',
+        body,
+        RELABEL_TIMEOUT_MS,
+        this.fetchImpl,
+      );
+      if (!reply) {
         throw unavailable('voice service unreachable');
       }
-      if (!response.ok) {
-        throw unavailable(`voice service answered ${response.status}`);
+      if (!reply.ok) {
+        throw unavailable(`voice service answered ${reply.status}`);
       }
-
       // A proxy or a crash can answer plain text or HTML: report it as « unavailable ».
-      const data = (await response.json().catch(() => {
-        throw unavailable(`voice service answered ${response.status} without JSON`);
-      })) as {
+      if (reply.json === undefined) {
+        throw unavailable(`voice service answered ${reply.status} without JSON`);
+      }
+      const data = reply.json as {
         fields?: Record<string, { value?: unknown; review?: unknown }>;
         suggestions?: Record<string, { value?: unknown; label?: unknown }[]>;
         serviceId?: unknown;

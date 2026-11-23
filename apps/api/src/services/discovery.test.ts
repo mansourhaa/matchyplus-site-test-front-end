@@ -497,6 +497,7 @@ describe('DiscoveryService.getSwipeFeed with MATCHING_ENGINE=agents', () => {
     expect(agents.rank).toHaveBeenCalledWith('me', expect.any(Array), expect.any(Number));
     expect(result.profiles.map((p) => p.id)).toEqual(['b', 'a']);
     expect(result.profiles[0].match_score).toBe(77);
+    expect(result.scoring_version).toBe('agents');
   });
 
   it('keeps the built-in feed when the agents give nothing back', async () => {
@@ -511,5 +512,6 @@ describe('DiscoveryService.getSwipeFeed with MATCHING_ENGINE=agents', () => {
     });
 
     expect(result.profiles.map((p) => p.id)).toEqual(['a']);
+    expect(result.scoring_version).toBe('v5-scripted');
   });
 });

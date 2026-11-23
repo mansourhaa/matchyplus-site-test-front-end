@@ -150,3 +150,88 @@ describe('VoiceAgentsService', () => {
     }
   });
 });
+
+describe('VoiceAgentsService — learned weights cache (Redis)', () => {
+  function redisMock() {
+    const store = new Map<string, string>();
+    return {
+      store,
+      get: vi.fn(async (key: string) => store.get(key) ?? null),
+      set: vi.fn(async (key: string, value: string) => {
+        store.set(key, value);
+        return 'OK';
+      }),
+    };
+  }
+
+  const reply = () =>
+    jsonResponse({
+      ok: true,
+      sponsored: null,
+      prefs: { categoryWeights: { btp: 1.12 }, tagWeights: {}, interactionCount: 1 },
+      results: [{ id: 'a', score: 70, confidence: 'medium', dimensions: [] }],
+    });
+
+  it('learns from the swipes once, then reuses the weights until a new swipe', async () => {
+    const prisma = {
+      ...prismaMock(),
+      swipeLog: {
+        ...prismaMock().swipeLog,
+        findFirst: vi.fn().mockResolvedValue({ id: 'swipe-1' }),
+      },
+    };
+    const redis = redisMock();
+    const fetchMock = vi.fn().mockImplementation(async () => reply());
+    const service = new VoiceAgentsService({
+      prisma: prisma as never,
+      redis: redis as never,
+      enabled: true,
+      baseUrl: 'http://voice-ai:8001',
+      fetchImpl: fetchMock,
+    });
+
+    // 1st call: no cache → the 500 swipes are read and sent, the weights are stored.
+    await service.rank('me', [feedProfile('a', 50)], 50);
+    expect(prisma.swipeLog.findMany).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).swipes).toHaveLength(1);
+    expect(JSON.parse(redis.store.get('agents:prefs:me')!)).toEqual({
+      lastSwipeId: 'swipe-1',
+      prefs: { categoryWeights: { btp: 1.12 }, tagWeights: {}, interactionCount: 1 },
+    });
+
+    // 2nd call (next page, refresh…): same newest swipe → weights from Redis, no SwipeLog read.
+    await service.rank('me', [feedProfile('a', 50)], 50);
+    expect(prisma.swipeLog.findMany).toHaveBeenCalledTimes(1);
+    const second = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(second.swipes).toEqual([]);
+    expect(second.prefs).toEqual({
+      categoryWeights: { btp: 1.12 },
+      tagWeights: {},
+      interactionCount: 1,
+    });
+
+    // New swipe → learned again.
+    prisma.swipeLog.findFirst.mockResolvedValue({ id: 'swipe-2' });
+    await service.rank('me', [feedProfile('a', 50)], 50);
+    expect(prisma.swipeLog.findMany).toHaveBeenCalledTimes(2);
+  });
+
+  it('still ranks when Redis fails', async () => {
+    const prisma = {
+      ...prismaMock(),
+      swipeLog: { ...prismaMock().swipeLog, findFirst: vi.fn() },
+    };
+    const redis = { get: vi.fn().mockRejectedValue(new Error('down')), set: vi.fn() };
+    const service = new VoiceAgentsService({
+      prisma: prisma as never,
+      redis: redis as never,
+      enabled: true,
+      baseUrl: 'http://voice-ai:8001',
+      fetchImpl: vi.fn().mockImplementation(async () => reply()),
+    });
+
+    const ranked = await service.rank('me', [feedProfile('a', 50)], 50);
+    expect(ranked?.[0]?.match_score).toBe(70);
+    expect(prisma.swipeLog.findMany).toHaveBeenCalledTimes(1);
+  });
+});

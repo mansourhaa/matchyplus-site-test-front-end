@@ -49,6 +49,9 @@ function serializeJob(job: {
 const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
   const aiJobs = new AiJobsService({ prisma: fastify.prisma, redis: fastify.redisClient });
   const videoAnalysis = new VideoAnalysisService({ prisma: fastify.prisma, aiJobs });
+  // Stale clips are cleaned in the background, not in POST /video-analysis.
+  const stopClipSweeper = videoAnalysis.startClipSweeper();
+  fastify.addHook('onClose', async () => stopClipSweeper());
   const voiceRelabel = new VoiceRelabelService();
 
   fastify.post<{ Body: StartOnboardingVideoAnalysisBody }>(
