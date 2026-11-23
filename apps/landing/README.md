@@ -275,7 +275,9 @@ Still to decide:
 Older issues, not caused by this work but worth a separate ticket:
 
 - **Brand teal as text:** `#49b8ad` used for text on white has a 2.4:1 contrast (WCAG asks for
-  4.5:1). Headings and the footer use it too. This is a brand decision.
+  4.5:1). Some small labels use it. This is a brand decision.
+- **Footer colours:** the footer is on the brand blue `#2d79be` with fully white text (4.6:1).
+  The original `#2f86b5` with semi-transparent text was 3.0 to 4.0:1.
 - **Arabic brand name:** "Matchy+" followed by Arabic text displays as "+Matchy". Every Arabic
   home text now has `\u200E` right after the "+"; other pages (FAQ, legal) were not checked.
 - **Old unused files:** `components/landing/landing-page.tsx`, `matchy/navbar.tsx`,
@@ -360,6 +362,11 @@ Other checks:
 - No browser errors and no hydration errors, with and without "reduce motion".
 - No broken internal links, and one `<h1>` per page.
 - Checked visually in French, English and Arabic, on computer and phone.
-- The axe accessibility check shows no new issue apart from the brand teal contrast above.
+- Pre-production review (53 pages in fr/en/ar, 57 internal links): every page answers 200,
+  unknown pages 404, one `<h1>`, title, description, canonical, hreflang, OG image and valid
+  JSON-LD on each page, `dir="rtl"` in Arabic, no broken link, no browser error.
+- The axe accessibility check (serious and critical) shows only the brand teal contrast above.
+  Fixed in the review: the "Utilisation" steps list (an animation `<div>` wrapped each `<li>`)
+  and the "Visiter le site" links of /partenaires/ (their name now starts with the visible words).
 - Nothing outside `apps/landing` changed, except the lockfile, which has only `apps/landing`
   lines.

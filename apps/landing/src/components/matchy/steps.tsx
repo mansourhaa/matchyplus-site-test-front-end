@@ -29,8 +29,9 @@ export function Steps() {
       <ol className="border-brand-teal/40 relative space-y-10 border-dashed ltr:border-l-2 ltr:pl-8 rtl:border-r-2 rtl:pr-8">
         {Array.isArray(steps) &&
           steps.map((s, i) => (
-            <Reveal key={s[0]} direction={isRtl ? 'right' : 'left'} delay={i * 0.1}>
-              <li className="relative">
+            // Reveal renders a <div>: it goes inside the <li>, so the list stays a real list
+            <li key={s[0]}>
+              <Reveal direction={isRtl ? 'right' : 'left'} delay={i * 0.1} className="relative">
                 <span className="bg-brand-teal shadow-brand-teal/30 absolute grid h-9 w-9 place-items-center rounded-full text-sm font-bold text-white shadow-lg ltr:-left-[3.05rem] rtl:-right-[3.05rem]">
                   {s[0]}
                 </span>
@@ -38,8 +39,8 @@ export function Steps() {
                 <p className="text-muted-foreground mt-2 max-w-md text-sm leading-relaxed">
                   {s[2]}
                 </p>
-              </li>
-            </Reveal>
+              </Reveal>
+            </li>
           ))}
       </ol>
     </section>

@@ -52,10 +52,11 @@ export function PartnersPage() {
                 href={partner.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={t('landing.ourPartnersVisit', { name: partner.name })}
                 className="text-brand-blue mt-4 inline-flex items-center gap-1.5 text-sm font-bold hover:underline"
               >
+                {/* the visible words start the link's name (WCAG 2.5.3), the partner follows */}
                 {t('landing.partnersPageVisit')}
+                <span className="sr-only"> {partner.name}</span>
                 <ExternalLink className="h-4 w-4" />
               </a>
             </li>
