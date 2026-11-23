@@ -6,7 +6,6 @@ import { PartnerLogos } from '@/components/matchy/partner-logos';
 import { Partnerships } from '@/components/matchy/partnerships';
 import { Press } from '@/components/matchy/press';
 import { ProBranding } from '@/components/matchy/pro-branding';
-import { Roadmap } from '@/components/matchy/roadmap';
 import { ServicesBelt } from '@/components/matchy/services-belt';
 import { WhyMatchy } from '@/components/matchy/why-matchy';
 import { PageFrame } from '@/components/site-shell';
@@ -42,14 +41,13 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
           {/* how Matchy+ works (features, steps, wallet, explore, download) is on /utilisation/ */}
           <Hero />
           <Press />
-          <ServicesBelt />
+          <LiveCommunity />
+          <Partnerships />
           <WhyMatchy />
           <ProBranding />
-          <LiveCommunity />
-          <PartnerLogos />
+          <ServicesBelt />
           <CompanyStory />
-          <Partnerships />
-          <Roadmap />
+          <PartnerLogos />
         </ReducedMotion>
       </main>
       {!DISABLE_CHATBOT && CHATBOT_WIDGET_SRC && (

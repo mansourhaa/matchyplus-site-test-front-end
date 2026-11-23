@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **160 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **155 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -41,14 +41,13 @@ Defined in `src/app/[lang]/page.tsx`. Sections marked **new** or **changed** are
 | --- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
 | 1   | Hero: live phone + search              | `hero.tsx`, `hero-live-phone.tsx`, `hero-phone-overlay.tsx`, `hero-phone-bubble.tsx`, `hero-mini-card.tsx`, `hero-search.tsx`                                           | changed |
 | 2   | Matchy+ Press (latest 3 news)          | `press.tsx`, `press-card.tsx`, `press-data.ts`                                                                                                                          | new     |
-| 3   | Services belt (10 trades)              | `services-belt.tsx`, `belt-person.tsx`, `belt-floor.tsx`, `belt-service-info.tsx`, `belt-geometry.ts`, `belt-profile-card.tsx`, `belt-match-dialog.tsx`, `belt-data.ts` | new     |
-| 4   | Without / with Matchy+                 | `why-matchy.tsx`                                                                                                                                                        | new     |
-| 5   | Pro storefront card + referral         | `pro-branding.tsx`, `referral.tsx`                                                                                                                                      | new     |
-| 6   | Pan-African ambition map               | `live-community.tsx`, `community-marker.tsx`, `community-arcs.tsx`, `community-tooltip.tsx`, `community-map.ts`                                                         | new     |
-| 7   | Nos partenaires (DOT-IT, GoPayzi, TCA) | `partner-logos.tsx`, `partners-data.ts`                                                                                                                                 | new     |
+| 3   | Pan-African ambition map               | `live-community.tsx`, `community-marker.tsx`, `community-arcs.tsx`, `community-tooltip.tsx`, `community-map.ts`                                                         | new     |
+| 4   | Partners strip + Devenir partenaire    | `partnerships.tsx`, `partners-data.ts`                                                                                                                                  | changed |
+| 5   | Without / with Matchy+                 | `why-matchy.tsx`                                                                                                                                                        | new     |
+| 6   | Pro storefront card + referral         | `pro-branding.tsx`, `referral.tsx`                                                                                                                                      | new     |
+| 7   | Services belt (10 trades)              | `services-belt.tsx`, `belt-person.tsx`, `belt-floor.tsx`, `belt-service-info.tsx`, `belt-geometry.ts`, `belt-profile-card.tsx`, `belt-match-dialog.tsx`, `belt-data.ts` | new     |
 | 8   | Company story                          | `company-story.tsx`                                                                                                                                                     | new     |
-| 9   | Partners strip + Devenir partenaire    | `partnerships.tsx`, `partners-data.ts`                                                                                                                                  | changed |
-| 10  | Roadmap                                | `roadmap.tsx`                                                                                                                                                           | new     |
+| 9   | Nos partenaires (DOT-IT, GoPayzi, TCA) | `partner-logos.tsx`, `partners-data.ts`                                                                                                                                 | new     |
 
 ## Other pages added
 
@@ -168,7 +167,7 @@ reviews, no idea of availability) with Matchy+.
     `MotionConfig reducedMotion="user"` for the floating counters.
 - **Phones:** the map keeps a readable width and scrolls sideways. It starts on Tunisia, and a
   tapped point slides to the middle so its tooltip is never cut off.
-- **"Nos partenaires" follows right under the map** (smaller gap) and closes this part.
+- **The partners strip "Ils avancent avec Matchy+" follows right after the map.**
 
 **Why our own map:** the reference image looked like a screenshot from an analytics tool, with
 unclear rights, and weighed 264 KB. `public/matchy/community/world-map-v2.svg` is generated from
@@ -215,24 +214,21 @@ smaller benefit.
 
 - **One list, `partners-data.ts`** (`PARTNERS`): name, logo (in `public/matchy/partners/`),
   its size and the website. **To add a partner:** one line there; both blocks below follow.
-- **"Nos partenaires"** (`partner-logos.tsx`), right under the map: the logos in landscape
+- **"Nos partenaires"** (`partner-logos.tsx`), last section of the page: the logos in landscape
   white cards (DOT-IT, GoPayzi horizontal SVG, TCA horizontal), each opening the partner's
   website in a new tab (`rel="noopener noreferrer"`). GoPayzi links to its PitchBook profile
   until it has a website.
-- **"Ils avancent avec Matchy+"** (`partnerships.tsx`), before the roadmap: the sliding strip
+- **"Ils avancent avec Matchy+"** (`partnerships.tsx`), right after the map: the sliding strip
   is back, with the **real logos** alternating with "Votre marque ici" places (linking to
   `/devenir-partenaire`), then the "Devenir partenaire" button. The strip is decorative
   (`aria-hidden`, links out of the tab order, logos with empty alt); the button is the
   accessible way in.
 
-### 8. Company story and roadmap
+### 8. Company story
 
 - **`company-story.tsx`:** Randa Touati's photo (`public/showcase/founder.webp`), her quote from
   the content brief (« Chaque compétence mérite d'être visible… ») and her path (teaching, web
   project manager at Dot-IT, co-founder of Matchy+, from her own LinkedIn post).
-- **`roadmap.tsx`** (last section of the page): "Matchy+
-  avance avec sa communauté" and the 5 steps of the brief, in order, with no status or date (the
-  brief gives none), then a "Rejoindre Matchy+" button.
 
 ---
 

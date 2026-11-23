@@ -82,7 +82,7 @@ export function LiveCommunity() {
   const selected = locations.find((location) => location.id === selectedId);
 
   return (
-    <section className="relative z-10 bg-white pt-20 pb-8 md:pt-24 md:pb-10">
+    <section className="relative z-10 bg-white py-20 md:py-24">
       <div className="mx-auto max-w-6xl px-5">
         {/* same heading as the other sections */}
         <Reveal className="mx-auto max-w-2xl text-center">

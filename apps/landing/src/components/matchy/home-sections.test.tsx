@@ -16,7 +16,6 @@ import { Press } from './press';
 import { PRESS_ITEMS, pressItems } from './press-data';
 import { PressArticle, PressList } from './press-pages';
 import { ProBranding } from './pro-branding';
-import { Roadmap } from './roadmap';
 import { WhyMatchy } from './why-matchy';
 
 const push = vi.hoisted(() => vi.fn());
@@ -69,10 +68,6 @@ const NEW_KEYS = [
   'pressNext',
   'pressCtaFind',
   'pressCtaPartner',
-  'roadmapTitle',
-  'roadmapBody',
-  'roadmapSteps',
-  'roadmapCta',
   'heroReassurance',
   'ourPartnersKicker',
   'pressWebsite',
@@ -227,23 +222,6 @@ describe('home sections', () => {
       'href',
       expect.stringMatching(/^\/fr\/devenir-partenaire\/?$/),
     );
-  });
-
-  it('Roadmap lists the five steps in order and a link to join, in every language', () => {
-    for (const locale of ['fr', 'en', 'ar'] as const) {
-      const { unmount } = renderIn(locale, <Roadmap />);
-      const steps = getMessage(messages[locale], 'landing.roadmapSteps') as string[];
-      expect(steps).toHaveLength(5);
-      const items = within(screen.getByRole('list')).getAllByRole('listitem');
-      expect(items.map((item) => item.textContent)).toEqual(
-        steps.map((step, index) => `${index + 1}${step}`),
-      );
-      expect(screen.getByRole('link', { name: /Matchy\+/ })).toHaveAttribute(
-        'href',
-        'http://localhost:3000/register',
-      );
-      unmount();
-    }
   });
 
   it('LiveCommunity shows the real Search Console figures with their source, and a tooltip per country', () => {

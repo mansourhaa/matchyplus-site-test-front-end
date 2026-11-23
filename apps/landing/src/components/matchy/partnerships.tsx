@@ -37,7 +37,8 @@ export function Partnerships() {
       {/*
         Decorative strip, shown twice for a seamless loop: hidden from screen readers and out of
         the tab order (the "Devenir partenaire" button below is the accessible way in).
-        The partners' names are in "Nos partenaires" under the map, so the logos here have no alt.
+        The partners' names are in "Nos partenaires" at the end of the page, so the logos here have no
+        alt.
       */}
       <div
         className="mt-14 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]"

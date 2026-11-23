@@ -7,14 +7,14 @@ import { Reveal } from './motion';
 import { PARTNERS } from './partners-data';
 
 /**
- * "Nos partenaires", right under the map (it closes that section): the partners' logos in
- * landscape cards, each opening the partner's website in a new tab.
+ * "Nos partenaires", last section of the page: the partners' logos in landscape cards, each
+ * opening the partner's website in a new tab.
  */
 export function PartnerLogos() {
   const { t } = useI18n();
 
   return (
-    <section className="mx-auto max-w-5xl px-5 pt-4 pb-16 md:pt-6 md:pb-20">
+    <section className="mx-auto max-w-5xl px-5 py-16 md:py-20">
       <Reveal className="text-center">
         <p className="text-brand-teal mb-2 text-sm font-semibold tracking-wide">
           {t('landing.ourPartnersKicker')}

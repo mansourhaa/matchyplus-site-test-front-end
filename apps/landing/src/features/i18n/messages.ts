@@ -144,17 +144,6 @@ export const messages: Record<Locale, MessageTree> = {
       ourPartnersBody:
         'Matchy+ développe des collaborations avec des acteurs de l’innovation, de l’entrepreneuriat, de la formation et du développement économique.',
       ourPartnersVisit: 'Site de {name} (nouvel onglet)',
-      roadmapTitle: 'Matchy+ avance avec sa communauté',
-      roadmapBody:
-        'Chaque nouvelle étape contribue à améliorer l’expérience, élargir les services disponibles et créer davantage d’opportunités pour les talents locaux.',
-      roadmapSteps: [
-        'Développement de la plateforme',
-        'Lancement en Tunisie',
-        'Déploiement à Tunis, Sousse et Sfax',
-        'Développement des partenariats',
-        'Expansion panafricaine',
-      ],
-      roadmapCta: 'Rejoindre Matchy+',
       usageTitle: 'Comment fonctionne Matchy+',
       usageBody:
         'Trouvez un professionnel en trois étapes, boostez votre visibilité et découvrez les services autour de vous.',
@@ -672,17 +661,6 @@ export const messages: Record<Locale, MessageTree> = {
       ourPartnersBody:
         'Matchy+ builds collaborations with players in innovation, entrepreneurship, training and economic development.',
       ourPartnersVisit: '{name} website (new tab)',
-      roadmapTitle: 'Matchy+ moves forward with its community',
-      roadmapBody:
-        'Each new step helps improve the experience, widen the services available and create more opportunities for local talent.',
-      roadmapSteps: [
-        'Platform development',
-        'Launch in Tunisia',
-        'Rollout in Tunis, Sousse and Sfax',
-        'Partnership development',
-        'Pan-African expansion',
-      ],
-      roadmapCta: 'Join Matchy+',
       usageTitle: 'How Matchy+ works',
       usageBody:
         'Find a professional in three steps, boost your visibility and discover the services around you.',
@@ -1181,17 +1159,6 @@ export const messages: Record<Locale, MessageTree> = {
       ourPartnersBody:
         'تطوّر Matchy+\u200E شراكات مع فاعلين في الابتكار وريادة الأعمال والتكوين والتنمية الاقتصادية.',
       ourPartnersVisit: 'موقع {name} (علامة تبويب جديدة)',
-      roadmapTitle: 'Matchy+\u200E تتقدّم مع مجتمعها',
-      roadmapBody:
-        'كل مرحلة جديدة تساهم في تحسين التجربة وتوسيع الخدمات المتاحة وخلق مزيد من الفرص للمواهب المحلية.',
-      roadmapSteps: [
-        'تطوير المنصة',
-        'الإطلاق في تونس',
-        'الانتشار في تونس وسوسة وصفاقس',
-        'تطوير الشراكات',
-        'التوسع الإفريقي',
-      ],
-      roadmapCta: 'انضم إلى Matchy+\u200E',
       usageTitle: 'كيف تعمل Matchy+\u200E',
       usageBody: 'اعثر على محترف في ثلاث خطوات، وعزّز ظهورك، واكتشف الخدمات من حولك.',
       referralYou: '10 نقاط لك',
