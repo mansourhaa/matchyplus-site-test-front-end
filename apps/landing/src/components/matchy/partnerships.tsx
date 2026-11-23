@@ -8,10 +8,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Reveal } from './motion';
-import { PARTNERS, type Partner } from './partners-data';
+import { NETWORK_PARTNERS, type Partner } from './partners-data';
 
 /** Strip slots: each partner's logo, then a free place to take ("Votre marque ici"). */
-const SLOTS: (Partner | 'free')[] = PARTNERS.flatMap((partner) => [partner, 'free' as const]);
+const SLOTS: (Partner | 'free')[] = NETWORK_PARTNERS.flatMap((partner) => [
+  partner,
+  'free' as const,
+]);
 
 /**
  * "Ils avancent avec Matchy+": a sliding strip that mixes the real partners' logos with free
@@ -55,7 +58,8 @@ export function Partnerships() {
             slot !== 'free' ? (
               <span
                 key={index}
-                className="grid h-44 w-56 shrink-0 place-items-center rounded-3xl bg-white p-6 shadow-xl shadow-black/10"
+                className={`grid h-44 w-56 shrink-0 place-items-center overflow-hidden rounded-3xl bg-white shadow-xl shadow-black/10 ${slot.background ? '' : 'p-6'}`}
+                style={{ backgroundColor: slot.background }}
               >
                 <Image
                   src={slot.logo}
@@ -64,7 +68,9 @@ export function Partnerships() {
                   height={slot.height}
                   sizes="176px"
                   unoptimized={slot.logo.endsWith('.svg')}
-                  className="h-32 w-full object-contain"
+                  className={
+                    slot.background ? 'h-44 w-full object-contain' : 'h-32 w-full object-contain'
+                  }
                 />
               </span>
             ) : (

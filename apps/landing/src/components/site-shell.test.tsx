@@ -12,12 +12,6 @@ vi.mock('next/navigation', () => ({
 
 /** The footer columns, each with its links, in order. */
 const COLUMNS = {
-  'Trouver un service': [
-    'Trouver un professionnel',
-    'Services à domicile',
-    'Services aux entreprises',
-    'Tous les services',
-  ],
   'Pour les professionnels': [
     'Créer mon profil',
     'Développer ma visibilité',
@@ -37,7 +31,7 @@ const COLUMNS = {
 };
 
 describe('Footer', () => {
-  it('has the 4 columns, every link in order', () => {
+  it('has the 3 columns, every link in order', () => {
     render(
       <I18nProvider locale="fr">
         <Footer />
@@ -52,6 +46,8 @@ describe('Footer', () => {
       ).toEqual(labels);
     }
     // the cookie settings are a button (it opens the CookieYes preferences, not a page)
+    // "Trouver un service" was removed by the manager
+    expect(screen.queryByRole('navigation', { name: 'Trouver un service' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Gérer les cookies' })).toHaveClass(
       'cky-banner-element',
     );
@@ -63,15 +59,10 @@ describe('Footer', () => {
         <Footer />
       </I18nProvider>,
     );
-    const href = (name: string, column = 'Trouver un service') =>
+    const href = (name: string, column: string) =>
       within(screen.getByRole('navigation', { name: column }))
         .getByRole('link', { name })
         .getAttribute('href');
-    expect(href('Trouver un professionnel')).toMatch(/^\/fr\/recherche\/?$/);
-    expect(href('Services à domicile')).toMatch(
-      /^\/fr\/recherche\/?\?service=Services\+%C3%A0\+domicile$/,
-    );
-    expect(href('Tous les services')).toMatch(/^\/fr\/services\/?$/);
     const pros = 'Pour les professionnels';
     expect(href('Créer mon profil', pros)).toMatch(/\/register$/);
     expect(href('Centre d’aide', pros)).toMatch(/^\/fr\/faq\/?$/);
@@ -87,8 +78,8 @@ describe('Footer', () => {
 
   it('is translated in English and Arabic', () => {
     for (const [locale, title] of [
-      ['en', 'Find a service'],
-      ['ar', 'ابحث عن خدمة'],
+      ['en', 'For professionals'],
+      ['ar', 'للمهنيين'],
     ] as const) {
       const { unmount } = render(
         <I18nProvider locale={locale}>

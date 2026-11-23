@@ -163,17 +163,17 @@ export const PAGES: Record<PageKey, PageSeo> = {
       fr: {
         title: 'Nos partenaires',
         description:
-          'Les partenaires de Matchy+ (DOT-IT, GoPayzi, TCA) et les avantages d’un partenariat avec la plateforme de services locaux.',
+          'Les partenaires de Matchy+ (DOT-IT, GoPayzi, Sahora, Pro Services Maintenance) et les avantages d’un partenariat avec la plateforme de services locaux.',
       },
       en: {
         title: 'Our partners',
         description:
-          'Matchy+ partners (DOT-IT, GoPayzi, TCA) and the benefits of partnering with the local services platform.',
+          'Matchy+ partners (DOT-IT, GoPayzi, Sahora, Pro Services Maintenance) and the benefits of partnering with the local services platform.',
       },
       ar: {
         title: 'شركاؤنا',
         description:
-          'شركاء Matchy+\u200E (DOT-IT وGoPayzi وTCA) ومزايا الشراكة مع منصة الخدمات المحلية.',
+          'شركاء Matchy+\u200E (DOT-IT وGoPayzi وSahora وPro Services Maintenance) ومزايا الشراكة مع منصة الخدمات المحلية.',
       },
     },
   },

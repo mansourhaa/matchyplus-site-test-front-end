@@ -8,10 +8,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { PARTNER_BENEFITS } from './partner-benefits';
-import { PARTNERS } from './partners-data';
+import { NETWORK_PARTNERS } from './partners-data';
 
 /**
- * /partenaires/: every partner (logo, name, one-line description, website), then the benefits of
+ * /partenaires/: every partner (logo, name, one-line description, website if any), then the benefits of
  * a partnership (the same list as /devenir-partenaire/) and the way to become one.
  */
 export function PartnersPage() {
@@ -29,13 +29,16 @@ export function PartnersPage() {
       />
 
       <div className="relative z-20 mx-auto -mt-10 max-w-5xl px-5 sm:-mt-14">
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {PARTNERS.map((partner) => (
+        <ul className="mx-auto grid max-w-3xl gap-5 sm:grid-cols-2">
+          {NETWORK_PARTNERS.map((partner) => (
             <li
               key={partner.id}
               className="flex flex-col rounded-3xl bg-white p-6 shadow-xl ring-1 shadow-[#2F76BB]/10 ring-slate-100"
             >
-              <div className="grid h-28 place-items-center rounded-2xl bg-white px-4">
+              <div
+                className={`grid h-28 place-items-center overflow-hidden rounded-2xl bg-white ${partner.background ? '' : 'px-4'}`}
+                style={{ backgroundColor: partner.background }}
+              >
                 <Image
                   src={partner.logo}
                   alt=""
@@ -43,22 +46,26 @@ export function PartnersPage() {
                   height={partner.height}
                   sizes="240px"
                   unoptimized={partner.logo.endsWith('.svg')}
-                  className="h-24 w-full object-contain"
+                  className={
+                    partner.background ? 'h-28 w-full object-contain' : 'h-24 w-full object-contain'
+                  }
                 />
               </div>
               <h2 className="text-brand-navy mt-5 text-lg font-extrabold">{partner.name}</h2>
               <p className="text-muted-foreground mt-1 text-sm">{descriptions.get(partner.id)}</p>
-              <a
-                href={partner.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-brand-blue mt-4 inline-flex items-center gap-1.5 text-sm font-bold hover:underline"
-              >
-                {/* the visible words start the link's name (WCAG 2.5.3), the partner follows */}
-                {t('landing.partnersPageVisit')}
-                <span className="sr-only"> {partner.name}</span>
-                <ExternalLink className="h-4 w-4" />
-              </a>
+              {partner.url && (
+                <a
+                  href={partner.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-blue mt-4 inline-flex items-center gap-1.5 text-sm font-bold hover:underline"
+                >
+                  {/* the visible words start the link's name (WCAG 2.5.3), the partner follows */}
+                  {t('landing.partnersPageVisit')}
+                  <span className="sr-only"> {partner.name}</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
             </li>
           ))}
         </ul>

@@ -112,7 +112,7 @@ export const messages: Record<Locale, MessageTree> = {
         ['8 ans', 'd’expérience'],
       ],
       storyEyebrow: 'L’histoire derrière Matchy+',
-      storyPhotoAlt: 'Portrait de Randa Touati, cofondatrice de Matchy+',
+      storyPhotoAlt: 'Logo Matchy+',
       storyQuote:
         '« Chaque compétence mérite d’être visible. Matchy+ rapproche les talents locaux des particuliers et des entreprises qui ont besoin de leur savoir-faire. »',
       storyBody:
@@ -142,7 +142,8 @@ export const messages: Record<Locale, MessageTree> = {
       partnerDescriptions: [
         ['dotit', 'Agence digitale'],
         ['gopayzi', 'Solution de paiement'],
-        ['tca', 'Cabinet d’audit et de commissariat aux comptes'],
+        ['sahora', 'Couture et création textile'],
+        ['proservices', 'Services de maintenance'],
       ],
       partnersPageEyebrow: 'Partenaires',
       partnersPageTitle: 'Nos partenaires',
@@ -150,11 +151,6 @@ export const messages: Record<Locale, MessageTree> = {
       partnersPageVisit: 'Visiter le site',
       partnersPageBenefitsTitle: 'Les avantages d’un partenariat Matchy+',
       partnersPageCtaBody: 'Vous souhaitez rejoindre nos partenaires ?',
-      footerFindTitle: 'Trouver un service',
-      footerFindPro: 'Trouver un professionnel',
-      footerHomeServices: 'Services à domicile',
-      footerBusiness: 'Services aux entreprises',
-      footerAllServices: 'Tous les services',
       footerProsTitle: 'Pour les professionnels',
       footerCreateProfile: 'Créer mon profil',
       footerVisibility: 'Développer ma visibilité',
@@ -658,7 +654,7 @@ export const messages: Record<Locale, MessageTree> = {
         ['8 yrs', 'experience'],
       ],
       storyEyebrow: 'The story behind Matchy+',
-      storyPhotoAlt: 'Portrait of Randa Touati, co-founder of Matchy+',
+      storyPhotoAlt: 'Matchy+ logo',
       storyQuote:
         '“Every skill deserves to be seen. Matchy+ brings local talent closer to the individuals and businesses who need their know-how.”',
       storyBody:
@@ -688,7 +684,8 @@ export const messages: Record<Locale, MessageTree> = {
       partnerDescriptions: [
         ['dotit', 'Digital agency'],
         ['gopayzi', 'Payment solution'],
-        ['tca', 'Audit and statutory audit firm'],
+        ['sahora', 'Sewing and textile creation'],
+        ['proservices', 'Maintenance services'],
       ],
       partnersPageEyebrow: 'Partners',
       partnersPageTitle: 'Our partners',
@@ -696,11 +693,6 @@ export const messages: Record<Locale, MessageTree> = {
       partnersPageVisit: 'Visit the website',
       partnersPageBenefitsTitle: 'The benefits of a Matchy+ partnership',
       partnersPageCtaBody: 'Would you like to join our partners?',
-      footerFindTitle: 'Find a service',
-      footerFindPro: 'Find a professional',
-      footerHomeServices: 'Home services',
-      footerBusiness: 'Business services',
-      footerAllServices: 'All services',
       footerProsTitle: 'For professionals',
       footerCreateProfile: 'Create my profile',
       footerVisibility: 'Grow my visibility',
@@ -1186,7 +1178,7 @@ export const messages: Record<Locale, MessageTree> = {
         ['8 سنوات', 'خبرة'],
       ],
       storyEyebrow: 'القصة وراء Matchy+\u200E',
-      storyPhotoAlt: 'صورة رندة التواتي، الشريكة المؤسسة لـ Matchy+\u200E',
+      storyPhotoAlt: 'شعار Matchy+\u200E',
       storyQuote:
         '«كل كفاءة تستحق أن تُرى. تقرّب Matchy+\u200E المواهب المحلية من الأفراد والشركات الذين يحتاجون إلى مهاراتهم.»',
       storyBody:
@@ -1215,7 +1207,8 @@ export const messages: Record<Locale, MessageTree> = {
       partnerDescriptions: [
         ['dotit', 'وكالة رقمية'],
         ['gopayzi', 'حل للدفع الإلكتروني'],
-        ['tca', 'مكتب تدقيق ومراقبة حسابات'],
+        ['sahora', 'خياطة وتصميم المنسوجات'],
+        ['proservices', 'خدمات الصيانة'],
       ],
       partnersPageEyebrow: 'الشركاء',
       partnersPageTitle: 'شركاؤنا',
@@ -1223,11 +1216,6 @@ export const messages: Record<Locale, MessageTree> = {
       partnersPageVisit: 'زيارة الموقع',
       partnersPageBenefitsTitle: 'مزايا الشراكة مع Matchy+\u200E',
       partnersPageCtaBody: 'هل ترغب في الانضمام إلى شركائنا؟',
-      footerFindTitle: 'ابحث عن خدمة',
-      footerFindPro: 'ابحث عن مهني',
-      footerHomeServices: 'خدمات منزلية',
-      footerBusiness: 'خدمات للشركات',
-      footerAllServices: 'كل الخدمات',
       footerProsTitle: 'للمهنيين',
       footerCreateProfile: 'أنشئ ملفي',
       footerVisibility: 'طوّر ظهوري',

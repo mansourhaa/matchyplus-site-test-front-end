@@ -11,7 +11,7 @@ import { HeroSearch } from './hero-search';
 import { LiveCommunity } from './live-community';
 import { PARTNER_BENEFITS } from './partner-benefits';
 import { PartnerLogos } from './partner-logos';
-import { PARTNERS } from './partners-data';
+import { NETWORK_PARTNERS, PARTNERS } from './partners-data';
 import { PartnersPage } from './partners-page';
 import { Partnerships } from './partnerships';
 import { Press } from './press';
@@ -70,7 +70,6 @@ const NEW_KEYS = [
   'partnerDescriptions',
   'partnersPageTitle',
   'partnersPageBenefitsTitle',
-  'footerFindTitle',
   'footerProsTitle',
   'footerLegalTitle',
   'footerCookies',
@@ -193,13 +192,10 @@ describe('home sections', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('CompanyStory shows the founder photo, described for screen readers', () => {
+  it('CompanyStory shows the Matchy+ logo, described for screen readers', () => {
     renderIn('fr', <CompanyStory />);
-    const photo = screen.getByRole('img', {
-      name: 'Portrait de Randa Touati, cofondatrice de Matchy+',
-    });
-    expect(photo.getAttribute('src')).toContain('founder.webp');
-    expect(screen.queryByText('[Photo du fondateur]')).toBeNull();
+    const logo = screen.getByRole('img', { name: 'Logo Matchy+' });
+    expect(logo.getAttribute('src')).toContain('matchy-plus-logo.svg');
   });
 
   it('CompanyStory links to the about page', () => {
@@ -215,7 +211,9 @@ describe('home sections', () => {
     // the strip is decorative, so its links and logos are not in the accessibility tree
     const strip = container.querySelector('[aria-hidden="true"]');
     const logos = [...(strip?.querySelectorAll('img') ?? [])].map((img) => img.getAttribute('src'));
-    for (const partner of PARTNERS) {
+    // the strip shows the network partners (Sahora and Pro Services, not TCA)
+    expect(logos.some((src) => src?.includes('tca'))).toBe(false);
+    for (const partner of NETWORK_PARTNERS) {
       expect(logos.some((src) => src?.includes(partner.logo.split('/').pop() ?? ''))).toBe(true);
     }
     expect(strip?.textContent).not.toMatch(/\[/);
@@ -239,14 +237,17 @@ describe('home sections', () => {
         messages[locale],
         'landing.partnerDescriptions',
       ) as string[][];
-      for (const partner of PARTNERS) {
+      for (const partner of NETWORK_PARTNERS) {
         expect(screen.getByRole('heading', { level: 2, name: partner.name })).toBeInTheDocument();
         const description = descriptions.find(([id]) => id === partner.id)?.[1];
         expect(description?.trim()).toBeTruthy();
         expect(screen.getByText(description ?? '')).toBeInTheDocument();
       }
       const sites = screen.getAllByRole('link').filter((link) => link.getAttribute('target'));
-      expect(sites.map((link) => link.getAttribute('href'))).toEqual(PARTNERS.map((p) => p.url));
+      // only partners with a website get a link
+      expect(sites.map((link) => link.getAttribute('href'))).toEqual(
+        NETWORK_PARTNERS.flatMap((p) => (p.url ? [p.url] : [])),
+      );
       for (const site of sites) expect(site).toHaveAttribute('rel', 'noopener noreferrer');
       for (const benefit of PARTNER_BENEFITS[locale]) {
         expect(screen.getByRole('heading', { level: 3, name: benefit.title })).toBeInTheDocument();

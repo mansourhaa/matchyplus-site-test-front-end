@@ -1,6 +1,5 @@
 'use client';
 
-import { withSearch } from '@/components/matchy/search-results-data';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
 import { localizePath } from '@/features/i18n/routing';
@@ -243,24 +242,20 @@ export function Header() {
   );
 }
 
+declare global {
+  interface Window {
+    /** CookieYes (loaded by analytics.tsx): reopens its preferences, for "Gérer les cookies". */
+    revisitCkyConsent?: () => void;
+  }
+}
+
 /** One footer link: a page of this site, or an app page (sign-up, log-in). */
 type FooterLink = { label: string; href: string; app?: boolean };
 
-/** The 4 footer columns, as the manager listed them. */
+/** The 3 footer columns, as the manager listed them. */
 function footerColumns(t: (key: string) => string, locale: Locale) {
   const page = (path: string) => localizePath(locale, path);
-  // a service category opens the search page already filled with it
-  const search = (label: string) => withSearch(page('/recherche'), label, '');
   const columns: { title: string; links: FooterLink[] }[] = [
-    {
-      title: t('landing.footerFindTitle'),
-      links: [
-        { label: t('landing.footerFindPro'), href: page('/recherche') },
-        { label: t('landing.footerHomeServices'), href: search(t('landing.footerHomeServices')) },
-        { label: t('landing.footerBusiness'), href: search(t('landing.footerBusiness')) },
-        { label: t('landing.footerAllServices'), href: page('/services') },
-      ],
-    },
     {
       title: t('landing.footerProsTitle'),
       links: [

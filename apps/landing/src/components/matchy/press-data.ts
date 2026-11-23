@@ -56,7 +56,7 @@ export const PRESS_ITEMS: PressItem[] = [
   {
     slug: 'matchy-plus-al-wataniya-1-jil-al-mostakbal',
     date: '2026-11-22',
-    cover: '/matchy/press/al-wataniya-1-jil-al-mostakbal.webp',
+    cover: '/matchy/press/al-wataniya-1-plateau-v2.webp',
     video: 'https://www.youtube.com/watch?v=Nk3_BD6rfTQ',
     linkedin: 'https://www.linkedin.com/feed/update/urn:li:activity:7526032162060521472/',
     sample: false,
@@ -273,6 +273,7 @@ export const PRESS_ITEMS: PressItem[] = [
   {
     slug: 'matchy-plus-express-fm-mundo-design',
     date: '2026',
+    cover: '/matchy/press/express-fm-mundo-design.webp',
     video: 'https://www.youtube.com/watch?v=8IjW794Bv4c',
     sample: false,
     text: {
@@ -280,6 +281,8 @@ export const PRESS_ITEMS: PressItem[] = [
         tag: 'Média',
         title: 'Sur Express FM, Matchy+ raconte comment le design transforme un besoin en solution',
         place: 'Express FM',
+        coverAlt:
+          'Plateau d’Express FM en direct : l’application Matchy+ présentée à l’écran pendant l’émission Mundo Design',
         summary:
           'Dans Mundo Design sur Express FM, Matchy+ a parlé de design et d’entrepreneuriat : observer un problème, comprendre les usages et construire une solution utile.',
         intro:
@@ -311,6 +314,8 @@ export const PRESS_ITEMS: PressItem[] = [
         tag: 'Media',
         title: 'On Express FM, Matchy+ explains how design turns a need into a solution',
         place: 'Express FM',
+        coverAlt:
+          'Express FM studio live: the Matchy+ app shown on screen during the Mundo Design show',
         summary:
           'On Mundo Design on Express FM, Matchy+ talked about design and entrepreneurship: observing a problem, understanding how people live and building a useful solution.',
         intro:
@@ -342,6 +347,8 @@ export const PRESS_ITEMS: PressItem[] = [
         tag: 'إعلام',
         title: 'على Express FM، تروي Matchy+\u200E كيف يحوّل التصميم الحاجة إلى حل',
         place: 'Express FM',
+        coverAlt:
+          'استوديو Express FM مباشرة: تطبيق Matchy+\u200E معروض على الشاشة خلال برنامج Mundo Design',
         summary:
           'في برنامج Mundo Design على Express FM، تحدّثت Matchy+\u200E عن التصميم وريادة الأعمال: ملاحظة المشكلة وفهم الاستخدامات وبناء حل مفيد.',
         intro:

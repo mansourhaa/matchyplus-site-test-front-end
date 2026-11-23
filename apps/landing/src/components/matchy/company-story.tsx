@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 import { Reveal } from './motion';
 
-/** The story behind Matchy+: the founder's photo, quote and story. Quote and name still to be written. */
+/** The story behind Matchy+: the Matchy+ logo, the founder's quote, her path and the about link. */
 export function CompanyStory() {
   const { t, locale } = useI18n();
 
@@ -21,14 +21,15 @@ export function CompanyStory() {
         />
         <div className="relative grid grid-cols-1 items-center gap-10 md:grid-cols-[220px_minmax(0,1fr)]">
           <div className="flex flex-col items-center gap-3">
-            <div className="from-brand-blue to-brand-teal rounded-full bg-gradient-to-br p-1.5 shadow-xl">
+            {/* the Matchy+ logo (vector: sharp at any size, served as it is) */}
+            <div className="grid h-36 w-full max-w-[220px] place-items-center rounded-3xl bg-white px-5 shadow-xl">
               <Image
-                src="/showcase/founder.webp"
+                src="/showcase/matchy-plus-logo.svg"
                 alt={t('landing.storyPhotoAlt')}
-                width={192}
-                height={192}
-                sizes="192px"
-                className="h-48 w-48 rounded-full border-4 border-white bg-[#DCE9F5] object-cover"
+                width={722}
+                height={184}
+                unoptimized
+                className="h-auto w-full"
               />
             </div>
             <span className="text-brand-teal -rotate-3 text-lg font-bold">

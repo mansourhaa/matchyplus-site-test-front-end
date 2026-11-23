@@ -19,8 +19,6 @@ type CookieYesConsent = { categories: Record<string, boolean> };
 declare global {
   interface Window {
     getCkyConsent?: () => CookieYesConsent;
-    /** Reopens the CookieYes preferences (footer "Gestion des cookies"). */
-    revisitCkyConsent?: () => void;
     clarity?: (...args: unknown[]) => void;
     [key: `ga-disable-${string}`]: boolean;
   }
