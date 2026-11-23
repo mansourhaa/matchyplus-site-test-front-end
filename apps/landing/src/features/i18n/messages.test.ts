@@ -23,3 +23,21 @@ describe('asRows', () => {
     expect(asList(getMessage(messages.ar, 'landing.heroPhoneTabs'))).toHaveLength(4);
   });
 });
+
+describe('texts ready for production', () => {
+  /** Every string of a message tree, flattened. */
+  const strings = (value: unknown): string[] =>
+    typeof value === 'string'
+      ? [value]
+      : Array.isArray(value)
+        ? value.flatMap(strings)
+        : value && typeof value === 'object'
+          ? Object.values(value).flatMap(strings)
+          : [];
+
+  it('contain no "[placeholder]" left to fill, in any language', () => {
+    for (const tree of Object.values(messages)) {
+      expect(strings(tree).filter((text) => /\[[^\]]+\]/.test(text))).toEqual([]);
+    }
+  });
+});

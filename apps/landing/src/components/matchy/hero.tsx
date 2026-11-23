@@ -1,13 +1,16 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
+import { APP_REGISTER_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
+import { ArrowRight, Check } from 'lucide-react';
+import Link from 'next/link';
 
 import { HeroLivePhone } from './hero-live-phone';
 import { HeroSearch } from './hero-search';
 
 export function Hero() {
-  const { t } = useI18n();
+  const { t, tList } = useI18n();
 
   return (
     <section className="from-brand-blue via-brand-blue to-brand-teal relative overflow-hidden bg-gradient-to-br">
@@ -38,7 +41,7 @@ export function Hero() {
             transition={{ duration: 0.7, delay: 0.1 }}
             className="text-3xl leading-tight font-bold text-balance sm:text-4xl md:text-4xl lg:text-[2.6rem]"
           >
-            <span className="block lg:whitespace-nowrap">{t('landing.hero')}</span>
+            <span className="block">{t('landing.hero')}</span>
             <span className="block">{t('landing.heroLine2')}</span>
           </motion.h1>
           <motion.p
@@ -56,6 +59,29 @@ export function Hero() {
             className="flex justify-center ltr:md:justify-start rtl:md:justify-start"
           >
             <HeroSearch />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="mt-5 flex flex-col items-center gap-4 ltr:md:items-start rtl:md:items-start"
+          >
+            {/* second call to action: for professionals */}
+            <Link
+              href={APP_REGISTER_URL}
+              className="inline-flex items-center gap-2 rounded-full border border-white/60 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-white/15"
+            >
+              {t('landing.searchProCta')}
+              <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+            </Link>
+            <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs font-semibold text-white/90 md:justify-start">
+              {tList('landing.heroReassurance').map((item) => (
+                <li key={item} className="inline-flex items-center gap-1.5">
+                  <Check className="h-3.5 w-3.5 shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </motion.div>
         </div>
 

@@ -27,6 +27,9 @@ export function PartnerLogos() {
   return (
     <section className="mx-auto max-w-5xl px-5 py-16 md:py-20">
       <Reveal className="text-center">
+        <p className="text-brand-teal mb-2 text-sm font-semibold tracking-wide">
+          {t('landing.ourPartnersKicker')}
+        </p>
         <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
           {t('landing.ourPartnersTitle')}
         </h2>

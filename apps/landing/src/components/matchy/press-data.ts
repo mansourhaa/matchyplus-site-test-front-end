@@ -30,6 +30,8 @@ export type PressItem = {
   video?: string;
   /** Optional link to the original LinkedIn post: the article shows a "Voir sur LinkedIn" button. */
   linkedin?: string;
+  /** Optional official page (programme, show…): the article shows a "Visiter le site officiel" button. */
+  website?: string;
   /** Example content until the real news arrives: labelled on the site and kept out of Google. */
   sample: boolean;
   text: Record<Locale, PressText>;
@@ -71,14 +73,14 @@ export const PRESS_ITEMS: PressItem[] = [
       },
       ar: {
         tag: 'فعالية',
-        title: 'Matchy+‎ في Meetup Pro 2026',
+        title: 'Matchy+\u200E في Meetup Pro 2026',
         place: 'سوسة',
         summary:
-          'تحدّثت رندة التواتي، الشريكة المؤسسة والرئيسة التنفيذية لـ Matchy+‎، أمام قرابة 600 مشارك عن التعاون بين الشركات الناشئة والشركات الكبرى.',
+          'تحدّثت رندة التواتي، الشريكة المؤسسة والرئيسة التنفيذية لـ Matchy+\u200E، أمام قرابة 600 مشارك عن التعاون بين الشركات الناشئة والشركات الكبرى.',
         body: [
-          'شاركت رندة التواتي، الشريكة المؤسسة والرئيسة التنفيذية لـ Matchy+‎، في Meetup Pro 2026 بسوسة إلى جانب غسان الدريدي ونزار السمراني، في جلسة أدارتها أنيزي أميمة. وقد جمعت هذه الدورة قرابة 600 مشارك.',
+          'شاركت رندة التواتي، الشريكة المؤسسة والرئيسة التنفيذية لـ Matchy+\u200E، في Meetup Pro 2026 بسوسة إلى جانب غسان الدريدي ونزار السمراني، في جلسة أدارتها أنيزي أميمة. وقد جمعت هذه الدورة قرابة 600 مشارك.',
           'تناولت الجلسة قوة التعاون بين الشركات الناشئة والشركات الكبرى، حول سؤال محوري: كيف يمكن لهما توحيد جهودهما لخلق قيمة وأثر أكبر؟',
-          'كما شاركت رندة مسيرتها: ثلاث مهن ومسار واحد وإرادة واحدة لتحويل التحديات إلى فرص. من التعليم، إلى رئيسة مشاريع الويب في Dot-IT، وصولًا إلى مغامرة Matchy+‎ الريادية.',
+          'كما شاركت رندة مسيرتها: ثلاث مهن ومسار واحد وإرادة واحدة لتحويل التحديات إلى فرص. من التعليم، إلى رئيسة مشاريع الويب في Dot-IT، وصولًا إلى مغامرة Matchy+\u200E الريادية.',
           'شكرًا لأمين التواتي على الدعوة، ولكامل فريق Meetup Pro على التنظيم، ولريان اليحياوي على الصور.',
         ],
       },
@@ -119,12 +121,12 @@ export const PRESS_ITEMS: PressItem[] = [
       },
       ar: {
         tag: 'إعلام',
-        title: 'Matchy+‎ في برنامج «جيل المستقبل» على الوطنية',
+        title: 'Matchy+\u200E في برنامج «جيل المستقبل» على الوطنية',
         place: 'التلفزة الوطنية',
         summary:
-          'قدّمت رندة التواتي رؤية Matchy+‎: تغيير طريقة الوصول إلى الخدمات المحلية بفضل الابتكار والذكاء الاصطناعي.',
+          'قدّمت رندة التواتي رؤية Matchy+\u200E: تغيير طريقة الوصول إلى الخدمات المحلية بفضل الابتكار والذكاء الاصطناعي.',
         body: [
-          'كانت رندة التواتي، الشريكة المؤسسة والرئيسة التنفيذية لـ Matchy+‎، ضيفة برنامج «جيل المستقبل» على قناة الوطنية. وقدّمت رؤية Matchy+‎ وطموحها، وهي منصة تهدف إلى تغيير طريقة الوصول إلى الخدمات المحلية بفضل الابتكار والذكاء الاصطناعي.',
+          'كانت رندة التواتي، الشريكة المؤسسة والرئيسة التنفيذية لـ Matchy+\u200E، ضيفة برنامج «جيل المستقبل» على قناة الوطنية. وقدّمت رؤية Matchy+\u200E وطموحها، وهي منصة تهدف إلى تغيير طريقة الوصول إلى الخدمات المحلية بفضل الابتكار والذكاء الاصطناعي.',
           'تناول النقاش ريادة الأعمال والابتكار ومستقبل الشركات الناشئة التونسية، مع بقية ضيوف البرنامج ومنهم رازي المِلياني.',
           'تساعد مثل هذه اللحظات على إبراز المبادرات التي تبني اقتصاد الغد وعلى تشجيع الجيل الجديد من رواد الأعمال.',
           'شكرًا لفاطمة بن جمعة غربال على الدعوة وحسن الاستقبال، ولكامل فريق التلفزة الوطنية.',
@@ -136,37 +138,40 @@ export const PRESS_ITEMS: PressItem[] = [
     slug: 'afrique-innovante-2026',
     // posted about 5 months before 23 Nov 2026: month only until the exact day is known
     date: '2026-06',
+    website:
+      'https://cpccaf.org/programme-et-appel-a-projet/appel-a-candidatures-2026-afrique-innovante-recrute-500-projets-feminins-a-fort-potentiel/',
     sample: false,
     text: {
       fr: {
         tag: 'Programme',
-        title: 'Matchy+ rejoint le programme Afrique Innovante 2026',
+        title: 'Matchy+ participe au programme Afrique Innovante 2026',
         place: 'Afrique',
         summary:
-          'Une expérience enrichissante, faite de rencontres inspirantes et d’échanges autour de l’innovation et de l’entrepreneuriat africain.',
+          'Une dynamique panafricaine destinée à identifier et accélérer des projets entrepreneuriaux féminins à fort potentiel.',
         body: [
-          'Randa Touati, cofondatrice et CEO de Matchy+, participe au programme Afrique Innovante 2026.',
+          'Randa Touati, cofondatrice et CEO de Matchy+, participe au programme Afrique Innovante 2026, une dynamique panafricaine destinée à identifier et accélérer des projets entrepreneuriaux féminins à fort potentiel.',
           'Une expérience enrichissante, faite de rencontres inspirantes et d’échanges autour de l’innovation et de l’entrepreneuriat africain.',
         ],
       },
       en: {
         tag: 'Programme',
-        title: 'Matchy+ joins the Afrique Innovante 2026 programme',
+        title: 'Matchy+ takes part in the Afrique Innovante 2026 programme',
         place: 'Africa',
         summary:
-          'An enriching experience of inspiring encounters and exchanges on innovation and African entrepreneurship.',
+          'A pan-African initiative to identify and accelerate high-potential women-led ventures.',
         body: [
-          'Randa Touati, co-founder and CEO of Matchy+, is taking part in the Afrique Innovante 2026 programme.',
+          'Randa Touati, co-founder and CEO of Matchy+, is taking part in Afrique Innovante 2026, a pan-African initiative to identify and accelerate high-potential women-led ventures.',
           'An enriching experience of inspiring encounters and exchanges on innovation and African entrepreneurship.',
         ],
       },
       ar: {
         tag: 'برنامج',
-        title: 'Matchy+‎ تنضمّ إلى برنامج Afrique Innovante 2026',
+        title: 'Matchy+\u200E تشارك في برنامج Afrique Innovante 2026',
         place: 'إفريقيا',
-        summary: 'تجربة ثرية مليئة بلقاءات ملهمة وتبادلات حول الابتكار وريادة الأعمال الإفريقية.',
+        summary:
+          'ديناميكية إفريقية تهدف إلى اكتشاف المشاريع الريادية النسائية ذات الإمكانات العالية وتسريعها.',
         body: [
-          'تشارك رندة التواتي، الشريكة المؤسسة والرئيسة التنفيذية لـ Matchy+‎، في برنامج Afrique Innovante 2026.',
+          'تشارك رندة التواتي، الشريكة المؤسسة والرئيسة التنفيذية لـ Matchy+\u200E، في برنامج Afrique Innovante 2026، وهو ديناميكية إفريقية تهدف إلى اكتشاف المشاريع الريادية النسائية ذات الإمكانات العالية وتسريعها.',
           'تجربة ثرية مليئة بلقاءات ملهمة وتبادلات حول الابتكار وريادة الأعمال الإفريقية.',
         ],
       },

@@ -10,11 +10,11 @@ import { HeroLivePhone } from './hero-live-phone';
 import { HeroSearch } from './hero-search';
 import { LiveCommunity } from './live-community';
 import { PartnerLogos } from './partner-logos';
-import { Partnerships } from './partnerships';
 import { Press } from './press';
 import { PRESS_ITEMS, pressItems } from './press-data';
 import { PressArticle, PressList } from './press-pages';
 import { ProBranding } from './pro-branding';
+import { Roadmap } from './roadmap';
 import { WhyMatchy } from './why-matchy';
 
 const push = vi.hoisted(() => vi.fn());
@@ -53,7 +53,6 @@ const NEW_KEYS = [
   'resultsNear',
   'resultsSearching',
   'resultsCta',
-  'resultsSample',
   'whyTitle',
   'whyBefore',
   'whyAfter',
@@ -62,13 +61,14 @@ const NEW_KEYS = [
   'brandSampleStats',
   'storyQuote',
   'storyBody',
-  'partnersTitle',
-  'partnersCta',
-  'partnersSlot',
+  'roadmapTitle',
+  'roadmapBody',
+  'roadmapSteps',
+  'roadmapCta',
+  'heroReassurance',
+  'ourPartnersKicker',
+  'pressWebsite',
   'communityTitle',
-  'communityPresence',
-  'communityAudience',
-  'communityVisitors',
   'communityMapLabel',
   'communityCities',
 ];
@@ -92,14 +92,18 @@ describe('HeroSearch', () => {
       'aria-pressed',
       'true',
     );
-    expect(screen.getByLabelText('Quel service ?')).toBeInTheDocument();
-    expect(screen.getByLabelText('Où ?')).toBeInTheDocument();
+    expect(screen.getByLabelText('Quel service recherchez-vous ?')).toBeInTheDocument();
+    expect(screen.getByLabelText('Où recherchez-vous ce service ?')).toBeInTheDocument();
   });
 
   it('a search opens the results page of the current language, with the search', () => {
     renderIn('fr', <HeroSearch />);
-    fireEvent.change(screen.getByLabelText('Quel service ?'), { target: { value: 'Plombier' } });
-    fireEvent.change(screen.getByLabelText('Où ?'), { target: { value: 'Sfax' } });
+    fireEvent.change(screen.getByLabelText('Quel service recherchez-vous ?'), {
+      target: { value: 'Plombier' },
+    });
+    fireEvent.change(screen.getByLabelText('Où recherchez-vous ce service ?'), {
+      target: { value: 'Sfax' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Rechercher' }));
     expect(push).toHaveBeenCalledWith('/fr/recherche/?service=Plombier&ville=Sfax');
   });
@@ -107,7 +111,7 @@ describe('HeroSearch', () => {
   it('a popular chip fills the service field', () => {
     renderIn('fr', <HeroSearch />);
     fireEvent.click(screen.getByRole('button', { name: 'Électricien' }));
-    expect(screen.getByLabelText('Quel service ?')).toHaveValue('Électricien');
+    expect(screen.getByLabelText('Quel service recherchez-vous ?')).toHaveValue('Électricien');
   });
 
   it('"Entreprise" leads to the partner page of the current language', () => {
@@ -118,18 +122,6 @@ describe('HeroSearch', () => {
       'href',
       expect.stringMatching(/^\/fr\/devenir-partenaire\/?$/),
     );
-  });
-
-  it('Partnerships strip: free places lead to the partner page, out of the tab order', () => {
-    const { container } = renderIn('fr', <Partnerships />);
-    // the strip is decorative, so its links are not in the accessibility tree: query the DOM
-    const slots = [...container.querySelectorAll('[aria-hidden="true"] a')];
-    expect(slots.length).toBeGreaterThan(0);
-    for (const slot of slots) {
-      expect(slot).toHaveTextContent('Votre marque ici');
-      expect(slot).toHaveAttribute('tabindex', '-1');
-      expect(slot.getAttribute('href')).toMatch(/^\/fr\/devenir-partenaire\/?$/);
-    }
   });
 });
 
@@ -188,7 +180,9 @@ describe('home sections', () => {
 
   it('CompanyStory shows the founder photo, described for screen readers', () => {
     renderIn('fr', <CompanyStory />);
-    const photo = screen.getByRole('img', { name: 'Portrait de la fondatrice de Matchy+' });
+    const photo = screen.getByRole('img', {
+      name: 'Portrait de Randa Touati, cofondatrice de Matchy+',
+    });
     expect(photo.getAttribute('src')).toContain('founder.webp');
     expect(screen.queryByText('[Photo du fondateur]')).toBeNull();
   });
@@ -201,37 +195,36 @@ describe('home sections', () => {
     );
   });
 
-  it('Partnerships shows the heading and the partner link', () => {
-    renderIn('fr', <Partnerships />);
-    expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument();
-    // next/link drops the trailing slash in tests; the site adds it back (trailingSlash).
-    expect(screen.getByRole('link', { name: /Devenir partenaire/ })).toHaveAttribute(
-      'href',
-      expect.stringMatching(/^\/fr\/devenir-partenaire\/?$/),
-    );
+  it('Roadmap lists the five steps in order and a link to join, in every language', () => {
+    for (const locale of ['fr', 'en', 'ar'] as const) {
+      const { unmount } = renderIn(locale, <Roadmap />);
+      const steps = getMessage(messages[locale], 'landing.roadmapSteps') as string[];
+      expect(steps).toHaveLength(5);
+      const items = within(screen.getByRole('list')).getAllByRole('listitem');
+      expect(items.map((item) => item.textContent)).toEqual(
+        steps.map((step, index) => `${index + 1}${step}`),
+      );
+      expect(screen.getByRole('link', { name: /Matchy\+/ })).toHaveAttribute(
+        'href',
+        'http://localhost:3000/register',
+      );
+      unmount();
+    }
   });
 
-  it('LiveCommunity shows the map, the counters and a tooltip per city', () => {
+  it('LiveCommunity shows the map and a tooltip per city, without any figure', () => {
     renderIn('fr', <LiveCommunity />);
     expect(
       screen.getByRole('heading', {
-        name: 'Matchy+ attire des professionnels dans plusieurs pays',
+        name: 'Matchy+ connecte les talents locaux aux opportunités',
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Carte du monde/ })).toBeInTheDocument();
-    // the legend line under the map was removed at the manager's request
-    expect(screen.queryByText('Position approximative')).not.toBeInTheDocument();
-    // 233 visitors on the map and an audience of 1 240 (narrow no-break space in French). The counters exist
-    // twice: on the map for computers and under it for phones; CSS shows one or the other.
-    expect(screen.getAllByText('233')).toHaveLength(2);
-    expect(screen.getAllByText(/^1\s?240$/)).toHaveLength(2);
-    expect(screen.getAllByText('Présence internationale')).toHaveLength(2);
-    expect(screen.getAllByText('Audience Matchy+')).toHaveLength(2);
-    // no "active now" wording and no country count any more
-    expect(screen.queryByText(/actifs/i)).toBeNull();
-    expect(screen.queryByText('Pays')).toBeNull();
+    // the content brief allows only sourced figures: no counters, no visitor counts
+    expect(screen.queryByText(/\d/)).toBeNull();
+    expect(screen.queryByText(/visiteurs/)).toBeNull();
 
-    const tunis = screen.getByRole('button', { name: /^Tunis, Tunisie : 72 visiteurs$/ });
+    const tunis = screen.getByRole('button', { name: 'Tunis, Tunisie' });
     fireEvent.pointerEnter(tunis, { pointerType: 'mouse' });
     expect(within(screen.getByRole('status')).getByText('Tunis, Tunisie')).toBeInTheDocument();
     // a touch leaving the point (the map slid under the finger) keeps the tooltip open
@@ -316,7 +309,9 @@ describe('Matchy+ Press and partners', () => {
 
   it('Nos partenaires links each logo to the partner site in a new tab', () => {
     renderIn('fr', <PartnerLogos />);
-    expect(screen.getByRole('heading', { level: 2, name: 'Nos partenaires' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Nos partenaires et écosystèmes' }),
+    ).toBeInTheDocument();
     const links = screen.getAllByRole('link');
     expect(links).toHaveLength(3);
     for (const link of links) {

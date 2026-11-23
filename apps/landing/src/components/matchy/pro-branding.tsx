@@ -3,14 +3,15 @@
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_REGISTER_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
-import { ArrowRight, BadgeCheck, Eye, MapPin, Star, Store } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Eye, MapPin, Star, Store, Target } from 'lucide-react';
 import Link from 'next/link';
 
 import { toProfiles } from './belt-data';
 import { Reveal } from './motion';
 import { ReferralCode } from './referral';
 
-const ICONS = [Store, Star, BadgeCheck, Eye];
+/** One icon per benefit, in order: profile, targeted requests, local visibility, credibility. */
+const ICONS = [Store, Target, Eye, Star];
 
 /** "Your pro storefront": what a professional gets on Matchy+, beside a sample profile. */
 export function ProBranding() {

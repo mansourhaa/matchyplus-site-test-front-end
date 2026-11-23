@@ -1,69 +1,39 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { motion, useInView } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 import { CommunityArcs } from './community-arcs';
-import { type CommunityMetric, CounterRow, FloatingCounters } from './community-counters';
 import {
+  CITY_POINTS,
   type CityId,
   HUB_ID,
   MAP_HEIGHT,
   MAP_WIDTH,
-  SAMPLE_AUDIENCE,
-  SAMPLE_LOCATIONS,
-  nudge,
-  numberLocale,
   toCityNames,
-  totalVisitors,
 } from './community-map';
 import { CommunityMarker } from './community-marker';
 import { CommunityTooltip } from './community-tooltip';
 import { EDGE_FADE, Reveal } from './motion';
 
-/** Time between two sample updates, in ms. */
-const UPDATE_EVERY = 1800;
-
 /** Where the phone view of the map starts: Tunis, in % of the map width. */
 const MOBILE_FOCUS_X = 52.7;
 
-/** Last sample update, to show a "+1" on the city a visitor just arrived in. */
-type Arrival = { id: CityId; key: number };
-
 /**
- * "The Matchy+ community in real time": a world map with the cities visiting right now,
- * live counters on the map, lines from Tunis and a tooltip per city. Sample figures,
- * labelled on screen; see community-map.ts to plug real, aggregated data.
+ * Matchy+'s ambition: a world map with the highlighted countries, the cities, lines from Tunis
+ * and a tooltip per city. No figures: the content brief allows only sourced numbers, so plug
+ * real, defined KPIs (see community-map.ts) before showing any.
  * Animations are hidden with CSS for "reduce motion", never with JS, so the server and the
  * browser always render the same HTML.
  */
 export function LiveCommunity() {
-  const { t, locale, dir, tRows } = useI18n();
+  const { t, dir, tRows } = useI18n();
   const cities = toCityNames(tRows('landing.communityCities'));
-  const format = new Intl.NumberFormat(numberLocale(locale));
 
-  const [locations, setLocations] = useState(SAMPLE_LOCATIONS);
-  const [audience, setAudience] = useState(SAMPLE_AUDIENCE);
-  const [arrival, setArrival] = useState<Arrival | null>(null);
+  const locations = CITY_POINTS;
   const [selectedId, setSelectedId] = useState<CityId | null>(null);
-
-  // Sample activity, only while the section is on screen and the tab is visible.
-  const sectionRef = useRef<HTMLElement>(null);
-  const inView = useInView(sectionRef, { amount: 0.2 });
-  useEffect(() => {
-    if (!inView) return;
-    const id = window.setInterval(() => {
-      if (document.hidden) return;
-      const index = Math.floor(Math.random() * SAMPLE_LOCATIONS.length);
-      const delta = Math.random() > 0.47 ? 1 : -1;
-      setLocations((current) => nudge(current, index, delta));
-      if (delta > 0) setArrival({ id: SAMPLE_LOCATIONS[index].id, key: Date.now() });
-      if (Math.random() > 0.35) setAudience((current) => current + 1);
-    }, UPDATE_EVERY);
-    return () => window.clearInterval(id);
-  }, [inView]);
 
   // On phones the map is wider than the screen and scrolls sideways: it starts on Tunis,
   // and a tapped city slides to the middle so its tooltip is fully visible.
@@ -82,25 +52,17 @@ export function LiveCommunity() {
     scroller.scrollLeft = (scroller.scrollWidth * MOBILE_FOCUS_X) / 100 - scroller.clientWidth / 2;
   }, []);
 
-  const hub = SAMPLE_LOCATIONS.find((location) => location.id === HUB_ID);
-  const routes = SAMPLE_LOCATIONS.filter((location) => location.id !== HUB_ID);
+  const hub = CITY_POINTS.find((location) => location.id === HUB_ID);
+  const routes = CITY_POINTS.filter((location) => location.id !== HUB_ID);
 
   const selected = locations.find((location) => location.id === selectedId);
-  const metrics: CommunityMetric[] = [
-    { label: t('landing.communityPresence'), value: totalVisitors(locations), headline: true },
-    { label: t('landing.communityAudience'), value: audience, headline: false },
-  ];
 
   return (
-    <section ref={sectionRef} className="relative z-10 bg-white py-20 md:py-24">
+    <section className="relative z-10 bg-white py-20 md:py-24">
       <div className="mx-auto max-w-6xl px-5">
         {/* same heading as the other sections */}
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-brand-teal mb-2 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide">
-            <span className="relative flex h-2 w-2">
-              <span className="bg-brand-teal absolute inline-flex h-full w-full rounded-full opacity-75 motion-safe:animate-ping" />
-              <span className="bg-brand-teal relative inline-flex h-2 w-2 rounded-full" />
-            </span>
+          <p className="text-brand-teal mb-2 text-sm font-semibold tracking-wide">
             {t('landing.communityBadge')}
           </p>
           <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
@@ -156,10 +118,9 @@ export function LiveCommunity() {
                     key={location.id}
                     location={location}
                     index={index}
-                    label={`${cities[location.id] ?? location.id} : ${t('landing.communityVisitors', { count: format.format(location.count) })}`}
+                    label={cities[location.id] ?? location.id}
                     selected={location.id === selectedId}
                     hub={location.id === HUB_ID}
-                    arrivalKey={arrival?.id === location.id ? arrival.key : null}
                     onShow={() => setSelectedId(location.id)}
                     onHide={() => setSelectedId(null)}
                     onTap={() => {
@@ -169,17 +130,11 @@ export function LiveCommunity() {
                   />
                 ))}
 
-                {/* counters, floating over the map (computers only) */}
-                <FloatingCounters metrics={metrics} format={format} dir={dir} />
-
                 <div role="status" aria-live="polite">
                   {selected && (
                     <CommunityTooltip
                       location={selected}
                       city={cities[selected.id] ?? selected.id}
-                      visitors={t('landing.communityVisitors', {
-                        count: format.format(selected.count),
-                      })}
                       dir={dir}
                     />
                   )}
@@ -187,9 +142,6 @@ export function LiveCommunity() {
               </div>
             </div>
           </figure>
-
-          {/* phones: the counters sit in a row under the map */}
-          <CounterRow metrics={metrics} format={format} />
         </Reveal>
       </div>
     </section>

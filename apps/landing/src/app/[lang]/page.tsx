@@ -3,9 +3,9 @@ import { Hero } from '@/components/matchy/hero';
 import { LiveCommunity } from '@/components/matchy/live-community';
 import { ReducedMotion } from '@/components/matchy/motion';
 import { PartnerLogos } from '@/components/matchy/partner-logos';
-import { Partnerships } from '@/components/matchy/partnerships';
 import { Press } from '@/components/matchy/press';
 import { ProBranding } from '@/components/matchy/pro-branding';
+import { Roadmap } from '@/components/matchy/roadmap';
 import { ServicesBelt } from '@/components/matchy/services-belt';
 import { WhyMatchy } from '@/components/matchy/why-matchy';
 import { PageFrame } from '@/components/site-shell';
@@ -47,7 +47,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
           <LiveCommunity />
           <PartnerLogos />
           <CompanyStory />
-          <Partnerships />
+          <Roadmap />
         </ReducedMotion>
       </main>
       {!DISABLE_CHATBOT && CHATBOT_WIDGET_SRC && (

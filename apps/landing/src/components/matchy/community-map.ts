@@ -1,6 +1,6 @@
 /**
  * Data for the live community map. Sample figures for now, clearly labelled on screen.
- * To go live, replace SAMPLE_LOCATIONS / SAMPLE_AUDIENCE with aggregated numbers from the API
+ * To go live, replace CITY_POINTS / SAMPLE_AUDIENCE with aggregated numbers from the API
  * (city, approximate position, active visitors): never send visitor IPs to the browser.
  */
 
@@ -24,8 +24,6 @@ export type CommunityLocation = {
   /** Position on the map, in % of its width and height. */
   x: number;
   y: number;
-  /** Active visitors right now. */
-  count: number;
 };
 
 /**
@@ -33,36 +31,17 @@ export type CommunityLocation = {
  * of 1000 on world-atlas countries-110m (Natural Earth, public domain), without Antarctica.
  * If the map is regenerated, recompute them with the same projection.
  */
-export const SAMPLE_LOCATIONS: readonly CommunityLocation[] = [
-  { id: 'tunis', x: 52.7, y: 31.6, count: 72 },
-  { id: 'paris', x: 50.6, y: 23.0, count: 41 },
-  { id: 'london', x: 50.0, y: 21.2, count: 18 },
-  { id: 'newYork', x: 30.9, y: 28.8, count: 23 },
-  { id: 'montreal', x: 31.4, y: 25.4, count: 15 },
-  { id: 'dubai', x: 65.1, y: 40.0, count: 29 },
-  { id: 'mumbai', x: 70.1, y: 44.5, count: 14 },
-  { id: 'singapore', x: 79.2, y: 57.2, count: 12 },
-  { id: 'sydney', x: 90.2, y: 82.7, count: 9 },
+export const CITY_POINTS: readonly CommunityLocation[] = [
+  { id: 'tunis', x: 52.7, y: 31.6 },
+  { id: 'paris', x: 50.6, y: 23.0 },
+  { id: 'london', x: 50.0, y: 21.2 },
+  { id: 'newYork', x: 30.9, y: 28.8 },
+  { id: 'montreal', x: 31.4, y: 25.4 },
+  { id: 'dubai', x: 65.1, y: 40.0 },
+  { id: 'mumbai', x: 70.1, y: 44.5 },
+  { id: 'singapore', x: 79.2, y: 57.2 },
+  { id: 'sydney', x: 90.2, y: 82.7 },
 ];
-
-/** "Audience Matchy+" number. */
-export const SAMPLE_AUDIENCE = 1240;
-
-/** "Présence internationale" number: the visitors of every city on the map, added up. */
-export function totalVisitors(locations: readonly CommunityLocation[]): number {
-  return locations.reduce((total, location) => total + location.count, 0);
-}
-
-/** One visitor arrives (+1) or leaves (-1) in one city; a city never drops below 1. */
-export function nudge(
-  locations: readonly CommunityLocation[],
-  index: number,
-  delta: number,
-): CommunityLocation[] {
-  return locations.map((location, current) =>
-    current === index ? { ...location, count: Math.max(1, location.count + delta) } : location,
-  );
-}
 
 /** Matchy+ was born in Tunis: the map's lines start there. */
 export const HUB_ID: CityId = 'tunis';

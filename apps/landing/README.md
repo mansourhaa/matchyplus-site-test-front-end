@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **150 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **146 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -44,10 +44,10 @@ Defined in `src/app/[lang]/page.tsx`. Sections marked **new** or **changed** are
 | 3   | Services belt (10 trades)              | `services-belt.tsx`, `belt-person.tsx`, `belt-floor.tsx`, `belt-service-info.tsx`, `belt-geometry.ts`, `belt-profile-card.tsx`, `belt-match-dialog.tsx`, `belt-data.ts` | new     |
 | 4   | Without / with Matchy+                 | `why-matchy.tsx`                                                                                                                                                        | new     |
 | 5   | Pro storefront card + referral         | `pro-branding.tsx`, `referral.tsx`                                                                                                                                      | new     |
-| 6   | Live community map                     | `live-community.tsx`, `community-marker.tsx`, `community-arcs.tsx`, `community-tooltip.tsx`, `community-counters.tsx`, `community-map.ts`                               | new     |
+| 6   | Pan-African ambition map               | `live-community.tsx`, `community-marker.tsx`, `community-arcs.tsx`, `community-tooltip.tsx`, `community-map.ts`                                                         | new     |
 | 7   | Nos partenaires (DOT-IT, GoPayzi, TCA) | `partner-logos.tsx`                                                                                                                                                     | new     |
 | 8   | Company story                          | `company-story.tsx`                                                                                                                                                     | new     |
-| 9   | Partnerships strip                     | `partnerships.tsx`                                                                                                                                                      | new     |
+| 9   | Roadmap                                | `roadmap.tsx`                                                                                                                                                           | new     |
 
 ## Other pages added
 
@@ -79,11 +79,13 @@ All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `e
 - **`hero-search.tsx`:** "I'm looking for a pro / I'm a professional / Business" toggles, plus
   "what service?" and "where?". A search opens the **results page** (`/recherche/`, see below),
   which then leads to sign-up with the search in the URL.
+- **Under the search:** a second button "Créer mon profil gratuitement" (sign-up) and the
+  reassurance line (proximity, profiles and skills, direct contact, individuals and businesses).
 - **Results page** (`app/[lang]/recherche/`, `search-results.tsx`, `search-results-data.ts`): the
-  site's blue sub-page band with "37 professionnels disponibles", the search (service, city or
-  "Près de chez vous") and a "Créer mon compte gratuit" button to the app's sign-up page
-  (`buildSearchUrl` adds `service` and `ville`). The number is a **sample** (same search, same
-  number, 12 to 48) and the page says "Chiffre indicatif" until a search API exists. The page is
+  site's blue sub-page band with "Trouvez le bon professionnel pour votre besoin", the search
+  (service, city or "Près de chez vous") and a "Créer mon compte gratuit" button to the app's
+  sign-up page (`buildSearchUrl` adds `service` and `ville`). **No count**: the content brief
+  allows only sourced figures, so a number comes back only with a real search API. The page is
   `noindex` and stays out of the sitemap.
   - The navbar has no login link, so the hero keeps "Déjà membre ? Connexion".
 
@@ -137,10 +139,14 @@ reviews, no idea of availability) with Matchy+.
 
 ### 5. Live community map (`live-community.tsx`, `community-map.ts`)
 
-`live-community.tsx` keeps the layout, the sample updates and the phone scroll. One city point
-is `community-marker.tsx`, the lines from Tunis are `community-arcs.tsx`, the city tooltip is
-`community-tooltip.tsx` and the two counters (over the map, or in a row on phones) are
-`community-counters.tsx`.
+`live-community.tsx` keeps the layout and the phone scroll. One city point is
+`community-marker.tsx`, the lines from Tunis are `community-arcs.tsx` and the city tooltip is
+`community-tooltip.tsx`.
+
+**No figures on the map** (content brief: "no number without a definition and a source"): the
+counters, the visitor counts in the tooltips and the "+1" arrivals were removed. Show a figure
+again only with a real, defined KPI (registered professionals, active users, countries really
+represented, connections made) and its source.
 
 Based on the manager's reference (a live visitors map), rebuilt in the site's theme:
 
@@ -148,18 +154,11 @@ Based on the manager's reference (a live visitors map), rebuilt in the site's th
   light world map sits directly on a white section and fades out on all four sides
   (`EDGE_FADE`, the same fade as the belt floor). Tunisia, France, Russia,
   Algeria and Morocco are in brand blue (the manager's choice).
-- **Texts (manager's wording):** badge "Acquisition & visibilité internationale", title
-  "Matchy+ attire des professionnels dans plusieurs pays". No "active now" wording anywhere.
-- **Counters in the map:** "Présence internationale", the headline number, floats over the South
-  Pacific on the left; "Audience Matchy+" over the Indian Ocean (positions in `STAT_SPOTS`). No
-  city is under them. They appear one after another, then float gently. On phones, they sit in a row
-  under the map instead, so they never hide a city.
-- **Cities:** 9 cities pulse on the map. Hovering or tapping one shows its name and number of
-  visitors.
+- **Texts (content brief):** kicker "Une ambition panafricaine", title "Matchy+ connecte les
+  talents locaux aux opportunités".
+- **Cities:** 9 cities pulse on the map (`CITY_POINTS`). Hovering or tapping one shows its name.
 - **Animations:**
   - curved lines drawn from Tunis (where Matchy+ was born) to each city;
-  - a ring and a "+1" when a visitor arrives;
-  - numbers that slide when they change;
   - a soft light sweep across the map.
   - All of it stops for "reduce motion": CSS `motion-reduce:` for the lines and sweep, and
     `MotionConfig reducedMotion="user"` for the floating and sliding.
@@ -207,53 +206,45 @@ The 3 real partners (logos in `public/matchy/partners/`, 320 px .webp, 2 to 7 KB
 opening the partner's website in a new tab (`rel="noopener noreferrer"`). GoPayzi links to its
 PitchBook profile until it has a website. To add a partner: one line in `PARTNERS`.
 
-### 8. Company story and partnerships
+### 8. Company story and roadmap
 
-- **`company-story.tsx`:** the story behind Matchy+: the founder's photo
-  (`public/showcase/founder.webp`), quote and story. The quote and name are still placeholders
-  (see below).
-- **`partnerships.tsx`:** the heading, a sliding strip of big cards that alternates partner logos
-  (white cards, placeholders for now) with free places ("Votre marque ici" with a "+", linking
-  to `/devenir-partenaire/`), and the "Devenir partenaire" button. The strip fades out at both
-  ends. The 3 benefit cards were removed at the manager's request.
+- **`company-story.tsx`:** Randa Touati's photo (`public/showcase/founder.webp`), her quote from
+  the content brief (« Chaque compétence mérite d'être visible… ») and her path (teaching, web
+  project manager at Dot-IT, co-founder of Matchy+, from her own LinkedIn post).
+- **`roadmap.tsx`** (replaces the partners strip and its `[Logo partenaire]` placeholders): "Matchy+
+  avance avec sa communauté" and the 5 steps of the brief, in order, with no status or date (the
+  brief gives none), then a "Rejoindre Matchy+" button.
 
 ---
 
 ## Example data: where it is, how to plug the real data
 
-| What                                        | Where                                                      | Status on screen          |
-| ------------------------------------------- | ---------------------------------------------------------- | ------------------------- |
-| Pros in the belt, the hero and the pro card | `belt-data.ts` + `landing.beltProfiles`                    | "Profil d'exemple" (belt) |
-| Community map: cities, counts, audience     | `community-map.ts` (`SAMPLE_LOCATIONS`, `SAMPLE_AUDIENCE`) | not labelled (manager)    |
-| Referral code `MP-7K2Q9`, 10 points         | `landing.referral*`                                        | sample code and points    |
-| Search results count                        | `search-results-data.ts` (`sampleResultCount`)             | "Chiffre indicatif"       |
+| What                                        | Where                                   | Status on screen          |
+| ------------------------------------------- | --------------------------------------- | ------------------------- |
+| Pros in the belt, the hero and the pro card | `belt-data.ts` + `landing.beltProfiles` | "Profil d'exemple" (belt) |
+| Referral code `MP-7K2Q9`, 10 points         | `landing.referral*`                     | sample code and points    |
 
-**Community map, going live:** replace the sample data with **aggregated** numbers from the API
-or Google Analytics: city, approximate position and active visitors. Never send visitor IPs to
-the browser.
-
-The sample updates only run while the section is on screen and the tab is visible.
+**Map figures, going live:** only with **aggregated**, defined and sourced KPIs (API or
+analytics). Never send visitor IPs to the browser.
 
 ---
 
 ## Before production: content to decide
 
-These placeholders are visible on the page today:
+No `[placeholder]` is left in any text (a test in `messages.test.ts` fails if one comes back).
+Still to decide:
 
-1. **Company story:** `[Prénom Nom]` and `[Phrase forte de la fondatrice…]` (the photo is in place).
-2. **Partnerships:** `[Logo partenaire]` in the white cards of the strip.
-3. **Referral:** Matchy+ has **no referral system yet**. The code, the QR code and the
+1. **Referral:** Matchy+ has **no referral system yet**. The code, the QR code and the
    "10 points" should go live only once the programme exists. Otherwise, hide the block.
-4. **Example data:** the sample pros and the search results count are labelled as examples. The
-   community map numbers are examples too but, at the manager's request, the line under the map
-   (legend and "Données d'exemple") was removed: plug the real numbers before relying on them.
+2. **Example data:** the sample pros of the belt are labelled "Profil d'exemple". The map and the
+   search page show no figures.
 
 Older issues, not caused by this work but worth a separate ticket:
 
 - **Brand teal as text:** `#49b8ad` used for text on white has a 2.4:1 contrast (WCAG asks for
   4.5:1). Headings and the footer use it too. This is a brand decision.
-- **Arabic brand name:** "Matchy+" followed by Arabic text displays as "+Matchy". It is fixed in
-  the community texts with `‎` after the "+"; the other sections still need it.
+- **Arabic brand name:** "Matchy+" followed by Arabic text displays as "+Matchy". Every Arabic
+  home text now has `\u200E` right after the "+"; other pages (FAQ, legal) were not checked.
 - **Old unused files:** `components/landing/landing-page.tsx`, `matchy/navbar.tsx`,
   `matchy/footer.tsx`, `phone-frame.tsx` and `screens.tsx` are not imported anywhere.
 
@@ -305,14 +296,14 @@ stub), and the same Testing Library setup as `apps/app`.
 | File                          | What it covers                                                                                                                                                                                                   |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `belt-geometry.test.ts`       | Front / back slots (size, blur, depth), even spacing, nearest slot, shortest turn, stage size                                                                                                                    |
-| `messages.test.ts`            | `tList` / `tRows` helpers: only strings kept, the real belt and city tables                                                                                                                                      |
+| `messages.test.ts`            | `tList` / `tRows` helpers: only strings kept, the real belt and city tables; no `[placeholder]` in any language                                                                                                  |
 | `belt-data.test.ts`           | Profile rows from the texts, invalid data ignored, a photo for every trade, pass / connect sequence                                                                                                              |
 | `belt-profile-card.test.tsx`  | Same match thresholds as the app (75 / 55), card content, Passer / Connecter / close                                                                                                                             |
 | `belt-match-dialog.test.tsx`  | Focus trap, Escape, click outside, continue                                                                                                                                                                      |
 | `referral.test.tsx`           | Sign-up link with code, texts in 3 languages, copy button                                                                                                                                                        |
-| `community-map.test.ts`       | Totals, positions on the map, curves, tooltip placement, number format, city names                                                                                                                               |
-| `search-results-data.test.ts` | Search in the URL (site and sign-up), sample count range and stability                                                                                                                                           |
-| `search-results.test.tsx`     | Results page: count, search, sign-up link with the search, "near you", back link                                                                                                                                 |
+| `community-map.test.ts`       | Positions on the map, curves, tooltip placement, number format, city names                                                                                                                                       |
+| `search-results-data.test.ts` | Search in the URL (site and sign-up)                                                                                                                                                                             |
+| `search-results.test.tsx`     | Results page: no count, search, sign-up link with the search, "near you", back link                                                                                                                              |
 | `press-data.test.ts`          | News: unique URL-safe slugs, dates (day or month only), texts in 3 languages, LinkedIn links, newest first, YouTube links (accepted / refused), dates per language                                               |
 | `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), news cards and article (video, unknown slug), partner links, new texts exist in all languages |
 

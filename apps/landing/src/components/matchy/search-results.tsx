@@ -8,11 +8,11 @@ import { ArrowRight, MapPin, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-import { buildSearchUrl, sampleResultCount } from './search-results-data';
+import { buildSearchUrl } from './search-results-data';
 
 /**
- * Results of the hero search, in the site's sub-page band: how many pros match, then a button
- * to sign up and see them. The sign-up link carries the search, like the hero did before.
+ * Results of the hero search, in the site's sub-page band: the search, then a button to sign up
+ * and see the matching pros. No count until a search API gives real numbers. The sign-up link carries the search, like the hero did before.
  */
 export function SearchResults() {
   const { t, locale } = useI18n();
@@ -24,7 +24,7 @@ export function SearchResults() {
     <main>
       <SubpageHero
         eyebrow={t('landing.resultsEyebrow')}
-        title={t('landing.resultsTitle', { count: sampleResultCount(service, city) })}
+        title={t('landing.resultsTitle')}
         subtitle={t('landing.resultsBody')}
       >
         <p className="flex flex-wrap items-center justify-center gap-2 text-sm font-bold">
@@ -53,9 +53,6 @@ export function SearchResults() {
           >
             {t('landing.resultsBack')}
           </Link>
-          <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold text-white/90">
-            {t('landing.resultsSample')}
-          </span>
         </div>
       </SubpageHero>
     </main>

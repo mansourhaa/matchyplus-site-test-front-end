@@ -101,6 +101,17 @@ export function PressArticle({ slug }: { slug: string }) {
             <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
             {t('landing.pressAll')}
           </Link>
+          {item.website && (
+            <a
+              href={item.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-blue ring-brand-blue/30 hover:bg-brand-blue/5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold ring-1 transition-colors"
+            >
+              {t('landing.pressWebsite')}
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          )}
           {item.linkedin && (
             <a
               href={item.linkedin}

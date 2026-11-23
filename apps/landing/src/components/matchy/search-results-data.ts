@@ -14,14 +14,3 @@ export function withSearch(path: string, service: string, city: string): string 
   const query = params.toString();
   return query ? `${path}?${query}` : path;
 }
-
-/**
- * Number of pros shown on the results page, between 12 and 48. Matchy+ has no public search API
- * yet, so it is a sample (labelled on the page): the same search always gives the same number.
- */
-export function sampleResultCount(service: string, city: string): number {
-  const key = `${service.trim().toLowerCase()}|${city.trim().toLowerCase()}`;
-  let hash = 0;
-  for (const char of key) hash = (hash * 31 + (char.codePointAt(0) ?? 0)) % 100_003;
-  return 12 + (hash % 37);
-}

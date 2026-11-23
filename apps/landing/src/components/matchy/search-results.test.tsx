@@ -5,7 +5,6 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SearchResults } from './search-results';
-import { sampleResultCount } from './search-results-data';
 
 const query = vi.hoisted(() => ({ value: '' }));
 
@@ -25,11 +24,10 @@ function renderIn(locale: Locale, search: string) {
 }
 
 describe('SearchResults', () => {
-  it('shows how many pros match, the search, and a sign-up link carrying it', () => {
+  it('shows the search and a sign-up link carrying it, without an invented count', () => {
     renderIn('fr', 'service=Plombier&ville=Sfax');
-    const count = sampleResultCount('Plombier', 'Sfax');
     expect(
-      screen.getByRole('heading', { name: `${count} professionnels disponibles` }),
+      screen.getByRole('heading', { name: 'Trouvez le bon professionnel pour votre besoin' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Plombier')).toBeInTheDocument();
     expect(screen.getByText('Sfax')).toBeInTheDocument();
@@ -37,8 +35,8 @@ describe('SearchResults', () => {
       'href',
       'http://localhost:3000/register?service=Plombier&ville=Sfax',
     );
-    // the number is a sample until a search API exists, and the page says so
-    expect(screen.getByText('Chiffre indicatif')).toBeInTheDocument();
+    // the content brief allows only sourced figures: no count until a search API exists
+    expect(screen.queryByText(/\d/)).toBeNull();
   });
 
   it('without a city, says "near you"; the back link returns home in the same language', () => {

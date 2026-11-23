@@ -2,23 +2,17 @@ import { SUPPORTED_LOCALES, getMessage, messages } from '@/features/i18n/message
 import { describe, expect, it } from 'vitest';
 
 import {
+  CITY_POINTS,
   HUB_ID,
-  SAMPLE_LOCATIONS,
   arcPath,
-  nudge,
   numberLocale,
   toCityNames,
   tooltipPlacement,
-  totalVisitors,
 } from './community-map';
 
 describe('community map data', () => {
-  it('adds up the visitors of every city', () => {
-    expect(totalVisitors(SAMPLE_LOCATIONS)).toBe(233);
-  });
-
   it('keeps every city on the map', () => {
-    for (const { x, y } of SAMPLE_LOCATIONS) {
+    for (const { x, y } of CITY_POINTS) {
       expect(x).toBeGreaterThan(0);
       expect(x).toBeLessThan(100);
       expect(y).toBeGreaterThan(0);
@@ -26,17 +20,9 @@ describe('community map data', () => {
     }
   });
 
-  it('moves one city by one visitor, never below 1, without touching the others', () => {
-    const next = nudge(SAMPLE_LOCATIONS, 0, 1);
-    expect(next[0].count).toBe(SAMPLE_LOCATIONS[0].count + 1);
-    expect(next.slice(1)).toEqual(SAMPLE_LOCATIONS.slice(1));
-    const one = [{ ...SAMPLE_LOCATIONS[0], count: 1 }];
-    expect(nudge(one, 0, -1)[0].count).toBe(1);
-  });
-
   it('draws a curve from one city to another, bowing upwards', () => {
     expect(arcPath({ x: 0, y: 50 }, { x: 10, y: 50 })).toBe('M0 226 Q50 196 100 226');
-    expect(SAMPLE_LOCATIONS.some(({ id }) => id === HUB_ID)).toBe(true);
+    expect(CITY_POINTS.some(({ id }) => id === HUB_ID)).toBe(true);
   });
 
   it('opens the tooltip towards the inside of the map', () => {
@@ -53,6 +39,6 @@ describe('community map data', () => {
 
   it.each(SUPPORTED_LOCALES)('%s names every city on the map', (locale) => {
     const cities = toCityNames(getMessage(messages[locale], 'landing.communityCities'));
-    for (const { id } of SAMPLE_LOCATIONS) expect(cities[id]).toBeTruthy();
+    for (const { id } of CITY_POINTS) expect(cities[id]).toBeTruthy();
   });
 });
