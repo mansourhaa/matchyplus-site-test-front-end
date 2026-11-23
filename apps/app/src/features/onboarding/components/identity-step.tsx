@@ -789,7 +789,7 @@ export function IdentityStep({
                     className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
                     style={{ background: '#EEF5FF', color: '#2F76BB' }}
                   >
-                    {locale === 'ar' ? '20 ثانية كحد أقصى' : '20s max'}
+                    {t('onboarding.identity.voiceMaxBadge')}
                   </span>
                 </div>
                 <p style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>

@@ -186,13 +186,15 @@ export function InterestsStep({
   const serviceCardOn = isIndividual ? offerService : seekService;
   // What the service card saves: provider → offer (type, price);
   // « Je cherche un prestataire » → type + budget (price), offer_service stays false.
+  // Card off → '' (not undefined): JSON.stringify drops undefined keys, so the API would
+  // keep the previous service_type / price in the database.
   const serviceCardPatch = () => {
     const effectiveOfferService = isIndividual && offerService;
-    const seeking = !isIndividual && seekService;
+    const cardOn = effectiveOfferService || (!isIndividual && seekService);
     return {
       offerService: effectiveOfferService,
-      serviceType: effectiveOfferService || seeking ? serviceType || undefined : undefined,
-      price: effectiveOfferService || seeking ? price || undefined : undefined,
+      serviceType: cardOn ? serviceType : '',
+      price: cardOn ? price : '',
     };
   };
 

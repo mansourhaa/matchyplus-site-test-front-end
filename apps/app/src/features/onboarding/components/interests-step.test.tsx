@@ -261,9 +261,39 @@ describe('InterestsStep', () => {
       interests: ['Bricolage'],
       selectedGoals: ['Trouver un job'],
       offerService: false,
-      serviceType: undefined,
-      price: undefined,
+      serviceType: '',
+      price: '',
     });
+  });
+
+  it('clears the saved service type and budget when the service card is turned off', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={{
+          ...baseProfile,
+          profile_type: 'PROVIDER',
+          interests: ['Bricolage'],
+          selected_goals: ['Trouver un job'],
+          service_type: 'Chauffeur / Transport',
+          price: '40',
+        }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+      />,
+    );
+
+    // « Chercher un prestataire » is on (saved service) — turn it off.
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    fireEvent.click(continueButton());
+
+    const patch = onNext.mock.calls[0][0];
+    expect(patch).toMatchObject({ offerService: false, serviceType: '', price: '' });
+    // Sent to the API as empty strings, so the old values are overwritten.
+    expect(JSON.parse(JSON.stringify(patch))).toMatchObject({ serviceType: '', price: '' });
   });
 
   it('submits full service details once every required field is filled', async () => {
