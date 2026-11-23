@@ -2,7 +2,6 @@
 
 import { matchyBrand } from '@/components/matchy/brand';
 import { MatchyHeaderActions } from '@/components/matchy/matchy-header-actions';
-import { VerifiedShield } from '@/components/matchy/verified-shield';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks/use-app-dispatch';
 import {
   fetchFavoriteIds,
@@ -14,17 +13,11 @@ import {
   useAutoCaptureGrantedLocation,
   useLocationGate,
 } from '@/features/location/location-context';
-import {
-  DiscoverEmptyFeed,
-  DiscoverEmptyPicks,
-} from '@/features/matching/components/discover-empty-feed';
+import { DiscoverEmptyFeed } from '@/features/matching/components/discover-empty-feed';
 import { DiscoverFiltersSheet } from '@/features/matching/components/discover-filters-sheet';
-import {
-  AIPicksHeader,
-  AIRecommendationItem,
-  LiveScorePanel,
-  matchLevelLabel,
-} from '@/features/matching/components/live-ai-score';
+import { DiscoverHomeTabs } from '@/features/matching/components/discover-home-tabs';
+import { DiscoverProfileCard } from '@/features/matching/components/discover-profile-card';
+import { DiscoverSidePanel } from '@/features/matching/components/discover-side-panel';
 import { MatchCelebrationModal } from '@/features/matching/components/match-celebration-modal';
 import { ProfileDetailModal } from '@/features/matching/components/profile-detail-modal';
 import { SECTOR_PILLS } from '@/features/matching/components/search-filters-sheet';
@@ -56,14 +49,11 @@ import {
 } from '@/features/notifications/store/notifications-slice';
 import { INDUSTRY_KEYS } from '@/features/onboarding/constants';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
-import { useVideoSettings } from '@/lib/video-settings';
-import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
+import { useMotionValue, useTransform } from 'framer-motion';
 import {
   AlertTriangle,
   Baby,
   Bell,
-  Bookmark,
-  BrainCircuit,
   Briefcase,
   Check,
   ChevronDown,
@@ -78,23 +68,16 @@ import {
   Laptop,
   Layers,
   LayoutGrid,
-  Loader2,
-  Lock,
   MapPin,
-  Play,
   RotateCcw,
   Search,
   SlidersHorizontal,
   Sparkles,
   Sprout,
-  Star,
   Store,
   ThumbsDown,
   Truck,
   Utensils,
-  Video,
-  Volume2,
-  VolumeX,
   Wrench,
   X,
   Zap,
@@ -231,7 +214,6 @@ export function DiscoverView() {
   const { t, locale } = useI18n();
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { settings: videoSettings } = useVideoSettings();
   const matching = useAppSelector(selectMatching);
   const { unreadCount } = useAppSelector(selectNotifications);
   const { favoriteIds = [], actionLoading: favLoading } = useAppSelector(selectFavorites);
@@ -257,33 +239,8 @@ export function DiscoverView() {
   const isTopFavorited = Boolean(top?.id && favoriteIds?.includes(top.id));
   const topPhoto = useAuthenticatedMediaUrl(top?.image);
   const topVideo = useAuthenticatedMediaUrl(top?.video, { stream: true });
-  const cardVideoRef = useRef<HTMLVideoElement>(null);
-  const [userPausedId, setUserPausedId] = useState<string | null>(null);
-  const [userPlayingId, setUserPlayingId] = useState<string | null>(null);
-  const [isCardVideoMuted, setIsCardVideoMuted] = useState(true);
-  const [isVideoBuffering, setIsVideoBuffering] = useState(false);
   const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<string[]>([]);
 
-  const isCardVideoPlaying = Boolean(
-    top?.id ? (videoSettings.autoPlay ? userPausedId !== top.id : userPlayingId === top.id) : false,
-  );
-
-  const handleToggleCardVideo = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (!top?.id) return;
-    const video = cardVideoRef.current;
-    if (!video) return;
-
-    if (isCardVideoPlaying) {
-      setUserPausedId(top.id);
-      setUserPlayingId(null);
-      video.pause();
-    } else {
-      setUserPausedId(null);
-      setUserPlayingId(top.id);
-      void video.play().catch(() => {});
-    }
-  };
   const {
     latitude,
     longitude,
@@ -680,11 +637,6 @@ export function DiscoverView() {
         : 'border border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
     }`;
 
-  const priceLabel = (price: string) =>
-    /(day|jour|j|يوم)/i.test(price)
-      ? price
-      : `${price.replace(/\/(h|hour|hr|heure|ساعة|س)/i, '').trim()} ${t('profileDetail.priceUnit')}`;
-
   // Right column « Meilleurs choix de l'IA »: 5 suggestions, locked after the 3rd for FREE.
   const visiblePicks = matching.feed
     .filter((p) => p.id !== top?.id && !dismissedSuggestionIds.includes(p.id))
@@ -850,63 +802,20 @@ export function DiscoverView() {
                 </div>
               )}
 
-              {/* Tabs: « Fil » | « Meilleurs choix IA » + « M'a aimé » (paid plans only, no lock) */}
-              <div
-                data-testid="discover-home-tabs"
-                className="mt-4 flex flex-wrap items-center gap-2 text-sm"
-              >
-                <div
-                  role="tablist"
-                  className="flex rounded-xl bg-white p-1 shadow-sm ring-1 ring-gray-100"
-                >
-                  {(['feed', 'top'] as const).map((mode) => {
-                    const active = homeMode === mode && !likedMeOnly;
-                    return (
-                      <button
-                        key={mode}
-                        type="button"
-                        role="tab"
-                        aria-selected={active}
-                        data-testid={`home-tab-${mode}`}
-                        onClick={() => handleHomeMode(mode)}
-                        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-colors ${
-                          active ? 'bg-[#2F76BB] text-white' : 'text-gray-600'
-                        }`}
-                      >
-                        {mode === 'top' && (isPaidPlan ? <Crown size={16} /> : <Lock size={14} />)}
-                        {mode === 'feed' ? t('matching.home.feed') : t('matching.home.topPicks')}
-                      </button>
-                    );
-                  })}
-                </div>
-                <button
-                  type="button"
-                  aria-pressed={likedMeOnly}
-                  data-testid="home-tab-liked-me"
-                  onClick={() => setLikedMeOnly((value) => !value)}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-2 font-semibold shadow-sm transition-colors ${
-                    likedMeOnly
-                      ? 'bg-pink-500 text-white'
-                      : 'bg-white text-gray-600 ring-1 ring-gray-100'
-                  }`}
-                >
-                  {isPaidPlan ? <Heart size={16} /> : <Lock size={14} />}
-                  {t('matching.home.likedMe')}
-                </button>
-                {homeMode === 'feed' &&
+              <DiscoverHomeTabs
+                homeMode={homeMode}
+                likedMeOnly={likedMeOnly}
+                isPaidPlan={isPaidPlan}
+                showColdStart={
+                  homeMode === 'feed' &&
                   !likedMeOnly &&
                   !allMode &&
                   !selectedSector &&
-                  sessionSwipes === 0 && (
-                    <span
-                      data-testid="discover-cold-start"
-                      className="flex items-center gap-1.5 text-gray-500"
-                    >
-                      <Sparkles size={16} className="text-[#61BCA6]" />
-                      {t('matching.home.coldStart')}
-                    </span>
-                  )}
-              </div>
+                  sessionSwipes === 0
+                }
+                onModeChange={handleHomeMode}
+                onToggleLikedMe={() => setLikedMeOnly((value) => !value)}
+              />
             </div>
           )}
 
@@ -919,264 +828,22 @@ export function DiscoverView() {
             ) : locationRequired ? null : top ? (
               <div className="relative h-[min(620px,72vh)] min-h-[440px] w-full max-w-[550px]">
                 <div className="absolute inset-x-6 -bottom-2 h-full rounded-[22px] bg-gray-200/70" />
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={top.id}
-                    className="absolute inset-0 cursor-grab touch-none overflow-hidden rounded-[22px] text-white shadow-xl select-none active:cursor-grabbing"
-                    style={{ zIndex: 1 }}
-                    drag={!matching.swipeLoading}
-                    dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                    dragElastic={0.7}
-                    onDragEnd={(_e, info) => {
-                      const offsetX = info.offset.x;
-                      const velocityX = info.velocity.x;
-                      if (offsetX > 100 || velocityX > 500) {
-                        void onConnect();
-                      } else if (offsetX < -100 || velocityX < -500) {
-                        void onPass();
-                      }
-                    }}
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{
-                      scale: 1,
-                      opacity: 1,
-                      x: swipeDirection === 'left' ? -500 : swipeDirection === 'right' ? 500 : 0,
-                      y: swipeDirection === 'up' ? -550 : 0,
-                      rotate: swipeDirection === 'left' ? -22 : swipeDirection === 'right' ? 22 : 0,
-                    }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    {topVideo.url ? (
-                      <>
-                        <video
-                          key={topVideo.url}
-                          ref={cardVideoRef}
-                          src={topVideo.url}
-                          preload="auto"
-                          autoPlay={isCardVideoPlaying}
-                          playsInline
-                          loop
-                          muted={isCardVideoMuted}
-                          onClick={handleToggleCardVideo}
-                          onWaiting={() => setIsVideoBuffering(true)}
-                          onPlaying={() => setIsVideoBuffering(false)}
-                          onPlay={() => {
-                            setIsVideoBuffering(false);
-                            if (top?.id) {
-                              setUserPlayingId(top.id);
-                              setUserPausedId(null);
-                            }
-                          }}
-                          onPause={() => {
-                            setIsVideoBuffering(false);
-                            if (top?.id) {
-                              setUserPausedId(top.id);
-                              setUserPlayingId(null);
-                            }
-                          }}
-                          onEnded={() => {
-                            setIsVideoBuffering(false);
-                            if (top?.id) {
-                              setUserPausedId(top.id);
-                              setUserPlayingId(null);
-                            }
-                          }}
-                          onLoadedData={(e) => {
-                            setIsVideoBuffering(false);
-                            if (isCardVideoPlaying) {
-                              void e.currentTarget.play().catch(() => {});
-                            }
-                          }}
-                          className="absolute inset-0 h-full w-full cursor-pointer bg-black object-cover"
-                        />
-
-                        {isVideoBuffering && (
-                          <div className="pointer-events-none absolute inset-0 z-25 flex items-center justify-center bg-black/30 backdrop-blur-xs">
-                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/60 shadow-2xl backdrop-blur-md">
-                              <Loader2 className="h-8 w-8 animate-spin text-[#61BCA6]" />
-                            </div>
-                          </div>
-                        )}
-
-                        {!isCardVideoPlaying && !isVideoBuffering && (
-                          <button
-                            type="button"
-                            onClick={handleToggleCardVideo}
-                            aria-label={
-                              locale === 'en'
-                                ? 'Play video'
-                                : locale === 'ar'
-                                  ? 'تشغيل الفيديو'
-                                  : 'Lire la vidéo'
-                            }
-                            className="pointer-events-auto absolute inset-0 z-20 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-black/60 text-white shadow-2xl backdrop-blur-md transition-all hover:scale-110 active:scale-95"
-                            style={{ border: '2px solid rgba(255,255,255,0.4)' }}
-                          >
-                            <Play size={28} fill="white" className="ml-1 text-white" />
-                          </button>
-                        )}
-                      </>
-                    ) : topPhoto.url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={topPhoto.url}
-                        alt={top.name}
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] text-7xl font-bold text-white">
-                        {top.name.slice(0, 1)}
-                      </div>
-                    )}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-
-                    {/* Top start: rating, AI score, level, video */}
-                    <div className="pointer-events-none absolute start-4 top-4 z-20 flex flex-col items-start gap-2">
-                      <span className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-sm font-bold text-[#1A1A2E] shadow">
-                        <Star size={16} color="#F5A623" fill="#F5A623" />
-                        {top.reviews || (Number.isFinite(top.rating) && top.rating > 0) ? (
-                          <>
-                            {top.rating.toFixed(1)}
-                            {top.reviews ? (
-                              <span className="text-xs font-normal text-gray-400">
-                                ({top.reviews})
-                              </span>
-                            ) : null}
-                          </>
-                        ) : (
-                          t('matching.home.newProfile')
-                        )}
-                      </span>
-                      <span
-                        data-testid="discover-card-ai-score"
-                        className="flex items-center gap-1.5 rounded-xl bg-black/45 px-3 py-1.5 text-[17px] font-extrabold backdrop-blur"
-                      >
-                        <BrainCircuit size={16} />
-                        {Math.round(top.match_score)}%
-                        <span className="text-xs">{t('matching.home.ai')}</span>
-                      </span>
-                      <span className="rounded-full bg-black/45 px-3 py-0.5 text-xs font-semibold">
-                        {matchLevelLabel(top, locale)}
-                      </span>
-                      {top.video && (
-                        <span className="flex items-center gap-1 rounded-full bg-black/45 px-3 py-0.5 text-xs font-semibold">
-                          <Video size={14} />
-                          {t('matching.home.video')}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Top end: available, favourite, details, sound */}
-                    <div className="pointer-events-auto absolute end-4 top-4 z-20 flex flex-col items-end gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="rounded-full bg-emerald-500 px-3 py-1 text-sm font-bold">
-                          ✓ {t('matching.available')}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void onFavorite();
-                          }}
-                          disabled={Boolean(top.id && favLoading[top.id])}
-                          aria-label={
-                            isTopFavorited
-                              ? t('profileDetail.removeFromFavorites')
-                              : t('profileDetail.addToFavorites')
-                          }
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-xs transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
-                        >
-                          <Bookmark
-                            size={16}
-                            color={isTopFavorited ? '#F5A623' : 'white'}
-                            fill={isTopFavorited ? '#F5A623' : 'none'}
-                          />
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDetailProfileId(top.id);
-                          setDetailOpen(true);
-                        }}
-                        className="rounded-full bg-[#2F76BB] px-3 py-1 text-xs font-bold"
-                      >
-                        👆 {t('matching.seeDetails')}
-                      </button>
-                      {topVideo.url && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsCardVideoMuted((prev) => !prev);
-                          }}
-                          aria-label={
-                            isCardVideoMuted
-                              ? t('matching.unmuteVideo') || 'Unmute video'
-                              : t('matching.muteVideo') || 'Mute video'
-                          }
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-md transition-all hover:bg-black/70 active:scale-95"
-                        >
-                          {isCardVideoMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Bottom: name, role, price, distance, bio, tags */}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-5">
-                      <div className="flex items-end justify-between gap-3">
-                        <div className="min-w-0">
-                          <h2 className="flex items-center gap-1.5 text-[26px] font-extrabold">
-                            <span className="truncate">{top.name}</span>
-                            {top.verified && (
-                              <VerifiedShield
-                                size={22}
-                                color="#48bba0"
-                                className="shrink-0 drop-shadow-sm"
-                                aria-label="Verified user"
-                              />
-                            )}
-                          </h2>
-                          <p className="text-lg font-semibold opacity-95">
-                            {formatRole(top.service_type || top.job || top.category, t)}
-                          </p>
-                        </div>
-                        {top.price && (
-                          <span className="shrink-0 rounded-2xl bg-[#2F76BB] px-3 py-2 font-extrabold">
-                            {priceLabel(top.price)}
-                          </span>
-                        )}
-                      </div>
-                      {((top.distance_km != null && Number.isFinite(top.distance_km)) ||
-                        top.city) && (
-                        <p className="mt-1 flex items-center gap-1.5 text-sm opacity-90">
-                          <MapPin size={16} className="text-[#61BCA6]" />
-                          {top.distance_km != null && Number.isFinite(top.distance_km)
-                            ? t('matching.kmAway', { km: top.distance_km })
-                            : top.city}
-                        </p>
-                      )}
-                      {top.bio && (
-                        <p className="mt-3 line-clamp-3 text-[15px] leading-relaxed opacity-95">
-                          {top.bio}
-                        </p>
-                      )}
-                      {top.interests?.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {top.interests.slice(0, 5).map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded-full bg-[#3F9B86]/90 px-3 py-1 text-sm"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+                <DiscoverProfileCard
+                  profile={top}
+                  photoUrl={topPhoto.url}
+                  videoUrl={topVideo.url}
+                  swipeDirection={swipeDirection}
+                  swipeLoading={matching.swipeLoading}
+                  isFavorited={isTopFavorited}
+                  favoriteBusy={Boolean(top.id && favLoading[top.id])}
+                  onFavorite={() => void onFavorite()}
+                  onOpenDetails={() => {
+                    setDetailProfileId(top.id);
+                    setDetailOpen(true);
+                  }}
+                  onConnect={() => void onConnect()}
+                  onPass={() => void onPass()}
+                />
               </div>
             ) : planLock ? (
               !matching.feedLoading && (
@@ -1320,120 +987,36 @@ export function DiscoverView() {
           style={{ width: 360, background: matchyBrand.bg }}
         >
           {locationRequired || !locationSynced ? null : (
-            <>
-              {top ? (
-                <div className="space-y-4">
-                  <div className="relative h-40 overflow-hidden rounded-2xl text-white">
-                    {topVideo.url ? (
-                      <video
-                        key={`sidebar-${topVideo.url}`}
-                        src={topVideo.url}
-                        preload="auto"
-                        autoPlay={videoSettings.autoPlay}
-                        playsInline
-                        loop
-                        muted
-                        onLoadedData={(e) => {
-                          if (videoSettings.autoPlay) {
-                            void e.currentTarget.play().catch(() => {});
-                          }
-                        }}
-                        className="h-full w-full bg-black object-cover"
-                      />
-                    ) : topPhoto.url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={topPhoto.url}
-                        alt={top.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] text-3xl font-bold text-white">
-                        {top.name.slice(0, 1)}
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                    <div className="absolute start-4 bottom-3">
-                      <b className="text-lg">{top.name}</b>
-                      <p className="text-sm opacity-90">
-                        {formatRole(top.service_type || top.job || top.category, t)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDetailProfileId(top.id);
-                        setDetailOpen(true);
-                      }}
-                      className="absolute end-3 bottom-3 rounded-full bg-black/40 px-3 py-1 text-xs font-bold"
-                    >
-                      👆 {t('matching.seeDetails')}
-                    </button>
-                  </div>
-                  <LiveScorePanel
-                    profile={top}
-                    isComputing={matching.feedLoading && !matching.feedLoaded}
-                    detailsLocked={!isPaidPlan}
-                    onUnlockDetails={() => openPlanModal('status')}
-                  />
-                </div>
-              ) : null}
-
-              <div className="flex items-center gap-2">
-                <AIPicksHeader
-                  count={visiblePicks.length}
-                  refreshing={matching.feedLoading}
-                  onRefresh={() => {
-                    if (latitude == null || longitude == null) return;
-                    setDismissedSuggestionIds([]);
-                    void dispatch(
-                      fetchSwipeFeed({
-                        latitude,
-                        longitude,
-                        sector: selectedSector ?? undefined,
-                        maxDistanceKm: filters.distanceKm ?? undefined,
-                        ...modeParams(homeMode),
-                      }),
-                    );
-                  }}
-                />
-              </div>
-              <div className="flex-1 space-y-2.5">
-                {matching.feedLoading && !matching.feedLoaded ? (
-                  <div className="space-y-2">
-                    {[0, 1, 2].map((i) => (
-                      <div
-                        key={i}
-                        className="h-14 animate-pulse rounded-2xl bg-white"
-                        style={{ animationDelay: `${i * 0.1}s` }}
-                      />
-                    ))}
-                  </div>
-                ) : visiblePicks.length === 0 ? (
-                  <DiscoverEmptyPicks />
-                ) : (
-                  visiblePicks.map((profile, i) => (
-                    <AIRecommendationItem
-                      key={profile.id}
-                      profile={profile}
-                      rank={i}
-                      locked={isPickLocked(profile, i)}
-                      onDismiss={() => {
-                        setDismissedSuggestionIds((prev) => [...prev, profile.id]);
-                      }}
-                      onClick={() => {
-                        if (isPickLocked(profile, i)) {
-                          openPlanModal('locked_profile');
-                          return;
-                        }
-                        setDetailProfileId(profile.id);
-                        setDetailOpen(true);
-                      }}
-                    />
-                  ))
-                )}
-              </div>
-            </>
+            <DiscoverSidePanel
+              profile={top}
+              photoUrl={topPhoto.url}
+              videoUrl={topVideo.url}
+              isComputing={matching.feedLoading && !matching.feedLoaded}
+              detailsLocked={!isPaidPlan}
+              picks={visiblePicks}
+              isPickLocked={isPickLocked}
+              refreshing={matching.feedLoading}
+              onOpenProfile={(id) => {
+                setDetailProfileId(id);
+                setDetailOpen(true);
+              }}
+              onLockedPick={() => openPlanModal('locked_profile')}
+              onUnlockDetails={() => openPlanModal('status')}
+              onDismissPick={(id) => setDismissedSuggestionIds((prev) => [...prev, id])}
+              onRefresh={() => {
+                if (latitude == null || longitude == null) return;
+                setDismissedSuggestionIds([]);
+                void dispatch(
+                  fetchSwipeFeed({
+                    latitude,
+                    longitude,
+                    sector: selectedSector ?? undefined,
+                    maxDistanceKm: filters.distanceKm ?? undefined,
+                    ...modeParams(homeMode),
+                  }),
+                );
+              }}
+            />
           )}
         </div>
       </div>
