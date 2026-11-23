@@ -10,11 +10,15 @@ import Link from 'next/link';
 import { Reveal } from './motion';
 import { NETWORK_PARTNERS, type Partner } from './partners-data';
 
-/** Strip slots: each partner's logo, then a free place to take ("Votre marque ici"). */
-const SLOTS: (Partner | 'free')[] = NETWORK_PARTNERS.flatMap((partner) => [
+/**
+ * Strip slots: each partner's logo, then a free place to take ("Votre marque ici"), repeated until
+ * one round is wider than a large screen (at least 8 cards), so the loop never shows a gap.
+ */
+const ROUND: (Partner | 'free')[] = NETWORK_PARTNERS.flatMap((partner) => [
   partner,
   'free' as const,
 ]);
+const SLOTS = Array.from({ length: Math.ceil(8 / ROUND.length) }, () => ROUND).flat();
 
 /**
  * "Ils avancent avec Matchy+": a sliding strip that mixes the real partners' logos with free
@@ -24,14 +28,15 @@ export function Partnerships() {
   const { t, locale } = useI18n();
 
   return (
-    <section className="from-brand-blue via-brand-blue to-brand-teal relative overflow-hidden bg-gradient-to-br py-20 text-white md:py-24">
+    // white, like the map just above it
+    <section className="relative overflow-hidden bg-white py-20 md:py-24">
       <div className="mx-auto max-w-6xl px-5">
         <Reveal className="text-center">
-          {/* centred heading, same as features / belt / map (white bar on the dark band) */}
-          <h2 className="text-3xl font-bold text-balance md:text-4xl">
+          {/* centred heading, same as features / belt / map */}
+          <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
             {t('landing.partnersTitle')}
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/85 md:text-base">
+          <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-sm leading-relaxed md:text-base">
             {t('landing.partnersBody')}
           </p>
         </Reveal>
@@ -40,8 +45,8 @@ export function Partnerships() {
       {/*
         Decorative strip, shown twice for a seamless loop: hidden from screen readers and out of
         the tab order (the "Devenir partenaire" button below is the accessible way in).
-        The partners' names are in "Nos partenaires" at the end of the page, so the logos here have no
-        alt.
+        The partners' names are on /partenaires/ (the "Devenir partenaire" link of the footer), so
+        the logos here have no alt.
       */}
       <div
         className="mt-14 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]"
@@ -58,7 +63,7 @@ export function Partnerships() {
             slot !== 'free' ? (
               <span
                 key={index}
-                className={`grid h-44 w-56 shrink-0 place-items-center overflow-hidden rounded-3xl bg-white shadow-xl shadow-black/10 ${slot.background ? '' : 'p-6'}`}
+                className={`grid h-44 w-56 shrink-0 place-items-center overflow-hidden rounded-3xl bg-white shadow-xl ring-1 shadow-[#2F76BB]/10 ring-slate-100 ${slot.background ? '' : 'p-6'}`}
                 style={{ backgroundColor: slot.background }}
               >
                 <Image
@@ -78,12 +83,12 @@ export function Partnerships() {
                 key={index}
                 href={localizePath(locale, '/devenir-partenaire')}
                 tabIndex={-1}
-                className="group flex h-44 w-56 shrink-0 flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed border-white/50 bg-white/10 transition-colors hover:bg-white/20"
+                className="group border-brand-blue/30 bg-brand-blue/[0.04] hover:bg-brand-blue/[0.08] flex h-44 w-56 shrink-0 flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed transition-colors"
               >
-                <span className="text-brand-blue grid h-16 w-16 place-items-center rounded-full bg-white shadow-lg transition-transform group-hover:scale-110">
+                <span className="bg-brand-blue grid h-16 w-16 place-items-center rounded-full text-white shadow-lg transition-transform group-hover:scale-110">
                   <Plus className="h-7 w-7" />
                 </span>
-                <span className="font-bold">{t('landing.partnersSlot')}</span>
+                <span className="text-brand-navy font-bold">{t('landing.partnersSlot')}</span>
               </Link>
             ),
           )}
@@ -93,7 +98,7 @@ export function Partnerships() {
       <div className="mt-12 text-center">
         <Link
           href={localizePath(locale, '/devenir-partenaire')}
-          className="text-brand-blue inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 font-bold shadow-xl transition-transform hover:scale-[1.03]"
+          className="bg-brand-blue inline-flex items-center gap-2 rounded-full px-8 py-3.5 font-bold text-white shadow-xl transition-transform hover:scale-[1.03]"
         >
           {t('landing.partnersCta')}
           <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />

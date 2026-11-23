@@ -263,6 +263,7 @@ function footerColumns(t: (key: string) => string, locale: Locale) {
         { label: t('landing.footerVisibility'), href: page('/utilisation') },
         { label: t('landing.footerHowItWorks'), href: page('/utilisation') },
         { label: t('landing.footerHelp'), href: page('/faq') },
+        { label: t('landing.footerAllServices'), href: page('/services') },
         { label: t('landing.footerLogin'), href: APP_LOGIN_URL, app: true },
         // the professional's way in: the partner form
         { label: t('landing.partnersCta'), href: page('/devenir-partenaire') },

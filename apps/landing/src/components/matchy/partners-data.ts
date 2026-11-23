@@ -54,8 +54,6 @@ export const PARTNERS: readonly Partner[] = [
 
 /** "Ils avancent avec Matchy+" and /partenaires/: the partners Matchy+ works with day to day. */
 export const NETWORK_PARTNERS: readonly Partner[] = [
-  DOTIT,
-  GOPAYZI,
   {
     id: 'sahora',
     name: 'Sahora',

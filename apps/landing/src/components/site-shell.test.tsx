@@ -17,6 +17,7 @@ const COLUMNS = {
     'Développer ma visibilité',
     'Fonctionnement',
     'Centre d’aide',
+    'Tous les services',
     'Se connecter',
     'Devenir partenaire',
   ],
@@ -66,6 +67,7 @@ describe('Footer', () => {
     const pros = 'Pour les professionnels';
     expect(href('Créer mon profil', pros)).toMatch(/\/register$/);
     expect(href('Centre d’aide', pros)).toMatch(/^\/fr\/faq\/?$/);
+    expect(href('Tous les services', pros)).toMatch(/^\/fr\/services\/?$/);
     expect(href('Se connecter', pros)).toMatch(/\/connexion$/);
     // professionals: the partner form; Matchy+: the page of our partners
     expect(href('Devenir partenaire', pros)).toMatch(/^\/fr\/devenir-partenaire\/?$/);

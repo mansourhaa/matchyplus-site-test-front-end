@@ -47,7 +47,7 @@ export function CompanyStory() {
             <p className="text-brand-navy mt-5 font-bold">{t('landing.storyName')}</p>
             <p className="text-muted-foreground text-sm">{t('landing.storyRole')}</p>
             <Link
-              href={localizePath(locale, '/a-propos')}
+              href={localizePath(locale, '/a-propos/histoire-matchy-plus')}
               className="text-brand-blue border-brand-teal mt-6 inline-flex items-center gap-2 border-b-2 pb-0.5 font-bold"
             >
               {t('landing.storyLink')}

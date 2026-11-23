@@ -63,7 +63,15 @@ describe('sitemap', () => {
     const urls = entries.map((entry) => entry.url);
     expect(new Set(urls).size).toBe(urls.length);
     const articles = pressItems().filter((item) => !item.sample);
-    expect(urls).toHaveLength((11 + articles.length) * SUPPORTED_LOCALES.length);
+    expect(urls).toHaveLength((12 + articles.length) * SUPPORTED_LOCALES.length);
+    // the story page has the addresses of its document, translated per language
+    for (const path of [
+      'fr/a-propos/histoire-matchy-plus/',
+      'en/about/matchy-plus-story/',
+      'ar/about/matchy-plus-story/',
+    ]) {
+      expect(urls).toContain(`https://matchyplus.com/${path}`);
+    }
     // every date is real, including news dated by month or by year only
     for (const entry of entries) {
       expect(Number.isNaN(new Date(entry.lastModified ?? '').getTime())).toBe(false);

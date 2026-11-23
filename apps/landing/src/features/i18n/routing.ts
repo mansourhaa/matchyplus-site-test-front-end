@@ -19,6 +19,12 @@ const LOCALIZED_SLUGS: Record<string, Record<Locale, string>> = {
   '/a-propos': { fr: '/a-propos', en: '/about-us', ar: '/من-نحن' },
   '/faq': { fr: '/faq', en: '/faq', ar: '/الأسئلة-الشائعة' },
   '/services': { fr: '/services', en: '/services', ar: '/الخدمات' },
+  // addresses from the "Story Matchy" document
+  '/a-propos/histoire-matchy-plus': {
+    fr: '/a-propos/histoire-matchy-plus',
+    en: '/about/matchy-plus-story',
+    ar: '/about/matchy-plus-story',
+  },
 };
 
 /** Route folder of a path, whatever language its slug is in: `/about-us` → `/a-propos`. */

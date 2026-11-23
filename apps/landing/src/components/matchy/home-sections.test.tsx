@@ -18,6 +18,8 @@ import { Press } from './press';
 import { PRESS_ITEMS, pressItems } from './press-data';
 import { PressArticle, PressList } from './press-pages';
 import { ProBranding } from './pro-branding';
+import { STORY } from './story-data';
+import { StoryPage } from './story-page';
 import { WhyMatchy } from './why-matchy';
 
 const push = vi.hoisted(() => vi.fn());
@@ -198,12 +200,39 @@ describe('home sections', () => {
     expect(logo.getAttribute('src')).toContain('matchy-plus-logo.svg');
   });
 
-  it('CompanyStory links to the about page', () => {
+  it('CompanyStory links to the story page', () => {
     renderIn('en', <CompanyStory />);
     expect(screen.getByRole('link', { name: /Discover our story/ })).toHaveAttribute(
       'href',
-      expect.stringMatching(/^\/en\/about-us\/?$/),
+      expect.stringMatching(/^\/en\/about\/matchy-plus-story\/?$/),
     );
+  });
+
+  it('Story page tells the story in 3 numbered steps and ends with a button per reader', () => {
+    for (const locale of SUPPORTED_LOCALES) {
+      const { unmount } = renderIn(locale, <StoryPage />);
+      const text = STORY[locale];
+      expect(screen.getByRole('heading', { level: 1, name: text.title })).toBeInTheDocument();
+      expect(screen.getByText(text.quote)).toBeInTheDocument();
+      for (const section of text.sections) {
+        expect(
+          screen.getByRole('heading', { level: 2, name: section.heading }),
+        ).toBeInTheDocument();
+      }
+      expect(screen.getByRole('link', { name: text.next.find[1] })).toHaveAttribute(
+        'href',
+        expect.stringMatching(new RegExp(`^/${locale}/recherche/?$`)),
+      );
+      expect(screen.getByRole('link', { name: text.next.profile[1] })).toHaveAttribute(
+        'href',
+        expect.stringMatching(/\/register$/),
+      );
+      expect(screen.getByRole('link', { name: text.next.build[1] })).toHaveAttribute(
+        'href',
+        expect.stringMatching(new RegExp(`^/${locale}/devenir-partenaire/?$`)),
+      );
+      unmount();
+    }
   });
 
   it('Partnerships strip shows the real partner logos, and free places lead to the partner page', () => {
@@ -211,8 +240,10 @@ describe('home sections', () => {
     // the strip is decorative, so its links and logos are not in the accessibility tree
     const strip = container.querySelector('[aria-hidden="true"]');
     const logos = [...(strip?.querySelectorAll('img') ?? [])].map((img) => img.getAttribute('src'));
-    // the strip shows the network partners (Sahora and Pro Services, not TCA)
-    expect(logos.some((src) => src?.includes('tca'))).toBe(false);
+    // the strip shows the network partners only: Sahora and Pro Services
+    for (const other of ['tca', 'dotit', 'gopayzi']) {
+      expect(logos.some((src) => src?.includes(other))).toBe(false);
+    }
     for (const partner of NETWORK_PARTNERS) {
       expect(logos.some((src) => src?.includes(partner.logo.split('/').pop() ?? ''))).toBe(true);
     }

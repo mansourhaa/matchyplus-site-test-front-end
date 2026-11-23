@@ -60,6 +60,7 @@ type PageSeo = {
 export type PageKey =
   | 'home'
   | 'a-propos'
+  | 'histoire'
   | 'services'
   | 'devenir-partenaire'
   | 'partenaires'
@@ -155,6 +156,38 @@ export const PAGES: Record<PageKey, PageSeo> = {
     priority: 0.8,
     copy: aboutCopy(),
   },
+  histoire: {
+    path: '/a-propos/histoire-matchy-plus',
+    changeFrequency: 'monthly',
+    priority: 0.7,
+    // texts of the "Story Matchy" document (SEO and Open Graph parts)
+    copy: {
+      fr: {
+        title: 'L’histoire de Matchy+ | Du premier MVP à une ambition réelle',
+        description:
+          'Découvrez comment Matchy+ est née d’un premier MVP créé avec l’aide de l’IA pour rendre les compétences locales plus visibles et les opportunités plus accessibles.',
+        ogTitle: 'Matchy+ : une idée, un premier MVP et une ambition devenue réalité',
+        ogDescription:
+          'Découvrez comment Matchy+ est née avec l’aide de l’intelligence artificielle pour rapprocher les besoins, les compétences et les opportunités.',
+      },
+      en: {
+        title: 'The Matchy+ Story | From First MVP to Growing Ambition',
+        description:
+          'Discover how Matchy+ grew from a first AI-assisted MVP into a platform making local skills more visible and opportunities more accessible.',
+        ogTitle: 'Matchy+: An Idea, a First MVP and an Ambition Brought to Life',
+        ogDescription:
+          'Discover how Matchy+ began with the help of AI to connect needs, skills and opportunities.',
+      },
+      ar: {
+        title: 'قصة Matchy+\u200E | من النموذج الأولي إلى الطموح',
+        description:
+          'اكتشفوا كيف بدأت Matchy+\u200E بنموذج أولي تم إنشاؤه بمساعدة الذكاء الاصطناعي لجعل المهارات المحلية أكثر ظهوراً والفرص أكثر سهولة.',
+        ogTitle: 'Matchy+\u200E: فكرة، ونموذج أولي، وطموح أصبح حقيقة',
+        ogDescription:
+          'اكتشفوا كيف بدأت Matchy+\u200E بمساعدة الذكاء الاصطناعي لربط الاحتياجات والمهارات والفرص.',
+      },
+    },
+  },
   partenaires: {
     path: '/partenaires',
     changeFrequency: 'monthly',
@@ -163,17 +196,17 @@ export const PAGES: Record<PageKey, PageSeo> = {
       fr: {
         title: 'Nos partenaires',
         description:
-          'Les partenaires de Matchy+ (DOT-IT, GoPayzi, Sahora, Pro Services Maintenance) et les avantages d’un partenariat avec la plateforme de services locaux.',
+          'Les partenaires de Matchy+ (Sahora, Pro Services Maintenance) et les avantages d’un partenariat avec la plateforme de services locaux.',
       },
       en: {
         title: 'Our partners',
         description:
-          'Matchy+ partners (DOT-IT, GoPayzi, Sahora, Pro Services Maintenance) and the benefits of partnering with the local services platform.',
+          'Matchy+ partners (Sahora, Pro Services Maintenance) and the benefits of partnering with the local services platform.',
       },
       ar: {
         title: 'شركاؤنا',
         description:
-          'شركاء Matchy+\u200E (DOT-IT وGoPayzi وSahora وPro Services Maintenance) ومزايا الشراكة مع منصة الخدمات المحلية.',
+          'شركاء Matchy+\u200E (Sahora وPro Services Maintenance) ومزايا الشراكة مع منصة الخدمات المحلية.',
       },
     },
   },
