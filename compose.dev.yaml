@@ -8,6 +8,7 @@
 #   - postgres  → optional local DB (skip if you already run Postgres)
 #   - redis     → job queue + cache
 #   - ai        → Flask health API + Redis Streams worker
+#   - voice-ai  → onboarding video/voice analysis and matching agents (FastAPI, port 8001)
 #
 # Staging/production do NOT use this file — they deploy via Kubernetes/ArgoCD.
 
@@ -79,6 +80,9 @@ services:
       AI_WORKER_CONCURRENCY: ${AI_WORKER_CONCURRENCY:-1}
       AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-dev-ai-internal-token}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # ANALYZE_VIDEO jobs: the voice-ai container of this file (overrides the
+      # host.docker.internal value that .env.development keeps for the API on the host).
+      VOICE_AI_URL: http://voice-ai:8001
       # VERIFY_IDENTITY reads the selfie + profile photo apps/api saved to its uploads
       # dir — apps/api runs on the host, not in this compose file, so there's no other
       # way for this container to see those files. Bind-mounted below.
@@ -104,7 +108,45 @@ services:
       retries: 5
       start_period: 20s
 
+  voice-ai:
+    build:
+      # Monorepo root: the image also needs the project lead's CSV files (data/taxonomy).
+      context: .
+      dockerfile: apps/voice-ai/Dockerfile
+      args:
+        # true = torch + transformers in the image, for DERJA_ENGINE=hf (several GB).
+        WITH_HF: ${VOICE_AI_WITH_HF:-false}
+        # CUDA wheels for a GPU machine: https://download.pytorch.org/whl/cu124
+        TORCH_INDEX_URL: ${VOICE_AI_TORCH_INDEX_URL:-https://download.pytorch.org/whl/cpu}
+    container_name: saas_voice_ai
+    restart: unless-stopped
+    environment:
+      # vosk = LinTO derja on CPU (default). The fine-tuned derja Whisper (DERJA_ENGINE=hf,
+      # HF_ASR_MODEL=...) needs VOICE_AI_WITH_HF=true; its weights go to the same volume.
+      DERJA_ENGINE: ${VOICE_AI_DERJA_ENGINE:-vosk}
+      HF_ASR_MODEL: ${VOICE_AI_HF_ASR_MODEL:-}
+      # false = also wait for the CPU Whisper pass when the hf engine runs (two readings).
+      SKIP_CPU_WHISPER_WITH_HF: ${VOICE_AI_SKIP_CPU_WHISPER_WITH_HF:-true}
+      WHISPER_SIZE: ${VOICE_AI_WHISPER_SIZE:-small}
+      LLM_MODE: ${VOICE_AI_LLM_MODE:-off}
+      PRELOAD_MODELS: ${VOICE_AI_PRELOAD_MODELS:-false}
+      DOWNLOAD_MODELS: ${VOICE_AI_DOWNLOAD_MODELS:-true}
+    volumes:
+      # Whisper + LinTO (~1 GB), downloaded on the first start only — without this, every
+      # container recreate would download them again.
+      - saas_voice_ai_models:/models
+    ports:
+      # The API (pnpm dev, on the host) reaches it on localhost:8001 / host.docker.internal:8001.
+      - "${VOICE_AI_PORT:-8001}:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 600s
+
 volumes:
   saas_postgres_data:
   saas_redis_data:
   saas_ai_deepface_cache:
+  saas_voice_ai_models:

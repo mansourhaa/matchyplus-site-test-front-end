@@ -13,13 +13,15 @@ Les modèles du LLM et des embeddings se téléchargent avec Ollama :
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import zipfile
 from pathlib import Path
 
 from huggingface_hub import hf_hub_download, snapshot_download
 
-MODELS = Path(__file__).resolve().parent.parent / "models"
+# Same folder as app/config.py (MODELS_DIR); /models in the Docker image.
+MODELS = Path(os.getenv("MODELS_DIR", str(Path(__file__).resolve().parent.parent / "models")))
 WHISPER_REPOS = {
     "tiny": "Systran/faster-whisper-tiny", "base": "Systran/faster-whisper-base",
     "small": "Systran/faster-whisper-small", "medium": "Systran/faster-whisper-medium",
@@ -62,7 +64,7 @@ def main() -> None:
     ap.add_argument("--whisper", default="small", choices=list(WHISPER_REPOS))
     ap.add_argument("--skip-linto", action="store_true")
     args = ap.parse_args()
-    MODELS.mkdir(exist_ok=True)
+    MODELS.mkdir(parents=True, exist_ok=True)
     download_whisper(args.whisper)
     if not args.skip_linto:
         download_linto()
