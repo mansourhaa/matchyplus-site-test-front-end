@@ -70,7 +70,7 @@ pipeline {
     // every app that ships as a container. The scan/push/sign stages iterate
     // this list instead of repeating themselves per image, so adding a sixth
     // app means editing this line and the build stage - not four stages.
-    IMAGE_COMPONENTS = 'api app admin landing ai'
+    IMAGE_COMPONENTS = 'api app admin landing ai voice-ai'
 
     // Build with BuildKit, not the legacy builder.
     //
@@ -342,6 +342,26 @@ pipeline {
       }
     }
 
+    stage('Voice AI service tests') {
+      agent { docker { image 'python:3.12-slim'; args '-u root'; reuseNode true } }
+      options { timeout(time: 25, unit: 'MINUTES') }
+      steps {
+        sh '''
+          apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+          pip install --no-cache-dir -r apps/voice-ai/requirements.txt -r apps/voice-ai/requirements-dev.txt
+          mkdir -p apps/voice-ai/test-results
+          cd apps/voice-ai && python -m pytest -q --junitxml=test-results/junit.xml
+        '''
+      }
+      post {
+        always {
+          sh 'chown -R "$(stat -c "%u:%g" .)" . 2>/dev/null || true'
+          junit testResults: 'apps/voice-ai/test-results/junit.xml', allowEmptyResults: true, skipPublishingChecks: true
+          archiveArtifacts artifacts: 'apps/voice-ai/test-results/junit.xml', allowEmptyArchive: true
+        }
+      }
+    }
+
     // mirrors the old Matchy platform's sonarqube setup (same server config,
     // token, docker network). needs to run after the test stages since it
     // reads their coverage output.
@@ -564,6 +584,7 @@ pipeline {
           docker build --pull --build-arg NEXT_PUBLIC_API_URL=${FRONTEND_API_URL} --build-arg NEXT_PUBLIC_APP_URL=${FRONTEND_APP_URL} -t ${REGISTRY_REPO}:admin-${IMAGE_TAG} -f apps/admin/Dockerfile .
           docker build --pull --build-arg NEXT_PUBLIC_APP_URL=${FRONTEND_APP_URL} --build-arg NEXT_PUBLIC_COOKIEYES_SRC=${env.ANALYTICS_COOKIEYES_SRC ?: ''} --build-arg NEXT_PUBLIC_GA_MEASUREMENT_ID=${env.ANALYTICS_GA_MEASUREMENT_ID ?: ''} --build-arg NEXT_PUBLIC_CLARITY_PROJECT_ID=${env.ANALYTICS_CLARITY_PROJECT_ID ?: ''} -t ${REGISTRY_REPO}:landing-${IMAGE_TAG} -f apps/landing/Dockerfile .
           docker build --pull -t ${REGISTRY_REPO}:ai-${IMAGE_TAG} -f apps/ai/Dockerfile apps/ai
+          docker build --pull -t ${REGISTRY_REPO}:voice-ai-${IMAGE_TAG} -f apps/voice-ai/Dockerfile .
         """
         sh 'mkdir -p reports/stages && touch reports/stages/build'
       }

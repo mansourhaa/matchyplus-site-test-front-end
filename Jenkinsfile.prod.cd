@@ -69,7 +69,7 @@ pipeline {
   environment {
     REGISTRY_REPO = "${env.REGISTRY_REPO}"
 
-    IMAGE_COMPONENTS = 'api app admin landing ai'
+    IMAGE_COMPONENTS = 'api app admin landing ai voice-ai'
 
     // Public prod hostnames. Real DNS and a real certificate, unlike staging's
     // .local names and self-signed cert - which is also why OAuth works here

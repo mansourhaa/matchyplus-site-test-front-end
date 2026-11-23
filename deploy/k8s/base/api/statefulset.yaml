@@ -38,6 +38,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: VOICE_AI_URL
+              value: http://saas-voice-ai:8001
+            - name: MATCHING_ENGINE
+              value: builtin
           volumeMounts:
             # media-storage.ts: <workdir>/apps/api/uploads, shared with saas-ai.
             - name: uploads

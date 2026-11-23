@@ -13,11 +13,14 @@ Only a temporary clip sent with "deleteAfter": true is removed once analysed.
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Any
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 VOICE_AI_URL = os.getenv("VOICE_AI_URL", "http://voice-ai:8001")
 VOICE_AI_TIMEOUT = float(os.getenv("VOICE_AI_TIMEOUT", "180"))
@@ -69,5 +72,10 @@ def process_analyze_video(payload: dict[str, Any]) -> dict[str, Any]:
     if (
         payload.get("deleteAfter") is True
     ):  # temporary clip only, never the profile video
-        path.unlink(missing_ok=True)
+        try:
+            path.unlink(missing_ok=True)
+        except OSError as exc:
+            # In Kubernetes the shared uploads PVC is mounted read-only on the ai worker;
+            # the API's background clip sweeper removes temporary onboarding clips instead.
+            logger.debug("Skipping temporary clip unlink for %s: %s", path, exc)
     return {"processor": "analyze_video", **body}

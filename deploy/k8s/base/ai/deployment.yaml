@@ -32,6 +32,8 @@ spec:
             # Same files as the API's apps/api/uploads (shared volume below).
             - name: AI_UPLOADS_DIR
               value: /data/uploads
+            - name: VOICE_AI_URL
+              value: http://saas-voice-ai:8001
           volumeMounts:
             - name: uploads
               mountPath: /data/uploads
