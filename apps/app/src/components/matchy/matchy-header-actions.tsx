@@ -6,6 +6,7 @@ import {
   fetchNotifications,
   selectNotifications,
 } from '@/features/notifications/store/notifications-slice';
+import { LangPickerLight } from '@/features/onboarding/components/lang-picker-light';
 import { Bell } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -24,6 +25,8 @@ export function MatchyHeaderActions() {
 
   return (
     <div className="flex items-center gap-2">
+      {/* 2.0.8 header: language flag + code (FR / EN / AR) */}
+      <LangPickerLight showCode />
       <Link
         href="/notifications"
         className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-slate-100"

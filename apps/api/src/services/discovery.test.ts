@@ -453,6 +453,23 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(interestFiltered.profiles.map((p) => p.id)).toEqual(['2']);
   });
 
+  it('filters by the onboarding industry key sent by the home sector menu', async () => {
+    const prisma = createMockPrisma([
+      candidate('1', { industry: 'commerce_retail', activity_sector: 'Boutique' }),
+      candidate('2', { industry: 'tech_digital', activity_sector: 'Informatique / Tech' }),
+      candidate('3', { industry: null, activity_sector: 'Aide ménagère' }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      sector: 'commerce_retail',
+      context: 'swipe',
+    });
+    expect(result.profiles.map((p) => p.id)).toEqual(['1']);
+  });
+
   it('retrieves distinct active sectors from database profiles', async () => {
     const prisma = {
       user: {

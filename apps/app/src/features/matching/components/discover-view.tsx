@@ -23,7 +23,7 @@ import {
   AIPicksHeader,
   AIRecommendationItem,
   LiveScorePanel,
-  MatchScoreBadge,
+  matchLevelLabel,
 } from '@/features/matching/components/live-ai-score';
 import { MatchCelebrationModal } from '@/features/matching/components/match-celebration-modal';
 import { ProfileDetailModal } from '@/features/matching/components/profile-detail-modal';
@@ -54,6 +54,7 @@ import {
   fetchNotifications,
   selectNotifications,
 } from '@/features/notifications/store/notifications-slice';
+import { INDUSTRY_KEYS } from '@/features/onboarding/constants';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
 import { useVideoSettings } from '@/lib/video-settings';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
@@ -62,25 +63,36 @@ import {
   Baby,
   Bell,
   Bookmark,
+  BrainCircuit,
   Briefcase,
   Check,
   ChevronDown,
+  Crown,
+  Factory,
   Flower2,
+  GraduationCap,
   Hammer,
   Heart,
+  HeartPulse,
+  Landmark,
   Laptop,
   Layers,
+  LayoutGrid,
   Loader2,
   Lock,
   MapPin,
   Play,
+  RotateCcw,
   Search,
   SlidersHorizontal,
   Sparkles,
+  Sprout,
   Star,
+  Store,
   ThumbsDown,
   Truck,
   Utensils,
+  Video,
   Volume2,
   VolumeX,
   Wrench,
@@ -129,6 +141,31 @@ export function getSectorIcon(sector: string | null) {
   return <Briefcase size={14} className="shrink-0" />;
 }
 
+/** 2.0.8 chips: one emoji per sector (the dropdown keeps the icons). */
+export function getSectorEmoji(sector: string): string {
+  const s = sector.trim().toLowerCase();
+  if (s.includes('tech') || s.includes('informatique')) return '🖥️';
+  if (s.includes('btp') || s.includes('artisanat')) return '🧱';
+  if (s.includes('transport') || s.includes('chauffeur')) return '🚗';
+  if (s.includes('ménage') || s.includes('menage')) return '🧹';
+  if (s.includes('freelance')) return '💻';
+  if (s.includes('cuisine') || s.includes('restauration')) return '🧑‍🍳';
+  if (s.includes('jardinage')) return '🌿';
+  if (s.includes('garde') || s.includes('enfant')) return '👶';
+  if (s.includes('plomberie')) return '🔧';
+  if (s.includes('électricité') || s.includes('electricite')) return '⚡';
+  return '💼';
+}
+
+/**
+ * Feed query of the home tabs/chips: « Meilleurs choix IA » = ranked by AI score (search
+ * context of the API), « الكل » = everyone nearest first, « لك » = the personalised feed.
+ */
+function feedModeParams(mode: 'feed' | 'top', all: boolean) {
+  if (mode === 'top') return { context: 'search' as const, sort: 'match' as const };
+  return all ? { sort: 'distance' as const } : {};
+}
+
 export function DiscoverCardSkeleton() {
   return (
     <div
@@ -157,7 +194,27 @@ export function DiscoverCardSkeleton() {
   );
 }
 
+/**
+ * « القطاع » menu (2.0.8): the 10 onboarding industries, each with its colour and icon. The key
+ * (`commerce_retail`…) is what the feed filter sends; the API matches it on `User.industry`.
+ */
+const INDUSTRY_LOOK: Record<string, { icon: React.ReactNode; from: string; to: string }> = {
+  commerce_retail: { icon: <Store size={16} />, from: '#7c3aed', to: '#c084fc' },
+  professional_services: { icon: <Briefcase size={16} />, from: '#1e3a8a', to: '#3b82f6' },
+  tech_digital: { icon: <Laptop size={16} />, from: '#0f766e', to: '#2dd4bf' },
+  finance_insurance: { icon: <Landmark size={16} />, from: '#334155', to: '#64748b' },
+  industry_production: { icon: <Factory size={16} />, from: '#78350f', to: '#d97706' },
+  agriculture_food: { icon: <Sprout size={16} />, from: '#166534', to: '#4ade80' },
+  health_wellness: { icon: <HeartPulse size={16} />, from: '#9d174d', to: '#f472b6' },
+  education_training: { icon: <GraduationCap size={16} />, from: '#1d4ed8', to: '#60a5fa' },
+  transport_logistics: { icon: <Truck size={16} />, from: '#0c4a6e', to: '#38bdf8' },
+  local_services_trades: { icon: <Wrench size={16} />, from: '#1f5f9e', to: '#61bca6' },
+};
+
+const isIndustryKey = (sector: string) => (INDUSTRY_KEYS as readonly string[]).includes(sector);
+
 function formatSectorLabel(sector: string, t: (key: string) => string): string {
+  if (isIndustryKey(sector)) return t(`onboarding.identity.industries.${sector}`);
   const s = sector.trim().toLowerCase();
   if (s === 'transport') return t('matching.categories.transport');
   if (s === 'ménage' || s === 'menage') return t('matching.categories.cleaning');
@@ -178,7 +235,25 @@ export function DiscoverView() {
   const matching = useAppSelector(selectMatching);
   const { unreadCount } = useAppSelector(selectNotifications);
   const { favoriteIds = [], actionLoading: favLoading } = useAppSelector(selectFavorites);
-  const top = useAppSelector(selectTopFeedProfile);
+  const feedTop = useAppSelector(selectTopFeedProfile);
+  const authUser = useAppSelector((state) => state.auth?.user);
+  // Home tabs (2.0.8 design): « Fil », « Meilleurs choix IA » and « M'a aimé », with the
+  // 2.0.8 locks. The plan rules stay the API ones: daily swipes, search lock `is_locked`
+  // after the plan's profiles, « M'a aimé » for Premium / Premium+ (GET /swipe/who-liked-me).
+  const [homeMode, setHomeMode] = useState<'feed' | 'top'>('feed');
+  const [likedMeOnly, setLikedMeOnly] = useState(false);
+  // « لك » (default) = the personalised feed ranked by AI; « الكل » = everyone, nearest first.
+  const [allMode, setAllMode] = useState(false);
+  // Swipes done on this visit: the « selon vos préférences d'inscription » hint shows before.
+  const [sessionSwipes, setSessionSwipes] = useState(0);
+  const userPlan = (matching.quota?.plan ?? authUser?.plan ?? 'FREE').toUpperCase();
+  const isPaidPlan = userPlan === 'PREMIUM' || userPlan === 'PREMIUM_PLUS';
+  const candidateTop = likedMeOnly
+    ? (matching.feed.find((profile) => profile.liked_me) ?? null)
+    : feedTop;
+  // 2.0.8 « plan lock »: a locked feature or profile shows the Premium card instead of the card.
+  const planLock = (likedMeOnly && !isPaidPlan) || Boolean(candidateTop?.is_locked);
+  const top = planLock ? null : candidateTop;
   const isTopFavorited = Boolean(top?.id && favoriteIds?.includes(top.id));
   const topPhoto = useAuthenticatedMediaUrl(top?.image);
   const topVideo = useAuthenticatedMediaUrl(top?.video, { stream: true });
@@ -283,6 +358,41 @@ export function DiscoverView() {
     };
   }, [isSearchOpen]);
 
+  const modeParams = (mode: 'feed' | 'top', all: boolean = allMode) => feedModeParams(mode, all);
+
+  const handlePickAll = (all: boolean) => {
+    setAllMode(all);
+    setSelectedSector(null);
+    syncUrlAndStorage(null, filters);
+    if (locationSynced && latitude != null && longitude != null) {
+      void dispatch(
+        fetchSwipeFeed({
+          latitude,
+          longitude,
+          maxDistanceKm: filters.distanceKm ?? undefined,
+          ...modeParams(homeMode, all),
+        }),
+      );
+    }
+  };
+
+  const handleHomeMode = (mode: 'feed' | 'top') => {
+    setLikedMeOnly(false);
+    if (mode === homeMode) return;
+    setHomeMode(mode);
+    if (locationSynced && latitude != null && longitude != null) {
+      void dispatch(
+        fetchSwipeFeed({
+          latitude,
+          longitude,
+          sector: selectedSector ?? undefined,
+          maxDistanceKm: filters.distanceKm ?? undefined,
+          ...modeParams(mode),
+        }),
+      );
+    }
+  };
+
   const syncUrlAndStorage = (sector: string | null, currentFilters: DiscoverFeedFilters) => {
     storeDiscoverFilters(currentFilters);
     if (typeof window === 'undefined') return;
@@ -361,10 +471,21 @@ export function DiscoverView() {
           longitude,
           sector: selectedSector ?? undefined,
           maxDistanceKm: filters.distanceKm ?? undefined,
+          ...feedModeParams(homeMode, allMode),
         }),
       );
     }
-  }, [dispatch, locationSynced, latitude, longitude, matching.feedLoaded, selectedSector, filters]);
+  }, [
+    dispatch,
+    locationSynced,
+    latitude,
+    longitude,
+    matching.feedLoaded,
+    selectedSector,
+    filters,
+    homeMode,
+    allMode,
+  ]);
 
   const handleSelectSector = (sector: string | null) => {
     setSelectedSector(sector);
@@ -376,6 +497,7 @@ export function DiscoverView() {
           longitude,
           sector: sector ?? undefined,
           maxDistanceKm: filters.distanceKm ?? undefined,
+          ...modeParams(homeMode),
         }),
       );
     }
@@ -391,12 +513,14 @@ export function DiscoverView() {
           longitude,
           sector: selectedSector ?? undefined,
           maxDistanceKm: nextFilters.distanceKm ?? undefined,
+          ...modeParams(homeMode),
         }),
       );
     }
   };
 
   const handleResetAllFilters = () => {
+    setAllMode(false);
     setSelectedSector(null);
     setFilters(DEFAULT_DISCOVER_FILTERS);
     syncUrlAndStorage(null, DEFAULT_DISCOVER_FILTERS);
@@ -407,6 +531,7 @@ export function DiscoverView() {
           longitude,
           sector: undefined,
           maxDistanceKm: undefined,
+          ...modeParams(homeMode, false),
         }),
       );
     }
@@ -425,6 +550,7 @@ export function DiscoverView() {
   const onPass = async () => {
     if (!top || matching.swipeLoading) return;
     swipedUserIdsRef.current.add(top.id);
+    setSessionSwipes((count) => count + 1);
     setSwipeDirection('left');
     try {
       await dispatch(swipeProfile({ targetUserId: top.id, direction: 'left', profile: top }));
@@ -443,6 +569,7 @@ export function DiscoverView() {
       return;
     }
     swipedUserIdsRef.current.add(top.id);
+    setSessionSwipes((count) => count + 1);
     setSwipeDirection('right');
     try {
       const result = await dispatch(
@@ -523,16 +650,13 @@ export function DiscoverView() {
   }, [matching.sectors, matching.feed]);
 
   const visibleSectors = useMemo(() => dynamicSectors.slice(0, 7), [dynamicSectors]);
-  const otherSectors = useMemo(() => dynamicSectors.slice(7), [dynamicSectors]);
 
   const filteredDropdownSectors = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return otherSectors;
-    return dynamicSectors.filter((sector) => {
-      const label = formatSectorLabel(sector, t).toLowerCase();
-      return label.includes(q) || sector.toLowerCase().includes(q);
-    });
-  }, [searchQuery, otherSectors, dynamicSectors, t]);
+    const industries: string[] = [...INDUSTRY_KEYS];
+    if (!q) return industries;
+    return industries.filter((sector) => formatSectorLabel(sector, t).toLowerCase().includes(q));
+  }, [searchQuery, t]);
 
   const isSearchActive = Boolean(selectedSector && !visibleSectors.includes(selectedSector));
 
@@ -545,16 +669,33 @@ export function DiscoverView() {
   const hasAnyActiveFilter = Boolean(selectedSector || activeNonSectorFilterCount > 0);
 
   const resultCount = matching.feed.length;
-  const resultCountLabel =
-    locale === 'ar'
-      ? `${resultCount} ملف`
-      : locale === 'en'
-        ? `${resultCount} ${resultCount === 1 ? 'professional' : 'professionals'}`
-        : `${resultCount} ${resultCount === 1 ? 'professionnel' : 'professionnels'}`;
-
   const showHomeFeedLoader = locationSynced && (matching.feedLoading || !matching.feedLoaded);
 
   const title = locale === 'fr' ? 'Accueil' : locale === 'ar' ? 'الرئيسية' : t('nav.home');
+
+  const chipClass = (active: boolean) =>
+    `flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-1.5 text-[15px] shadow-sm transition-all active:scale-95 ${
+      active
+        ? 'bg-[#2F76BB] font-bold text-white'
+        : 'border border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
+    }`;
+
+  const priceLabel = (price: string) =>
+    /(day|jour|j|يوم)/i.test(price)
+      ? price
+      : `${price.replace(/\/(h|hour|hr|heure|ساعة|س)/i, '').trim()} ${t('profileDetail.priceUnit')}`;
+
+  // Right column « Meilleurs choix de l'IA »: 5 suggestions, locked after the 3rd for FREE.
+  const visiblePicks = matching.feed
+    .filter((p) => p.id !== top?.id && !dismissedSuggestionIds.includes(p.id))
+    .slice(0, 5);
+  const isPickLocked = (profile: { is_locked?: boolean }, rank: number) =>
+    Boolean(profile.is_locked || (!isPaidPlan && rank >= 3));
+
+  const openPlanModal = (reason: 'limit' | 'status' | 'locked_profile') => {
+    setQuotaModalReason(reason);
+    setForceQuotaModal(true);
+  };
 
   return (
     <div
@@ -562,132 +703,96 @@ export function DiscoverView() {
       style={{ background: matchyBrand.bg }}
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
-        {/* Main swipe column */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-3 pb-2 md:px-8">
+        {/* Main column — 2.0.8 home: chips, active filters, tabs, card, limit, actions */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 md:px-8">
           {!locationRequired && (
-            <div className="relative z-30 mb-6 flex flex-col gap-2.5">
-              {/* Top row: Category chips (horizontal scroll with right edge fade) + Filtres trigger button */}
-              <div className="flex w-full items-center gap-2">
-                {/* Scrollable single row of category chips */}
-                <div className="relative flex min-w-0 flex-1 items-center">
-                  <div
-                    role="tablist"
-                    aria-label="Secteurs d'activité"
-                    className="no-scrollbar flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1 pr-10"
-                  >
-                    {/* 'Tout' pill */}
+            <div className="relative z-30 flex flex-col">
+              {/* Sector chips + « Secteur » dropdown + « Filtres » (same row, like 2.0.8) */}
+              <div
+                role="tablist"
+                aria-label={t('matching.home.sectors')}
+                className="flex flex-wrap items-center gap-3"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedSector === null && allMode}
+                  data-testid="sector-pill-all"
+                  onClick={() => handlePickAll(true)}
+                  className={chipClass(selectedSector === null && allMode)}
+                >
+                  <span aria-hidden="true">✨</span>
+                  <span>{t('matching.home.all')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  ref={searchButtonRef}
+                  data-testid="sector-search-toggle"
+                  onClick={() => setIsSearchOpen((prev) => !prev)}
+                  aria-expanded={isSearchOpen}
+                  aria-label={t('matching.home.sector')}
+                  className={chipClass(isSearchActive)}
+                >
+                  <LayoutGrid size={16} className="shrink-0" />
+                  <span>
+                    {isSearchActive && selectedSector
+                      ? formatSectorLabel(selectedSector, t)
+                      : t('matching.home.sector')}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform duration-200 ${isSearchOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedSector === null && !allMode}
+                  data-testid="sector-pill-for-you"
+                  onClick={() => handlePickAll(false)}
+                  className={chipClass(selectedSector === null && !allMode)}
+                >
+                  <Sparkles size={16} className="shrink-0" />
+                  <span>{t('matching.home.forYou')}</span>
+                </button>
+
+                {visibleSectors.map((sector) => {
+                  const isSelected = selectedSector === sector;
+                  return (
                     <button
+                      key={sector}
                       type="button"
                       role="tab"
-                      aria-selected={selectedSector === null}
-                      data-testid="sector-pill-all"
-                      onClick={() => handleSelectSector(null)}
-                      className="flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-2xs transition-all active:scale-95"
-                      style={{
-                        backgroundColor: selectedSector === null ? matchyBrand.blue : '#FFFFFF',
-                        color: selectedSector === null ? '#FFFFFF' : '#475569',
-                        border:
-                          selectedSector === null
-                            ? `1px solid ${matchyBrand.blue}`
-                            : '1px solid #E2E8F0',
-                      }}
+                      aria-selected={isSelected}
+                      data-testid={`sector-pill-${sector}`}
+                      onClick={() => handleSelectSector(isSelected ? null : sector)}
+                      className={chipClass(isSelected)}
                     >
-                      <Layers size={14} className="shrink-0" />
-                      <span>{locale === 'ar' ? 'الكل' : locale === 'en' ? 'All' : 'Tout'}</span>
+                      <span aria-hidden="true">{getSectorEmoji(sector)}</span>
+                      <span>{formatSectorLabel(sector, t)}</span>
                     </button>
+                  );
+                })}
 
-                    {/* Sector search dropdown trigger pill */}
-                    <button
-                      type="button"
-                      ref={searchButtonRef}
-                      data-testid="sector-search-toggle"
-                      onClick={() => setIsSearchOpen((prev) => !prev)}
-                      aria-expanded={isSearchOpen}
-                      aria-label={
-                        locale === 'ar'
-                          ? 'تصفية حسب القطاع'
-                          : locale === 'en'
-                            ? 'Filter by sector'
-                            : 'Filtrer par secteur'
-                      }
-                      className="flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95"
-                      style={{
-                        backgroundColor:
-                          isSearchActive || isSearchOpen ? 'rgba(47, 118, 187, 0.1)' : '#FFFFFF',
-                        color: isSearchActive || isSearchOpen ? matchyBrand.blue : '#475569',
-                        borderColor: isSearchActive || isSearchOpen ? matchyBrand.blue : '#E2E8F0',
-                      }}
-                    >
-                      <Search size={13} strokeWidth={2} />
-                      <span>
-                        {locale === 'ar' ? 'القطاع' : locale === 'en' ? 'Sector' : 'Secteur'}
-                      </span>
-                      <ChevronDown
-                        size={13}
-                        className={`transition-transform duration-200 ${
-                          isSearchOpen ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </button>
-
-                    {/* Visible sector pills with icons and >=40px touch height */}
-                    {visibleSectors.map((sector) => {
-                      const isSelected = selectedSector === sector;
-                      return (
-                        <button
-                          key={sector}
-                          type="button"
-                          role="tab"
-                          aria-selected={isSelected}
-                          data-testid={`sector-pill-${sector}`}
-                          onClick={() => handleSelectSector(isSelected ? null : sector)}
-                          className="flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95"
-                          style={{
-                            backgroundColor: isSelected ? matchyBrand.blue : '#FFFFFF',
-                            color: isSelected ? '#FFFFFF' : '#475569',
-                            border: isSelected
-                              ? `1px solid ${matchyBrand.blue}`
-                              : '1px solid #E2E8F0',
-                          }}
-                        >
-                          {getSectorIcon(sector)}
-                          <span>{formatSectorLabel(sector, t)}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Fade on right edge so users see there is more content */}
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-l from-[#F8FAFC] to-transparent"
-                  />
-                </div>
-
-                {/* "Filtres" panel trigger button with active badge */}
                 <button
                   type="button"
                   data-testid="discover-filters-trigger-btn"
                   onClick={() => setIsFiltersSheetOpen(true)}
-                  aria-label="Filtres"
-                  className="flex min-h-[40px] shrink-0 cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold shadow-2xs transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95"
-                  style={{
-                    backgroundColor:
-                      activeNonSectorFilterCount > 0 ? `${matchyBrand.blue}15` : '#FFFFFF',
-                    color: activeNonSectorFilterCount > 0 ? matchyBrand.blue : '#475569',
-                    border:
-                      activeNonSectorFilterCount > 0
-                        ? `1.5px solid ${matchyBrand.blue}`
-                        : '1px solid #E2E8F0',
-                  }}
+                  aria-label={t('matching.home.filters')}
+                  className={`flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-1.5 text-[15px] font-semibold shadow-sm transition-all active:scale-95 ${
+                    activeNonSectorFilterCount > 0
+                      ? 'bg-[#61BCA6] text-white'
+                      : 'border border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
+                  }`}
                 >
-                  <SlidersHorizontal size={15} className="shrink-0" />
-                  <span>{locale === 'fr' ? 'Filtres' : 'Filters'}</span>
+                  <SlidersHorizontal size={16} className="shrink-0" />
+                  <span>{t('matching.home.filters')}</span>
                   {activeNonSectorFilterCount > 0 && (
                     <span
                       data-testid="discover-filters-count-badge"
-                      className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold text-white"
-                      style={{ backgroundColor: matchyBrand.blue }}
+                      className="rounded-full bg-white/25 px-1.5 text-xs"
                     >
                       {activeNonSectorFilterCount}
                     </span>
@@ -695,374 +800,418 @@ export function DiscoverView() {
                 </button>
               </div>
 
-              {/* Second row: Active filters removable chips row + result count + Reset link */}
-              {(hasAnyActiveFilter || resultCount > 0) && (
+              {/* Active filters: profile count + removable chips + Reset (only when filtering) */}
+              {hasAnyActiveFilter && !matching.feedLoading && (
                 <div
                   data-testid="discover-active-filters-bar"
-                  className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs"
+                  className="mt-3 flex flex-wrap items-center gap-2 text-sm"
                 >
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {/* Live result count */}
-                    <span
-                      data-testid="discover-live-count"
-                      className="rounded-full bg-slate-100 px-2.5 py-1 text-[12px] font-semibold text-slate-600"
-                    >
-                      {resultCountLabel}
-                    </span>
-
-                    {/* Active removable chips */}
-                    {selectedSector && (
-                      <button
-                        type="button"
-                        data-testid="active-chip-sector"
-                        onClick={() => handleSelectSector(null)}
-                        className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-                      >
-                        {getSectorIcon(selectedSector)}
-                        <span>{formatSectorLabel(selectedSector, t)}</span>
-                        <X size={12} className="text-slate-400 hover:text-slate-600" />
-                      </button>
-                    )}
-
-                    {filters.distanceKm !== null && filters.distanceKm < MAX_DISTANCE_KM && (
-                      <button
-                        type="button"
-                        data-testid="active-chip-distance"
-                        onClick={() => handleUpdateFilters({ ...filters, distanceKm: null })}
-                        className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-                      >
-                        <MapPin size={12} className="text-[#2F76BB]" />
-                        <span>≤ {filters.distanceKm} km</span>
-                        <X size={12} className="text-slate-400 hover:text-slate-600" />
-                      </button>
-                    )}
-                  </div>
-
-                  {hasAnyActiveFilter && (
+                  <b data-testid="discover-live-count" className="text-gray-700">
+                    {t(resultCount === 1 ? 'matching.home.profileOne' : 'matching.home.profiles', {
+                      n: resultCount,
+                    })}
+                  </b>
+                  {selectedSector && (
                     <button
                       type="button"
-                      data-testid="discover-reset-all-btn"
-                      onClick={handleResetAllFilters}
-                      className="cursor-pointer text-xs font-semibold text-slate-500 transition-colors hover:text-[#2F76BB] hover:underline"
+                      data-testid="active-chip-sector"
+                      onClick={() => handleSelectSector(null)}
+                      className="flex items-center gap-1.5 rounded-full bg-[#E8F1FB] px-3 py-1 font-semibold text-[#2F76BB]"
                     >
-                      {locale === 'fr' ? 'Réinitialiser' : 'Reset'}
+                      {formatSectorLabel(selectedSector, t)}
+                      <X size={14} />
                     </button>
                   )}
+                  {filters.distanceKm !== null && filters.distanceKm < MAX_DISTANCE_KM && (
+                    <button
+                      type="button"
+                      data-testid="active-chip-distance"
+                      onClick={() => handleUpdateFilters({ ...filters, distanceKm: null })}
+                      className="flex items-center gap-1.5 rounded-full bg-[#E7F6F2] px-3 py-1 font-semibold text-[#3F9B86]"
+                    >
+                      <MapPin size={14} />≤ {filters.distanceKm} km
+                      <X size={14} />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    data-testid="discover-reset-all-btn"
+                    onClick={handleResetAllFilters}
+                    className="ms-1 flex items-center gap-1 font-semibold text-[#2F76BB]"
+                  >
+                    <RotateCcw size={14} />
+                    {t('matching.home.reset')}
+                  </button>
                 </div>
               )}
+
+              {/* Tabs: « Fil » | « Meilleurs choix IA » + « M'a aimé » (paid plans only, no lock) */}
+              <div
+                data-testid="discover-home-tabs"
+                className="mt-4 flex flex-wrap items-center gap-2 text-sm"
+              >
+                <div
+                  role="tablist"
+                  className="flex rounded-xl bg-white p-1 shadow-sm ring-1 ring-gray-100"
+                >
+                  {(['feed', 'top'] as const).map((mode) => {
+                    const active = homeMode === mode && !likedMeOnly;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        data-testid={`home-tab-${mode}`}
+                        onClick={() => handleHomeMode(mode)}
+                        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-colors ${
+                          active ? 'bg-[#2F76BB] text-white' : 'text-gray-600'
+                        }`}
+                      >
+                        {mode === 'top' && (isPaidPlan ? <Crown size={16} /> : <Lock size={14} />)}
+                        {mode === 'feed' ? t('matching.home.feed') : t('matching.home.topPicks')}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  aria-pressed={likedMeOnly}
+                  data-testid="home-tab-liked-me"
+                  onClick={() => setLikedMeOnly((value) => !value)}
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-2 font-semibold shadow-sm transition-colors ${
+                    likedMeOnly
+                      ? 'bg-pink-500 text-white'
+                      : 'bg-white text-gray-600 ring-1 ring-gray-100'
+                  }`}
+                >
+                  {isPaidPlan ? <Heart size={16} /> : <Lock size={14} />}
+                  {t('matching.home.likedMe')}
+                </button>
+                {homeMode === 'feed' &&
+                  !likedMeOnly &&
+                  !allMode &&
+                  !selectedSector &&
+                  sessionSwipes === 0 && (
+                    <span
+                      data-testid="discover-cold-start"
+                      className="flex items-center gap-1.5 text-gray-500"
+                    >
+                      <Sparkles size={16} className="text-[#61BCA6]" />
+                      {t('matching.home.coldStart')}
+                    </span>
+                  )}
+              </div>
             </div>
           )}
-          <div className="relative flex min-h-0 flex-1 items-center justify-center">
+
+          {/* Card */}
+          <div className="mt-8 flex flex-col items-center">
             {showHomeFeedLoader ? (
-              <DiscoverCardSkeleton />
-            ) : locationRequired ? null : (
-              <>
-                {top && (
-                  <div
-                    className="absolute rounded-2xl"
-                    style={{
-                      width: 'min(88%, 420px)',
-                      height: '88%',
-                      bottom: 6,
-                      background: '#DDE7F4',
-                      transform: 'scale(0.95)',
-                      zIndex: 0,
-                      borderRadius: 20,
-                    }}
-                  />
-                )}
-
+              <div className="relative flex h-[min(620px,72vh)] w-full max-w-[550px] items-center justify-center">
+                <DiscoverCardSkeleton />
+              </div>
+            ) : locationRequired ? null : top ? (
+              <div className="relative h-[min(620px,72vh)] min-h-[440px] w-full max-w-[550px]">
+                <div className="absolute inset-x-6 -bottom-2 h-full rounded-[22px] bg-gray-200/70" />
                 <AnimatePresence mode="wait">
-                  {top && (
-                    <motion.div
-                      key={top.id}
-                      className="absolute cursor-grab touch-none overflow-hidden rounded-2xl shadow-xl select-none active:cursor-grabbing"
-                      style={{
-                        width: 'min(92%, 440px)',
-                        height: 'min(90%, 560px)',
-                        zIndex: 1,
-                      }}
-                      drag={!matching.swipeLoading}
-                      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                      dragElastic={0.7}
-                      onDragEnd={(_e, info) => {
-                        const offsetX = info.offset.x;
-                        const velocityX = info.velocity.x;
-                        if (offsetX > 100 || velocityX > 500) {
-                          void onConnect();
-                        } else if (offsetX < -100 || velocityX < -500) {
-                          void onPass();
-                        }
-                      }}
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{
-                        scale: 1,
-                        opacity: 1,
-                        x: swipeDirection === 'left' ? -500 : swipeDirection === 'right' ? 500 : 0,
-                        y: swipeDirection === 'up' ? -550 : 0,
-                        rotate:
-                          swipeDirection === 'left' ? -22 : swipeDirection === 'right' ? 22 : 0,
-                      }}
-                      exit={{ scale: 0.95, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      {topVideo.url ? (
-                        <>
-                          <video
-                            key={topVideo.url}
-                            ref={cardVideoRef}
-                            src={topVideo.url}
-                            preload="auto"
-                            autoPlay={isCardVideoPlaying}
-                            playsInline
-                            loop
-                            muted={isCardVideoMuted}
-                            onClick={handleToggleCardVideo}
-                            onWaiting={() => setIsVideoBuffering(true)}
-                            onPlaying={() => setIsVideoBuffering(false)}
-                            onPlay={() => {
-                              setIsVideoBuffering(false);
-                              if (top?.id) {
-                                setUserPlayingId(top.id);
-                                setUserPausedId(null);
-                              }
-                            }}
-                            onPause={() => {
-                              setIsVideoBuffering(false);
-                              if (top?.id) {
-                                setUserPausedId(top.id);
-                                setUserPlayingId(null);
-                              }
-                            }}
-                            onEnded={() => {
-                              setIsVideoBuffering(false);
-                              if (top?.id) {
-                                setUserPausedId(top.id);
-                                setUserPlayingId(null);
-                              }
-                            }}
-                            onLoadedData={(e) => {
-                              setIsVideoBuffering(false);
-                              if (isCardVideoPlaying) {
-                                void e.currentTarget.play().catch(() => {});
-                              }
-                            }}
-                            className="absolute inset-0 h-full w-full cursor-pointer bg-black object-cover"
-                          />
-
-                          {/* Video Buffering / Loading Spinner */}
-                          {isVideoBuffering && (
-                            <div className="pointer-events-none absolute inset-0 z-25 flex items-center justify-center bg-black/30 backdrop-blur-xs">
-                              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/60 shadow-2xl backdrop-blur-md">
-                                <Loader2 className="h-8 w-8 animate-spin text-[#61BCA6]" />
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Sound control toggle button (Mute / Unmute) */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsCardVideoMuted((prev) => !prev);
-                            }}
-                            aria-label={
-                              isCardVideoMuted
-                                ? t('matching.unmuteVideo') || 'Unmute video'
-                                : t('matching.muteVideo') || 'Mute video'
+                  <motion.div
+                    key={top.id}
+                    className="absolute inset-0 cursor-grab touch-none overflow-hidden rounded-[22px] text-white shadow-xl select-none active:cursor-grabbing"
+                    style={{ zIndex: 1 }}
+                    drag={!matching.swipeLoading}
+                    dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                    dragElastic={0.7}
+                    onDragEnd={(_e, info) => {
+                      const offsetX = info.offset.x;
+                      const velocityX = info.velocity.x;
+                      if (offsetX > 100 || velocityX > 500) {
+                        void onConnect();
+                      } else if (offsetX < -100 || velocityX < -500) {
+                        void onPass();
+                      }
+                    }}
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{
+                      scale: 1,
+                      opacity: 1,
+                      x: swipeDirection === 'left' ? -500 : swipeDirection === 'right' ? 500 : 0,
+                      y: swipeDirection === 'up' ? -550 : 0,
+                      rotate: swipeDirection === 'left' ? -22 : swipeDirection === 'right' ? 22 : 0,
+                    }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    {topVideo.url ? (
+                      <>
+                        <video
+                          key={topVideo.url}
+                          ref={cardVideoRef}
+                          src={topVideo.url}
+                          preload="auto"
+                          autoPlay={isCardVideoPlaying}
+                          playsInline
+                          loop
+                          muted={isCardVideoMuted}
+                          onClick={handleToggleCardVideo}
+                          onWaiting={() => setIsVideoBuffering(true)}
+                          onPlaying={() => setIsVideoBuffering(false)}
+                          onPlay={() => {
+                            setIsVideoBuffering(false);
+                            if (top?.id) {
+                              setUserPlayingId(top.id);
+                              setUserPausedId(null);
                             }
-                            className="pointer-events-auto absolute right-4 bottom-4 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white shadow-md backdrop-blur-md transition-all hover:scale-105 hover:bg-black/80 active:scale-95"
-                            style={{ border: '1px solid rgba(255,255,255,0.3)' }}
-                          >
-                            {isCardVideoMuted ? (
-                              <VolumeX size={16} className="text-white" />
-                            ) : (
-                              <Volume2 size={16} className="text-white" />
-                            )}
-                          </button>
-
-                          {/* Centered Play Button when paused / stopped */}
-                          {!isCardVideoPlaying && !isVideoBuffering && (
-                            <button
-                              type="button"
-                              onClick={handleToggleCardVideo}
-                              aria-label={
-                                locale === 'en'
-                                  ? 'Play video'
-                                  : locale === 'ar'
-                                    ? 'تشغيل الفيديو'
-                                    : 'Lire la vidéo'
-                              }
-                              className="pointer-events-auto absolute inset-0 z-20 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-black/60 text-white shadow-2xl backdrop-blur-md transition-all hover:scale-110 active:scale-95"
-                              style={{ border: '2px solid rgba(255,255,255,0.4)' }}
-                            >
-                              <Play size={28} fill="white" className="ml-1 text-white" />
-                            </button>
-                          )}
-                        </>
-                      ) : topPhoto.url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={topPhoto.url}
-                          alt={top.name}
-                          className="absolute inset-0 h-full w-full object-cover"
+                          }}
+                          onPause={() => {
+                            setIsVideoBuffering(false);
+                            if (top?.id) {
+                              setUserPausedId(top.id);
+                              setUserPlayingId(null);
+                            }
+                          }}
+                          onEnded={() => {
+                            setIsVideoBuffering(false);
+                            if (top?.id) {
+                              setUserPausedId(top.id);
+                              setUserPlayingId(null);
+                            }
+                          }}
+                          onLoadedData={(e) => {
+                            setIsVideoBuffering(false);
+                            if (isCardVideoPlaying) {
+                              void e.currentTarget.play().catch(() => {});
+                            }
+                          }}
+                          className="absolute inset-0 h-full w-full cursor-pointer bg-black object-cover"
                         />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] text-7xl font-bold text-white">
-                          {top.name.slice(0, 1)}
-                        </div>
-                      )}
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          background:
-                            'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.4) 100%)',
-                          pointerEvents: 'none',
-                        }}
-                      />
 
-                      {/* Top left rating pill */}
-                      <div
-                        className="absolute top-3 left-3 flex items-center gap-1 rounded-full px-2.5 py-1 shadow-xs backdrop-blur-md"
-                        style={{ background: 'rgba(255,255,255,0.92)' }}
-                      >
-                        <Star size={12} color="#F5A623" fill="#F5A623" />
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#353535' }}>
-                          {Number.isFinite(top.rating) ? top.rating.toFixed(1) : '0.0'}
-                        </span>
-                      </div>
-
-                      {/* Top right: Available pill, Bookmark button, & Voir details button */}
-                      <div className="pointer-events-auto absolute top-3 right-3 z-20 flex flex-col items-end gap-1.5">
-                        <div className="flex items-center gap-1.5">
-                          {/* Available pill */}
-                          <div
-                            className="flex h-8 items-center gap-1 rounded-full px-2.5 text-white shadow-xs backdrop-blur-md"
-                            style={{
-                              background: 'rgba(97,188,166,0.9)',
-                              fontSize: 11,
-                              fontWeight: 700,
-                            }}
-                          >
-                            <Check size={12} strokeWidth={3} />
-                            <span>{t('matching.available')}</span>
+                        {isVideoBuffering && (
+                          <div className="pointer-events-none absolute inset-0 z-25 flex items-center justify-center bg-black/30 backdrop-blur-xs">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/60 shadow-2xl backdrop-blur-md">
+                              <Loader2 className="h-8 w-8 animate-spin text-[#61BCA6]" />
+                            </div>
                           </div>
+                        )}
 
-                          {/* Bookmark / Favorite button on the right */}
+                        {!isCardVideoPlaying && !isVideoBuffering && (
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              void onFavorite();
-                            }}
-                            disabled={Boolean(top.id && favLoading[top.id])}
+                            onClick={handleToggleCardVideo}
                             aria-label={
-                              isTopFavorited
-                                ? t('profileDetail.removeFromFavorites')
-                                : t('profileDetail.addToFavorites')
+                              locale === 'en'
+                                ? 'Play video'
+                                : locale === 'ar'
+                                  ? 'تشغيل الفيديو'
+                                  : 'Lire la vidéo'
                             }
-                            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-xs transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
+                            className="pointer-events-auto absolute inset-0 z-20 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-black/60 text-white shadow-2xl backdrop-blur-md transition-all hover:scale-110 active:scale-95"
+                            style={{ border: '2px solid rgba(255,255,255,0.4)' }}
                           >
-                            <Bookmark
-                              size={16}
-                              color={isTopFavorited ? '#F5A623' : 'white'}
-                              fill={isTopFavorited ? '#F5A623' : 'none'}
-                            />
+                            <Play size={28} fill="white" className="ml-1 text-white" />
                           </button>
-                        </div>
+                        )}
+                      </>
+                    ) : topPhoto.url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={topPhoto.url}
+                        alt={top.name}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#61BCA6] to-[#2F76BB] text-7xl font-bold text-white">
+                        {top.name.slice(0, 1)}
+                      </div>
+                    )}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
-                        {/* See details button */}
+                    {/* Top start: rating, AI score, level, video */}
+                    <div className="pointer-events-none absolute start-4 top-4 z-20 flex flex-col items-start gap-2">
+                      <span className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-sm font-bold text-[#1A1A2E] shadow">
+                        <Star size={16} color="#F5A623" fill="#F5A623" />
+                        {top.reviews || (Number.isFinite(top.rating) && top.rating > 0) ? (
+                          <>
+                            {top.rating.toFixed(1)}
+                            {top.reviews ? (
+                              <span className="text-xs font-normal text-gray-400">
+                                ({top.reviews})
+                              </span>
+                            ) : null}
+                          </>
+                        ) : (
+                          t('matching.home.newProfile')
+                        )}
+                      </span>
+                      <span
+                        data-testid="discover-card-ai-score"
+                        className="flex items-center gap-1.5 rounded-xl bg-black/45 px-3 py-1.5 text-[17px] font-extrabold backdrop-blur"
+                      >
+                        <BrainCircuit size={16} />
+                        {Math.round(top.match_score)}%
+                        <span className="text-xs">{t('matching.home.ai')}</span>
+                      </span>
+                      <span className="rounded-full bg-black/45 px-3 py-0.5 text-xs font-semibold">
+                        {matchLevelLabel(top, locale)}
+                      </span>
+                      {top.video && (
+                        <span className="flex items-center gap-1 rounded-full bg-black/45 px-3 py-0.5 text-xs font-semibold">
+                          <Video size={14} />
+                          {t('matching.home.video')}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Top end: available, favourite, details, sound */}
+                    <div className="pointer-events-auto absolute end-4 top-4 z-20 flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="rounded-full bg-emerald-500 px-3 py-1 text-sm font-bold">
+                          ✓ {t('matching.available')}
+                        </span>
                         <button
                           type="button"
-                          onClick={() => {
-                            setDetailProfileId(top.id);
-                            setDetailOpen(true);
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void onFavorite();
                           }}
-                          className="flex items-center gap-1 rounded-full px-2.5 py-1 text-white shadow-xs backdrop-blur-md transition-transform hover:scale-105 active:scale-95"
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            background: 'rgba(47,118,187,0.85)',
-                          }}
+                          disabled={Boolean(top.id && favLoading[top.id])}
+                          aria-label={
+                            isTopFavorited
+                              ? t('profileDetail.removeFromFavorites')
+                              : t('profileDetail.addToFavorites')
+                          }
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-xs transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
                         >
-                          <span>👆</span>
-                          <span>{t('matching.seeDetails')}</span>
+                          <Bookmark
+                            size={16}
+                            color={isTopFavorited ? '#F5A623' : 'white'}
+                            fill={isTopFavorited ? '#F5A623' : 'none'}
+                          />
                         </button>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDetailProfileId(top.id);
+                          setDetailOpen(true);
+                        }}
+                        className="rounded-full bg-[#2F76BB] px-3 py-1 text-xs font-bold"
+                      >
+                        👆 {t('matching.seeDetails')}
+                      </button>
+                      {topVideo.url && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsCardVideoMuted((prev) => !prev);
+                          }}
+                          aria-label={
+                            isCardVideoMuted
+                              ? t('matching.unmuteVideo') || 'Unmute video'
+                              : t('matching.muteVideo') || 'Mute video'
+                          }
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-md transition-all hover:bg-black/70 active:scale-95"
+                        >
+                          {isCardVideoMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                        </button>
+                      )}
+                    </div>
 
-                      {/* Top left AI match score badge (complementary tag removed per spec) */}
-                      <div className="absolute top-12 left-3">
-                        <MatchScoreBadge score={top.match_score} size="lg" />
-                      </div>
-
-                      {/* Bottom card info */}
-                      <div className="absolute right-0 bottom-0 left-0 p-4">
-                        <div className="mb-1 flex items-end justify-between">
-                          <div>
-                            <h2
-                              className="flex items-center gap-1.5 text-white"
-                              style={{ fontSize: 22, fontWeight: 700 }}
-                            >
-                              <span>{top.name}</span>
-                              {top.verified && (
-                                <VerifiedShield
-                                  size={20}
-                                  color="#48bba0"
-                                  className="shrink-0 drop-shadow-sm"
-                                  aria-label="Verified user"
-                                />
-                              )}
-                            </h2>
-                            <p
-                              className="text-white opacity-90"
-                              style={{ fontSize: 14, fontWeight: 500 }}
-                            >
-                              {formatRole(top.service_type || top.job || top.category, t)}
-                            </p>
-                          </div>
-                        </div>
-                        {((top.distance_km != null && Number.isFinite(top.distance_km)) ||
-                          top.city) && (
-                          <div className="mb-2 flex items-center gap-1">
-                            <MapPin size={12} color="#61BCA6" />
-                            <span className="text-white opacity-75" style={{ fontSize: 12 }}>
-                              {top.distance_km != null && Number.isFinite(top.distance_km)
-                                ? t('matching.kmAway', { km: top.distance_km })
-                                : top.city}
-                            </span>
-                          </div>
-                        )}
-                        {top.bio && (
-                          <p
-                            className="mb-3 text-white opacity-85"
-                            style={{ fontSize: 12, lineHeight: 1.4 }}
-                          >
-                            {top.bio}
+                    {/* Bottom: name, role, price, distance, bio, tags */}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-5">
+                      <div className="flex items-end justify-between gap-3">
+                        <div className="min-w-0">
+                          <h2 className="flex items-center gap-1.5 text-[26px] font-extrabold">
+                            <span className="truncate">{top.name}</span>
+                            {top.verified && (
+                              <VerifiedShield
+                                size={22}
+                                color="#48bba0"
+                                className="shrink-0 drop-shadow-sm"
+                                aria-label="Verified user"
+                              />
+                            )}
+                          </h2>
+                          <p className="text-lg font-semibold opacity-95">
+                            {formatRole(top.service_type || top.job || top.category, t)}
                           </p>
-                        )}
-                        {top.interests?.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {top.interests.slice(0, 5).map((tag) => (
-                              <span
-                                key={tag}
-                                className="rounded-full px-2.5 py-0.5 text-white shadow-2xs"
-                                style={{
-                                  fontSize: 11,
-                                  background: 'rgba(97,188,166,0.65)',
-                                  border: '1px solid rgba(97,188,166,0.4)',
-                                }}
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
+                        </div>
+                        {top.price && (
+                          <span className="shrink-0 rounded-2xl bg-[#2F76BB] px-3 py-2 font-extrabold">
+                            {priceLabel(top.price)}
+                          </span>
                         )}
                       </div>
-                    </motion.div>
-                  )}
+                      {((top.distance_km != null && Number.isFinite(top.distance_km)) ||
+                        top.city) && (
+                        <p className="mt-1 flex items-center gap-1.5 text-sm opacity-90">
+                          <MapPin size={16} className="text-[#61BCA6]" />
+                          {top.distance_km != null && Number.isFinite(top.distance_km)
+                            ? t('matching.kmAway', { km: top.distance_km })
+                            : top.city}
+                        </p>
+                      )}
+                      {top.bio && (
+                        <p className="mt-3 line-clamp-3 text-[15px] leading-relaxed opacity-95">
+                          {top.bio}
+                        </p>
+                      )}
+                      {top.interests?.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {top.interests.slice(0, 5).map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-[#3F9B86]/90 px-3 py-1 text-sm"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
                 </AnimatePresence>
-
-                {!top && !matching.feedLoading && (
+              </div>
+            ) : planLock ? (
+              !matching.feedLoading && (
+                <div
+                  data-testid="discover-plan-lock"
+                  className="flex max-w-md flex-col items-center gap-3 py-28 text-center"
+                >
+                  <span className="grid h-16 w-16 place-items-center rounded-2xl bg-amber-50 text-amber-500">
+                    <Crown size={32} />
+                  </span>
+                  <p className="text-lg font-bold text-[#1A1A2E]">
+                    {t('matching.home.premiumOnly')}
+                  </p>
+                  <button
+                    type="button"
+                    data-testid="discover-plan-lock-cta"
+                    onClick={() => openPlanModal('locked_profile')}
+                    className="rounded-xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] px-5 py-2.5 font-bold text-white transition-all hover:brightness-105 active:scale-[0.98]"
+                  >
+                    {t('matching.home.goPremium')}
+                  </button>
+                </div>
+              )
+            ) : likedMeOnly ? (
+              !matching.feedLoading && (
+                <div
+                  data-testid="discover-liked-me-empty"
+                  className="flex max-w-md flex-col items-center gap-3 py-24 text-center"
+                >
+                  <span className="grid h-16 w-16 place-items-center rounded-2xl bg-pink-50 text-pink-500">
+                    <Heart size={30} />
+                  </span>
+                  <p className="text-[15px] font-semibold text-gray-600">
+                    {t('matching.home.likedMeEmpty')}
+                  </p>
+                </div>
+              )
+            ) : (
+              !matching.feedLoading && (
+                <div className="flex w-full justify-center">
                   <DiscoverEmptyFeed
                     errorKey={matching.feedError}
                     refreshing={matching.feedLoading}
@@ -1076,6 +1225,7 @@ export function DiscoverView() {
                                 longitude,
                                 sector: selectedSector ?? undefined,
                                 maxDistanceKm: filters.distanceKm ?? undefined,
+                                ...modeParams(homeMode),
                               }
                             : undefined,
                         ),
@@ -1084,101 +1234,91 @@ export function DiscoverView() {
                     onExpandRadius={() => handleUpdateFilters({ ...filters, distanceKm: null })}
                     onResetFilters={handleResetAllFilters}
                   />
+                </div>
+              )
+            )}
+
+            {/* Daily limit + actions (2.0.8) */}
+            {top && !locationRequired && (
+              <>
+                {matching.swipeError && (
+                  <div className="mt-6 flex w-full max-w-[380px] items-center justify-between rounded-xl bg-[#FFF0F0] px-3 py-2 text-xs text-[#E74C3C]">
+                    <span>{t(matching.swipeError)}</span>
+                    <button type="button" onClick={() => dispatch(clearSwipeError())}>
+                      {t('common.close')}
+                    </button>
+                  </div>
                 )}
+
+                {quota?.unlimited ? (
+                  <div
+                    data-testid="discover-unlimited-pill"
+                    className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-2.5 text-[15px] font-semibold text-amber-700"
+                  >
+                    ⭐ {t('matching.home.unlimited')}
+                  </div>
+                ) : quota ? (
+                  <div
+                    data-testid="discover-quota-banner"
+                    className="mt-8 flex items-center gap-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-2.5 text-[15px]"
+                  >
+                    <span className="flex items-center gap-2 font-semibold text-red-600">
+                      <AlertTriangle size={16} />
+                      {t('matching.swipeQuotaActionsRemaining', {
+                        remaining: freeRemaining ?? 0,
+                        limit: freeLimit ?? 10,
+                      })}
+                    </span>
+                    <button
+                      type="button"
+                      data-testid="discover-go-premium"
+                      onClick={() => openPlanModal(freeRemaining === 0 ? 'limit' : 'status')}
+                      className="font-bold text-[#2F76BB]"
+                    >
+                      {t('matching.home.goPremium')}
+                    </button>
+                  </div>
+                ) : null}
+
+                <div className="mt-4 flex gap-5">
+                  <button
+                    type="button"
+                    onClick={() => void onPass()}
+                    disabled={!top || matching.swipeLoading}
+                    className="flex w-44 items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white py-4 text-lg font-bold whitespace-nowrap text-gray-600 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-60"
+                  >
+                    <X size={20} />
+                    <span>{t('matching.pass')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void onConnect()}
+                    disabled={!top || matching.swipeLoading || isRightSwipeBlocked}
+                    className={`flex w-44 items-center justify-center gap-2 rounded-2xl py-4 text-lg font-bold whitespace-nowrap text-white shadow-sm transition-all active:scale-[0.98] ${
+                      isRightSwipeBlocked
+                        ? 'cursor-not-allowed bg-gray-200 text-white/80'
+                        : 'bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] hover:brightness-105'
+                    }`}
+                  >
+                    <Check size={20} />
+                    <span>{t('matching.connect')}</span>
+                  </button>
+                </div>
               </>
             )}
           </div>
-
-          {/* Action buttons — Matchy exact */}
-          {top && !locationRequired && (
-            <>
-              {matching.swipeError && (
-                <div className="mx-auto mb-2 flex w-full max-w-[340px] items-center justify-between rounded-xl bg-[#FFF0F0] px-3 py-2 text-xs text-[#E74C3C]">
-                  <span>{t(matching.swipeError)}</span>
-                  <button type="button" onClick={() => dispatch(clearSwipeError())}>
-                    {t('common.close')}
-                  </button>
-                </div>
-              )}
-
-              {/* Action count pill banner (from Figma design) */}
-              {quota && !quota.unlimited && (
-                <div
-                  onClick={() => {
-                    setQuotaModalReason(freeRemaining === 0 ? 'limit' : 'status');
-                    setForceQuotaModal(true);
-                  }}
-                  className="mx-auto mt-3 mb-2 flex cursor-pointer items-center justify-start gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
-                  style={{
-                    background: freeRemaining === 0 ? '#FFF1F2' : '#FFFBEB',
-                    color: freeRemaining === 0 ? '#E11D48' : '#D97706',
-                    border: freeRemaining === 0 ? '1px solid #FECDD3' : '1px solid #FDE68A',
-                    maxWidth: 360,
-                    width: '100%',
-                  }}
-                >
-                  <AlertTriangle
-                    size={13}
-                    className={freeRemaining === 0 ? 'text-[#E11D48]' : 'text-[#D97706]'}
-                  />
-                  <span>
-                    {t('matching.swipeQuotaActionsRemaining', {
-                      remaining: freeRemaining ?? 0,
-                      limit: quota.limit ?? 10,
-                    })}
-                  </span>
-                </div>
-              )}
-
-              <div
-                className="mx-auto mb-3 flex items-center justify-center gap-3"
-                style={{ maxWidth: 360, width: '100%' }}
-              >
-                {/* Skip / Pass Button */}
-                <button
-                  type="button"
-                  onClick={() => void onPass()}
-                  disabled={!top || matching.swipeLoading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[#E2E8F0] bg-white py-3 font-bold text-[#475569] shadow-xs transition-all hover:bg-[#F8FAFC] active:scale-[0.98] disabled:opacity-60"
-                  style={{
-                    fontSize: 15,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <X size={18} className="text-[#64748B]" strokeWidth={2.5} />
-                  <span>{t('matching.pass')}</span>
-                </button>
-
-                {/* Connect Button */}
-                <button
-                  type="button"
-                  onClick={() => void onConnect()}
-                  disabled={!top || matching.swipeLoading || isRightSwipeBlocked}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
-                  style={{
-                    fontSize: 15,
-                    cursor: isRightSwipeBlocked ? 'not-allowed' : 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <Check size={18} strokeWidth={2.5} className="text-white" />
-                  <span>{t('matching.connect')}</span>
-                </button>
-              </div>
-            </>
-          )}
         </div>
 
-        {/* Right panel: Live AI Score + Top Picks — Matchy exact (lg+) */}
+        {/* Right column (2.0.8): current profile, AI score, AI picks */}
         <div
-          className="hidden flex-col gap-4 overflow-y-auto px-4 py-4 lg:flex"
-          style={{ width: 320, borderLeft: '1px solid #F0F0F0', background: matchyBrand.bg }}
+          className="hidden flex-none flex-col gap-4 overflow-y-auto px-4 py-6 lg:flex"
+          style={{ width: 360, background: matchyBrand.bg }}
         >
           {locationRequired || !locationSynced ? null : (
             <>
               {top ? (
-                <div className="space-y-3">
-                  <div className="relative overflow-hidden rounded-2xl" style={{ height: 130 }}>
+                <div className="space-y-4">
+                  <div className="relative h-40 overflow-hidden rounded-2xl text-white">
                     {topVideo.url ? (
                       <video
                         key={`sidebar-${topVideo.url}`}
@@ -1207,101 +1347,85 @@ export function DiscoverView() {
                         {top.name.slice(0, 1)}
                       </div>
                     )}
-                    {/* Gradient overlay only if not showing video (removed for video per item 9) */}
-                    {!topVideo.url && (
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          background:
-                            'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)',
-                        }}
-                      />
-                    )}
-                    <div className="absolute bottom-2 left-3">
-                      <p style={{ color: 'white', fontSize: 14, fontWeight: 700 }}>{top.name}</p>
-                      <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11 }}>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute start-4 bottom-3">
+                      <b className="text-lg">{top.name}</b>
+                      <p className="text-sm opacity-90">
                         {formatRole(top.service_type || top.job || top.category, t)}
                       </p>
                     </div>
-                    <div className="absolute right-2 bottom-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDetailProfileId(top.id);
-                          setDetailOpen(true);
-                        }}
-                        className="rounded-lg px-2 py-1"
-                        style={{
-                          background: 'rgba(255,255,255,0.15)',
-                          backdropFilter: 'blur(8px)',
-                          color: 'white',
-                          fontSize: 10,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {t('matching.seeDetails')}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDetailProfileId(top.id);
+                        setDetailOpen(true);
+                      }}
+                      className="absolute end-3 bottom-3 rounded-full bg-black/40 px-3 py-1 text-xs font-bold"
+                    >
+                      👆 {t('matching.seeDetails')}
+                    </button>
                   </div>
                   <LiveScorePanel
                     profile={top}
                     isComputing={matching.feedLoading && !matching.feedLoaded}
+                    detailsLocked={!isPaidPlan}
+                    onUnlockDetails={() => openPlanModal('status')}
                   />
                 </div>
               ) : null}
 
-              <div
-                className="flex items-center gap-2"
-                style={{ borderTop: '1px solid #F0F0F0', paddingTop: 12 }}
-              >
+              <div className="flex items-center gap-2">
                 <AIPicksHeader
-                  count={Math.min(
-                    5,
-                    matching.feed.filter(
-                      (p) => p.id !== top?.id && !dismissedSuggestionIds.includes(p.id),
-                    ).length,
-                  )}
+                  count={visiblePicks.length}
+                  refreshing={matching.feedLoading}
+                  onRefresh={() => {
+                    if (latitude == null || longitude == null) return;
+                    setDismissedSuggestionIds([]);
+                    void dispatch(
+                      fetchSwipeFeed({
+                        latitude,
+                        longitude,
+                        sector: selectedSector ?? undefined,
+                        maxDistanceKm: filters.distanceKm ?? undefined,
+                        ...modeParams(homeMode),
+                      }),
+                    );
+                  }}
                 />
               </div>
-              <div className="flex-1 space-y-1.5 overflow-y-auto">
+              <div className="flex-1 space-y-2.5">
                 {matching.feedLoading && !matching.feedLoaded ? (
                   <div className="space-y-2">
-                    {[0, 1, 2, 3, 4].map((i) => (
+                    {[0, 1, 2].map((i) => (
                       <div
                         key={i}
-                        className="h-14 animate-pulse rounded-xl"
-                        style={{ background: '#F5F5F5', animationDelay: `${i * 0.1}s` }}
+                        className="h-14 animate-pulse rounded-2xl bg-white"
+                        style={{ animationDelay: `${i * 0.1}s` }}
                       />
                     ))}
                   </div>
-                ) : matching.feed.filter(
-                    (p) => p.id !== top?.id && !dismissedSuggestionIds.includes(p.id),
-                  ).length === 0 ? (
+                ) : visiblePicks.length === 0 ? (
                   <DiscoverEmptyPicks />
                 ) : (
-                  matching.feed
-                    .filter((p) => p.id !== top?.id && !dismissedSuggestionIds.includes(p.id))
-                    .slice(0, 5)
-                    .map((profile, i) => (
-                      <AIRecommendationItem
-                        key={profile.id}
-                        profile={profile}
-                        rank={i}
-                        onDismiss={() => {
-                          setDismissedSuggestionIds((prev) => [...prev, profile.id]);
-                        }}
-                        onClick={() => {
-                          const isLocked = Boolean(profile.is_locked || i >= 3);
-                          if (isLocked) {
-                            setQuotaModalReason('locked_profile');
-                            setForceQuotaModal(true);
-                            return;
-                          }
-                          setDetailProfileId(profile.id);
-                          setDetailOpen(true);
-                        }}
-                      />
-                    ))
+                  visiblePicks.map((profile, i) => (
+                    <AIRecommendationItem
+                      key={profile.id}
+                      profile={profile}
+                      rank={i}
+                      locked={isPickLocked(profile, i)}
+                      onDismiss={() => {
+                        setDismissedSuggestionIds((prev) => [...prev, profile.id]);
+                      }}
+                      onClick={() => {
+                        if (isPickLocked(profile, i)) {
+                          openPlanModal('locked_profile');
+                          return;
+                        }
+                        setDetailProfileId(profile.id);
+                        setDetailOpen(true);
+                      }}
+                    />
+                  ))
                 )}
               </div>
             </>
@@ -1334,6 +1458,7 @@ export function DiscoverView() {
       {(matching.showQuotaModal || forceQuotaModal) && (
         <SwipeLimitModal
           reason={forceQuotaModal ? quotaModalReason : 'limit'}
+          onUpgrade={() => router.push('/settings/plans')}
           onClose={() => {
             setForceQuotaModal(false);
             setQuotaModalReason('limit');
@@ -1389,13 +1514,7 @@ export function DiscoverView() {
                   data-testid="sector-search-input"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={
-                    locale === 'ar'
-                      ? 'ابحث عن قطاع...'
-                      : locale === 'en'
-                        ? 'Search a sector...'
-                        : 'Rechercher un secteur...'
-                  }
+                  placeholder={t('matching.home.sectorSearch')}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pr-7 pl-8 text-xs text-slate-800 placeholder-slate-400 focus:border-[#2F76BB] focus:bg-white focus:outline-hidden"
                 />
                 {searchQuery && (
@@ -1411,7 +1530,7 @@ export function DiscoverView() {
             </div>
 
             <div className="flex items-center justify-between px-1 pt-0.5 pb-1.5 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-              <span>{locale === 'ar' ? 'القطاعات' : locale === 'en' ? 'Sectors' : 'Secteurs'}</span>
+              <span>{t('matching.home.sectors')}</span>
               {selectedSector && (
                 <button
                   type="button"
@@ -1449,18 +1568,20 @@ export function DiscoverView() {
                         handleSelectSector(isSelected ? null : sector);
                         setIsSearchOpen(false);
                       }}
-                      className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-slate-50"
-                      style={{
-                        backgroundColor: isSelected ? 'rgba(47, 118, 187, 0.08)' : 'transparent',
-                        color: isSelected ? matchyBrand.blue : '#334155',
-                        fontWeight: isSelected ? 600 : 500,
-                      }}
+                      className={`flex w-full cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-start text-sm transition-colors hover:bg-gray-50 ${
+                        isSelected ? 'font-bold text-[#2F76BB]' : 'text-gray-700'
+                      }`}
                     >
-                      <div className="flex items-center gap-2">
-                        {getSectorIcon(sector)}
-                        <span>{formatSectorLabel(sector, t)}</span>
-                      </div>
-                      {isSelected && <Check size={13} className="text-[#2F76BB]" />}
+                      <span
+                        className="grid h-9 w-9 flex-none place-items-center rounded-lg text-white"
+                        style={{
+                          background: `linear-gradient(150deg, ${INDUSTRY_LOOK[sector]?.from ?? '#1f5f9e'}, ${INDUSTRY_LOOK[sector]?.to ?? '#61bca6'})`,
+                        }}
+                      >
+                        {INDUSTRY_LOOK[sector]?.icon ?? getSectorIcon(sector)}
+                      </span>
+                      <span className="flex-1">{formatSectorLabel(sector, t)}</span>
+                      {isSelected && <Check size={16} />}
                     </button>
                   );
                 })
