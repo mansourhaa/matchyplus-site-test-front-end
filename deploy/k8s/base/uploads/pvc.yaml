@@ -1,0 +1,28 @@
+# Shared uploads folder of saas-api and saas-ai (ReadWriteMany).
+#
+# The API writes media under apps/api/uploads (onboarding clips, selfies, photos, videos);
+# the AI worker reads the same files through AI_UPLOADS_DIR (ANALYZE_VIDEO deletes the
+# onboarding clip after the analysis, VERIFY_IDENTITY reads the selfie). Both pods mount
+# this claim, so a job never fails with MEDIA_NOT_FOUND because the file is on another pod.
+#
+# The cluster needs a storage class that supports ReadWriteMany (NFS, CephFS, Longhorn
+# RWX, EFS, Azure Files…). Set it per environment in the overlay, e.g.:
+#   patches:
+#     - target: { kind: PersistentVolumeClaim, name: saas-uploads }
+#       patch: |-
+#         - op: add
+#           path: /spec/storageClassName
+#           value: <rwx-storage-class>
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: saas-uploads
+  labels:
+    app.kubernetes.io/name: saas-uploads
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi

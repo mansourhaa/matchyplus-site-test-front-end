@@ -11,7 +11,7 @@ import { SwipeService } from '../../../services/swipe.js';
 import { DiscoveryFeedQuery, PostSwipeBody } from '../../../types/matching.js';
 
 const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
-  const discovery = new DiscoveryService({ prisma: fastify.prisma });
+  const discovery = new DiscoveryService({ prisma: fastify.prisma, redis: fastify.redisClient });
   const swipe = new SwipeService({
     prisma: fastify.prisma,
     notify: (userId, event, payload) => fastify.notifyUser(userId, event, payload),

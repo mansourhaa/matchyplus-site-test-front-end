@@ -105,21 +105,63 @@ describe('VideoAnalysisService', () => {
       expect(storage.deleteMediaFile).toHaveBeenCalledWith('/uploads/onboarding-clips', 'abc.mp4');
     });
 
-    it('sweeps clips older than an hour, and keeps recent ones', async () => {
+    it('does not scan the clips folder during the upload request', async () => {
       const { service, aiJobs } = createService();
+      storage.saveMediaFile.mockResolvedValue('abc.mp4');
+      aiJobs.createJob.mockResolvedValue({ id: 'job-1' });
+
+      await service.startFromClip(clip);
+
+      expect(storage.readdir).not.toHaveBeenCalled();
+      expect(storage.stat).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sweepStaleClips (background)', () => {
+    it('removes clips older than an hour, and keeps recent ones', async () => {
+      const { service } = createService();
       storage.readdir.mockResolvedValue(['old.webm', 'new.webm']);
       storage.stat.mockImplementation((path: string) =>
         Promise.resolve({
           mtimeMs: path.endsWith('old.webm') ? Date.now() - 2 * 60 * 60 * 1000 : Date.now(),
         }),
       );
-      storage.saveMediaFile.mockResolvedValue('abc.mp4');
-      aiJobs.createJob.mockResolvedValue({ id: 'job-1' });
 
-      await service.startFromClip(clip);
-
+      await expect(service.sweepStaleClips()).resolves.toBe(1);
       expect(storage.deleteMediaFile).toHaveBeenCalledTimes(1);
       expect(storage.deleteMediaFile).toHaveBeenCalledWith('/uploads/onboarding-clips', 'old.webm');
+    });
+
+    it('skips a clip deleted meanwhile by the worker or another replica', async () => {
+      const { service } = createService();
+      storage.readdir.mockResolvedValue(['gone.webm', 'old.webm']);
+      storage.stat.mockImplementation((path: string) =>
+        path.endsWith('gone.webm')
+          ? Promise.reject(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }))
+          : Promise.resolve({ mtimeMs: Date.now() - 2 * 60 * 60 * 1000 }),
+      );
+
+      await expect(service.sweepStaleClips()).resolves.toBe(1);
+      expect(storage.deleteMediaFile).toHaveBeenCalledWith('/uploads/onboarding-clips', 'old.webm');
+    });
+
+    it('runs at start and then on an interval until stopped', async () => {
+      vi.useFakeTimers();
+      try {
+        const { service } = createService();
+        storage.readdir.mockResolvedValue([]);
+
+        const stop = service.startClipSweeper(1000);
+        expect(storage.readdir).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(2500);
+        expect(storage.readdir).toHaveBeenCalledTimes(3);
+
+        stop();
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(storage.readdir).toHaveBeenCalledTimes(3);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
