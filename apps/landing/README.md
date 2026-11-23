@@ -217,7 +217,7 @@ PitchBook profile until it has a website. To add a partner: one line in `PARTNER
 | What                                        | Where                                                      | Status on screen          |
 | ------------------------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Pros in the belt, the hero and the pro card | `belt-data.ts` + `landing.beltProfiles`                    | "Profil d'exemple" (belt) |
-| Community map: cities, counts, audience     | `community-map.ts` (`SAMPLE_LOCATIONS`, `SAMPLE_AUDIENCE`) | "Données d'exemple"       |
+| Community map: cities, counts, audience     | `community-map.ts` (`SAMPLE_LOCATIONS`, `SAMPLE_AUDIENCE`) | not labelled (manager)    |
 | Referral code `MP-7K2Q9`, 10 points         | `landing.referral*`                                        | sample code and points    |
 | Search results count                        | `search-results-data.ts` (`sampleResultCount`)             | "Chiffre indicatif"       |
 | The 3 news items                            | `press-data.ts` (`sample: true`)                           | "Exemple", `noindex`      |
@@ -238,8 +238,9 @@ These placeholders are visible on the page today:
 2. **Partnerships:** `[Logo partenaire]` in the white cards of the strip.
 3. **Referral:** Matchy+ has **no referral system yet**. The code, the QR code and the
    "10 points" should go live only once the programme exists. Otherwise, hide the block.
-4. **Example data:** the community map, the sample pros and the search results count are
-   labelled as examples. Real data makes them much stronger.
+4. **Example data:** the sample pros and the search results count are labelled as examples. The
+   community map numbers are examples too but, at the manager's request, the line under the map
+   (legend and "Données d'exemple") was removed: plug the real numbers before relying on them.
 
 Older issues, not caused by this work but worth a separate ticket:
 
@@ -271,11 +272,12 @@ Older issues, not caused by this work but worth a separate ticket:
   - JavaScript checks it only for logic: the belt's auto-rotation and spin, the hero's timer and
     pointer tilt, the card's instant swipe.
   - First states must equal the server's. Otherwise React throws hydration error #418.
-- **Section headings, two styles from the original site:**
-  - Centred (like `features`): teal bar `h-1 w-10 rounded`, optional teal kicker
-    (`text-sm font-semibold tracking-wide`), `h2` `text-brand-blue text-3xl font-bold md:text-4xl`.
-  - Beside a visual (like `steps`, `security`, `explore`): blue bar `h-1 w-14 rounded-full`
-    aligned to the text side, `h2` `font-extrabold`.
+- **Section headings, two styles from the original site** (no small bar above the title: the
+  manager had it removed everywhere):
+  - Centred (like `features`): optional teal kicker (`text-sm font-semibold tracking-wide`),
+    `h2` `text-brand-blue text-3xl font-bold md:text-4xl`.
+  - Beside a visual (like `steps`, `security`, `explore`): `h2` `font-extrabold`, aligned to the
+    text side.
 - **Phones:** hover handlers react only to `pointerType === 'mouse'`, so content that slides
   under a finger does not close a tooltip.
 - **Images:**

@@ -138,10 +138,6 @@ export const messages: Record<Locale, MessageTree> = {
       communityAudience: 'Audience Matchy+',
       communityVisitors: '{count} visiteurs',
       communityMapLabel: 'Carte du monde de la présence internationale de Matchy+',
-      communityLegendApprox: 'Position approximative',
-      communityLegendHint: 'Survolez ou touchez un point pour les détails',
-      communityLegendLive: 'Mise à jour automatique',
-      communityLegendSwipe: 'Faites glisser la carte pour explorer',
       communityCities: [
         ['tunis', 'Tunis, Tunisie'],
         ['paris', 'Paris, France'],
@@ -153,7 +149,6 @@ export const messages: Record<Locale, MessageTree> = {
         ['singapore', 'Singapour'],
         ['sydney', 'Sydney, Australie'],
       ],
-      communitySample: 'Données d’exemple',
       intro:
         'Besoin d’un service fiable ? Découvrez des professionnels disponibles autour de vous, trouvez le profil qui correspond à votre besoin et entrez facilement en contact.',
       title: 'Trouvez plus facilement le service dont vous avez besoin',
@@ -644,10 +639,6 @@ export const messages: Record<Locale, MessageTree> = {
       communityAudience: 'Matchy+ audience',
       communityVisitors: '{count} visitors',
       communityMapLabel: "World map of Matchy+'s international presence",
-      communityLegendApprox: 'Approximate location',
-      communityLegendHint: 'Hover or tap a point for details',
-      communityLegendLive: 'Updates automatically',
-      communityLegendSwipe: 'Swipe the map to explore',
       communityCities: [
         ['tunis', 'Tunis, Tunisia'],
         ['paris', 'Paris, France'],
@@ -659,7 +650,6 @@ export const messages: Record<Locale, MessageTree> = {
         ['singapore', 'Singapore'],
         ['sydney', 'Sydney, Australia'],
       ],
-      communitySample: 'Sample data',
       intro:
         ' Need a reliable service? Discover professionals available around you, find the profile that matches your needs and connect easily.',
       title: 'Find the service you need more easily',
@@ -1133,10 +1123,6 @@ export const messages: Record<Locale, MessageTree> = {
       communityAudience: 'جمهور Matchy+\u200E',
       communityVisitors: '{count} زائر',
       communityMapLabel: 'خريطة العالم للحضور الدولي لـ Matchy+\u200E',
-      communityLegendApprox: 'موقع تقريبي',
-      communityLegendHint: 'مرّر المؤشر أو المس نقطة لعرض التفاصيل',
-      communityLegendLive: 'تحديث تلقائي',
-      communityLegendSwipe: 'اسحب الخريطة للاستكشاف',
       communityCities: [
         ['tunis', 'تونس، تونس'],
         ['paris', 'باريس، فرنسا'],
@@ -1148,7 +1134,6 @@ export const messages: Record<Locale, MessageTree> = {
         ['singapore', 'سنغافورة'],
         ['sydney', 'سيدني، أستراليا'],
       ],
-      communitySample: 'بيانات للتوضيح',
       intro:
         ' هل تحتاج إلى خدمة موثوقة؟ اكتشف المهنيين المتاحين من حولك، واعثر على الملف الذي يناسب احتياجاتك، وتواصل بسهولة.',
       title: ' اعثر بسهولة أكبر على الخدمة التي تحتاجها',

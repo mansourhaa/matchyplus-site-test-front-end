@@ -34,7 +34,6 @@ function Feature({
           <Icon className="h-6 w-6" />
         </span>
         <h3 className="text-brand-navy mt-4 text-lg font-semibold">{title}</h3>
-        <div className="bg-brand-teal/50 mt-1 h-0.5 w-10 rounded" />
         <p className="text-muted-foreground mt-3 max-w-[280px] text-sm leading-relaxed">{text}</p>
       </div>
     </Reveal>
@@ -73,7 +72,6 @@ export function Features() {
   return (
     <section className="mx-auto max-w-6xl px-5 py-20" id="services">
       <Reveal className="mx-auto max-w-2xl text-center">
-        <div className="bg-brand-teal mx-auto mb-4 h-1 w-10 rounded" />
         <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
           {t('landing.title')}
         </h2>

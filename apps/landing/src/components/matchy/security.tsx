@@ -38,7 +38,6 @@ export function Security() {
           direction={isRtl ? 'right' : 'left'}
           className="text-center ltr:lg:text-left rtl:lg:text-right"
         >
-          <div className="bg-brand-blue mx-auto mb-5 h-1 w-14 rounded-full ltr:lg:mr-auto ltr:lg:ml-0 rtl:lg:mr-0 rtl:lg:ml-auto" />
           <h2 className="text-brand-blue text-2xl font-extrabold text-balance sm:text-3xl md:text-3xl lg:text-[2.2rem] lg:leading-tight">
             {t('landing.wallet')}
             <span className="mt-1 block">{t('landing.walletSubtitle')}</span>

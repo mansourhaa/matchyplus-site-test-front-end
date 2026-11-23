@@ -236,7 +236,6 @@ export function ServicesBelt() {
   return (
     <section className="relative z-10 mx-auto max-w-6xl px-5 py-20" id="services-belt">
       <Reveal className="mx-auto max-w-2xl text-center">
-        <div className="bg-brand-teal mx-auto mb-4 h-1 w-10 rounded" />
         <p className="text-brand-teal mb-2 text-sm font-semibold tracking-wide">
           {t('landing.beltEyebrow')}
         </p>

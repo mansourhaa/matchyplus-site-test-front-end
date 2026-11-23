@@ -23,7 +23,6 @@ export function Press() {
   return (
     <section id="press" className="mx-auto max-w-6xl px-5 py-20 md:py-24">
       <Reveal className="text-center">
-        <div className="bg-brand-teal mx-auto mb-4 h-1 w-10 rounded" />
         <p className="text-brand-teal mb-2 text-sm font-semibold tracking-wide">
           {t('landing.pressKicker')}
         </p>

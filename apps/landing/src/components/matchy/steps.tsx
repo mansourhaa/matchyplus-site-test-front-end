@@ -15,7 +15,6 @@ export function Steps() {
       id="how"
     >
       <Reveal direction={isRtl ? 'left' : 'right'} className="md:sticky md:top-28">
-        <div className="bg-brand-blue mb-5 h-1 w-14 rounded-full ltr:mr-auto rtl:ml-auto" />
         <h2 className="text-brand-blue text-2xl font-extrabold text-balance sm:text-3xl md:text-4xl lg:text-[2.2rem] lg:leading-tight">
           {t('landing.stepsTitle')}
           <span className="mt-1 block text-xl font-bold opacity-90 sm:text-2xl">

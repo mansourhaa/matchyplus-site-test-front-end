@@ -25,7 +25,6 @@ export function ProBranding() {
     <section className="relative z-10 bg-[#F4F8FC] py-20 md:py-24">
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-5 lg:grid-cols-2">
         <Reveal direction={isRtl ? 'right' : 'left'}>
-          <div className="bg-brand-blue mb-5 h-1 w-14 rounded-full ltr:mr-auto rtl:ml-auto" />
           {/* side heading, same as steps / security / explore */}
           <p className="text-brand-teal text-sm font-semibold tracking-wide">
             {t('landing.brandEyebrow')}

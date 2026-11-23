@@ -69,7 +69,6 @@ const NEW_KEYS = [
   'communityAudience',
   'communityVisitors',
   'communityMapLabel',
-  'communityLegendSwipe',
   'communityCities',
 ];
 
@@ -211,7 +210,7 @@ describe('home sections', () => {
     );
   });
 
-  it('LiveCommunity shows the map, the counters and a tooltip per city, clearly labelled', () => {
+  it('LiveCommunity shows the map, the counters and a tooltip per city', () => {
     renderIn('fr', <LiveCommunity />);
     expect(
       screen.getByRole('heading', {
@@ -219,7 +218,8 @@ describe('home sections', () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Carte du monde/ })).toBeInTheDocument();
-    expect(screen.getByText('Données d’exemple')).toBeInTheDocument();
+    // the legend line under the map was removed at the manager's request
+    expect(screen.queryByText('Position approximative')).not.toBeInTheDocument();
     // 233 visitors on the map and an audience of 1 240 (narrow no-break space in French). The counters exist
     // twice: on the map for computers and under it for phones; CSS shows one or the other.
     expect(screen.getAllByText('233')).toHaveLength(2);

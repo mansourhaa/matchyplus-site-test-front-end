@@ -23,7 +23,6 @@ export function Partnerships() {
       <div className="mx-auto max-w-6xl px-5">
         <Reveal className="text-center">
           {/* centred heading, same as features / belt / map (white bar on the dark band) */}
-          <div className="mx-auto mb-4 h-1 w-10 rounded bg-white" />
           <h2 className="text-3xl font-bold text-balance md:text-4xl">
             {t('landing.partnersTitle')}
           </h2>

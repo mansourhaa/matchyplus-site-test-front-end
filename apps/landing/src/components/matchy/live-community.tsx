@@ -96,7 +96,6 @@ export function LiveCommunity() {
       <div className="mx-auto max-w-6xl px-5">
         {/* same heading as the other sections */}
         <Reveal className="mx-auto max-w-2xl text-center">
-          <div className="bg-brand-teal mx-auto mb-4 h-1 w-10 rounded" />
           <p className="text-brand-teal mb-2 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide">
             <span className="relative flex h-2 w-2">
               <span className="bg-brand-teal absolute inline-flex h-full w-full rounded-full opacity-75 motion-safe:animate-ping" />
@@ -191,21 +190,6 @@ export function LiveCommunity() {
 
           {/* phones: the counters sit in a row under the map */}
           <CounterRow metrics={metrics} format={format} />
-
-          <footer className="text-muted-foreground mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-center text-xs sm:text-sm">
-            <span className="flex items-center gap-2">
-              <span className="bg-brand-teal h-2 w-2 rounded-full shadow-[0_0_0_2px_#FFFFFF,0_0_8px_rgba(73,184,173,0.7)]" />
-              {t('landing.communityLegendApprox')}
-            </span>
-            <span>{t('landing.communityLegendHint')}</span>
-            <span className="md:hidden">{t('landing.communityLegendSwipe')}</span>
-            <span className="text-brand-teal font-semibold">
-              ● {t('landing.communityLegendLive')}
-            </span>
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 font-semibold text-slate-600">
-              {t('landing.communitySample')}
-            </span>
-          </footer>
         </Reveal>
       </div>
     </section>

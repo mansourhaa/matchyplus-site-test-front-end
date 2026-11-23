@@ -27,7 +27,6 @@ export function PartnerLogos() {
   return (
     <section className="mx-auto max-w-5xl px-5 py-16 md:py-20">
       <Reveal className="text-center">
-        <div className="bg-brand-teal mx-auto mb-4 h-1 w-10 rounded" />
         <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
           {t('landing.ourPartnersTitle')}
         </h2>

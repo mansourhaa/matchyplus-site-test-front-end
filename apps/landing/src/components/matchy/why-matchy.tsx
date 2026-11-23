@@ -16,7 +16,6 @@ export function WhyMatchy() {
     <section className="mx-auto max-w-6xl px-5 py-20 md:py-24">
       <Reveal className="text-center">
         {/* centred heading, same as features / belt / map */}
-        <div className="bg-brand-teal mx-auto mb-4 h-1 w-10 rounded" />
         <h2 className="text-brand-blue text-3xl font-bold text-balance md:text-4xl">
           {t('landing.whyTitle')}
         </h2>
