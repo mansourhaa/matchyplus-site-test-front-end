@@ -14,10 +14,12 @@ const LANG_NAMES: Record<Locale, string> = {
 
 type LangPickerLightProps = {
   menuAlign?: 'left' | 'right';
+  /** Shows the language code next to the flag (« 🇹🇳 AR »), like the 2.0.8 header. */
+  showCode?: boolean;
 };
 
 /** Matchy Inscription AuthLayout `LangPickerLight` — flag button + FR/EN/AR menu. */
-export function LangPickerLight({ menuAlign }: LangPickerLightProps) {
+export function LangPickerLight({ menuAlign, showCode = false }: LangPickerLightProps) {
   const { locale, setLocale, t } = useI18n();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -37,18 +39,25 @@ export function LangPickerLight({ menuAlign }: LangPickerLightProps) {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex items-center justify-center rounded-xl transition-all"
+        data-testid="lang-picker-button"
+        className="flex items-center justify-center gap-2 rounded-xl transition-all"
         style={{
           background: '#F5F7FA',
           border: '1px solid #E0E0E0',
-          width: 44,
+          minWidth: 44,
           height: 38,
+          padding: showCode ? '0 12px' : undefined,
         }}
         title={t('common.selectLanguage')}
         aria-label={t('common.selectLanguage')}
         aria-expanded={open}
       >
         <FlagIcon locale={locale} size={18} />
+        {showCode && (
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>
+            {locale.toUpperCase()}
+          </span>
+        )}
       </button>
       {open && (
         <div

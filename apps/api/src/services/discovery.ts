@@ -477,6 +477,8 @@ function expandSynonyms(terms: string[], synonymMap: Record<string, string[]>): 
 }
 
 function matchesSectors(candidate: FeedUser, sectors: string[]): boolean {
+  // The home « Secteur » menu sends the onboarding industry key (e.g. `commerce_retail`).
+  if (candidate.industry && sectors.includes(candidate.industry.toLowerCase())) return true;
   const hay = [
     candidate.activity_sector,
     candidate.sector,

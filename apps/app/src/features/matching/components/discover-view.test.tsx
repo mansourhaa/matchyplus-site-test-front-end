@@ -66,15 +66,18 @@ const mockFeedProfile = {
   liked_me: false,
 };
 
-function renderDiscoverView(initialProfiles = [mockFeedProfile]) {
+function renderDiscoverView(
+  initialProfiles: Array<Record<string, unknown>> = [mockFeedProfile],
+  plan = 'FREE',
+) {
   vi.mocked(api.get).mockImplementation((url: string) => {
     if (url === '/discovery/swipe-feed') {
       return Promise.resolve({
         data: {
           profiles: initialProfiles,
           quota: {
-            plan: 'FREE',
-            unlimited: false,
+            plan,
+            unlimited: plan !== 'FREE',
             used: 0,
             limit: 20,
             remaining: 20,
@@ -86,8 +89,8 @@ function renderDiscoverView(initialProfiles = [mockFeedProfile]) {
     if (url === '/discovery/quota') {
       return Promise.resolve({
         data: {
-          plan: 'FREE',
-          unlimited: false,
+          plan,
+          unlimited: plan !== 'FREE',
           used: 0,
           limit: 20,
           remaining: 20,
@@ -137,12 +140,13 @@ describe('DiscoverView — Upgraded Filter System', () => {
   });
 
   describe('1. Structure & Category Chips', () => {
-    it('renders single row of category chips with "Tout" selected and icons', async () => {
+    it('renders the 2.0.8 chips with « Pour vous » selected by default', async () => {
       renderDiscoverView();
 
       const allPill = await screen.findByTestId('sector-pill-all');
       expect(allPill).toBeInTheDocument();
-      expect(allPill).toHaveAttribute('aria-selected', 'true');
+      expect(allPill).toHaveAttribute('aria-selected', 'false');
+      expect(screen.getByTestId('sector-pill-for-you')).toHaveAttribute('aria-selected', 'true');
 
       const techPill = screen.getByTestId('sector-pill-Informatique / Tech');
       expect(techPill).toBeInTheDocument();
@@ -207,7 +211,7 @@ describe('DiscoverView — Upgraded Filter System', () => {
         );
       });
 
-      expect(screen.getByTestId('sector-pill-all')).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByTestId('sector-pill-for-you')).toHaveAttribute('aria-selected', 'true');
       expect(techPill).toHaveAttribute('aria-selected', 'false');
     });
 
@@ -223,19 +227,22 @@ describe('DiscoverView — Upgraded Filter System', () => {
       const searchInput = screen.getByTestId('sector-search-input');
       expect(searchInput).toBeInTheDocument();
 
-      const plomberieBtn = within(dropdown).getByTestId('sector-pill-Plomberie');
-      fireEvent.click(plomberieBtn);
+      // 2.0.8 menu: the 10 onboarding industries, sent as their key
+      expect(within(dropdown).getAllByRole('tab')).toHaveLength(10);
+      const commerceBtn = within(dropdown).getByTestId('sector-pill-commerce_retail');
+      fireEvent.click(commerceBtn);
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
           '/discovery/swipe-feed',
           expect.objectContaining({
             params: expect.objectContaining({
-              sector: 'Plomberie',
+              sector: 'commerce_retail',
             }),
           }),
         );
       });
+      expect(screen.getByTestId('sector-search-toggle')).not.toHaveTextContent('commerce_retail');
 
       // Dropdown closes after selection
       expect(screen.queryByTestId('sector-search-dropdown')).not.toBeInTheDocument();
@@ -316,7 +323,7 @@ describe('DiscoverView — Upgraded Filter System', () => {
   });
 
   describe('3. Active State & Reset', () => {
-    it('displays live count "1 professionnel" and resets all filters when clicking Réinitialiser', async () => {
+    it('displays live count "1 profil" and resets all filters when clicking Réinitialiser', async () => {
       renderDiscoverView();
 
       // Set tech sector
@@ -324,13 +331,13 @@ describe('DiscoverView — Upgraded Filter System', () => {
       fireEvent.click(techPill);
 
       const liveCount = await screen.findByTestId('discover-live-count');
-      expect(liveCount).toHaveTextContent('1 professionnel');
+      expect(liveCount).toHaveTextContent('1 profil');
 
       const resetAllBtn = screen.getByTestId('discover-reset-all-btn');
       fireEvent.click(resetAllBtn);
 
       await waitFor(() => {
-        expect(screen.getByTestId('sector-pill-all')).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByTestId('sector-pill-for-you')).toHaveAttribute('aria-selected', 'true');
       });
     });
   });
@@ -386,6 +393,118 @@ describe('DiscoverView — Upgraded Filter System', () => {
             }),
           }),
         );
+      });
+    });
+  });
+
+  describe('6. Home tabs (2.0.8) with the plan locks', () => {
+    it('shows the card badges, the locked tabs and the daily limit for a FREE user', async () => {
+      renderDiscoverView();
+
+      expect(await screen.findByTestId('discover-card-ai-score')).toHaveTextContent('92%');
+      expect(screen.getByTestId('home-tab-feed')).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByTestId('home-tab-top')).toBeInTheDocument();
+      expect(screen.getByTestId('home-tab-liked-me')).toBeInTheDocument();
+      expect(screen.getByTestId('discover-quota-banner')).toHaveTextContent('20/20');
+
+      fireEvent.click(screen.getByTestId('discover-go-premium'));
+      expect(await screen.findByTestId('swipe-limit-modal')).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('swipe-limit-upgrade'));
+      expect(pushMock).toHaveBeenCalledWith('/settings/plans');
+    });
+
+    it('locks the detailed AI score for FREE and opens it for Premium', async () => {
+      const { unmount } = renderDiscoverView();
+      expect(await screen.findByTestId('score-details-locked')).toHaveTextContent(
+        'Le score détaillé est réservé au Premium',
+      );
+      unmount();
+
+      renderDiscoverView([mockFeedProfile], 'PREMIUM');
+      expect(await screen.findByTestId('discover-card-ai-score')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId('score-details-locked')).not.toBeInTheDocument();
+      });
+    });
+
+    it("shows the Premium card when a FREE user opens « M'a aimé »", async () => {
+      renderDiscoverView([{ ...mockFeedProfile, liked_me: true }]);
+
+      fireEvent.click(await screen.findByTestId('home-tab-liked-me'));
+
+      expect(await screen.findByTestId('discover-plan-lock')).toHaveTextContent('Fonction Premium');
+      expect(screen.queryByTestId('discover-card-ai-score')).not.toBeInTheDocument();
+    });
+
+    it('loads « Meilleurs choix IA » ranked by AI score and locks the locked profiles', async () => {
+      renderDiscoverView([
+        { ...mockFeedProfile, id: 'locked-1', name: 'Locked Person', is_locked: true },
+      ]);
+
+      fireEvent.click(await screen.findByTestId('home-tab-top'));
+
+      await waitFor(() => {
+        expect(api.get).toHaveBeenCalledWith(
+          '/discovery/swipe-feed',
+          expect.objectContaining({
+            params: expect.objectContaining({ context: 'search', sort: 'match' }),
+          }),
+        );
+      });
+      expect(screen.getByTestId('home-tab-top')).toHaveAttribute('aria-selected', 'true');
+      expect(await screen.findByTestId('discover-plan-lock')).toBeInTheDocument();
+    });
+
+    it("shows « M'a aimé » for a paid plan and filters the profiles that liked me", async () => {
+      renderDiscoverView(
+        [
+          { ...mockFeedProfile, id: 'not-liked', name: 'Karim Neutre' },
+          { ...mockFeedProfile, id: 'liked', name: 'Rania Fan', liked_me: true },
+        ],
+        'PREMIUM',
+      );
+
+      const likedMe = await screen.findByTestId('home-tab-liked-me');
+      expect(screen.queryByTestId('discover-quota-banner')).not.toBeInTheDocument();
+      expect(await screen.findByTestId('discover-unlimited-pill')).toBeInTheDocument();
+      fireEvent.click(likedMe);
+
+      expect(likedMe).toHaveAttribute('aria-pressed', 'true');
+      expect((await screen.findAllByText('Rania Fan')).length).toBeGreaterThan(0);
+    });
+
+    it('shows a simple empty state when nobody liked me yet', async () => {
+      renderDiscoverView([mockFeedProfile], 'PREMIUM_PLUS');
+
+      fireEvent.click(await screen.findByTestId('home-tab-liked-me'));
+
+      expect(await screen.findByTestId('discover-liked-me-empty')).toBeInTheDocument();
+    });
+    it('« الكل » loads everyone nearest first and hides the sign-up hint', async () => {
+      renderDiscoverView();
+
+      expect(await screen.findByTestId('discover-cold-start')).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('sector-pill-all'));
+
+      await waitFor(() => {
+        expect(api.get).toHaveBeenCalledWith(
+          '/discovery/swipe-feed',
+          expect.objectContaining({ params: expect.objectContaining({ sort: 'distance' }) }),
+        );
+      });
+      expect(screen.getByTestId('sector-pill-all')).toHaveAttribute('aria-selected', 'true');
+      expect(screen.queryByTestId('discover-cold-start')).not.toBeInTheDocument();
+    });
+
+    it('refreshes the AI picks from their header button', async () => {
+      renderDiscoverView();
+
+      const refresh = await screen.findByTestId('ai-picks-refresh');
+      const calls = vi.mocked(api.get).mock.calls.length;
+      fireEvent.click(refresh);
+
+      await waitFor(() => {
+        expect(vi.mocked(api.get).mock.calls.length).toBeGreaterThan(calls);
       });
     });
   });
