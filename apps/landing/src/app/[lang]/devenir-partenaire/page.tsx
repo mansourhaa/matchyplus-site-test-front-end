@@ -1,6 +1,7 @@
 'use client';
 
 import { CountryCodeSelector } from '@/components/country-code-selector';
+import { PARTNER_BENEFITS } from '@/components/matchy/partner-benefits';
 import { PageFrame } from '@/components/site-shell';
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
@@ -41,20 +42,7 @@ const data: Record<
     pitchTitle: 'Propulsez votre activité vers de nouveaux sommets',
     pitchText:
       'Matchy+ met vos compétences en valeur auprès de milliers de clients qualifiés à la recherche de services de proximité fiables.',
-    benefits: [
-      {
-        title: 'Visibilité maximale',
-        desc: 'Apparaissez en priorité dans les recherches géolocalisées de votre ville.',
-      },
-      {
-        title: 'Clients qualifiés',
-        desc: 'Recevez des demandes ciblées correspondant exactement à vos domaines d’expertise.',
-      },
-      {
-        title: 'Matchy Wallet & Boosters',
-        desc: 'Accédez à des outils exclusifs pour multiplier vos connexions et opportunités.',
-      },
-    ],
+    benefits: PARTNER_BENEFITS.fr,
     formTitle: 'Rejoindre le réseau',
     formDesc: 'Remplissez vos coordonnées et votre demande pour finaliser votre profil pro.',
     name: 'Nom & Prénom',
@@ -79,20 +67,7 @@ const data: Record<
     pitchTitle: 'Take your business to the next level',
     pitchText:
       'Matchy+ showcases your skills to thousands of qualified clients looking for trusted nearby services.',
-    benefits: [
-      {
-        title: 'Maximum visibility',
-        desc: 'Appear at the top of location-based searches in your city.',
-      },
-      {
-        title: 'Qualified clients',
-        desc: 'Receive targeted service requests tailored to your exact skillset.',
-      },
-      {
-        title: 'Matchy Wallet & Boosters',
-        desc: 'Unlock exclusive tools to multiply connections and business opportunities.',
-      },
-    ],
+    benefits: PARTNER_BENEFITS.en,
     formTitle: 'Join the network',
     formDesc: 'Submit your details and request to set up your pro profile.',
     name: 'Full name',
@@ -108,26 +83,13 @@ const data: Record<
   },
   ar: {
     eyebrow: 'Matchy Wallet والشركاء',
-    title: 'كن شريكًا مع Matchy+',
+    title: 'كن شريكًا مع Matchy+\u200E',
     subtitle: 'انضم إلى الشبكة الإفريقية الرائدة للمهنيين وطوّر قاعدة عملائك المحلية بكل سهولة.',
     badge: 'برنامج الشركاء المعتمدين',
     pitchTitle: 'انطلق بنشاطك المهني إلى مستويات جديدة',
     pitchText:
-      'تبرز Matchy+ مهاراتك أمام آلاف العملاء المستهدفين الذين يبحثون عن خدمات محلية موثوقة.',
-    benefits: [
-      {
-        title: 'أقصى درجات الظهور',
-        desc: 'كن في مقدمة نتائج البحث المعتمدة على الموقع في منطقتك.',
-      },
-      {
-        title: 'عملاء مؤهلون',
-        desc: 'احصل على طلبات تطابق تخصصك وخبراتك بدقة.',
-      },
-      {
-        title: 'Matchy Wallet وميزات الترويج',
-        desc: 'استفد من أدوات تسريع الظهور لمضاعفة فرص العمل.',
-      },
-    ],
+      'تبرز Matchy+\u200E مهاراتك أمام آلاف العملاء المستهدفين الذين يبحثون عن خدمات محلية موثوقة.',
+    benefits: PARTNER_BENEFITS.ar,
     formTitle: 'انضم إلى الشبكة',
     formDesc: 'أدخل بياناتك وتفاصيل طلبك وسيتواصل معك فريقنا.',
     name: 'الاسم واللقب',

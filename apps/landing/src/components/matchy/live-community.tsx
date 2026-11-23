@@ -26,8 +26,8 @@ const MOBILE_FOCUS_X = 52.5;
 
 /**
  * Matchy+'s ambition: a world map with the highlighted countries, the cities, lines from Tunis
- * and a tooltip per country. Every figure is a real Google Search Console number, with its
- * source shown under the map (the content brief allows only defined, sourced figures).
+ * and a tooltip per country. The figures are real Google Search Console numbers (see
+ * community-map.ts); by the manager's choice the source line is not shown on the page.
  * Animations are hidden with CSS for "reduce motion", never with JS, so the server and the
  * browser always render the same HTML.
  */
@@ -35,12 +35,6 @@ export function LiveCommunity() {
   const { t, locale, dir, tRows } = useI18n();
   const countries = toCountryNames(tRows('landing.communityCountries'));
   const format = new Intl.NumberFormat(numberLocale(locale));
-  const asOf = new Intl.DateTimeFormat(numberLocale(locale), {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${SEARCH_CONSOLE.asOf}T12:00:00Z`));
   const appearances = (count: number) =>
     t('landing.communityImpressionsCount', { count: format.format(count) });
 
@@ -173,9 +167,6 @@ export function LiveCommunity() {
 
           {/* phones: the counters sit in a row under the map */}
           <CounterRow metrics={metrics} format={format} />
-          <p className="text-muted-foreground mt-5 text-center text-xs">
-            {t('landing.communitySource', { date: asOf })}
-          </p>
         </Reveal>
       </div>
     </section>

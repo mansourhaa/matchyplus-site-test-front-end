@@ -604,15 +604,20 @@ export function youtubeId(link: string | undefined): string | null {
   return id && /^[\w-]{11}$/.test(id) ? id : null;
 }
 
+/** The first day a (possibly partial) date can mean, at noon UTC: '2026' → 1 Jan 2026. */
+export function pressDateValue(date: string): Date {
+  const [year, month = '01', day = '01'] = date.split('-');
+  // noon UTC: the same calendar day on the server and in every visitor's time zone
+  return new Date(`${year}-${month}-${day}T12:00:00Z`);
+}
+
 /**
  * Date parts in the page language, e.g. { top: 'nov.', big: '22', full: '22 nov. 2026' }.
  * A month-only date (YYYY-MM) shows the year on top and the month big ({ top: '2026', big: 'juin' });
  * a year-only date (YYYY) shows just the year ({ top: '', big: '2026', full: '2026' }).
  */
 export function pressDate(date: string, locale: Locale) {
-  const [year, month = '01', day = '01'] = date.split('-');
-  // noon UTC: the same calendar day on the server and in every visitor's time zone
-  const value = new Date(`${year}-${month}-${day}T12:00:00Z`);
+  const value = pressDateValue(date);
   const format = (options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(numberLocale(locale), { timeZone: 'UTC', ...options }).format(value);
   if (/^\d{4}$/.test(date)) {

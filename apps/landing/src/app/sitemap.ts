@@ -1,4 +1,4 @@
-import { pressItems } from '@/components/matchy/press-data';
+import { pressDateValue, pressItems } from '@/components/matchy/press-data';
 import { SUPPORTED_LOCALES } from '@/features/i18n/messages';
 import { localizePath } from '@/features/i18n/routing';
 import { PAGES, absoluteUrl, languageAlternates } from '@/lib/seo';
@@ -17,7 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       path: `/actualites/${item.slug}`,
       changeFrequency: 'monthly' as const,
       priority: 0.6,
-      lastModified: new Date(`${item.date.length === 7 ? `${item.date}-01` : item.date}T12:00:00Z`),
+      lastModified: pressDateValue(item.date),
     }));
   return [...pages, ...articles].flatMap((page) =>
     SUPPORTED_LOCALES.map((locale) => ({

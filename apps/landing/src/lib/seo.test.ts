@@ -63,7 +63,11 @@ describe('sitemap', () => {
     const urls = entries.map((entry) => entry.url);
     expect(new Set(urls).size).toBe(urls.length);
     const articles = pressItems().filter((item) => !item.sample);
-    expect(urls).toHaveLength((10 + articles.length) * SUPPORTED_LOCALES.length);
+    expect(urls).toHaveLength((11 + articles.length) * SUPPORTED_LOCALES.length);
+    // every date is real, including news dated by month or by year only
+    for (const entry of entries) {
+      expect(Number.isNaN(new Date(entry.lastModified ?? '').getTime())).toBe(false);
+    }
     for (const item of articles) {
       expect(urls).toContain(`https://matchyplus.com/fr/actualites/${item.slug}/`);
     }

@@ -9,8 +9,10 @@ import { CompanyStory } from './company-story';
 import { HeroLivePhone } from './hero-live-phone';
 import { HeroSearch } from './hero-search';
 import { LiveCommunity } from './live-community';
+import { PARTNER_BENEFITS } from './partner-benefits';
 import { PartnerLogos } from './partner-logos';
 import { PARTNERS } from './partners-data';
+import { PartnersPage } from './partners-page';
 import { Partnerships } from './partnerships';
 import { Press } from './press';
 import { PRESS_ITEMS, pressItems } from './press-data';
@@ -65,6 +67,13 @@ const NEW_KEYS = [
   'partnersTitle',
   'partnersCta',
   'partnersSlot',
+  'partnerDescriptions',
+  'partnersPageTitle',
+  'partnersPageBenefitsTitle',
+  'footerFindTitle',
+  'footerProsTitle',
+  'footerLegalTitle',
+  'footerCookies',
   'pressNext',
   'pressCtaFind',
   'pressCtaPartner',
@@ -77,7 +86,6 @@ const NEW_KEYS = [
   'communityCountriesLabel',
   'communityImpressionsLabel',
   'communityImpressionsCount',
-  'communitySource',
 ];
 
 describe('new home texts', () => {
@@ -224,7 +232,34 @@ describe('home sections', () => {
     );
   });
 
-  it('LiveCommunity shows the real Search Console figures with their source, and a tooltip per country', () => {
+  it('Partners page lists every partner with its description and website, then the benefits', () => {
+    for (const locale of SUPPORTED_LOCALES) {
+      const { unmount } = renderIn(locale, <PartnersPage />);
+      const descriptions = getMessage(
+        messages[locale],
+        'landing.partnerDescriptions',
+      ) as string[][];
+      for (const partner of PARTNERS) {
+        expect(screen.getByRole('heading', { level: 2, name: partner.name })).toBeInTheDocument();
+        const description = descriptions.find(([id]) => id === partner.id)?.[1];
+        expect(description?.trim()).toBeTruthy();
+        expect(screen.getByText(description ?? '')).toBeInTheDocument();
+      }
+      const sites = screen.getAllByRole('link').filter((link) => link.getAttribute('target'));
+      expect(sites.map((link) => link.getAttribute('href'))).toEqual(PARTNERS.map((p) => p.url));
+      for (const site of sites) expect(site).toHaveAttribute('rel', 'noopener noreferrer');
+      for (const benefit of PARTNER_BENEFITS[locale]) {
+        expect(screen.getByRole('heading', { level: 3, name: benefit.title })).toBeInTheDocument();
+      }
+      expect(screen.getByRole('link', { name: /partenaire|partner|شريك/i })).toHaveAttribute(
+        'href',
+        expect.stringMatching(new RegExp(`^/${locale}/devenir-partenaire/?$`)),
+      );
+      unmount();
+    }
+  });
+
+  it('LiveCommunity shows the Search Console figures and a tooltip per country, with no source line', () => {
     renderIn('fr', <LiveCommunity />);
     expect(
       screen.getByRole('heading', {
@@ -235,12 +270,11 @@ describe('home sections', () => {
     // the counters exist twice: on the map for computers and under it for phones
     expect(screen.getAllByText('52')).toHaveLength(2);
     expect(screen.getAllByText('434')).toHaveLength(2);
-    expect(screen.getAllByText('Pays où Matchy+ apparaît dans Google')).toHaveLength(2);
-    expect(
-      screen.getByText('Source : Google Search Console, 3 derniers mois (au 23 nov. 2026)'),
-    ).toBeInTheDocument();
+    expect(screen.getAllByText('Présence internationale')).toHaveLength(2);
+    expect(screen.getAllByText('Audience Matchy+')).toHaveLength(2);
+    expect(screen.queryByText(/Source|Google/)).toBeNull();
 
-    const tunis = screen.getByRole('button', { name: 'Tunisie : 136 apparitions dans Google' });
+    const tunis = screen.getByRole('button', { name: 'Tunisie : audience 136' });
     fireEvent.pointerEnter(tunis, { pointerType: 'mouse' });
     expect(within(screen.getByRole('status')).getByText('Tunisie')).toBeInTheDocument();
     // a touch leaving the point (the map slid under the finger) keeps the tooltip open

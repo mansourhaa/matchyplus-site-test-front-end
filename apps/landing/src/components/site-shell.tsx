@@ -1,9 +1,10 @@
 'use client';
 
+import { withSearch } from '@/components/matchy/search-results-data';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
 import { localizePath } from '@/features/i18n/routing';
-import { APP_REGISTER_URL, SOCIAL_LINKS } from '@/lib/constants';
+import { APP_LOGIN_URL, APP_REGISTER_URL, SOCIAL_LINKS } from '@/lib/constants';
 import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -242,8 +243,68 @@ export function Header() {
   );
 }
 
+/** One footer link: a page of this site, or an app page (sign-up, log-in). */
+type FooterLink = { label: string; href: string; app?: boolean };
+
+/** The 4 footer columns, in the order of the content brief. */
+function footerColumns(t: (key: string) => string, locale: Locale) {
+  const page = (path: string) => localizePath(locale, path);
+  // a service category opens the search page already filled with it
+  const search = (label: string) => withSearch(page('/recherche'), label, '');
+  const columns: { title: string; links: FooterLink[] }[] = [
+    {
+      title: t('landing.footerFindTitle'),
+      links: [
+        { label: t('landing.footerFindPro'), href: page('/recherche') },
+        ...(
+          [
+            'footerHomeServices',
+            'footerCrafts',
+            'footerTransport',
+            'footerChildcare',
+            'footerBusiness',
+          ] as const
+        ).map((key) => ({ label: t(`landing.${key}`), href: search(t(`landing.${key}`)) })),
+        { label: t('landing.footerAllServices'), href: page('/services') },
+      ],
+    },
+    {
+      title: t('landing.footerProsTitle'),
+      links: [
+        { label: t('landing.footerCreateProfile'), href: APP_REGISTER_URL, app: true },
+        { label: t('landing.footerVisibility'), href: page('/utilisation') },
+        { label: t('landing.footerOpportunities'), href: APP_REGISTER_URL, app: true },
+        { label: t('landing.footerHowItWorks'), href: page('/utilisation') },
+        { label: t('landing.footerHelp'), href: page('/faq') },
+        { label: t('landing.footerLogin'), href: APP_LOGIN_URL, app: true },
+      ],
+    },
+    {
+      title: t('landing.footerMatchyTitle'),
+      links: [
+        { label: t('landing.footerAbout'), href: page('/a-propos') },
+        { label: t('landing.footerNews'), href: page('/actualites') },
+        { label: t('landing.footerPartners'), href: page('/partenaires') },
+        { label: t('landing.footerBusinessOffer'), href: page('/devenir-partenaire') },
+        { label: t('landing.footerContact'), href: page('/contact') },
+        { label: t('landing.footerJoin'), href: APP_REGISTER_URL, app: true },
+      ],
+    },
+    {
+      title: t('landing.footerLegalTitle'),
+      links: [
+        { label: t('landing.footerTerms'), href: page('/terms-of-service') },
+        { label: t('landing.footerPrivacy'), href: page('/privacy-policy') },
+        { label: t('landing.footerReport'), href: page('/contact') },
+      ],
+    },
+  ];
+  return columns;
+}
+
 export function Footer() {
   const { locale, t } = useI18n();
+  const columns = footerColumns(t, locale);
   return (
     <footer className="site-footer">
       <div className="footer-grid container">
@@ -254,25 +315,32 @@ export function Footer() {
           <p>{t('landing.panAfrican')}</p>
           <SocialLinks />
         </div>
-        <div>
-          <h3>{locale === 'ar' ? 'اكتشف' : locale === 'en' ? 'Discover' : 'Découvrir'}</h3>
-          <Link href={localizePath(locale, '/services')}>{t('landing.services')}</Link>
-          <Link href={localizePath(locale, '/a-propos')}>{t('landing.about')}</Link>
-          <Link href={localizePath(locale, '/utilisation')}>{t('landing.how')}</Link>
-        </div>
-        <div>
-          <h3>
-            {locale === 'ar' ? 'روابط مفيدة' : locale === 'en' ? 'Useful links' : 'Liens utiles'}
-          </h3>
-          <Link href={localizePath(locale, '/faq')}>{t('landing.faq')}</Link>
-          <Link href={localizePath(locale, '/contact')}>{t('landing.contact')}</Link>
-          <Link href={localizePath(locale, '/devenir-partenaire')}>{t('landing.partner')}</Link>
-        </div>
-        <div>
-          <h3>{locale === 'ar' ? 'معلومات قانونية' : locale === 'en' ? 'Legal' : 'Légal'}</h3>
-          <Link href={localizePath(locale, '/privacy-policy')}>{t('landing.privacyPolicy')}</Link>
-          <Link href={localizePath(locale, '/terms-of-service')}>{t('landing.terms')}</Link>
-        </div>
+        {columns.map((column, index) => (
+          <nav key={column.title} aria-label={column.title}>
+            <h3>{column.title}</h3>
+            {column.links.map((link) =>
+              link.app ? (
+                <a key={link.label} href={link.href}>
+                  {link.label}
+                </a>
+              ) : (
+                <Link key={link.label} href={link.href}>
+                  {link.label}
+                </Link>
+              ),
+            )}
+            {/* last column: reopens the CookieYes preferences (only loaded on the public site) */}
+            {index === columns.length - 1 && (
+              <button
+                type="button"
+                className="footer-link-button cky-banner-element"
+                onClick={() => window.revisitCkyConsent?.()}
+              >
+                {t('landing.footerCookies')}
+              </button>
+            )}
+          </nav>
+        ))}
       </div>
       <div className="footer-bottom container">
         <span>{t('landing.allRights')}</span>

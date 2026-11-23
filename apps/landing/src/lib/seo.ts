@@ -62,6 +62,7 @@ export type PageKey =
   | 'a-propos'
   | 'services'
   | 'devenir-partenaire'
+  | 'partenaires'
   | 'contact'
   | 'faq'
   | 'terms-of-service'
@@ -153,6 +154,28 @@ export const PAGES: Record<PageKey, PageSeo> = {
     changeFrequency: 'monthly',
     priority: 0.8,
     copy: aboutCopy(),
+  },
+  partenaires: {
+    path: '/partenaires',
+    changeFrequency: 'monthly',
+    priority: 0.6,
+    copy: {
+      fr: {
+        title: 'Nos partenaires',
+        description:
+          'Les partenaires de Matchy+ (DOT-IT, GoPayzi, TCA) et les avantages d’un partenariat avec la plateforme de services locaux.',
+      },
+      en: {
+        title: 'Our partners',
+        description:
+          'Matchy+ partners (DOT-IT, GoPayzi, TCA) and the benefits of partnering with the local services platform.',
+      },
+      ar: {
+        title: 'شركاؤنا',
+        description:
+          'شركاء Matchy+\u200E (DOT-IT وGoPayzi وTCA) ومزايا الشراكة مع منصة الخدمات المحلية.',
+      },
+    },
   },
   'devenir-partenaire': {
     path: '/devenir-partenaire',

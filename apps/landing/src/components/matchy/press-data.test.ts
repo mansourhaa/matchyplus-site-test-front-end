@@ -1,7 +1,14 @@
 import { SUPPORTED_LOCALES } from '@/features/i18n/messages';
 import { describe, expect, it } from 'vitest';
 
-import { PRESS_ITEMS, pressDate, pressItem, pressItems, youtubeId } from './press-data';
+import {
+  PRESS_ITEMS,
+  pressDate,
+  pressDateValue,
+  pressItem,
+  pressItems,
+  youtubeId,
+} from './press-data';
 
 describe('press items', () => {
   it('have unique URL-safe slugs, a valid date and every text in every language', () => {
@@ -76,6 +83,12 @@ describe('pressDate', () => {
   it('shows a month-only date as the month and year, without inventing a day', () => {
     expect(pressDate('2026-06', 'fr')).toEqual({ top: '2026', big: 'juin', full: 'juin 2026' });
     expect(pressDate('2026-06', 'en').full).toBe('June 2026');
+  });
+
+  it('reads a day, month or year-only date as its first day, at noon UTC', () => {
+    expect(pressDateValue('2026-11-22').toISOString()).toBe('2026-11-22T12:00:00.000Z');
+    expect(pressDateValue('2026-06').toISOString()).toBe('2026-06-01T12:00:00.000Z');
+    expect(pressDateValue('2026').toISOString()).toBe('2026-01-01T12:00:00.000Z');
   });
 
   it('shows a year-only date as the year alone', () => {
