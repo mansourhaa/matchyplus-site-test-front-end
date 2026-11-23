@@ -674,7 +674,7 @@ export function DiscoverView() {
   const title = locale === 'fr' ? 'Accueil' : locale === 'ar' ? 'الرئيسية' : t('nav.home');
 
   const chipClass = (active: boolean) =>
-    `flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-1.5 text-[15px] shadow-sm transition-all active:scale-95 ${
+    `flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-1.5 text-[15px] whitespace-nowrap shadow-sm transition-all active:scale-95 ${
       active
         ? 'bg-[#2F76BB] font-bold text-white'
         : 'border border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
@@ -707,81 +707,86 @@ export function DiscoverView() {
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 md:px-8">
           {!locationRequired && (
             <div className="relative z-30 flex flex-col">
-              {/* Sector chips + « Secteur » dropdown + « Filtres » (same row, like 2.0.8) */}
-              <div
-                role="tablist"
-                aria-label={t('matching.home.sectors')}
-                className="flex flex-wrap items-center gap-3"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={selectedSector === null && allMode}
-                  data-testid="sector-pill-all"
-                  onClick={() => handlePickAll(true)}
-                  className={chipClass(selectedSector === null && allMode)}
+              {/* Sector chips + « Secteur » dropdown + « Filtres » (same row, like 2.0.8).
+                  Mobile: one row that scrolls left / right, « Filtres » stays visible at the end,
+                  so the profile card keeps its size. md+: the chips wrap like 2.0.8. */}
+              <div className="flex items-center gap-3 md:flex-wrap">
+                <div
+                  role="tablist"
+                  aria-label={t('matching.home.sectors')}
+                  data-testid="discover-sector-chips"
+                  className="no-scrollbar flex min-w-0 flex-1 items-center gap-3 overflow-x-auto py-1 md:contents"
                 >
-                  <span aria-hidden="true">✨</span>
-                  <span>{t('matching.home.all')}</span>
-                </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={selectedSector === null && allMode}
+                    data-testid="sector-pill-all"
+                    onClick={() => handlePickAll(true)}
+                    className={chipClass(selectedSector === null && allMode)}
+                  >
+                    <span aria-hidden="true">✨</span>
+                    <span>{t('matching.home.all')}</span>
+                  </button>
 
-                <button
-                  type="button"
-                  ref={searchButtonRef}
-                  data-testid="sector-search-toggle"
-                  onClick={() => setIsSearchOpen((prev) => !prev)}
-                  aria-expanded={isSearchOpen}
-                  aria-label={t('matching.home.sector')}
-                  className={chipClass(isSearchActive)}
-                >
-                  <LayoutGrid size={16} className="shrink-0" />
-                  <span>
-                    {isSearchActive && selectedSector
-                      ? formatSectorLabel(selectedSector, t)
-                      : t('matching.home.sector')}
-                  </span>
-                  <ChevronDown
-                    size={16}
-                    className={`transition-transform duration-200 ${isSearchOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
+                  <button
+                    type="button"
+                    ref={searchButtonRef}
+                    data-testid="sector-search-toggle"
+                    onClick={() => setIsSearchOpen((prev) => !prev)}
+                    aria-expanded={isSearchOpen}
+                    aria-label={t('matching.home.sector')}
+                    className={chipClass(isSearchActive)}
+                  >
+                    <LayoutGrid size={16} className="shrink-0" />
+                    <span>
+                      {isSearchActive && selectedSector
+                        ? formatSectorLabel(selectedSector, t)
+                        : t('matching.home.sector')}
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform duration-200 ${isSearchOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
 
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={selectedSector === null && !allMode}
-                  data-testid="sector-pill-for-you"
-                  onClick={() => handlePickAll(false)}
-                  className={chipClass(selectedSector === null && !allMode)}
-                >
-                  <Sparkles size={16} className="shrink-0" />
-                  <span>{t('matching.home.forYou')}</span>
-                </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={selectedSector === null && !allMode}
+                    data-testid="sector-pill-for-you"
+                    onClick={() => handlePickAll(false)}
+                    className={chipClass(selectedSector === null && !allMode)}
+                  >
+                    <Sparkles size={16} className="shrink-0" />
+                    <span>{t('matching.home.forYou')}</span>
+                  </button>
 
-                {visibleSectors.map((sector) => {
-                  const isSelected = selectedSector === sector;
-                  return (
-                    <button
-                      key={sector}
-                      type="button"
-                      role="tab"
-                      aria-selected={isSelected}
-                      data-testid={`sector-pill-${sector}`}
-                      onClick={() => handleSelectSector(isSelected ? null : sector)}
-                      className={chipClass(isSelected)}
-                    >
-                      <span aria-hidden="true">{getSectorEmoji(sector)}</span>
-                      <span>{formatSectorLabel(sector, t)}</span>
-                    </button>
-                  );
-                })}
+                  {visibleSectors.map((sector) => {
+                    const isSelected = selectedSector === sector;
+                    return (
+                      <button
+                        key={sector}
+                        type="button"
+                        role="tab"
+                        aria-selected={isSelected}
+                        data-testid={`sector-pill-${sector}`}
+                        onClick={() => handleSelectSector(isSelected ? null : sector)}
+                        className={chipClass(isSelected)}
+                      >
+                        <span aria-hidden="true">{getSectorEmoji(sector)}</span>
+                        <span>{formatSectorLabel(sector, t)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
 
                 <button
                   type="button"
                   data-testid="discover-filters-trigger-btn"
                   onClick={() => setIsFiltersSheetOpen(true)}
                   aria-label={t('matching.home.filters')}
-                  className={`flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-1.5 text-[15px] font-semibold shadow-sm transition-all active:scale-95 ${
+                  className={`flex min-h-[40px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-1.5 text-[15px] font-semibold whitespace-nowrap shadow-sm transition-all active:scale-95 ${
                     activeNonSectorFilterCount > 0
                       ? 'bg-[#61BCA6] text-white'
                       : 'border border-gray-200 bg-white text-gray-700 hover:bg-slate-50'
