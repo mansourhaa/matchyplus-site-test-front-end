@@ -47,3 +47,6 @@ images:
   - name: saas-boilerplate-ai
     newName: ghcr.io/matchy-plus/saas-boilerplate-ai
     newTag: staging
+  - name: saas-boilerplate-voice-ai
+    newName: ghcr.io/matchy-plus/saas-boilerplate-voice-ai
+    newTag: staging

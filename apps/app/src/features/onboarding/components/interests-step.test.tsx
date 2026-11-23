@@ -75,7 +75,6 @@ describe('InterestsStep', () => {
       />,
     );
 
-    fireEvent.click(firstButton('Trouver un emploi'));
     fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
@@ -100,6 +99,8 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
+    // A new INDIVIDUAL step starts with its default goal: remove it.
+    fireEvent.click(firstButton('Trouver un emploi'));
     fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
@@ -107,7 +108,7 @@ describe('InterestsStep', () => {
     expect(screen.queryByText(/expected array/i)).not.toBeInTheDocument();
   });
 
-  it('hides the "offer a service" card for a PROVIDER (Employeur) profile', () => {
+  it('shows « Chercher un prestataire » instead of « Offrir un service » for a PROVIDER profile', () => {
     renderStep(
       <InterestsStep
         profile={{ ...baseProfile, profile_type: 'PROVIDER' }}
@@ -120,6 +121,75 @@ describe('InterestsStep', () => {
     );
 
     expect(screen.queryAllByText('Offrir un service ?')).toHaveLength(0);
+    expect(screen.getAllByText('Chercher un prestataire').length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText('Élargissez votre cercle d’activité autour de vous.').length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText('Budget indicatif (DT)').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Années d’expérience')).toHaveLength(0);
+  });
+
+  it('saves the service wanted and the budget of a PROVIDER profile without offering a service', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={{ ...baseProfile, profile_type: 'PROVIDER' }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(firstButton('+ Bricolage'));
+    selectServiceType('Chauffeur / Transport');
+    fireEvent.change(firstPlaceholder('Montant'), { target: { value: '40' } });
+    fireEvent.click(continueButton());
+
+    expect(onNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        offerService: false,
+        serviceType: 'Chauffeur / Transport',
+        price: '40',
+      }),
+    );
+  });
+
+  it('pre-fills the service wanted and the budget from the voice message of a PROVIDER profile', () => {
+    renderStep(
+      <InterestsStep
+        profile={{ ...baseProfile, profile_type: 'PROVIDER' }}
+        aiSuggestions={{ serviceType: 'Jardinage / Bricolage', price: '40' }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByText('Jardinage / Bricolage').length).toBeGreaterThan(0);
+    expect(firstPlaceholder('Montant')).toHaveValue('40');
+  });
+
+  it('shows type of service and price, without experience, to someone offering a service', () => {
+    renderStep(
+      <InterestsStep
+        profile={{ ...baseProfile, offer_service: true }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByText('Élargissez votre activité autour de vous.').length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText('Prix approximatif (DT)').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Années d’expérience')).toHaveLength(0);
   });
 
   it('requires a service type when offering a service', async () => {
@@ -136,7 +206,6 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un emploi'));
     fireEvent.click(continueButton());
 
     expect(onNext).not.toHaveBeenCalled();
@@ -161,7 +230,6 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un emploi'));
     selectServiceType('Chauffeur / Transport');
     fireEvent.click(continueButton());
 
@@ -185,7 +253,6 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un emploi'));
     // New INDIVIDUAL steps default offer-service on — turn it off for this case.
     fireEvent.click(screen.getAllByRole('switch')[0]);
     fireEvent.click(continueButton());
@@ -194,9 +261,39 @@ describe('InterestsStep', () => {
       interests: ['Bricolage'],
       selectedGoals: ['Trouver un job'],
       offerService: false,
-      serviceType: undefined,
-      price: undefined,
+      serviceType: '',
+      price: '',
     });
+  });
+
+  it('clears the saved service type and budget when the service card is turned off', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={{
+          ...baseProfile,
+          profile_type: 'PROVIDER',
+          interests: ['Bricolage'],
+          selected_goals: ['Trouver un job'],
+          service_type: 'Chauffeur / Transport',
+          price: '40',
+        }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+      />,
+    );
+
+    // « Chercher un prestataire » is on (saved service) — turn it off.
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    fireEvent.click(continueButton());
+
+    const patch = onNext.mock.calls[0][0];
+    expect(patch).toMatchObject({ offerService: false, serviceType: '', price: '' });
+    // Sent to the API as empty strings, so the old values are overwritten.
+    expect(JSON.parse(JSON.stringify(patch))).toMatchObject({ serviceType: '', price: '' });
   });
 
   it('submits full service details once every required field is filled', async () => {
@@ -213,7 +310,6 @@ describe('InterestsStep', () => {
     );
 
     fireEvent.click(firstButton('+ Bricolage'));
-    fireEvent.click(firstButton('Trouver un emploi'));
     selectServiceType('Chauffeur / Transport');
     fireEvent.change(firstPlaceholder('Montant'), { target: { value: '50' } });
     fireEvent.click(continueButton());
@@ -263,5 +359,136 @@ describe('InterestsStep', () => {
     );
 
     expect(screen.getAllByText('Bricolage').length).toBeGreaterThan(0);
+  });
+
+  it('pre-fills an empty price from the profile video analysis', () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={{ ...baseProfile, offer_service: true }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+        aiSuggestions={{ price: '20' }}
+      />,
+    );
+
+    fireEvent.click(firstButton('+ Bricolage'));
+    selectServiceType('Chauffeur / Transport');
+    fireEvent.click(continueButton());
+
+    expect(onNext).toHaveBeenCalledWith(expect.objectContaining({ price: '20' }));
+  });
+
+  it('starts a new step with a default goal from the profile type', () => {
+    const { unmount } = renderStep(
+      <InterestsStep
+        profile={baseProfile}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+    expect(firstButton('Trouver un emploi').textContent).toBe('Trouver un emploi');
+    expect(firstButton('Trouver un emploi').style.fontWeight).toBe('700');
+    unmount();
+
+    renderStep(
+      <InterestsStep
+        profile={{ ...baseProfile, profile_type: 'PROVIDER' }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
+    expect(firstButton('Recruter un collaborateur').style.fontWeight).toBe('700');
+    expect(firstButton('Trouver un emploi').style.fontWeight).toBe('400');
+  });
+
+  it('pre-fills interests and goals from the video, and proposes the other jobs', async () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={baseProfile}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+        aiSuggestions={{
+          job: 'Aide ménagère',
+          interestTags: ['Ménage'],
+          homeService: true,
+          proposals: { job: ['Femme de ménage'] },
+        }}
+      />,
+    );
+
+    fireEvent.click(firstButton('+ Femme de ménage'));
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    fireEvent.click(continueButton());
+
+    expect(onNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        interests: ['Aide ménagère', 'Ménage', 'Femme de ménage'],
+        selectedGoals: [
+          'Trouver un job',
+          'Proposer mes services',
+          'Travailler comme prestataire',
+          'Service à domicile',
+        ],
+      }),
+    );
+  });
+
+  it('pre-fills the service type from the video for someone offering services', () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={baseProfile}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+        aiSuggestions={{ job: 'Aide ménagère', serviceType: 'Aide ménagère', price: '20' }}
+      />,
+    );
+
+    fireEvent.click(continueButton());
+
+    expect(onNext).toHaveBeenCalledWith(
+      expect.objectContaining({ offerService: true, serviceType: 'Aide ménagère', price: '20' }),
+    );
+  });
+
+  it('keeps the goals the person chose', () => {
+    const onNext = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <InterestsStep
+        profile={{
+          ...baseProfile,
+          interests: ['Cuisine'],
+          selected_goals: ['Trouver des missions'],
+        }}
+        stepNumber={2}
+        totalSteps={3}
+        loading={false}
+        onNext={onNext}
+        onBack={vi.fn()}
+        aiSuggestions={{ job: 'Aide ménagère', homeService: true }}
+      />,
+    );
+    fireEvent.click(continueButton());
+
+    expect(onNext).toHaveBeenCalledWith(
+      expect.objectContaining({ interests: ['Cuisine'], selectedGoals: ['Trouver des missions'] }),
+    );
   });
 });

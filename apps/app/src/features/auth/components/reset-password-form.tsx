@@ -26,6 +26,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { AuthLayout } from './auth-layout';
+import { DevOtpBanner } from './dev-otp-banner';
 import { MatchyLogo } from './matchy-logo';
 import { PhoneInput } from './phone-input';
 
@@ -67,6 +68,7 @@ export function ResetPasswordForm() {
   // OTP Modal State
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [code, setCode] = useState('');
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [verifiedCode, setVerifiedCode] = useState('');
 
   // Password fields
@@ -115,7 +117,8 @@ export function ResetPasswordForm() {
     setRequestLoading(true);
 
     try {
-      await dispatch(requestPasswordReset({ phone })).unwrap();
+      const result = await dispatch(requestPasswordReset({ phone })).unwrap();
+      setDevOtp(result?.devOtp ?? null);
       setResendCooldown(60);
       setOtpModalOpen(true);
       setCode('');
@@ -487,6 +490,7 @@ export function ResetPasswordForm() {
             )}
 
             <form onSubmit={handleVerifyOtpModal} className="mt-5 space-y-4">
+              <DevOtpBanner code={devOtp} />
               <div>
                 <input
                   type="text"

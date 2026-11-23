@@ -8,6 +8,7 @@ import type { Metadata } from 'next';
 import { Cairo } from 'next/font/google';
 import { Baloo_2 } from 'next/font/google';
 import { notFound } from 'next/navigation';
+import Script from 'next/script';
 
 import '../globals.css';
 
@@ -47,6 +48,32 @@ export default async function RootLayout({
   return (
     <html lang={lang} dir={localeDir(lang)}>
       <body className={`${baloo.variable} ${cairo.variable} ${baloo.className}`}>
+        {/* Google Tag Manager (gtm.js) */}
+        <Script
+          id="gtm-script"
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtm.js?id=G-R7FNSWEW2C"
+        />
+        <Script id="gtm-init" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());`}
+        </Script>
+
+        {/* Google tag (gtag.js) */}
+        <Script
+          id="google-tag-script"
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-GBBJJXX8S4"
+        />
+        <Script id="google-tag-init" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'G-GBBJJXX8S4');`}
+        </Script>
+
         <I18nProvider locale={lang}>{children}</I18nProvider>
         <Analytics />
       </body>

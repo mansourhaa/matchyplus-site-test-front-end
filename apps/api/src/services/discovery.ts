@@ -1,3 +1,5 @@
+import { type Redis } from 'ioredis';
+
 import { PrismaClient, Role, SwipeDirection, UserStatus } from '@saas-boilerplate/types';
 
 import {
@@ -16,6 +18,7 @@ import {
 import { notFound } from '../utils/http-errors.js';
 import { computeMatchScore, haversineKm } from '../utils/matching-score.js';
 import { SwipeQuotaService } from './swipe-quota.js';
+import { VoiceAgentsService } from './voice-agents.js';
 
 /**
  * Product discovery: eligibility filters + scripted score.
@@ -24,10 +27,15 @@ import { SwipeQuotaService } from './swipe-quota.js';
 export class DiscoveryService {
   prisma: PrismaClient;
   quota: SwipeQuotaService;
+  agents: VoiceAgentsService;
 
-  constructor(options: AbstractServiceOptions) {
+  constructor(
+    options: AbstractServiceOptions & { agents?: VoiceAgentsService; redis?: Redis | null },
+  ) {
     this.prisma = options.prisma;
     this.quota = new SwipeQuotaService({ prisma: options.prisma });
+    this.agents =
+      options.agents ?? new VoiceAgentsService({ prisma: options.prisma, redis: options.redis });
   }
 
   async getSwipeFeed(userId: string, query: DiscoveryFeedQuery = {}) {
@@ -214,6 +222,16 @@ export class DiscoveryService {
 
       scored.sort((a, b) => compareFeedProfiles(a, b, sort));
 
+      // MATCHING_ENGINE=agents: the 2.0.8 agents rank the feed (off by default; on any
+      // problem the built-in order above is kept).
+      const byAgents = await this.agents.rank(userId, scored, radiusM / 1000);
+      // Which engine produced match_score: the agents when they ranked this feed.
+      const scoringVersion = byAgents ? ('agents' as const) : ('v5-scripted' as const);
+      if (byAgents) {
+        scored.splice(0, scored.length, ...byAgents);
+        if (sort !== 'match') scored.sort((a, b) => compareFeedProfiles(a, b, sort));
+      }
+
       const page = scored.slice(offset, offset + limit);
       const hasMore = offset + limit < scored.length;
       const quota = await this.quota.buildQuotaSnapshot(userId);
@@ -223,15 +241,26 @@ export class DiscoveryService {
           ? await this.applySearchVisibilityLock(userId, page, offset)
           : page.map((profile) => ({ ...profile, is_locked: false }));
 
+      // Paid-only fields (detailed 6-dimension breakdown + who-liked-me flag) must not be
+      // leaked in the API response for FREE accounts where the UI hides them behind a lock.
+      const isPaidPlan = quota.plan === 'PREMIUM' || quota.plan === 'PREMIUM_PLUS';
+      const sanitizedProfiles = isPaidPlan
+        ? lockedProfiles
+        : lockedProfiles.map((profile) => ({
+            ...profile,
+            compatibility: [],
+            liked_me: false,
+          }));
+
       return {
-        profiles: lockedProfiles,
-        count: lockedProfiles.length,
+        profiles: sanitizedProfiles,
+        count: sanitizedProfiles.length,
         offset,
         limit,
         has_more: hasMore,
         feed_breakdown: { ...breakdown, feed_total: scored.length },
         quota,
-        scoring_version: 'v5-scripted' as const,
+        scoring_version: scoringVersion,
       };
     } catch (err) {
       throw err;
@@ -459,6 +488,8 @@ function expandSynonyms(terms: string[], synonymMap: Record<string, string[]>): 
 }
 
 function matchesSectors(candidate: FeedUser, sectors: string[]): boolean {
+  // The home « Secteur » menu sends the onboarding industry key (e.g. `commerce_retail`).
+  if (candidate.industry && sectors.includes(candidate.industry.toLowerCase())) return true;
   const hay = [
     candidate.activity_sector,
     candidate.sector,

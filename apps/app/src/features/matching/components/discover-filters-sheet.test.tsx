@@ -47,9 +47,7 @@ describe('DiscoverFiltersSheet component', () => {
     expect(screen.queryByText('Disponible uniquement')).not.toBeInTheDocument();
     expect(screen.queryByText('Note minimale')).not.toBeInTheDocument();
     expect(screen.queryByText('Trier par')).not.toBeInTheDocument();
-    expect(screen.getByTestId('discover-filters-apply-btn')).toHaveTextContent(
-      'Voir 24 professionnels',
-    );
+    expect(screen.getByTestId('discover-filters-apply-btn')).toHaveTextContent('Voir 24 profils');
   });
 
   it('triggers onChange when milestone button is clicked', () => {

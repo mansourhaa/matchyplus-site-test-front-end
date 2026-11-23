@@ -107,7 +107,6 @@ export type AdminCreateTeamMemberPayload = {
 export type AdminCreateUserPayload = Omit<UpdateOnboardingProfileBody, 'name' | 'profileType'> & {
   name: string;
   phone: string;
-  password?: string;
   email?: string;
   profileType: 'INDIVIDUAL' | 'PROVIDER';
   plan?: UserPlan;

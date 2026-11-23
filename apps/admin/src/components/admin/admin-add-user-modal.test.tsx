@@ -20,15 +20,9 @@ function renderModal(onClose = vi.fn(), onCreated = vi.fn()) {
   return { onClose, onCreated };
 }
 
-async function fillMinimumValidForm({ manualPassword = true }: { manualPassword?: boolean } = {}) {
+async function fillMinimumValidForm() {
   fireEvent.change(screen.getByLabelText('Nom complet'), { target: { value: 'Amine Ben Salah' } });
   fireEvent.change(screen.getByLabelText('Téléphone'), { target: { value: '20123456' } });
-  if (manualPassword) {
-    fireEvent.click(screen.getByRole('button', { name: /mot de passe manuel/i }));
-    fireEvent.change(screen.getByLabelText('Mot de passe temporaire'), {
-      target: { value: 'Matchy2026!' },
-    });
-  }
   fireEvent.change(screen.getByLabelText('Métier'), { target: { value: 'Plombier' } });
 
   const file = new File(['fake-image-bytes'], 'photo.jpg', { type: 'image/jpeg' });
@@ -70,22 +64,6 @@ describe('AdminAddUserModal', () => {
     expect(post).not.toHaveBeenCalled();
   });
 
-  it('blocks navigation when manual password mode is selected but password is empty', () => {
-    const post = vi.spyOn(adminApi, 'post');
-    renderModal();
-
-    fireEvent.change(screen.getByLabelText('Nom complet'), { target: { value: 'Amine Ben Salah' } });
-    fireEvent.change(screen.getByLabelText('Téléphone'), { target: { value: '20123456' } });
-    fireEvent.click(screen.getByRole('button', { name: /mot de passe manuel/i }));
-
-    fireEvent.click(screen.getByRole('button', { name: /suivant/i }));
-
-    expect(
-      screen.getByText('Le mot de passe est obligatoire en mode manuel.'),
-    ).toBeInTheDocument();
-    expect(post).not.toHaveBeenCalled();
-  });
-
   it('creates the user with the filled-in profile and closes the modal', async () => {
     const post = vi
       .spyOn(adminApi, 'post')
@@ -101,7 +79,6 @@ describe('AdminAddUserModal', () => {
       expect.objectContaining({
         name: 'Amine Ben Salah',
         phone: '20123456',
-        password: 'Matchy2026!',
         job: 'Plombier',
         interests: ['Plomberie'],
         selectedGoals: ['Trouver un job'],
@@ -125,7 +102,7 @@ describe('AdminAddUserModal', () => {
     });
     const { onClose, onCreated } = renderModal();
 
-    await fillMinimumValidForm({ manualPassword: false });
+    await fillMinimumValidForm();
     fireEvent.click(screen.getByRole('button', { name: "Créer l'utilisateur" }));
 
     await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
@@ -134,7 +111,6 @@ describe('AdminAddUserModal', () => {
       expect.objectContaining({
         name: 'Amine Ben Salah',
         phone: '20123456',
-        password: undefined,
       }),
     );
 
@@ -174,8 +150,6 @@ describe('AdminAddUserModal', () => {
       target: { value: 'Amine Ben Salah' },
     });
     fireEvent.change(screen.getByLabelText('Téléphone'), { target: { value: '20123456' } });
-    fireEvent.click(screen.getByRole('button', { name: /mot de passe manuel/i }));
-    fireEvent.change(screen.getByLabelText('Mot de passe temporaire'), { target: { value: 'Matchy2026!' } });
     fireEvent.change(screen.getByLabelText('Métier'), { target: { value: 'Plombier' } });
 
     // Step 1 to Step 2

@@ -17,6 +17,7 @@ export const feedUserSelect = {
   looking_for: true,
   activity_sector: true,
   sector: true,
+  industry: true,
   service_type: true,
   profile_type: true,
   offer_service: true,

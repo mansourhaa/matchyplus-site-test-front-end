@@ -1,0 +1,166 @@
+[
+  {
+    "names": [
+      "Sousse",
+      "سوسة",
+      "sousa",
+      "soussa",
+      "سوس",
+      "vissous",
+      "fissous",
+      "فيسوس",
+      "soust",
+      "souss",
+      "sous",
+      "سوست"
+    ],
+    "lat": 35.8256,
+    "lng": 10.6084,
+    "fr": "Sousse",
+    "ar": "سوسة"
+  },
+  {
+    "names": ["Sahloul", "سهلول"],
+    "lat": 35.836,
+    "lng": 10.592,
+    "fr": "Sahloul",
+    "ar": "سهلول"
+  },
+  {
+    "names": ["Khezama", "خزامة"],
+    "lat": 35.8455,
+    "lng": 10.603,
+    "fr": "Khezama",
+    "ar": "خزامة"
+  },
+  {
+    "names": ["Hammam Sousse", "حمام سوسة"],
+    "lat": 35.8609,
+    "lng": 10.5935,
+    "fr": "Hammam Sousse",
+    "ar": "حمام سوسة"
+  },
+  {
+    "names": [
+      "Kalaa Kebira",
+      "القلعة الكبرى",
+      "qalaa kebira",
+      "القلعة الكبيرة",
+      "القلعة لكبيرة",
+      "قلعة الكبيرة",
+      "القلعة الكبيره",
+      "kalaa kbira",
+      "kala kebira",
+      "kala kbira",
+      "el kalaa el kebira",
+      "la kalaa"
+    ],
+    "lat": 35.8667,
+    "lng": 10.5333,
+    "fr": "Kalaa Kebira",
+    "ar": "القلعة الكبرى"
+  },
+  {
+    "names": ["Msaken", "مساكن"],
+    "lat": 35.7333,
+    "lng": 10.5833,
+    "fr": "Msaken",
+    "ar": "مساكن"
+  },
+  {
+    "names": [
+      "Monastir",
+      "المنستير",
+      "منستير",
+      "mestir",
+      "المستير",
+      "مونستير",
+      "مونيستير",
+      "monestir",
+      "monasstir",
+      "monastère",
+      "monastere"
+    ],
+    "lat": 35.7643,
+    "lng": 10.8113,
+    "fr": "Monastir",
+    "ar": "المنستير"
+  },
+  {
+    "names": ["Mahdia", "المهدية"],
+    "lat": 35.5047,
+    "lng": 11.0622,
+    "fr": "Mahdia",
+    "ar": "المهدية"
+  },
+  {
+    "names": ["Sfax", "صفاقس", "sfaks"],
+    "lat": 34.7406,
+    "lng": 10.7603,
+    "fr": "Sfax",
+    "ar": "صفاقس"
+  },
+  {
+    "names": ["Tunis", "تونس", "tounes"],
+    "lat": 36.8065,
+    "lng": 10.1815,
+    "fr": "Tunis",
+    "ar": "تونس"
+  },
+  {
+    "names": ["Ariana", "أريانة", "اريانة"],
+    "lat": 36.8625,
+    "lng": 10.1956,
+    "fr": "Ariana",
+    "ar": "أريانة"
+  },
+  {
+    "names": ["La Marsa", "المرسى", "marsa"],
+    "lat": 36.8782,
+    "lng": 10.3247,
+    "fr": "La Marsa",
+    "ar": "المرسى"
+  },
+  {
+    "names": ["Ben Arous", "بن عروس"],
+    "lat": 36.7531,
+    "lng": 10.2189,
+    "fr": "Ben Arous",
+    "ar": "بن عروس"
+  },
+  {
+    "names": ["Nabeul", "نابل"],
+    "lat": 36.4561,
+    "lng": 10.7376,
+    "fr": "Nabeul",
+    "ar": "نابل"
+  },
+  {
+    "names": ["Bizerte", "بنزرت"],
+    "lat": 37.2744,
+    "lng": 9.8739,
+    "fr": "Bizerte",
+    "ar": "بنزرت"
+  },
+  {
+    "names": ["Kairouan", "القيروان"],
+    "lat": 35.6781,
+    "lng": 10.0963,
+    "fr": "Kairouan",
+    "ar": "القيروان"
+  },
+  {
+    "names": ["Gabès", "Gabes", "قابس"],
+    "lat": 33.8815,
+    "lng": 10.0982,
+    "fr": "Gabès",
+    "ar": "قابس"
+  },
+  {
+    "names": ["Djerba", "جربة"],
+    "lat": 33.8076,
+    "lng": 10.8451,
+    "fr": "Djerba",
+    "ar": "جربة"
+  }
+]

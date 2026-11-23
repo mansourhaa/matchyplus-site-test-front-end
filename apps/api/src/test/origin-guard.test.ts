@@ -73,6 +73,9 @@ describe('origin guard', () => {
     const app = await buildTestApp({
       prisma: {
         user: { findUnique: async () => null } as never,
+        otpChallenge: {
+          findFirst: async () => null,
+        } as never,
       },
     });
     apps.push(app);
@@ -80,12 +83,12 @@ describe('origin guard', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/login-phone',
-      payload: { phone: '+21612345678', password: 'password123' },
+      payload: { phone: '+21612345678', code: '123456' },
     });
 
     // No Origin/Referer at all — the guard has nothing to check, so this reaches the
-    // route handler itself (which rejects it for an unrelated reason: no such user).
-    expect(response.statusCode).toBe(401);
+    // route handler itself (which rejects it for an unrelated reason: invalid OTP).
+    expect(response.statusCode).toBe(400);
   });
 
   it('never applies to GET requests', async () => {

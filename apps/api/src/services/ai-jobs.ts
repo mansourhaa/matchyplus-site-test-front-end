@@ -51,7 +51,7 @@ export class AiJobsService {
     }
   }
 
-  async createJob(userId: string, input: CreateAiJobRequest): Promise<AiJob> {
+  async createJob(userId: string | null, input: CreateAiJobRequest): Promise<AiJob> {
     this.assertQueueReady();
 
     if (input.idempotencyKey) {

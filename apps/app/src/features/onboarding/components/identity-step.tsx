@@ -1,15 +1,22 @@
 'use client';
 
 import { matchyBrand } from '@/components/matchy/brand';
-import { PasswordRequirements } from '@/components/password-requirements';
+import { DevOtpBanner } from '@/features/auth/components/dev-otp-banner';
 import { PhoneInput } from '@/features/auth/components/phone-input';
 import { useAppDispatch, useAppSelector } from '@/features/auth/hooks';
 import { registerPhone, selectAuth, sendOtp, verifyOtp } from '@/features/auth/store/auth-slice';
 import { useI18n } from '@/features/i18n/i18n-provider';
+import type { Locale } from '@/features/i18n/messages';
 import { INDUSTRY_KEYS, type IndustryKey } from '@/features/onboarding/constants';
 import { identityStepSchema } from '@/features/onboarding/schemas';
-import { patchOnboardingProfile } from '@/features/onboarding/store/onboarding-slice';
+import {
+  analyzeProfileVideo,
+  clearVideoAnalysis,
+  patchOnboardingProfile,
+  selectVideoAnalysis,
+} from '@/features/onboarding/store/onboarding-slice';
 import type { OnboardingProfile, ProfileType } from '@/features/onboarding/types';
+import { aiFieldUpdate } from '@/features/onboarding/video-analysis';
 import { humanizeMediaError } from '@/features/profile/media-errors';
 import {
   deleteProfileVideo,
@@ -17,17 +24,15 @@ import {
   uploadProfileVideo,
 } from '@/features/profile/store/profile-slice';
 import { useAuthenticatedMediaUrl } from '@/hooks/use-authenticated-media-url';
-import { isPasswordPolicySatisfied } from '@/lib/password-policy';
+import { isNativeMobileClient } from '@/lib/native';
 import { DEFAULT_PHONE_COUNTRY, composeE164Phone, getPhoneCountry } from '@/lib/phone-countries';
 import {
   Briefcase,
   Camera,
   Check,
   ChevronDown,
-  Eye,
-  EyeOff,
   Loader2,
-  Lock,
+  MapPin,
   ShieldCheck,
   Video,
   X,
@@ -36,9 +41,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { AiProposals } from './ai-proposals';
 import { FieldMicButton } from './field-mic-button';
 import { OnboardingStepLayout, StepCtaRow, StepProgress } from './onboarding-step-layout';
 import { VideoRecorderModal, buildVideoRecorderTr } from './video-recorder-modal';
+import { VoiceNeedRecorder } from './voice-need-recorder';
 
 /** Keep in sync with apps/api `PROFILE_PHOTO_MAX_BYTES` / `ALLOWED_PROFILE_PHOTO_MIMES`. */
 const PROFILE_PHOTO_MAX_BYTES = 8 * 1024 * 1024;
@@ -64,17 +71,20 @@ function ProfileSilhouette() {
 function IndustryDropdown({
   value,
   onChange,
+  hasError = false,
 }: {
   value: string;
   onChange: (value: IndustryKey) => void;
+  hasError?: boolean;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const selected = INDUSTRY_KEYS.find((key) => key === value);
   return (
     <div>
-      <label style={{ fontSize: '12px', color: '#888' }}>
+      <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
         {t('onboarding.identity.industryLabel')}
+        <span style={{ color: '#61BCA6' }}> *</span>
       </label>
       <div className="relative mt-1">
         <button
@@ -82,8 +92,8 @@ function IndustryDropdown({
           onClick={() => setOpen(!open)}
           className="flex w-full items-center justify-between rounded-xl px-3 py-2.5"
           style={{
-            border: '1.5px solid #E0E0E0',
-            background: 'white',
+            border: `2px solid ${hasError ? '#E24E59' : selected ? '#2F76BB' : '#E0E0E0'}`,
+            background: selected ? '#F5F9FF' : 'white',
             fontSize: '13px',
             color: selected ? '#353535' : '#BBB',
           }}
@@ -151,6 +161,8 @@ type IdentityStepProps = {
     name: string;
     job?: string;
     bio?: string;
+    /** Both profile types; filled from the video or the voice message. */
+    city?: string;
     profileType: ProfileType;
     industry: IndustryKey;
   }) => Promise<boolean>;
@@ -184,6 +196,7 @@ export function IdentityStep({
   const [job, setJob] = useState(profile?.job ?? '');
   const [bio, setBio] = useState(profile?.bio ?? '');
   const [industry, setIndustry] = useState(profile?.industry ?? '');
+  const [city, setCity] = useState(profile?.city ?? '');
   const [image, setImage] = useState(profile?.image ?? '');
   const [profileType, setProfileType] = useState<ProfileType>(
     profile?.profile_type ?? 'INDIVIDUAL',
@@ -197,14 +210,12 @@ export function IdentityStep({
   const pendingPhotoRef = useRef<File | null>(null);
   const localPhotoPreviewRef = useRef<string | null>(null);
 
-  // Credentials — only rendered/validated when !isAuthenticated. Single password field,
-  // no confirmation.
+  // Credentials — only rendered/validated when !isAuthenticated (phone + OTP only).
   const [countryIso, setCountryIso] = useState(DEFAULT_PHONE_COUNTRY.iso);
   const [nationalNumber, setNationalNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [code, setCode] = useState('');
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
@@ -219,11 +230,12 @@ export function IdentityStep({
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
   const pendingVideoRef = useRef<{ blob: Blob; filename: string } | null>(null);
+  // « Je cherche un prestataire »: voice message (analysis only, never stored).
+  const [voiceRecorded, setVoiceRecorded] = useState(false);
 
   const country = getPhoneCountry(countryIso);
   const phone = composeE164Phone(countryIso, nationalNumber);
   const isPhoneValid = nationalNumber.length >= country.nationalLength;
-  const passwordReady = isPasswordPolicySatisfied(password);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -248,12 +260,37 @@ export function IdentityStep({
     setJob(profile.job ?? '');
     setBio(profile.bio ?? '');
     setIndustry(profile.industry ?? '');
+    setCity(profile.city ?? '');
     setImage(profile.image ?? '');
     setProfileType(profile.profile_type ?? 'INDIVIDUAL');
     setVideoLabel(profile.video ? t('onboarding.identity.videoPresentationLabel') : null);
     setVideoUploaded(Boolean(profile.video));
     setVideoPendingLocal(false);
   }, [profile, t]);
+
+  // AI autofill from the profile video: only fields the person left empty, once per analysis;
+  // after a page-language switch, the AI's own values (not edited since) follow the language.
+  // « Je cherche un prestataire »: the voice message describes the service wanted, so it fills
+  // everything except the person's own job and sector, which they type themselves.
+  // The city is asked from both profile types.
+  const videoAnalysis = useAppSelector(selectVideoAnalysis);
+  const isSeeker = profileType === 'PROVIDER';
+  const appliedSuggestionsRef = useRef<typeof videoAnalysis.suggestions>(null);
+  useEffect(() => {
+    const suggestions = videoAnalysis.suggestions;
+    if (!suggestions || appliedSuggestionsRef.current === suggestions) return;
+    const previous = appliedSuggestionsRef.current;
+    appliedSuggestionsRef.current = suggestions;
+    const next = aiFieldUpdate(previous, suggestions);
+    setFirstName((current) => next(current, 'firstName'));
+    setLastName((current) => next(current, 'lastName'));
+    setBio((current) => next(current, 'bio'));
+    setCity((current) => next(current, 'city'));
+    if (!isSeeker) {
+      setJob((current) => next(current, 'job'));
+      setIndustry((current) => current || suggestions.industry || '');
+    }
+  }, [videoAnalysis.suggestions, isSeeker]);
 
   const [hasPendingPhoto, setHasPendingPhoto] = useState(false);
   const { user } = useAppSelector(selectAuth);
@@ -283,11 +320,7 @@ export function IdentityStep({
     return () => clearLocalPhotoPreview();
   }, []);
 
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-
+  const processSelectedPhoto = (file: File) => {
     if (!isAllowedProfilePhoto(file)) {
       setError(t('onboarding.identity.errorPhotoType'));
       return;
@@ -307,6 +340,37 @@ export function IdentityStep({
       setImage(preview);
     } else {
       setImage(file.name);
+    }
+  };
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    processSelectedPhoto(file);
+  };
+
+  const handleNativePhotoPick = async (event: React.MouseEvent<HTMLElement>) => {
+    if (!isNativeMobileClient()) return;
+    event.preventDefault();
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+      const photo = await Camera.getPhoto({
+        quality: 85,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Prompt,
+      });
+      if (!photo.dataUrl) return;
+      const res = await fetch(photo.dataUrl);
+      const blob = await res.blob();
+      const ext = photo.format || 'jpeg';
+      const file = new File([blob], `profile.${ext}`, {
+        type: blob.type || `image/${ext}`,
+      });
+      processSelectedPhoto(file);
+    } catch {
+      // User cancelled or camera unavailable; fallback to web file input if needed
     }
   };
 
@@ -359,9 +423,23 @@ export function IdentityStep({
     return false;
   };
 
-  const handleVideoReady = async (blob: Blob, blobUrl: string, filename: string) => {
+  const handleVideoReady = async (blob: Blob, blobUrl: string, filename: string, audio?: Blob) => {
     setShowVideoModal(false);
     setVideoError(null);
+    // AI autofill right after the recording, before the SMS check: runs in the
+    // background, the person can keep typing meanwhile. Like the voice demo, the AI gets
+    // the clean sound-only track when the recorder made one, else the video itself.
+    const audioType = audio?.type || 'audio/webm';
+    void dispatch(
+      analyzeProfileVideo({
+        file: audio
+          ? new File([audio], audioType.includes('mp4') ? 'clip-audio.m4a' : 'clip-audio.webm', {
+              type: audioType,
+            })
+          : new File([blob], filename, { type: blob.type || 'video/webm' }),
+        uiLocale: locale as Locale,
+      }),
+    );
     try {
       if (!isAuthenticated) {
         pendingVideoRef.current = { blob, filename };
@@ -376,6 +454,16 @@ export function IdentityStep({
     }
   };
 
+  const handleVoiceRecorded = (file: File) => {
+    setVoiceRecorded(true);
+    void dispatch(analyzeProfileVideo({ file, uiLocale: locale as Locale }));
+  };
+
+  const handleRemoveVoice = () => {
+    setVoiceRecorded(false);
+    dispatch(clearVideoAnalysis());
+  };
+
   const flushPendingVideo = async () => {
     const pending = pendingVideoRef.current;
     if (!pending) return true;
@@ -383,6 +471,7 @@ export function IdentityStep({
   };
 
   const clearLocalVideo = () => {
+    dispatch(clearVideoAnalysis());
     setVideoLabel(null);
     setVideoError(null);
     setVideoPendingLocal(false);
@@ -411,6 +500,7 @@ export function IdentityStep({
   const handleProfileTypeClick = (type: ProfileType) => {
     if (type === profileType) return;
     const hasRoleSpecificData =
+      voiceRecorded ||
       Boolean(videoLabel) ||
       Boolean(videoUploaded) ||
       Boolean(videoPendingLocal) ||
@@ -433,6 +523,7 @@ export function IdentityStep({
       }
       dispatch(patchOnboardingProfile({ profile_type: 'PROVIDER', experience: null, video: null }));
     } else {
+      if (voiceRecorded) handleRemoveVoice();
       dispatch(patchOnboardingProfile({ profile_type: 'INDIVIDUAL' }));
     }
     setPendingProfileType(null);
@@ -442,6 +533,7 @@ export function IdentityStep({
     name,
     job: job || undefined,
     bio: bio || undefined,
+    city: city.trim() || undefined,
     // Photo is persisted via multipart `/users/me/profile/photo`, not this JSON patch
     // (base64 in the body triggered Fastify 413 FST_ERR_CTP_BODY_TOO_LARGE).
     profileType,
@@ -451,16 +543,12 @@ export function IdentityStep({
 
   const photoPreview = useAuthenticatedMediaUrl(image || null);
 
-  // Only ever checks phone/password, never the identity fields above — handleNext
+  // Only ever checks phone, never the identity fields above — handleNext
   // validates those once before the first call, but the modal's "Renvoyer le code"
   // button calls this directly and must not re-run that validation on every resend.
   const requestOtp = async () => {
     if (!isPhoneValid) {
       setError(t('onboarding.identity.errorPhoneRequired', { length: country.nationalLength }));
-      return;
-    }
-    if (!passwordReady) {
-      setError(t('onboarding.identity.errorPasswordRequired'));
       return;
     }
 
@@ -481,6 +569,7 @@ export function IdentityStep({
       setOtpError(t('onboarding.identity.errorOtpSend'));
       return;
     }
+    setDevOtp(sendAction.payload.devOtp ?? null);
     setResendCooldown(30);
   };
 
@@ -536,7 +625,7 @@ export function IdentityStep({
 
     onRegistered?.();
     const registerAction = await dispatch(
-      registerPhone({ phone, password, signupToken: verifyAction.payload.signupToken }),
+      registerPhone({ phone, signupToken: verifyAction.payload.signupToken }),
     );
     if (!registerPhone.fulfilled.match(registerAction)) {
       setOtpVerifying(false);
@@ -567,6 +656,7 @@ export function IdentityStep({
         name,
         job: job || undefined,
         bio: bio || undefined,
+        city: city || null,
         profile_type: profileType,
       }),
     );
@@ -594,47 +684,51 @@ export function IdentityStep({
         <div className="space-y-6 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
           {/* Left: photo + profile type */}
           <div className="mb-6 flex flex-col items-center md:mb-0">
-            <div className="relative mb-3">
-              <div
-                className="flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-4 transition-transform hover:scale-105"
-                style={{
-                  borderColor: missingPhoto ? '#E74C3C' : '#2F76BB',
-                  background: '#D5E6F5',
-                }}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {photoPreview.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={photoPreview.url}
-                    alt="Profile"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <ProfileSilhouette />
-                )}
+            <label
+              onClick={handleNativePhotoPick}
+              className="group mb-2 flex w-full max-w-[240px] cursor-pointer flex-col items-center rounded-2xl p-3 transition-colors hover:bg-[#F5F9FF] active:bg-[#EBF4FF]"
+            >
+              <div className="relative mb-3">
+                <div
+                  className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border-4 transition-transform group-hover:scale-105"
+                  style={{
+                    borderColor: missingPhoto ? '#E74C3C' : '#2F76BB',
+                    background: '#D5E6F5',
+                  }}
+                >
+                  {photoPreview.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={photoPreview.url}
+                      alt="Profile"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <ProfileSilhouette />
+                  )}
+                </div>
+                <span
+                  className="absolute -right-2 -bottom-2 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-white shadow-md transition-transform group-hover:scale-110"
+                  style={{ borderColor: '#61BCA6' }}
+                  aria-label={t('onboarding.identity.imageUploadDesc')}
+                >
+                  <Camera size={18} color="#61BCA6" />
+                </span>
               </div>
-              <button
-                type="button"
-                className="absolute -right-2 -bottom-2 flex h-9 w-9 items-center justify-center rounded-full border-2 bg-white shadow-md"
-                style={{ borderColor: '#61BCA6' }}
-                onClick={() => fileInputRef.current?.click()}
-                aria-label={t('onboarding.identity.imageUploadDesc')}
-              >
-                <Camera size={16} color="#61BCA6" />
-              </button>
+              <p style={{ fontSize: '12px', color: '#AAA', fontWeight: 600 }}>
+                {t('onboarding.identity.photoLabel')}
+              </p>
+              <p style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                {t('onboarding.identity.photoHint')}
+              </p>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept={PROFILE_PHOTO_ACCEPT}
-                className="hidden"
+                className="sr-only"
                 onChange={handlePhotoChange}
               />
-            </div>
-            <p style={{ fontSize: '12px', color: '#AAA' }}>{t('onboarding.identity.photoLabel')}</p>
-            <p style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-              {t('onboarding.identity.photoHint')}
-            </p>
+            </label>
             {missingPhoto && (
               <p style={{ fontSize: '11px', color: '#E74C3C', marginTop: '4px' }}>
                 {t('onboarding.identity.photoRequired')}
@@ -683,6 +777,52 @@ export function IdentityStep({
                 ))}
               </div>
             </div>
+
+            {/* « Je cherche un prestataire » — voice message instead of the video (2.0.8) */}
+            {isSeeker && (
+              <div className="mt-6 w-full">
+                <div className="mb-1 flex items-center justify-between">
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#353535' }}>
+                    {t('onboarding.identity.voiceTitle')}
+                  </p>
+                  <span
+                    className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                    style={{ background: '#EEF5FF', color: '#2F76BB' }}
+                  >
+                    {t('onboarding.identity.voiceMaxBadge')}
+                  </span>
+                </div>
+                <p style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
+                  {t('onboarding.identity.voiceDesc')}
+                </p>
+                <VoiceNeedRecorder
+                  recorded={voiceRecorded}
+                  disabled={loading || otpSending}
+                  onRecorded={handleVoiceRecorded}
+                  onRemove={handleRemoveVoice}
+                />
+                {voiceRecorded && videoAnalysis.status === 'running' && (
+                  <p
+                    role="status"
+                    className="flex items-center gap-1.5"
+                    style={{ fontSize: '12px', color: '#2F76BB', marginTop: '6px' }}
+                  >
+                    <Loader2 size={12} className="animate-spin" />
+                    {t('onboarding.identity.voiceAnalyzing')}
+                  </p>
+                )}
+                {voiceRecorded && videoAnalysis.status === 'succeeded' && (
+                  <p role="status" style={{ fontSize: '12px', color: '#2A9177', marginTop: '6px' }}>
+                    {t('onboarding.identity.voiceAnalyzed')}
+                  </p>
+                )}
+                {voiceRecorded && videoAnalysis.status === 'failed' && (
+                  <p role="status" style={{ fontSize: '12px', color: '#888', marginTop: '6px' }}>
+                    {t('onboarding.identity.voiceAnalysisFailed')}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Presentation video — Offering / INDIVIDUAL only (Matchy Inscription1) */}
             {profileType === 'INDIVIDUAL' && (
@@ -777,6 +917,26 @@ export function IdentityStep({
                     {t('onboarding.identity.videoUploading')}
                   </p>
                 )}
+                {!isUploadingVideo && videoAnalysis.status === 'running' && (
+                  <p
+                    role="status"
+                    className="flex items-center gap-1.5"
+                    style={{ fontSize: '12px', color: '#2F76BB', marginTop: '6px' }}
+                  >
+                    <Loader2 size={12} className="animate-spin" />
+                    {t('onboarding.identity.videoAnalyzing')}
+                  </p>
+                )}
+                {videoAnalysis.status === 'succeeded' && (
+                  <p role="status" style={{ fontSize: '12px', color: '#2A9177', marginTop: '6px' }}>
+                    {t('onboarding.identity.videoAnalyzed')}
+                  </p>
+                )}
+                {videoAnalysis.status === 'failed' && (
+                  <p role="status" style={{ fontSize: '12px', color: '#888', marginTop: '6px' }}>
+                    {t('onboarding.identity.videoAnalysisFailed')}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -805,6 +965,11 @@ export function IdentityStep({
                   disabled={loading || otpSending}
                 />
               </div>
+              <AiProposals
+                options={videoAnalysis.suggestions?.proposals?.firstName}
+                current={firstName}
+                onPick={setFirstName}
+              />
             </div>
 
             <div>
@@ -829,6 +994,11 @@ export function IdentityStep({
                   disabled={loading || otpSending}
                 />
               </div>
+              <AiProposals
+                options={videoAnalysis.suggestions?.proposals?.lastName}
+                current={lastName}
+                onPick={setLastName}
+              />
             </div>
 
             {!isAuthenticated && (
@@ -848,48 +1018,44 @@ export function IdentityStep({
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
-                    {t('onboarding.identity.passwordLabel')}{' '}
-                    <span style={{ color: '#61BCA6' }}>*</span>
-                  </label>
-                  <div
-                    className="mt-1 flex items-center gap-3 rounded-xl px-4 py-3"
-                    style={{
-                      border: `2px solid ${
-                        password.length > 0 && !passwordReady
-                          ? '#E74C3C'
-                          : passwordReady
-                            ? '#2F76BB'
-                            : '#E0E0E0'
-                      }`,
-                      background: password ? '#F5F9FF' : '#FAFAFA',
-                    }}
-                  >
-                    <Lock size={16} color="#61BCA6" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      autoComplete="new-password"
-                      value={password}
-                      disabled={loading || otpSending}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="••••••••"
-                      className="flex-1 bg-transparent text-[#353535] outline-none"
-                      style={{ fontSize: '14px' }}
-                    />
-                    <button type="button" onClick={() => setShowPassword((value) => !value)}>
-                      {showPassword ? (
-                        <EyeOff size={18} color="#7A7A7A" />
-                      ) : (
-                        <Eye size={18} color="#7A7A7A" />
-                      )}
-                    </button>
-                  </div>
-                  <PasswordRequirements password={password} />
-                </div>
               </>
             )}
+
+            <div>
+              <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
+                {t('onboarding.identity.cityLabel')}
+              </label>
+              <div className="mt-1 flex items-center gap-2">
+                <div className="relative flex-1">
+                  <div className="pointer-events-none absolute top-1/2 left-3 z-10 -translate-y-1/2">
+                    <MapPin size={15} color={city ? '#2F76BB' : '#CCC'} />
+                  </div>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(event) => setCity(event.target.value)}
+                    placeholder={t('onboarding.location.cityPlaceholder')}
+                    className="w-full rounded-xl py-3 text-[#353535] transition-all outline-none"
+                    style={{
+                      fontSize: '14px',
+                      border: `2px solid ${city ? '#2F76BB' : '#E0E0E0'}`,
+                      background: city ? '#F5F9FF' : '#FAFAFA',
+                      paddingLeft: '36px',
+                      paddingRight: '16px',
+                    }}
+                  />
+                </div>
+                <FieldMicButton
+                  onResult={(text) => setCity(text)}
+                  disabled={loading || otpSending}
+                />
+              </div>
+              <AiProposals
+                options={videoAnalysis.suggestions?.proposals?.city}
+                current={city}
+                onPick={setCity}
+              />
+            </div>
 
             <div>
               <label style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>
@@ -921,10 +1087,21 @@ export function IdentityStep({
                   disabled={loading || otpSending}
                 />
               </div>
+              {!isSeeker && (
+                <AiProposals
+                  options={videoAnalysis.suggestions?.proposals?.job}
+                  current={job}
+                  onPick={setJob}
+                />
+              )}
             </div>
 
             <div className="mt-4">
-              <IndustryDropdown value={industry} onChange={setIndustry} />
+              <IndustryDropdown
+                value={industry}
+                onChange={setIndustry}
+                hasError={requiredTouched && !industry}
+              />
             </div>
 
             <div>
@@ -954,6 +1131,11 @@ export function IdentityStep({
                   />
                 </div>
               </div>
+              <AiProposals
+                options={videoAnalysis.suggestions?.proposals?.bio}
+                current={bio}
+                onPick={(text) => setBio(text.slice(0, 250))}
+              />
             </div>
           </div>
         </div>
@@ -1033,6 +1215,10 @@ export function IdentityStep({
                 {t('onboarding.identity.otpModalDesc')}{' '}
                 <span style={{ fontWeight: 700, color: '#2F76BB' }}>{phone}</span>
               </p>
+            </div>
+
+            <div className="mt-4">
+              <DevOtpBanner code={devOtp} />
             </div>
 
             <input

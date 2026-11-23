@@ -16,6 +16,8 @@ spec:
         app.kubernetes.io/name: saas-ai
         app.kubernetes.io/component: ai
     spec:
+      securityContext:
+        fsGroup: 1001
       containers:
         - name: ai
           image: saas-boilerplate-ai:latest
@@ -26,6 +28,15 @@ spec:
           envFrom:
             - secretRef:
                 name: saas-ai-env
+          env:
+            # Same files as the API's apps/api/uploads (shared volume below).
+            - name: AI_UPLOADS_DIR
+              value: /data/uploads
+            - name: VOICE_AI_URL
+              value: http://saas-voice-ai:8001
+          volumeMounts:
+            - name: uploads
+              mountPath: /data/uploads
           readinessProbe:
             httpGet:
               path: /ready
@@ -45,3 +56,7 @@ spec:
             limits:
               cpu: "1"
               memory: 1Gi
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: saas-uploads

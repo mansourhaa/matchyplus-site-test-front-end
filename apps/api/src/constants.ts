@@ -89,6 +89,17 @@ export const PROFILE_VIDEO_CONTENT_TYPES: Record<string, string> = {
  * like the other upload routes. */
 export const IDENTITY_VERIFICATION_RATE_LIMIT = { max: 5, timeWindow: '1 hour' };
 
+/** ANALYZE_VIDEO from the onboarding video, before any account exists: per IP, one per
+ * recording with room for a few re-recordings. Polling has its own, looser limit. */
+export const ONBOARDING_VIDEO_ANALYSIS_RATE_LIMIT = { max: 10, timeWindow: '1 hour' };
+export const ONBOARDING_VIDEO_ANALYSIS_POLL_RATE_LIMIT = { max: 300, timeWindow: '1 hour' };
+/** Page-language switch of the AI-filled fields (dictionaries only, no model). */
+export const ONBOARDING_RELABEL_RATE_LIMIT = { max: 120, timeWindow: '1 hour' };
+/** A clip the worker never got to (queue down, job failed) is swept after this. */
+export const ONBOARDING_CLIP_MAX_AGE_MS = 60 * 60 * 1000;
+/** How often the API removes stale onboarding clips (background, not in the upload request). */
+export const ONBOARDING_CLIP_SWEEP_INTERVAL_MS = 15 * 60 * 1000;
+
 /** Voice-note upload limits for messaging. */
 export const VOICE_AUDIO_MAX_BYTES = 10 * 1024 * 1024;
 export const VOICE_AUDIO_RATE_LIMIT = { max: 30, timeWindow: '1 hour' };

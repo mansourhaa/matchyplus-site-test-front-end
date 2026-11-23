@@ -14,6 +14,7 @@ import {
   Loader2,
   Lock,
   MapPin,
+  RefreshCw,
   Sparkles,
   Star,
   X,
@@ -121,6 +122,16 @@ function confidenceKey(raw: string): keyof typeof CONFIDENCE_LABELS {
   return 'medium';
 }
 
+/** Level label of a profile (same rule as the AI score panel), for the home card badge. */
+export function matchLevelLabel(profile: FeedProfile, locale: string): string {
+  const score = Math.round(profile.match_score ?? 0);
+  const conf =
+    CONFIDENCE_LABELS[
+      confidenceKey(profile.confidence || (score >= 75 ? 'high' : score >= 50 ? 'medium' : 'low'))
+    ];
+  return locale === 'en' ? conf.en : locale === 'ar' ? conf.ar : conf.fr;
+}
+
 export function AIThinkingAnimation() {
   const { locale } = useI18n();
   const labels = {
@@ -209,9 +220,14 @@ export function MatchScoreBadge({
 export function LiveScorePanel({
   profile,
   isComputing = false,
+  detailsLocked = false,
+  onUnlockDetails,
 }: {
   profile: FeedProfile | null;
   isComputing?: boolean;
+  /** 2.0.8: the detailed score is a Premium feature (FREE sees a lock instead of the bars). */
+  detailsLocked?: boolean;
+  onUnlockDetails?: () => void;
 }) {
   const { t, locale } = useI18n();
   const [expanded, setExpanded] = useState(true);
@@ -242,8 +258,7 @@ export function LiveScorePanel({
     dims.find((d) => d.dimension?.toLowerCase() === 'availability')?.score ??
     (profile?.availability_days && profile.availability_days.length > 0 ? 50 : 30);
 
-  const languagesScore =
-    dims.find((d) => d.dimension?.toLowerCase() === 'languages')?.score ?? 60;
+  const languagesScore = dims.find((d) => d.dimension?.toLowerCase() === 'languages')?.score ?? 60;
 
   const qualityScore =
     dims.find((d) => d.dimension?.toLowerCase() === 'quality')?.score ??
@@ -388,9 +403,7 @@ export function LiveScorePanel({
                 </span>
               )}
               {profile.distance_km > 5 && profile.distance_km <= 15 && (
-                <span className="font-semibold text-slate-700">
-                  {t('matching.aiScore.nearby')}
-                </span>
+                <span className="font-semibold text-slate-700">{t('matching.aiScore.nearby')}</span>
               )}
             </span>
           </div>
@@ -442,7 +455,25 @@ export function LiveScorePanel({
         </button>
 
         <AnimatePresence initial={false}>
-          {expanded && (
+          {expanded && detailsLocked && (
+            <div
+              data-testid="score-details-locked"
+              className="flex items-center gap-2 pt-1 pb-2 text-[12px] text-slate-500"
+            >
+              <Lock size={15} className="shrink-0 text-amber-500" />
+              <span>{t('matching.home.lockedDetails')}</span>
+              {onUnlockDetails && (
+                <button
+                  type="button"
+                  onClick={onUnlockDetails}
+                  className="ms-auto shrink-0 font-bold text-[#2F76BB]"
+                >
+                  {t('matching.home.goPremium')}
+                </button>
+              )}
+            </div>
+          )}
+          {expanded && !detailsLocked && (
             <motion.div
               className="space-y-3 overflow-hidden pt-1 pb-1"
               initial={{ height: 0, opacity: 0 }}
@@ -477,13 +508,16 @@ export function AIRecommendationItem({
   rank,
   onClick,
   onDismiss,
+  locked,
 }: {
   profile: FeedProfile;
   rank: number;
   onClick?: () => void;
   onDismiss?: () => void;
+  /** Set by the home, where the plan limit is applied before the list (background). */
+  locked?: boolean;
 }) {
-  const isLocked = Boolean(profile.is_locked || rank >= 3);
+  const isLocked = locked ?? Boolean(profile.is_locked || rank >= 3);
   const color = scoreTierColor(profile.match_score);
   const count = useCountUp(Math.round(profile.match_score), 600, rank * 80);
   const { t } = useI18n();
@@ -627,7 +661,15 @@ export function AIRecommendationItem({
   );
 }
 
-export function AIPicksHeader({ count }: { count: number }) {
+export function AIPicksHeader({
+  count,
+  onRefresh,
+  refreshing = false,
+}: {
+  count: number;
+  onRefresh?: () => void;
+  refreshing?: boolean;
+}) {
   const { locale } = useI18n();
   return (
     <div className="flex w-full items-center justify-between">
@@ -657,12 +699,26 @@ export function AIPicksHeader({ count }: { count: number }) {
           </p>
         </div>
       </div>
-      <span
-        className="rounded-full px-2 py-0.5"
-        style={{ background: '#E8F0FA', color: '#2F76BB', fontSize: 11, fontWeight: 700 }}
-      >
-        {count}
-      </span>
+      <div className="flex items-center gap-2">
+        <span
+          className="rounded-full px-2 py-0.5"
+          style={{ background: '#E8F0FA', color: '#2F76BB', fontSize: 11, fontWeight: 700 }}
+        >
+          {count}
+        </span>
+        {onRefresh && (
+          <button
+            type="button"
+            data-testid="ai-picks-refresh"
+            onClick={onRefresh}
+            disabled={refreshing}
+            aria-label={locale === 'en' ? 'Refresh' : locale === 'ar' ? 'تحديث' : 'Actualiser'}
+            className="text-[#61BCA6] transition-transform active:scale-90 disabled:opacity-60"
+          >
+            <RefreshCw size={16} className={refreshing ? 'animate-spin' : undefined} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

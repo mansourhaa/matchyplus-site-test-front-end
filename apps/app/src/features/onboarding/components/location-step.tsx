@@ -14,17 +14,18 @@ import {
 } from '@/features/onboarding/constants';
 import { locationStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile } from '@/features/onboarding/types';
+import { type OnboardingSuggestions, aiFieldUpdate } from '@/features/onboarding/video-analysis';
 import {
   Check,
   Clock,
-  Coffee,
   Globe,
   MessageCircle,
   Moon,
   Phone,
-  Smile,
   Sun,
+  Sunrise,
   Sunset,
+  Users,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -34,14 +35,15 @@ import { OnboardingStepLayout, StepCard, StepCtaRow, StepProgress } from './onbo
 const CONTACT_ICONS: Record<string, ReactNode> = {
   phone: <Phone size={15} />,
   whatsapp: <MessageCircle size={15} />,
-  person: <Coffee size={15} />,
+  person: <Users size={15} />,
 };
 
 const TIME_ICONS: Record<string, ReactNode> = {
-  morning: <Sun size={14} />,
-  afternoon: <Sunset size={14} />,
-  evening: <Moon size={14} />,
-  flexible: <Smile size={14} />,
+  // Same icons and colours as the 2.0.8 demo.
+  morning: <Sunrise size={14} color="#F59E0B" />,
+  afternoon: <Sun size={14} color="#F97316" />,
+  evening: <Sunset size={14} color="#6366F1" />,
+  flexible: <Moon size={14} color="#61BCA6" />,
 };
 
 function LangFlag({ langKey, size = 18 }: { langKey: string; size?: number }) {
@@ -77,6 +79,8 @@ function LangFlag({ langKey, size = 18 }: { langKey: string; size?: number }) {
 }
 
 type LocationStepProps = {
+  /** Fields found in the profile video (identity step); used only for empty fields. */
+  aiSuggestions?: OnboardingSuggestions | null;
   profile: OnboardingProfile | null;
   stepNumber: number;
   totalSteps: number;
@@ -108,6 +112,7 @@ export function LocationStep({
   onFinish,
   onBack,
   onSaveDraft,
+  aiSuggestions = null,
 }: LocationStepProps) {
   const { t, locale } = useI18n();
   const [city, setCity] = useState(profile?.city ?? '');
@@ -138,6 +143,28 @@ export function LocationStep({
       setLanguages(profile.languages ?? []);
     }, 0);
   }, [profile]);
+
+  // AI autofill from the profile video (identity step): only empty fields, once per
+  // analysis, queued after the hydration above so it never gets overwritten by it.
+  const appliedSuggestionsRef = useRef<OnboardingSuggestions | null>(null);
+  useEffect(() => {
+    const suggestions = aiSuggestions;
+    if (!suggestions || !hydratedRef.current || appliedSuggestionsRef.current === suggestions) {
+      return;
+    }
+    const previous = appliedSuggestionsRef.current;
+    appliedSuggestionsRef.current = suggestions;
+    const fill = (current: string[], suggested?: string[]) =>
+      current.length ? current : (suggested ?? current);
+    const next = aiFieldUpdate(previous, suggestions);
+    const timer = setTimeout(() => {
+      setCity((current) => next(current, 'city'));
+      setAvailabilityDays((current) => fill(current, suggestions.availabilityDays));
+      setAvailabilityHours((current) => fill(current, suggestions.availabilityHours));
+      setLanguages((current) => fill(current, suggestions.languages));
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [aiSuggestions, profile]);
 
   const offerService = profile?.offer_service ?? false;
 

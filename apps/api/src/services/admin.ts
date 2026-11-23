@@ -348,24 +348,10 @@ export class AdminService {
       }
     }
 
-    const hasPassword = Boolean(payload.password?.trim());
-    let hashedPassword: string | null = null;
-    let activationToken: string | undefined;
-    let activationLink: string | undefined;
-    let activationTokenHash: string | null = null;
-    let activationTokenExpiresAt: Date | null = null;
-
-    if (hasPassword) {
-      if (!isPasswordPolicySatisfied(payload.password!)) {
-        throw badRequest('password does not meet the security policy', 'weak_password');
-      }
-      hashedPassword = await bcrypt.hash(payload.password!, await bcrypt.genSalt(10));
-    } else {
-      activationToken = generateActivationToken();
-      activationTokenHash = hashActivationToken(activationToken);
-      activationTokenExpiresAt = computeActivationExpiry();
-      activationLink = buildActivationLink(activationToken);
-    }
+    const activationToken = generateActivationToken();
+    const activationTokenHash = hashActivationToken(activationToken);
+    const activationTokenExpiresAt = computeActivationExpiry();
+    const activationLink = buildActivationLink(activationToken);
 
     const name = payload.name.trim();
     if (!name) {
@@ -402,9 +388,9 @@ export class AdminService {
         name,
         phone,
         email: payload.email?.toLowerCase(),
-        password: hashedPassword,
-        must_change_password: !hasPassword,
-        status: hasPassword ? UserStatus.ACTIVE : UserStatus.INACTIVE,
+        password: null,
+        must_change_password: true,
+        status: UserStatus.INACTIVE,
         activation_token_hash: activationTokenHash,
         activation_token_expires_at: activationTokenExpiresAt,
         auth_provider: 'phone',
@@ -438,15 +424,11 @@ export class AdminService {
     });
 
     const normalized = normalizeAdminUser(user);
-    if (!hasPassword) {
-      return Object.assign(normalized, {
-        activationToken,
-        activationLink,
-        smsSent: false,
-      });
-    }
-
-    return normalized;
+    return Object.assign(normalized, {
+      activationToken,
+      activationLink,
+      smsSent: false,
+    });
   }
 
   /**

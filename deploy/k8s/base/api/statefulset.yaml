@@ -17,6 +17,10 @@ spec:
         app.kubernetes.io/name: saas-api
         app.kubernetes.io/component: api
     spec:
+      # aiuser in saas-ai has the same uid/gid (1001) as fastify here: both can write and
+      # delete in the shared uploads volume.
+      securityContext:
+        fsGroup: 1001
       containers:
         - name: api
           image: saas-boilerplate-api:latest
@@ -34,6 +38,14 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: VOICE_AI_URL
+              value: http://saas-voice-ai:8001
+            - name: MATCHING_ENGINE
+              value: builtin
+          volumeMounts:
+            # media-storage.ts: <workdir>/apps/api/uploads, shared with saas-ai.
+            - name: uploads
+              mountPath: /server/apps/api/uploads
           readinessProbe:
             httpGet:
               path: /api/v1/health
@@ -53,3 +65,7 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: saas-uploads

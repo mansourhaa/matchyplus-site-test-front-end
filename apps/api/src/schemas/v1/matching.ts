@@ -207,7 +207,7 @@ export const swipeFeedQuerySchema = {
           },
         },
         quota: swipeQuota,
-        scoring_version: { type: 'string', enum: ['v5-scripted'] },
+        scoring_version: { type: 'string', enum: ['v5-scripted', 'agents'] },
       },
     },
     ...errorResponses,

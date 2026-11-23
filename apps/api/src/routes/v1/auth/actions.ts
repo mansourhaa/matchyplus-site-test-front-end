@@ -6,6 +6,7 @@ import { RATE_LIMIT_STRICT } from '../../../constants.js';
 import { handleProviderOAuthCallback } from '../../../lib/oauth-callback-handler.js';
 import {
   activationConfirmSchema,
+  activationOtpSendSchema,
   activationPreviewSchema,
   adminLoginSchema,
   adminLogoutSchema,
@@ -22,6 +23,7 @@ import {
   requestAccountDeleteOtpSchema,
   requestPasswordResetSchema,
   requestPhoneLinkSchema,
+  sendLoginOtpSchema,
   sendOtpSchema,
   verifyOtpSchema,
 } from '../../../schemas/v1/index.js';
@@ -31,6 +33,7 @@ import { PhoneAuthenticationService } from '../../../services/phone-authenticati
 import { TokenService } from '../../../services/token.js';
 import {
   ActivationConfirmPayload,
+  ActivationOtpPayload,
   ActivationPreviewQuery,
   ChangePasswordPayload,
   ConfirmPasswordResetPayload,
@@ -363,6 +366,22 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     },
   );
 
+  fastify.post<{ Body: SendOtpPayload }>(
+    '/login-otp/send',
+    {
+      schema: sendLoginOtpSchema,
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+    },
+    async (request, reply) => {
+      try {
+        const data = await phoneAuthService.sendLoginOtp(request.body);
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
   fastify.post<{ Body: LoginPhonePayload }>(
     '/login-phone',
     {
@@ -404,6 +423,22 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
       try {
         const data = await phoneAuthService.getActivationPreview(request.query.token);
         return reply.code(200).send(data);
+      } catch (err) {
+        throw mapError(err as Error, request);
+      }
+    },
+  );
+
+  fastify.post<{ Body: ActivationOtpPayload }>(
+    '/activation/otp/send',
+    {
+      schema: activationOtpSendSchema,
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+    },
+    async (request, reply) => {
+      try {
+        const data = await phoneAuthService.sendActivationOtp(request.body.token);
+        return reply.code(200).send({ ...data, message: translate(request, data.message) });
       } catch (err) {
         throw mapError(err as Error, request);
       }

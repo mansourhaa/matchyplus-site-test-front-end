@@ -10,12 +10,21 @@ import {
 } from '@/features/onboarding/constants';
 import { interestsStepSchema } from '@/features/onboarding/schemas';
 import type { OnboardingProfile } from '@/features/onboarding/types';
-import { Check, ChevronDown, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { type OnboardingSuggestions, videoInterests } from '@/features/onboarding/video-analysis';
+import { Briefcase, Check, ChevronDown, HandHeart, Search, Sparkles, Users, X } from 'lucide-react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { OnboardingStepLayout, StepCard, StepCtaRow, StepProgress } from './onboarding-step-layout';
 
+/** Goal group icons, as in the 2.0.8 demo (no emoji). */
+const GOAL_GROUP_ICONS: Record<string, ReactNode> = {
+  'Trouver du travail': <Briefcase size={16} color="#2F76BB" />,
+  'Services & missions': <Users size={16} color="#2F76BB" />,
+};
+
 type InterestsStepProps = {
+  /** Fields found in the profile video (identity step); used only for empty fields. */
+  aiSuggestions?: OnboardingSuggestions | null;
   profile: OnboardingProfile | null;
   stepNumber: number;
   totalSteps: number;
@@ -31,6 +40,25 @@ type InterestsStepProps = {
   onSaveDraft?: (patch: Partial<OnboardingProfile>) => void;
 };
 
+/** Goals: what the person saved, or for a new step a default from the profile type —
+ * someone offering services is looking for work, someone looking for a service is hiring. */
+function initialGoals(
+  profile: OnboardingProfile | null | undefined,
+  isNewStep: boolean,
+  isIndividual: boolean,
+): string[] {
+  if (profile?.selected_goals?.length || !isNewStep) return profile?.selected_goals ?? [];
+  return [isIndividual ? 'Trouver un job' : "Recruter quelqu'un"];
+}
+
+/** Goals pre-filled from the video analysis (the most the profile type allows). */
+function videoGoals(isIndividual: boolean, homeService: boolean): string[] {
+  const goals = isIndividual
+    ? ['Trouver un job', 'Proposer mes services', 'Travailler comme prestataire']
+    : ["Recruter quelqu'un", 'Demander un service', 'Trouver un prestataire'];
+  return homeService ? [...goals, 'Service à domicile'] : goals;
+}
+
 export function InterestsStep({
   profile,
   stepNumber,
@@ -39,17 +67,26 @@ export function InterestsStep({
   onNext,
   onBack,
   onSaveDraft,
+  aiSuggestions = null,
 }: InterestsStepProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const isIndividual = (profile?.profile_type ?? 'INDIVIDUAL') === 'INDIVIDUAL';
   const isNewStep = !profile?.interests?.length && !profile?.selected_goals?.length;
 
   const [interests, setInterests] = useState<string[]>(profile?.interests ?? []);
   const [interestInput, setInterestInput] = useState('');
   const [lastRemovedInterest, setLastRemovedInterest] = useState<string | null>(null);
-  const [selectedGoals, setSelectedGoals] = useState<string[]>(profile?.selected_goals ?? []);
+  const [selectedGoals, setSelectedGoals] = useState<string[]>(
+    initialGoals(profile, isNewStep, isIndividual),
+  );
   const [offerService, setOfferService] = useState(
     isNewStep ? isIndividual : (profile?.offer_service ?? false),
+  );
+  // « Je cherche un prestataire » (PROVIDER): the same card becomes « Chercher un prestataire »
+  // (service type + budget), as in the 2.0.8 demo. Saved in service_type / price, without
+  // offer_service. On by default for a new step, like « Offrir un service ».
+  const [seekService, setSeekService] = useState(
+    isNewStep ? !isIndividual : !isIndividual && Boolean(profile?.service_type),
   );
   const [serviceType, setServiceType] = useState(profile?.service_type ?? '');
   const [price, setPrice] = useState(profile?.price ?? '');
@@ -63,14 +100,56 @@ export function InterestsStep({
     if (hydratedRef.current || !profile) return;
     hydratedRef.current = true;
     setInterests(profile.interests ?? []);
-    setSelectedGoals(profile.selected_goals ?? []);
+    setSelectedGoals(initialGoals(profile, isNewStep, isIndividual));
     setOfferService(isNewStep ? isIndividual : (profile.offer_service ?? false));
+    setSeekService(isNewStep ? !isIndividual : !isIndividual && Boolean(profile.service_type));
     setServiceType(profile.service_type ?? '');
     setPrice(profile.price ?? '');
   }, [profile, isNewStep, isIndividual]);
 
-  // "Offrir un service" only applies to INDIVIDUAL (Employé) profiles — matching the
-  // old app's Inscription2, which hides this card entirely for Employeur.
+  // AI autofill from the profile video (identity step), only where the person left it empty:
+  // the price, and the job heard in the video as the first interest (as in the 2.0.8 demo).
+  // After a page-language switch, that interest follows the language.
+  const appliedSuggestionsRef = useRef<OnboardingSuggestions | null>(null);
+  const goalsTouchedRef = useRef(false);
+  const appliedInterestsRef = useRef<string[]>([]);
+  useEffect(() => {
+    const suggestions = aiSuggestions;
+    if (!suggestions || !hydratedRef.current || appliedSuggestionsRef.current === suggestions) {
+      return;
+    }
+    appliedSuggestionsRef.current = suggestions;
+    const previous = appliedInterestsRef.current;
+    const next = videoInterests(suggestions, locale);
+    appliedInterestsRef.current = next;
+    setPrice((current) => current || suggestions.price || '');
+    setInterests((current) => {
+      // Same analysis, other page language: the interests it added (not removed since)
+      // follow the language, in the same order.
+      if (previous.length && current.some((entry) => previous.includes(entry))) {
+        return current
+          .map((entry) => {
+            const index = previous.indexOf(entry);
+            return index === -1 ? entry : next[index];
+          })
+          .filter((entry): entry is string => Boolean(entry));
+      }
+      return current.length ? current : next.slice(0, MAX_INTERESTS);
+    });
+    // Goals the person has not touched yet: every goal of their profile type, and home
+    // service when the job heard in the video is one.
+    if (!goalsTouchedRef.current && isNewStep) {
+      setSelectedGoals(videoGoals(isIndividual, Boolean(suggestions.homeService)));
+    }
+    // Service type: the job heard in the video (provider), or the service asked for in the
+    // voice message (« Je cherche un prestataire »).
+    setServiceType((current) => current || suggestions.serviceType || '');
+    if (isIndividual) {
+      if (suggestions.offerService && isNewStep) setOfferService(true);
+    } else if (suggestions.serviceType && isNewStep) {
+      setSeekService(true);
+    }
+  }, [aiSuggestions, profile, isIndividual, isNewStep, locale]);
 
   const addInterest = (value: string) => {
     const trimmed = value.trim();
@@ -98,9 +177,25 @@ export function InterestsStep({
   };
 
   const toggleGoal = (goal: string) => {
+    goalsTouchedRef.current = true;
     setSelectedGoals((current) =>
       current.includes(goal) ? current.filter((value) => value !== goal) : [...current, goal],
     );
+  };
+
+  const serviceCardOn = isIndividual ? offerService : seekService;
+  // What the service card saves: provider → offer (type, price);
+  // « Je cherche un prestataire » → type + budget (price), offer_service stays false.
+  // Card off → '' (not undefined): JSON.stringify drops undefined keys, so the API would
+  // keep the previous service_type / price in the database.
+  const serviceCardPatch = () => {
+    const effectiveOfferService = isIndividual && offerService;
+    const cardOn = effectiveOfferService || (!isIndividual && seekService);
+    return {
+      offerService: effectiveOfferService,
+      serviceType: cardOn ? serviceType : '',
+      price: cardOn ? price : '',
+    };
   };
 
   const handleNext = async () => {
@@ -118,13 +213,7 @@ export function InterestsStep({
     }
 
     setError(null);
-    const saved = await onNext({
-      interests,
-      selectedGoals,
-      offerService: effectiveOfferService,
-      serviceType: effectiveOfferService ? serviceType : undefined,
-      price: effectiveOfferService ? price : undefined,
-    });
+    const saved = await onNext({ interests, selectedGoals, ...serviceCardPatch() });
     if (!saved) {
       setError(t('onboarding.interests.errorSubmit'));
     }
@@ -133,7 +222,10 @@ export function InterestsStep({
   // Show a short suggestion row, but put a just-removed catalog tag first so deleting
   // an interest immediately returns it to the visible suggestions (instead of staying
   // buried past .slice(0, 4)).
-  const unusedSuggestions = INTERESTS_SUGGESTIONS.filter(
+  const unusedSuggestions = [
+    ...(aiSuggestions?.proposals?.job ?? []),
+    ...INTERESTS_SUGGESTIONS,
+  ].filter(
     (suggestion) => !interests.some((entry) => entry.toLowerCase() === suggestion.toLowerCase()),
   );
   const suggestions = [
@@ -148,13 +240,13 @@ export function InterestsStep({
   ].slice(0, 4);
 
   const handleBack = () => {
-    const effectiveOfferService = isIndividual && offerService;
+    const card = serviceCardPatch();
     onSaveDraft?.({
       interests,
       selected_goals: selectedGoals,
-      offer_service: effectiveOfferService,
-      service_type: effectiveOfferService ? serviceType : undefined,
-      price: effectiveOfferService ? price : undefined,
+      offer_service: card.offerService,
+      service_type: card.serviceType,
+      price: card.price,
     });
     onBack();
   };
@@ -184,6 +276,7 @@ export function InterestsStep({
           {/* Left: interests + offer service */}
           <div className="space-y-6">
             <StepCard
+              icon={<Sparkles size={16} color="white" />}
               title={t('onboarding.interests.interestsTitle')}
               description={t('onboarding.interests.interestsDesc', { slots: MAX_INTERESTS })}
             >
@@ -257,124 +350,139 @@ export function InterestsStep({
               </p>
             </StepCard>
 
-            {isIndividual && (
-              <div
-                className="rounded-2xl p-5"
-                style={{ background: '#F9FAFC', border: '1px solid #F0F0F0' }}
-              >
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A2E' }}>
-                      {t('onboarding.interests.offerServiceTitle')}
-                    </p>
-                    <p style={{ fontSize: '12px', color: '#888' }}>
-                      {t('onboarding.interests.offerServiceDesc')}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={offerService}
-                    dir="ltr"
-                    onClick={() => setOfferService(!offerService)}
-                    className="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none"
-                    style={{ background: offerService ? '#2F76BB' : '#E0E0E0' }}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
-                      style={{ transform: offerService ? 'translateX(20px)' : 'translateX(0px)' }}
-                    />
-                  </button>
+            <div
+              className="rounded-2xl p-5"
+              style={{ background: '#F9FAFC', border: '1px solid #F0F0F0' }}
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                  style={{ background: 'linear-gradient(135deg, #61BCA6, #2F76BB)' }}
+                >
+                  {isIndividual ? (
+                    <HandHeart size={16} color="white" />
+                  ) : (
+                    <Search size={16} color="white" />
+                  )}
                 </div>
+                <div className="min-w-0 flex-1">
+                  <p style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A2E' }}>
+                    {isIndividual
+                      ? t('onboarding.interests.offerServiceTitle')
+                      : t('onboarding.interests.seekServiceTitle')}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#888' }}>
+                    {isIndividual
+                      ? t('onboarding.interests.offerServiceDesc')
+                      : t('onboarding.interests.seekServiceDesc')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={serviceCardOn}
+                  dir="ltr"
+                  onClick={() =>
+                    isIndividual ? setOfferService(!offerService) : setSeekService(!seekService)
+                  }
+                  className="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none"
+                  style={{ background: serviceCardOn ? '#2F76BB' : '#E0E0E0' }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
+                    style={{ transform: serviceCardOn ? 'translateX(20px)' : 'translateX(0px)' }}
+                  />
+                </button>
+              </div>
 
-                {offerService && (
-                  <div className="mt-3 space-y-3">
-                    <div>
-                      <label style={{ fontSize: '12px', color: '#888' }}>
-                        {t('onboarding.interests.serviceTypeLabel')}
-                      </label>
-                      <div className="relative mt-1">
-                        <button
-                          type="button"
-                          onClick={() => setShowServiceDropdown(!showServiceDropdown)}
-                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5"
+              {serviceCardOn && (
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <label style={{ fontSize: '12px', color: '#888' }}>
+                      {t('onboarding.interests.serviceTypeLabel')}
+                    </label>
+                    <div className="relative mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowServiceDropdown(!showServiceDropdown)}
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2.5"
+                        style={{
+                          border: '1.5px solid #E0E0E0',
+                          background: 'white',
+                          fontSize: '13px',
+                          color: serviceType ? '#353535' : '#BBB',
+                        }}
+                      >
+                        <span>
+                          {formatRole(serviceType, t) ||
+                            t('onboarding.interests.serviceTypePlaceholder')}
+                        </span>
+                        <ChevronDown size={16} color="#888" />
+                      </button>
+                      {showServiceDropdown && (
+                        <div
+                          className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl bg-white py-1"
                           style={{
                             border: '1.5px solid #E0E0E0',
-                            background: 'white',
-                            fontSize: '13px',
-                            color: serviceType ? '#353535' : '#BBB',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
                           }}
                         >
-                          <span>
-                            {formatRole(serviceType, t) ||
-                              t('onboarding.interests.serviceTypePlaceholder')}
-                          </span>
-                          <ChevronDown size={16} color="#888" />
-                        </button>
-                        {showServiceDropdown && (
-                          <div
-                            className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl bg-white py-1"
-                            style={{
-                              border: '1.5px solid #E0E0E0',
-                              boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                            }}
-                          >
-                            {SERVICE_TYPES.map((type) => (
-                              <button
-                                key={type}
-                                type="button"
-                                className="block w-full px-3 py-2 text-left"
-                                style={{
-                                  fontSize: '13px',
-                                  color: serviceType === type ? '#2F76BB' : '#353535',
-                                  fontWeight: serviceType === type ? 700 : 400,
-                                  background: serviceType === type ? '#F5F9FF' : 'transparent',
-                                }}
-                                onClick={() => {
-                                  setServiceType(type);
-                                  setShowServiceDropdown(false);
-                                }}
-                              >
-                                {formatRole(type, t)}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', color: '#888' }}>
-                        {t('onboarding.interests.priceLabel')}
-                      </label>
-                      <div
-                        className="mt-1 flex items-center gap-2 rounded-xl px-3 py-2.5"
-                        style={{ border: '1.5px solid #E0E0E0', background: 'white' }}
-                      >
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={price}
-                          onChange={(event) =>
-                            setPrice(event.target.value.replace(/[^0-9.,]/g, ''))
-                          }
-                          placeholder={t('onboarding.interests.pricePlaceholder')}
-                          className="flex-1 bg-transparent text-[#353535] outline-none"
-                          style={{ fontSize: '13px' }}
-                        />
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#2F76BB' }}>
-                          DT
-                        </span>
-                      </div>
+                          {SERVICE_TYPES.map((type) => (
+                            <button
+                              key={type}
+                              type="button"
+                              className="block w-full px-3 py-2 text-left"
+                              style={{
+                                fontSize: '13px',
+                                color: serviceType === type ? '#2F76BB' : '#353535',
+                                fontWeight: serviceType === type ? 700 : 400,
+                                background: serviceType === type ? '#F5F9FF' : 'transparent',
+                              }}
+                              onClick={() => {
+                                setServiceType(type);
+                                setShowServiceDropdown(false);
+                              }}
+                            >
+                              {formatRole(type, t)}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
+                  <div>
+                    <label style={{ fontSize: '12px', color: '#888' }}>
+                      {isIndividual
+                        ? t('onboarding.interests.priceLabel')
+                        : t('onboarding.interests.budgetLabel')}
+                    </label>
+                    <div
+                      className="mt-1 flex items-center gap-2 rounded-xl px-3 py-2.5"
+                      style={{ border: '1.5px solid #E0E0E0', background: 'white' }}
+                    >
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={price}
+                        onChange={(event) => setPrice(event.target.value.replace(/[^0-9.,]/g, ''))}
+                        placeholder={t('onboarding.interests.pricePlaceholder')}
+                        className="flex-1 bg-transparent text-[#353535] outline-none"
+                        style={{ fontSize: '13px' }}
+                      />
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#2F76BB' }}>
+                        DT
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right: goals */}
           <StepCard
+            icon={<Briefcase size={16} color="white" />}
             title={t('onboarding.interests.goalsTitle')}
             description={t('onboarding.interests.goalsDesc')}
           >
@@ -393,7 +501,9 @@ export function InterestsStep({
                 return (
                   <div key={category.label}>
                     <div className="mb-2 flex items-center gap-2">
-                      <span style={{ fontSize: '18px' }}>{category.emoji}</span>
+                      {GOAL_GROUP_ICONS[category.label] ?? (
+                        <span style={{ fontSize: '18px' }}>{category.emoji}</span>
+                      )}
                       <p style={{ fontSize: '13px', fontWeight: 700, color: '#555' }}>
                         {categoryLabel}
                       </p>

@@ -169,4 +169,41 @@ describe('LocationStep', () => {
     // Must NOT invoke browser geolocation prompt when submitting location step towards welcome
     expect(getCurrentPosition).not.toHaveBeenCalled();
   });
+
+  it('pre-fills only the empty fields from the profile video analysis', async () => {
+    const onFinish = vi.fn().mockResolvedValue(true);
+    renderStep(
+      <LocationStep
+        profile={{ ...baseProfile, offer_service: true, city: 'Tunis' }}
+        stepNumber={3}
+        totalSteps={3}
+        loading={false}
+        onFinish={onFinish}
+        onBack={vi.fn()}
+        aiSuggestions={{
+          city: 'Sousse',
+          availabilityDays: ['Lun', 'Mar'],
+          availabilityHours: ['morning'],
+          languages: ['ar', 'fr'],
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(firstButton(/Terminer mon inscription/)).toBeEnabled();
+    });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    fireEvent.click(firstButton(/Terminer mon inscription/));
+
+    await waitFor(() => {
+      expect(onFinish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          city: 'Tunis',
+          availabilityDays: ['Lun', 'Mar'],
+          availabilityHours: ['morning'],
+          languages: ['ar', 'fr'],
+        }),
+      );
+    });
+  });
 });

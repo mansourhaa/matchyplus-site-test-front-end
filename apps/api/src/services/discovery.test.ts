@@ -321,7 +321,7 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(page2.profiles[1]?.id).toBe('locked-3');
   });
 
-  it('computes 6-dimension compatibility breakdown', async () => {
+  it('computes 6-dimension compatibility breakdown for paid plans', async () => {
     const prisma = createMockPrisma([
       candidate('test_cand', {
         interests: ['Mobile', 'React'],
@@ -331,6 +331,17 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
         reviews: 12,
       }),
     ]);
+    prisma.user.findUnique.mockImplementation(
+      ({ where, select }: { where: { id: string }; select?: unknown }) => {
+        if (where.id === 'me') {
+          if (select && typeof select === 'object' && 'plan' in (select as object)) {
+            return Promise.resolve({ plan: 'PREMIUM' });
+          }
+          return Promise.resolve(baseUser());
+        }
+        return Promise.resolve(null);
+      },
+    );
     const service = new DiscoveryService({ prisma: prisma as never });
 
     const result = await service.getSwipeFeed('me', {
@@ -352,6 +363,24 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     ]);
     expect(profile.match_score).toBeGreaterThanOrEqual(40);
     expect(profile.match_score).toBeLessThanOrEqual(100);
+  });
+
+  it('strips compatibility breakdown and liked_me for FREE users', async () => {
+    const prisma = createMockPrisma([candidate('liker_1')]);
+    prisma.swipeLog.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ user_id: 'liker_1' }]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      context: 'swipe',
+    });
+
+    expect(result.profiles).toHaveLength(1);
+    expect(result.profiles[0]?.compatibility).toEqual([]);
+    expect(result.profiles[0]?.liked_me).toBe(false);
   });
 
   it('filters by sector, minPrice, maxPrice, and availableOnly', async () => {
@@ -453,6 +482,23 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(interestFiltered.profiles.map((p) => p.id)).toEqual(['2']);
   });
 
+  it('filters by the onboarding industry key sent by the home sector menu', async () => {
+    const prisma = createMockPrisma([
+      candidate('1', { industry: 'commerce_retail', activity_sector: 'Boutique' }),
+      candidate('2', { industry: 'tech_digital', activity_sector: 'Informatique / Tech' }),
+      candidate('3', { industry: null, activity_sector: 'Aide ménagère' }),
+    ]);
+    const service = new DiscoveryService({ prisma: prisma as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      sector: 'commerce_retail',
+      context: 'swipe',
+    });
+    expect(result.profiles.map((p) => p.id)).toEqual(['1']);
+  });
+
   it('retrieves distinct active sectors from database profiles', async () => {
     const prisma = {
       user: {
@@ -469,5 +515,49 @@ describe('DiscoveryService.getSwipeFeed filters + pagination', () => {
     expect(res.sectors).toContain('Transport');
     expect(res.sectors).toContain('Chauffeur');
     expect(res.sectors).toContain('Informatique / Tech');
+  });
+});
+
+describe('DiscoveryService.getSwipeFeed with MATCHING_ENGINE=agents', () => {
+  it('uses the order and the score of the agents', async () => {
+    const prisma = createMockPrisma([candidate('a'), candidate('b')]);
+    const agents = {
+      rank: vi
+        .fn()
+        .mockImplementation((_userId: string, profiles: { id: string }[]) =>
+          Promise.resolve(
+            [...profiles]
+              .sort((x, y) => (x.id < y.id ? 1 : -1))
+              .map((profile) => ({ ...profile, match_score: 77 })),
+          ),
+        ),
+    };
+    const service = new DiscoveryService({ prisma: prisma as never, agents: agents as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      context: 'swipe',
+    });
+
+    expect(agents.rank).toHaveBeenCalledWith('me', expect.any(Array), expect.any(Number));
+    expect(result.profiles.map((p) => p.id)).toEqual(['b', 'a']);
+    expect(result.profiles[0].match_score).toBe(77);
+    expect(result.scoring_version).toBe('agents');
+  });
+
+  it('keeps the built-in feed when the agents give nothing back', async () => {
+    const prisma = createMockPrisma([candidate('a')]);
+    const agents = { rank: vi.fn().mockResolvedValue(null) };
+    const service = new DiscoveryService({ prisma: prisma as never, agents: agents as never });
+
+    const result = await service.getSwipeFeed('me', {
+      latitude: 36.8,
+      longitude: 10.18,
+      context: 'swipe',
+    });
+
+    expect(result.profiles.map((p) => p.id)).toEqual(['a']);
+    expect(result.scoring_version).toBe('v5-scripted');
   });
 });
