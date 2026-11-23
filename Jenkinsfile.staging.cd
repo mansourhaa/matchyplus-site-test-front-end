@@ -77,7 +77,7 @@ pipeline {
 
   environment {
     REGISTRY_REPO = "${env.REGISTRY_REPO}"
-    IMAGE_COMPONENTS = 'api app admin landing ai'
+    IMAGE_COMPONENTS = 'api app admin landing ai voice-ai'
 
     STG_LANDING_HOST = 'staging.matchyplus.com'
     STG_APP_HOST = 'app.staging.matchyplus.com'

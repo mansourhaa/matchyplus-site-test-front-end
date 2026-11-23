@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: saas-voice-ai-models
+  labels:
+    app.kubernetes.io/name: saas-voice-ai
+    app.kubernetes.io/component: voice-ai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi

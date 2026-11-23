@@ -103,3 +103,18 @@ def test_path_outside_uploads_is_refused(video):
         "processor": "analyze_video",
         "error": "MEDIA_NOT_FOUND",
     }
+
+
+def test_readonly_uploads_mount_does_not_fail_delete_after(video, monkeypatch):
+    monkeypatch.setattr(
+        httpx, "post", lambda url, **kw: FakeResponse(200, {"ok": True, "profile": {}})
+    )
+
+    def raise_readonly(self, missing_ok=False):
+        raise PermissionError("Read-only file system")
+
+    monkeypatch.setattr(type(video), "unlink", raise_readonly)
+    result = get_processor("ANALYZE_VIDEO")(
+        {"mediaPath": "videos/intro.webm", "deleteAfter": True}
+    )
+    assert result["ok"] is True

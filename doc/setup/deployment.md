@@ -21,7 +21,7 @@ flowchart LR
     subgraph GitOps["ArgoCD"]
         Sync[Sync K8s manifests]
         Migrate[Run migration Job]
-        Rollout[Deploy api app ai redis]
+        Rollout[Deploy api app ai voice-ai redis]
         Sync --> Migrate --> Rollout
     end
 
@@ -40,7 +40,7 @@ flowchart LR
 | Step | When | What |
 | --- | --- | --- |
 | Local verify | Before every PR | `pnpm lint` → `pnpm test` → `pnpm build` |
-| Publish images | When promoting to staging/production | Build & push API + App + AI to `ghcr.io/matchy-plus/` |
+| Publish images | When promoting to staging/production | Build & push API + App + AI + Voice AI to `ghcr.io/matchy-plus/` |
 | GitOps | After merge to `staging` / `main` | ArgoCD syncs manifests and rolls out |
 
 ### Image tags
@@ -79,6 +79,7 @@ Images are published to GitHub Container Registry:
 | `ghcr.io/matchy-plus/saas-boilerplate-api` | `apps/api/Dockerfile` |
 | `ghcr.io/matchy-plus/saas-boilerplate-app` | `apps/app/Dockerfile` |
 | `ghcr.io/matchy-plus/saas-boilerplate-ai` | `apps/ai/Dockerfile` |
+| `ghcr.io/matchy-plus/saas-boilerplate-voice-ai` | `apps/voice-ai/Dockerfile` |
 
 Redis uses the public `redis:7.4-alpine` image via `deploy/k8s/base/redis/`.
 
@@ -89,9 +90,11 @@ docker login ghcr.io -u USERNAME
 docker build -t ghcr.io/matchy-plus/saas-boilerplate-api:staging -f apps/api/Dockerfile .
 docker build -t ghcr.io/matchy-plus/saas-boilerplate-app:staging -f apps/app/Dockerfile .
 docker build -t ghcr.io/matchy-plus/saas-boilerplate-ai:staging -f apps/ai/Dockerfile apps/ai
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-voice-ai:staging -f apps/voice-ai/Dockerfile .
 docker push ghcr.io/matchy-plus/saas-boilerplate-api:staging
 docker push ghcr.io/matchy-plus/saas-boilerplate-app:staging
 docker push ghcr.io/matchy-plus/saas-boilerplate-ai:staging
+docker push ghcr.io/matchy-plus/saas-boilerplate-voice-ai:staging
 ```
 
 ### Build and push (production)
@@ -100,9 +103,11 @@ docker push ghcr.io/matchy-plus/saas-boilerplate-ai:staging
 docker build -t ghcr.io/matchy-plus/saas-boilerplate-api:production -f apps/api/Dockerfile .
 docker build -t ghcr.io/matchy-plus/saas-boilerplate-app:production -f apps/app/Dockerfile .
 docker build -t ghcr.io/matchy-plus/saas-boilerplate-ai:production -f apps/ai/Dockerfile apps/ai
+docker build -t ghcr.io/matchy-plus/saas-boilerplate-voice-ai:production -f apps/voice-ai/Dockerfile .
 docker push ghcr.io/matchy-plus/saas-boilerplate-api:production
 docker push ghcr.io/matchy-plus/saas-boilerplate-app:production
 docker push ghcr.io/matchy-plus/saas-boilerplate-ai:production
+docker push ghcr.io/matchy-plus/saas-boilerplate-voice-ai:production
 ```
 
 ---

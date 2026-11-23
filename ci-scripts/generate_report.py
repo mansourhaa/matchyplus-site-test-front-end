@@ -25,7 +25,7 @@ try:
 except ImportError:  # nosemgrep: python.lang.security.use-defused-xml.use-defused-xml
     import xml.etree.ElementTree as ET
 
-COMPONENTS = ("api", "app", "admin", "landing", "ai")
+COMPONENTS = ("api", "app", "admin", "landing", "ai", "voice-ai")
 
 SAST_WHAT = ("An automatic tool read through the application source code looking for known "
              "insecure coding patterns (the kind attackers exploit).")
@@ -502,6 +502,7 @@ def main():
         ("API image", f"{REGISTRY_REPO}:api-{image_tag}"),
         ("Web app image", f"{REGISTRY_REPO}:app-{image_tag}"),
         ("AI service image", f"{REGISTRY_REPO}:ai-{image_tag}"),
+        ("Voice AI service image", f"{REGISTRY_REPO}:voice-ai-{image_tag}"),
     ]
 
     sections = []
@@ -522,7 +523,7 @@ def main():
         ))
 
     TESTS_WHAT = ("The codebase was checked for style/quality issues (lint) and the automated "
-                  "test suites were run across the api, app, admin and ai packages.")
+                  "test suites were run across the api, app, admin, ai and voice-ai packages.")
     jt = junit_summary()
     if jt is None:
         # No XML at all. Either the stage never started, or it died in
@@ -585,7 +586,7 @@ def main():
         ))
 
     if args.type == "dev":
-        PUSH_WHAT = ("The five images were built, scanned, signed and pushed. This pipeline "
+        PUSH_WHAT = ("The six images were built, scanned, signed and pushed. This pipeline "
                      "stops here - dev does not deploy anywhere, it only proves the build "
                      "is clean.")
         if not stage_ran("push"):
