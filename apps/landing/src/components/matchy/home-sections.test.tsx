@@ -41,7 +41,7 @@ const NEW_KEYS = [
   'pressSample',
   'pressPageTitle',
   'pressVideo',
-  'pressLinkedin',
+  'pressNextArticle',
   'ourPartnersTitle',
   'ourPartnersBody',
   'ourPartnersVisit',
@@ -76,7 +76,6 @@ const NEW_KEYS = [
   'footerCookies',
   'heroReassurance',
   'ourPartnersKicker',
-  'pressWebsite',
   'communityTitle',
   'communityMapLabel',
   'communityCountries',
@@ -239,6 +238,12 @@ describe('home sections', () => {
     }
   });
 
+  it('DOT-IT uses its new horizontal vector logo', () => {
+    const dotit = PARTNERS.find((partner) => partner.id === 'dotit');
+    expect(dotit?.logo).toBe('/matchy/partners/dotit-logo.svg');
+    expect([dotit?.width, dotit?.height]).toEqual([394, 148]);
+  });
+
   it('Partnerships strip shows the real partner logos, and free places lead to the partner page', () => {
     const { container } = renderIn('fr', <Partnerships />);
     // the strip is decorative, so its links and logos are not in the accessibility tree
@@ -351,14 +356,17 @@ describe('Matchy+ Press and partners', () => {
     expect(screen.queryAllByText('Exemple')).toHaveLength(samples);
   });
 
-  it('an article with a LinkedIn post links to it in a new tab', () => {
-    const item = PRESS_ITEMS.find((entry) => entry.linkedin);
-    if (!item) return;
-    renderIn('fr', <PressArticle slug={item.slug} />);
-    const link = screen.getByRole('link', { name: 'Voir la publication sur LinkedIn' });
-    expect(link).toHaveAttribute('href', item.linkedin);
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  it('an article leads to the next news item, and the last one back to the first', () => {
+    const items = pressItems();
+    items.forEach((item, index) => {
+      const next = items[(index + 1) % items.length];
+      const { unmount } = renderIn('fr', <PressArticle slug={item.slug} />);
+      expect(screen.getByRole('link', { name: /Article suivant/ })).toHaveAttribute(
+        'href',
+        expect.stringMatching(new RegExp(`^/fr/actualites/${next.slug}/?$`)),
+      );
+      unmount();
+    });
   });
 
   it('an article shows its texts in the page language and links back to all news', () => {
@@ -374,6 +382,21 @@ describe('Matchy+ Press and partners', () => {
       'href',
       expect.stringMatching(/^\/ar\/actualites\/?$/),
     );
+  });
+
+  it('the news page title shows ® small and raised, not bold', () => {
+    renderIn('fr', <PressList />);
+    const title = screen.getByRole('heading', { level: 1 });
+    expect(title).toHaveTextContent('Matchy+® press');
+    const mark = title.querySelector('sup');
+    expect(mark).toHaveTextContent('®');
+    expect(mark).toHaveClass('font-normal');
+  });
+
+  it('a news card has no dot before the place and no line above Matchy+', () => {
+    const { container } = renderIn('fr', <Press />);
+    expect(container.querySelector('.h-1\\.5.w-1\\.5.rounded-full')).toBeNull();
+    expect(container.querySelector('.border-t')).toBeNull();
   });
 
   it('a news card shows its title once (not on the cover too)', () => {
@@ -397,15 +420,14 @@ describe('Matchy+ Press and partners', () => {
     }
   });
 
-  it('an article ends with its source and the way back, without the next-steps block', () => {
-    renderIn('fr', <PressArticle slug={PRESS_ITEMS[0].slug} />);
+  it('an article ends with the way back and the next article, without source buttons', () => {
+    const item = PRESS_ITEMS.find((entry) => entry.linkedin || entry.website) ?? PRESS_ITEMS[0];
+    renderIn('fr', <PressArticle slug={item.slug} />);
     expect(screen.queryByText('Et vous, que cherchez-vous ?')).toBeNull();
     expect(screen.queryByRole('link', { name: 'Proposer une collaboration' })).toBeNull();
-    expect(screen.getByRole('link', { name: /Voir la publication sur LinkedIn/ })).toHaveAttribute(
-      'href',
-      PRESS_ITEMS[0].linkedin,
-    );
+    expect(screen.queryByRole('link', { name: /LinkedIn|site officiel/ })).toBeNull();
     expect(screen.getByRole('link', { name: /Toutes les actualités/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Article suivant/ })).toBeInTheDocument();
   });
 
   it('an article with a YouTube link embeds it without cookies; an unknown slug renders nothing', () => {

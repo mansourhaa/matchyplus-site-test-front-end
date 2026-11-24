@@ -38,9 +38,9 @@ export type PressItem = {
   cover?: string;
   /** Optional YouTube link (watch, youtu.be or shorts link): the article shows the video. */
   video?: string;
-  /** Optional link to the original LinkedIn post: the article shows a "Voir sur LinkedIn" button. */
+  /** Optional link to the original LinkedIn post (the source; not shown on the site since 24 Nov 2026). */
   linkedin?: string;
-  /** Optional official page (programme, show…): the article shows a "Visiter le site officiel" button. */
+  /** Optional official page: programme, show… (the source; not shown on the site since 24 Nov 2026). */
   website?: string;
   /** Example content: labelled on the site and kept out of Google. */
   sample: boolean;

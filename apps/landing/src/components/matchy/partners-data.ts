@@ -25,9 +25,10 @@ export const PARTNERS: readonly Partner[] = [
   {
     id: 'dotit',
     name: 'DOT-IT',
-    logo: '/matchy/partners/dotit.webp',
-    width: 320,
-    height: 320,
+    // horizontal vector logo (sent 24 Nov 2026), cleaned of the editor data
+    logo: '/matchy/partners/dotit-logo.svg',
+    width: 394,
+    height: 148,
     url: 'https://www.dotit-tn.com/fr',
   },
   {

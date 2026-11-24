@@ -123,11 +123,10 @@ export const messages: Record<Locale, MessageTree> = {
       pressSubtitle:
         'Découvrez les programmes, interventions médiatiques et initiatives qui accompagnent le développement de Matchy+ en Tunisie et en Afrique.',
       pressAll: 'Toutes les actualités',
+      pressNextArticle: 'Article suivant',
       pressSample: 'Exemple',
-      pressPageTitle: 'Actualités',
+      pressPageTitle: 'Matchy+® press',
       pressVideo: 'Vidéo : {title}',
-      pressLinkedin: 'Voir la publication sur LinkedIn',
-      pressWebsite: 'Visiter le site officiel',
       ourPartnersTitle: 'Nos partenaires et écosystèmes',
       partnersTitle: 'Ils avancent avec Matchy+',
       partnersBody:
@@ -659,11 +658,10 @@ export const messages: Record<Locale, MessageTree> = {
       pressSubtitle:
         'Discover the programmes, media appearances and initiatives supporting the growth of Matchy+ in Tunisia and Africa.',
       pressAll: 'All news',
+      pressNextArticle: 'Next article',
       pressSample: 'Sample',
-      pressPageTitle: 'News',
+      pressPageTitle: 'Matchy+® Press',
       pressVideo: 'Video: {title}',
-      pressLinkedin: 'View the post on LinkedIn',
-      pressWebsite: 'Visit the official website',
       ourPartnersTitle: 'Our partners and ecosystems',
       partnersTitle: 'Growing together with Matchy+',
       partnersBody:
@@ -1177,11 +1175,10 @@ export const messages: Record<Locale, MessageTree> = {
       pressSubtitle:
         'اكتشف البرامج والظهور الإعلامي والمبادرات التي ترافق تطوّر Matchy+\u200E في تونس وإفريقيا.',
       pressAll: 'كل الأخبار',
+      pressNextArticle: 'المقال التالي',
       pressSample: 'مثال',
-      pressPageTitle: 'الأخبار',
+      pressPageTitle: 'أخبار Matchy+®\u200E',
       pressVideo: 'فيديو: {title}',
-      pressLinkedin: 'عرض المنشور على LinkedIn',
-      pressWebsite: 'زيارة الموقع الرسمي',
       ourPartnersTitle: 'شركاؤنا ومنظوماتنا',
       partnersTitle: 'يتقدّمون مع Matchy+\u200E',
       partnersBody: 'شركات وجمعيات وعلامات محلية: لنبنِ معًا شبكة خدمات موثوقة.',

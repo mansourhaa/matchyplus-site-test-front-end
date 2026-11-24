@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **166 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **168 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -215,14 +215,13 @@ smaller benefit.
 - **Article layout** (`press-pages.tsx`): like /a-propos/: dark text (`#101a36`) on white, the
   intro in semi-bold, then each section as a bold heading and its paragraph. The story page uses
   the same look.
-- **Sources:** "Visiter le site officiel" (programme, network, event page), "Voir la publication
-  sur LinkedIn", or the embedded video.
-- **End of an article:** "Toutes les actualités" and the source button only (the block of 3
-  next-step buttons was removed on 24 Nov 2026).
-- **LinkedIn:** an item with a `linkedin` link shows a "Voir la publication sur LinkedIn" button
-  (new tab, `rel="noopener noreferrer"`).
+- **Page title:** "Matchy+® press", the ® small, raised and in normal weight (like "Fiverr®").
+- **End of an article:** "Toutes les actualités" and "Article suivant →" (the next item, newest
+  first; after the last one, the first). Since 24 Nov 2026 the source buttons (LinkedIn,
+  official site) and the block of 3 next-step buttons are gone; `linkedin` and `website` stay in
+  the data as the sources. The embedded video stays.
 - **Card** (`press-card.tsx`, same on the home page and on `/actualites/`): date badge, tag,
-  place and a Matchy+ footer on the cover, then the title (shown once, under the cover). Without
+  place and a Matchy+ footer on the cover (no dot, no dividing line), then the title (shown once, under the cover). Without
   a cover image the card uses a brand gradient with the Matchy+ logo. An item with a video shows
   its cover on the card and plays the video in the article. On phones the home cards are a
   swipeable row.
@@ -241,7 +240,8 @@ smaller benefit.
   Maintenance). Each partner: name, logo (in `public/matchy/partners/`), its size,
   and its website when it has one. **To add a partner:** one line in the right list.
 - **"Nos partenaires"** (`partner-logos.tsx`), last section of the page: the logos in landscape
-  logos on the page without boxes (DOT-IT, TCA horizontal), each opening the partner's website in a new tab
+  logos on the page without boxes (DOT-IT: its horizontal vector logo `dotit-logo.svg`, sent on
+  24 Nov 2026 and cleaned of the editor data; TCA horizontal), each opening the partner's website in a new tab
   (`rel="noopener noreferrer"`). GoPayzi was removed (24 Nov 2026).
 - **"Ils avancent avec Matchy+"** (`partnerships.tsx`), right after the map, on white like the
   map: the sliding strip
@@ -253,7 +253,7 @@ smaller benefit.
 
 ### 8. Company story
 
-- **`company-story.tsx`:** the Matchy+ logo in a white circle (`public/showcase/matchy-plus-logo.svg`),
+- **`company-story.tsx`:** the Matchy+ logo in a white circle inside a blue-to-green ring, the old round look (`public/showcase/matchy-plus-logo.svg`),
   the founder's quote from the content brief (« Chaque compétence mérite d'être visible… »),
   signed Randa Touati, Cofondatrice de Matchy+. "Découvrir notre histoire" opens the story
   page.

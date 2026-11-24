@@ -3,13 +3,26 @@
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
-import { ArrowLeft, ArrowRight, ExternalLink, MapPin } from 'lucide-react';
+import { ArrowLeft, ArrowRight, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { Reveal } from './motion';
 import { PressCard } from './press-card';
 import { pressDate, pressItem, pressItems, youtubeId } from './press-data';
+
+/** The ® of a brand name, small and raised, in normal weight (like "Fiverr®"). */
+function withRegistered(text: string) {
+  const [before, after] = text.split('®');
+  if (after === undefined) return text;
+  return (
+    <>
+      {before}
+      <sup className="ms-0.5 align-super text-[0.4em] font-normal">®</sup>
+      {after}
+    </>
+  );
+}
 
 /** /actualites/: every news item, newest first, in the site's sub-page band. */
 export function PressList() {
@@ -20,7 +33,7 @@ export function PressList() {
     <main>
       <SubpageHero
         eyebrow={t('landing.pressKicker')}
-        title={t('landing.pressPageTitle')}
+        title={withRegistered(t('landing.pressPageTitle'))}
         subtitle={t('landing.pressSubtitle')}
       />
       <div className="mx-auto -mt-16 grid max-w-6xl gap-6 px-5 pb-24 sm:grid-cols-2 lg:grid-cols-3">
@@ -42,6 +55,9 @@ export function PressArticle({ slug }: { slug: string }) {
   const text = item.text[locale];
   const date = pressDate(item.date, locale);
   const video = youtubeId(item.video);
+  // the next news item in the list (newest first); after the last one, back to the first
+  const items = pressItems();
+  const nextItem = items[(items.findIndex((other) => other.slug === slug) + 1) % items.length];
 
   return (
     <main>
@@ -101,7 +117,7 @@ export function PressArticle({ slug }: { slug: string }) {
           ))}
         </div>
 
-        {/* back to all news, and the source: the LinkedIn post or the official page */}
+        {/* back to all news, and on to the next one (after the last, the first) */}
         <div className="mt-12 flex flex-wrap items-center justify-between gap-4">
           <Link
             href={localizePath(locale, '/actualites')}
@@ -110,28 +126,13 @@ export function PressArticle({ slug }: { slug: string }) {
             <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
             {t('landing.pressAll')}
           </Link>
-          {item.website && (
-            <a
-              href={item.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-blue ring-brand-blue/30 hover:bg-brand-blue/5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold ring-1 transition-colors"
-            >
-              {t('landing.pressWebsite')}
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          )}
-          {item.linkedin && (
-            <a
-              href={item.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-brand-blue hover:bg-brand-navy inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-lg transition-colors"
-            >
-              {t('landing.pressLinkedin')}
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          )}
+          <Link
+            href={localizePath(locale, `/actualites/${nextItem.slug}`)}
+            className="bg-brand-blue hover:bg-brand-navy inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-lg transition-colors"
+          >
+            {t('landing.pressNextArticle')}
+            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+          </Link>
         </div>
       </article>
     </main>
