@@ -3,7 +3,6 @@
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
-import { APP_REGISTER_URL } from '@/lib/constants';
 import { ArrowLeft, ArrowRight, ExternalLink, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -102,31 +101,8 @@ export function PressArticle({ slug }: { slug: string }) {
           ))}
         </div>
 
-        {/* the next step for each reader: a client, a professional or a partner */}
-        <div className="from-brand-navy to-brand-blue mt-14 flex flex-col gap-3 rounded-3xl bg-gradient-to-br p-6 text-white shadow-xl sm:flex-row sm:flex-wrap sm:items-center md:p-8">
-          <p className="text-lg font-extrabold sm:me-auto">{t('landing.pressNext')}</p>
-          <Link
-            href={localizePath(locale, '/recherche')}
-            className="text-brand-blue inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold shadow-lg transition-transform hover:scale-[1.03]"
-          >
-            {t('landing.pressCtaFind')}
-            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-          </Link>
-          <a
-            href={APP_REGISTER_URL}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-white/15 px-5 py-2.5 text-sm font-bold ring-1 ring-white/40 transition-colors hover:bg-white/25"
-          >
-            {t('landing.searchProCta')}
-          </a>
-          <Link
-            href={localizePath(locale, '/devenir-partenaire')}
-            className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold underline-offset-4 hover:underline"
-          >
-            {t('landing.pressCtaPartner')}
-          </Link>
-        </div>
-
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+        {/* back to all news, and the source: the LinkedIn post or the official page */}
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-4">
           <Link
             href={localizePath(locale, '/actualites')}
             className="text-brand-blue inline-flex items-center gap-2 text-sm font-bold hover:underline"

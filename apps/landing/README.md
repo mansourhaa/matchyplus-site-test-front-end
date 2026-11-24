@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **168 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **165 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -166,8 +166,9 @@ reviews, no idea of availability) with Matchy+.
 line on the page; the source stays documented here and in the code:
 
 - **« Présence internationale » 52**: countries where Matchy+ appeared in Google results.
-- **« Audience Matchy+ » 434**: appearances (impressions) in total. Both counters float on
-  the map on computers and sit in a row under it on phones.
+- **« Audience Matchy+ » 434**: appearances (impressions) in total. On computers both counters
+  float on the left of the map, the audience above the countries; on phones they sit in a row
+  under it.
 - The **10 countries with the most appearances** are in brand blue and have a point
   (`COUNTRY_POINTS`): Tunisia 136, United States 54, France 41, Morocco 37, South Africa 23,
   Brazil 14, Nigeria 10, Germany 5, Turkey 2, Bulgaria 1. Hovering or tapping a point shows the
@@ -217,9 +218,8 @@ smaller benefit.
   the same look.
 - **Sources:** "Visiter le site officiel" (programme, network, event page), "Voir la publication
   sur LinkedIn", or the embedded video.
-- **Next steps:** every article ends with the kit's 3 buttons: « Trouver un professionnel »
-  (search page), « Créer mon profil gratuitement » (app sign-up), « Proposer une collaboration »
-  (partner page).
+- **End of an article:** "Toutes les actualités" and the source button only (the block of 3
+  next-step buttons was removed on 24 Nov 2026).
 - **LinkedIn:** an item with a `linkedin` link shows a "Voir la publication sur LinkedIn" button
   (new tab, `rel="noopener noreferrer"`).
 - **Card** (`press-card.tsx`, same on the home page and on `/actualites/`): date badge, tag,
@@ -339,20 +339,20 @@ Older issues, not caused by this work but worth a separate ticket:
 Vitest with jsdom (`vitest.config.ts`, `src/test/setup.ts`: cleanup and an IntersectionObserver
 stub), and the same Testing Library setup as `apps/app`.
 
-| File                          | What it covers                                                                                                                                                                                                                                                                                                         |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `belt-geometry.test.ts`       | Front / back slots (size, blur, depth), even spacing, nearest slot, shortest turn, stage size                                                                                                                                                                                                                          |
-| `messages.test.ts`            | `tList` / `tRows` helpers: only strings kept, the real belt and city tables; no `[placeholder]` in any language                                                                                                                                                                                                        |
-| `belt-data.test.ts`           | Profile rows from the texts, invalid data ignored, a photo for every trade, pass / connect sequence                                                                                                                                                                                                                    |
-| `belt-profile-card.test.tsx`  | Same match thresholds as the app (75 / 55), card content, Passer / Connecter / close                                                                                                                                                                                                                                   |
-| `belt-match-dialog.test.tsx`  | Focus trap, Escape, click outside, continue                                                                                                                                                                                                                                                                            |
-| `referral.test.tsx`           | Sign-up link with code, texts in 3 languages, copy button                                                                                                                                                                                                                                                              |
-| `community-map.test.ts`       | Positions on the map, curves, tooltip placement, number format, country names, Search Console totals                                                                                                                                                                                                                   |
-| `search-results-data.test.ts` | Search in the URL (site and sign-up)                                                                                                                                                                                                                                                                                   |
-| `search-results.test.tsx`     | Results page: no count, search, sign-up link with the search, "near you", back link                                                                                                                                                                                                                                    |
-| `press-data.test.ts`          | News: unique URL-safe slugs, dates (day, month or year only), texts and headings in 3 languages, cover alt, LinkedIn links, newest first, YouTube links (accepted / refused), dates per language                                                                                                                       |
-| `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), news cards and article (headings, 3 next steps, video, unknown slug), map counters (no source line), partner links, partners strip with real logos, partners page, new texts exist in all languages |
-| `site-shell.test.tsx`         | Footer: the 4 columns with their links in order, where each link goes, the cookie settings button, en/ar                                                                                                                                                                                                               |
+| File                          | What it covers                                                                                                                                                                                                                                                                                                          |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `belt-geometry.test.ts`       | Front / back slots (size, blur, depth), even spacing, nearest slot, shortest turn, stage size                                                                                                                                                                                                                           |
+| `messages.test.ts`            | `tList` / `tRows` helpers: only strings kept, the real belt and city tables; no `[placeholder]` in any language                                                                                                                                                                                                         |
+| `belt-data.test.ts`           | Profile rows from the texts, invalid data ignored, a photo for every trade, pass / connect sequence                                                                                                                                                                                                                     |
+| `belt-profile-card.test.tsx`  | Same match thresholds as the app (75 / 55), card content, Passer / Connecter / close                                                                                                                                                                                                                                    |
+| `belt-match-dialog.test.tsx`  | Focus trap, Escape, click outside, continue                                                                                                                                                                                                                                                                             |
+| `referral.test.tsx`           | Sign-up link with code, texts in 3 languages, copy button                                                                                                                                                                                                                                                               |
+| `community-map.test.ts`       | Positions on the map, curves, tooltip placement, number format, country names, Search Console totals                                                                                                                                                                                                                    |
+| `search-results-data.test.ts` | Search in the URL (site and sign-up)                                                                                                                                                                                                                                                                                    |
+| `search-results.test.tsx`     | Results page: no count, search, sign-up link with the search, "near you", back link                                                                                                                                                                                                                                     |
+| `press-data.test.ts`          | News: unique URL-safe slugs, dates (day, month or year only), texts and headings in 3 languages, cover alt, LinkedIn links, newest first, YouTube links (accepted / refused), dates per language                                                                                                                        |
+| `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), news cards and article (headings, source button, video, unknown slug), map counters (no source line), partner links, partners strip with real logos, partners page, new texts exist in all languages |
+| `site-shell.test.tsx`         | Footer: the 4 columns with their links in order, where each link goes, the cookie settings button, en/ar                                                                                                                                                                                                                |
 
 ---
 

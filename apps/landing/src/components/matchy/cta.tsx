@@ -3,7 +3,6 @@
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_REGISTER_URL } from '@/lib/constants';
 import Image from 'next/image';
-import Link from 'next/link';
 
 import { Parallax, Reveal } from './motion';
 
@@ -48,12 +47,12 @@ export function Cta() {
             {t('landing.downloadBody')}
           </p>
           <div className="mt-7 sm:mt-8">
-            <Link
+            <a
               href={APP_REGISTER_URL}
               className="inline-block rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-[#2d79be] shadow-xl transition-transform hover:scale-[1.03]"
             >
               {ctaBtnText}
-            </Link>
+            </a>
           </div>
         </Reveal>
       </div>

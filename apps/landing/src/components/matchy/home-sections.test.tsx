@@ -74,9 +74,6 @@ const NEW_KEYS = [
   'footerProsTitle',
   'footerLegalTitle',
   'footerCookies',
-  'pressNext',
-  'pressCtaFind',
-  'pressCtaPartner',
   'heroReassurance',
   'ourPartnersKicker',
   'pressWebsite',
@@ -400,20 +397,15 @@ describe('Matchy+ Press and partners', () => {
     }
   });
 
-  it('every article ends with the 3 next steps: find a pro, create a profile, propose a collaboration', () => {
+  it('an article ends with its source and the way back, without the next-steps block', () => {
     renderIn('fr', <PressArticle slug={PRESS_ITEMS[0].slug} />);
-    expect(screen.getByRole('link', { name: /Trouver un professionnel/ })).toHaveAttribute(
+    expect(screen.queryByText('Et vous, que cherchez-vous ?')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Proposer une collaboration' })).toBeNull();
+    expect(screen.getByRole('link', { name: /Voir la publication sur LinkedIn/ })).toHaveAttribute(
       'href',
-      expect.stringMatching(/^\/fr\/recherche\/?$/),
+      PRESS_ITEMS[0].linkedin,
     );
-    expect(screen.getByRole('link', { name: 'Créer mon profil gratuitement' })).toHaveAttribute(
-      'href',
-      expect.stringMatching(/\/register$/),
-    );
-    expect(screen.getByRole('link', { name: 'Proposer une collaboration' })).toHaveAttribute(
-      'href',
-      expect.stringMatching(/^\/fr\/devenir-partenaire\/?$/),
-    );
+    expect(screen.getByRole('link', { name: /Toutes les actualités/ })).toBeInTheDocument();
   });
 
   it('an article with a YouTube link embeds it without cookies; an unknown slug renders nothing', () => {

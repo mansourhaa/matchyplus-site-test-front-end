@@ -4,7 +4,6 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_REGISTER_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check } from 'lucide-react';
-import Link from 'next/link';
 
 import { HeroLivePhone } from './hero-live-phone';
 import { HeroSearch } from './hero-search';
@@ -69,13 +68,13 @@ export function Hero() {
             className="mt-5 flex flex-col items-center gap-4 ltr:md:items-start rtl:md:items-start"
           >
             {/* second call to action: for professionals */}
-            <Link
+            <a
               href={APP_REGISTER_URL}
               className="inline-flex items-center gap-2 rounded-full border border-white/60 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-white/15"
             >
               {t('landing.searchProCta')}
               <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-            </Link>
+            </a>
             <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs font-semibold text-white/90 md:justify-start">
               {tList('landing.heroReassurance').map((item) => (
                 <li key={item} className="inline-flex items-center gap-1.5">
