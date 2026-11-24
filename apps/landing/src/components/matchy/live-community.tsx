@@ -8,12 +8,12 @@ import { useEffect, useRef, useState } from 'react';
 import { CommunityArcs } from './community-arcs';
 import { type CommunityMetric, CounterRow, FloatingCounters } from './community-counters';
 import {
+  ACTIVE_VISITORS,
   COUNTRY_POINTS,
   type CountryId,
   HUB_ID,
   MAP_HEIGHT,
   MAP_WIDTH,
-  SEARCH_CONSOLE,
   numberLocale,
   toCountryNames,
 } from './community-map';
@@ -47,8 +47,8 @@ export function LiveCommunity() {
       headline: true,
     },
     {
-      label: t('landing.communityImpressionsLabel'),
-      value: SEARCH_CONSOLE.impressions,
+      label: t('landing.communityVisitorsLabel'),
+      value: ACTIVE_VISITORS,
       headline: false,
     },
   ];

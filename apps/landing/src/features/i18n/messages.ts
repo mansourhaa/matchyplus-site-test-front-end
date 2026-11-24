@@ -176,7 +176,7 @@ export const messages: Record<Locale, MessageTree> = {
       ],
       communityCountriesLabel: 'Présence internationale',
       communityCountriesUnit: 'pays',
-      communityImpressionsLabel: 'Audience Matchy+',
+      communityVisitorsLabel: 'Visiteurs actifs',
       intro:
         'Besoin d’un service fiable ? Découvrez des professionnels disponibles autour de vous, trouvez le profil qui correspond à votre besoin et entrez facilement en contact.',
       title: 'Trouvez plus facilement le service dont vous avez besoin',
@@ -702,7 +702,7 @@ export const messages: Record<Locale, MessageTree> = {
       ],
       communityCountriesLabel: 'International presence',
       communityCountriesUnit: 'countries',
-      communityImpressionsLabel: 'Matchy+ audience',
+      communityVisitorsLabel: 'Active visitors',
       intro:
         'Need a reliable service? Discover professionals available around you, find the profile that matches your needs and connect easily.',
       title: 'Find the service you need more easily',
@@ -1212,7 +1212,7 @@ export const messages: Record<Locale, MessageTree> = {
       ],
       communityCountriesLabel: 'الحضور الدولي',
       communityCountriesUnit: 'دول',
-      communityImpressionsLabel: 'جمهور Matchy+\u200E',
+      communityVisitorsLabel: 'الزوار النشطون',
       intro:
         'هل تحتاج إلى خدمة موثوقة؟ اكتشف المهنيين المتاحين من حولك، واعثر على الملف الذي يناسب احتياجاتك، وتواصل بسهولة.',
       title: ' اعثر بسهولة أكبر على الخدمة التي تحتاجها',

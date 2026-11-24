@@ -79,7 +79,7 @@ const NEW_KEYS = [
   'communityCountries',
   'communityCountriesLabel',
   'communityCountriesUnit',
-  'communityImpressionsLabel',
+  'communityVisitorsLabel',
 ];
 
 describe('new home texts', () => {
@@ -315,9 +315,9 @@ describe('home sections', () => {
     expect(screen.getAllByText('10')).toHaveLength(2);
     expect(screen.getAllByText('pays')).toHaveLength(2);
     expect(document.querySelector('dt .animate-pulse, dt .motion-safe\\:animate-pulse')).toBeNull();
-    expect(screen.getAllByText('434')).toHaveLength(2);
+    expect(screen.getAllByText('452')).toHaveLength(2);
     expect(screen.getAllByText('Présence internationale')).toHaveLength(2);
-    expect(screen.getAllByText('Audience Matchy+')).toHaveLength(2);
+    expect(screen.getAllByText('Visiteurs actifs')).toHaveLength(2);
     expect(screen.queryByText(/Source|Google/)).toBeNull();
 
     const tunis = screen.getByRole('button', { name: 'Tunisie' });

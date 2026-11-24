@@ -9,10 +9,16 @@ export const MAP_WIDTH = 1000;
 export const MAP_HEIGHT = 452;
 
 /** Search Console totals shown as the map's counters, with their source line. */
+/**
+ * "Visiteurs actifs" counter on the map: a figure given by the Matchy+ team on 24 Nov 2026
+ * (replaces the Google appearances, 434). Update it here when the team sends a new one.
+ */
+export const ACTIVE_VISITORS = 452;
+
 export const SEARCH_CONSOLE = {
   /** Countries where Matchy+ appeared in Google results (the map shows the top 10: "10 pays"). */
   countries: 52,
-  /** Times Matchy+ appeared in Google results (impressions). */
+  /** Times Matchy+ appeared in Google results (impressions); no longer shown on the page. */
   impressions: 434,
   /** Day the figures were read, YYYY-MM-DD. */
   asOf: '2026-11-23',

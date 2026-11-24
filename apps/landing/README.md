@@ -166,8 +166,8 @@ reviews, no idea of availability) with Matchy+.
 line on the page; the source stays documented here and in the code:
 
 - **« Présence internationale » 10 pays**: the 10 countries shown on the map (top 10 of the 52 where Matchy+ appeared in Google results); no pulsing dot.
-- **« Audience Matchy+ » 434**: appearances (impressions) in total. On computers both counters
-  float on the left of the map, the audience above the countries; on phones they sit in a row
+- **« Visiteurs actifs » 452**: a figure given by the Matchy+ team on 24 Nov 2026 (`ACTIVE_VISITORS`; it replaced the 434 Google appearances). On computers both counters
+  float on the left of the map, the visitors above the countries; on phones they sit in a row
   under it.
 - The **10 countries with the most appearances** are in brand blue and have a point
   (`COUNTRY_POINTS`): Tunisia 136, United States 54, France 41, Morocco 37, South Africa 23,
