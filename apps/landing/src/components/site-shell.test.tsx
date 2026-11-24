@@ -36,7 +36,7 @@ const COLUMNS = {
 };
 
 describe('Header', () => {
-  it('has "Connexion" for members next to "S\u2019inscrire gratuitement", both to the app', () => {
+  it('has "S\u2019inscrire gratuitement" then "Connexion", both to the app, and a flag-only language picker', () => {
     render(
       <I18nProvider locale="fr">
         <Header />
@@ -46,8 +46,11 @@ describe('Header', () => {
     const login = within(nav).getByRole('link', { name: /Connexion/ });
     const signUp = within(nav).getByRole('link', { name: /inscrire gratuitement/ });
     expect(login).toHaveAttribute('href', expect.stringMatching(/\/connexion$/));
-    // right before the sign-up button
-    expect(login.nextElementSibling).toBe(signUp);
+    // right after the sign-up button
+    expect(signUp.nextElementSibling).toBe(login);
+    // the language picker shows the flag only (its name is for screen readers)
+    const picker = within(nav).getByRole('button', { name: 'Français' });
+    expect(picker).not.toHaveTextContent('FR');
   });
 });
 
