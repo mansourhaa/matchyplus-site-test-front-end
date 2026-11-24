@@ -163,7 +163,7 @@ export const PRESS_ITEMS: PressItem[] = [
   },
   {
     slug: 'matchy-plus-afrique-innovante-2026',
-    date: '2026-06-05',
+    date: '2026-05-29',
     cover: '/matchy/press/afrique-innovante-2026-randa-touati.webp',
     website:
       'https://cpccaf.org/programme-et-appel-a-projet/appel-a-candidatures-2026-afrique-innovante-recrute-500-projets-feminins-a-fort-potentiel/',

@@ -96,7 +96,7 @@ describe('pressDate', () => {
     expect(PRESS_ITEMS).toHaveLength(3);
     const date = (slug: string) => pressDate(pressItem(slug)?.date ?? '', 'fr').full;
     expect(date('matchy-plus-al-wataniya-1-jil-al-mostakbal')).toBe('22 nov. 2026');
-    expect(date('matchy-plus-afrique-innovante-2026')).toBe('5 juin 2026');
+    expect(date('matchy-plus-afrique-innovante-2026')).toBe('29 mai 2026');
     expect(date('matchy-plus-express-fm-mundo-design')).toBe('1 juin 2026');
     expect(
       pressItems()
@@ -104,8 +104,8 @@ describe('pressDate', () => {
         .map((item) => item.slug),
     ).toEqual([
       'matchy-plus-al-wataniya-1-jil-al-mostakbal',
-      'matchy-plus-afrique-innovante-2026',
       'matchy-plus-express-fm-mundo-design',
+      'matchy-plus-afrique-innovante-2026',
     ]);
   });
 
