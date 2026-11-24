@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Heart } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   useEffect,
@@ -145,14 +144,15 @@ export function BeltMatchDialog({
         <p id={bodyId} className="text-muted-foreground mt-2 leading-relaxed">
           {labels.body}
         </p>
-        <Link
+        {/* registerHref is the app (another site): a plain link, not Next's client-side <Link> */}
+        <a
           ref={ctaRef}
           href={registerHref}
           className="focus-visible:ring-brand-teal mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#61BCA6] to-[#2F76BB] py-3 font-bold text-white shadow-md transition outline-none hover:brightness-105 focus-visible:ring-2 focus-visible:ring-offset-2"
         >
           {labels.cta}
           <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-        </Link>
+        </a>
         <button
           type="button"
           onClick={onContinue}

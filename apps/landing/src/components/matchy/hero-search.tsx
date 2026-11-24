@@ -13,6 +13,9 @@ import { withSearch } from './search-results-data';
 
 type Audience = 'client' | 'pro' | 'business';
 
+const AUDIENCE_CTA =
+  'bg-brand-blue hover:bg-brand-navy flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold whitespace-nowrap text-white transition-colors';
+
 /**
  * Hero search: who you are, then what you need and where.
  * A search opens the results page (how many pros match), which then leads to sign-up.
@@ -131,27 +134,30 @@ export function HeroSearch() {
           <p className="text-brand-navy flex-1 text-sm leading-relaxed font-semibold">
             {audience === 'pro' ? t('landing.searchProText') : t('landing.searchBusinessText')}
           </p>
-          <Link
-            href={
-              audience === 'pro' ? APP_REGISTER_URL : localizePath(locale, '/devenir-partenaire')
-            }
-            className="bg-brand-blue hover:bg-brand-navy flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold whitespace-nowrap text-white transition-colors"
-          >
-            {audience === 'pro' ? t('landing.searchProCta') : t('landing.searchBusinessCta')}
-            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-          </Link>
+          {/* pros go to the app (another site, a plain link); businesses to our partner page */}
+          {audience === 'pro' ? (
+            <a href={APP_REGISTER_URL} className={AUDIENCE_CTA}>
+              {t('landing.searchProCta')}
+              <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+            </a>
+          ) : (
+            <Link href={localizePath(locale, '/devenir-partenaire')} className={AUDIENCE_CTA}>
+              {t('landing.searchBusinessCta')}
+              <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+            </Link>
+          )}
         </div>
       )}
 
       <p className="mt-5 text-sm text-white/85">
         {t('landing.searchMember')}{' '}
-        <Link
+        <a
           href={APP_LOGIN_URL}
           className="inline-flex items-center gap-1 font-bold text-white underline underline-offset-4 hover:no-underline"
         >
           <LogIn className="h-4 w-4 rtl:-scale-x-100" />
           {t('landing.login')}
-        </Link>
+        </a>
       </p>
     </div>
   );

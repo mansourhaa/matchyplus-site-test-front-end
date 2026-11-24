@@ -277,7 +277,7 @@ function footerColumns(t: (key: string) => string, locale: Locale) {
         { label: t('landing.footerDownload'), href: `${page('/utilisation')}#download` },
         { label: t('landing.footerContact'), href: page('/contact') },
         // the companies' way in: our partners and what a partnership brings
-        { label: t('landing.partnersCta'), href: page('/partenaires') },
+        { label: t('landing.partnersPageTitle'), href: page('/partenaires') },
       ],
     },
     {
@@ -318,15 +318,19 @@ export function Footer() {
                 </Link>
               ),
             )}
-            {/* last column: reopens the CookieYes preferences (only loaded on the public site) */}
+            {/* last column: reopens the CookieYes preferences; where CookieYes is not loaded
+                (localhost, staging, an ad blocker) it is a plain link to the privacy policy */}
             {index === columns.length - 1 && (
-              <button
-                type="button"
-                className="footer-link-button cky-banner-element"
-                onClick={() => window.revisitCkyConsent?.()}
+              <Link
+                href={localizePath(locale, '/privacy-policy')}
+                onClick={(event) => {
+                  if (!window.revisitCkyConsent) return;
+                  event.preventDefault();
+                  window.revisitCkyConsent();
+                }}
               >
                 {t('landing.footerCookies')}
-              </button>
+              </Link>
             )}
           </nav>
         ))}

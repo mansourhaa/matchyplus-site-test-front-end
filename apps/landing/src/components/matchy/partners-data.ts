@@ -21,27 +21,15 @@ export type Partner = {
   background?: string;
 };
 
-const DOTIT: Partner = {
-  id: 'dotit',
-  name: 'DOT-IT',
-  logo: '/matchy/partners/dotit.webp',
-  width: 320,
-  height: 320,
-  url: 'https://www.dotit-tn.com/fr',
-};
-
-const GOPAYZI: Partner = {
-  id: 'gopayzi',
-  name: 'GoPayzi',
-  logo: '/matchy/partners/gopayzi-logo.svg',
-  width: 512,
-  height: 138,
-  url: 'https://pitchbook.com/profiles/company/494307-91',
-};
-
 export const PARTNERS: readonly Partner[] = [
-  DOTIT,
-  GOPAYZI,
+  {
+    id: 'dotit',
+    name: 'DOT-IT',
+    logo: '/matchy/partners/dotit.webp',
+    width: 320,
+    height: 320,
+    url: 'https://www.dotit-tn.com/fr',
+  },
   {
     id: 'tca',
     name: 'TCA – Tunisie Commissariat aux Comptes',

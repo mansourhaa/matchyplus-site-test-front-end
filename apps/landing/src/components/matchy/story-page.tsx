@@ -24,9 +24,8 @@ function Block({ block }: { block: StoryBlock }) {
 }
 
 /**
- * /a-propos/histoire-matchy-plus/: the founder's quote, the story in 3 numbered steps (the look of
- * the news articles and /utilisation/), then a button for each reader: client, professional or
- * company.
+ * /a-propos/histoire-matchy-plus/: the founders' quotes, the story along a dashed line (the look of
+ * /utilisation/), then a button for each reader: client, professional or company.
  */
 export function StoryPage() {
   const { locale } = useI18n();
@@ -51,14 +50,22 @@ export function StoryPage() {
             unoptimized
             className="h-8 w-auto"
           />
-          <Quote className="text-brand-blue/20 mt-6 h-10 w-10" />
-          <blockquote className="text-brand-blue mt-2 text-xl leading-snug font-extrabold text-balance md:text-2xl">
-            {text.quote}
-          </blockquote>
-          <figcaption className="mt-5">
-            <span className="text-brand-navy block font-bold">{text.name}</span>
-            <span className="text-muted-foreground text-sm">{text.role}</span>
-          </figcaption>
+          {/* the founders' quotes, each signed */}
+          {text.quotes.map((quote) => (
+            <div
+              key={quote.name}
+              className="mt-6 border-t border-slate-100 pt-6 first-of-type:border-0"
+            >
+              <Quote className="text-brand-blue/20 h-10 w-10" />
+              <blockquote className="text-brand-blue mt-2 text-xl leading-snug font-extrabold text-balance md:text-2xl">
+                {quote.text}
+              </blockquote>
+              <p className="mt-4">
+                <span className="text-brand-navy block font-bold">{quote.name}</span>
+                <span className="text-muted-foreground text-sm">{quote.role}</span>
+              </p>
+            </div>
+          ))}
           <Link
             href={localizePath(locale, '/')}
             className="text-brand-blue border-brand-teal mt-6 inline-flex items-center gap-2 border-b-2 pb-0.5 font-bold"
@@ -68,27 +75,28 @@ export function StoryPage() {
           </Link>
         </figure>
 
-        <ol className="border-brand-teal/40 relative mt-14 space-y-12 border-dashed ltr:ml-4 ltr:border-l-2 ltr:pl-8 rtl:mr-4 rtl:border-r-2 rtl:pr-8">
+        {/* the story along a dashed line, a teal dot per part (the look of /utilisation/) */}
+        <div className="border-brand-teal/40 relative mt-14 space-y-12 border-dashed ltr:ml-4 ltr:border-l-2 ltr:pl-8 rtl:mr-4 rtl:border-r-2 rtl:pr-8">
           {text.sections.map((section, index) => (
-            <li key={section.heading} className="relative">
+            <section key={section.heading ?? index} className="relative">
               <span
                 aria-hidden="true"
-                className="bg-brand-teal shadow-brand-teal/30 absolute grid h-9 w-9 place-items-center rounded-full text-sm font-bold text-white shadow-lg ltr:-left-[3.05rem] rtl:-right-[3.05rem]"
-              >
-                {index + 1}
-              </span>
-              <h2 className="text-brand-teal text-xl font-semibold md:text-2xl">
-                {section.heading}
-              </h2>
-              <div className="text-muted-foreground mt-3 space-y-4 text-base leading-relaxed md:text-lg">
+                className="bg-brand-teal shadow-brand-teal/30 absolute top-1 h-4 w-4 rounded-full shadow-lg ltr:-left-[2.55rem] rtl:-right-[2.55rem]"
+              />
+              {section.heading && (
+                <h2 className="text-brand-teal mb-3 text-xl font-semibold md:text-2xl">
+                  {section.heading}
+                </h2>
+              )}
+              <div className="text-muted-foreground space-y-4 text-base leading-relaxed md:text-lg">
                 {section.blocks.map((block, blockIndex) => (
                   // a fixed list of blocks: their position is a stable key
                   <Block key={blockIndex} block={block} />
                 ))}
               </div>
-            </li>
+            </section>
           ))}
-        </ol>
+        </div>
 
         <section className="from-brand-navy to-brand-blue mt-16 rounded-3xl bg-gradient-to-br p-6 text-white shadow-xl md:p-10">
           <h2 className="text-2xl font-extrabold md:text-3xl">{text.nextTitle}</h2>

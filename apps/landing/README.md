@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **168 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **169 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -37,28 +37,28 @@ The sign-up and login buttons point to the app (`apps/app`) through `NEXT_PUBLIC
 
 Defined in `src/app/[lang]/page.tsx`. Sections marked **new** or **changed** are part of this work.
 
-| #   | Section                                | File(s) in `src/components/matchy/`                                                                                                                                     | Status  |
-| --- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| 1   | Hero: live phone + search              | `hero.tsx`, `hero-live-phone.tsx`, `hero-phone-overlay.tsx`, `hero-phone-bubble.tsx`, `hero-mini-card.tsx`, `hero-search.tsx`                                           | changed |
-| 2   | Matchy+ Press (latest 3 news)          | `press.tsx`, `press-card.tsx`, `press-data.ts`                                                                                                                          | new     |
-| 3   | Pan-African ambition map               | `live-community.tsx`, `community-marker.tsx`, `community-arcs.tsx`, `community-tooltip.tsx`, `community-map.ts`                                                         | new     |
-| 4   | Partners strip + Devenir partenaire    | `partnerships.tsx`, `partners-data.ts`                                                                                                                                  | changed |
-| 5   | Without / with Matchy+                 | `why-matchy.tsx`                                                                                                                                                        | new     |
-| 6   | Pro storefront card + referral         | `pro-branding.tsx`, `referral.tsx`                                                                                                                                      | new     |
-| 7   | Services belt (10 trades)              | `services-belt.tsx`, `belt-person.tsx`, `belt-floor.tsx`, `belt-service-info.tsx`, `belt-geometry.ts`, `belt-profile-card.tsx`, `belt-match-dialog.tsx`, `belt-data.ts` | new     |
-| 8   | Company story                          | `company-story.tsx`                                                                                                                                                     | new     |
-| 9   | Nos partenaires (DOT-IT, GoPayzi, TCA) | `partner-logos.tsx`, `partners-data.ts`                                                                                                                                 | new     |
+| #   | Section                             | File(s) in `src/components/matchy/`                                                                                                                                     | Status  |
+| --- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 1   | Hero: live phone + search           | `hero.tsx`, `hero-live-phone.tsx`, `hero-phone-overlay.tsx`, `hero-phone-bubble.tsx`, `hero-mini-card.tsx`, `hero-search.tsx`                                           | changed |
+| 2   | Matchy+ Press (latest 3 news)       | `press.tsx`, `press-card.tsx`, `press-data.ts`                                                                                                                          | new     |
+| 3   | Pan-African ambition map            | `live-community.tsx`, `community-marker.tsx`, `community-arcs.tsx`, `community-tooltip.tsx`, `community-map.ts`                                                         | new     |
+| 4   | Partners strip + Devenir partenaire | `partnerships.tsx`, `partners-data.ts`                                                                                                                                  | changed |
+| 5   | Without / with Matchy+              | `why-matchy.tsx`                                                                                                                                                        | new     |
+| 6   | Pro storefront card + referral      | `pro-branding.tsx`, `referral.tsx`                                                                                                                                      | new     |
+| 7   | Services belt (10 trades)           | `services-belt.tsx`, `belt-person.tsx`, `belt-floor.tsx`, `belt-service-info.tsx`, `belt-geometry.ts`, `belt-profile-card.tsx`, `belt-match-dialog.tsx`, `belt-data.ts` | new     |
+| 8   | Company story                       | `company-story.tsx`                                                                                                                                                     | new     |
+| 9   | Nos partenaires (DOT-IT, TCA)       | `partner-logos.tsx`, `partners-data.ts`                                                                                                                                 | new     |
 
 ## Other pages added
 
-| Page                                                                   | Files                                                                                  | What it shows                                                                                                                                                                                                                                                                                                                                                    |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/utilisation/`                                                        | `app/[lang]/utilisation/page.tsx`, `usage-hero.tsx`                                    | How Matchy+ works: the 5 sections that left the home page, unchanged and in the same order: `features.tsx`, `steps.tsx` (`#how`), `security.tsx` (wallet), `explore.tsx`, `cta.tsx`. The menu's "Utilisation" opens it. In the sitemap.                                                                                                                          |
-| `/actualites/`                                                         | `app/[lang]/actualites/`, `press-pages.tsx` (`PressList`)                              | Every news item, newest first. In the sitemap.                                                                                                                                                                                                                                                                                                                   |
-| `/actualites/<slug>/`                                                  | `app/[lang]/actualites/[slug]/page.tsx`, `press-pages.tsx` (`PressArticle`)            | One news item: date, tag, title, place, the YouTube video (if any), the text. One static page per item and language; any other slug is a 404.                                                                                                                                                                                                                    |
-| `/recherche/`                                                          | `app/[lang]/recherche/`, `search-results.tsx`                                          | Results of the hero search (see the hero section below).                                                                                                                                                                                                                                                                                                         |
-| `/a-propos/histoire-matchy-plus/` (en/ar: `/about/matchy-plus-story/`) | `app/[lang]/a-propos/histoire-matchy-plus/page.tsx`, `story-page.tsx`, `story-data.ts` | "Découvrez l'histoire de Matchy+" from the "Story Matchy" document (texts, title, description, Open Graph and addresses as in the document): the founder's quote, the story in 3 numbered steps like the news, then a button per reader (find a pro, create a profile, build with Matchy+). The home page's "Découvrir notre histoire" opens it. In the sitemap. |
-| `/partenaires/`                                                        | `app/[lang]/partenaires/page.tsx`, `partners-page.tsx`                                 | Every network partner (`NETWORK_PARTNERS`: logo, name, one-line description from `landing.partnerDescriptions`, website if any), then the partnership benefits (`partner-benefits.ts`, shared with `/devenir-partenaire/`) and the "Devenir partenaire" button. In the sitemap.                                                                                  |
+| Page                                                                   | Files                                                                                  | What it shows                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/utilisation/`                                                        | `app/[lang]/utilisation/page.tsx`, `usage-hero.tsx`                                    | How Matchy+ works: the 5 sections that left the home page, unchanged and in the same order: `features.tsx`, `steps.tsx` (`#how`), `security.tsx` (wallet), `explore.tsx`, `cta.tsx`. The menu's "Utilisation" opens it. In the sitemap.                                                                                                                                                           |
+| `/actualites/`                                                         | `app/[lang]/actualites/`, `press-pages.tsx` (`PressList`)                              | Every news item, newest first. In the sitemap.                                                                                                                                                                                                                                                                                                                                                    |
+| `/actualites/<slug>/`                                                  | `app/[lang]/actualites/[slug]/page.tsx`, `press-pages.tsx` (`PressArticle`)            | One news item: date, tag, title, place, the YouTube video (if any), the text. One static page per item and language; any other slug is a 404.                                                                                                                                                                                                                                                     |
+| `/recherche/`                                                          | `app/[lang]/recherche/`, `search-results.tsx`                                          | Results of the hero search (see the hero section below).                                                                                                                                                                                                                                                                                                                                          |
+| `/a-propos/histoire-matchy-plus/` (en/ar: `/about/matchy-plus-story/`) | `app/[lang]/a-propos/histoire-matchy-plus/page.tsx`, `story-page.tsx`, `story-data.ts` | "Découvrez l'histoire de Matchy+" from the "Story Matchy 2" document (French, light spelling fixes; English and Arabic translated): the two founders' quotes (Randa Touati, Khalil Zahouani), the story along a dashed line like /utilisation/, then a button per reader (find a pro, create a profile, build with Matchy+). The home page's "Découvrir notre histoire" opens it. In the sitemap. |
+| `/partenaires/`                                                        | `app/[lang]/partenaires/page.tsx`, `partners-page.tsx`                                 | Every network partner (`NETWORK_PARTNERS`: logo, name, one-line description from `landing.partnerDescriptions`, website if any), then the partnership benefits (`partner-benefits.ts`, shared with `/devenir-partenaire/`) and the "Devenir partenaire" button. In the sitemap.                                                                                                                   |
 
 All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `en` and `ar`.
 
@@ -69,9 +69,12 @@ them, each a `<nav>` with its links:
   centre), /services/ (all services), log-in, "Devenir partenaire" → the partner form
   (/devenir-partenaire/).
 - **Matchy+:** /a-propos/, /actualites/, "Télécharger l'application" (/utilisation/#download),
-  /contact/, "Devenir partenaire" → /partenaires/ (our partners and the benefits).
-- **Informations légales:** privacy policy, terms, "Gérer les cookies" (a button that reopens
-  the CookieYes preferences, loaded on the public site only).
+  /contact/, "Nos partenaires" → /partenaires/ (our partners and the benefits).
+- **Informations légales:** privacy policy, terms, "Gérer les cookies": it reopens the CookieYes
+  preferences where CookieYes is loaded (matchyplus.com); elsewhere (localhost, staging, an ad
+  blocker) it is a plain link to the privacy policy.
+- Links to the app (sign-up, log-in) are plain `<a>` everywhere on the site, not Next's `<Link>`:
+  the app is another site.
 - **Not in the footer yet:** "Inviter un ami": the app has no referral programme yet, so the
   footer promises no points. Add it to `footerColumns` when the programme is live.
 
@@ -234,14 +237,13 @@ smaller benefit.
 
 ### 7. Partners (`partners-data.ts`, `partner-logos.tsx`, `partnerships.tsx`)
 
-- **Two lists in `partners-data.ts`:** `PARTNERS` ("Nos partenaires" on the home page: DOT-IT,
-  GoPayzi, TCA) and `NETWORK_PARTNERS` (the strip and /partenaires/: Sahora and Pro Services
+- **Two lists in `partners-data.ts`:** `PARTNERS` ("Nos partenaires" on the home page: DOT-IT
+  and TCA) and `NETWORK_PARTNERS` (the strip and /partenaires/: Sahora and Pro Services
   Maintenance). Each partner: name, logo (in `public/matchy/partners/`), its size,
   and its website when it has one. **To add a partner:** one line in the right list.
 - **"Nos partenaires"** (`partner-logos.tsx`), last section of the page: the logos in landscape
-  white cards (DOT-IT, GoPayzi horizontal SVG, TCA horizontal), each opening the partner's
-  website in a new tab (`rel="noopener noreferrer"`). GoPayzi links to its PitchBook profile
-  until it has a website.
+  white cards (DOT-IT, TCA horizontal), each opening the partner's website in a new tab
+  (`rel="noopener noreferrer"`). GoPayzi was removed (24 Nov 2026).
 - **"Ils avancent avec Matchy+"** (`partnerships.tsx`), right after the map, on white like the
   map: the sliding strip
   with the network partners' logos alternating with "Votre marque ici" places (linking to
