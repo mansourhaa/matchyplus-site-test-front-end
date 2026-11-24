@@ -4,28 +4,42 @@ import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
 import { APP_REGISTER_URL } from '@/lib/constants';
-import { ArrowRight, Quote } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { STORY, type StoryBlock } from './story-data';
 
-/** One block of a section: a paragraph, a stand-out sentence or a list of short lines. */
+/** A paragraph of the document: words between `**` are bold, as in the document. */
+function Rich({ text }: { text: string }) {
+  return text.split('**').map((piece, index) =>
+    // odd pieces sit between two `**`; a fixed text, so the position is a stable key
+    index % 2 === 1 ? <strong key={index}>{piece}</strong> : piece,
+  );
+}
+
+/** One block: a paragraph, a stand-out sentence or a founder's quote, signed. */
 function Block({ block }: { block: StoryBlock }) {
-  if (typeof block === 'string') return <p>{block}</p>;
-  if ('strong' in block) return <p className="font-extrabold">{block.strong}</p>;
+  if (typeof block === 'string')
+    return (
+      <p>
+        <Rich text={block} />
+      </p>
+    );
+  if ('quote' in block) return <blockquote className={QUOTE}>{block.quote}</blockquote>;
   return (
-    <ul className="space-y-1">
-      {block.lines.map((line) => (
-        <li key={line}>{line}</li>
-      ))}
-    </ul>
+    <figure>
+      <blockquote className={QUOTE}>{block.founder.text}</blockquote>
+      <figcaption className="mt-4">
+        <span className="block font-bold">{block.founder.name}</span>
+        <span className="text-muted-foreground italic">{block.founder.role}</span>
+      </figcaption>
+    </figure>
   );
 }
 
 /**
- * /a-propos/histoire-matchy-plus/: the founders' quotes, the story in the look of /a-propos/ (dark
- * text on white), then a button for each reader: client, professional or company.
+ * /a-propos/histoire-matchy-plus/: the "Story Matchy 3" document in the look of /a-propos/ (dark
+ * text on white, no boxes): its parts in order, separated by a thin line, then a button for each
+ * reader: client, professional or company.
  */
 export function StoryPage() {
   const { locale } = useI18n();
@@ -38,68 +52,30 @@ export function StoryPage() {
 
   return (
     <main className="bg-white pb-24">
-      <SubpageHero eyebrow={text.eyebrow} title={text.title} subtitle={text.subtitle} />
+      <SubpageHero eyebrow={text.eyebrow} title={text.title} />
 
-      <article className="mx-auto -mt-16 max-w-3xl px-5">
-        <figure className="relative z-10 rounded-3xl bg-white p-6 shadow-xl ring-1 shadow-[#2F76BB]/10 ring-slate-100 md:p-10">
-          <Image
-            src="/showcase/matchy-plus-logo.svg"
-            alt=""
-            width={722}
-            height={184}
-            unoptimized
-            className="h-8 w-auto"
-          />
-          {/* the founders' quotes, each signed */}
-          {text.quotes.map((quote) => (
-            <div
-              key={quote.name}
-              className="mt-6 border-t border-slate-100 pt-6 first-of-type:border-0"
-            >
-              <Quote className="text-brand-blue/20 h-10 w-10" />
-              <blockquote className="text-brand-blue mt-2 text-xl leading-snug font-extrabold text-balance md:text-2xl">
-                {quote.text}
-              </blockquote>
-              <p className="mt-4">
-                <span className="text-brand-navy block font-bold">{quote.name}</span>
-                <span className="text-muted-foreground text-sm">{quote.role}</span>
-              </p>
+      <article className="mx-auto max-w-3xl px-5 pt-4 text-[#101a36]">
+        {text.parts.map((part, index) => (
+          // a fixed list of parts: their position is a stable key
+          <section key={part.heading ?? index}>
+            {part.heading && (
+              <h2 className="mb-2.5 text-[1.75rem] leading-tight font-extrabold">{part.heading}</h2>
+            )}
+            <div className="space-y-4 leading-[1.65]">
+              {part.blocks.map((block, blockIndex) => (
+                <Block key={blockIndex} block={block} />
+              ))}
             </div>
-          ))}
-          <Link
-            href={localizePath(locale, '/')}
-            className="text-brand-blue border-brand-teal mt-6 inline-flex items-center gap-2 border-b-2 pb-0.5 font-bold"
-          >
-            {text.discover}
-            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-          </Link>
-        </figure>
+            <hr className="my-10 border-slate-200" />
+          </section>
+        ))}
 
-        {/* the story as on /a-propos/: dark text on white, a bold heading then its paragraphs */}
-        <div className="text-[#101a36]">
-          {text.sections.map((section, index) => (
-            <section key={section.heading ?? index} className="mt-10">
-              {section.heading && (
-                <h2 className="mb-2.5 text-[1.75rem] leading-tight font-extrabold">
-                  {section.heading}
-                </h2>
-              )}
-              <div className="space-y-4 leading-[1.65]">
-                {section.blocks.map((block, blockIndex) => (
-                  // a fixed list of blocks: their position is a stable key
-                  <Block key={blockIndex} block={block} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-
-        <section className="from-brand-navy to-brand-blue mt-16 rounded-3xl bg-gradient-to-br p-6 text-white shadow-xl md:p-10">
-          <h2 className="text-2xl font-extrabold md:text-3xl">{text.nextTitle}</h2>
-          <ul className="mt-6 grid gap-4 md:grid-cols-3">
+        <section>
+          <h2 className="mb-6 text-[1.75rem] leading-tight font-extrabold">{text.nextTitle}</h2>
+          <ul className="grid gap-8 md:grid-cols-3">
             {next.map((item) => (
-              <li key={item.label} className="flex flex-col gap-3 rounded-2xl bg-white/10 p-5">
-                <p className="font-bold">{item.question}</p>
+              <li key={item.label} className="flex flex-col gap-3">
+                <p className="leading-[1.65]">{item.question}</p>
                 {item.app ? (
                   <a href={item.href} className={NEXT_BUTTON}>
                     {item.label}
@@ -118,8 +94,11 @@ export function StoryPage() {
   );
 }
 
+/** A quote or stand-out sentence: bold, with the brand bar on its side (as in the document). */
+const QUOTE = 'border-brand-teal border-s-4 ps-5 text-lg leading-[1.65] font-semibold';
+
 const NEXT_BUTTON =
-  'text-brand-blue mt-auto inline-flex items-center justify-center rounded-full bg-white px-5 py-2.5 text-center text-sm font-bold shadow-lg transition-transform hover:scale-[1.03]';
+  'bg-brand-blue hover:bg-brand-navy mt-auto inline-flex items-center justify-center rounded-full px-5 py-2.5 text-center text-sm font-bold text-white shadow-lg transition-colors';
 
 function pair([question, label]: [string, string]) {
   return { question, label };

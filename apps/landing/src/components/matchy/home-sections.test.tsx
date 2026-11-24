@@ -205,23 +205,29 @@ describe('home sections', () => {
     );
   });
 
-  it('Story page shows both founders, the story, and a button per reader', () => {
+  it('Story page follows the document: founders, parts, bold words, and a button per reader', () => {
     for (const locale of SUPPORTED_LOCALES) {
-      const { unmount } = renderIn(locale, <StoryPage />);
+      const { container, unmount } = renderIn(locale, <StoryPage />);
       const text = STORY[locale];
       expect(screen.getByRole('heading', { level: 1, name: text.title })).toBeInTheDocument();
-      // both founders' quotes, signed
-      for (const quote of text.quotes) {
-        expect(screen.getByText(quote.text)).toBeInTheDocument();
-        expect(screen.getByText(quote.name)).toBeInTheDocument();
+      const blocks = text.parts.flatMap((part) => part.blocks);
+      // both founders' quotes, signed with the name and the role
+      for (const block of blocks) {
+        if (typeof block === 'string' || !('founder' in block)) continue;
+        expect(screen.getByText(block.founder.text)).toBeInTheDocument();
+        expect(screen.getByText(block.founder.name)).toHaveClass('font-bold');
+        expect(screen.getByText(block.founder.role)).toHaveClass('italic');
       }
-      for (const section of text.sections) {
-        if (section.heading) {
-          expect(
-            screen.getByRole('heading', { level: 2, name: section.heading }),
-          ).toBeInTheDocument();
+      for (const part of text.parts) {
+        if (part.heading) {
+          expect(screen.getByRole('heading', { level: 2, name: part.heading })).toBeInTheDocument();
         }
       }
+      // the document's bold words are bold, and no "**" mark shows
+      expect(container.querySelectorAll('strong').length).toBeGreaterThanOrEqual(4);
+      expect(container.textContent).not.toContain('**');
+      // no boxes: no card, no shadowed panel around the story
+      expect(container.querySelector('figure.shadow-xl, section.rounded-3xl')).toBeNull();
       expect(screen.getByRole('link', { name: text.next.find[1] })).toHaveAttribute(
         'href',
         expect.stringMatching(new RegExp(`^/${locale}/recherche/?$`)),
