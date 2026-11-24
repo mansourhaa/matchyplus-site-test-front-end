@@ -208,16 +208,22 @@ describe('home sections', () => {
     );
   });
 
-  it('Story page tells the story in 3 numbered steps and ends with a button per reader', () => {
+  it('Story page shows both founders, the story, and a button per reader', () => {
     for (const locale of SUPPORTED_LOCALES) {
       const { unmount } = renderIn(locale, <StoryPage />);
       const text = STORY[locale];
       expect(screen.getByRole('heading', { level: 1, name: text.title })).toBeInTheDocument();
-      expect(screen.getByText(text.quote)).toBeInTheDocument();
+      // both founders' quotes, signed
+      for (const quote of text.quotes) {
+        expect(screen.getByText(quote.text)).toBeInTheDocument();
+        expect(screen.getByText(quote.name)).toBeInTheDocument();
+      }
       for (const section of text.sections) {
-        expect(
-          screen.getByRole('heading', { level: 2, name: section.heading }),
-        ).toBeInTheDocument();
+        if (section.heading) {
+          expect(
+            screen.getByRole('heading', { level: 2, name: section.heading }),
+          ).toBeInTheDocument();
+        }
       }
       expect(screen.getByRole('link', { name: text.next.find[1] })).toHaveAttribute(
         'href',
@@ -435,7 +441,9 @@ describe('Matchy+ Press and partners', () => {
       screen.getByRole('heading', { level: 2, name: 'Nos partenaires et écosystèmes' }),
     ).toBeInTheDocument();
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(3);
+    // DOT-IT and TCA (GoPayzi was removed)
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(PARTNERS.map((p) => p.url));
+    expect(screen.queryByRole('img', { name: /GoPayzi/ })).toBeNull();
     for (const link of links) {
       expect(link).toHaveAttribute('target', '_blank');
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');

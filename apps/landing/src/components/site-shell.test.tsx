@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { I18nProvider } from '@/features/i18n/i18n-provider';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Footer } from './site-shell';
@@ -26,9 +26,13 @@ const COLUMNS = {
     'Actualités',
     'Télécharger l’application',
     'Nous contacter',
-    'Devenir partenaire',
+    'Nos partenaires',
   ],
-  'Informations légales': ['Politique de confidentialité', 'Conditions d’utilisation'],
+  'Informations légales': [
+    'Politique de confidentialité',
+    'Conditions d’utilisation',
+    'Gérer les cookies',
+  ],
 };
 
 describe('Footer', () => {
@@ -46,12 +50,29 @@ describe('Footer', () => {
           .map((link) => link.textContent),
       ).toEqual(labels);
     }
-    // the cookie settings are a button (it opens the CookieYes preferences, not a page)
     // "Trouver un service" was removed by the manager
     expect(screen.queryByRole('navigation', { name: 'Trouver un service' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Gérer les cookies' })).toHaveClass(
-      'cky-banner-element',
+  });
+
+  it('"Gérer les cookies" opens CookieYes when it is loaded, the privacy policy otherwise', () => {
+    render(
+      <I18nProvider locale="fr">
+        <Footer />
+      </I18nProvider>,
     );
+    const cookies = screen.getByRole('link', { name: 'Gérer les cookies' });
+    expect(cookies).toHaveAttribute('href', expect.stringMatching(/^\/fr\/privacy-policy\/?$/));
+    // without CookieYes (localhost, staging, an ad blocker): the link is followed
+    expect(fireEvent.click(cookies)).toBe(true);
+    // with CookieYes: its preferences open and the link is not followed
+    const revisit = vi.fn();
+    window.revisitCkyConsent = revisit;
+    try {
+      expect(fireEvent.click(cookies)).toBe(false);
+      expect(revisit).toHaveBeenCalledOnce();
+    } finally {
+      delete window.revisitCkyConsent;
+    }
   });
 
   it('links each item to a page that exists, or to the app', () => {
@@ -69,9 +90,9 @@ describe('Footer', () => {
     expect(href('Centre d’aide', pros)).toMatch(/^\/fr\/faq\/?$/);
     expect(href('Tous les services', pros)).toMatch(/^\/fr\/services\/?$/);
     expect(href('Se connecter', pros)).toMatch(/\/connexion$/);
-    // professionals: the partner form; Matchy+: the page of our partners
+    // professionals: the partner form; Matchy+: the page of our partners, with its own label
     expect(href('Devenir partenaire', pros)).toMatch(/^\/fr\/devenir-partenaire\/?$/);
-    expect(href('Devenir partenaire', 'Matchy+')).toMatch(/^\/fr\/partenaires\/?$/);
+    expect(href('Nos partenaires', 'Matchy+')).toMatch(/^\/fr\/partenaires\/?$/);
     expect(href('Télécharger l’application', 'Matchy+')).toMatch(/^\/fr\/utilisation\/?#download$/);
     expect(href('Conditions d’utilisation', 'Informations légales')).toMatch(
       /^\/fr\/terms-of-service\/?$/,

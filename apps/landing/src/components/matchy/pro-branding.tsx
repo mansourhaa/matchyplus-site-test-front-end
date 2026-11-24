@@ -4,7 +4,6 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_REGISTER_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import { ArrowRight, BadgeCheck, Eye, MapPin, Star, Store, Target } from 'lucide-react';
-import Link from 'next/link';
 
 import { toProfiles } from './belt-data';
 import { Reveal } from './motion';
@@ -99,13 +98,14 @@ export function ProBranding() {
                 ))}
               </div>
               {/* the call to action sits inside the card, as the manager asked */}
-              <Link
+              {/* the app is another site: a plain link, not Next's client-side <Link> */}
+              <a
                 href={APP_REGISTER_URL}
                 className="bg-brand-blue hover:bg-brand-navy mt-5 flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold text-white shadow-lg transition-colors md:text-base"
               >
                 {t('landing.brandCta')}
                 <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-              </Link>
+              </a>
             </div>
           </motion.div>
         </Reveal>

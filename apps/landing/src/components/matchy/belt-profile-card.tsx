@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { Brain, Check, MapPin, Star, X } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { type RefObject, useState } from 'react';
 
 export type BeltProfile = {
@@ -198,13 +197,14 @@ export function BeltProfileCard({
             <Check size={13} strokeWidth={3} />
             {labels.available}
           </span>
-          <Link
+          {/* detailsHref is the app (another site): a plain link, not Next's client-side <Link> */}
+          <a
             href={detailsHref}
             className="flex items-center gap-1 rounded-full bg-[rgba(47,118,187,0.85)] px-2.5 py-1 text-[11px] font-semibold text-white shadow-xs backdrop-blur-md transition-transform hover:scale-105"
           >
             <span aria-hidden="true">👆</span>
             {labels.seeDetails}
-          </Link>
+          </a>
         </div>
 
         {/* bottom: identity, bio, tags, then the swipe buttons */}

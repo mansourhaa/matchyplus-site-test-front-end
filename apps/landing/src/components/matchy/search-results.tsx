@@ -40,13 +40,14 @@ export function SearchResults() {
           </span>
         </p>
         <div className="mt-8 flex flex-col items-center gap-4">
-          <Link
+          {/* the app is another site: a plain link, not Next's client-side <Link> */}
+          <a
             href={buildSearchUrl(APP_REGISTER_URL, service, city)}
             className="text-brand-blue inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold shadow-lg transition-transform hover:-translate-y-0.5 md:text-base"
           >
             {t('landing.resultsCta')}
             <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-          </Link>
+          </a>
           <Link
             href={localizePath(locale, '/')}
             className="text-sm font-bold text-white underline underline-offset-4 hover:no-underline"

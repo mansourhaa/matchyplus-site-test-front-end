@@ -160,31 +160,30 @@ export const PAGES: Record<PageKey, PageSeo> = {
     path: '/a-propos/histoire-matchy-plus',
     changeFrequency: 'monthly',
     priority: 0.7,
-    // texts of the "Story Matchy" document (SEO and Open Graph parts)
+    // from the "Story Matchy 2" document
     copy: {
       fr: {
-        title: 'L’histoire de Matchy+ | Du premier MVP à une ambition réelle',
+        title: 'L’histoire de Matchy+ | Une application sociale et inclusive',
         description:
-          'Découvrez comment Matchy+ est née d’un premier MVP créé avec l’aide de l’IA pour rendre les compétences locales plus visibles et les opportunités plus accessibles.',
-        ogTitle: 'Matchy+ : une idée, un premier MVP et une ambition devenue réalité',
+          'Découvrez comment Matchy+ met en relation les métiers précaires et les particuliers ou entreprises qui en ont besoin, grâce à l’IA et à la géolocalisation.',
+        ogTitle: 'Matchy+ : une application populaire, sociale et inclusive',
         ogDescription:
-          'Découvrez comment Matchy+ est née avec l’aide de l’intelligence artificielle pour rapprocher les besoins, les compétences et les opportunités.',
+          'L’histoire de Matchy+, racontée par ses cofondateurs Randa Touati et Khalil Zahouani.',
       },
       en: {
-        title: 'The Matchy+ Story | From First MVP to Growing Ambition',
+        title: 'The Matchy+ Story | A Social and Inclusive App',
         description:
-          'Discover how Matchy+ grew from a first AI-assisted MVP into a platform making local skills more visible and opportunities more accessible.',
-        ogTitle: 'Matchy+: An Idea, a First MVP and an Ambition Brought to Life',
+          'Discover how Matchy+ connects precarious jobs with the individuals and companies who need them, using AI and geolocation.',
+        ogTitle: 'Matchy+: A Popular, Social and Inclusive App',
         ogDescription:
-          'Discover how Matchy+ began with the help of AI to connect needs, skills and opportunities.',
+          'The story of Matchy+, told by its co-founders Randa Touati and Khalil Zahouani.',
       },
       ar: {
-        title: 'قصة Matchy+\u200E | من النموذج الأولي إلى الطموح',
+        title: 'قصة Matchy+\u200E | تطبيق اجتماعي ودامج',
         description:
-          'اكتشفوا كيف بدأت Matchy+\u200E بنموذج أولي تم إنشاؤه بمساعدة الذكاء الاصطناعي لجعل المهارات المحلية أكثر ظهوراً والفرص أكثر سهولة.',
-        ogTitle: 'Matchy+\u200E: فكرة، ونموذج أولي، وطموح أصبح حقيقة',
-        ogDescription:
-          'اكتشفوا كيف بدأت Matchy+\u200E بمساعدة الذكاء الاصطناعي لربط الاحتياجات والمهارات والفرص.',
+          'اكتشفوا كيف تربط Matchy+\u200E بين أصحاب المهن الهشة والأفراد والشركات الذين يحتاجونهم، بفضل الذكاء الاصطناعي والتحديد الجغرافي.',
+        ogTitle: 'Matchy+\u200E: تطبيق شعبي واجتماعي ودامج',
+        ogDescription: 'قصة Matchy+\u200E كما يرويها مؤسساها راندا التواتي وخليل الزهواني.',
       },
     },
   },
