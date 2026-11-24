@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **169 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **168 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -51,14 +51,14 @@ Defined in `src/app/[lang]/page.tsx`. Sections marked **new** or **changed** are
 
 ## Other pages added
 
-| Page                                                                   | Files                                                                                  | What it shows                                                                                                                                                                                                                                                                                                                                                                                     |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/utilisation/`                                                        | `app/[lang]/utilisation/page.tsx`, `usage-hero.tsx`                                    | How Matchy+ works: the 5 sections that left the home page, unchanged and in the same order: `features.tsx`, `steps.tsx` (`#how`), `security.tsx` (wallet), `explore.tsx`, `cta.tsx`. The menu's "Utilisation" opens it. In the sitemap.                                                                                                                                                           |
-| `/actualites/`                                                         | `app/[lang]/actualites/`, `press-pages.tsx` (`PressList`)                              | Every news item, newest first. In the sitemap.                                                                                                                                                                                                                                                                                                                                                    |
-| `/actualites/<slug>/`                                                  | `app/[lang]/actualites/[slug]/page.tsx`, `press-pages.tsx` (`PressArticle`)            | One news item: date, tag, title, place, the YouTube video (if any), the text. One static page per item and language; any other slug is a 404.                                                                                                                                                                                                                                                     |
-| `/recherche/`                                                          | `app/[lang]/recherche/`, `search-results.tsx`                                          | Results of the hero search (see the hero section below).                                                                                                                                                                                                                                                                                                                                          |
-| `/a-propos/histoire-matchy-plus/` (en/ar: `/about/matchy-plus-story/`) | `app/[lang]/a-propos/histoire-matchy-plus/page.tsx`, `story-page.tsx`, `story-data.ts` | "Découvrez l'histoire de Matchy+" from the "Story Matchy 2" document (French, light spelling fixes; English and Arabic translated): the two founders' quotes (Randa Touati, Khalil Zahouani), the story along a dashed line like /utilisation/, then a button per reader (find a pro, create a profile, build with Matchy+). The home page's "Découvrir notre histoire" opens it. In the sitemap. |
-| `/partenaires/`                                                        | `app/[lang]/partenaires/page.tsx`, `partners-page.tsx`                                 | Every network partner (`NETWORK_PARTNERS`: logo, name, one-line description from `landing.partnerDescriptions`, website if any), then the partnership benefits (`partner-benefits.ts`, shared with `/devenir-partenaire/`) and the "Devenir partenaire" button. In the sitemap.                                                                                                                   |
+| Page                                                                   | Files                                                                                  | What it shows                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/utilisation/`                                                        | `app/[lang]/utilisation/page.tsx`, `usage-hero.tsx`                                    | How Matchy+ works: the 5 sections that left the home page, unchanged and in the same order: `features.tsx`, `steps.tsx` (`#how`), `security.tsx` (wallet), `explore.tsx`, `cta.tsx`. The menu's "Utilisation" opens it. In the sitemap.                                                                                                                                                                   |
+| `/actualites/`                                                         | `app/[lang]/actualites/`, `press-pages.tsx` (`PressList`)                              | Every news item, newest first. In the sitemap.                                                                                                                                                                                                                                                                                                                                                            |
+| `/actualites/<slug>/`                                                  | `app/[lang]/actualites/[slug]/page.tsx`, `press-pages.tsx` (`PressArticle`)            | One news item: date, tag, title, place, the YouTube video (if any), the text. One static page per item and language; any other slug is a 404.                                                                                                                                                                                                                                                             |
+| `/recherche/`                                                          | `app/[lang]/recherche/`, `search-results.tsx`                                          | Results of the hero search (see the hero section below).                                                                                                                                                                                                                                                                                                                                                  |
+| `/a-propos/histoire-matchy-plus/` (en/ar: `/about/matchy-plus-story/`) | `app/[lang]/a-propos/histoire-matchy-plus/page.tsx`, `story-page.tsx`, `story-data.ts` | "Découvrez l'histoire de Matchy+" from the "Story Matchy 2" document (French, light spelling fixes; English and Arabic translated): the two founders' quotes (Randa Touati, Khalil Zahouani), the story in the look of /a-propos/ (dark text on white), then a button per reader (find a pro, create a profile, build with Matchy+). The home page's "Découvrir notre histoire" opens it. In the sitemap. |
+| `/partenaires/`                                                        | `app/[lang]/partenaires/page.tsx`, `partners-page.tsx`                                 | Every network partner (`NETWORK_PARTNERS`: logo, name, one-line description from `landing.partnerDescriptions`, website if any), then the partnership benefits (`partner-benefits.ts`, shared with `/devenir-partenaire/`) and the "Devenir partenaire" button. In the sitemap.                                                                                                                           |
 
 All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `en` and `ar`.
 
@@ -212,9 +212,9 @@ smaller benefit.
   Founders Tribe Founder Circle, Meetup Pro 2026. The kit marks 4 dates "à confirmer": they show
   **the year only** (`date: '2026'`), never an invented day. When a date is confirmed, write it
   `YYYY-MM-DD`.
-- **Article layout** (`press-pages.tsx`): like the steps of /utilisation/, no box: the intro as a
-  lead paragraph, then each section as a numbered step (teal number, teal heading, grey text)
-  along a dashed line.
+- **Article layout** (`press-pages.tsx`): like /a-propos/: dark text (`#101a36`) on white, the
+  intro in semi-bold, then each section as a bold heading and its paragraph. The story page uses
+  the same look.
 - **Sources:** "Visiter le site officiel" (programme, network, event page), "Voir la publication
   sur LinkedIn", or the embedded video.
 - **Next steps:** every article ends with the kit's 3 buttons: « Trouver un professionnel »
@@ -242,20 +242,21 @@ smaller benefit.
   Maintenance). Each partner: name, logo (in `public/matchy/partners/`), its size,
   and its website when it has one. **To add a partner:** one line in the right list.
 - **"Nos partenaires"** (`partner-logos.tsx`), last section of the page: the logos in landscape
-  white cards (DOT-IT, TCA horizontal), each opening the partner's website in a new tab
+  logos on the page without boxes (DOT-IT, TCA horizontal), each opening the partner's website in a new tab
   (`rel="noopener noreferrer"`). GoPayzi was removed (24 Nov 2026).
 - **"Ils avancent avec Matchy+"** (`partnerships.tsx`), right after the map, on white like the
   map: the sliding strip
   with the network partners' logos alternating with "Votre marque ici" places (linking to
-  `/devenir-partenaire`), then the "Devenir partenaire" button. The strip is decorative
+  `/devenir-partenaire`), then the "Devenir partenaire" button. Flat cards (no shadow); Sahora's
+  photo banner covers its card (`cover` in `partners-data.ts`). The strip is decorative
   (`aria-hidden`, links out of the tab order, logos with empty alt); the button is the
   accessible way in.
 
 ### 8. Company story
 
-- **`company-story.tsx`:** the Matchy+ logo (`public/showcase/matchy-plus-logo.svg`), the
-  founder's quote from the content brief (« Chaque compétence mérite d'être visible… ») and her
-  path, signed Randa Touati, Cofondatrice de Matchy+. "Découvrir notre histoire" opens the story
+- **`company-story.tsx`:** the Matchy+ logo in a white circle (`public/showcase/matchy-plus-logo.svg`),
+  the founder's quote from the content brief (« Chaque compétence mérite d'être visible… »),
+  signed Randa Touati, Cofondatrice de Matchy+. "Découvrir notre histoire" opens the story
   page.
 
 ---

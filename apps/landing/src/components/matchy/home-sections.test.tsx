@@ -65,7 +65,6 @@ const NEW_KEYS = [
   'brandPoints',
   'brandSampleStats',
   'storyQuote',
-  'storyBody',
   'partnersTitle',
   'partnersCta',
   'partnersSlot',
@@ -198,6 +197,8 @@ describe('home sections', () => {
     renderIn('fr', <CompanyStory />);
     const logo = screen.getByRole('img', { name: 'Logo Matchy+' });
     expect(logo.getAttribute('src')).toContain('matchy-plus-logo.svg');
+    // the sentence about the founder's path was removed (24 Nov 2026)
+    expect(screen.queryByText(/enseignement/)).toBeNull();
   });
 
   it('CompanyStory links to the story page', () => {

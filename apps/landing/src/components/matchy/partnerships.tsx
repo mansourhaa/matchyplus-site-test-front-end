@@ -63,8 +63,7 @@ export function Partnerships() {
             slot !== 'free' ? (
               <span
                 key={index}
-                className={`grid h-44 w-56 shrink-0 place-items-center overflow-hidden rounded-3xl bg-white shadow-xl ring-1 shadow-[#2F76BB]/10 ring-slate-100 ${slot.background ? '' : 'p-6'}`}
-                style={{ backgroundColor: slot.background }}
+                className={`grid h-44 w-56 shrink-0 place-items-center overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200 ${slot.cover ? '' : 'p-6'}`}
               >
                 <Image
                   src={slot.logo}
@@ -73,9 +72,8 @@ export function Partnerships() {
                   height={slot.height}
                   sizes="176px"
                   unoptimized={slot.logo.endsWith('.svg')}
-                  className={
-                    slot.background ? 'h-44 w-full object-contain' : 'h-32 w-full object-contain'
-                  }
+                  className={slot.cover ? 'h-44 w-full object-cover' : 'h-32 w-full object-contain'}
+                  style={slot.cover ? { objectPosition: slot.cover } : undefined}
                 />
               </span>
             ) : (
@@ -85,7 +83,7 @@ export function Partnerships() {
                 tabIndex={-1}
                 className="group border-brand-blue/30 bg-brand-blue/[0.04] hover:bg-brand-blue/[0.08] flex h-44 w-56 shrink-0 flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed transition-colors"
               >
-                <span className="bg-brand-blue grid h-16 w-16 place-items-center rounded-full text-white shadow-lg transition-transform group-hover:scale-110">
+                <span className="bg-brand-blue grid h-16 w-16 place-items-center rounded-full text-white transition-transform group-hover:scale-110">
                   <Plus className="h-7 w-7" />
                 </span>
                 <span className="text-brand-navy font-bold">{t('landing.partnersSlot')}</span>

@@ -115,8 +115,6 @@ export const messages: Record<Locale, MessageTree> = {
       storyPhotoAlt: 'Logo Matchy+',
       storyQuote:
         '« Chaque compétence mérite d’être visible. Matchy+ rapproche les talents locaux des particuliers et des entreprises qui ont besoin de leur savoir-faire. »',
-      storyBody:
-        'De l’enseignement à la gestion de projets web chez Dot-IT, puis à l’aventure entrepreneuriale de Matchy+ : Randa Touati a fait de chaque étape une façon de transformer les défis en opportunités.',
       storyName: 'Randa Touati',
       storyRole: 'Cofondatrice de Matchy+',
       storyLink: 'Découvrir notre histoire',
@@ -656,8 +654,6 @@ export const messages: Record<Locale, MessageTree> = {
       storyPhotoAlt: 'Matchy+ logo',
       storyQuote:
         '“Every skill deserves to be seen. Matchy+ brings local talent closer to the individuals and businesses who need their know-how.”',
-      storyBody:
-        'From teaching, to managing web projects at Dot-IT, to the entrepreneurial adventure of Matchy+: Randa Touati has made each step a way to turn challenges into opportunities.',
       storyName: 'Randa Touati',
       storyRole: 'Co-founder of Matchy+',
       storyLink: 'Discover our story',
@@ -1179,8 +1175,6 @@ export const messages: Record<Locale, MessageTree> = {
       storyPhotoAlt: 'شعار Matchy+\u200E',
       storyQuote:
         '«كل كفاءة تستحق أن تُرى. تقرّب Matchy+\u200E المواهب المحلية من الأفراد والشركات الذين يحتاجون إلى مهاراتهم.»',
-      storyBody:
-        'من التعليم إلى إدارة مشاريع الويب في Dot-IT، ثم إلى مغامرة Matchy+\u200E الريادية: جعلت رندة التواتي من كل مرحلة طريقة لتحويل التحديات إلى فرص.',
       storyName: 'رندة التواتي',
       storyRole: 'الشريكة المؤسسة لـ Matchy+\u200E',
       storyLink: 'اكتشف قصتنا',

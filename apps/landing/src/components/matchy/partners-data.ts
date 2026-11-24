@@ -15,10 +15,10 @@ export type Partner = {
   /** Their website; without one, the partner shows no "Visiter le site" link. */
   url?: string;
   /**
-   * For a logo that is a photo banner: the card takes this colour (the banner's own edges) and
-   * the banner fills the card's width, whole, without white space around it.
+   * For a logo that is a photo banner: it covers its whole card, and this `object-position` keeps
+   * the brand name in view (e.g. 'right bottom' when the name is at the bottom right).
    */
-  background?: string;
+  cover?: string;
 };
 
 export const PARTNERS: readonly Partner[] = [
@@ -48,7 +48,7 @@ export const NETWORK_PARTNERS: readonly Partner[] = [
     logo: '/matchy/partners/sahora.webp',
     width: 640,
     height: 360,
-    background: '#2b5646',
+    cover: 'right bottom',
   },
   {
     id: 'proservices',

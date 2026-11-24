@@ -36,8 +36,7 @@ export function PartnersPage() {
               className="flex flex-col rounded-3xl bg-white p-6 shadow-xl ring-1 shadow-[#2F76BB]/10 ring-slate-100"
             >
               <div
-                className={`grid h-28 place-items-center overflow-hidden rounded-2xl bg-white ${partner.background ? '' : 'px-4'}`}
-                style={{ backgroundColor: partner.background }}
+                className={`grid h-28 place-items-center overflow-hidden rounded-2xl bg-white ${partner.cover ? '' : 'px-4'}`}
               >
                 <Image
                   src={partner.logo}
@@ -47,8 +46,9 @@ export function PartnersPage() {
                   sizes="240px"
                   unoptimized={partner.logo.endsWith('.svg')}
                   className={
-                    partner.background ? 'h-28 w-full object-contain' : 'h-24 w-full object-contain'
+                    partner.cover ? 'h-28 w-full object-cover' : 'h-24 w-full object-contain'
                   }
+                  style={partner.cover ? { objectPosition: partner.cover } : undefined}
                 />
               </div>
               <h2 className="text-brand-navy mt-5 text-lg font-extrabold">{partner.name}</h2>

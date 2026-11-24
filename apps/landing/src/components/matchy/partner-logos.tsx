@@ -7,7 +7,7 @@ import { Reveal } from './motion';
 import { PARTNERS } from './partners-data';
 
 /**
- * "Nos partenaires", last section of the page: the partners' logos in landscape cards, each
+ * "Nos partenaires", last section of the page: the partners' logos on the page (no box), each
  * opening the partner's website in a new tab.
  */
 export function PartnerLogos() {
@@ -36,7 +36,7 @@ export function PartnerLogos() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={t('landing.ourPartnersVisit', { name: partner.name })}
-                className="focus-visible:ring-brand-teal grid h-28 w-60 place-items-center overflow-hidden rounded-3xl bg-white px-6 py-4 shadow-xl ring-1 shadow-[#2F76BB]/10 ring-slate-100 transition-transform duration-300 outline-none hover:-translate-y-1 focus-visible:ring-4 motion-reduce:hover:translate-y-0 md:h-32 md:w-64"
+                className="focus-visible:ring-brand-teal grid h-28 w-60 place-items-center rounded-2xl px-6 py-4 transition-transform duration-300 outline-none hover:-translate-y-1 focus-visible:ring-4 motion-reduce:hover:translate-y-0 md:h-32 md:w-64"
               >
                 <Image
                   src={partner.logo}

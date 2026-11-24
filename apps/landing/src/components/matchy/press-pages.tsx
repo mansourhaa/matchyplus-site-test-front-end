@@ -89,27 +89,18 @@ export function PressArticle({ slug }: { slug: string }) {
         )}
 
         {/* the text as on /utilisation/: a lead paragraph, then numbered steps along a dashed line */}
-        <p className="text-brand-navy mt-12 text-lg leading-relaxed font-semibold md:text-xl">
-          {text.intro}
-        </p>
-        <ol className="border-brand-teal/40 relative mt-12 space-y-10 border-dashed ltr:ml-4 ltr:border-l-2 ltr:pl-8 rtl:mr-4 rtl:border-r-2 rtl:pr-8">
-          {text.sections.map((section, index) => (
-            <li key={section.heading} className="relative">
-              <span
-                aria-hidden="true"
-                className="bg-brand-teal shadow-brand-teal/30 absolute grid h-9 w-9 place-items-center rounded-full text-sm font-bold text-white shadow-lg ltr:-left-[3.05rem] rtl:-right-[3.05rem]"
-              >
-                {index + 1}
-              </span>
-              <h2 className="text-brand-teal text-xl font-semibold md:text-2xl">
+        {/* the text as on /a-propos/: dark text on white, a bold heading then its paragraph */}
+        <div className="text-[#101a36]">
+          <p className="mt-12 text-lg leading-[1.65] font-semibold">{text.intro}</p>
+          {text.sections.map((section) => (
+            <section key={section.heading} className="mt-10">
+              <h2 className="mb-2.5 text-[1.75rem] leading-tight font-extrabold">
                 {section.heading}
               </h2>
-              <p className="text-muted-foreground mt-2 text-base leading-relaxed md:text-lg">
-                {section.text}
-              </p>
-            </li>
+              <p className="leading-[1.65]">{section.text}</p>
+            </section>
           ))}
-        </ol>
+        </div>
 
         {/* the next step for each reader: a client, a professional or a partner */}
         <div className="from-brand-navy to-brand-blue mt-14 flex flex-col gap-3 rounded-3xl bg-gradient-to-br p-6 text-white shadow-xl sm:flex-row sm:flex-wrap sm:items-center md:p-8">

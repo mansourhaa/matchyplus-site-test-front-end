@@ -13,7 +13,7 @@ import { STORY, type StoryBlock } from './story-data';
 /** One block of a section: a paragraph, a stand-out sentence or a list of short lines. */
 function Block({ block }: { block: StoryBlock }) {
   if (typeof block === 'string') return <p>{block}</p>;
-  if ('strong' in block) return <p className="text-brand-navy font-bold">{block.strong}</p>;
+  if ('strong' in block) return <p className="font-extrabold">{block.strong}</p>;
   return (
     <ul className="space-y-1">
       {block.lines.map((line) => (
@@ -24,8 +24,8 @@ function Block({ block }: { block: StoryBlock }) {
 }
 
 /**
- * /a-propos/histoire-matchy-plus/: the founders' quotes, the story along a dashed line (the look of
- * /utilisation/), then a button for each reader: client, professional or company.
+ * /a-propos/histoire-matchy-plus/: the founders' quotes, the story in the look of /a-propos/ (dark
+ * text on white), then a button for each reader: client, professional or company.
  */
 export function StoryPage() {
   const { locale } = useI18n();
@@ -37,7 +37,7 @@ export function StoryPage() {
   ];
 
   return (
-    <main className="bg-neutral-50/60 pb-24">
+    <main className="bg-white pb-24">
       <SubpageHero eyebrow={text.eyebrow} title={text.title} subtitle={text.subtitle} />
 
       <article className="mx-auto -mt-16 max-w-3xl px-5">
@@ -75,20 +75,16 @@ export function StoryPage() {
           </Link>
         </figure>
 
-        {/* the story along a dashed line, a teal dot per part (the look of /utilisation/) */}
-        <div className="border-brand-teal/40 relative mt-14 space-y-12 border-dashed ltr:ml-4 ltr:border-l-2 ltr:pl-8 rtl:mr-4 rtl:border-r-2 rtl:pr-8">
+        {/* the story as on /a-propos/: dark text on white, a bold heading then its paragraphs */}
+        <div className="text-[#101a36]">
           {text.sections.map((section, index) => (
-            <section key={section.heading ?? index} className="relative">
-              <span
-                aria-hidden="true"
-                className="bg-brand-teal shadow-brand-teal/30 absolute top-1 h-4 w-4 rounded-full shadow-lg ltr:-left-[2.55rem] rtl:-right-[2.55rem]"
-              />
+            <section key={section.heading ?? index} className="mt-10">
               {section.heading && (
-                <h2 className="text-brand-teal mb-3 text-xl font-semibold md:text-2xl">
+                <h2 className="mb-2.5 text-[1.75rem] leading-tight font-extrabold">
                   {section.heading}
                 </h2>
               )}
-              <div className="text-muted-foreground space-y-4 text-base leading-relaxed md:text-lg">
+              <div className="space-y-4 leading-[1.65]">
                 {section.blocks.map((block, blockIndex) => (
                   // a fixed list of blocks: their position is a stable key
                   <Block key={blockIndex} block={block} />
