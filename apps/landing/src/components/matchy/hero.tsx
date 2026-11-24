@@ -22,7 +22,7 @@ export function Hero() {
         aria-hidden="true"
       />
 
-      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pt-32 pb-36 md:grid-cols-2 md:gap-8 md:pt-36 md:pb-48 lg:pt-40 lg:pb-56">
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pt-32 pb-36 md:grid-cols-2 md:gap-8 md:pt-36 md:pb-48 lg:grid-cols-[1.25fr_0.75fr] lg:pt-40 lg:pb-56">
         <div className="text-center text-white ltr:md:text-left rtl:md:text-right">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -42,7 +42,8 @@ export function Hero() {
             transition={{ duration: 0.7, delay: 0.1 }}
             className="text-3xl leading-tight font-bold text-balance sm:text-4xl md:text-4xl lg:text-[2.6rem]"
           >
-            <span className="block">{t('landing.hero')}</span>
+            {/* 2 lines on wide screens (1280 px and up), as in the reference: the first line never wraps */}
+            <span className="block xl:whitespace-nowrap">{t('landing.hero')}</span>
             <span className="block">{t('landing.heroLine2')}</span>
           </motion.h1>
           <motion.p
