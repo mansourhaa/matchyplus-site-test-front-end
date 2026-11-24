@@ -4,6 +4,7 @@ import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
 import { APP_REGISTER_URL } from '@/lib/constants';
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 import { STORY, type StoryBlock } from './story-data';
@@ -38,7 +39,7 @@ function Block({ block }: { block: StoryBlock }) {
 
 /**
  * /a-propos/histoire-matchy-plus/: the "Story Matchy 3" document in the look of /a-propos/ (dark
- * text on white, no boxes): its parts in order, separated by a thin line, then a button for each
+ * text on white, no boxes): its parts in order, separated by a thin line, then a link for each
  * reader: client, professional or company.
  */
 export function StoryPage() {
@@ -54,7 +55,7 @@ export function StoryPage() {
     <main className="bg-white pb-24">
       <SubpageHero eyebrow={text.eyebrow} title={text.title} />
 
-      <article className="mx-auto max-w-3xl px-5 pt-4 text-[#101a36]">
+      <article className="mx-auto max-w-3xl px-5 pt-12 text-[#101a36] md:pt-16">
         {text.parts.map((part, index) => (
           // a fixed list of parts: their position is a stable key
           <section key={part.heading ?? index}>
@@ -72,17 +73,19 @@ export function StoryPage() {
 
         <section>
           <h2 className="mb-6 text-[1.75rem] leading-tight font-extrabold">{text.nextTitle}</h2>
-          <ul className="grid gap-8 md:grid-cols-3">
+          <ul className="space-y-6">
             {next.map((item) => (
-              <li key={item.label} className="flex flex-col gap-3">
+              <li key={item.label}>
                 <p className="leading-[1.65]">{item.question}</p>
                 {item.app ? (
-                  <a href={item.href} className={NEXT_BUTTON}>
+                  <a href={item.href} className={NEXT_LINK}>
                     {item.label}
+                    <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
                   </a>
                 ) : (
-                  <Link href={item.href} className={NEXT_BUTTON}>
+                  <Link href={item.href} className={NEXT_LINK}>
                     {item.label}
+                    <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
                   </Link>
                 )}
               </li>
@@ -97,8 +100,8 @@ export function StoryPage() {
 /** A quote or stand-out sentence: bold, with the brand bar on its side (as in the document). */
 const QUOTE = 'border-brand-teal border-s-4 ps-5 text-lg leading-[1.65] font-semibold';
 
-const NEXT_BUTTON =
-  'bg-brand-blue hover:bg-brand-navy mt-auto inline-flex items-center justify-center rounded-full px-5 py-2.5 text-center text-sm font-bold text-white shadow-lg transition-colors';
+/** As in the document: under each question, its action in bold, here a link. */
+const NEXT_LINK = 'text-brand-blue mt-1 inline-flex items-center gap-2 font-bold hover:underline';
 
 function pair([question, label]: [string, string]) {
   return { question, label };
