@@ -92,6 +92,8 @@ describe('pressDate', () => {
   });
 
   it('shows the confirmed days of the news, newest first', () => {
+    // Female Founders Tribe and Meetup Pro were removed (24 Nov 2026)
+    expect(PRESS_ITEMS).toHaveLength(3);
     const date = (slug: string) => pressDate(pressItem(slug)?.date ?? '', 'fr').full;
     expect(date('matchy-plus-al-wataniya-1-jil-al-mostakbal')).toBe('22 nov. 2026');
     expect(date('matchy-plus-afrique-innovante-2026')).toBe('5 juin 2026');

@@ -205,15 +205,13 @@ smaller benefit.
   and optionally a cover image, a YouTube link, the LinkedIn post and the official website.
   **To add a news item:** copy an entry and fill it in. No other code changes. The home page
   shows the 3 newest; `/actualites/` shows all.
-- **The 5 news come from the "Articles storytelling V4" kit** (French texts, headings and slugs
+- **The 3 news come from the "Articles storytelling V4" kit** (French texts, headings and slugs
   as in the kit; English and Arabic translated): Al Wataniya 1 "جيل المستقبل" (22 Nov 2026, TV
-  set photo on the card, replay video in the article), Afrique Innovante 2026 (photo of Randa
-  Touati presented for Tunisia), Express FM Mundo Design (studio photo on the card, YouTube
-  video in the article), Female
-  Founders Tribe Founder Circle, Meetup Pro 2026. Confirmed dates: Al Wataniya 1 on 22 Nov 2026, Afrique Innovante on 5 June 2026, Express FM
-  on 1 June 2026. Female Founders Tribe and Meetup Pro are still "à confirmer" in the kit: they
-  show **the year only** (`date: '2026'`), never an invented day. When a date is confirmed,
-  write it `YYYY-MM-DD`.
+  set photo on the card, replay video in the article), Afrique Innovante 2026 (5 June 2026,
+  photo of Randa Touati presented for Tunisia), Express FM Mundo Design (1 June 2026, studio
+  photo on the card, YouTube video in the article). The Female Founders Tribe and Meetup Pro
+  articles were removed on 24 Nov 2026. A date not confirmed yet is written as the year only
+  (`date: '2026'`), never an invented day.
 - **Article layout** (`press-pages.tsx`): like /a-propos/: dark text (`#101a36`) on white, the
   intro in semi-bold, then each section as a bold heading and its paragraph. The story page uses
   the same look.
