@@ -29,7 +29,6 @@ export type BeltProfileLabels = {
   pass: string;
   like: string;
   close: string;
-  sample: string;
 };
 
 type CardImage = { src: string; width: number; height: number };
@@ -262,10 +261,6 @@ export function BeltProfileCard({
           <span>{labels.like}</span>
         </motion.button>
       </div>
-
-      <p className="text-muted-foreground absolute inset-x-0 -bottom-6 text-center text-[11px]">
-        {labels.sample}
-      </p>
     </motion.div>
   );
 }

@@ -3,13 +3,13 @@
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_REGISTER_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { HeroLivePhone } from './hero-live-phone';
 import { HeroSearch } from './hero-search';
 
 export function Hero() {
-  const { t, tList } = useI18n();
+  const { t } = useI18n();
 
   return (
     <section className="relative overflow-hidden">
@@ -22,7 +22,7 @@ export function Hero() {
         aria-hidden="true"
       />
 
-      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pt-32 pb-36 md:grid-cols-2 md:gap-8 md:pt-36 md:pb-48 lg:pt-40 lg:pb-56">
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pt-32 pb-36 md:grid-cols-2 md:gap-8 md:pt-36 md:pb-48 lg:grid-cols-[1.25fr_0.75fr] lg:pt-40 lg:pb-56">
         <div className="text-center text-white ltr:md:text-left rtl:md:text-right">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -42,7 +42,8 @@ export function Hero() {
             transition={{ duration: 0.7, delay: 0.1 }}
             className="text-3xl leading-tight font-bold text-balance sm:text-4xl md:text-4xl lg:text-[2.6rem]"
           >
-            <span className="block">{t('landing.hero')}</span>
+            {/* 2 lines on wide screens (1280 px and up), as in the reference: the first line never wraps */}
+            <span className="block xl:whitespace-nowrap">{t('landing.hero')}</span>
             <span className="block">{t('landing.heroLine2')}</span>
           </motion.h1>
           <motion.p
@@ -75,14 +76,6 @@ export function Hero() {
               {t('landing.searchProCta')}
               <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
             </a>
-            <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs font-semibold text-white/90 md:justify-start">
-              {tList('landing.heroReassurance').map((item) => (
-                <li key={item} className="inline-flex items-center gap-1.5">
-                  <Check className="h-3.5 w-3.5 shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
           </motion.div>
         </div>
 

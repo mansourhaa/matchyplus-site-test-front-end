@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **168 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **167 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -165,20 +165,22 @@ reviews, no idea of availability) with Matchy+.
 (`SEARCH_CONSOLE` in `community-map.ts`). The manager chose the labels and to show no source
 line on the page; the source stays documented here and in the code:
 
-- **« Présence internationale » 52**: countries where Matchy+ appeared in Google results.
-- **« Audience Matchy+ » 434**: appearances (impressions) in total. On computers both counters
-  float on the left of the map, the audience above the countries; on phones they sit in a row
+- **« Présence internationale » 10 pays**: the 10 countries shown on the map (top 10 of the 52 where Matchy+ appeared in Google results); no pulsing dot.
+- **« Visiteurs actifs » 452**: a figure given by the Matchy+ team on 24 Nov 2026 (`ACTIVE_VISITORS`; it replaced the 434 Google appearances). On computers both counters
+  float on the left of the map, the visitors above the countries; on phones they sit in a row
   under it.
 - The **10 countries with the most appearances** are in brand blue and have a point
   (`COUNTRY_POINTS`): Tunisia 136, United States 54, France 41, Morocco 37, South Africa 23,
   Brazil 14, Nigeria 10, Germany 5, Turkey 2, Bulgaria 1. Hovering or tapping a point shows the
-  country and its audience (« Tunisie : audience 136 »).
+  country's name only (no audience figure, since 24 Nov 2026).
 - **To update:** change `SEARCH_CONSOLE` (countries, impressions, date) and the `impressions` of
   each point. If the top 10 changes, regenerate the map (below) and add the country names in
   `landing.communityCountries` (fr/en/ar).
 
-- **Texts (content brief):** kicker "Une ambition panafricaine", title "Matchy+ connecte les
-  talents locaux aux opportunités".
+- **Texts (back to the earlier ones on 24 Nov 2026):** kicker "Acquisition & visibilité
+  internationale", title "Matchy+ attire des professionnels dans plusieurs pays". The hero is back
+  to "Des pros disponibles près de chez vous / Trouvez le bon professionnel, près de chez vous",
+  search "Quel service ?" / "Où ?". The belt card has no "Profil d'exemple" line.
 - **Animations:**
   - curved lines drawn from Tunisia (where Matchy+ was born) to each country;
   - a soft light sweep across the map.

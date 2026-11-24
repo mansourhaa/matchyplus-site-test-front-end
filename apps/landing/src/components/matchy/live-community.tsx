@@ -8,12 +8,12 @@ import { useEffect, useRef, useState } from 'react';
 import { CommunityArcs } from './community-arcs';
 import { type CommunityMetric, CounterRow, FloatingCounters } from './community-counters';
 import {
+  ACTIVE_VISITORS,
   COUNTRY_POINTS,
   type CountryId,
   HUB_ID,
   MAP_HEIGHT,
   MAP_WIDTH,
-  SEARCH_CONSOLE,
   numberLocale,
   toCountryNames,
 } from './community-map';
@@ -35,20 +35,20 @@ export function LiveCommunity() {
   const { t, locale, dir, tRows } = useI18n();
   const countries = toCountryNames(tRows('landing.communityCountries'));
   const format = new Intl.NumberFormat(numberLocale(locale));
-  const appearances = (count: number) =>
-    t('landing.communityImpressionsCount', { count: format.format(count) });
 
   const locations = COUNTRY_POINTS;
   const [selectedId, setSelectedId] = useState<CountryId | null>(null);
   const metrics: CommunityMetric[] = [
     {
+      // the countries shown on the map (the top 10 of Search Console), as "10 pays"
       label: t('landing.communityCountriesLabel'),
-      value: SEARCH_CONSOLE.countries,
+      value: COUNTRY_POINTS.length,
+      unit: t('landing.communityCountriesUnit'),
       headline: true,
     },
     {
-      label: t('landing.communityImpressionsLabel'),
-      value: SEARCH_CONSOLE.impressions,
+      label: t('landing.communityVisitorsLabel'),
+      value: ACTIVE_VISITORS,
       headline: false,
     },
   ];
@@ -136,7 +136,7 @@ export function LiveCommunity() {
                     key={location.id}
                     location={location}
                     index={index}
-                    label={`${countries[location.id] ?? location.id} : ${appearances(location.impressions)}`}
+                    label={countries[location.id] ?? location.id}
                     selected={location.id === selectedId}
                     hub={location.id === HUB_ID}
                     onShow={() => setSelectedId(location.id)}
@@ -156,7 +156,6 @@ export function LiveCommunity() {
                     <CommunityTooltip
                       location={selected}
                       city={countries[selected.id] ?? selected.id}
-                      detail={appearances(selected.impressions)}
                       dir={dir}
                     />
                   )}

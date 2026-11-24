@@ -3,7 +3,7 @@ import { I18nProvider } from '@/features/i18n/i18n-provider';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Footer } from './site-shell';
+import { Footer, Header } from './site-shell';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
@@ -34,6 +34,25 @@ const COLUMNS = {
     'Gérer les cookies',
   ],
 };
+
+describe('Header', () => {
+  it('has "S\u2019inscrire gratuitement" then "Connexion", both to the app, and a flag-only language picker', () => {
+    render(
+      <I18nProvider locale="fr">
+        <Header />
+      </I18nProvider>,
+    );
+    const nav = screen.getByRole('navigation', { name: 'Main navigation' });
+    const login = within(nav).getByRole('link', { name: /Connexion/ });
+    const signUp = within(nav).getByRole('link', { name: /inscrire gratuitement/ });
+    expect(login).toHaveAttribute('href', expect.stringMatching(/\/connexion$/));
+    // right after the sign-up button
+    expect(signUp.nextElementSibling).toBe(login);
+    // the language picker shows the flag only (its name is for screen readers)
+    const picker = within(nav).getByRole('button', { name: 'Français' });
+    expect(picker).not.toHaveTextContent('FR');
+  });
+});
 
 describe('Footer', () => {
   it('has the 3 columns, every link in order', () => {

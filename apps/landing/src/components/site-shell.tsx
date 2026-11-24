@@ -4,16 +4,10 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
 import { localizePath } from '@/features/i18n/routing';
 import { APP_LOGIN_URL, APP_REGISTER_URL, SOCIAL_LINKS } from '@/lib/constants';
-import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, LogIn, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-
-const LANGUAGE_NAMES: Record<Locale, string> = {
-  fr: 'FR',
-  en: 'EN',
-  ar: 'AR',
-};
 
 // Renders via the flag-icons package (real, professionally-made flag SVGs), not
 // hand-drawn shapes — flag-icons keys by country, not language: English maps to the
@@ -40,6 +34,9 @@ const languageOptions = [
   { value: 'en', label: 'English' },
   { value: 'ar', label: 'العربية' },
 ] as const;
+
+/** Language names, for screen readers: the pickers show the flags only. */
+const LANGUAGE_LABELS: Record<Locale, string> = { fr: 'Français', en: 'English', ar: 'العربية' };
 
 // lucide-react dropped its brand icons in v1, so these redraw them inline with the same
 // 24×24 stroke geometry to stay consistent with the other Lucide icons on the site.
@@ -147,17 +144,18 @@ export function Header() {
             <button
               type="button"
               onClick={() => setLangOpen(!langOpen)}
+              aria-label={LANGUAGE_LABELS[locale]}
+              aria-expanded={langOpen}
               className="flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-white/10 px-3 py-1.5 text-white transition-colors select-none hover:bg-white/20"
             >
-              <Flag locale={locale} />
-              <span className="text-[13px] font-bold">{LANGUAGE_NAMES[locale]}</span>
+              <Flag locale={locale} size={17} />
               <ChevronDown
                 size={14}
                 className={`transition-transform duration-200 ${langOpen ? 'rotate-180' : ''}`}
               />
             </button>
             {langOpen && (
-              <div className="absolute top-[calc(100%+0.5rem)] z-50 w-32 overflow-hidden rounded-xl border border-neutral-100 bg-white py-1 shadow-xl ltr:right-0 rtl:left-0">
+              <div className="absolute top-[calc(100%+0.5rem)] z-50 w-20 overflow-hidden rounded-xl border border-neutral-100 bg-white py-1 shadow-xl ltr:right-0 rtl:left-0">
                 {(['fr', 'en', 'ar'] as Locale[]).map((item) => {
                   const active = locale === item;
                   return (
@@ -165,12 +163,10 @@ export function Header() {
                       key={item}
                       type="button"
                       onClick={() => handleLanguageChange(item)}
+                      aria-label={LANGUAGE_LABELS[item]}
                       className="flex w-full cursor-pointer items-center justify-between px-3.5 py-2 text-sm font-medium text-neutral-800 transition-colors hover:bg-neutral-50"
                     >
-                      <span className="flex items-center gap-2">
-                        <Flag locale={item} />
-                        <span>{LANGUAGE_NAMES[item]}</span>
-                      </span>
+                      <Flag locale={item} size={17} />
                       {active && <span className="bg-brand-teal h-2 w-2 rounded-full" />}
                     </button>
                   );
@@ -180,6 +176,11 @@ export function Header() {
           </div>
           <a className="nav-cta" href={APP_REGISTER_URL}>
             {t('landing.cta')} <ArrowUpRight size={15} className="rtl:-scale-x-1" />
+          </a>
+          {/* members log in to the app (another site, a plain link), after the sign-up button */}
+          <a className="nav-login" href={APP_LOGIN_URL}>
+            <LogIn size={15} className="rtl:-scale-x-100" />
+            <span className="nav-login-label">{t('landing.login')}</span>
           </a>
         </nav>
         <button
@@ -220,6 +221,14 @@ export function Header() {
               <span>{t('landing.cta')}</span>
               <ArrowUpRight size={16} className="rtl:-scale-x-1" />
             </a>
+            <a
+              href={APP_LOGIN_URL}
+              onClick={() => setOpen(false)}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-white/70 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-white/15"
+            >
+              <LogIn size={16} className="rtl:-scale-x-100" />
+              <span>{t('landing.login')}</span>
+            </a>
           </div>
           <div className="mobile-langs">
             {languageOptions.map((option) => (
@@ -232,7 +241,7 @@ export function Header() {
                 className="flex cursor-pointer items-center gap-1.5 border-0 bg-transparent text-sm font-semibold text-white"
                 aria-label={option.label}
               >
-                <Flag locale={option.value} /> {option.value.toUpperCase()}
+                <Flag locale={option.value} size={20} />
               </button>
             ))}
           </div>

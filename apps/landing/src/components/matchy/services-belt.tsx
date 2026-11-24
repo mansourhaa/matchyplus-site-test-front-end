@@ -220,7 +220,6 @@ export function ServicesBelt() {
           pass: t('landing.beltPass'),
           like: t('landing.beltLike'),
           close: t('landing.beltClose'),
-          sample: t('landing.beltSample'),
         }}
         detailsHref={APP_REGISTER_URL}
         titleId={titleId}
