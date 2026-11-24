@@ -35,15 +35,15 @@ export function LiveCommunity() {
   const { t, locale, dir, tRows } = useI18n();
   const countries = toCountryNames(tRows('landing.communityCountries'));
   const format = new Intl.NumberFormat(numberLocale(locale));
-  const appearances = (count: number) =>
-    t('landing.communityImpressionsCount', { count: format.format(count) });
 
   const locations = COUNTRY_POINTS;
   const [selectedId, setSelectedId] = useState<CountryId | null>(null);
   const metrics: CommunityMetric[] = [
     {
+      // the countries shown on the map (the top 10 of Search Console), as "10 pays"
       label: t('landing.communityCountriesLabel'),
-      value: SEARCH_CONSOLE.countries,
+      value: COUNTRY_POINTS.length,
+      unit: t('landing.communityCountriesUnit'),
       headline: true,
     },
     {
@@ -136,7 +136,7 @@ export function LiveCommunity() {
                     key={location.id}
                     location={location}
                     index={index}
-                    label={`${countries[location.id] ?? location.id} : ${appearances(location.impressions)}`}
+                    label={countries[location.id] ?? location.id}
                     selected={location.id === selectedId}
                     hub={location.id === HUB_ID}
                     onShow={() => setSelectedId(location.id)}
@@ -156,7 +156,6 @@ export function LiveCommunity() {
                     <CommunityTooltip
                       location={selected}
                       city={countries[selected.id] ?? selected.id}
-                      detail={appearances(selected.impressions)}
                       dir={dir}
                     />
                   )}

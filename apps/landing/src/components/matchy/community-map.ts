@@ -10,7 +10,7 @@ export const MAP_HEIGHT = 452;
 
 /** Search Console totals shown as the map's counters, with their source line. */
 export const SEARCH_CONSOLE = {
-  /** Countries where Matchy+ appeared in Google results. */
+  /** Countries where Matchy+ appeared in Google results (the map shows the top 10: "10 pays"). */
   countries: 52,
   /** Times Matchy+ appeared in Google results (impressions). */
   impressions: 434,

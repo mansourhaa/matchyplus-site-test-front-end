@@ -21,14 +21,13 @@ const AUDIENCE_CTA =
  * A search opens the results page (how many pros match), which then leads to sign-up.
  */
 export function HeroSearch() {
-  const { t, locale, tList } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const [audience, setAudience] = useState<Audience>('client');
   const [service, setService] = useState('');
   const [city, setCity] = useState('');
   const serviceId = useId();
   const cityId = useId();
-  const popular = tList('landing.searchPopular');
 
   const tabs: { key: Audience; label: string }[] = [
     { key: 'client', label: t('landing.searchTabClient') },
@@ -113,19 +112,6 @@ export function HeroSearch() {
               {t('landing.searchSubmit')}
             </button>
           </form>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-white/80">{t('landing.searchPopularLabel')}</span>
-            {popular.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setService(item)}
-                className="rounded-full border border-white/40 bg-white/10 px-3 py-1 font-semibold text-white transition-colors hover:bg-white/25"
-              >
-                {item}
-              </button>
-            ))}
-          </div>
         </>
       )}
 

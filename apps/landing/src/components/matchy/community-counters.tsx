@@ -6,7 +6,9 @@ import { motion } from 'framer-motion';
 export type CommunityMetric = {
   label: string;
   value: number;
-  /** The headline counter (countries): bigger, teal, with a pulsing dot. */
+  /** Optional word after the number ("pays"), smaller. */
+  unit?: string;
+  /** The headline counter (countries): bigger and teal. */
   headline: boolean;
 };
 
@@ -82,18 +84,20 @@ export function CounterRow({
 }
 
 /**
- * One counter: label, then the number. The headline one (countries) is bigger and teal, with a
- * pulsing dot.
+ * One counter: label, then the number (and its unit). The headline one (countries) is bigger and
+ * teal.
  */
 function Stat({
   label,
   value,
+  unit,
   headline,
   format,
   centered = false,
 }: {
   label: string;
   value: number;
+  unit?: string;
   headline: boolean;
   format: Intl.NumberFormat;
   centered?: boolean;
@@ -103,15 +107,13 @@ function Stat({
       <dt
         className={`flex items-center gap-1.5 text-[10px] leading-tight font-bold text-slate-500 uppercase sm:text-xs sm:tracking-wide ${centered ? 'justify-center' : ''}`}
       >
-        {headline && (
-          <span className="bg-brand-teal h-1.5 w-1.5 shrink-0 rounded-full motion-safe:animate-pulse" />
-        )}
         {label}
       </dt>
       <dd
         className={`mt-1 font-extrabold tabular-nums [text-shadow:0_0_16px_#F7FAFD] ${headline ? 'text-brand-teal text-3xl md:text-6xl' : 'text-brand-blue text-2xl md:text-4xl'}`}
       >
         {format.format(value)}
+        {unit && <span className="ms-1.5 text-[0.45em] font-bold">{unit}</span>}
       </dd>
     </>
   );

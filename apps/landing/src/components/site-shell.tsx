@@ -4,7 +4,7 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
 import { localizePath } from '@/features/i18n/routing';
 import { APP_LOGIN_URL, APP_REGISTER_URL, SOCIAL_LINKS } from '@/lib/constants';
-import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, LogIn, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -178,6 +178,11 @@ export function Header() {
               </div>
             )}
           </div>
+          {/* members log in to the app (another site, a plain link), next to the sign-up button */}
+          <a className="nav-login" href={APP_LOGIN_URL}>
+            <LogIn size={15} className="rtl:-scale-x-100" />
+            <span className="nav-login-label">{t('landing.login')}</span>
+          </a>
           <a className="nav-cta" href={APP_REGISTER_URL}>
             {t('landing.cta')} <ArrowUpRight size={15} className="rtl:-scale-x-1" />
           </a>
@@ -219,6 +224,14 @@ export function Header() {
             >
               <span>{t('landing.cta')}</span>
               <ArrowUpRight size={16} className="rtl:-scale-x-1" />
+            </a>
+            <a
+              href={APP_LOGIN_URL}
+              onClick={() => setOpen(false)}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-white/70 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-white/15"
+            >
+              <LogIn size={16} className="rtl:-scale-x-100" />
+              <span>{t('landing.login')}</span>
             </a>
           </div>
           <div className="mobile-langs">

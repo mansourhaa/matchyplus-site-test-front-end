@@ -6,17 +6,14 @@ const TOOLTIP_ALIGN = {
   end: '-translate-x-[calc(100%-1rem)]',
 } as const;
 
-/** City tooltip on the map: opens towards the inside of the map so it is never cut off. */
+/** Country tooltip on the map (its name only): opens towards the inside of the map so it is never cut off. */
 export function CommunityTooltip({
   location,
   city,
-  detail,
   dir,
 }: {
   location: CommunityLocation;
   city: string;
-  /** Second line, e.g. "136 apparitions dans Google", already translated. */
-  detail: string;
   /** Page direction: the map is left-to-right, the tooltip's text follows the page language. */
   dir: 'ltr' | 'rtl';
 }) {
@@ -28,9 +25,6 @@ export function CommunityTooltip({
     >
       <p dir={dir} className="text-sm font-bold">
         {city}
-      </p>
-      <p dir={dir} className="text-xs text-white/70">
-        {detail}
       </p>
     </div>
   );

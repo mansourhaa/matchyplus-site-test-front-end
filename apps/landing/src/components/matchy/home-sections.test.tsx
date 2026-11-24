@@ -52,7 +52,6 @@ const NEW_KEYS = [
   'searchTabClient',
   'searchTabPro',
   'searchTabBusiness',
-  'searchPopular',
   'searchMember',
   'resultsTitle',
   'resultsNear',
@@ -74,14 +73,13 @@ const NEW_KEYS = [
   'footerProsTitle',
   'footerLegalTitle',
   'footerCookies',
-  'heroReassurance',
   'ourPartnersKicker',
   'communityTitle',
   'communityMapLabel',
   'communityCountries',
   'communityCountriesLabel',
+  'communityCountriesUnit',
   'communityImpressionsLabel',
-  'communityImpressionsCount',
 ];
 
 describe('new home texts', () => {
@@ -103,26 +101,26 @@ describe('HeroSearch', () => {
       'aria-pressed',
       'true',
     );
-    expect(screen.getByLabelText('Quel service recherchez-vous ?')).toBeInTheDocument();
-    expect(screen.getByLabelText('Où recherchez-vous ce service ?')).toBeInTheDocument();
+    expect(screen.getByLabelText('Quel service ?')).toBeInTheDocument();
+    expect(screen.getByLabelText('Où ?')).toBeInTheDocument();
   });
 
   it('a search opens the results page of the current language, with the search', () => {
     renderIn('fr', <HeroSearch />);
-    fireEvent.change(screen.getByLabelText('Quel service recherchez-vous ?'), {
+    fireEvent.change(screen.getByLabelText('Quel service ?'), {
       target: { value: 'Plombier' },
     });
-    fireEvent.change(screen.getByLabelText('Où recherchez-vous ce service ?'), {
+    fireEvent.change(screen.getByLabelText('Où ?'), {
       target: { value: 'Sfax' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Rechercher' }));
     expect(push).toHaveBeenCalledWith('/fr/recherche/?service=Plombier&ville=Sfax');
   });
 
-  it('a popular chip fills the service field', () => {
+  it('has no popular suggestions under the search', () => {
     renderIn('fr', <HeroSearch />);
-    fireEvent.click(screen.getByRole('button', { name: 'Électricien' }));
-    expect(screen.getByLabelText('Quel service recherchez-vous ?')).toHaveValue('Électricien');
+    expect(screen.queryByText('Populaire :')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Électricien' })).toBeNull();
   });
 
   it('"Entreprise" leads to the partner page of the current language', () => {
@@ -184,9 +182,7 @@ describe('home sections', () => {
       name: getMessage(messages.ar, 'landing.brandCta') as string,
     });
     expect(cta.closest('.rounded-\\[2rem\\]')).not.toBeNull();
-    expect(
-      screen.queryByText(getMessage(messages.ar, 'landing.beltSample') as string),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('ملف تجريبي')).not.toBeInTheDocument();
   });
 
   it('CompanyStory shows the Matchy+ logo, described for screen readers', () => {
@@ -310,18 +306,21 @@ describe('home sections', () => {
     renderIn('fr', <LiveCommunity />);
     expect(
       screen.getByRole('heading', {
-        name: 'Matchy+ connecte les talents locaux aux opportunités',
+        name: 'Matchy+ attire des professionnels dans plusieurs pays',
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Carte du monde/ })).toBeInTheDocument();
     // the counters exist twice: on the map for computers and under it for phones
-    expect(screen.getAllByText('52')).toHaveLength(2);
+    // the countries counter: "10 pays" (the 10 points of the map), with no pulsing dot
+    expect(screen.getAllByText('10')).toHaveLength(2);
+    expect(screen.getAllByText('pays')).toHaveLength(2);
+    expect(document.querySelector('dt .animate-pulse, dt .motion-safe\\:animate-pulse')).toBeNull();
     expect(screen.getAllByText('434')).toHaveLength(2);
     expect(screen.getAllByText('Présence internationale')).toHaveLength(2);
     expect(screen.getAllByText('Audience Matchy+')).toHaveLength(2);
     expect(screen.queryByText(/Source|Google/)).toBeNull();
 
-    const tunis = screen.getByRole('button', { name: 'Tunisie : audience 136' });
+    const tunis = screen.getByRole('button', { name: 'Tunisie' });
     fireEvent.pointerEnter(tunis, { pointerType: 'mouse' });
     expect(within(screen.getByRole('status')).getByText('Tunisie')).toBeInTheDocument();
     // a touch leaving the point (the map slid under the finger) keeps the tooltip open

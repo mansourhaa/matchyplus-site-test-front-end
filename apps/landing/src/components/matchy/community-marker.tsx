@@ -19,7 +19,7 @@ export function CommunityMarker({
   location: CommunityLocation;
   /** Position in the list, to offset the pulse of each point. */
   index: number;
-  /** Accessible name: the country and its Google appearances. */
+  /** Accessible name: the country's name. */
   label: string;
   selected: boolean;
   hub: boolean;

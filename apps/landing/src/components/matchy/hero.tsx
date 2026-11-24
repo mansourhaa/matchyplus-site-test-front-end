@@ -3,13 +3,13 @@
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_REGISTER_URL } from '@/lib/constants';
 import { motion } from 'framer-motion';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { HeroLivePhone } from './hero-live-phone';
 import { HeroSearch } from './hero-search';
 
 export function Hero() {
-  const { t, tList } = useI18n();
+  const { t } = useI18n();
 
   return (
     <section className="relative overflow-hidden">
@@ -75,14 +75,6 @@ export function Hero() {
               {t('landing.searchProCta')}
               <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
             </a>
-            <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs font-semibold text-white/90 md:justify-start">
-              {tList('landing.heroReassurance').map((item) => (
-                <li key={item} className="inline-flex items-center gap-1.5">
-                  <Check className="h-3.5 w-3.5 shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
           </motion.div>
         </div>
 
