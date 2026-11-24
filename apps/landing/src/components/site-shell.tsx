@@ -178,9 +178,9 @@ export function Header() {
               </div>
             )}
           </div>
-          <Link className="nav-cta" href={APP_REGISTER_URL}>
+          <a className="nav-cta" href={APP_REGISTER_URL}>
             {t('landing.cta')} <ArrowUpRight size={15} className="rtl:-scale-x-1" />
-          </Link>
+          </a>
         </nav>
         <button
           className="mobile-toggle text-white"
@@ -211,7 +211,7 @@ export function Header() {
             {t('landing.partner')}
           </Link>
           <div className="mt-2 border-t border-white/20 pt-4">
-            <Link
+            <a
               href={APP_REGISTER_URL}
               onClick={() => setOpen(false)}
               className="nav-cta !text-brand-blue flex w-full items-center justify-center gap-1.5 !rounded-full !bg-white py-3 text-center text-sm font-bold shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.98]"
@@ -219,7 +219,7 @@ export function Header() {
             >
               <span>{t('landing.cta')}</span>
               <ArrowUpRight size={16} className="rtl:-scale-x-1" />
-            </Link>
+            </a>
           </div>
           <div className="mobile-langs">
             {languageOptions.map((option) => (

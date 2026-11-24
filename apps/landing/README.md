@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **169 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **168 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -51,14 +51,14 @@ Defined in `src/app/[lang]/page.tsx`. Sections marked **new** or **changed** are
 
 ## Other pages added
 
-| Page                                                                   | Files                                                                                  | What it shows                                                                                                                                                                                                                                                                                                                                                                                     |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/utilisation/`                                                        | `app/[lang]/utilisation/page.tsx`, `usage-hero.tsx`                                    | How Matchy+ works: the 5 sections that left the home page, unchanged and in the same order: `features.tsx`, `steps.tsx` (`#how`), `security.tsx` (wallet), `explore.tsx`, `cta.tsx`. The menu's "Utilisation" opens it. In the sitemap.                                                                                                                                                           |
-| `/actualites/`                                                         | `app/[lang]/actualites/`, `press-pages.tsx` (`PressList`)                              | Every news item, newest first. In the sitemap.                                                                                                                                                                                                                                                                                                                                                    |
-| `/actualites/<slug>/`                                                  | `app/[lang]/actualites/[slug]/page.tsx`, `press-pages.tsx` (`PressArticle`)            | One news item: date, tag, title, place, the YouTube video (if any), the text. One static page per item and language; any other slug is a 404.                                                                                                                                                                                                                                                     |
-| `/recherche/`                                                          | `app/[lang]/recherche/`, `search-results.tsx`                                          | Results of the hero search (see the hero section below).                                                                                                                                                                                                                                                                                                                                          |
-| `/a-propos/histoire-matchy-plus/` (en/ar: `/about/matchy-plus-story/`) | `app/[lang]/a-propos/histoire-matchy-plus/page.tsx`, `story-page.tsx`, `story-data.ts` | "Découvrez l'histoire de Matchy+" from the "Story Matchy 2" document (French, light spelling fixes; English and Arabic translated): the two founders' quotes (Randa Touati, Khalil Zahouani), the story along a dashed line like /utilisation/, then a button per reader (find a pro, create a profile, build with Matchy+). The home page's "Découvrir notre histoire" opens it. In the sitemap. |
-| `/partenaires/`                                                        | `app/[lang]/partenaires/page.tsx`, `partners-page.tsx`                                 | Every network partner (`NETWORK_PARTNERS`: logo, name, one-line description from `landing.partnerDescriptions`, website if any), then the partnership benefits (`partner-benefits.ts`, shared with `/devenir-partenaire/`) and the "Devenir partenaire" button. In the sitemap.                                                                                                                   |
+| Page                                                                   | Files                                                                                  | What it shows                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/utilisation/`                                                        | `app/[lang]/utilisation/page.tsx`, `usage-hero.tsx`                                    | How Matchy+ works: the 5 sections that left the home page, unchanged and in the same order: `features.tsx`, `steps.tsx` (`#how`), `security.tsx` (wallet), `explore.tsx`, `cta.tsx`. The menu's "Utilisation" opens it. In the sitemap.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `/actualites/`                                                         | `app/[lang]/actualites/`, `press-pages.tsx` (`PressList`)                              | Every news item, newest first. In the sitemap.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `/actualites/<slug>/`                                                  | `app/[lang]/actualites/[slug]/page.tsx`, `press-pages.tsx` (`PressArticle`)            | One news item: date, tag, title, place, the YouTube video (if any), the text. One static page per item and language; any other slug is a 404.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `/recherche/`                                                          | `app/[lang]/recherche/`, `search-results.tsx`                                          | Results of the hero search (see the hero section below).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `/a-propos/histoire-matchy-plus/` (en/ar: `/about/matchy-plus-story/`) | `app/[lang]/a-propos/histoire-matchy-plus/page.tsx`, `story-page.tsx`, `story-data.ts` | "Découvrez l'histoire de Matchy+" from the "Story Matchy 3" document (24 Nov 2026; French as written, English and Arabic translated), in its order: Randa Touati's quote, the opening, Khalil Zahouani's quote, "Une application populaire, sociale et inclusive", "L'histoire ne fait que commencer", then "Écrivez la suite avec nous" with a link per reader, one under the other (find a pro, create a profile, build with Matchy+). Look of /a-propos/, no boxes: quotes with a teal side bar, names bold and roles italic, the document's bold words (`**…**` in `story-data.ts`), a thin line between parts. The home page's "Découvrir notre histoire" opens it. In the sitemap. |
+| `/partenaires/`                                                        | `app/[lang]/partenaires/page.tsx`, `partners-page.tsx`                                 | Every network partner (`NETWORK_PARTNERS`: logo, name, one-line description from `landing.partnerDescriptions`, website if any), then the partnership benefits (`partner-benefits.ts`, shared with `/devenir-partenaire/`) and the "Devenir partenaire" button. In the sitemap.                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `en` and `ar`.
 
@@ -166,8 +166,9 @@ reviews, no idea of availability) with Matchy+.
 line on the page; the source stays documented here and in the code:
 
 - **« Présence internationale » 52**: countries where Matchy+ appeared in Google results.
-- **« Audience Matchy+ » 434**: appearances (impressions) in total. Both counters float on
-  the map on computers and sit in a row under it on phones.
+- **« Audience Matchy+ » 434**: appearances (impressions) in total. On computers both counters
+  float on the left of the map, the audience above the countries; on phones they sit in a row
+  under it.
 - The **10 countries with the most appearances** are in brand blue and have a point
   (`COUNTRY_POINTS`): Tunisia 136, United States 54, France 41, Morocco 37, South Africa 23,
   Brazil 14, Nigeria 10, Germany 5, Turkey 2, Bulgaria 1. Hovering or tapping a point shows the
@@ -204,26 +205,23 @@ smaller benefit.
   and optionally a cover image, a YouTube link, the LinkedIn post and the official website.
   **To add a news item:** copy an entry and fill it in. No other code changes. The home page
   shows the 3 newest; `/actualites/` shows all.
-- **The 5 news come from the "Articles storytelling V4" kit** (French texts, headings and slugs
+- **The 3 news come from the "Articles storytelling V4" kit** (French texts, headings and slugs
   as in the kit; English and Arabic translated): Al Wataniya 1 "جيل المستقبل" (22 Nov 2026, TV
-  set photo on the card, replay video in the article), Afrique Innovante 2026 (photo of Randa
-  Touati presented for Tunisia), Express FM Mundo Design (studio photo on the card, YouTube
-  video in the article), Female
-  Founders Tribe Founder Circle, Meetup Pro 2026. The kit marks 4 dates "à confirmer": they show
-  **the year only** (`date: '2026'`), never an invented day. When a date is confirmed, write it
-  `YYYY-MM-DD`.
-- **Article layout** (`press-pages.tsx`): like the steps of /utilisation/, no box: the intro as a
-  lead paragraph, then each section as a numbered step (teal number, teal heading, grey text)
-  along a dashed line.
-- **Sources:** "Visiter le site officiel" (programme, network, event page), "Voir la publication
-  sur LinkedIn", or the embedded video.
-- **Next steps:** every article ends with the kit's 3 buttons: « Trouver un professionnel »
-  (search page), « Créer mon profil gratuitement » (app sign-up), « Proposer une collaboration »
-  (partner page).
-- **LinkedIn:** an item with a `linkedin` link shows a "Voir la publication sur LinkedIn" button
-  (new tab, `rel="noopener noreferrer"`).
+  set photo on the card, replay video in the article), Express FM Mundo Design (1 June 2026, studio
+  photo on the card, YouTube video in the article), Afrique Innovante 2026 (29 May 2026, photo
+  of Randa Touati presented for Tunisia). The Female Founders Tribe and Meetup Pro
+  articles were removed on 24 Nov 2026. A date not confirmed yet is written as the year only
+  (`date: '2026'`), never an invented day.
+- **Article layout** (`press-pages.tsx`): like /a-propos/: dark text (`#101a36`) on white, the
+  intro in semi-bold, then each section as a bold heading and its paragraph. The story page uses
+  the same look.
+- **Page title:** "Matchy+® press", the ® small, raised and in normal weight (like "Fiverr®").
+- **End of an article:** "Toutes les actualités" and "Article suivant →" (the next item, newest
+  first; after the last one, the first). Since 24 Nov 2026 the source buttons (LinkedIn,
+  official site) and the block of 3 next-step buttons are gone; `linkedin` and `website` stay in
+  the data as the sources. The embedded video stays.
 - **Card** (`press-card.tsx`, same on the home page and on `/actualites/`): date badge, tag,
-  place and a Matchy+ footer on the cover, then the title (shown once, under the cover). Without
+  place and a Matchy+ footer on the cover (no dot, no dividing line), then the title (shown once, under the cover). Without
   a cover image the card uses a brand gradient with the Matchy+ logo. An item with a video shows
   its cover on the card and plays the video in the article. On phones the home cards are a
   swipeable row.
@@ -242,20 +240,22 @@ smaller benefit.
   Maintenance). Each partner: name, logo (in `public/matchy/partners/`), its size,
   and its website when it has one. **To add a partner:** one line in the right list.
 - **"Nos partenaires"** (`partner-logos.tsx`), last section of the page: the logos in landscape
-  white cards (DOT-IT, TCA horizontal), each opening the partner's website in a new tab
+  logos on the page without boxes (DOT-IT: its horizontal vector logo `dotit-logo.svg`, sent on
+  24 Nov 2026 and cleaned of the editor data; TCA horizontal), each opening the partner's website in a new tab
   (`rel="noopener noreferrer"`). GoPayzi was removed (24 Nov 2026).
 - **"Ils avancent avec Matchy+"** (`partnerships.tsx`), right after the map, on white like the
   map: the sliding strip
   with the network partners' logos alternating with "Votre marque ici" places (linking to
-  `/devenir-partenaire`), then the "Devenir partenaire" button. The strip is decorative
+  `/devenir-partenaire`), then the "Devenir partenaire" button. Flat cards (no shadow); Sahora's
+  photo banner covers its card (`cover` in `partners-data.ts`). The strip is decorative
   (`aria-hidden`, links out of the tab order, logos with empty alt); the button is the
   accessible way in.
 
 ### 8. Company story
 
-- **`company-story.tsx`:** the Matchy+ logo (`public/showcase/matchy-plus-logo.svg`), the
-  founder's quote from the content brief (« Chaque compétence mérite d'être visible… ») and her
-  path, signed Randa Touati, Cofondatrice de Matchy+. "Découvrir notre histoire" opens the story
+- **`company-story.tsx`:** the Matchy+ logo in a white circle inside a blue-to-green ring, the old round look (`public/showcase/matchy-plus-logo.svg`),
+  the founder's quote from the content brief (« Chaque compétence mérite d'être visible… »),
+  signed Randa Touati, Cofondatrice de Matchy+. "Découvrir notre histoire" opens the story
   page.
 
 ---
@@ -338,20 +338,20 @@ Older issues, not caused by this work but worth a separate ticket:
 Vitest with jsdom (`vitest.config.ts`, `src/test/setup.ts`: cleanup and an IntersectionObserver
 stub), and the same Testing Library setup as `apps/app`.
 
-| File                          | What it covers                                                                                                                                                                                                                                                                                                         |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `belt-geometry.test.ts`       | Front / back slots (size, blur, depth), even spacing, nearest slot, shortest turn, stage size                                                                                                                                                                                                                          |
-| `messages.test.ts`            | `tList` / `tRows` helpers: only strings kept, the real belt and city tables; no `[placeholder]` in any language                                                                                                                                                                                                        |
-| `belt-data.test.ts`           | Profile rows from the texts, invalid data ignored, a photo for every trade, pass / connect sequence                                                                                                                                                                                                                    |
-| `belt-profile-card.test.tsx`  | Same match thresholds as the app (75 / 55), card content, Passer / Connecter / close                                                                                                                                                                                                                                   |
-| `belt-match-dialog.test.tsx`  | Focus trap, Escape, click outside, continue                                                                                                                                                                                                                                                                            |
-| `referral.test.tsx`           | Sign-up link with code, texts in 3 languages, copy button                                                                                                                                                                                                                                                              |
-| `community-map.test.ts`       | Positions on the map, curves, tooltip placement, number format, country names, Search Console totals                                                                                                                                                                                                                   |
-| `search-results-data.test.ts` | Search in the URL (site and sign-up)                                                                                                                                                                                                                                                                                   |
-| `search-results.test.tsx`     | Results page: no count, search, sign-up link with the search, "near you", back link                                                                                                                                                                                                                                    |
-| `press-data.test.ts`          | News: unique URL-safe slugs, dates (day, month or year only), texts and headings in 3 languages, cover alt, LinkedIn links, newest first, YouTube links (accepted / refused), dates per language                                                                                                                       |
-| `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), news cards and article (headings, 3 next steps, video, unknown slug), map counters (no source line), partner links, partners strip with real logos, partners page, new texts exist in all languages |
-| `site-shell.test.tsx`         | Footer: the 4 columns with their links in order, where each link goes, the cookie settings button, en/ar                                                                                                                                                                                                               |
+| File                          | What it covers                                                                                                                                                                                                                                                                                                          |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `belt-geometry.test.ts`       | Front / back slots (size, blur, depth), even spacing, nearest slot, shortest turn, stage size                                                                                                                                                                                                                           |
+| `messages.test.ts`            | `tList` / `tRows` helpers: only strings kept, the real belt and city tables; no `[placeholder]` in any language                                                                                                                                                                                                         |
+| `belt-data.test.ts`           | Profile rows from the texts, invalid data ignored, a photo for every trade, pass / connect sequence                                                                                                                                                                                                                     |
+| `belt-profile-card.test.tsx`  | Same match thresholds as the app (75 / 55), card content, Passer / Connecter / close                                                                                                                                                                                                                                    |
+| `belt-match-dialog.test.tsx`  | Focus trap, Escape, click outside, continue                                                                                                                                                                                                                                                                             |
+| `referral.test.tsx`           | Sign-up link with code, texts in 3 languages, copy button                                                                                                                                                                                                                                                               |
+| `community-map.test.ts`       | Positions on the map, curves, tooltip placement, number format, country names, Search Console totals                                                                                                                                                                                                                    |
+| `search-results-data.test.ts` | Search in the URL (site and sign-up)                                                                                                                                                                                                                                                                                    |
+| `search-results.test.tsx`     | Results page: no count, search, sign-up link with the search, "near you", back link                                                                                                                                                                                                                                     |
+| `press-data.test.ts`          | News: unique URL-safe slugs, dates (day, month or year only), texts and headings in 3 languages, cover alt, LinkedIn links, newest first, YouTube links (accepted / refused), dates per language                                                                                                                        |
+| `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), news cards and article (headings, source button, video, unknown slug), map counters (no source line), partner links, partners strip with real logos, partners page, new texts exist in all languages |
+| `site-shell.test.tsx`         | Footer: the 4 columns with their links in order, where each link goes, the cookie settings button, en/ar                                                                                                                                                                                                                |
 
 ---
 

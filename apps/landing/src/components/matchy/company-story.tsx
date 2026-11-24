@@ -21,16 +21,18 @@ export function CompanyStory() {
         />
         <div className="relative grid grid-cols-1 items-center gap-10 md:grid-cols-[220px_minmax(0,1fr)]">
           <div className="flex flex-col items-center gap-3">
-            {/* the Matchy+ logo (vector: sharp at any size, served as it is) */}
-            <div className="grid h-36 w-full max-w-[220px] place-items-center rounded-3xl bg-white px-5 shadow-xl">
-              <Image
-                src="/showcase/matchy-plus-logo.svg"
-                alt={t('landing.storyPhotoAlt')}
-                width={722}
-                height={184}
-                unoptimized
-                className="h-auto w-full"
-              />
+            {/* the Matchy+ logo in the old round look: a blue-to-green ring around a white circle */}
+            <div className="from-brand-blue to-brand-teal rounded-full bg-gradient-to-br p-1.5 shadow-xl">
+              <div className="grid h-48 w-48 place-items-center rounded-full border-4 border-white bg-white px-7">
+                <Image
+                  src="/showcase/matchy-plus-logo.svg"
+                  alt={t('landing.storyPhotoAlt')}
+                  width={722}
+                  height={184}
+                  unoptimized
+                  className="h-auto w-full"
+                />
+              </div>
             </div>
             <span className="text-brand-teal -rotate-3 text-lg font-bold">
               {t('landing.storyEyebrow')}
@@ -41,10 +43,7 @@ export function CompanyStory() {
             <p className="text-brand-blue mt-2 text-2xl leading-snug font-extrabold text-balance md:text-3xl">
               {t('landing.storyQuote')}
             </p>
-            <p className="text-muted-foreground mt-5 max-w-2xl text-sm leading-relaxed md:text-base">
-              {t('landing.storyBody')}
-            </p>
-            <p className="text-brand-navy mt-5 font-bold">{t('landing.storyName')}</p>
+            <p className="text-brand-navy mt-6 font-bold">{t('landing.storyName')}</p>
             <p className="text-muted-foreground text-sm">{t('landing.storyRole')}</p>
             <Link
               href={localizePath(locale, '/a-propos/histoire-matchy-plus')}

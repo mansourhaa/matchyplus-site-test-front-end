@@ -13,11 +13,11 @@ export type CommunityMetric = {
 /**
  * Where the counters float on the map on computers, in % (left / top), over open ocean: no land
  * or highlighted country under them. Same order as the counters: countries (the headline number)
- * over the South Pacific, Google appearances over the Indian Ocean.
+ * over the South Pacific, and the audience just above it, both on the left of the map.
  */
 const STAT_SPOTS = [
   { left: 5, top: 62, centered: false },
-  { left: 64, top: 61, centered: false },
+  { left: 5, top: 45, centered: false },
 ] as const;
 
 /** Counters floating over the oceans of the map, on computers only. */

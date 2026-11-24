@@ -41,7 +41,7 @@ const NEW_KEYS = [
   'pressSample',
   'pressPageTitle',
   'pressVideo',
-  'pressLinkedin',
+  'pressNextArticle',
   'ourPartnersTitle',
   'ourPartnersBody',
   'ourPartnersVisit',
@@ -65,7 +65,6 @@ const NEW_KEYS = [
   'brandPoints',
   'brandSampleStats',
   'storyQuote',
-  'storyBody',
   'partnersTitle',
   'partnersCta',
   'partnersSlot',
@@ -75,12 +74,8 @@ const NEW_KEYS = [
   'footerProsTitle',
   'footerLegalTitle',
   'footerCookies',
-  'pressNext',
-  'pressCtaFind',
-  'pressCtaPartner',
   'heroReassurance',
   'ourPartnersKicker',
-  'pressWebsite',
   'communityTitle',
   'communityMapLabel',
   'communityCountries',
@@ -198,6 +193,8 @@ describe('home sections', () => {
     renderIn('fr', <CompanyStory />);
     const logo = screen.getByRole('img', { name: 'Logo Matchy+' });
     expect(logo.getAttribute('src')).toContain('matchy-plus-logo.svg');
+    // the sentence about the founder's path was removed (24 Nov 2026)
+    expect(screen.queryByText(/enseignement/)).toBeNull();
   });
 
   it('CompanyStory links to the story page', () => {
@@ -208,23 +205,29 @@ describe('home sections', () => {
     );
   });
 
-  it('Story page shows both founders, the story, and a button per reader', () => {
+  it('Story page follows the document: founders, parts, bold words, and a button per reader', () => {
     for (const locale of SUPPORTED_LOCALES) {
-      const { unmount } = renderIn(locale, <StoryPage />);
+      const { container, unmount } = renderIn(locale, <StoryPage />);
       const text = STORY[locale];
       expect(screen.getByRole('heading', { level: 1, name: text.title })).toBeInTheDocument();
-      // both founders' quotes, signed
-      for (const quote of text.quotes) {
-        expect(screen.getByText(quote.text)).toBeInTheDocument();
-        expect(screen.getByText(quote.name)).toBeInTheDocument();
+      const blocks = text.parts.flatMap((part) => part.blocks);
+      // both founders' quotes, signed with the name and the role
+      for (const block of blocks) {
+        if (typeof block === 'string' || !('founder' in block)) continue;
+        expect(screen.getByText(block.founder.text)).toBeInTheDocument();
+        expect(screen.getByText(block.founder.name)).toHaveClass('font-bold');
+        expect(screen.getByText(block.founder.role)).toHaveClass('italic');
       }
-      for (const section of text.sections) {
-        if (section.heading) {
-          expect(
-            screen.getByRole('heading', { level: 2, name: section.heading }),
-          ).toBeInTheDocument();
+      for (const part of text.parts) {
+        if (part.heading) {
+          expect(screen.getByRole('heading', { level: 2, name: part.heading })).toBeInTheDocument();
         }
       }
+      // the document's bold words are bold, and no "**" mark shows
+      expect(container.querySelectorAll('strong').length).toBeGreaterThanOrEqual(4);
+      expect(container.textContent).not.toContain('**');
+      // no boxes: no card, no shadowed panel around the story
+      expect(container.querySelector('figure.shadow-xl, section.rounded-3xl')).toBeNull();
       expect(screen.getByRole('link', { name: text.next.find[1] })).toHaveAttribute(
         'href',
         expect.stringMatching(new RegExp(`^/${locale}/recherche/?$`)),
@@ -239,6 +242,12 @@ describe('home sections', () => {
       );
       unmount();
     }
+  });
+
+  it('DOT-IT uses its new horizontal vector logo', () => {
+    const dotit = PARTNERS.find((partner) => partner.id === 'dotit');
+    expect(dotit?.logo).toBe('/matchy/partners/dotit-logo.svg');
+    expect([dotit?.width, dotit?.height]).toEqual([394, 148]);
   });
 
   it('Partnerships strip shows the real partner logos, and free places lead to the partner page', () => {
@@ -353,14 +362,17 @@ describe('Matchy+ Press and partners', () => {
     expect(screen.queryAllByText('Exemple')).toHaveLength(samples);
   });
 
-  it('an article with a LinkedIn post links to it in a new tab', () => {
-    const item = PRESS_ITEMS.find((entry) => entry.linkedin);
-    if (!item) return;
-    renderIn('fr', <PressArticle slug={item.slug} />);
-    const link = screen.getByRole('link', { name: 'Voir la publication sur LinkedIn' });
-    expect(link).toHaveAttribute('href', item.linkedin);
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  it('an article leads to the next news item, and the last one back to the first', () => {
+    const items = pressItems();
+    items.forEach((item, index) => {
+      const next = items[(index + 1) % items.length];
+      const { unmount } = renderIn('fr', <PressArticle slug={item.slug} />);
+      expect(screen.getByRole('link', { name: /Article suivant/ })).toHaveAttribute(
+        'href',
+        expect.stringMatching(new RegExp(`^/fr/actualites/${next.slug}/?$`)),
+      );
+      unmount();
+    });
   });
 
   it('an article shows its texts in the page language and links back to all news', () => {
@@ -376,6 +388,21 @@ describe('Matchy+ Press and partners', () => {
       'href',
       expect.stringMatching(/^\/ar\/actualites\/?$/),
     );
+  });
+
+  it('the news page title shows ® small and raised, not bold', () => {
+    renderIn('fr', <PressList />);
+    const title = screen.getByRole('heading', { level: 1 });
+    expect(title).toHaveTextContent('Matchy+® press');
+    const mark = title.querySelector('sup');
+    expect(mark).toHaveTextContent('®');
+    expect(mark).toHaveClass('font-normal');
+  });
+
+  it('a news card has no dot before the place and no line above Matchy+', () => {
+    const { container } = renderIn('fr', <Press />);
+    expect(container.querySelector('.h-1\\.5.w-1\\.5.rounded-full')).toBeNull();
+    expect(container.querySelector('.border-t')).toBeNull();
   });
 
   it('a news card shows its title once (not on the cover too)', () => {
@@ -399,20 +426,14 @@ describe('Matchy+ Press and partners', () => {
     }
   });
 
-  it('every article ends with the 3 next steps: find a pro, create a profile, propose a collaboration', () => {
-    renderIn('fr', <PressArticle slug={PRESS_ITEMS[0].slug} />);
-    expect(screen.getByRole('link', { name: /Trouver un professionnel/ })).toHaveAttribute(
-      'href',
-      expect.stringMatching(/^\/fr\/recherche\/?$/),
-    );
-    expect(screen.getByRole('link', { name: 'Créer mon profil gratuitement' })).toHaveAttribute(
-      'href',
-      expect.stringMatching(/\/register$/),
-    );
-    expect(screen.getByRole('link', { name: 'Proposer une collaboration' })).toHaveAttribute(
-      'href',
-      expect.stringMatching(/^\/fr\/devenir-partenaire\/?$/),
-    );
+  it('an article ends with the way back and the next article, without source buttons', () => {
+    const item = PRESS_ITEMS.find((entry) => entry.linkedin || entry.website) ?? PRESS_ITEMS[0];
+    renderIn('fr', <PressArticle slug={item.slug} />);
+    expect(screen.queryByText('Et vous, que cherchez-vous ?')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Proposer une collaboration' })).toBeNull();
+    expect(screen.queryByRole('link', { name: /LinkedIn|site officiel/ })).toBeNull();
+    expect(screen.getByRole('link', { name: /Toutes les actualités/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Article suivant/ })).toBeInTheDocument();
   });
 
   it('an article with a YouTube link embeds it without cookies; an unknown slug renders nothing', () => {

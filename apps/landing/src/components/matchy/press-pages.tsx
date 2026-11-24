@@ -3,14 +3,26 @@
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
-import { APP_REGISTER_URL } from '@/lib/constants';
-import { ArrowLeft, ArrowRight, ExternalLink, MapPin } from 'lucide-react';
+import { ArrowLeft, ArrowRight, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { Reveal } from './motion';
 import { PressCard } from './press-card';
 import { pressDate, pressItem, pressItems, youtubeId } from './press-data';
+
+/** The ® of a brand name, small and raised, in normal weight (like "Fiverr®"). */
+function withRegistered(text: string) {
+  const [before, after] = text.split('®');
+  if (after === undefined) return text;
+  return (
+    <>
+      {before}
+      <sup className="ms-0.5 align-super text-[0.4em] font-normal">®</sup>
+      {after}
+    </>
+  );
+}
 
 /** /actualites/: every news item, newest first, in the site's sub-page band. */
 export function PressList() {
@@ -21,7 +33,7 @@ export function PressList() {
     <main>
       <SubpageHero
         eyebrow={t('landing.pressKicker')}
-        title={t('landing.pressPageTitle')}
+        title={withRegistered(t('landing.pressPageTitle'))}
         subtitle={t('landing.pressSubtitle')}
       />
       <div className="mx-auto -mt-16 grid max-w-6xl gap-6 px-5 pb-24 sm:grid-cols-2 lg:grid-cols-3">
@@ -43,6 +55,9 @@ export function PressArticle({ slug }: { slug: string }) {
   const text = item.text[locale];
   const date = pressDate(item.date, locale);
   const video = youtubeId(item.video);
+  // the next news item in the list (newest first); after the last one, back to the first
+  const items = pressItems();
+  const nextItem = items[(items.findIndex((other) => other.slug === slug) + 1) % items.length];
 
   return (
     <main>
@@ -89,53 +104,21 @@ export function PressArticle({ slug }: { slug: string }) {
         )}
 
         {/* the text as on /utilisation/: a lead paragraph, then numbered steps along a dashed line */}
-        <p className="text-brand-navy mt-12 text-lg leading-relaxed font-semibold md:text-xl">
-          {text.intro}
-        </p>
-        <ol className="border-brand-teal/40 relative mt-12 space-y-10 border-dashed ltr:ml-4 ltr:border-l-2 ltr:pl-8 rtl:mr-4 rtl:border-r-2 rtl:pr-8">
-          {text.sections.map((section, index) => (
-            <li key={section.heading} className="relative">
-              <span
-                aria-hidden="true"
-                className="bg-brand-teal shadow-brand-teal/30 absolute grid h-9 w-9 place-items-center rounded-full text-sm font-bold text-white shadow-lg ltr:-left-[3.05rem] rtl:-right-[3.05rem]"
-              >
-                {index + 1}
-              </span>
-              <h2 className="text-brand-teal text-xl font-semibold md:text-2xl">
+        {/* the text as on /a-propos/: dark text on white, a bold heading then its paragraph */}
+        <div className="text-[#101a36]">
+          <p className="mt-12 text-lg leading-[1.65] font-semibold">{text.intro}</p>
+          {text.sections.map((section) => (
+            <section key={section.heading} className="mt-10">
+              <h2 className="mb-2.5 text-[1.75rem] leading-tight font-extrabold">
                 {section.heading}
               </h2>
-              <p className="text-muted-foreground mt-2 text-base leading-relaxed md:text-lg">
-                {section.text}
-              </p>
-            </li>
+              <p className="leading-[1.65]">{section.text}</p>
+            </section>
           ))}
-        </ol>
-
-        {/* the next step for each reader: a client, a professional or a partner */}
-        <div className="from-brand-navy to-brand-blue mt-14 flex flex-col gap-3 rounded-3xl bg-gradient-to-br p-6 text-white shadow-xl sm:flex-row sm:flex-wrap sm:items-center md:p-8">
-          <p className="text-lg font-extrabold sm:me-auto">{t('landing.pressNext')}</p>
-          <Link
-            href={localizePath(locale, '/recherche')}
-            className="text-brand-blue inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold shadow-lg transition-transform hover:scale-[1.03]"
-          >
-            {t('landing.pressCtaFind')}
-            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-          </Link>
-          <a
-            href={APP_REGISTER_URL}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-white/15 px-5 py-2.5 text-sm font-bold ring-1 ring-white/40 transition-colors hover:bg-white/25"
-          >
-            {t('landing.searchProCta')}
-          </a>
-          <Link
-            href={localizePath(locale, '/devenir-partenaire')}
-            className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold underline-offset-4 hover:underline"
-          >
-            {t('landing.pressCtaPartner')}
-          </Link>
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+        {/* back to all news, and on to the next one (after the last, the first) */}
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-4">
           <Link
             href={localizePath(locale, '/actualites')}
             className="text-brand-blue inline-flex items-center gap-2 text-sm font-bold hover:underline"
@@ -143,28 +126,13 @@ export function PressArticle({ slug }: { slug: string }) {
             <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
             {t('landing.pressAll')}
           </Link>
-          {item.website && (
-            <a
-              href={item.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-blue ring-brand-blue/30 hover:bg-brand-blue/5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold ring-1 transition-colors"
-            >
-              {t('landing.pressWebsite')}
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          )}
-          {item.linkedin && (
-            <a
-              href={item.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-brand-blue hover:bg-brand-navy inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-lg transition-colors"
-            >
-              {t('landing.pressLinkedin')}
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          )}
+          <Link
+            href={localizePath(locale, `/actualites/${nextItem.slug}`)}
+            className="bg-brand-blue hover:bg-brand-navy inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-lg transition-colors"
+          >
+            {t('landing.pressNextArticle')}
+            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+          </Link>
         </div>
       </article>
     </main>

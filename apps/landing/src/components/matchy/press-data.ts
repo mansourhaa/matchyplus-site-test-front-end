@@ -38,9 +38,9 @@ export type PressItem = {
   cover?: string;
   /** Optional YouTube link (watch, youtu.be or shorts link): the article shows the video. */
   video?: string;
-  /** Optional link to the original LinkedIn post: the article shows a "Voir sur LinkedIn" button. */
+  /** Optional link to the original LinkedIn post (the source; not shown on the site since 24 Nov 2026). */
   linkedin?: string;
-  /** Optional official page (programme, show…): the article shows a "Visiter le site officiel" button. */
+  /** Optional official page: programme, show… (the source; not shown on the site since 24 Nov 2026). */
   website?: string;
   /** Example content: labelled on the site and kept out of Google. */
   sample: boolean;
@@ -49,7 +49,7 @@ export type PressItem = {
 
 /**
  * Texts: "Articles storytelling V4" from Matchy+ (French), translated for /en/ and /ar/.
- * Dates marked "à confirmer" in that file are shown as the year only. Every article ends with
+ * Dates confirmed by Matchy+ on 24 Nov 2026; an unconfirmed date is written as the year only. Every article ends with
  * the same 3 buttons: find a professional, create a free profile, propose a collaboration.
  */
 export const PRESS_ITEMS: PressItem[] = [
@@ -163,7 +163,7 @@ export const PRESS_ITEMS: PressItem[] = [
   },
   {
     slug: 'matchy-plus-afrique-innovante-2026',
-    date: '2026',
+    date: '2026-05-29',
     cover: '/matchy/press/afrique-innovante-2026-randa-touati.webp',
     website:
       'https://cpccaf.org/programme-et-appel-a-projet/appel-a-candidatures-2026-afrique-innovante-recrute-500-projets-feminins-a-fort-potentiel/',
@@ -272,7 +272,7 @@ export const PRESS_ITEMS: PressItem[] = [
   },
   {
     slug: 'matchy-plus-express-fm-mundo-design',
-    date: '2026',
+    date: '2026-06-01',
     cover: '/matchy/press/express-fm-mundo-design.webp',
     video: 'https://www.youtube.com/watch?v=8IjW794Bv4c',
     sample: false,
@@ -373,209 +373,6 @@ export const PRESS_ITEMS: PressItem[] = [
           {
             heading: 'وماذا بعد؟',
             text: 'يذكّرنا هذا الحضور على Express FM بأن أكثر الحلول فائدة تبدأ غالبًا بسؤال بسيط جدًا: كيف نجعل حياة المستخدم أسهل قليلًا؟ وبالنسبة إلى Matchy+\u200E، تُبنى الإجابة كل يوم عند تقاطع التصميم والتكنولوجيا والمواهب المحلية.',
-          },
-        ],
-      },
-    },
-  },
-  {
-    slug: 'matchy-plus-founder-circle-female-founders-tribe',
-    date: '2026',
-    website: 'https://femalefounderstribe.org/',
-    sample: false,
-    text: {
-      fr: {
-        tag: 'Réseau',
-        title:
-          'Matchy+ rejoint le Founder Circle : de nouvelles connexions, de plus grandes ambitions',
-        place: 'Afrique',
-        summary:
-          'En rejoignant le Founder Circle de Female Founders Tribe, Matchy+ entre dans une communauté panafricaine où les expériences se partagent et les ambitions grandissent ensemble.',
-        intro:
-          'Construire une startup est une aventure faite d’idées, de tests, de remises en question et de rencontres décisives. En rejoignant officiellement le Founder Circle de Female Founders Tribe, Matchy+ entre dans une communauté panafricaine où les expériences se partagent, les connexions se créent et les ambitions peuvent grandir ensemble.',
-        sections: [
-          {
-            heading: 'Plus qu’un réseau, un espace pour avancer ensemble',
-            text: 'Rejoindre une communauté de fondatrices à travers l’Afrique, c’est pouvoir échanger avec des personnes qui connaissent les réalités de la construction d’une entreprise. Les conversations deviennent des sources d’apprentissage, les retours d’expérience permettent d’éviter certaines erreurs et les rencontres peuvent faire naître des collaborations inattendues.',
-          },
-          {
-            heading: 'Partager une vision née en Tunisie',
-            text: 'Matchy+ apporte à ce cercle une vision claire : faciliter l’accès aux services locaux et donner davantage de visibilité aux compétences. Cette mission, née de besoins observés en Tunisie, trouve un écho dans de nombreux marchés africains où les professionnels de proximité jouent un rôle essentiel dans l’économie quotidienne.',
-          },
-          {
-            heading: 'Apprendre pour mieux s’adapter',
-            text: 'Grandir en Afrique demande de comprendre plusieurs langues, usages, territoires et niveaux d’accès au numérique. Le Founder Circle représente une occasion précieuse de confronter les idées, d’écouter d’autres expériences et de renforcer une approche pensée pour s’adapter sans perdre son identité.',
-          },
-          {
-            heading: 'Créer des opportunités qui comptent',
-            text: 'Pour Matchy+, cette nouvelle étape ouvre la porte à des échanges avec des fondatrices, partenaires, opérateurs et investisseurs engagés dans le développement du continent. L’objectif reste concret : créer des connexions utiles, développer des collaborations et faire grandir les opportunités accessibles aux professionnels locaux.',
-          },
-          {
-            heading: 'Et maintenant ?',
-            text: 'Nouvelles connexions. Nouvelles opportunités. Ambitions plus grandes. Matchy+ rejoint le Founder Circle avec enthousiasme et avec l’envie de contribuer pleinement à cet écosystème panafricain en mouvement.',
-          },
-        ],
-      },
-      en: {
-        tag: 'Network',
-        title: 'Matchy+ joins the Founder Circle: new connections, bigger ambitions',
-        place: 'Africa',
-        summary:
-          'By joining the Female Founders Tribe Founder Circle, Matchy+ enters a pan-African community where experiences are shared and ambitions grow together.',
-        intro:
-          'Building a startup is an adventure made of ideas, tests, rethinking and decisive encounters. By officially joining the Female Founders Tribe Founder Circle, Matchy+ enters a pan-African community where experiences are shared, connections are made and ambitions can grow together.',
-        sections: [
-          {
-            heading: 'More than a network: a space to move forward together',
-            text: 'Joining a community of women founders across Africa means exchanging with people who know the realities of building a company. Conversations become sources of learning, shared experience helps avoid some mistakes, and encounters can spark unexpected collaborations.',
-          },
-          {
-            heading: 'Sharing a vision born in Tunisia',
-            text: 'Matchy+ brings a clear vision to this circle: making local services easier to access and giving skills more visibility. This mission, born from needs observed in Tunisia, resonates in many African markets where local professionals play an essential role in the everyday economy.',
-          },
-          {
-            heading: 'Learning to adapt better',
-            text: 'Growing in Africa means understanding many languages, habits, territories and levels of digital access. The Founder Circle is a valuable opportunity to test ideas, listen to other experiences and strengthen an approach designed to adapt without losing its identity.',
-          },
-          {
-            heading: 'Creating opportunities that matter',
-            text: 'For Matchy+, this new step opens the door to exchanges with founders, partners, operators and investors committed to the continent’s development. The goal stays concrete: creating useful connections, developing collaborations and growing the opportunities available to local professionals.',
-          },
-          {
-            heading: 'What’s next?',
-            text: 'New connections. New opportunities. Bigger ambitions. Matchy+ joins the Founder Circle with enthusiasm and a wish to contribute fully to this pan-African ecosystem on the move.',
-          },
-        ],
-      },
-      ar: {
-        tag: 'شبكة',
-        title: 'Matchy+\u200E تنضمّ إلى Founder Circle: روابط جديدة وطموحات أكبر',
-        place: 'إفريقيا',
-        summary:
-          'بانضمامها إلى Founder Circle التابع لـ Female Founders Tribe، تدخل Matchy+\u200E مجتمعًا إفريقيًا تُتقاسم فيه التجارب وتكبر فيه الطموحات معًا.',
-        intro:
-          'بناء شركة ناشئة مغامرة مليئة بالأفكار والتجارب والمراجعات واللقاءات الحاسمة. وبانضمامها رسميًا إلى Founder Circle التابع لـ Female Founders Tribe، تدخل Matchy+\u200E مجتمعًا إفريقيًا تُتقاسم فيه التجارب وتُنسج فيه الروابط ويمكن للطموحات أن تكبر معًا.',
-        sections: [
-          {
-            heading: 'أكثر من شبكة: فضاء للتقدّم معًا',
-            text: 'الانضمام إلى مجتمع من المؤسسات عبر إفريقيا يعني التبادل مع أشخاص يعرفون واقع بناء شركة. تصبح المحادثات مصادر للتعلّم، وتساعد التجارب المشتركة على تجنّب بعض الأخطاء، ويمكن للقاءات أن تُطلق شراكات غير متوقعة.',
-          },
-          {
-            heading: 'تقاسم رؤية وُلدت في تونس',
-            text: 'تحمل Matchy+\u200E إلى هذه الدائرة رؤية واضحة: تسهيل الوصول إلى الخدمات المحلية ومنح الكفاءات مزيدًا من الظهور. وتجد هذه المهمة، التي وُلدت من احتياجات لوحظت في تونس، صدى في أسواق إفريقية عديدة يؤدّي فيها مهنيّو القرب دورًا أساسيًا في الاقتصاد اليومي.',
-          },
-          {
-            heading: 'التعلّم للتكيّف بشكل أفضل',
-            text: 'يتطلّب النمو في إفريقيا فهم لغات وعادات ومناطق ومستويات نفاذ رقمي متعددة. ويمثّل Founder Circle فرصة ثمينة لمقارنة الأفكار والإصغاء إلى تجارب أخرى وتعزيز مقاربة مصمّمة للتكيّف دون فقدان الهوية.',
-          },
-          {
-            heading: 'خلق فرص ذات قيمة',
-            text: 'بالنسبة إلى Matchy+\u200E، تفتح هذه المرحلة الجديدة الباب أمام تبادلات مع مؤسسات وشركاء ومشغّلين ومستثمرين ملتزمين بتنمية القارة. ويبقى الهدف ملموسًا: خلق روابط مفيدة وتطوير الشراكات وتنمية الفرص المتاحة للمهنيين المحليين.',
-          },
-          {
-            heading: 'وماذا بعد؟',
-            text: 'روابط جديدة. فرص جديدة. طموحات أكبر. تنضمّ Matchy+\u200E إلى Founder Circle بحماس ورغبة في المساهمة الكاملة في هذه المنظومة الإفريقية المتحرّكة.',
-          },
-        ],
-      },
-    },
-  },
-  {
-    slug: 'matchy-plus-meetup-pro-2026-startup-corporate',
-    date: '2026',
-    website: 'https://www.linkedin.com/company/meetup-pro/',
-    sample: false,
-    text: {
-      fr: {
-        tag: 'Événement',
-        title: 'À Meetup Pro 2026, Matchy+ ouvre le dialogue entre startups et entreprises',
-        place: 'Sousse',
-        summary:
-          'À Meetup Pro 2026, Matchy+ a pris part à un échange sur une question clé : comment startups et grandes entreprises peuvent-elles unir leurs forces pour créer plus de valeur et d’impact ?',
-        intro:
-          'Les collaborations les plus prometteuses commencent souvent par une conversation sincère. À l’édition 2026 de Meetup Pro, Matchy+ a pris part à un échange vivant autour d’une question qui concerne tout l’écosystème : comment les startups et les grandes entreprises peuvent-elles unir leurs forces pour créer davantage de valeur et d’impact ?',
-        sections: [
-          {
-            heading: 'Deux mondes, une même envie d’avancer',
-            text: 'Les startups avancent vite, testent et s’adaptent. Les grandes entreprises disposent d’une expérience sectorielle, de ressources et d’une capacité de déploiement. Lorsque ces forces se rencontrent autour d’un besoin concret, une collaboration peut aller bien au-delà d’un simple partenariat : elle peut ouvrir un nouveau service, améliorer une expérience ou créer des opportunités locales.',
-          },
-          {
-            heading: 'La vision portée par Matchy+',
-            text: 'Matchy+ construit une plateforme où particuliers, entreprises et professionnels locaux peuvent se rencontrer plus facilement. Pour une entreprise, cela peut signifier identifier des prestataires pour la maintenance, le transport, l’événementiel ou les services aux collaborateurs. Pour un professionnel, cela signifie devenir plus visible et accéder à de nouvelles demandes.',
-          },
-          {
-            heading: 'Commencer petit pour construire durablement',
-            text: 'Une collaboration réussie n’a pas besoin de commencer par un projet complexe. Elle peut débuter par un pilote limité à un service, une zone géographique ou une population cible. Les résultats sont ensuite observés, les retours intégrés et le dispositif amélioré avant de passer à une échelle plus large.',
-          },
-          {
-            heading: 'Une rencontre qui appelle la suite',
-            text: 'Meetup Pro 2026 a offert à Matchy+ un espace pour écouter, partager et imaginer de nouveaux cas d’usage avec les acteurs de l’écosystème. L’énergie de ces échanges renforce une conviction : l’innovation devient vraiment utile lorsqu’elle réunit les bonnes personnes autour d’un objectif commun.',
-          },
-          {
-            heading: 'Et maintenant ?',
-            text: 'Matchy+ repart de cette rencontre avec de nouvelles idées, une envie renouvelée de collaborer et une invitation ouverte aux entreprises, institutions, incubateurs et réseaux qui souhaitent expérimenter des solutions autour des services locaux et de la visibilité des compétences.',
-          },
-        ],
-      },
-      en: {
-        tag: 'Event',
-        title: 'At Meetup Pro 2026, Matchy+ opens the dialogue between startups and corporates',
-        place: 'Sousse',
-        summary:
-          'At Meetup Pro 2026, Matchy+ joined a discussion on a key question: how can startups and large companies join forces to create more value and impact?',
-        intro:
-          'The most promising collaborations often start with an honest conversation. At the 2026 edition of Meetup Pro, Matchy+ took part in a lively discussion about a question that concerns the whole ecosystem: how can startups and large companies join forces to create more value and impact?',
-        sections: [
-          {
-            heading: 'Two worlds, one same drive to move forward',
-            text: 'Startups move fast, test and adapt. Large companies bring sector experience, resources and the ability to scale. When these strengths meet around a concrete need, a collaboration can go far beyond a simple partnership: it can open a new service, improve an experience or create local opportunities.',
-          },
-          {
-            heading: 'The vision Matchy+ carries',
-            text: 'Matchy+ is building a platform where individuals, businesses and local professionals can meet more easily. For a company, that can mean finding providers for maintenance, transport, events or employee services. For a professional, it means becoming more visible and reaching new requests.',
-          },
-          {
-            heading: 'Starting small to build for the long term',
-            text: 'A successful collaboration does not need to start with a complex project. It can begin with a pilot limited to one service, one area or one target group. Results are then observed, feedback is built in and the setup is improved before scaling up.',
-          },
-          {
-            heading: 'An encounter that calls for more',
-            text: 'Meetup Pro 2026 gave Matchy+ a space to listen, share and imagine new use cases with players in the ecosystem. The energy of these exchanges strengthens a conviction: innovation becomes truly useful when it brings the right people together around a common goal.',
-          },
-          {
-            heading: 'What’s next?',
-            text: 'Matchy+ leaves this event with new ideas, a renewed wish to collaborate and an open invitation to companies, institutions, incubators and networks that want to experiment with solutions around local services and the visibility of skills.',
-          },
-        ],
-      },
-      ar: {
-        tag: 'فعالية',
-        title: 'في Meetup Pro 2026، تفتح Matchy+\u200E الحوار بين الشركات الناشئة والشركات الكبرى',
-        place: 'سوسة',
-        summary:
-          'في Meetup Pro 2026، شاركت Matchy+\u200E في نقاش حول سؤال محوري: كيف يمكن للشركات الناشئة والشركات الكبرى أن توحّد جهودها لخلق قيمة وأثر أكبر؟',
-        intro:
-          'غالبًا ما تبدأ أكثر الشراكات الواعدة بحوار صادق. في دورة 2026 من Meetup Pro، شاركت Matchy+\u200E في نقاش حيّ حول سؤال يهمّ المنظومة بأكملها: كيف يمكن للشركات الناشئة والشركات الكبرى أن توحّد جهودها لخلق قيمة وأثر أكبر؟',
-        sections: [
-          {
-            heading: 'عالمان ورغبة واحدة في التقدّم',
-            text: 'تتقدّم الشركات الناشئة بسرعة، وتجرّب وتتكيّف. وتمتلك الشركات الكبرى خبرة قطاعية وموارد وقدرة على التوسّع. وعندما تلتقي هذه القوى حول حاجة ملموسة، يمكن للتعاون أن يتجاوز مجرد شراكة: قد يفتح خدمة جديدة أو يحسّن تجربة أو يخلق فرصًا محلية.',
-          },
-          {
-            heading: 'الرؤية التي تحملها Matchy+\u200E',
-            text: 'تبني Matchy+\u200E منصة يمكن فيها للأفراد والشركات والمهنيين المحليين أن يلتقوا بسهولة أكبر. بالنسبة إلى شركة، قد يعني ذلك إيجاد مقدّمي خدمات للصيانة أو النقل أو الفعاليات أو خدمات الموظفين. وبالنسبة إلى مهني، يعني ذلك أن يصبح أكثر ظهورًا وأن يصل إلى طلبات جديدة.',
-          },
-          {
-            heading: 'البدء صغيرًا للبناء على المدى الطويل',
-            text: 'لا يحتاج التعاون الناجح إلى أن يبدأ بمشروع معقّد. يمكن أن ينطلق بتجربة محدودة بخدمة واحدة أو منطقة جغرافية أو فئة مستهدفة. ثم تُرصد النتائج وتُدمج الملاحظات ويُحسَّن النظام قبل الانتقال إلى نطاق أوسع.',
-          },
-          {
-            heading: 'لقاء يدعو إلى المتابعة',
-            text: 'وفّر Meetup Pro 2026 لـ Matchy+\u200E فضاءً للإصغاء والتبادل وتخيّل حالات استخدام جديدة مع فاعلي المنظومة. وتعزّز طاقة هذه التبادلات قناعة راسخة: يصبح الابتكار مفيدًا حقًا عندما يجمع الأشخاص المناسبين حول هدف مشترك.',
-          },
-          {
-            heading: 'وماذا بعد؟',
-            text: 'تخرج Matchy+\u200E من هذا اللقاء بأفكار جديدة، ورغبة متجدّدة في التعاون، ودعوة مفتوحة إلى الشركات والمؤسسات والحاضنات والشبكات التي تريد تجربة حلول حول الخدمات المحلية وإبراز الكفاءات.',
           },
         ],
       },

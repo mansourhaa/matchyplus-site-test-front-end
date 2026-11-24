@@ -115,8 +115,6 @@ export const messages: Record<Locale, MessageTree> = {
       storyPhotoAlt: 'Logo Matchy+',
       storyQuote:
         '« Chaque compétence mérite d’être visible. Matchy+ rapproche les talents locaux des particuliers et des entreprises qui ont besoin de leur savoir-faire. »',
-      storyBody:
-        'De l’enseignement à la gestion de projets web chez Dot-IT, puis à l’aventure entrepreneuriale de Matchy+ : Randa Touati a fait de chaque étape une façon de transformer les défis en opportunités.',
       storyName: 'Randa Touati',
       storyRole: 'Cofondatrice de Matchy+',
       storyLink: 'Découvrir notre histoire',
@@ -125,14 +123,10 @@ export const messages: Record<Locale, MessageTree> = {
       pressSubtitle:
         'Découvrez les programmes, interventions médiatiques et initiatives qui accompagnent le développement de Matchy+ en Tunisie et en Afrique.',
       pressAll: 'Toutes les actualités',
+      pressNextArticle: 'Article suivant',
       pressSample: 'Exemple',
-      pressPageTitle: 'Actualités',
+      pressPageTitle: 'Matchy+® press',
       pressVideo: 'Vidéo : {title}',
-      pressLinkedin: 'Voir la publication sur LinkedIn',
-      pressNext: 'Et vous, que cherchez-vous ?',
-      pressCtaFind: 'Trouver un professionnel',
-      pressCtaPartner: 'Proposer une collaboration',
-      pressWebsite: 'Visiter le site officiel',
       ourPartnersTitle: 'Nos partenaires et écosystèmes',
       partnersTitle: 'Ils avancent avec Matchy+',
       partnersBody:
@@ -656,8 +650,6 @@ export const messages: Record<Locale, MessageTree> = {
       storyPhotoAlt: 'Matchy+ logo',
       storyQuote:
         '“Every skill deserves to be seen. Matchy+ brings local talent closer to the individuals and businesses who need their know-how.”',
-      storyBody:
-        'From teaching, to managing web projects at Dot-IT, to the entrepreneurial adventure of Matchy+: Randa Touati has made each step a way to turn challenges into opportunities.',
       storyName: 'Randa Touati',
       storyRole: 'Co-founder of Matchy+',
       storyLink: 'Discover our story',
@@ -666,14 +658,10 @@ export const messages: Record<Locale, MessageTree> = {
       pressSubtitle:
         'Discover the programmes, media appearances and initiatives supporting the growth of Matchy+ in Tunisia and Africa.',
       pressAll: 'All news',
+      pressNextArticle: 'Next article',
       pressSample: 'Sample',
-      pressPageTitle: 'News',
+      pressPageTitle: 'Matchy+® Press',
       pressVideo: 'Video: {title}',
-      pressLinkedin: 'View the post on LinkedIn',
-      pressNext: 'What are you looking for?',
-      pressCtaFind: 'Find a professional',
-      pressCtaPartner: 'Propose a collaboration',
-      pressWebsite: 'Visit the official website',
       ourPartnersTitle: 'Our partners and ecosystems',
       partnersTitle: 'Growing together with Matchy+',
       partnersBody:
@@ -1179,8 +1167,6 @@ export const messages: Record<Locale, MessageTree> = {
       storyPhotoAlt: 'شعار Matchy+\u200E',
       storyQuote:
         '«كل كفاءة تستحق أن تُرى. تقرّب Matchy+\u200E المواهب المحلية من الأفراد والشركات الذين يحتاجون إلى مهاراتهم.»',
-      storyBody:
-        'من التعليم إلى إدارة مشاريع الويب في Dot-IT، ثم إلى مغامرة Matchy+\u200E الريادية: جعلت رندة التواتي من كل مرحلة طريقة لتحويل التحديات إلى فرص.',
       storyName: 'رندة التواتي',
       storyRole: 'الشريكة المؤسسة لـ Matchy+\u200E',
       storyLink: 'اكتشف قصتنا',
@@ -1189,14 +1175,10 @@ export const messages: Record<Locale, MessageTree> = {
       pressSubtitle:
         'اكتشف البرامج والظهور الإعلامي والمبادرات التي ترافق تطوّر Matchy+\u200E في تونس وإفريقيا.',
       pressAll: 'كل الأخبار',
+      pressNextArticle: 'المقال التالي',
       pressSample: 'مثال',
-      pressPageTitle: 'الأخبار',
+      pressPageTitle: 'أخبار Matchy+®\u200E',
       pressVideo: 'فيديو: {title}',
-      pressLinkedin: 'عرض المنشور على LinkedIn',
-      pressNext: 'وأنت، عمّ تبحث؟',
-      pressCtaFind: 'ابحث عن مهني',
-      pressCtaPartner: 'اقترح شراكة',
-      pressWebsite: 'زيارة الموقع الرسمي',
       ourPartnersTitle: 'شركاؤنا ومنظوماتنا',
       partnersTitle: 'يتقدّمون مع Matchy+\u200E',
       partnersBody: 'شركات وجمعيات وعلامات محلية: لنبنِ معًا شبكة خدمات موثوقة.',

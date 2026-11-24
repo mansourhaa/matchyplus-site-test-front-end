@@ -91,6 +91,24 @@ describe('pressDate', () => {
     expect(pressDateValue('2026').toISOString()).toBe('2026-01-01T12:00:00.000Z');
   });
 
+  it('shows the confirmed days of the news, newest first', () => {
+    // Female Founders Tribe and Meetup Pro were removed (24 Nov 2026)
+    expect(PRESS_ITEMS).toHaveLength(3);
+    const date = (slug: string) => pressDate(pressItem(slug)?.date ?? '', 'fr').full;
+    expect(date('matchy-plus-al-wataniya-1-jil-al-mostakbal')).toBe('22 nov. 2026');
+    expect(date('matchy-plus-afrique-innovante-2026')).toBe('29 mai 2026');
+    expect(date('matchy-plus-express-fm-mundo-design')).toBe('1 juin 2026');
+    expect(
+      pressItems()
+        .slice(0, 3)
+        .map((item) => item.slug),
+    ).toEqual([
+      'matchy-plus-al-wataniya-1-jil-al-mostakbal',
+      'matchy-plus-express-fm-mundo-design',
+      'matchy-plus-afrique-innovante-2026',
+    ]);
+  });
+
   it('shows a year-only date as the year alone', () => {
     expect(pressDate('2026', 'fr')).toEqual({ top: '', big: '2026', full: '2026' });
     expect(pressDate('2026', 'ar').full).toBe(pressDate('2026', 'fr').full);

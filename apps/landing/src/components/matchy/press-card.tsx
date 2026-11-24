@@ -97,10 +97,9 @@ export function PressCard({
             item.cover && 'mt-auto',
           )}
         >
-          <span className="bg-brand-teal h-1.5 w-1.5 rounded-full" />
           {text.place}
         </p>
-        <p className="relative mt-3 flex items-center justify-between border-t border-white/25 pt-2 text-xs">
+        <p className="relative mt-2 flex items-center justify-between text-xs">
           {/* dir="ltr": in Arabic the "+" would jump before the name */}
           <span dir="ltr" className="font-bold">
             Matchy+
