@@ -49,7 +49,8 @@ export type PressItem = {
 
 /**
  * Texts: "Articles storytelling V4" from Matchy+ (French), translated for /en/ and /ar/.
- * Dates marked "à confirmer" in that file are shown as the year only. Every article ends with
+ * Dates marked "à confirmer" in that file are shown as the year only, until Matchy+ confirms
+ * them (Afrique Innovante 5 June and Express FM 1 June 2026 were confirmed on 24 Nov 2026). Every article ends with
  * the same 3 buttons: find a professional, create a free profile, propose a collaboration.
  */
 export const PRESS_ITEMS: PressItem[] = [
@@ -163,7 +164,7 @@ export const PRESS_ITEMS: PressItem[] = [
   },
   {
     slug: 'matchy-plus-afrique-innovante-2026',
-    date: '2026',
+    date: '2026-06-05',
     cover: '/matchy/press/afrique-innovante-2026-randa-touati.webp',
     website:
       'https://cpccaf.org/programme-et-appel-a-projet/appel-a-candidatures-2026-afrique-innovante-recrute-500-projets-feminins-a-fort-potentiel/',
@@ -272,7 +273,7 @@ export const PRESS_ITEMS: PressItem[] = [
   },
   {
     slug: 'matchy-plus-express-fm-mundo-design',
-    date: '2026',
+    date: '2026-06-01',
     cover: '/matchy/press/express-fm-mundo-design.webp',
     video: 'https://www.youtube.com/watch?v=8IjW794Bv4c',
     sample: false,

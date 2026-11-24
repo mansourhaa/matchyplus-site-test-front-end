@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **165 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **166 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -210,9 +210,10 @@ smaller benefit.
   set photo on the card, replay video in the article), Afrique Innovante 2026 (photo of Randa
   Touati presented for Tunisia), Express FM Mundo Design (studio photo on the card, YouTube
   video in the article), Female
-  Founders Tribe Founder Circle, Meetup Pro 2026. The kit marks 4 dates "à confirmer": they show
-  **the year only** (`date: '2026'`), never an invented day. When a date is confirmed, write it
-  `YYYY-MM-DD`.
+  Founders Tribe Founder Circle, Meetup Pro 2026. Confirmed dates: Al Wataniya 1 on 22 Nov 2026, Afrique Innovante on 5 June 2026, Express FM
+  on 1 June 2026. Female Founders Tribe and Meetup Pro are still "à confirmer" in the kit: they
+  show **the year only** (`date: '2026'`), never an invented day. When a date is confirmed,
+  write it `YYYY-MM-DD`.
 - **Article layout** (`press-pages.tsx`): like /a-propos/: dark text (`#101a36`) on white, the
   intro in semi-bold, then each section as a bold heading and its paragraph. The story page uses
   the same look.
