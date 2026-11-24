@@ -12,18 +12,8 @@ import { PageFrame } from '@/components/site-shell';
 import { isLocale } from '@/features/i18n/routing';
 import { homeJsonLd, localizedMetadata } from '@/lib/seo';
 import { notFound } from 'next/navigation';
-import Script from 'next/script';
 
 export const generateMetadata = localizedMetadata('home');
-
-// Configurable Gabster AI chatbot loader widget.
-// Falls back to the production Gabster widget unless disabled via NEXT_PUBLIC_DISABLE_CHATBOT.
-const CHATBOT_WIDGET_SRC =
-  process.env.NEXT_PUBLIC_CHATBOT_WIDGET_SRC ||
-  (process.env.NEXT_PUBLIC_GABSTER_CBID
-    ? `https://widget.gabster.ai/loader?cbid=${process.env.NEXT_PUBLIC_GABSTER_CBID}`
-    : 'https://widget.gabster.ai/loader?cbid=6ad89dd9d8227d15b7ec3813');
-const DISABLE_CHATBOT = process.env.NEXT_PUBLIC_DISABLE_CHATBOT === 'true';
 
 export default async function Page({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
@@ -50,14 +40,6 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
           <PartnerLogos />
         </ReducedMotion>
       </main>
-      {!DISABLE_CHATBOT && CHATBOT_WIDGET_SRC && (
-        <Script
-          data-gabster-widget=""
-          src={CHATBOT_WIDGET_SRC}
-          data-embed-type="widget"
-          strategy="lazyOnload"
-        />
-      )}
     </PageFrame>
   );
 }
