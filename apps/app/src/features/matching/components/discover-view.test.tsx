@@ -161,6 +161,16 @@ describe('DiscoverView — Upgraded Filter System', () => {
       expect(filtresBtn).toHaveTextContent('Filtres');
     });
 
+    it('keeps the chips on one row that scrolls on mobile, with « Filtres » outside it', async () => {
+      renderDiscoverView();
+
+      const chips = await screen.findByTestId('discover-sector-chips');
+      expect(chips.className).toContain('overflow-x-auto');
+      expect(chips.className).toContain('md:contents');
+      expect(within(chips).getByTestId('sector-pill-for-you')).toBeInTheDocument();
+      expect(within(chips).queryByTestId('discover-filters-trigger-btn')).not.toBeInTheDocument();
+    });
+
     it('filters swipe feed when a sector chip is clicked and displays active chip', async () => {
       renderDiscoverView();
 
