@@ -47,7 +47,10 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} dir={localeDir(lang)}>
-      <body className={`${baloo.variable} ${cairo.variable} ${baloo.className}`}>
+      {/* only the font variables here: globals.css picks Baloo 2 (fr/en) or Cairo (ar, dir="rtl").
+          A next/font className here would win over that rule (Tailwind's layers) and leave the
+          Arabic pages in a system font, since Baloo 2 has no Arabic letters. */}
+      <body className={`${baloo.variable} ${cairo.variable}`}>
         {/* Google Tag Manager (gtm.js) */}
         <Script
           id="gtm-script"
