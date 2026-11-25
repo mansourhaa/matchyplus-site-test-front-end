@@ -57,7 +57,8 @@ export const PRESS_ITEMS: PressItem[] = [
     slug: 'matchy-plus-al-wataniya-1-jil-al-mostakbal',
     date: '2026-11-22',
     cover: '/matchy/press/al-wataniya-1-plateau-v2.webp',
-    video: 'https://www.youtube.com/watch?v=Nk3_BD6rfTQ',
+    // the video on the Matchy+ YouTube channel (25 Nov 2026)
+    video: 'https://www.youtube.com/watch?v=lsoz7VXc5ok',
     linkedin: 'https://www.linkedin.com/feed/update/urn:li:activity:7526032162060521472/',
     sample: false,
     text: {
@@ -274,7 +275,8 @@ export const PRESS_ITEMS: PressItem[] = [
     slug: 'matchy-plus-express-fm-mundo-design',
     date: '2026-06-01',
     cover: '/matchy/press/express-fm-mundo-design.webp',
-    video: 'https://www.youtube.com/watch?v=8IjW794Bv4c',
+    // the video on the Matchy+ YouTube channel (25 Nov 2026)
+    video: 'https://www.youtube.com/watch?v=MPJXj0HWO7A',
     sample: false,
     text: {
       fr: {

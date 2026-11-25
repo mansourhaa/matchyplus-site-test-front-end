@@ -413,8 +413,8 @@ describe('Matchy+ Press and partners', () => {
 
   it('the Al Wataniya 1 and Express FM articles play their replay', () => {
     for (const [slug, id] of [
-      ['matchy-plus-al-wataniya-1-jil-al-mostakbal', 'Nk3_BD6rfTQ'],
-      ['matchy-plus-express-fm-mundo-design', '8IjW794Bv4c'],
+      ['matchy-plus-al-wataniya-1-jil-al-mostakbal', 'lsoz7VXc5ok'],
+      ['matchy-plus-express-fm-mundo-design', 'MPJXj0HWO7A'],
     ]) {
       const { container, unmount } = renderIn('fr', <PressArticle slug={slug} />);
       expect(container.querySelector('iframe')).toHaveAttribute(

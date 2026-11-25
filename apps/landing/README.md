@@ -237,7 +237,8 @@ smaller benefit.
 - **End of an article:** "Toutes les actualités" and "Article suivant →" (the next item, newest
   first; after the last one, the first). Since 24 Nov 2026 the source buttons (LinkedIn,
   official site) and the block of 3 next-step buttons are gone; `linkedin` and `website` stay in
-  the data as the sources. The embedded video stays.
+  the data as the sources. The embedded video stays: since 25 Nov 2026 both videos (Al Wataniya 1:
+  `lsoz7VXc5ok`, Express FM: `MPJXj0HWO7A`) are the ones on the Matchy+ YouTube channel.
 - **Card** (`press-card.tsx`, same on the home page and on `/actualites/`): date badge, tag,
   place and a Matchy+ footer on the cover (no dot, no dividing line), then the title (shown once, under the cover). Without
   a cover image the card uses a brand gradient with the Matchy+ logo. An item with a video shows
