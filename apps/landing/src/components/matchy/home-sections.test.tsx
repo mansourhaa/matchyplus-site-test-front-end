@@ -54,7 +54,7 @@ const NEW_KEYS = [
   'searchTabBusiness',
   'searchMember',
   'resultsTitle',
-  'resultsNear',
+  'resultsCountLabel',
   'resultsSearching',
   'resultsCta',
   'whyTitle',

@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **167 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **175 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -99,12 +99,24 @@ them, each a `<nav>` with its links:
   which then leads to sign-up with the search in the URL.
 - **Under the search:** a second button "Créer mon profil gratuitement" (sign-up) and the
   reassurance line (proximity, profiles and skills, direct contact, individuals and businesses).
-- **Results page** (`app/[lang]/recherche/`, `search-results.tsx`, `search-results-data.ts`): the
-  site's blue sub-page band with "Trouvez le bon professionnel pour votre besoin", the search
-  (service, city or "Près de chez vous") and a "Créer mon compte gratuit" button to the app's
-  sign-up page (`buildSearchUrl` adds `service` and `ville`). **No count**: the content brief
-  allows only sourced figures, so a number comes back only with a real search API. The page is
-  `noindex` and stays out of the sitemap.
+- **Results page** (`app/[lang]/recherche/`, `search-results.tsx`, `search-form.tsx`,
+  `search-results-data.ts`), redone on 25 Nov 2026 as a real results page, not a copy of the
+  home hero: a slim blue band with the **search bar** (the same `SearchForm` as the hero, filled
+  with the corrected search, editable), then on white, centred like a "quick start" screen: the
+  **number of pros, very large** ("35", brand gradient, soft dot pattern behind it), the sentence
+  under it ("plombiers disponibles à Sousse"), one line, and **one big "Créer mon compte gratuit"
+  button**. An unknown search shows the usual title, no number. The sign-up link carries the
+  corrected search (`buildSearchUrl`). The page
+  is `noindex` and stays out of the sitemap.
+  - **Count** (`search-counts.ts`, 25 Nov 2026): "**35** plombiers disponibles à Sousse", the page
+    title. The service and the city are recognised despite typos, accents and case ("pombire",
+    "souse" → Plombier, Sousse; fr/en/ar words; the 10 belt trades and 26 Tunisian cities). If
+    either is not recognised, no number is shown.
+  - **TEMPORARY numbers:** `sampleCount` gives 30–50 (the range the team gave from the database),
+    always the same for the same search; Plombier + Sousse = 35. **For the backend:** only
+    `getProCount` must change, to call `GET /api/pros/count?service=PLB&city=sousse` and return
+    `{ "service": "PLB", "city": "sousse", "count": 35 }` (service codes as in
+    `landing.beltServices`, city ids as in `CITIES`).
   - The navbar has no login link, so the hero keeps "Déjà membre ? Connexion".
 
 ### 2. Services belt
@@ -350,7 +362,8 @@ stub), and the same Testing Library setup as `apps/app`.
 | `referral.test.tsx`           | Sign-up link with code, texts in 3 languages, copy button                                                                                                                                                                                                                                                               |
 | `community-map.test.ts`       | Positions on the map, curves, tooltip placement, number format, country names, Search Console totals                                                                                                                                                                                                                    |
 | `search-results-data.test.ts` | Search in the URL (site and sign-up)                                                                                                                                                                                                                                                                                    |
-| `search-results.test.tsx`     | Results page: no count, search, sign-up link with the search, "near you", back link                                                                                                                                                                                                                                     |
+| `search-counts.test.ts`       | Count: typos, accents, Arabic; unknown words give none; 30–50 and stable; Plombier + Sousse = 35; plural words fr/en/ar                                                                                                                                                                                                 |
+| `search-results.test.tsx`     | Results page: big number + sentence as title, corrected search in the bar, one sign-up link with the search, fr/en/ar, unknown search                                                                                                                                                                                   |
 | `press-data.test.ts`          | News: unique URL-safe slugs, dates (day, month or year only), texts and headings in 3 languages, cover alt, LinkedIn links, newest first, YouTube links (accepted / refused), dates per language                                                                                                                        |
 | `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), news cards and article (headings, source button, video, unknown slug), map counters (no source line), partner links, partners strip with real logos, partners page, new texts exist in all languages |
 | `site-shell.test.tsx`         | Footer: the 4 columns with their links in order, where each link goes, the cookie settings button, en/ar                                                                                                                                                                                                                |
