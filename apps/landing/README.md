@@ -69,14 +69,14 @@ footer picture (25 Nov 2026), each a `<nav>` with its links:
   /services/ (all services), log-in, "Devenir partenaire" → the partner form
   (/devenir-partenaire/).
 - **Matchy+:** "À propos de nous", "Actualités & Média", "Développer ma visibilité"
-  (/utilisation/), "Télécharger l'application" with a small "(Soon)" label
+  (→ /partenaires/, the content of the former "Nos partenaires" link), "Télécharger l'application" with a small "(Soon)" label
   (/utilisation/#download).
 - **Informations légales:** privacy policy, terms, "Nous contacter" (/contact/), then a box with
   the phone (`tel:+21694670292`) and the email (`mailto:Contact@matchyplus.com`), as on the
   contact page.
 - Since 25 Nov 2026 the footer has no "Gérer les cookies" and no "Nos partenaires" link (not in
-  the picture). ⚠️ /partenaires/ is then linked from nowhere on the site (it stays in the
-  sitemap); the CookieYes banner keeps its own settings button.
+  the picture). /partenaires/ is reached through "Développer ma visibilité"; the CookieYes banner
+  keeps its own settings button.
 - Links to the app (sign-up, log-in) are plain `<a>` everywhere on the site, not Next's `<Link>`:
   the app is another site.
 - **Not in the footer yet:** "Inviter un ami": the app has no referral programme yet, so the

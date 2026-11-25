@@ -275,7 +275,8 @@ function footerColumns(t: (key: string) => string, locale: Locale) {
       links: [
         { label: t('landing.footerAbout'), href: page('/a-propos') },
         { label: t('landing.footerNews'), href: page('/actualites') },
-        { label: t('landing.footerVisibility'), href: page('/utilisation') },
+        // the content of the former "Nos partenaires" link: our partners and what a partnership brings
+        { label: t('landing.footerVisibility'), href: page('/partenaires') },
         {
           label: t('landing.footerDownload'),
           href: `${page('/utilisation')}#download`,

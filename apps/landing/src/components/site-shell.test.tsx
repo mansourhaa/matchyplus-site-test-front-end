@@ -108,7 +108,7 @@ describe('Footer', () => {
     expect(href('Tous les services', pros)).toMatch(/^\/fr\/services\/?$/);
     expect(href('Se connecter', pros)).toMatch(/\/connexion$/);
     expect(href('Devenir partenaire', pros)).toMatch(/^\/fr\/devenir-partenaire\/?$/);
-    expect(href('Développer ma visibilité', 'Matchy+')).toMatch(/^\/fr\/utilisation\/?$/);
+    expect(href('Développer ma visibilité', 'Matchy+')).toMatch(/^\/fr\/partenaires\/?$/);
     expect(href('Télécharger l’application(Soon)', 'Matchy+')).toMatch(
       /^\/fr\/utilisation\/?#download$/,
     );
