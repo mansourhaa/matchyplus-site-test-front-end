@@ -62,17 +62,21 @@ Defined in `src/app/[lang]/page.tsx`. Sections marked **new** or **changed** are
 
 All texts live in `src/features/i18n/messages.ts` under `landing.*`, in `fr`, `en` and `ar`.
 
-**Footer** (`Footer` in `components/site-shell.tsx`, every page): 3 columns as the manager listed
-them, each a `<nav>` with its links:
+**Footer** (`Footer` in `components/site-shell.tsx`, every page): 3 columns as in the manager's
+footer picture (25 Nov 2026), each a `<nav>` with its links:
 
-- **Pour les professionnels:** sign-up, /utilisation/ (visibility, how it works), /faq/ (help
-  centre), /services/ (all services), log-in, "Devenir partenaire" → the partner form
+- **Pour les professionnels:** sign-up, /utilisation/ (how it works), /faq/ (help centre),
+  /services/ (all services), log-in, "Devenir partenaire" → the partner form
   (/devenir-partenaire/).
-- **Matchy+:** /a-propos/, /actualites/, "Télécharger l'application" (/utilisation/#download),
-  /contact/, "Nos partenaires" → /partenaires/ (our partners and the benefits).
-- **Informations légales:** privacy policy, terms, "Gérer les cookies": it reopens the CookieYes
-  preferences where CookieYes is loaded (matchyplus.com); elsewhere (localhost, staging, an ad
-  blocker) it is a plain link to the privacy policy.
+- **Matchy+:** "À propos de nous", "Actualités & Média", "Développer ma visibilité"
+  (/utilisation/), "Télécharger l'application" with a small "(Soon)" label
+  (/utilisation/#download).
+- **Informations légales:** privacy policy, terms, "Nous contacter" (/contact/), then a box with
+  the phone (`tel:+21694670292`) and the email (`mailto:Contact@matchyplus.com`), as on the
+  contact page.
+- Since 25 Nov 2026 the footer has no "Gérer les cookies" and no "Nos partenaires" link (not in
+  the picture). ⚠️ /partenaires/ is then linked from nowhere on the site (it stays in the
+  sitemap); the CookieYes banner keeps its own settings button.
 - Links to the app (sign-up, log-in) are plain `<a>` everywhere on the site, not Next's `<Link>`:
   the app is another site.
 - **Not in the footer yet:** "Inviter un ami": the app has no referral programme yet, so the
@@ -366,7 +370,7 @@ stub), and the same Testing Library setup as `apps/app`.
 | `search-results.test.tsx`     | Results page: big number + sentence as title, corrected search in the bar, one sign-up link with the search, fr/en/ar, unknown search                                                                                                                                                                                   |
 | `press-data.test.ts`          | News: unique URL-safe slugs, dates (day, month or year only), texts and headings in 3 languages, cover alt, LinkedIn links, newest first, YouTube links (accepted / refused), dates per language                                                                                                                        |
 | `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), news cards and article (headings, source button, video, unknown slug), map counters (no source line), partner links, partners strip with real logos, partners page, new texts exist in all languages |
-| `site-shell.test.tsx`         | Footer: the 4 columns with their links in order, where each link goes, the cookie settings button, en/ar                                                                                                                                                                                                                |
+| `site-shell.test.tsx`         | Header buttons and flag picker; footer: the 3 columns with their links in order, where each link goes, phone and email, en/ar                                                                                                                                                                                           |
 
 ---
 

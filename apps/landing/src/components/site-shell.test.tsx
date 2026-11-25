@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { I18nProvider } from '@/features/i18n/i18n-provider';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Footer, Header } from './site-shell';
@@ -14,7 +14,6 @@ vi.mock('next/navigation', () => ({
 const COLUMNS = {
   'Pour les professionnels': [
     'Créer mon profil',
-    'Développer ma visibilité',
     'Fonctionnement',
     'Centre d’aide',
     'Tous les services',
@@ -22,16 +21,17 @@ const COLUMNS = {
     'Devenir partenaire',
   ],
   'Matchy+': [
-    'À propos',
-    'Actualités',
-    'Télécharger l’application',
-    'Nous contacter',
-    'Nos partenaires',
+    'À propos de nous',
+    'Actualités & Média',
+    'Développer ma visibilité',
+    'Télécharger l’application(Soon)',
   ],
   'Informations légales': [
     'Politique de confidentialité',
     'Conditions d’utilisation',
-    'Gérer les cookies',
+    'Nous contacter',
+    '+216 94 670 292',
+    'Contact@matchyplus.com',
   ],
 };
 
@@ -73,25 +73,23 @@ describe('Footer', () => {
     expect(screen.queryByRole('navigation', { name: 'Trouver un service' })).toBeNull();
   });
 
-  it('"Gérer les cookies" opens CookieYes when it is loaded, the privacy policy otherwise', () => {
+  it('the last column ends with the phone and the email, as on the contact page', () => {
     render(
       <I18nProvider locale="fr">
         <Footer />
       </I18nProvider>,
     );
-    const cookies = screen.getByRole('link', { name: 'Gérer les cookies' });
-    expect(cookies).toHaveAttribute('href', expect.stringMatching(/^\/fr\/privacy-policy\/?$/));
-    // without CookieYes (localhost, staging, an ad blocker): the link is followed
-    expect(fireEvent.click(cookies)).toBe(true);
-    // with CookieYes: its preferences open and the link is not followed
-    const revisit = vi.fn();
-    window.revisitCkyConsent = revisit;
-    try {
-      expect(fireEvent.click(cookies)).toBe(false);
-      expect(revisit).toHaveBeenCalledOnce();
-    } finally {
-      delete window.revisitCkyConsent;
-    }
+    expect(screen.getByRole('link', { name: '+216 94 670 292' })).toHaveAttribute(
+      'href',
+      'tel:+21694670292',
+    );
+    expect(screen.getByRole('link', { name: 'Contact@matchyplus.com' })).toHaveAttribute(
+      'href',
+      'mailto:Contact@matchyplus.com',
+    );
+    // as in the manager's picture: no cookies link and no partners link in the footer
+    expect(screen.queryByRole('link', { name: 'Gérer les cookies' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Nos partenaires' })).toBeNull();
   });
 
   it('links each item to a page that exists, or to the app', () => {
@@ -109,10 +107,12 @@ describe('Footer', () => {
     expect(href('Centre d’aide', pros)).toMatch(/^\/fr\/faq\/?$/);
     expect(href('Tous les services', pros)).toMatch(/^\/fr\/services\/?$/);
     expect(href('Se connecter', pros)).toMatch(/\/connexion$/);
-    // professionals: the partner form; Matchy+: the page of our partners, with its own label
     expect(href('Devenir partenaire', pros)).toMatch(/^\/fr\/devenir-partenaire\/?$/);
-    expect(href('Nos partenaires', 'Matchy+')).toMatch(/^\/fr\/partenaires\/?$/);
-    expect(href('Télécharger l’application', 'Matchy+')).toMatch(/^\/fr\/utilisation\/?#download$/);
+    expect(href('Développer ma visibilité', 'Matchy+')).toMatch(/^\/fr\/utilisation\/?$/);
+    expect(href('Télécharger l’application(Soon)', 'Matchy+')).toMatch(
+      /^\/fr\/utilisation\/?#download$/,
+    );
+    expect(href('Nous contacter', 'Informations légales')).toMatch(/^\/fr\/contact\/?$/);
     expect(href('Conditions d’utilisation', 'Informations légales')).toMatch(
       /^\/fr\/terms-of-service\/?$/,
     );

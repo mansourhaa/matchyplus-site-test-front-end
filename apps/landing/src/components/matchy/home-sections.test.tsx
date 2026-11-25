@@ -72,7 +72,7 @@ const NEW_KEYS = [
   'partnersPageBenefitsTitle',
   'footerProsTitle',
   'footerLegalTitle',
-  'footerCookies',
+  'footerSoon',
   'ourPartnersKicker',
   'communityTitle',
   'communityMapLabel',

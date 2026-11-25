@@ -251,17 +251,10 @@ export function Header() {
   );
 }
 
-declare global {
-  interface Window {
-    /** CookieYes (loaded by analytics.tsx): reopens its preferences, for "Gérer les cookies". */
-    revisitCkyConsent?: () => void;
-  }
-}
+/** One footer link: a page of this site, or an app page (sign-up, log-in); `soon` adds a small label. */
+type FooterLink = { label: string; href: string; app?: boolean; soon?: boolean };
 
-/** One footer link: a page of this site, or an app page (sign-up, log-in). */
-type FooterLink = { label: string; href: string; app?: boolean };
-
-/** The 3 footer columns, as the manager listed them. */
+/** The 3 footer columns, as in the manager's footer picture (25 Nov 2026). */
 function footerColumns(t: (key: string) => string, locale: Locale) {
   const page = (path: string) => localizePath(locale, path);
   const columns: { title: string; links: FooterLink[] }[] = [
@@ -269,7 +262,6 @@ function footerColumns(t: (key: string) => string, locale: Locale) {
       title: t('landing.footerProsTitle'),
       links: [
         { label: t('landing.footerCreateProfile'), href: APP_REGISTER_URL, app: true },
-        { label: t('landing.footerVisibility'), href: page('/utilisation') },
         { label: t('landing.footerHowItWorks'), href: page('/utilisation') },
         { label: t('landing.footerHelp'), href: page('/faq') },
         { label: t('landing.footerAllServices'), href: page('/services') },
@@ -283,10 +275,12 @@ function footerColumns(t: (key: string) => string, locale: Locale) {
       links: [
         { label: t('landing.footerAbout'), href: page('/a-propos') },
         { label: t('landing.footerNews'), href: page('/actualites') },
-        { label: t('landing.footerDownload'), href: `${page('/utilisation')}#download` },
-        { label: t('landing.footerContact'), href: page('/contact') },
-        // the companies' way in: our partners and what a partnership brings
-        { label: t('landing.partnersPageTitle'), href: page('/partenaires') },
+        { label: t('landing.footerVisibility'), href: page('/utilisation') },
+        {
+          label: t('landing.footerDownload'),
+          href: `${page('/utilisation')}#download`,
+          soon: true,
+        },
       ],
     },
     {
@@ -294,6 +288,7 @@ function footerColumns(t: (key: string) => string, locale: Locale) {
       links: [
         { label: t('landing.footerPrivacy'), href: page('/privacy-policy') },
         { label: t('landing.footerTerms'), href: page('/terms-of-service') },
+        { label: t('landing.footerContact'), href: page('/contact') },
       ],
     },
   ];
@@ -316,30 +311,31 @@ export function Footer() {
         {columns.map((column, index) => (
           <nav key={column.title} aria-label={column.title}>
             <h3>{column.title}</h3>
-            {column.links.map((link) =>
-              link.app ? (
-                <a key={link.label} href={link.href}>
+            {column.links.map((link) => {
+              const label = (
+                <>
                   {link.label}
+                  {link.soon && <span className="footer-soon">({t('landing.footerSoon')})</span>}
+                </>
+              );
+              return link.app ? (
+                <a key={link.label} href={link.href}>
+                  {label}
                 </a>
               ) : (
                 <Link key={link.label} href={link.href}>
-                  {link.label}
+                  {label}
                 </Link>
-              ),
-            )}
-            {/* last column: reopens the CookieYes preferences; where CookieYes is not loaded
-                (localhost, staging, an ad blocker) it is a plain link to the privacy policy */}
+              );
+            })}
+            {/* last column: the phone and the email, as on the contact page */}
             {index === columns.length - 1 && (
-              <Link
-                href={localizePath(locale, '/privacy-policy')}
-                onClick={(event) => {
-                  if (!window.revisitCkyConsent) return;
-                  event.preventDefault();
-                  window.revisitCkyConsent();
-                }}
-              >
-                {t('landing.footerCookies')}
-              </Link>
+              <div className="footer-contact">
+                <a href="tel:+21694670292" dir="ltr">
+                  +216 94 670 292
+                </a>
+                <a href="mailto:Contact@matchyplus.com">Contact@matchyplus.com</a>
+              </div>
             )}
           </nav>
         ))}
