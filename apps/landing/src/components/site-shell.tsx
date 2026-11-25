@@ -3,7 +3,7 @@
 import { useI18n } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
 import { localizePath } from '@/features/i18n/routing';
-import { APP_LOGIN_URL, APP_REGISTER_URL, SOCIAL_LINKS } from '@/lib/constants';
+import { APP_LOGIN_URL, APP_REGISTER_URL, SOCIAL_LINKS, appLink } from '@/lib/constants';
 import { ArrowUpRight, ChevronDown, LogIn, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -174,11 +174,11 @@ export function Header() {
               </div>
             )}
           </div>
-          <a className="nav-cta" href={APP_REGISTER_URL}>
+          <a className="nav-cta" href={appLink(APP_REGISTER_URL, locale)}>
             {t('landing.cta')} <ArrowUpRight size={15} className="rtl:-scale-x-1" />
           </a>
           {/* members log in to the app (another site, a plain link), after the sign-up button */}
-          <a className="nav-login" href={APP_LOGIN_URL}>
+          <a className="nav-login" href={appLink(APP_LOGIN_URL, locale)}>
             <LogIn size={15} className="rtl:-scale-x-100" />
             <span className="nav-login-label">{t('landing.login')}</span>
           </a>
@@ -213,7 +213,7 @@ export function Header() {
           </Link>
           <div className="mt-2 border-t border-white/20 pt-4">
             <a
-              href={APP_REGISTER_URL}
+              href={appLink(APP_REGISTER_URL, locale)}
               onClick={() => setOpen(false)}
               className="nav-cta !text-brand-blue flex w-full items-center justify-center gap-1.5 !rounded-full !bg-white py-3 text-center text-sm font-bold shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.98]"
               style={{ color: 'var(--brand-blue)' }}
@@ -222,7 +222,7 @@ export function Header() {
               <ArrowUpRight size={16} className="rtl:-scale-x-1" />
             </a>
             <a
-              href={APP_LOGIN_URL}
+              href={appLink(APP_LOGIN_URL, locale)}
               onClick={() => setOpen(false)}
               className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-white/70 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-white/15"
             >
@@ -261,11 +261,15 @@ function footerColumns(t: (key: string) => string, locale: Locale) {
     {
       title: t('landing.footerProsTitle'),
       links: [
-        { label: t('landing.footerCreateProfile'), href: APP_REGISTER_URL, app: true },
+        {
+          label: t('landing.footerCreateProfile'),
+          href: appLink(APP_REGISTER_URL, locale),
+          app: true,
+        },
         { label: t('landing.footerHowItWorks'), href: page('/utilisation') },
         { label: t('landing.footerHelp'), href: page('/faq') },
         { label: t('landing.footerAllServices'), href: page('/services') },
-        { label: t('landing.footerLogin'), href: APP_LOGIN_URL, app: true },
+        { label: t('landing.footerLogin'), href: appLink(APP_LOGIN_URL, locale), app: true },
         // the professional's way in: the partner form
         { label: t('landing.partnersCta'), href: page('/devenir-partenaire') },
       ],

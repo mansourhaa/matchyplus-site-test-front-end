@@ -1,7 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { APP_REGISTER_URL } from '@/lib/constants';
+import { APP_REGISTER_URL, appLink } from '@/lib/constants';
 import { Check, Copy, Gift } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
@@ -19,9 +19,9 @@ export function referralUrl(base: string, code: string): string {
  * Matchy+ has no referral system yet: the code and the points are samples.
  */
 export function ReferralCode() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const code = t('landing.referralSampleCode');
-  const link = referralUrl(APP_REGISTER_URL, code);
+  const link = referralUrl(appLink(APP_REGISTER_URL, locale), code);
 
   const [copied, setCopied] = useState(false);
   useEffect(() => {

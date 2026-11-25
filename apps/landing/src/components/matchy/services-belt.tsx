@@ -1,7 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { APP_REGISTER_URL } from '@/lib/constants';
+import { APP_REGISTER_URL, appLink } from '@/lib/constants';
 import {
   AnimatePresence,
   type PanInfo,
@@ -41,7 +41,7 @@ const AUTO_SPEED = 0.00018;
 const DRAG_SPEED = 0.006;
 
 export function ServicesBelt() {
-  const { t, dir, tList, tRows } = useI18n();
+  const { t, dir, locale, tList, tRows } = useI18n();
   const isRtl = dir === 'rtl';
   const reduceMotion = useReducedMotion() ?? false;
   const titleId = useId();
@@ -221,7 +221,7 @@ export function ServicesBelt() {
           like: t('landing.beltLike'),
           close: t('landing.beltClose'),
         }}
-        detailsHref={APP_REGISTER_URL}
+        detailsHref={appLink(APP_REGISTER_URL, locale)}
         titleId={titleId}
         reduceMotion={reduceMotion}
         onPass={passCurrent}
@@ -355,7 +355,7 @@ export function ServicesBelt() {
                 cta: t('landing.beltMatchCta'),
                 continue: t('landing.beltMatchContinue'),
               }}
-              registerHref={APP_REGISTER_URL}
+              registerHref={appLink(APP_REGISTER_URL, locale)}
               onDismiss={dismissMatch}
               onContinue={keepExploring}
             />

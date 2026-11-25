@@ -3,7 +3,7 @@
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
-import { APP_REGISTER_URL } from '@/lib/constants';
+import { APP_REGISTER_URL, appLink } from '@/lib/constants';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -47,7 +47,7 @@ export function StoryPage() {
   const text = STORY[locale];
   const next = [
     { ...pair(text.next.find), href: localizePath(locale, '/recherche'), app: false },
-    { ...pair(text.next.profile), href: APP_REGISTER_URL, app: true },
+    { ...pair(text.next.profile), href: appLink(APP_REGISTER_URL, locale), app: true },
     { ...pair(text.next.build), href: localizePath(locale, '/devenir-partenaire'), app: false },
   ];
 

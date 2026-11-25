@@ -1,7 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { APP_REGISTER_URL } from '@/lib/constants';
+import { APP_REGISTER_URL, appLink } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import { ArrowRight, BadgeCheck, Eye, MapPin, Star, Store, Target } from 'lucide-react';
 
@@ -14,7 +14,7 @@ const ICONS = [Store, Target, Eye, Star];
 
 /** "Your pro storefront": what a professional gets on Matchy+, beside a sample profile. */
 export function ProBranding() {
-  const { t, dir, tRows } = useI18n();
+  const { t, dir, locale, tRows } = useI18n();
   const points = tRows('landing.brandPoints');
   const isRtl = dir === 'rtl';
   // Same sample plumber as in the services belt, so every section tells one story.
@@ -100,7 +100,7 @@ export function ProBranding() {
               {/* the call to action sits inside the card, as the manager asked */}
               {/* the app is another site: a plain link, not Next's client-side <Link> */}
               <a
-                href={APP_REGISTER_URL}
+                href={appLink(APP_REGISTER_URL, locale)}
                 className="bg-brand-blue hover:bg-brand-navy mt-5 flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold text-white shadow-lg transition-colors md:text-base"
               >
                 {t('landing.brandCta')}

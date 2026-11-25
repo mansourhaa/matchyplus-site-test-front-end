@@ -41,7 +41,7 @@ describe('SearchResults', () => {
     for (const link of screen.getAllByRole('link', { name: /Créer mon compte gratuit/ })) {
       expect(link).toHaveAttribute(
         'href',
-        'http://localhost:3000/register?service=Plombier&ville=Sousse',
+        'http://localhost:3000/register?lang=fr&service=Plombier&ville=Sousse',
       );
     }
   });

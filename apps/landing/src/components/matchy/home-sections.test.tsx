@@ -153,7 +153,7 @@ describe('HeroSearch login', () => {
     renderIn('fr', <HeroSearch />);
     expect(screen.getByRole('link', { name: /Connexion/ })).toHaveAttribute(
       'href',
-      expect.stringMatching(/\/connexion$/),
+      expect.stringMatching(/\/connexion\?lang=fr$/),
     );
   });
 });
@@ -228,9 +228,10 @@ describe('home sections', () => {
         'href',
         expect.stringMatching(new RegExp(`^/${locale}/recherche/?$`)),
       );
+      // the app opens in the page's language
       expect(screen.getByRole('link', { name: text.next.profile[1] })).toHaveAttribute(
         'href',
-        expect.stringMatching(/\/register$/),
+        expect.stringMatching(new RegExp(`/register\\?lang=${locale}$`)),
       );
       expect(screen.getByRole('link', { name: text.next.build[1] })).toHaveAttribute(
         'href',

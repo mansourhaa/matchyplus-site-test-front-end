@@ -1,7 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { APP_REGISTER_URL } from '@/lib/constants';
+import { APP_REGISTER_URL, appLink } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 
@@ -9,7 +9,7 @@ import { HeroLivePhone } from './hero-live-phone';
 import { HeroSearch } from './hero-search';
 
 export function Hero() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   return (
     <section className="relative overflow-hidden">
@@ -70,7 +70,7 @@ export function Hero() {
           >
             {/* second call to action: for professionals */}
             <a
-              href={APP_REGISTER_URL}
+              href={appLink(APP_REGISTER_URL, locale)}
               className="inline-flex items-center gap-2 rounded-full border border-white/60 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-white/15"
             >
               {t('landing.searchProCta')}

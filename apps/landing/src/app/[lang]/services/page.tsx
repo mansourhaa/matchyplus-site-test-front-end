@@ -1,7 +1,7 @@
 import { SERVICES_CONTENT, ServicesPage } from '@/components/services';
 import { PageFrame } from '@/components/site-shell';
 import { isLocale } from '@/features/i18n/routing';
-import { APP_LOGIN_URL, APP_REGISTER_URL } from '@/lib/constants';
+import { APP_LOGIN_URL, APP_REGISTER_URL, appLink } from '@/lib/constants';
 import { servicesJsonLd } from '@/lib/seo';
 import { notFound } from 'next/navigation';
 
@@ -18,8 +18,8 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
       />
       <ServicesPage
         content={SERVICES_CONTENT[lang]}
-        signupHref={APP_REGISTER_URL}
-        loginHref={APP_LOGIN_URL}
+        signupHref={appLink(APP_REGISTER_URL, lang)}
+        loginHref={appLink(APP_LOGIN_URL, lang)}
       />
     </PageFrame>
   );

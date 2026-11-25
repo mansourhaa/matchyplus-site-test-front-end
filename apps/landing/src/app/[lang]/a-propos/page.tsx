@@ -1,7 +1,7 @@
 import { ABOUT_CONTENT, AboutPage } from '@/components/about';
 import { PageFrame } from '@/components/site-shell';
 import { isLocale } from '@/features/i18n/routing';
-import { APP_REGISTER_URL } from '@/lib/constants';
+import { APP_REGISTER_URL, appLink } from '@/lib/constants';
 import { aboutJsonLd } from '@/lib/seo';
 import { notFound } from 'next/navigation';
 
@@ -18,8 +18,8 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
       />
       <AboutPage
         content={ABOUT_CONTENT[lang]}
-        customerHref={APP_REGISTER_URL}
-        professionalHref={APP_REGISTER_URL}
+        customerHref={appLink(APP_REGISTER_URL, lang)}
+        professionalHref={appLink(APP_REGISTER_URL, lang)}
       />
     </PageFrame>
   );

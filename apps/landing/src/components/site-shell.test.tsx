@@ -45,7 +45,7 @@ describe('Header', () => {
     const nav = screen.getByRole('navigation', { name: 'Main navigation' });
     const login = within(nav).getByRole('link', { name: /Connexion/ });
     const signUp = within(nav).getByRole('link', { name: /inscrire gratuitement/ });
-    expect(login).toHaveAttribute('href', expect.stringMatching(/\/connexion$/));
+    expect(login).toHaveAttribute('href', expect.stringMatching(/\/connexion\?lang=fr$/));
     // right after the sign-up button
     expect(signUp.nextElementSibling).toBe(login);
     // the language picker shows the flag only (its name is for screen readers)
@@ -103,10 +103,10 @@ describe('Footer', () => {
         .getByRole('link', { name })
         .getAttribute('href');
     const pros = 'Pour les professionnels';
-    expect(href('Créer mon profil', pros)).toMatch(/\/register$/);
+    expect(href('Créer mon profil', pros)).toMatch(/\/register\?lang=fr$/);
     expect(href('Centre d’aide', pros)).toMatch(/^\/fr\/faq\/?$/);
     expect(href('Tous les services', pros)).toMatch(/^\/fr\/services\/?$/);
-    expect(href('Se connecter', pros)).toMatch(/\/connexion$/);
+    expect(href('Se connecter', pros)).toMatch(/\/connexion\?lang=fr$/);
     expect(href('Devenir partenaire', pros)).toMatch(/^\/fr\/devenir-partenaire\/?$/);
     expect(href('Développer ma visibilité', 'Matchy+')).toMatch(/^\/fr\/partenaires\/?$/);
     expect(href('Télécharger l’application(Soon)', 'Matchy+')).toMatch(
@@ -116,6 +116,19 @@ describe('Footer', () => {
     expect(href('Conditions d’utilisation', 'Informations légales')).toMatch(
       /^\/fr\/terms-of-service\/?$/,
     );
+  });
+
+  it('opens the app in the page\u2019s language (Arabic page → ?lang=ar)', () => {
+    render(
+      <I18nProvider locale="ar">
+        <Header />
+      </I18nProvider>,
+    );
+    const nav = screen.getByRole('navigation', { name: 'Main navigation' });
+    for (const link of within(nav).getAllByRole('link')) {
+      const href = link.getAttribute('href') ?? '';
+      if (href.startsWith('http')) expect(href).toMatch(/[?&]lang=ar$/);
+    }
   });
 
   it('is translated in English and Arabic', () => {

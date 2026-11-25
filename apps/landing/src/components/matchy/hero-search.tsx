@@ -2,7 +2,7 @@
 
 import { useI18n } from '@/features/i18n/i18n-provider';
 import { localizePath } from '@/features/i18n/routing';
-import { APP_LOGIN_URL, APP_REGISTER_URL } from '@/lib/constants';
+import { APP_LOGIN_URL, APP_REGISTER_URL, appLink } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { ArrowRight, LogIn } from 'lucide-react';
 import Link from 'next/link';
@@ -74,7 +74,7 @@ export function HeroSearch() {
           </p>
           {/* pros go to the app (another site, a plain link); businesses to our partner page */}
           {audience === 'pro' ? (
-            <a href={APP_REGISTER_URL} className={AUDIENCE_CTA}>
+            <a href={appLink(APP_REGISTER_URL, locale)} className={AUDIENCE_CTA}>
               {t('landing.searchProCta')}
               <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
             </a>
@@ -90,7 +90,7 @@ export function HeroSearch() {
       <p className="mt-5 text-sm text-white/85">
         {t('landing.searchMember')}{' '}
         <a
-          href={APP_LOGIN_URL}
+          href={appLink(APP_LOGIN_URL, locale)}
           className="inline-flex items-center gap-1 font-bold text-white underline underline-offset-4 hover:no-underline"
         >
           <LogIn className="h-4 w-4 rtl:-scale-x-100" />

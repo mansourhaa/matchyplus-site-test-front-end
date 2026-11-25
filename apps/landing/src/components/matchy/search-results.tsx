@@ -1,7 +1,7 @@
 'use client';
 
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { APP_REGISTER_URL } from '@/lib/constants';
+import { APP_REGISTER_URL, appLink } from '@/lib/constants';
 import { ArrowRight } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { type ReactNode, useState } from 'react';
@@ -25,7 +25,11 @@ export function SearchResults() {
   const typedCity = params.get('ville')?.trim() ?? '';
   const corrected = correctedSearch(typedService, typedCity, locale);
   const count = getProCount(typedService, typedCity);
-  const registerUrl = buildSearchUrl(APP_REGISTER_URL, corrected.service, corrected.city);
+  const registerUrl = buildSearchUrl(
+    appLink(APP_REGISTER_URL, locale),
+    corrected.service,
+    corrected.city,
+  );
 
   return (
     // a new search on this page re-fills the bar with its corrected words
