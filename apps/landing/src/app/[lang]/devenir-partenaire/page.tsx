@@ -5,7 +5,7 @@ import { PARTNER_BENEFITS } from '@/components/matchy/partner-benefits';
 import { PageFrame } from '@/components/site-shell';
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { API_URL } from '@/lib/constants';
+import { postToApi } from '@/lib/api';
 import { CheckCircle2, Loader2, ShieldCheck, Sparkles, Zap } from 'lucide-react';
 import { useState } from 'react';
 
@@ -31,6 +31,7 @@ const data: Record<
     success: string;
     successSub: string;
     sendAnother: string;
+    failed: string;
   }
 > = {
   fr: {
@@ -57,6 +58,8 @@ const data: Record<
     successSub:
       'Un conseiller vous guidera pas à pas pour maximiser votre impact dès le premier jour.',
     sendAnother: 'Soumettre une autre inscription',
+    failed:
+      'Votre demande n’a pas pu être envoyée. Réessayez, ou écrivez-nous à Contact@matchyplus.com.',
   },
   en: {
     eyebrow: 'Matchy Wallet & Partners',
@@ -80,6 +83,8 @@ const data: Record<
     success: 'Application sent! Our partner team will reach out to you shortly.',
     successSub: 'An advisor will guide you step by step to maximize your impact from day one.',
     sendAnother: 'Submit another application',
+    failed:
+      'Your application could not be sent. Please try again, or write to us at Contact@matchyplus.com.',
   },
   ar: {
     eyebrow: 'Matchy Wallet والشركاء',
@@ -102,6 +107,7 @@ const data: Record<
     success: 'تم إرسال الطلب بنجاح! سيتواصل معك فريق الشركاء قريبًا.',
     successSub: 'سيرشدك مستشار خطوة بخطوة لتحقيق أقصى استفادة منذ اليوم الأول.',
     sendAnother: 'إرسال طلب تسجيل آخر',
+    failed: 'تعذّر إرسال طلبك. حاول مرة أخرى، أو راسلنا على Contact@matchyplus.com.',
   },
 };
 
@@ -110,6 +116,7 @@ export default function Partner() {
   const t = data[locale];
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [countryCode, setCountryCode] = useState('+216');
   const [form, setForm] = useState({
     name: '',
@@ -121,28 +128,19 @@ export default function Partner() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    try {
-      const fullPhone = form.phone ? `${countryCode} ${form.phone}`.trim() : '';
-      await fetch(`${API_URL}/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'partner',
-          name: form.name,
-          email: form.email,
-          phone: fullPhone,
-          requestText: form.requestText,
-        }),
-      });
-      setSubmitted(true);
-    } catch (err) {
-      console.error('Failed to send partner email:', err);
-      // Still show success to user if network glitch on simulated
-      setSubmitted(true);
-    } finally {
-      setLoading(false);
-    }
+    setFailed(false);
+    const fullPhone = form.phone ? `${countryCode} ${form.phone}`.trim() : '';
+    // "sent" only when the API really received it; otherwise an error the visitor can act on
+    const sent = await postToApi('/contact', {
+      type: 'partner',
+      name: form.name,
+      email: form.email,
+      phone: fullPhone,
+      requestText: form.requestText,
+    });
+    setSubmitted(sent);
+    setFailed(!sent);
+    setLoading(false);
   };
 
   return (
@@ -277,6 +275,11 @@ export default function Partner() {
                     />
                   </div>
 
+                  {failed && (
+                    <p role="alert" className="text-sm font-semibold text-red-600">
+                      {t.failed}
+                    </p>
+                  )}
                   <button
                     type="submit"
                     disabled={loading}

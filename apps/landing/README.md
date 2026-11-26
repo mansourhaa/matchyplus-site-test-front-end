@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **186 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **192 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -34,10 +34,14 @@ The sign-up and login buttons point to the app (`apps/app`) through `NEXT_PUBLIC
 The `<body>` only gets the two font variables (`layout.tsx`): a next/font class there would win
 over the Arabic rule and leave Arabic in a system font (fixed 25 Nov 2026; `app/fonts.test.ts`).
 
-Every link to the app goes through `appLink(url, locale)`, which adds `?lang=fr|en|ar`; the app
-reads it (`apps/app/src/features/i18n/i18n-provider.tsx`, once per address) and keeps it, so a
-visitor on the Arabic site lands on the app in Arabic (before 25 Nov 2026 it always opened in
-English, the app's default).
+Every link to the app goes through `appLink(url, locale)`, which adds `?lang=fr|en|ar`, so a
+visitor on the Arabic site can land on the app in Arabic (before, it always opened in English, the
+app's default). Reading `?lang` is the app's side, in its own PR (apps/app `I18nProvider`); until
+it is merged the app simply ignores the parameter.
+
+The contact and partner forms send through `postToApi` (`lib/api.ts`): they say "sent" only when
+the API answers 2xx, and show an error the visitor can act on otherwise (before 26 Nov 2026 they
+said "sent" even when the request failed).
 
 ---
 

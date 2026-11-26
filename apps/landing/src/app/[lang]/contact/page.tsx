@@ -4,7 +4,7 @@ import { CountryCodeSelector } from '@/components/country-code-selector';
 import { PageFrame } from '@/components/site-shell';
 import { SubpageHero } from '@/components/subpage-hero';
 import { useI18n } from '@/features/i18n/i18n-provider';
-import { API_URL } from '@/lib/constants';
+import { postToApi } from '@/lib/api';
 import { Loader2, Mail, MapPin, MessageSquare, Phone, Send } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,6 +23,7 @@ const data: Record<
     sent: string;
     sentSub: string;
     sendAnother: string;
+    failed: string;
     infoTitle: string;
     infoText: string;
     emailLabel: string;
@@ -45,6 +46,8 @@ const data: Record<
     sent: 'Merci ! Votre message a bien été envoyé.',
     sentSub: 'Notre équipe reviendra vers vous à l’adresse {email} sous 24 heures ouvrées.',
     sendAnother: 'Envoyer un autre message',
+    failed:
+      'Votre message n’a pas pu être envoyé. Réessayez, ou écrivez-nous à Contact@matchyplus.com.',
     infoTitle: 'Parlons de votre projet',
     infoText:
       'Notre équipe est à votre disposition pour vous accompagner dans l’utilisation de Matchy+ ou pour toute proposition de partenariat.',
@@ -68,6 +71,8 @@ const data: Record<
     sent: 'Thank you! Your message has been sent successfully.',
     sentSub: 'Our team will get back to you at {email} within 24 business hours.',
     sendAnother: 'Send another message',
+    failed:
+      'Your message could not be sent. Please try again, or write to us at Contact@matchyplus.com.',
     infoTitle: "Let's talk about your project",
     infoText:
       'Our team is here to assist you with Matchy+ or discuss partnership opportunities across the continent.',
@@ -90,6 +95,7 @@ const data: Record<
     sent: 'شكرًا لك! تم إرسال رسالتك بنجاح.',
     sentSub: 'سيعود فريقنا إليك عبر البريد {email} خلال 24 ساعة عمل.',
     sendAnother: 'إرسال رسالة أخرى',
+    failed: 'تعذّر إرسال رسالتك. حاول مرة أخرى، أو راسلنا على Contact@matchyplus.com.',
     infoTitle: 'دعنا نتحدث عن مشروعك',
     infoText: 'فريقنا متاح لمساعدتك في استخدام Matchy+ أو لمناقشة أي مقترح شراكة.',
     emailLabel: 'البريد الإلكتروني',
@@ -104,6 +110,7 @@ export default function Contact() {
   const t = data[locale];
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [countryCode, setCountryCode] = useState('+216');
   const [form, setForm] = useState({
     name: '',
@@ -115,27 +122,19 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    try {
-      const fullPhone = form.phone ? `${countryCode} ${form.phone}`.trim() : '';
-      await fetch(`${API_URL}/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'contact',
-          name: form.name,
-          email: form.email,
-          phone: fullPhone,
-          message: form.message,
-        }),
-      });
-      setSubmitted(true);
-    } catch (err) {
-      console.error('Failed to send contact message:', err);
-      setSubmitted(true);
-    } finally {
-      setLoading(false);
-    }
+    setFailed(false);
+    const fullPhone = form.phone ? `${countryCode} ${form.phone}`.trim() : '';
+    // "sent" only when the API really received it; otherwise an error the visitor can act on
+    const sent = await postToApi('/contact', {
+      type: 'contact',
+      name: form.name,
+      email: form.email,
+      phone: fullPhone,
+      message: form.message,
+    });
+    setSubmitted(sent);
+    setFailed(!sent);
+    setLoading(false);
   };
 
   return (
@@ -282,6 +281,11 @@ export default function Contact() {
                     />
                   </div>
 
+                  {failed && (
+                    <p role="alert" className="text-sm font-semibold text-red-600">
+                      {t.failed}
+                    </p>
+                  )}
                   <button
                     type="submit"
                     disabled={loading}
