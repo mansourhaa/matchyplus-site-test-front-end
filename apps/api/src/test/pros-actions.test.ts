@@ -29,7 +29,7 @@ describe('GET /api/v1/pros/count', () => {
     expect(response.headers['cache-control']).toBe('public, max-age=300');
   });
 
-  it('requires both the service and the city', async () => {
+  it('requires both the service and the city, with the usual error shape', async () => {
     const app = await buildTestApp({ prisma: prismaCounting(0) });
     apps.push(app);
 
@@ -39,6 +39,8 @@ describe('GET /api/v1/pros/count', () => {
     });
 
     expect(response.statusCode).toBe(400);
+    // same shape as every route (plugins/error-handler.ts)
+    expect(response.json()).toMatchObject({ status: 400, message: expect.any(String) });
   });
 
   it('drops unknown query parameters (the schema allows only service and city)', async () => {

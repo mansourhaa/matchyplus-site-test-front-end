@@ -125,6 +125,20 @@ export const VOICE_AUDIO_CONTENT_TYPES: Record<string, string> = {
   '.aac': 'audio/aac',
 };
 
+/**
+ * Public pro counts for the landing search page (GET /api/v1/pros/count). The route is open, so
+ * each visitor is rate-limited and each count is cached in Redis: the same search reaches the
+ * database at most once per TTL, whatever the traffic.
+ */
+export const PRO_COUNT_RATE_LIMIT = { max: 60, timeWindow: '1 minute' };
+export const PRO_COUNT_CACHE_TTL_SECONDS = 10 * 60;
+/** Browsers and CDNs may reuse a count for this long (shorter than the Redis TTL). */
+export const PRO_COUNT_HTTP_MAX_AGE_SECONDS = 5 * 60;
+/** Trade words shorter than this are not searched: they would match almost every profile. */
+export const PRO_COUNT_MIN_TERM_LENGTH = 4;
+/** At most this many trade words (the taxonomy variants) per count, to keep the query small. */
+export const PRO_COUNT_MAX_TRADE_TERMS = 12;
+
 /** Default page size for conversation message history. */
 export const MESSAGES_PAGE_SIZE = 50;
 export const MESSAGES_PAGE_SIZE_MAX = 100;

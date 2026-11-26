@@ -156,7 +156,7 @@ Business logic lives in `src/services/` as **classes with constructor DI** (typi
 | `swipe-quota.ts` | Plan limits + UTC-day RIGHT counts |
 | `ai-jobs.ts` | Enqueue + poll AI jobs |
 | `ai-cache.ts` | Redis result cache |
-| `pros.ts` | Public counts for the landing search page (`GET /api/v1/pros/count`) |
+| `pros.ts` | Public counts for the landing search page (`GET /api/v1/pros/count`): exact city, taxonomy trade words, Redis-cached (`PRO_COUNT_*` in `constants.ts`) |
 
 ### Strict layout rules
 
