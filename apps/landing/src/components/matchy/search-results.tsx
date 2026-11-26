@@ -4,19 +4,19 @@ import { useI18n } from '@/features/i18n/i18n-provider';
 import { APP_REGISTER_URL, appLink } from '@/lib/constants';
 import { ArrowRight } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 
 import { numberLocale } from './community-map';
-import { correctedSearch, countWords, getProCount } from './search-counts';
+import { type ProCount, correctedSearch, countWords, fetchProCount } from './search-counts';
 import { SearchForm } from './search-form';
 import { buildSearchUrl } from './search-results-data';
 
 /**
  * /recherche/: a results page, not a copy of the home hero. A slim blue band with the search bar
- * (filled with the corrected search, editable), then on white, centred: the number of pros that
- * match, very large ("35"), the sentence under it ("plombiers disponibles à Sousse", see
- * search-counts.ts), one line, and one big sign-up button. No number when the service or the
- * city is not recognised: the usual title instead.
+ * (filled with the corrected search, editable), then on white, centred: the real number of pros
+ * that match (from the API), very large ("35"), the sentence under it ("plombiers disponibles à
+ * Sousse", see search-counts.ts), one line, and one big sign-up button. No number when the
+ * search is not recognised, nobody matches or the API cannot be reached: the usual title.
  */
 export function SearchResults() {
   const { t, locale } = useI18n();
@@ -24,7 +24,7 @@ export function SearchResults() {
   const typedService = params.get('service')?.trim() ?? '';
   const typedCity = params.get('ville')?.trim() ?? '';
   const corrected = correctedSearch(typedService, typedCity, locale);
-  const count = getProCount(typedService, typedCity);
+  const count = useProCount(typedService, typedCity);
   const registerUrl = buildSearchUrl(
     appLink(APP_REGISTER_URL, locale),
     corrected.service,
@@ -80,6 +80,29 @@ export function SearchResults() {
       </div>
     </SearchShell>
   );
+}
+
+/**
+ * The number of pros for this search, from the API. Null until the answer arrives, and when the
+ * search is not recognised, nobody matches or the API cannot be reached (no number is shown).
+ */
+function useProCount(service: string, city: string): ProCount | null {
+  const search = `${service}|${city}`;
+  const [answer, setAnswer] = useState<{ search: string; count: ProCount | null } | null>(null);
+
+  useEffect(() => {
+    let current = true;
+    void fetchProCount(service, city).then((count) => {
+      if (current) setAnswer({ search, count });
+    });
+    // a newer search (or leaving the page) ignores this answer
+    return () => {
+      current = false;
+    };
+  }, [search, service, city]);
+
+  // an answer for an older search does not count
+  return answer?.search === search ? answer.count : null;
 }
 
 /** The page frame: slim blue band with the search bar, then the white results area. */

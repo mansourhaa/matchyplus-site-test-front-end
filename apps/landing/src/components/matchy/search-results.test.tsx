@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { I18nProvider } from '@/features/i18n/i18n-provider';
 import type { Locale } from '@/features/i18n/messages';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchResults } from './search-results';
 
@@ -23,9 +23,25 @@ function renderIn(locale: Locale, search: string) {
   );
 }
 
+/** The API answers 35 for any recognised search (apps/api ProsService). */
+function apiAnswers(count: number) {
+  return vi
+    .spyOn(globalThis, 'fetch')
+    .mockImplementation(async () => new Response(JSON.stringify({ count })));
+}
+
 describe('SearchResults', () => {
-  it('a results page: the big number and its sentence as the title, the corrected search in the bar', () => {
+  beforeEach(() => {
+    apiAnswers(35);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('a results page: the big number and its sentence as the title, the corrected search in the bar', async () => {
     renderIn('fr', 'service=pombire&ville=souse');
+    await screen.findByTestId('results-count');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       '35plombiers disponibles à Sousse',
     );
@@ -46,12 +62,14 @@ describe('SearchResults', () => {
     }
   });
 
-  it('shows the count in English and Arabic', () => {
+  it('shows the count in English and Arabic', async () => {
     const { unmount } = renderIn('en', 'service=Plumber&ville=Sousse');
-    expect(screen.getByTestId('results-count')).toHaveTextContent('35plumbers available in Sousse');
+    expect(await screen.findByTestId('results-count')).toHaveTextContent(
+      '35plumbers available in Sousse',
+    );
     unmount();
     renderIn('ar', 'service=سباك&ville=سوسة');
-    expect(screen.getByTestId('results-count')).toHaveTextContent('35سبّاكًا في سوسة');
+    expect(await screen.findByTestId('results-count')).toHaveTextContent('35سبّاكًا في سوسة');
   });
 
   it('an unknown search: the usual title, what was typed in the bar, no number', () => {
@@ -62,6 +80,25 @@ describe('SearchResults', () => {
     expect(screen.getByLabelText('Quel service ?')).toHaveValue('astronaute');
     expect(screen.queryByTestId('results-count')).toBeNull();
     expect(screen.getByRole('link', { name: /Créer mon compte gratuit/ })).toBeInTheDocument();
+  });
+
+  it('asks the API with the corrected French names', async () => {
+    renderIn('fr', 'service=pombire&ville=souse');
+    await screen.findByTestId('results-count');
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/v1\/pros\/count\?service=Plombier&city=Sousse$/),
+    );
+  });
+
+  it('no number when the API cannot be reached or nobody matches: the usual title', async () => {
+    vi.restoreAllMocks();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('down'));
+    renderIn('fr', 'service=Plombier&ville=Sousse');
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Trouvez le bon professionnel pour votre besoin',
+    );
+    expect(screen.queryByTestId('results-count')).toBeNull();
   });
 
   it('no back link any more: the search bar is on the page', () => {

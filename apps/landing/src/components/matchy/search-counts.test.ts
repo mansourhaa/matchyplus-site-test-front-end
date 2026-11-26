@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { CITIES, SERVICES, countWords, findCity, findService, getProCount } from './search-counts';
+import { countWords, fetchProCount, findCity, findService, proCountRequest } from './search-counts';
 
-describe('search counts (temporary sample numbers until the API)', () => {
+describe('search counts (from the API)', () => {
   it('recognises services and cities despite typos, accents and case', () => {
     expect(findService('pombire')?.code).toBe('PLB');
     expect(findService('ELECTRICIEN')?.code).toBe('ELC');
@@ -14,34 +14,45 @@ describe('search counts (temporary sample numbers until the API)', () => {
     expect(findCity('سوسة')?.id).toBe('sousse');
   });
 
-  it('does not guess: unknown or too different words give no count', () => {
+  it('does not guess: unknown or too different words give no request', () => {
     expect(findService('astronaute')).toBeUndefined();
     expect(findCity('Paris')).toBeUndefined();
-    expect(getProCount('', 'Sousse')).toBeNull();
-    expect(getProCount('Plombier', '')).toBeNull();
+    expect(proCountRequest('', 'Sousse')).toBeNull();
+    expect(proCountRequest('Plombier', '')).toBeNull();
   });
 
-  it('Plombier in Sousse is 35, the figure the team gave', () => {
-    expect(getProCount('Plombier', 'Sousse')).toEqual({
+  it('asks the API with the French names, whatever was typed', () => {
+    const request = proCountRequest('pombire', 'سوسة');
+    expect(request?.url).toMatch(/\/v1\/pros\/count\?service=Plombier&city=Sousse$/);
+  });
+
+  it('returns the API count', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ service: 'Plombier', city: 'Sousse', count: 35 })),
+      );
+    await expect(fetchProCount('Plombier', 'Sousse', fetcher)).resolves.toEqual({
       service: 'PLB',
       city: 'sousse',
       count: 35,
     });
   });
 
-  it('every count is between 30 and 50 and stays the same for the same search', () => {
-    for (const service of SERVICES) {
-      for (const city of CITIES) {
-        const first = getProCount(service.words[0], city.name.fr);
-        expect(first?.count).toBeGreaterThanOrEqual(30);
-        expect(first?.count).toBeLessThanOrEqual(50);
-        expect(getProCount(service.words[0], city.name.fr)).toEqual(first);
-      }
-    }
+  it('no number when nobody matches, the API fails, or the search is unknown', async () => {
+    const zero = vi.fn().mockResolvedValue(new Response(JSON.stringify({ count: 0 })));
+    const down = vi.fn().mockRejectedValue(new Error('network'));
+    const error = vi.fn().mockResolvedValue(new Response('{}', { status: 500 }));
+    const unused = vi.fn();
+    await expect(fetchProCount('Plombier', 'Sousse', zero)).resolves.toBeNull();
+    await expect(fetchProCount('Plombier', 'Sousse', down)).resolves.toBeNull();
+    await expect(fetchProCount('Plombier', 'Sousse', error)).resolves.toBeNull();
+    await expect(fetchProCount('astronaute', 'Sousse', unused)).resolves.toBeNull();
+    expect(unused).not.toHaveBeenCalled();
   });
 
   it('gives the plural trade and the city name in each language', () => {
-    const count = getProCount('Plombier', 'Sousse')!;
+    const count = { service: 'PLB', city: 'sousse', count: 35 } as const;
     expect(countWords(count, 'fr')).toEqual({ service: 'plombiers', city: 'Sousse' });
     expect(countWords(count, 'en')).toEqual({ service: 'plumbers', city: 'Sousse' });
     expect(countWords(count, 'ar')).toEqual({ service: 'سبّاكًا', city: 'سوسة' });

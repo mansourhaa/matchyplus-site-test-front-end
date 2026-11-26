@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **180 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **183 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -124,11 +124,12 @@ footer picture (25 Nov 2026), each a `<nav>` with its links:
     title. The service and the city are recognised despite typos, accents and case ("pombire",
     "souse" → Plombier, Sousse; fr/en/ar words; the 10 belt trades and 26 Tunisian cities). If
     either is not recognised, no number is shown.
-  - **TEMPORARY numbers:** `sampleCount` gives 30–50 (the range the team gave from the database),
-    always the same for the same search; Plombier + Sousse = 35. **For the backend:** only
-    `getProCount` must change, to call `GET /api/pros/count?service=PLB&city=sousse` and return
-    `{ "service": "PLB", "city": "sousse", "count": 35 }` (service codes as in
-    `landing.beltServices`, city ids as in `CITIES`).
+  - **Real numbers** (26 Nov 2026): `fetchProCount` asks the API
+    `GET /api/v1/pros/count?service=Plombier&city=Sousse` (French names; apps/api `ProsService`
+    counts active users offering that trade in that city, the trade widened to every language
+    with the taxonomy). No number while waiting, when nobody matches, or when the API cannot be
+    reached: the usual title instead, never an invented number. The API address comes from
+    `NEXT_PUBLIC_API_URL`, and the API's `CORS_ORIGINS` must include the landing's domain.
   - The navbar has no login link, so the hero keeps "Déjà membre ? Connexion".
 
 ### 2. Services belt
@@ -375,7 +376,7 @@ stub), and the same Testing Library setup as `apps/app`.
 | `referral.test.tsx`           | Sign-up link with code, texts in 3 languages, copy button                                                                                                                                                                                                                                                               |
 | `community-map.test.ts`       | Positions on the map, curves, tooltip placement, number format, country names, Search Console totals                                                                                                                                                                                                                    |
 | `search-results-data.test.ts` | Search in the URL (site and sign-up)                                                                                                                                                                                                                                                                                    |
-| `search-counts.test.ts`       | Count: typos, accents, Arabic; unknown words give none; 30–50 and stable; Plombier + Sousse = 35; plural words fr/en/ar                                                                                                                                                                                                 |
+| `search-counts.test.ts`       | Count: typos, accents, Arabic; unknown words ask nothing; API request with French names; API count, 0 / error → no number; plural words fr/en/ar                                                                                                                                                                        |
 | `search-results.test.tsx`     | Results page: big number + sentence as title, corrected search in the bar, one sign-up link with the search, fr/en/ar, unknown search                                                                                                                                                                                   |
 | `press-data.test.ts`          | News: unique URL-safe slugs, dates (day, month or year only), texts and headings in 3 languages, cover alt, LinkedIn links, newest first, YouTube links (accepted / refused), dates per language                                                                                                                        |
 | `home-sections.test.tsx`      | Every new section renders in fr/en/ar, labels, links, search opens the results page, map tooltip (mouse vs touch), news cards and article (headings, source button, video, unknown slug), map counters (no source line), partner links, partners strip with real logos, partners page, new texts exist in all languages |

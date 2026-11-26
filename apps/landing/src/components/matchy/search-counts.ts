@@ -1,14 +1,11 @@
 import type { Locale } from '@/features/i18n/messages';
+import { API_URL } from '@/lib/constants';
 
 /**
- * How many pros a search finds, shown on /recherche/ ("35 plombiers disponibles à Sousse").
- *
- * TEMPORARY (25 Nov 2026): the numbers come from `sampleCount` below, between 30 and 50, the
- * range the team gave from the database. When the backend API is ready, only `getProCount`
- * changes: it calls the API and returns the same `ProCount`. Nothing else on the page changes.
- *
- * Expected API (to agree with the backend team):
- *   GET /api/pros/count?service=PLB&city=sousse  →  { "service": "PLB", "city": "sousse", "count": 35 }
+ * How many pros a search finds, shown on /recherche/ ("35 plombiers disponibles à Sousse"): the
+ * real number from the API (`GET /api/v1/pros/count?service=Plombier&city=Sousse`, apps/api
+ * ProsService), since 26 Nov 2026. This file recognises the typed service and city (typos,
+ * accents, fr/en/ar) and gives the words of the sentence.
  */
 export type ProCount = { service: ServiceCode; city: CityId; count: number };
 
@@ -189,22 +186,40 @@ export function findCity(typed: string) {
 }
 
 /**
- * TEMPORARY sample count, between 30 and 50, always the same for the same service and city.
- * Plombier + Sousse is 35, the figure the team gave. Replaced by the API later.
+ * The API request for a search, or null when the service or the city is not recognised (then
+ * nothing is asked and no number is shown). The French names are sent: the API widens the trade
+ * to every language with its taxonomy, and cities are stored with their Latin names.
  */
-function sampleCount(service: ServiceCode, city: CityId): number {
-  if (service === 'PLB' && city === 'sousse') return 35;
-  let hash = 0;
-  for (const char of `${service}:${city}`) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return 30 + (hash % 21);
-}
-
-/** The count for a search, or null when the service or the city is not recognised. */
-export function getProCount(typedService: string, typedCity: string): ProCount | null {
+export function proCountRequest(typedService: string, typedCity: string) {
   const service = findService(typedService);
   const city = findCity(typedCity);
   if (!service || !city) return null;
-  return { service: service.code, city: city.id, count: sampleCount(service.code, city.id) };
+  const params = new URLSearchParams({ service: service.name.fr, city: city.name.fr });
+  return { service: service.code, city: city.id, url: `${API_URL}/v1/pros/count?${params}` };
+}
+
+/**
+ * How many pros match a search, from the API (`GET /v1/pros/count`). Null when the search is not
+ * recognised, when no pro matches, or when the API cannot be reached: the page then shows its
+ * usual title, never an invented number.
+ */
+export async function fetchProCount(
+  typedService: string,
+  typedCity: string,
+  fetcher: typeof fetch = fetch,
+): Promise<ProCount | null> {
+  const request = proCountRequest(typedService, typedCity);
+  if (!request) return null;
+  try {
+    const response = await fetcher(request.url);
+    if (!response.ok) return null;
+    const { count } = (await response.json()) as { count?: unknown };
+    if (typeof count !== 'number' || count < 1) return null;
+    return { service: request.service, city: request.city, count };
+  } catch {
+    // network error or the API is down: no number rather than a wrong one
+    return null;
+  }
 }
 
 /**
