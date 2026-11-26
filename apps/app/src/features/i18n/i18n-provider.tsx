@@ -50,28 +50,8 @@ function subscribeLocale(onStoreChange: () => void) {
   };
 }
 
-/**
- * The language asked for in the URL (`?lang=ar`), e.g. by the landing site's links: the landing is
- * another site, so this is how a visitor on its Arabic pages lands on the app in Arabic. It is
- * kept as the visitor's language; without `lang`, the stored choice is used as before.
- */
-function localeFromUrl(): Locale | null {
-  const requested = new URLSearchParams(window.location.search).get('lang');
-  return requested && SUPPORTED_LOCALES.includes(requested as Locale)
-    ? (requested as Locale)
-    : null;
-}
-
-/** The address whose `?lang` was last applied: applied once, so a later choice in the app wins. */
-let appliedUrl: string | null = null;
-
 function readStoredLocale(): Locale {
   if (typeof window === 'undefined') return DEFAULT_LOCALE;
-  if (appliedUrl !== window.location.href) {
-    appliedUrl = window.location.href;
-    const fromUrl = localeFromUrl();
-    if (fromUrl) window.localStorage.setItem(LOCALE_STORAGE_KEY, fromUrl);
-  }
   const raw = window.localStorage.getItem(LOCALE_STORAGE_KEY);
   if (raw && SUPPORTED_LOCALES.includes(raw as Locale)) return raw as Locale;
   return DEFAULT_LOCALE;
