@@ -82,6 +82,15 @@ describe('SearchResults', () => {
     expect(screen.getByRole('link', { name: /Créer mon compte gratuit/ })).toBeInTheDocument();
   });
 
+  it('one pro: the sentence is singular ("1 plombier disponible")', async () => {
+    vi.restoreAllMocks();
+    apiAnswers(1);
+    renderIn('fr', 'service=Plombier&ville=Sousse');
+    expect(await screen.findByTestId('results-count')).toHaveTextContent(
+      '1plombier disponible à Sousse',
+    );
+  });
+
   it('asks the API with the corrected French names', async () => {
     renderIn('fr', 'service=pombire&ville=souse');
     await screen.findByTestId('results-count');

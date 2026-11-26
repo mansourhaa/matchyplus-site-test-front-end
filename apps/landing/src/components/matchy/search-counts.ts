@@ -14,26 +14,46 @@ export type CityId = (typeof CITIES)[number]['id'];
 
 /**
  * The 10 trades of the belt (same codes and names as `landing.beltServices`), with the words a
- * visitor may type (fr/en/ar) and the plural used in the sentence.
+ * visitor may type (fr/en/ar) and the word used after a number, by plural category
+ * (`Intl.PluralRules`): French and English one/other; Arabic one (1), two (2), few (3–10),
+ * many (11–99) and other (100…), each with its own form ("سبّاك", "سبّاكان", "سبّاكين", "سبّاكًا").
  */
 export const SERVICES = [
   {
     code: 'PLB',
     name: { fr: 'Plombier', en: 'Plumber', ar: 'سبّاك' },
     words: ['plombier', 'plomberie', 'plumber', 'plumbing', 'سباك', 'سباكة'],
-    plural: { fr: 'plombiers', en: 'plumbers', ar: 'سبّاكًا' },
+    count: {
+      fr: { one: 'plombier', other: 'plombiers' },
+      en: { one: 'plumber', other: 'plumbers' },
+      ar: { one: 'سبّاك', two: 'سبّاكان', few: 'سبّاكين', many: 'سبّاكًا', other: 'سبّاك' },
+    },
   },
   {
     code: 'ELC',
     name: { fr: 'Électricien', en: 'Electrician', ar: 'كهربائي' },
     words: ['electricien', 'electricite', 'electrician', 'electricity', 'كهربائي', 'كهرباء'],
-    plural: { fr: 'électriciens', en: 'electricians', ar: 'كهربائيًا' },
+    count: {
+      fr: { one: 'électricien', other: 'électriciens' },
+      en: { one: 'electrician', other: 'electricians' },
+      ar: {
+        one: 'كهربائي',
+        two: 'كهربائيان',
+        few: 'كهربائيين',
+        many: 'كهربائيًا',
+        other: 'كهربائي',
+      },
+    },
   },
   {
     code: 'CHF',
     name: { fr: 'Chauffeur', en: 'Driver', ar: 'سائق' },
     words: ['chauffeur', 'driver', 'سائق'],
-    plural: { fr: 'chauffeurs', en: 'drivers', ar: 'سائقًا' },
+    count: {
+      fr: { one: 'chauffeur', other: 'chauffeurs' },
+      en: { one: 'driver', other: 'drivers' },
+      ar: { one: 'سائق', two: 'سائقان', few: 'سائقين', many: 'سائقًا', other: 'سائق' },
+    },
   },
   {
     code: 'GDE',
@@ -47,7 +67,11 @@ export const SERVICES = [
       'رعاية الاطفال',
       'مربية',
     ],
-    plural: { fr: 'gardes d’enfants', en: 'childminders', ar: 'مربّيةً' },
+    count: {
+      fr: { one: 'garde d’enfants', other: 'gardes d’enfants' },
+      en: { one: 'childminder', other: 'childminders' },
+      ar: { one: 'مربّية', two: 'مربّيتان', few: 'مربّيات', many: 'مربّيةً', other: 'مربّية' },
+    },
   },
   {
     code: 'MEN',
@@ -61,37 +85,73 @@ export const SERVICES = [
       'عاملة منزلية',
       'تنظيف',
     ],
-    plural: { fr: 'aides ménagères', en: 'housekeepers', ar: 'عاملةً منزلية' },
+    count: {
+      fr: { one: 'aide ménagère', other: 'aides ménagères' },
+      en: { one: 'housekeeper', other: 'housekeepers' },
+      ar: {
+        one: 'عاملة منزلية',
+        two: 'عاملتان منزليتان',
+        few: 'عاملات منزليات',
+        many: 'عاملةً منزلية',
+        other: 'عاملة منزلية',
+      },
+    },
   },
   {
     code: 'LIV',
     name: { fr: 'Livreur', en: 'Delivery driver', ar: 'عامل توصيل' },
     words: ['livreur', 'livraison', 'delivery', 'delivery driver', 'عامل توصيل', 'توصيل'],
-    plural: { fr: 'livreurs', en: 'delivery drivers', ar: 'عاملَ توصيل' },
+    count: {
+      fr: { one: 'livreur', other: 'livreurs' },
+      en: { one: 'delivery driver', other: 'delivery drivers' },
+      ar: {
+        one: 'عامل توصيل',
+        two: 'عاملا توصيل',
+        few: 'عمّال توصيل',
+        many: 'عاملَ توصيل',
+        other: 'عامل توصيل',
+      },
+    },
   },
   {
     code: 'CUI',
     name: { fr: 'Cuisinier', en: 'Cook', ar: 'طبّاخ' },
     words: ['cuisinier', 'cuisine', 'cook', 'chef', 'طباخ'],
-    plural: { fr: 'cuisiniers', en: 'cooks', ar: 'طبّاخًا' },
+    count: {
+      fr: { one: 'cuisinier', other: 'cuisiniers' },
+      en: { one: 'cook', other: 'cooks' },
+      ar: { one: 'طبّاخ', two: 'طبّاخان', few: 'طبّاخين', many: 'طبّاخًا', other: 'طبّاخ' },
+    },
   },
   {
     code: 'COU',
     name: { fr: 'Couturière', en: 'Seamstress', ar: 'خيّاطة' },
     words: ['couturiere', 'couturier', 'couture', 'seamstress', 'tailor', 'خياطة', 'خياط'],
-    plural: { fr: 'couturières', en: 'seamstresses', ar: 'خيّاطةً' },
+    count: {
+      fr: { one: 'couturière', other: 'couturières' },
+      en: { one: 'seamstress', other: 'seamstresses' },
+      ar: { one: 'خيّاطة', two: 'خيّاطتان', few: 'خيّاطات', many: 'خيّاطةً', other: 'خيّاطة' },
+    },
   },
   {
     code: 'JAR',
     name: { fr: 'Jardinier', en: 'Gardener', ar: 'بستاني' },
     words: ['jardinier', 'jardinage', 'gardener', 'gardening', 'بستاني'],
-    plural: { fr: 'jardiniers', en: 'gardeners', ar: 'بستانيًا' },
+    count: {
+      fr: { one: 'jardinier', other: 'jardiniers' },
+      en: { one: 'gardener', other: 'gardeners' },
+      ar: { one: 'بستاني', two: 'بستانيان', few: 'بستانيين', many: 'بستانيًا', other: 'بستاني' },
+    },
   },
   {
     code: 'SRV',
     name: { fr: 'Serveur', en: 'Waiter', ar: 'نادل' },
     words: ['serveur', 'serveuse', 'waiter', 'waitress', 'نادل'],
-    plural: { fr: 'serveurs', en: 'waiters', ar: 'نادلًا' },
+    count: {
+      fr: { one: 'serveur', other: 'serveurs' },
+      en: { one: 'waiter', other: 'waiters' },
+      ar: { one: 'نادل', two: 'نادلان', few: 'نادلين', many: 'نادلًا', other: 'نادل' },
+    },
   },
 ] as const;
 
@@ -233,9 +293,19 @@ export function correctedSearch(typedService: string, typedCity: string, locale:
   };
 }
 
-/** The plural trade and the city's name in a language, for the sentence. */
+/**
+ * The words of the sentence for this number: the trade in the right form for the count
+ * ("1 plombier", "35 plombiers"; Arabic "سبّاكان" for 2, "سبّاكين" for 3–10), the city's name,
+ * and whether the count is singular (French "disponible" vs "disponibles").
+ */
 export function countWords(count: ProCount, locale: Locale) {
   const service = SERVICES.find((item) => item.code === count.service);
   const city = CITIES.find((item) => item.id === count.city);
-  return { service: service?.plural[locale] ?? '', city: city?.name[locale] ?? '' };
+  const category = new Intl.PluralRules(locale).select(count.count);
+  const forms: Record<string, string> = service?.count[locale] ?? {};
+  return {
+    service: forms[category] ?? forms.other ?? '',
+    city: city?.name[locale] ?? '',
+    singular: category === 'one',
+  };
 }

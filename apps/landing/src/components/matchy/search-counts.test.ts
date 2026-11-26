@@ -52,10 +52,19 @@ describe('search counts (from the API)', () => {
     expect(unused).not.toHaveBeenCalled();
   });
 
-  it('gives the plural trade and the city name in each language', () => {
-    const count = { service: 'PLB', city: 'sousse', count: 35 } as const;
-    expect(countWords(count, 'fr')).toEqual({ service: 'plombiers', city: 'Sousse' });
-    expect(countWords(count, 'en')).toEqual({ service: 'plumbers', city: 'Sousse' });
-    expect(countWords(count, 'ar')).toEqual({ service: 'سبّاكًا', city: 'سوسة' });
+  it('uses the right word form for every number, in each language', () => {
+    const words = (n: number, locale: 'fr' | 'en' | 'ar') =>
+      countWords({ service: 'PLB', city: 'sousse', count: n }, locale);
+    expect(words(1, 'fr')).toEqual({ service: 'plombier', city: 'Sousse', singular: true });
+    expect(words(35, 'fr')).toEqual({ service: 'plombiers', city: 'Sousse', singular: false });
+    expect(words(1, 'en').service).toBe('plumber');
+    expect(words(2, 'en').service).toBe('plumbers');
+    // Arabic: 1, 2, 3–10, 11–99 and 100+ each have their own form
+    expect(words(1, 'ar').service).toBe('سبّاك');
+    expect(words(2, 'ar').service).toBe('سبّاكان');
+    expect(words(5, 'ar').service).toBe('سبّاكين');
+    expect(words(35, 'ar').service).toBe('سبّاكًا');
+    expect(words(100, 'ar').service).toBe('سبّاك');
+    expect(words(35, 'ar').city).toBe('سوسة');
   });
 });

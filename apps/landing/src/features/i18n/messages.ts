@@ -40,6 +40,7 @@ export const messages: Record<Locale, MessageTree> = {
       resultsEyebrow: 'Résultats de votre recherche',
       resultsTitle: 'Trouvez le bon professionnel pour votre besoin',
       resultsCountLabel: '{service} disponibles à {city}',
+      resultsCountLabelOne: '{service} disponible à {city}',
       resultsSearching: 'Recherche en cours…',
       resultsBody:
         'Créez votre compte gratuit pour découvrir les professionnels disponibles, comparer leurs profils et les contacter.',
@@ -572,6 +573,7 @@ export const messages: Record<Locale, MessageTree> = {
       resultsEyebrow: 'Your search results',
       resultsTitle: 'Find the right professional for your need',
       resultsCountLabel: '{service} available in {city}',
+      resultsCountLabelOne: '{service} available in {city}',
       resultsSearching: 'Searching…',
       resultsBody:
         'Create your free account to discover available professionals, compare their profiles and contact them.',
@@ -1085,6 +1087,7 @@ export const messages: Record<Locale, MessageTree> = {
       resultsEyebrow: 'نتائج بحثك',
       resultsTitle: 'اعثر على المهني المناسب لحاجتك',
       resultsCountLabel: '{service} في {city}',
+      resultsCountLabelOne: '{service} في {city}',
       resultsSearching: 'جارٍ البحث…',
       resultsBody: 'أنشئ حسابك المجاني لاكتشاف المهنيين المتاحين ومقارنة ملفاتهم والتواصل معهم.',
       resultsCta: 'إنشاء حسابي المجاني',

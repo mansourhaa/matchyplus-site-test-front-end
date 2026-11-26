@@ -30,6 +30,8 @@ export function SearchResults() {
     corrected.service,
     corrected.city,
   );
+  // the trade in the right form for the number ("1 plombier disponible", "35 plombiers disponibles")
+  const words = count ? countWords(count, locale) : null;
 
   return (
     // a new search on this page re-fills the bar with its corrected words
@@ -57,7 +59,10 @@ export function SearchResults() {
                 {new Intl.NumberFormat(numberLocale(locale)).format(count.count)}
               </span>
               <span className="mt-4 block text-2xl leading-snug font-extrabold md:text-3xl">
-                {t('landing.resultsCountLabel', countWords(count, locale))}
+                {t(words?.singular ? 'landing.resultsCountLabelOne' : 'landing.resultsCountLabel', {
+                  service: words?.service ?? '',
+                  city: words?.city ?? '',
+                })}
               </span>
             </span>
           ) : (

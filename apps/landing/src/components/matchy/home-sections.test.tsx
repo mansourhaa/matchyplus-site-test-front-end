@@ -55,6 +55,7 @@ const NEW_KEYS = [
   'searchMember',
   'resultsTitle',
   'resultsCountLabel',
+  'resultsCountLabelOne',
   'resultsSearching',
   'resultsCta',
   'whyTitle',
