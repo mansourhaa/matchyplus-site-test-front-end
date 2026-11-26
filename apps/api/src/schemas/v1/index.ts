@@ -11,5 +11,6 @@ export * from './notification.js';
 export * from './profile.js';
 export * from './conversations.js';
 export * from './location.js';
+export * from './pros.js';
 export * from './waitlist.js';
 export * from './favorites.js';
