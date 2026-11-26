@@ -195,7 +195,7 @@ export function proCountRequest(typedService: string, typedCity: string) {
   const city = findCity(typedCity);
   if (!service || !city) return null;
   const params = new URLSearchParams({ service: service.name.fr, city: city.name.fr });
-  return { service: service.code, city: city.id, url: `${API_URL}/v1/pros/count?${params}` };
+  return { service: service.code, city: city.id, url: `${API_URL}/pros/count?${params}` };
 }
 
 /**

@@ -14,3 +14,12 @@ describe('appLink', () => {
     );
   });
 });
+
+describe('API_URL', () => {
+  it('uses the versioned base like the other apps, and adds /v1 to a base without it', async () => {
+    const { apiBase } = await import('./constants');
+    expect(apiBase('https://api.matchyplus.com/api/v1')).toBe('https://api.matchyplus.com/api/v1');
+    expect(apiBase('https://api.matchyplus.com/api/v1/')).toBe('https://api.matchyplus.com/api/v1');
+    expect(apiBase('http://localhost:8000/api')).toBe('http://localhost:8000/api/v1');
+  });
+});

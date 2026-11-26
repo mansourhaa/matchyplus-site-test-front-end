@@ -118,7 +118,7 @@ export default function Contact() {
 
     try {
       const fullPhone = form.phone ? `${countryCode} ${form.phone}`.trim() : '';
-      await fetch(`${API_URL}/v1/contact`, {
+      await fetch(`${API_URL}/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

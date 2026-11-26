@@ -23,7 +23,8 @@ describe('search counts (from the API)', () => {
 
   it('asks the API with the French names, whatever was typed', () => {
     const request = proCountRequest('pombire', 'سوسة');
-    expect(request?.url).toMatch(/\/v1\/pros\/count\?service=Plombier&city=Sousse$/);
+    expect(request?.url).toMatch(/\/api\/v1\/pros\/count\?service=Plombier&city=Sousse$/);
+    expect(request?.url).not.toContain('/v1/v1/');
   });
 
   it('returns the API count', async () => {

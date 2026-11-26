@@ -20,7 +20,7 @@ pnpm --filter @saas-boilerplate/landing dev    # http://localhost:3002/fr/
 | --------------------------- | -------------------------------------------------- |
 | `pnpm typecheck`            | TypeScript                                         |
 | `pnpm lint`                 | ESLint (0 errors; 5 old `no-img-element` warnings) |
-| `pnpm test`                 | Vitest + Testing Library: **183 tests**            |
+| `pnpm test`                 | Vitest + Testing Library: **184 tests**            |
 | `pnpm build`                | Production build (36 pages)                        |
 
 **Windows tip:** if `/fr/services/` and the other pages return 404 in dev while `/fr/` works, look
@@ -129,7 +129,10 @@ footer picture (25 Nov 2026), each a `<nav>` with its links:
     counts active users offering that trade in that city, the trade widened to every language
     with the taxonomy). No number while waiting, when nobody matches, or when the API cannot be
     reached: the usual title instead, never an invented number. The API address comes from
-    `NEXT_PUBLIC_API_URL`, and the API's `CORS_ORIGINS` must include the landing's domain.
+    `NEXT_PUBLIC_API_URL` in the same form as apps/app and apps/admin (`…/api/v1`; a base ending in
+    `/api` gets `/v1` added; passed at build time by the Dockerfile), and the API's `CORS_ORIGINS`
+    must include the landing's domain. The contact and partner forms use the same base
+    (`${API_URL}/contact`).
   - The navbar has no login link, so the hero keeps "Déjà membre ? Connexion".
 
 ### 2. Services belt

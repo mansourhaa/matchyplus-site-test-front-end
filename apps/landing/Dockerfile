@@ -43,6 +43,12 @@ RUN pnpm install
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 
+# Where the contact and partner forms and the search page's count call the API, same form as
+# apps/app and apps/admin (…/api/v1). Without it the landing compiled in its localhost fallback,
+# so on the deployed site those calls never reached the API.
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 # Analytics identifiers, read by apps/landing/src/components/analytics.tsx.
 # Inlined at build time for the same reason as the URL above, so they cannot be
 # supplied by the Deployment or a ConfigMap afterwards.
