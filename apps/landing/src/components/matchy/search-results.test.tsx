@@ -48,13 +48,27 @@ describe('SearchResults', () => {
     expect(screen.getByLabelText('Quel service ?')).toHaveValue('Plombier');
     expect(screen.getByLabelText('Où ?')).toHaveValue('Sousse');
     // one big sign-up button, no locked cards
-    expect(screen.getAllByRole('link', { name: /Créer mon compte gratuit/ })).toHaveLength(1);
+    expect(screen.getAllByRole('link', { name: /Continuer/ })).toHaveLength(1);
     expect(screen.queryByTestId('locked-cards')).toBeNull();
+    expect(
+      screen.getByText(
+        'Les profils professionnels, particuliers et sociétés à Sousse sont connectés directement à l’application. Connectez-vous sans attendre qu’une offre soit publiée.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('no city typed: the same line without a city', () => {
+    renderIn('fr', 'service=Plombier');
+    expect(
+      screen.getByText(
+        'Les profils professionnels, particuliers et sociétés sont connectés directement à l’application. Connectez-vous sans attendre qu’une offre soit publiée.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('the sign-up links carry the corrected search to the app', () => {
     renderIn('fr', 'service=pombire&ville=souse');
-    for (const link of screen.getAllByRole('link', { name: /Créer mon compte gratuit/ })) {
+    for (const link of screen.getAllByRole('link', { name: /Continuer/ })) {
       expect(link).toHaveAttribute(
         'href',
         'http://localhost:3000/register?lang=fr&service=Plombier&ville=Sousse',
@@ -79,7 +93,7 @@ describe('SearchResults', () => {
     );
     expect(screen.getByLabelText('Quel service ?')).toHaveValue('astronaute');
     expect(screen.queryByTestId('results-count')).toBeNull();
-    expect(screen.getByRole('link', { name: /Créer mon compte gratuit/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Continuer/ })).toBeInTheDocument();
   });
 
   it('one pro: the sentence is singular ("1 plombier disponible")', async () => {

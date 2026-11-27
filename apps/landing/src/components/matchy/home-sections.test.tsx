@@ -57,6 +57,8 @@ const NEW_KEYS = [
   'resultsCountLabel',
   'resultsCountLabelOne',
   'resultsSearching',
+  'resultsBody',
+  'resultsBodyAnywhere',
   'resultsCta',
   'whyTitle',
   'whyBefore',

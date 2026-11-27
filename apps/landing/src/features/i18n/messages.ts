@@ -43,8 +43,10 @@ export const messages: Record<Locale, MessageTree> = {
       resultsCountLabelOne: '{service} disponible à {city}',
       resultsSearching: 'Recherche en cours…',
       resultsBody:
-        'Créez votre compte gratuit pour découvrir les professionnels disponibles, comparer leurs profils et les contacter.',
-      resultsCta: 'Créer mon compte gratuit',
+        'Les profils professionnels, particuliers et sociétés à {city} sont connectés directement à l’application. Connectez-vous sans attendre qu’une offre soit publiée.',
+      resultsBodyAnywhere:
+        'Les profils professionnels, particuliers et sociétés sont connectés directement à l’application. Connectez-vous sans attendre qu’une offre soit publiée.',
+      resultsCta: 'Continuer',
       searchProText:
         'Créez votre profil gratuit et recevez des demandes de clients près de chez vous.',
       searchProCta: 'Créer mon profil gratuitement',
@@ -576,8 +578,10 @@ export const messages: Record<Locale, MessageTree> = {
       resultsCountLabelOne: '{service} available in {city}',
       resultsSearching: 'Searching…',
       resultsBody:
-        'Create your free account to discover available professionals, compare their profiles and contact them.',
-      resultsCta: 'Create my free account',
+        'Professionals, individuals and companies in {city} are connected directly on the app. Sign in now, without waiting for an offer to be published.',
+      resultsBodyAnywhere:
+        'Professionals, individuals and companies are connected directly on the app. Sign in now, without waiting for an offer to be published.',
+      resultsCta: 'Continue',
       searchProText: 'Create your free profile and get requests from clients near you.',
       searchProCta: 'Create a free professional profile',
       searchBusinessText: 'Representing a company? Become a Matchy+ partner.',
@@ -1089,8 +1093,11 @@ export const messages: Record<Locale, MessageTree> = {
       resultsCountLabel: '{service} في {city}',
       resultsCountLabelOne: '{service} في {city}',
       resultsSearching: 'جارٍ البحث…',
-      resultsBody: 'أنشئ حسابك المجاني لاكتشاف المهنيين المتاحين ومقارنة ملفاتهم والتواصل معهم.',
-      resultsCta: 'إنشاء حسابي المجاني',
+      resultsBody:
+        'المهنيون والأفراد والشركات في {city} متصلون مباشرة بالتطبيق. سجّل دخولك الآن دون انتظار نشر عرض.',
+      resultsBodyAnywhere:
+        'المهنيون والأفراد والشركات متصلون مباشرة بالتطبيق. سجّل دخولك الآن دون انتظار نشر عرض.',
+      resultsCta: 'متابعة',
       searchProText: 'أنشئ ملفك المجاني واستقبل طلبات العملاء القريبين منك.',
       searchProCta: 'أنشئ ملفك المهني مجانًا',
       searchBusinessText: 'تمثّل شركة؟ كن شريكًا لـ Matchy+\u200E.',

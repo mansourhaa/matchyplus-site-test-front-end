@@ -72,7 +72,10 @@ export function SearchResults() {
           )}
         </h1>
         <p className="relative mx-auto mt-4 max-w-md leading-relaxed text-slate-600 md:text-lg">
-          {t('landing.resultsBody')}
+          {/* the boss's line: everyone in the searched city is already on the app */}
+          {corrected.city
+            ? t('landing.resultsBody', { city: corrected.city })
+            : t('landing.resultsBodyAnywhere')}
         </p>
         {/* the app is another site: a plain link, not Next's client-side <Link> */}
         <a
